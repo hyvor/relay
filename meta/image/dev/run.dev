@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# install dependencies
+composer install
+
+# run frankenphp
+frankenphp run --config /etc/caddy/Caddyfile --watch

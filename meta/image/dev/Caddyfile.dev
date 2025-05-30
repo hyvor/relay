@@ -1,0 +1,18 @@
+{
+	frankenphp
+}
+
+:80 {
+
+    root /app/backend/public
+
+    php_server {
+        file_server off
+        try_files index.php
+    }
+
+	log {
+        output file /var/log/caddy.log
+    }
+
+}
