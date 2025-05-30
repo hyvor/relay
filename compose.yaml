@@ -1,6 +1,6 @@
 services:
-  hyvor-relay-backend:
-    container_name: hyvor-relay-backend
+  api:
+    container_name: hyvor-relay-api
     build:
       context: .
       target: backend-dev
@@ -11,17 +11,31 @@ services:
     labels:
       traefik.enable: true
       # backend
-      traefik.http.routers.hyvor-relay-backend.rule: Host(`relay.hyvor.dev`)
-      traefik.http.routers.hyvor-relay-backend.entrypoints: https
-      traefik.http.routers.hyvor-relay-backend.tls: true
-      traefik.http.routers.hyvor-relay-backend.service: hyvor-relay-backend
+      traefik.http.routers.hyvor-relay-api.rule: Host(`relay.hyvor.dev`)
+      traefik.http.routers.hyvor-relay-api.entrypoints: https
+      traefik.http.routers.hyvor-relay-api.tls: true
+      traefik.http.routers.hyvor-relay-api.service: hyvor-relay-api
       # service
-      traefik.http.services.hyvor-relay-backend.loadbalancer.server.port: 80
+      traefik.http.services.hyvor-relay-api.loadbalancer.server.port: 80
     networks:
       - hyvor-network
     healthcheck:
       test: ls
       disable: true
+
+  worker:
+    build:
+      context: .
+      target: backend-dev
+    volumes:
+      - ./backend:/app/backend
+    networks:
+      - hyvor-network
+    healthcheck:
+      test: ls
+      disable: true
+    deploy:
+      replicas: 2
 
 networks:
   hyvor-network:
