@@ -2,18 +2,49 @@
 
 namespace App\Controller;
 
+use App\Service\Email\EmailMessage;
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Attribute\Route;
 
 class HomeController extends AbstractController
 {
 
+    public function __construct(
+        private MessageBusInterface $bus,
+    )
+    {
+    }
+
     #[Route('/')]
     public function index(): Response
+    {
+
+        $email = (new Email())
+            ->from('fabien@symfony.com')
+            ->to('foo@example.com')
+            ->cc('bar@example.com')
+            ->bcc('baz@example.com')
+            ->replyTo('fabien@symfony.com')
+            ->priority(Email::PRIORITY_HIGH)
+            ->subject('Important Notification')
+            ->text('Lorem ipsum...')
+            ->html('<h1>Lorem ipsum</h1> <p>...</p>');
+
+        $emailMessage = new EmailMessage($email->toString());
+
+        $this->bus->dispatch($emailMessage);
+
+        return new Response('');
+    }
+
+
+    public function oldIndex(): Response
     {
 
         $logs = '';

@@ -1,10 +1,4 @@
-Hyvor Relay
-
-Email delivery service.
-
-First idea was to write the API in Symfony, and then the worker in Go for performance.
-But, I'm going to try Symfony for both first.
-If needed, we can easily rewrite the worker in Go later.
+## Hyvor Relay
 
 ## Architecture
 
@@ -12,7 +6,8 @@ Basic architecture of the service:
 
 - Central PGSQL database for storing metadata and worker configuration
 - Central RabbitMQ for queuing emails
-- Symfony for the API and worker implementation
+- Symfony for the API
+- Go for the workers
 
 Servers:
 
