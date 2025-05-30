@@ -21,6 +21,20 @@ services:
       test: ls
       disable: true
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: hyvor-relay-rabbitmq
+    ports:
+      # - "5672:5672"   # AMQP protocol
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbit
+      RABBITMQ_DEFAULT_PASS: rabbit
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - hyvor-network
+
 #  worker:
 #    build:
 #      context: .
@@ -34,6 +48,9 @@ services:
 #      disable: true
 #    deploy:
 #      replicas: 2
+
+volumes:
+  rabbitmq_data:
 
 networks:
   hyvor-network:

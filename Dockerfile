@@ -5,7 +5,7 @@ FROM dunglas/frankenphp:1.4.4-php8.4 AS frankenphp
 FROM frankenphp AS api-base
 WORKDIR /app/api
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
-RUN install-php-extensions zip intl pdo_pgsql opcache apcu
+RUN install-php-extensions zip intl pdo_pgsql opcache apcu amqp
 
 FROM api-base AS api-dev
 ENV APP_RUNTIME="Runtime\FrankenPhpSymfony\Runtime"

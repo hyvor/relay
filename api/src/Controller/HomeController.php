@@ -8,6 +8,7 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Attribute\Route;
@@ -38,9 +39,11 @@ class HomeController extends AbstractController
 
         $emailMessage = new EmailMessage($email->toString());
 
-        $this->bus->dispatch($emailMessage);
+        $this->bus->dispatch($emailMessage, [
+            new AmqpStamp('email.transactional')
+        ]);
 
-        return new Response('');
+        return new Response('all good');
     }
 
 
