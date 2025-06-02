@@ -7,8 +7,14 @@
         "php": ">=8.2",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "doctrine/dbal": "^3",
+        "doctrine/doctrine-bundle": "^2.14",
+        "doctrine/doctrine-migrations-bundle": "^3.4",
+        "doctrine/orm": "^3.3",
         "egulias/email-validator": "^4.0",
+        "phpdocumentor/reflection-docblock": "^5.6",
         "phpmailer/phpmailer": "^6.10",
+        "phpstan/phpdoc-parser": "^2.1",
         "runtime/frankenphp-symfony": "^0.2.0",
         "symfony/amqp-messenger": "7.2.*",
         "symfony/console": "7.2.*",
@@ -17,7 +23,10 @@
         "symfony/framework-bundle": "7.2.*",
         "symfony/messenger": "7.2.*",
         "symfony/mime": "7.2.*",
+        "symfony/property-access": "7.2.*",
+        "symfony/property-info": "7.2.*",
         "symfony/runtime": "7.2.*",
+        "symfony/serializer": "7.2.*",
         "symfony/yaml": "7.2.*"
     },
     "config": {
@@ -67,7 +76,11 @@
     "extra": {
         "symfony": {
             "allow-contrib": false,
-            "require": "7.2.*"
+            "require": "7.2.*",
+            "docker": false
         }
+    },
+    "require-dev": {
+        "symfony/maker-bundle": "^1.63"
     }
 }

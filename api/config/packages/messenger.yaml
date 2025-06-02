@@ -1,7 +1,10 @@
 framework:
     messenger:
+
         transports:
-            email: '%env(MESSENGER_EMAIL_TRANSPORT_DSN)%'
+            email:
+                dsn: '%env(MESSENGER_EMAIL_TRANSPORT_DSN)%'
+                serializer: messenger.transport.symfony_serializer
             # failed: 'doctrine://default?queue_name=failed'
             # sync: 'sync://'
 

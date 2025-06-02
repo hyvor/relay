@@ -22,7 +22,7 @@ services:
       disable: true
 
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:4.1-management
     container_name: hyvor-relay-rabbitmq
     ports:
       # - "5672:5672"   # AMQP protocol
@@ -35,19 +35,15 @@ services:
     networks:
       - hyvor-network
 
-#  worker:
-#    build:
-#      context: .
-#      target: backend-dev
-#    volumes:
-#      - ./backend:/app/backend
-#    networks:
-#      - hyvor-network
-#    healthcheck:
-#      test: ls
-#      disable: true
-#    deploy:
-#      replicas: 2
+  worker:
+    image: cosmtrek/air # https://github.com/air-verse/air?tab=readme-ov-file#docker-compose
+    working_dir: /worker
+    volumes:
+      - ./worker:/worker
+    networks:
+      - hyvor-network
+    deploy:
+      replicas: 2
 
 volumes:
   rabbitmq_data:
