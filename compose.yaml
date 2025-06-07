@@ -1,20 +1,20 @@
 services:
-  api:
-    container_name: hyvor-relay-api
+  backend:
+    container_name: hyvor-relay-backend
     build:
       context: .
-      target: api-dev
+      target: backend-dev
     volumes:
-      - ./api:/app/api
-      #- ../internal:/app/api/vendor/hyvor/internal:ro
+      - ./backend:/app/backend
+      #- ../internal:/app/backend/vendor/hyvor/internal:ro
       # - ./shared:/app/shared
     labels:
       traefik.enable: true
-      traefik.http.routers.hyvor-relay-api.rule: Host(`relay.hyvor.dev`)
-      traefik.http.routers.hyvor-relay-api.entrypoints: https
-      traefik.http.routers.hyvor-relay-api.tls: true
-      traefik.http.routers.hyvor-relay-api.service: hyvor-relay-api
-      traefik.http.services.hyvor-relay-api.loadbalancer.server.port: 80
+      traefik.http.routers.hyvor-relay-backend.rule: Host(`relay.hyvor.dev`)
+      traefik.http.routers.hyvor-relay-backend.entrypoints: https
+      traefik.http.routers.hyvor-relay-backend.tls: true
+      traefik.http.routers.hyvor-relay-backend.service: hyvor-relay-backend
+      traefik.http.services.hyvor-relay-backend.loadbalancer.server.port: 80
     networks:
       - hyvor-network
     healthcheck:
@@ -34,16 +34,6 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
       - hyvor-network
-
-  worker:
-    image: cosmtrek/air # https://github.com/air-verse/air?tab=readme-ov-file#docker-compose
-    working_dir: /worker
-    volumes:
-      - ./worker:/worker
-    networks:
-      - hyvor-network
-    deploy:
-      replicas: 2
 
 volumes:
   rabbitmq_data:

@@ -4,7 +4,7 @@
 
 :80 {
 
-    root /app/api/public
+    root /app/backend/public
 
     php_server {
         file_server off
