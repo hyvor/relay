@@ -19,6 +19,7 @@ final class Version20250607093659 extends AbstractMigration
         $this->addSql('
         CREATE TABLE sends (
             id SERIAL PRIMARY KEY,
+            uuid UUID NOT NULL UNIQUE,
             created_at TIMESTAMPTZ NOT NULL,
             updated_at TIMESTAMPTZ NOT NULL,
             project_id INTEGER NOT NULL references projects(id) ON DELETE CASCADE,
