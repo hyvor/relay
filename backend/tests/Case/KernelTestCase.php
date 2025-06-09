@@ -33,7 +33,7 @@ class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
         $command = $this->application->find($name);
         return new CommandTester($command);
     }
-
+  
     protected function setConfig(string $key, mixed $value): void
     {
         $config = $this->getContainer()->get(Config::class);

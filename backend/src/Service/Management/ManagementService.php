@@ -18,7 +18,6 @@ class ManagementService
     public function __construct(
         private ServerService $serverService,
         private IpAddressService $ipAddressService,
-
         private Config $config,
     )
     {
