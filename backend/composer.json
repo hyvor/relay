@@ -85,6 +85,7 @@
         "phpunit/phpunit": "^12.2",
         "symfony/browser-kit": "7.2.*",
         "symfony/css-selector": "7.2.*",
-        "symfony/maker-bundle": "^1.63"
+        "symfony/maker-bundle": "^1.63",
+        "zenstruck/foundry": "^2.6"
     }
 }
