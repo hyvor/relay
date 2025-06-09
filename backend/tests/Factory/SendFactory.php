@@ -2,13 +2,14 @@
 
 namespace App\Tests\Factory;
 
-use App\Entity\Server;
+use App\Entity\Send;
+use App\Entity\Project;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<Server>
+ * @extends PersistentProxyObjectFactory<Send>
  */
-final class ServerFactory extends PersistentProxyObjectFactory
+final class SendFactory extends PersistentProxyObjectFactory
 {
 
     public function __construct()
@@ -18,7 +19,7 @@ final class ServerFactory extends PersistentProxyObjectFactory
 
     public static function class(): string
     {
-        return Server::class;
+        return Send::class;
     }
 
     /**
@@ -27,15 +28,13 @@ final class ServerFactory extends PersistentProxyObjectFactory
     protected function defaults(): array
     {
         return [
-            'hostname' => self::faker()->domainName(),
+            'project' => ProjectFactory::new(),
+            'email' => self::faker()->optional(0.9)->email(),
+            'content_html' => self::faker()->optional(0.8)->randomHtml(),
+            'content_text' => self::faker()->optional(0.7)->text(500),
+            'from' => self::faker()->optional(0.9)->email(),
             'created_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'updated_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
-            'last_ping_at' => self::faker()->optional(0.7)->passthrough(
-                \DateTimeImmutable::createFromMutable(self::faker()->dateTime())
-            ),
-            'api_on' => self::faker()->boolean(30),
-            'email_on' => self::faker()->boolean(40),
-            'webhook_on' => self::faker()->boolean(20),
         ];
     }
 

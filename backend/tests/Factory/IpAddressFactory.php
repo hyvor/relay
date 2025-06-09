@@ -2,13 +2,14 @@
 
 namespace App\Tests\Factory;
 
+use App\Entity\IpAddress;
 use App\Entity\Server;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<Server>
+ * @extends PersistentProxyObjectFactory<IpAddress>
  */
-final class ServerFactory extends PersistentProxyObjectFactory
+final class IpAddressFactory extends PersistentProxyObjectFactory
 {
 
     public function __construct()
@@ -18,7 +19,7 @@ final class ServerFactory extends PersistentProxyObjectFactory
 
     public static function class(): string
     {
-        return Server::class;
+        return IpAddress::class;
     }
 
     /**
@@ -27,15 +28,12 @@ final class ServerFactory extends PersistentProxyObjectFactory
     protected function defaults(): array
     {
         return [
-            'hostname' => self::faker()->domainName(),
+            'server' => ServerFactory::new(),
+            'ip_address' => self::faker()->ipv4(),
+            'email_queue' => self::faker()->word() . '_queue',
+            'is_enabled' => self::faker()->boolean(80),
             'created_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'updated_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
-            'last_ping_at' => self::faker()->optional(0.7)->passthrough(
-                \DateTimeImmutable::createFromMutable(self::faker()->dateTime())
-            ),
-            'api_on' => self::faker()->boolean(30),
-            'email_on' => self::faker()->boolean(40),
-            'webhook_on' => self::faker()->boolean(20),
         ];
     }
 
