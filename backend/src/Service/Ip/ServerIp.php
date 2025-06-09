@@ -2,7 +2,7 @@
 
 namespace App\Service\Ip;
 
-class IpService
+class ServerIp
 {
 
     public function __construct(

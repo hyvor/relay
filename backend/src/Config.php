@@ -1,14 +1,17 @@
 <?php
 
-namespace App\Service;
+namespace App;
 
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
-readonly class Config
+/**
+ * @readonly
+ */
+class Config
 {
 
     public function __construct(
-        #[Autowire('%env(string:HOSTNAME)%')]
+        #[Autowire('%env(string:HOST_HOSTNAME)%')]
         private string $hostname,
 
         #[Autowire('%env(bool:API_ON)%')]

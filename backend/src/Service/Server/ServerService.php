@@ -2,8 +2,8 @@
 
 namespace App\Service\Server;
 
+use App\Config;
 use App\Entity\Server;
-use App\Service\Config;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 

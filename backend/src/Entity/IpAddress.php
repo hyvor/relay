@@ -25,7 +25,7 @@ class IpAddress
     private int $server_id;
 
     #[ORM\ManyToOne(targetEntity: Server::class)]
-    #[ORM\JoinColumn(name: 'server_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    #[ORM\JoinColumn()]
     private Server $server;
 
     #[ORM\Column(type: 'string', length: 45)]
@@ -38,14 +38,17 @@ class IpAddress
     private bool $is_enabled = true;
 
     public function __construct()
-    {
-        $this->created_at = new \DateTimeImmutable();
-        $this->updated_at = new \DateTimeImmutable();
-    }
+    {}
 
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->created_at;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $time): static
+    {
+        $this->created_at = $time;
+        return $this;
     }
 
     public function getUpdatedAt(): \DateTimeImmutable
@@ -53,10 +56,10 @@ class IpAddress
         return $this->updated_at;
     }
 
-    #[ORM\PreUpdate]
-    public function setUpdatedAt(): void
+    public function setUpdatedAt(\DateTimeImmutable $time): static
     {
-        $this->updated_at = new \DateTimeImmutable();
+        $this->updated_at = $time;
+        return $this;
     }
 
     public function getId(): int

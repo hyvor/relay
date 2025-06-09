@@ -2,22 +2,24 @@
 
 namespace App\Tests\Service\Ip;
 
-use App\Service\Ip\IpService;
+use App\Service\Ip\ServerIp;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-class IpServiceTest extends TestCase
+#[CoversClass(ServerIp::class)]
+class ServerIpTest extends TestCase
 {
 
     public function test_get_public_ips(): void
     {
-        $ipService = new IpService();
+        $ipService = new ServerIp();
         $addresses = $ipService->getPublicV4IpAddresses();
         $this->assertIsArray($addresses);
     }
 
     public function test_get_public_ips_mocked(): void
     {
-        $ipService = new IpService(
+        $ipService = new ServerIp(
             netGetInterfacesFunction: [$this, 'getMockedNetGetInterfaces']
         );
         $addresses = $ipService->getPublicV4IpAddresses();
