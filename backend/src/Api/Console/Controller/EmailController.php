@@ -2,14 +2,19 @@
 
 namespace App\Api\Console\Controller;
 
+use App\Api\Console\Input\SendEmailInput;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 
-class EmailController extends \Symfony\Bundle\FrameworkBundle\Controller\AbstractController
+class EmailController extends AbstractController
 {
 
-    #[Route('/email', methods: 'GET')]
-    public function email(): JsonResponse
+    #[Route('/email', methods: 'POST')]
+    public function email(
+        #[MapRequestPayload] SendEmailInput $sendEmailInput
+    ): JsonResponse
     {
         //
 

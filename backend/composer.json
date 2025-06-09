@@ -12,6 +12,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.4",
         "doctrine/orm": "^3.3",
         "egulias/email-validator": "^4.0",
+        "hyvor/internal": "^3.0",
         "phpdocumentor/reflection-docblock": "^5.6",
         "phpmailer/phpmailer": "^6.10",
         "phpstan/phpdoc-parser": "^2.1",
@@ -81,6 +82,10 @@
         }
     },
     "require-dev": {
-        "symfony/maker-bundle": "^1.63"
+        "phpunit/phpunit": "^12.2",
+        "symfony/browser-kit": "7.2.*",
+        "symfony/css-selector": "7.2.*",
+        "symfony/maker-bundle": "^1.63",
+        "zenstruck/foundry": "^2.6"
     }
 }
