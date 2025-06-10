@@ -24,18 +24,16 @@ final class Version20250609112606 extends AbstractMigration
             updated_at TIMESTAMPTZ NOT NULL,
             server_id INTEGER NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
             ip_address VARCHAR(45) NOT NULL,
-            email_queue VARCHAR(255) NOT NULL,
-            is_enabled BOOLEAN NOT NULL DEFAULT TRUE
+            email_queue VARCHAR(255),
+            is_active BOOLEAN NOT NULL DEFAULT FALSE, -- Indicates if the IP was found last time
+            is_enabled BOOLEAN NOT NULL DEFAULT TRUE, -- Whether this IP is enabled for use to send emails
+            UNIQUE (server_id, ip_address)
         )
         ');
 
         // Create indexes
-        $this->addSql(
-            "CREATE INDEX idx_ip_addresses_server_id ON ip_addresses (server_id)"
-        );
-        $this->addSql(
-            "CREATE INDEX idx_ip_addresses_ip_address ON ip_addresses (ip_address)"
-        );
+        $this->addSql("CREATE INDEX idx_ip_addresses_server_id ON ip_addresses (server_id)");
+        $this->addSql("CREATE INDEX idx_ip_addresses_ip_address ON ip_addresses (ip_address)");
     }
 
     public function down(Schema $schema): void

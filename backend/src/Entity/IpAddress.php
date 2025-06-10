@@ -32,7 +32,10 @@ class IpAddress
     private string $ip_address;
 
     #[ORM\Column(type: 'string', length: 255)]
-    private string $email_queue;
+    private ?string $email_queue;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $is_active = false;
 
     #[ORM\Column(type: 'boolean')]
     private bool $is_enabled = true;
@@ -115,6 +118,17 @@ class IpAddress
     public function setEmailQueue(string $emailQueue): static
     {
         $this->email_queue = $emailQueue;
+        return $this;
+    }
+
+    public function getIsActive(): bool
+    {
+        return $this->is_active;
+    }
+
+    public function setIsActive(bool $isActive): static
+    {
+        $this->is_active = $isActive;
         return $this;
     }
 

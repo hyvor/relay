@@ -3,10 +3,10 @@
 namespace App\Service\Management;
 
 use App\Config;
-use App\Entity\IpAddress;
 use App\Entity\Server;
 use App\Service\Ip\IpAddressService;
 use App\Service\Server\ServerService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -19,6 +19,7 @@ class ManagementService
         private ServerService $serverService,
         private IpAddressService $ipAddressService,
         private Config $config,
+        private EntityManagerInterface $entityManager,
     )
     {
         $this->output = new NullOutput();
@@ -31,8 +32,10 @@ class ManagementService
 
     public function initialize(): void
     {
-        $server = $this->initializeServer();
-        $this->initializeIpAddresses($server);
+        $this->entityManager->wrapInTransaction(function() {
+            $server = $this->initializeServer();
+            $this->initializeIpAddresses($server);
+        });
     }
 
     private function initializeServer(): Server

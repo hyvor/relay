@@ -9,6 +9,7 @@ use App\Service\Ip\ServerIp;
 use App\Service\Management\ManagementService;
 use App\Service\Server\ServerService;
 use App\Tests\Case\KernelTestCase;
+use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ServerFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
@@ -39,6 +40,68 @@ class ManagementInitCommandTest extends KernelTestCase
 
         $ips = $this->em->getRepository(IpAddress::class)->findBy(['server' => $server]);
         $this->assertCount(2, $ips);
+
+        $this->assertSame('8.8.8.8', $ips[0]->getIpAddress());
+        $this->assertTrue($ips[0]->getIsActive());
+        $this->assertSame('9.9.9.9', $ips[1]->getIpAddress());
+        $this->assertTrue($ips[1]->getIsActive());
+
+    }
+
+    public function test_updates_ip_addresses_is_active(): void
+    {
+
+        $server = ServerFactory::createOne([
+            'hostname' => 'hyvor-relay'
+        ]);
+
+        // is_active must be true
+        $ip1 = IpAddressFactory::createOne([
+            'server' => $server,
+            'ip_address' => '8.8.8.8',
+            'is_active' => false
+        ]);
+
+        // no changes
+        $ip2 = IpAddressFactory::createOne([
+            'server' => $server,
+            'ip_address' => '9.9.9.9',
+            'is_active' => true
+        ]);
+
+        // is_active must be false
+        $ip3 = IpAddressFactory::createOne([
+            'server' => $server,
+            'ip_address' => '10.10.10.10',
+            'is_active' => true
+        ]);
+
+        $serverIpMock = $this->createMock(ServerIp::class);
+        $serverIpMock->method('getPublicV4IpAddresses')->willReturn([
+            '8.8.8.8',
+            '9.9.9.9'
+        ]);
+        $this->container->set(ServerIp::class, $serverIpMock);
+
+        $command = $this->commandTester('management:init');
+        $command->execute([]);
+        $command->assertCommandIsSuccessful();
+
+        $updatedIp1 = $this->em->getRepository(IpAddress::class)->find($ip1->getId());
+        $this->assertNotNull($updatedIp1);
+        $this->assertSame('8.8.8.8', $updatedIp1->getIpAddress());
+        $this->assertTrue($updatedIp1->getIsActive());
+
+        $updatedIp2 = $this->em->getRepository(IpAddress::class)->find($ip2->getId());
+        $this->assertNotNull($updatedIp2);
+        $this->assertSame('9.9.9.9', $updatedIp2->getIpAddress());
+        $this->assertTrue($updatedIp2->getIsActive());
+
+        $updatedIp3 = $this->em->getRepository(IpAddress::class)->find($ip3->getId());
+        $this->assertNotNull($updatedIp3);
+        $this->assertSame('10.10.10.10', $updatedIp3->getIpAddress());
+        $this->assertFalse($updatedIp3->getIsActive());
+
     }
 
     public function test_updates_server(): void
