@@ -2,6 +2,7 @@
 
 namespace App\Api\Admin\Controller;
 
+use App\Api\Admin\Object\ServerObject;
 use App\Service\Server\ServerService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -19,9 +20,14 @@ class ServerController extends AbstractController
     #[Route('/servers', methods: 'GET')]
     public function getServers(): JsonResponse
     {
+        $servers = $this->serverService->getServers();
+        
+        $serverObjects = array_map(
+            fn($server) => new ServerObject($server),
+            $servers
+        );
 
-
-
+        return $this->json($serverObjects);
     }
 
 }
