@@ -16,14 +16,14 @@
 
 <Base>
 	<main>
-		<HyvorBar product="core" instance="https://hyvor.dev" config={{ name: 'Relay' }} />
+		<HyvorBar product="core" instance="https://hyvor.dev" config={{ name: 'Hyvor Relay' }} />
 
 		<div id="wrap">
 			<nav>
 				<div class="hds-box nav-inner">
 					<div class="nav-title">Infrastructure</div>
 
-					<NavLink href="/admin" active={page.url.pathname === '/admin'}>
+					<NavLink href="/admin/servers" active={page.url.pathname === '/admin/servers'}>
 						{#snippet start()}
 							<IconHdd />
 						{/snippet}
