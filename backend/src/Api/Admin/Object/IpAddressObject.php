@@ -9,7 +9,6 @@ class IpAddressObject
 
     public int $id;
     public int $created_at;
-    public int $updated_at;
     public int $server_id;
     public string $ip_address;
     public ?string $email_queue = null;
@@ -20,7 +19,6 @@ class IpAddressObject
     {
         $this->id = $ipAddress->getId();
         $this->created_at = $ipAddress->getCreatedAt()->getTimestamp();
-        $this->updated_at = $ipAddress->getUpdatedAt()->getTimestamp();
         $this->server_id = $ipAddress->getServerId();
         $this->ip_address = $ipAddress->getIpAddress();
         $this->email_queue = $ipAddress->getEmailQueue();

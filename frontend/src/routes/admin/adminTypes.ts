@@ -8,3 +8,13 @@ export interface Server {
     email_on: boolean;
     webhook_on: boolean;
 }
+
+export interface IpAddress {
+    id: number;
+    created_at: number;
+    server_id: number;
+    ip_address: string;
+    email_queue: string | null;
+    is_active: boolean;
+    is_enabled: boolean;
+}

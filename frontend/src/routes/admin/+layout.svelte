@@ -14,6 +14,10 @@
 	let { children }: Props = $props();
 </script>
 
+<svelte:head>
+	<title>Hyvor Relay · Admin</title>
+</svelte:head>
+
 <Base>
 	<main>
 		<HyvorBar product="core" instance="https://hyvor.dev" config={{ name: 'Hyvor Relay' }} />
