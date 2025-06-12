@@ -16,7 +16,6 @@ final class Version20250609112605 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        // Create servers table
         $this->addSql('
         CREATE TABLE servers (
             id SERIAL PRIMARY KEY,
@@ -24,9 +23,10 @@ final class Version20250609112605 extends AbstractMigration
             updated_at timestamptz NOT NULL,
             hostname text NOT NULL UNIQUE,
             last_ping_at timestamptz,
-            api_on boolean NOT NULL DEFAULT FALSE,
-            email_on boolean NOT NULL DEFAULT FALSE,
-            webhook_on boolean NOT NULL DEFAULT FALSE
+            api_on boolean NOT NULL DEFAULT true,
+            api_workers integer NOT NULL DEFAULT 0,
+            email_workers integer NOT NULL DEFAULT 0,
+            webhook_workers integer NOT NULL DEFAULT 0
         )
         ');
     }
