@@ -27,9 +27,6 @@ class Server
     #[ORM\Column(type: "datetime_immutable", nullable: true)]
     private ?\DateTimeImmutable $last_ping_at = null;
 
-    #[ORM\Column(type: "boolean")]
-    private bool $api_on = false;
-
     #[ORM\Column(type: "integer")]
     private int $api_workers = 0;
 

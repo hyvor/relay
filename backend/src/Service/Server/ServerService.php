@@ -45,9 +45,7 @@ class ServerService
             ->setCreatedAt($this->now())
             ->setUpdatedAt($this->now())
             ->setHostname($this->config->getHostname())
-            ->setApiOn($this->config->isApiOn())
-            ->setEmailOn($this->config->isEmailOn())
-            ->setWebhookOn($this->config->isWebhookOn());
+            ->setApiWorkers(Cpu::getCores() * 2);
 
         $this->em->persist($server);
         $this->em->flush();
@@ -55,19 +53,9 @@ class ServerService
         return $server;
     }
 
-    public function updateServerFromConfig(Server $server): Server
+    public function updateServerFromConfig(Server $server): void
     {
-        $server
-            ->setUpdatedAt($this->now())
-            ->setHostname($this->config->getHostname())
-            ->setApiOn($this->config->isApiOn())
-            ->setEmailOn($this->config->isEmailOn())
-            ->setWebhookOn($this->config->isWebhookOn());
-
-        $this->em->persist($server);
-        $this->em->flush();
-
-        return $server;
+        // todo
     }
 
 }

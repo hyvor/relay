@@ -5,8 +5,9 @@ export interface Server {
     hostname: string;
     last_ping_at?: number | null;
     api_on: boolean;
-    email_on: boolean;
-    webhook_on: boolean;
+    api_workers: number;
+    email_workers: number;
+    webhook_workers: number;
 }
 
 export interface IpAddress {

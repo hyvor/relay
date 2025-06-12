@@ -105,7 +105,7 @@ class ManagementInitCommandTest extends KernelTestCase
 
     }
 
-    public function test_updates_server(): void
+    /*public function test_updates_server(): void
     {
         $this->setConfig('apiOn', false);
 
@@ -121,7 +121,7 @@ class ManagementInitCommandTest extends KernelTestCase
         $this->assertNotNull($updatedServer);
         $this->assertSame('hyvor-relay', $updatedServer->getHostname());
         $this->assertFalse($updatedServer->getApiOn());
-    }
+    }*/
 
     public function test_adds_default_queues(): void
     {

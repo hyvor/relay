@@ -21,7 +21,6 @@ class ManagementService
         private ServerService $serverService,
         private IpAddressService $ipAddressService,
         private QueueService $queueService,
-        private Config $config,
         private EntityManagerInterface $entityManager,
         private LockFactory $lockFactory,
     )
@@ -51,20 +50,6 @@ class ManagementService
             $this->output->writeln('<info>Creating new server entry in the database...</info>');
             $server = $this->serverService->createServerFromConfig();
             $this->output->writeln('<info>New server entry created successfully.</info>');
-        } else {
-            $this->output->writeln([
-                '<info>Updating existing server entry in the database...</info>',
-                sprintf('   Server ID: %d', $server->getId()),
-                sprintf('   Hostname: %s', $server->getHostname()),
-                $this->outputUpdatingOn('API', $this->config->isApiOn(), $server->getApiOn()),
-                $this->outputUpdatingOn('Email', $this->config->isEmailOn(), $server->getEmailOn()),
-                $this->outputUpdatingOn('Webhook', $this->config->isWebhookOn(), $server->getWebhookOn()),
-                ''
-            ]);
-
-            $server = $this->serverService->updateServerFromConfig($server);
-
-            $this->output->writeln('<info>Server entry updated successfully.</info>');
         }
 
         $this->output->writeln(sprintf('<info>Server ID: %d</info>', $server->getId()));

@@ -33,9 +33,6 @@ final class ServerFactory extends PersistentProxyObjectFactory
             'last_ping_at' => self::faker()->optional(0.7)->passthrough(
                 \DateTimeImmutable::createFromMutable(self::faker()->dateTime())
             ),
-            'api_on' => self::faker()->boolean(30),
-            'email_on' => self::faker()->boolean(40),
-            'webhook_on' => self::faker()->boolean(20),
         ];
     }
 

@@ -2,6 +2,7 @@
 	import { Tag } from '@hyvor/design/components';
 	import type { Server } from '../adminTypes';
 	import { ipAddressesStore } from '../adminStore';
+	import WorkersTag from './WorkersTag.svelte';
 
 	interface Props {
 		server: Server;
@@ -20,9 +21,9 @@
 		{server.hostname}
 	</div>
 	<div class="work">
-		<Tag size="small">API</Tag>
-		<Tag size="small">Email</Tag>
-		<Tag size="small">Webhook</Tag>
+		<WorkersTag text="API" value={server.api_workers} />
+		<WorkersTag text="Email" value={server.email_workers} />
+		<WorkersTag text="Webhook" value={server.webhook_workers} />
 	</div>
 </div>
 
