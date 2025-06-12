@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Type\QueueType;
 use App\Repository\QueueRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -23,6 +24,9 @@ class Queue
 
     #[ORM\Column(type: "string", length: 255, unique: true)]
     private string $name;
+
+    #[ORM\Column(type: "string", enumType: QueueType::class)]
+    private QueueType $type;
 
     public function __construct()
     {
@@ -77,6 +81,17 @@ class Queue
     public function setName(string $name): static
     {
         $this->name = $name;
+        return $this;
+    }
+
+    public function getType(): QueueType
+    {
+        return $this->type;
+    }
+
+    public function setType(QueueType $type): static
+    {
+        $this->type = $type;
         return $this;
     }
 }
