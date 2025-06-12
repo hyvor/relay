@@ -22,6 +22,14 @@ class IpAddressService
     /**
      * @return IpAddress[]
      */
+    public function getAllIpAddresses(): array
+    {
+        return $this->em->getRepository(IpAddress::class)->findAll();
+    }
+
+    /**
+     * @return IpAddress[]
+     */
     public function getIpAddressesOfServer(Server $server): array
     {
         return $this->em->getRepository(IpAddress::class)->findBy(['server' => $server]);

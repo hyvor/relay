@@ -1,4 +1,28 @@
 services:
+  frontend:
+    container_name: hyvor-relay-frontend
+    build:
+      context: .
+      target: frontend-dev
+    volumes:
+      - ./frontend/src:/app/frontend/src
+      - ./frontend/static:/app/frontend/static
+      - ./frontend/vite.config.ts:/app/frontend/vite.config.ts
+      - ./frontend/package.json:/app/frontend/package.json
+      - ./frontend/bun.lock:/app/frontend/bun.lock
+      - ./frontend/tsconfig.json:/app/frontend/tsconfig.json
+      - ./frontend/svelte.config.js:/app/frontend/svelte.config.js
+    labels:
+      traefik.enable: true
+      traefik.http.routers.hyvor-relay-frontend.rule: Host(`relay.hyvor.dev`)
+      traefik.http.routers.hyvor-relay-frontend.entrypoints: https
+      traefik.http.routers.hyvor-relay-frontend.tls: true
+      traefik.http.routers.hyvor-relay-frontend.middlewares: vite-retry@file
+      traefik.http.services.hyvor-relay-frontend.loadbalancer.server.port: 80
+
+    networks:
+      - hyvor-network
+
   backend:
     container_name: hyvor-relay-backend
     build:
@@ -10,7 +34,7 @@ services:
       # - ./shared:/app/shared
     labels:
       traefik.enable: true
-      traefik.http.routers.hyvor-relay-backend.rule: Host(`relay.hyvor.dev`)
+      traefik.http.routers.hyvor-relay-backend.rule: Host(`relay.hyvor.dev`) && PathPrefix(`/api`)
       traefik.http.routers.hyvor-relay-backend.entrypoints: https
       traefik.http.routers.hyvor-relay-backend.tls: true
       traefik.http.routers.hyvor-relay-backend.service: hyvor-relay-backend

@@ -19,6 +19,14 @@ class ServerService
     {
     }
 
+    /**
+     * @return Server[]
+     */
+    public function getServers(): array
+    {
+        return $this->em->getRepository(Server::class)->findAll();
+    }
+
     public function getServerByCurrentHostname(): ?Server
     {
         return $this->getServerByHostname($this->config->getHostname());

@@ -110,12 +110,12 @@ class IpAddress
         return $this;
     }
 
-    public function getEmailQueue(): string
+    public function getEmailQueue(): ?string
     {
         return $this->email_queue;
     }
 
-    public function setEmailQueue(string $emailQueue): static
+    public function setEmailQueue(?string $emailQueue): static
     {
         $this->email_queue = $emailQueue;
         return $this;
