@@ -16,14 +16,16 @@ final class Version20250612052227 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('
+        $this->addSql("CREATE TYPE queue_type as ENUM('default', 'dedicated', 'custom')");
+        $this->addSql(<<<SQL
         CREATE TABLE queues (
             id SERIAL PRIMARY KEY,
             created_at TIMESTAMPTZ NOT NULL,
             updated_at TIMESTAMPTZ NOT NULL,
-            name VARCHAR(255) NOT NULL UNIQUE
+            name VARCHAR(255) NOT NULL UNIQUE,
+            type queue_type NOT NULL DEFAULT 'default',
         )
-        ');
+        SQL);
     }
 
     public function down(Schema $schema): void
