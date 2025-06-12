@@ -18,3 +18,9 @@ export interface IpAddress {
     is_active: boolean;
     is_enabled: boolean;
 }
+
+export interface Queue {
+    id: number;
+    created_at: number;
+    name: string;
+}

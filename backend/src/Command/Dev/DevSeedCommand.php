@@ -32,8 +32,6 @@ class DevSeedCommand extends Command
             return Command::FAILURE;
         }
 
-        //
-
         $output->writeln('<info>Database seeded with test data.</info>');
 
         return Command::SUCCESS;

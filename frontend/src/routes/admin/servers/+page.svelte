@@ -2,22 +2,16 @@
 	import { onMount } from 'svelte';
 	import { Loader, toast } from '@hyvor/design/components';
 	import { getIpAddresses, getServers } from '../adminActions';
-	import type { IpAddress, Server } from '../adminTypes';
 	import ServerRow from './ServerRow.svelte';
+	import { ipAddressesStore, serversStore } from '../adminStore';
 
 	let loading = $state(false);
-	let servers: Server[] = $state([]);
-	let ips: IpAddress[] = $state([]);
-
-	function getIpAddressesOfServer(server: Server): IpAddress[] {
-		return ips.filter((ip) => ip.server_id === server.id);
-	}
 
 	onMount(async () => {
 		Promise.all([await getServers(), await getIpAddresses()])
 			.then(([serversResponse, ipsResponse]) => {
-				servers = serversResponse;
-				ips = ipsResponse;
+				serversStore.set(serversResponse);
+				ipAddressesStore.set(ipsResponse);
 			})
 			.catch((err) => {
 				toast.error('Failed to load data: ' + err.message);
@@ -32,8 +26,8 @@
 	<Loader full />
 {:else}
 	<div class="server-list">
-		{#each servers as server}
-			<ServerRow {server} ips={getIpAddressesOfServer(server)} />
+		{#each $serversStore as server}
+			<ServerRow {server} />
 		{/each}
 	</div>
 {/if}

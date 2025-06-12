@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { Tag } from '@hyvor/design/components';
-	import type { IpAddress, Server } from '../adminTypes';
+	import type { Server } from '../adminTypes';
+	import { ipAddressesStore } from '../adminStore';
 
 	interface Props {
 		server: Server;
-		ips: IpAddress[];
 	}
 
-	let { server, ips }: Props = $props();
+	let { server }: Props = $props();
+
+	const ips = $derived($ipAddressesStore.filter((ip) => ip.server_id === server.id));
 </script>
 
 <div class="row">
