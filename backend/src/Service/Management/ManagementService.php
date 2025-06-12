@@ -5,10 +5,12 @@ namespace App\Service\Management;
 use App\Config;
 use App\Entity\Server;
 use App\Service\Ip\IpAddressService;
+use App\Service\Queue\QueueService;
 use App\Service\Server\ServerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Lock\LockFactory;
 
 class ManagementService
 {
@@ -18,8 +20,10 @@ class ManagementService
     public function __construct(
         private ServerService $serverService,
         private IpAddressService $ipAddressService,
+        private QueueService $queueService,
         private Config $config,
         private EntityManagerInterface $entityManager,
+        private LockFactory $lockFactory,
     )
     {
         $this->output = new NullOutput();
@@ -35,6 +39,7 @@ class ManagementService
         $this->entityManager->wrapInTransaction(function() {
             $server = $this->initializeServer();
             $this->initializeIpAddresses($server);
+            $this->initializeDefaultQueues();
         });
     }
 
@@ -72,6 +77,29 @@ class ManagementService
         $this->output->writeln('<info>Initializing IP addresses for the server...</info>');
         $this->ipAddressService->updateIpAddressesOfServer($server);
         $this->output->writeln('<info>IP addresses initialized successfully.</info>');
+    }
+
+    private function initializeDefaultQueues(): void
+    {
+        $hasDefaultQueues = $this->queueService->hasDefaultQueues();
+
+        if ($hasDefaultQueues) {
+            return;
+        }
+
+        $lock = $this->lockFactory->createLock('management_init_default_queues');
+
+        if (!$lock->acquire()) {
+            $this->output->writeln('<info>Default queues already being created by another process.</info>');
+            return;
+        }
+
+        $this->output->writeln('<info>Creating default queues...</info>');
+        $this->queueService->createDefaultQueues();
+        $this->output->writeln('<info>Default queues created successfully.</info>');
+
+        $lock->release();
+
     }
 
     private function outputUpdatingOn(string $name, bool $newValue, bool $oldValue): string

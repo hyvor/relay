@@ -22,6 +22,7 @@
         "symfony/dotenv": "7.2.*",
         "symfony/flex": "^2.7.1",
         "symfony/framework-bundle": "7.2.*",
+        "symfony/lock": "7.2.*",
         "symfony/messenger": "7.2.*",
         "symfony/mime": "7.2.*",
         "symfony/property-access": "7.2.*",

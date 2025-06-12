@@ -23,7 +23,7 @@ final class Version20250612052227 extends AbstractMigration
             created_at TIMESTAMPTZ NOT NULL,
             updated_at TIMESTAMPTZ NOT NULL,
             name VARCHAR(255) NOT NULL UNIQUE,
-            type queue_type NOT NULL DEFAULT 'default',
+            type queue_type NOT NULL DEFAULT 'default'
         )
         SQL);
     }

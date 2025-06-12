@@ -4,6 +4,7 @@ namespace App\Tests\Command\Management;
 
 use App\Command\Management\ManagementInitCommand;
 use App\Entity\IpAddress;
+use App\Entity\Queue;
 use App\Entity\Server;
 use App\Service\Ip\ServerIp;
 use App\Service\Management\ManagementService;
@@ -120,6 +121,17 @@ class ManagementInitCommandTest extends KernelTestCase
         $this->assertNotNull($updatedServer);
         $this->assertSame('hyvor-relay', $updatedServer->getHostname());
         $this->assertFalse($updatedServer->getApiOn());
+    }
+
+    public function test_adds_default_queues(): void
+    {
+        $command = $this->commandTester('management:init');
+        $command->execute([]);
+        $command->assertCommandIsSuccessful();
+
+        $queues = $this->em->getRepository(Queue::class)->findAll();
+        $this->assertCount(2, $queues);
+
     }
 
 }
