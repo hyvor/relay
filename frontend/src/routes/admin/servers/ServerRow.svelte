@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { TabNav, TabNavItem, Tag } from '@hyvor/design/components';
+	import { TabNav, TabNavItem, Tag, Tooltip } from '@hyvor/design/components';
 	import type { Server } from '../adminTypes';
 	import { ipAddressesStore } from '../adminStore';
 	import WorkersTag from './WorkersTag.svelte';
 	import WorkerSplit from './WorkerSplit.svelte';
 	import IpRow from './IpRow.svelte';
+	import dayjs from 'dayjs';
 
 	interface Props {
 		server: Server;
@@ -15,15 +16,30 @@
 	const ips = $derived($ipAddressesStore.filter((ip) => ip.server_id === server.id));
 
 	let activeTab: 'ips' | 'workers' = $state('ips');
+
+	function getReadablePing() {
+		if (!server.last_ping_at) return 'N/A';
+		return dayjs.unix(server.last_ping_at).fromNow();
+	}
 </script>
 
-<div class="wrap hds-box">
+<div class="wrap hds-box" class:dead={!server.is_alive}>
 	<div class="row">
 		<div class="id">
 			({server.id})
 		</div>
 		<div class="hostname">
 			{server.hostname}
+
+			{#if server.last_ping_at}
+				{#if !server.is_alive}
+					<Tooltip text="This server has not sent a heartbeat in the last 3 minutes.">
+						<Tag color="red" size="small">Dead, last heartbeat {getReadablePing()}</Tag>
+					</Tooltip>
+				{:else}
+					<Tag color="green" size="small">Pinged {getReadablePing()}</Tag>
+				{/if}
+			{/if}
 		</div>
 		<div class="work">
 			<WorkersTag text="API" value={server.api_workers} />
@@ -72,6 +88,9 @@
 	.wrap {
 		padding: 25px 35px;
 		border-right: 25px solid var(--green-light);
+	}
+	.wrap.dead {
+		border-right-color: var(--red-light);
 	}
 	.row {
 		display: flex;

@@ -4,6 +4,10 @@
 	import IconHdd from '@hyvor/icons/IconHdd';
 	import IconSegmentedNav from '@hyvor/icons/IconSegmentedNav';
 	import IconActivity from '@hyvor/icons/IconActivity';
+	import relativeTime from 'dayjs/plugin/relativeTime';
+	import dayjs from 'dayjs';
+
+	dayjs.extend(relativeTime);
 
 	interface Props {
 		children?: import('svelte').Snippet;
