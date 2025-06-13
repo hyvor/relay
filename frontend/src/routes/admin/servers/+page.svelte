@@ -25,15 +25,7 @@
 {#if loading}
 	<Loader full />
 {:else}
-	<div class="server-list">
-		{#each $serversStore as server}
-			<ServerRow {server} />
-		{/each}
-	</div>
+	{#each $serversStore as server}
+		<ServerRow {server} />
+	{/each}
 {/if}
-
-<style>
-	.server-list {
-		padding: 20px;
-	}
-</style>

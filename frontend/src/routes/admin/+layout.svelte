@@ -66,9 +66,8 @@
 			</nav>
 
 			<div class="content">
-				<div class="content-inner hds-box">
-					{@render children?.()}
-				</div>
+				{@render children?.()}
+				<div class="content-inner hds-box"></div>
 			</div>
 		</div>
 	</main>
@@ -104,10 +103,5 @@
 		flex: 1;
 		overflow: auto;
 		padding: 15px;
-	}
-	.content-inner {
-		min-height: 100%;
-		display: flex;
-		flex-direction: column;
 	}
 </style>

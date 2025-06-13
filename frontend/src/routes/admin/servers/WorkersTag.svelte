@@ -10,5 +10,5 @@
 </script>
 
 <Tooltip text="{text} Workers: {value}">
-	<Tag size="small">{text}</Tag>
+	<Tag size="small">{text}: {value}</Tag>
 </Tooltip>

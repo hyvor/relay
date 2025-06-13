@@ -2,7 +2,6 @@
 
 namespace App\Service\Management;
 
-use App\Config;
 use App\Entity\Server;
 use App\Service\Ip\IpAddressService;
 use App\Service\Queue\QueueService;
@@ -85,16 +84,6 @@ class ManagementService
 
         $lock->release();
 
-    }
-
-    private function outputUpdatingOn(string $name, bool $newValue, bool $oldValue): string
-    {
-        return sprintf(
-            '   %s On: %s (previous: %s)',
-            $name,
-            $newValue ? 'Yes' : 'No',
-            $oldValue ? 'Yes' : 'No'
-        );
     }
 
 }
