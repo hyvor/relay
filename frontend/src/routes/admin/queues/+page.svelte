@@ -4,6 +4,7 @@
 	import { getIpAddresses, getQueues } from '../adminActions';
 	import { ipAddressesStore, queuesStore } from '../adminStore';
 	import QueueRow from './QueueRow.svelte';
+	import SingleBox from '../SingleBox.svelte';
 
 	let loading = $state(true);
 
@@ -22,23 +23,25 @@
 	});
 </script>
 
-{#if loading}
-	<Loader full />
-{:else}
-	<div class="header">
-		<div class="tip">
-			Each email is sent to a queue. A server with an IP address asssigned to that queue will
-			process the email. By default, emails are sent to transactional or distributional queues based
-			on the project type. For users with dedicated IPs, a dedicated queue is used.
+<SingleBox>
+	{#if loading}
+		<Loader full />
+	{:else}
+		<div class="header">
+			<div class="tip">
+				Each email is sent to a queue. A server with an IP address asssigned to that queue will
+				process the email. By default, emails are sent to transactional or distributional queues
+				based on the project type. For users with dedicated IPs, a dedicated queue is used.
+			</div>
 		</div>
-	</div>
 
-	<div class="server-list">
-		{#each $queuesStore as queue}
-			<QueueRow {queue} />
-		{/each}
-	</div>
-{/if}
+		<div class="server-list">
+			{#each $queuesStore as queue}
+				<QueueRow {queue} />
+			{/each}
+		</div>
+	{/if}
+</SingleBox>
 
 <style>
 	.server-list {

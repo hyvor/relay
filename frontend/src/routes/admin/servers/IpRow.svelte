@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { Tag } from '@hyvor/design/components';
+	import { Button, Tag, Tooltip } from '@hyvor/design/components';
 	import type { IpAddress } from '../adminTypes';
+	import IconExclamationCircle from '@hyvor/icons/IconExclamationCircle';
 
 	interface Props {
 		ip: IpAddress;
@@ -17,8 +18,19 @@
 		{#if ip.email_queue}
 			{ip.email_queue}
 		{:else}
-			None
+			<Tooltip
+				text="This IP address will not be used for email delivery until you assign a queue to it."
+			>
+				<span class="none">
+					None
+					<IconExclamationCircle size={14} />
+				</span>
+			</Tooltip>
 		{/if}
+
+		<Button size="x-small" color="input" style="margin-left: 5px;">
+			{ip.email_queue ? 'Change' : 'Assign'}
+		</Button>
 	</td>
 	<td> relay.hyvor.com </td>
 	<td class="">
@@ -30,5 +42,17 @@
 	td {
 		padding: 0.75rem;
 		text-align: left;
+	}
+	.none {
+		color: var(--orange-dark);
+		font-size: 14px;
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+	}
+
+	.assign-button {
+		font-size: 14px;
+		margin-left: 5px;
 	}
 </style>

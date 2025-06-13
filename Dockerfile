@@ -16,6 +16,7 @@ FROM frankenphp AS backend-base
 WORKDIR /app/backend
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 RUN install-php-extensions zip intl pdo_pgsql opcache apcu amqp
+RUN apt update  && apt install -y supervisor
 
 FROM backend-base AS backend-dev
 ENV APP_RUNTIME="Runtime\FrankenPhpSymfony\Runtime"
@@ -24,5 +25,6 @@ RUN install-php-extensions pcov
 COPY backend /app/backend/
 COPY meta/image/dev/Caddyfile.dev /etc/caddy/Caddyfile
 COPY meta/image/dev/run.dev /app/run
+COPY meta/image/dev/supervisord.conf.dev /etc/supervisor/conf.d/supervisord.conf
 CMD ["sh", "/app/run"]
 

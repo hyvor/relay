@@ -3,9 +3,7 @@
 	import { Base, HyvorBar, NavLink } from '@hyvor/design/components';
 	import IconHdd from '@hyvor/icons/IconHdd';
 	import IconSegmentedNav from '@hyvor/icons/IconSegmentedNav';
-	import IconCardList from '@hyvor/icons/IconCardList';
-	import IconDatabase from '@hyvor/icons/IconDatabase';
-	import IconEnvelope from '@hyvor/icons/IconEnvelope';
+	import IconActivity from '@hyvor/icons/IconActivity';
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -27,6 +25,13 @@
 				<div class="hds-box nav-inner">
 					<div class="nav-title">Infrastructure</div>
 
+					<NavLink href="/admin/health" active={page.url.pathname === '/admin/health'}>
+						{#snippet start()}
+							<IconActivity />
+						{/snippet}
+						Health
+					</NavLink>
+
 					<NavLink href="/admin/servers" active={page.url.pathname === '/admin/servers'}>
 						{#snippet start()}
 							<IconHdd />
@@ -40,7 +45,7 @@
 						Queues
 					</NavLink>
 
-					<div class="nav-title">Users</div>
+					<!-- <div class="nav-title">Users</div>
 
 					<NavLink href="/admin/projects" active={page.url.pathname === '/admin/projects'}>
 						{#snippet start()}
@@ -61,7 +66,7 @@
 							<IconEnvelope />
 						{/snippet}
 						Emails
-					</NavLink>
+					</NavLink> -->
 				</div>
 			</nav>
 

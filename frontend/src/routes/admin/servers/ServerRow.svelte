@@ -71,6 +71,7 @@
 <style>
 	.wrap {
 		padding: 25px 35px;
+		border-right: 25px solid var(--green-light);
 	}
 	.row {
 		display: flex;

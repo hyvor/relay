@@ -4,6 +4,7 @@ namespace App\Service\Server;
 
 use App\Config;
 use App\Entity\Server;
+use App\Service\Server\Dto\UpdateServerDto;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 
@@ -53,9 +54,16 @@ class ServerService
         return $server;
     }
 
-    public function updateServerFromConfig(Server $server): void
+    public function updateServer(Server $server, UpdateServerDto $updates): void
     {
-        // todo
+        if ($updates->lastPingAtSet) {
+            $server->setLastPingAt($updates->lastPingAt);
+        }
+
+        $server->setUpdatedAt($this->now());
+
+        $this->em->persist($server);
+        $this->em->flush();
     }
 
 }

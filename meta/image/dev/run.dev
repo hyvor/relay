@@ -3,5 +3,5 @@
 # install dependencies
 composer install
 
-# run frankenphp
-frankenphp run --config /etc/caddy/Caddyfile --watch
+# Run supervisor
+/usr/bin/supervisord
