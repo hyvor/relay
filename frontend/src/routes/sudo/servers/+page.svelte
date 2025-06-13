@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Loader, toast } from '@hyvor/design/components';
-	import { getIpAddresses, getServers } from '../adminActions';
+	import { getIpAddresses, getServers } from '../sudoActions';
 	import ServerRow from './ServerRow.svelte';
-	import { ipAddressesStore, serversStore } from '../adminStore';
+	import { ipAddressesStore, serversStore } from '../sudoStore';
 
 	let loading = $state(false);
 

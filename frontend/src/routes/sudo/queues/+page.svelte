@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Loader, toast } from '@hyvor/design/components';
-	import { getIpAddresses, getQueues } from '../adminActions';
-	import { ipAddressesStore, queuesStore } from '../adminStore';
+	import { getIpAddresses, getQueues } from '../sudoActions';
+	import { ipAddressesStore, queuesStore } from '../sudoStore';
 	import QueueRow from './QueueRow.svelte';
 	import SingleBox from '../SingleBox.svelte';
 

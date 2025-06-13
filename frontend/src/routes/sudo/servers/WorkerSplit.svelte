@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { SplitControl, TextInput } from '@hyvor/design/components';
-	import type { Server } from '../adminTypes';
+	import type { Server } from '../sudoTypes';
 
 	interface Props {
 		worker: 'api' | 'email' | 'webhook';

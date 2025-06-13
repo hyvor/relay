@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button, Tag, Tooltip } from '@hyvor/design/components';
-	import type { IpAddress } from '../adminTypes';
+	import type { IpAddress } from '../sudoTypes';
 	import IconExclamationCircle from '@hyvor/icons/IconExclamationCircle';
 
 	interface Props {

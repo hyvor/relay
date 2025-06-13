@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Queue } from '../adminTypes';
+	import type { Queue } from '../sudoTypes';
 
 	interface Props {
 		queue: Queue;

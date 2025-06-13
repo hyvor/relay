@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { TabNav, TabNavItem, Tag, Tooltip } from '@hyvor/design/components';
-	import type { Server } from '../adminTypes';
-	import { ipAddressesStore } from '../adminStore';
+	import type { Server } from '../sudoTypes';
+	import { ipAddressesStore } from '../sudoStore';
 	import WorkersTag from './WorkersTag.svelte';
 	import WorkerSplit from './WorkerSplit.svelte';
 	import IpRow from './IpRow.svelte';

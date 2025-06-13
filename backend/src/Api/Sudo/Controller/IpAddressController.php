@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Api\Admin\Controller;
+namespace App\Api\Sudo\Controller;
 
-use App\Api\Admin\Object\IpAddressObject;
+use App\Api\Sudo\Object\IpAddressObject;
 use App\Service\Ip\IpAddressService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;

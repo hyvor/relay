@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Api\Admin\Object;
+namespace App\Api\Sudo\Object;
 
 use App\Entity\Queue;
 
