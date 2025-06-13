@@ -3,9 +3,11 @@
 	import { Base, HyvorBar, NavLink } from '@hyvor/design/components';
 	import IconHdd from '@hyvor/icons/IconHdd';
 	import IconSegmentedNav from '@hyvor/icons/IconSegmentedNav';
-	import IconCardList from '@hyvor/icons/IconCardList';
-	import IconDatabase from '@hyvor/icons/IconDatabase';
-	import IconEnvelope from '@hyvor/icons/IconEnvelope';
+	import IconActivity from '@hyvor/icons/IconActivity';
+	import relativeTime from 'dayjs/plugin/relativeTime';
+	import dayjs from 'dayjs';
+
+	dayjs.extend(relativeTime);
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -27,48 +29,54 @@
 				<div class="hds-box nav-inner">
 					<div class="nav-title">Infrastructure</div>
 
-					<NavLink href="/admin/servers" active={page.url.pathname === '/admin/servers'}>
+					<NavLink href="/sudo/health" active={page.url.pathname === '/sudo/health'}>
+						{#snippet start()}
+							<IconActivity />
+						{/snippet}
+						Health
+					</NavLink>
+
+					<NavLink href="/sudo/servers" active={page.url.pathname === '/sudo/servers'}>
 						{#snippet start()}
 							<IconHdd />
 						{/snippet}
 						Servers
 					</NavLink>
-					<NavLink href="/admin/queues" active={page.url.pathname === '/admin/queues'}>
+					<NavLink href="/sudo/queues" active={page.url.pathname === '/sudo/queues'}>
 						{#snippet start()}
 							<IconSegmentedNav />
 						{/snippet}
 						Queues
 					</NavLink>
 
-					<div class="nav-title">Users</div>
+					<!-- <div class="nav-title">Users</div>
 
-					<NavLink href="/admin/projects" active={page.url.pathname === '/admin/projects'}>
+					<NavLink href="/sudo/projects" active={page.url.pathname === '/sudo/projects'}>
 						{#snippet start()}
 							<IconCardList />
 						{/snippet}
 						Projects
 					</NavLink>
 
-					<NavLink href="/admin/domains" active={page.url.pathname === '/admin/domains'}>
+					<NavLink href="/sudo/domains" active={page.url.pathname === '/sudo/domains'}>
 						{#snippet start()}
 							<IconDatabase />
 						{/snippet}
 						Domains
 					</NavLink>
 
-					<NavLink href="/admin/emails" active={page.url.pathname === '/admin/emails'}>
+					<NavLink href="/sudo/emails" active={page.url.pathname === '/sudo/emails'}>
 						{#snippet start()}
 							<IconEnvelope />
 						{/snippet}
 						Emails
-					</NavLink>
+					</NavLink> -->
 				</div>
 			</nav>
 
 			<div class="content">
-				<div class="content-inner hds-box">
-					{@render children?.()}
-				</div>
+				{@render children?.()}
+				<div class="content-inner hds-box"></div>
 			</div>
 		</div>
 	</main>
@@ -104,8 +112,5 @@
 		flex: 1;
 		overflow: auto;
 		padding: 15px;
-	}
-	.content-inner {
-		min-height: 100%;
 	}
 </style>

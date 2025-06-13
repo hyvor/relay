@@ -4,6 +4,7 @@ namespace App\Service\Server;
 
 use App\Config;
 use App\Entity\Server;
+use App\Service\Server\Dto\UpdateServerDto;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 
@@ -45,9 +46,7 @@ class ServerService
             ->setCreatedAt($this->now())
             ->setUpdatedAt($this->now())
             ->setHostname($this->config->getHostname())
-            ->setApiOn($this->config->isApiOn())
-            ->setEmailOn($this->config->isEmailOn())
-            ->setWebhookOn($this->config->isWebhookOn());
+            ->setApiWorkers(Cpu::getCores() * 2);
 
         $this->em->persist($server);
         $this->em->flush();
@@ -55,19 +54,16 @@ class ServerService
         return $server;
     }
 
-    public function updateServerFromConfig(Server $server): Server
+    public function updateServer(Server $server, UpdateServerDto $updates): void
     {
-        $server
-            ->setUpdatedAt($this->now())
-            ->setHostname($this->config->getHostname())
-            ->setApiOn($this->config->isApiOn())
-            ->setEmailOn($this->config->isEmailOn())
-            ->setWebhookOn($this->config->isWebhookOn());
+        if ($updates->lastPingAtSet) {
+            $server->setLastPingAt($updates->lastPingAt);
+        }
+
+        $server->setUpdatedAt($this->now());
 
         $this->em->persist($server);
         $this->em->flush();
-
-        return $server;
     }
 
 }

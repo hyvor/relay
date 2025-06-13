@@ -4,10 +4,10 @@ use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
 return static function (RoutingConfigurator $routes): void {
 
-    // admin API
-    $routes->import('../../src/Api/Admin/Controller', 'attribute')
-        ->prefix('/api/admin')
-        ->namePrefix('api_admin_');
+    // sudo API
+    $routes->import('../../src/Api/Sudo/Controller', 'attribute')
+        ->prefix('/api/sudo')
+        ->namePrefix('api_sudo_');
 
     // console API
     $routes->import('../../src/Api/Console/Controller', 'attribute')

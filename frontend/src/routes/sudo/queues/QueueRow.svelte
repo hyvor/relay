@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Queue } from '../adminTypes';
+	import type { Queue } from '../sudoTypes';
 
 	interface Props {
 		queue: Queue;
@@ -16,3 +16,16 @@
 		{queue.name}
 	</div>
 </div>
+
+<style>
+	.queue {
+		display: flex;
+		align-items: center;
+		padding: 8px 20px;
+	}
+	.id {
+		margin-right: 10px;
+		color: var(--text-light);
+		font-size: 14px;
+	}
+</style>

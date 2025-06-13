@@ -2,13 +2,14 @@
 
 namespace App\Service\Management;
 
-use App\Config;
 use App\Entity\Server;
 use App\Service\Ip\IpAddressService;
+use App\Service\Queue\QueueService;
 use App\Service\Server\ServerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Lock\LockFactory;
 
 class ManagementService
 {
@@ -18,8 +19,9 @@ class ManagementService
     public function __construct(
         private ServerService $serverService,
         private IpAddressService $ipAddressService,
-        private Config $config,
+        private QueueService $queueService,
         private EntityManagerInterface $entityManager,
+        private LockFactory $lockFactory,
     )
     {
         $this->output = new NullOutput();
@@ -35,6 +37,7 @@ class ManagementService
         $this->entityManager->wrapInTransaction(function() {
             $server = $this->initializeServer();
             $this->initializeIpAddresses($server);
+            $this->initializeDefaultQueues();
         });
     }
 
@@ -46,20 +49,6 @@ class ManagementService
             $this->output->writeln('<info>Creating new server entry in the database...</info>');
             $server = $this->serverService->createServerFromConfig();
             $this->output->writeln('<info>New server entry created successfully.</info>');
-        } else {
-            $this->output->writeln([
-                '<info>Updating existing server entry in the database...</info>',
-                sprintf('   Server ID: %d', $server->getId()),
-                sprintf('   Hostname: %s', $server->getHostname()),
-                $this->outputUpdatingOn('API', $this->config->isApiOn(), $server->getApiOn()),
-                $this->outputUpdatingOn('Email', $this->config->isEmailOn(), $server->getEmailOn()),
-                $this->outputUpdatingOn('Webhook', $this->config->isWebhookOn(), $server->getWebhookOn()),
-                ''
-            ]);
-
-            $server = $this->serverService->updateServerFromConfig($server);
-
-            $this->output->writeln('<info>Server entry updated successfully.</info>');
         }
 
         $this->output->writeln(sprintf('<info>Server ID: %d</info>', $server->getId()));
@@ -74,14 +63,27 @@ class ManagementService
         $this->output->writeln('<info>IP addresses initialized successfully.</info>');
     }
 
-    private function outputUpdatingOn(string $name, bool $newValue, bool $oldValue): string
+    private function initializeDefaultQueues(): void
     {
-        return sprintf(
-            '   %s On: %s (previous: %s)',
-            $name,
-            $newValue ? 'Yes' : 'No',
-            $oldValue ? 'Yes' : 'No'
-        );
+        $hasDefaultQueues = $this->queueService->hasDefaultQueues();
+
+        if ($hasDefaultQueues) {
+            return;
+        }
+
+        $lock = $this->lockFactory->createLock('management_init_default_queues');
+
+        if (!$lock->acquire()) {
+            $this->output->writeln('<info>Default queues already being created by another process.</info>');
+            return;
+        }
+
+        $this->output->writeln('<info>Creating default queues...</info>');
+        $this->queueService->createDefaultQueues();
+        $this->output->writeln('<info>Default queues created successfully.</info>');
+
+        $lock->release();
+
     }
 
 }

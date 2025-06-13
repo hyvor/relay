@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Loader, toast } from '@hyvor/design/components';
-	import { getIpAddresses, getServers } from '../adminActions';
+	import { getIpAddresses, getServers } from '../sudoActions';
 	import ServerRow from './ServerRow.svelte';
-	import { ipAddressesStore, serversStore } from '../adminStore';
+	import { ipAddressesStore, serversStore } from '../sudoStore';
 
 	let loading = $state(false);
 
@@ -25,15 +25,7 @@
 {#if loading}
 	<Loader full />
 {:else}
-	<div class="server-list">
-		{#each $serversStore as server}
-			<ServerRow {server} />
-		{/each}
-	</div>
+	{#each $serversStore as server}
+		<ServerRow {server} />
+	{/each}
 {/if}
-
-<style>
-	.server-list {
-		padding: 20px;
-	}
-</style>

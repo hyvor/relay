@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Api\Admin\Controller;
+namespace App\Api\Sudo\Controller;
 
-use App\Api\Admin\Object\ServerObject;
+use App\Api\Sudo\Object\ServerObject;
 use App\Service\Server\ServerService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;

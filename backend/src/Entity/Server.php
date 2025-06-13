@@ -6,38 +6,37 @@ use App\Repository\ServerRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ServerRepository::class)]
-#[ORM\Table(name: 'servers')]
+#[ORM\Table(name: "servers")]
 #[ORM\HasLifecycleCallbacks]
 class Server
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: "integer")]
     private int $id;
 
-    #[ORM\Column(type: 'datetime_immutable')]
+    #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable $created_at;
 
-    #[ORM\Column(type: 'datetime_immutable')]
+    #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable $updated_at;
 
-    #[ORM\Column(type: 'string', length: 255)]
+    #[ORM\Column(type: "string", length: 255)]
     private string $hostname;
 
-    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    #[ORM\Column(type: "datetime_immutable", nullable: true)]
     private ?\DateTimeImmutable $last_ping_at = null;
 
-    #[ORM\Column(type: 'boolean')]
-    private bool $api_on = false;
+    #[ORM\Column(type: "integer")]
+    private int $api_workers = 0;
 
-    #[ORM\Column(type: 'boolean')]
-    private bool $email_on = false;
+    #[ORM\Column(type: "integer")]
+    private int $email_workers = 0;
 
-    #[ORM\Column(type: 'boolean')]
-    private bool $webhook_on = false;
+    #[ORM\Column(type: "integer")]
+    private int $webhook_workers = 0;
 
-    public function __construct()
-    {}
+    public function __construct() {}
 
     public function getCreatedAt(): \DateTimeImmutable
     {
@@ -105,25 +104,36 @@ class Server
         return $this;
     }
 
-    public function getEmailOn(): bool
+    public function getApiWorkers(): int
     {
-        return $this->email_on;
+        return $this->api_workers;
     }
 
-    public function setEmailOn(bool $emailOn): static
+    public function setApiWorkers(int $apiWorkers): static
     {
-        $this->email_on = $emailOn;
+        $this->api_workers = $apiWorkers;
         return $this;
     }
 
-    public function getWebhookOn(): bool
+    public function getEmailWorkers(): int
     {
-        return $this->webhook_on;
+        return $this->email_workers;
     }
 
-    public function setWebhookOn(bool $webhookOn): static
+    public function setEmailWorkers(int $emailWorkers): static
     {
-        $this->webhook_on = $webhookOn;
+        $this->email_workers = $emailWorkers;
+        return $this;
+    }
+
+    public function getWebhookWorkers(): int
+    {
+        return $this->webhook_workers;
+    }
+
+    public function setWebhookWorkers(int $webhookWorkers): static
+    {
+        $this->webhook_workers = $webhookWorkers;
         return $this;
     }
 }

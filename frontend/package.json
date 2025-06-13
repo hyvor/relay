@@ -33,6 +33,7 @@
 	},
 	"dependencies": {
 		"@hyvor/design": "^1.1.3",
-		"@hyvor/icons": "^1.1.1"
+		"@hyvor/icons": "^1.1.1",
+		"dayjs": "^1.11.13"
 	}
 }

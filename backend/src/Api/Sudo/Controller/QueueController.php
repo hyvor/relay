@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Api\Admin\Controller;
+namespace App\Api\Sudo\Controller;
 
-use App\Api\Admin\Object\QueueObject;
+use App\Api\Sudo\Object\QueueObject;
 use App\Service\Queue\QueueService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;

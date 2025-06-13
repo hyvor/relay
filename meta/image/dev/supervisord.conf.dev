@@ -1,0 +1,17 @@
+[supervisord]
+nodaemon=true
+pidfile=/run/supervisor.pid
+
+[program:frankenphp]
+command=frankenphp run --config /etc/caddy/Caddyfile --watch
+stdout_logfile=/dev/stdout
+stderr_logfile=/dev/stderr
+stdout_logfile_maxbytes=0
+stderr_logfile_maxbytes=0
+
+[program:messenger-worker-scheduler-server]
+command=php bin/console messenger:consume scheduler_server -v
+stdout_logfile=/dev/stdout
+stderr_logfile=/dev/stderr
+stdout_logfile_maxbytes=0
+stderr_logfile_maxbytes=0
