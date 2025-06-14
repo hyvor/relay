@@ -10,6 +10,8 @@ readonly class EmailSendMessage
 
     public function __construct(
         public int $sendId,
+        public string $from,
+        public string $to,
         public string $rawEmail
     )
     {

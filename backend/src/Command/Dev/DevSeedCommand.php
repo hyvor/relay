@@ -2,6 +2,9 @@
 
 namespace App\Command\Dev;
 
+use App\Tests\Factory\DomainFactory;
+use App\Tests\Factory\ProjectFactory;
+use App\Tests\Factory\QueueFactory;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -31,6 +34,12 @@ class DevSeedCommand extends Command
             $output->writeln('<error>This command can only be run in the dev and test environments.</error>');
             return Command::FAILURE;
         }
+
+        QueueFactory::createTransactional();
+        $domain = DomainFactory::createOne(['domain' => 'example.com']);
+        $project = ProjectFactory::createOne([
+            'name' => 'Test Project',
+        ]);
 
         $output->writeln('<info>Database seeded with test data.</info>');
 

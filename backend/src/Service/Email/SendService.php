@@ -68,6 +68,8 @@ class SendService
 
             $this->bus->dispatch(new EmailSendMessage(
                 sendId: $send->getId(),
+                from: $fromAddress,
+                to: $toAddress,
                 rawEmail: $rawEmail
             ));
 
