@@ -18,14 +18,15 @@ final class Version20250607093659 extends AbstractMigration
     {
         $this->addSql("CREATE TYPE sends_status AS ENUM ('queued', 'sent', 'failed')");
 
-        $this->addSql('
+        $this->addSql(<<<SQL
         CREATE TABLE sends (
             id SERIAL PRIMARY KEY,
             uuid UUID NOT NULL UNIQUE,
             created_at TIMESTAMPTZ NOT NULL,
             updated_at TIMESTAMPTZ NOT NULL,
             sent_at TIMESTAMPTZ,
-            delivered_at TIMESTAMPTZ,
+            failed_at TIMESTAMPTZ,
+            status sends_status NOT NULL,
             project_id BIGINT NOT NULL references projects(id) ON DELETE CASCADE,
             domain_id BIGINT references domains(id),
             queue_id BIGINT references queues(id),
@@ -36,13 +37,13 @@ final class Version20250607093659 extends AbstractMigration
             to_address text,
             subject text,
             body_html text,
-            body_text text,
+            body_text text
         )
-        ');
+        SQL);
 
-        $this->addSql(
-            "CREATE INDEX idx_sends_project_id ON sends (project_id)"
-        );
+        $this->addSql("CREATE INDEX idx_sends_project_id ON sends (project_id)");
+        $this->addSql("CREATE INDEX idx_sends_domain_id ON sends (domain_id)");
+        $this->addSql("CREATE INDEX idx_sends_queue_id ON sends (queue_id)");
     }
 
     public function down(Schema $schema): void
