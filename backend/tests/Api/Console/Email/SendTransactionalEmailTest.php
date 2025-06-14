@@ -4,6 +4,7 @@ namespace App\Tests\Api\Console\Email;
 
 use App\Entity\Send;
 use App\Entity\Type\SendStatus;
+use App\Service\Email\Message\EmailSendMessage;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
@@ -14,7 +15,6 @@ class SendTransactionalEmailTest extends WebTestCase
 
     public function test_queues_mail(): void
     {
-
         $project = ProjectFactory::createOne();
         DomainFactory::createOne([
             'domain' => 'hyvor.com'
@@ -45,6 +45,14 @@ class SendTransactionalEmailTest extends WebTestCase
         $this->assertSame(SendStatus::QUEUED, $send->getStatus());
         $this->assertSame('Test Email', $send->getSubject());
 
+        $messages = $this->transport('email')->queue()->messages();
+        $this->assertCount(1, $messages);
+        $message = $messages[0];
+        $this->assertInstanceOf(EmailSendMessage::class, $message);
+
+        $this->assertSame($send->getId(), $message->sendId);
+        $this->assertStringContainsString('From: supun@hyvor.com', $message->rawEmail);
+        $this->assertStringContainsString('To: somebody@example.com', $message->rawEmail);
     }
 
 }

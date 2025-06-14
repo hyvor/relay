@@ -34,7 +34,8 @@ final class Version20250613093659 extends AbstractMigration
             to_address text NOT NULL,
             subject text,
             body_html text,
-            body_text text
+            body_text text,
+            raw text
         )
         SQL);
 

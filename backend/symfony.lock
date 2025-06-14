@@ -275,5 +275,14 @@
             "config/packages/zenstruck_foundry.yaml",
             "src/Story/AppStory.php"
         ]
+    },
+    "zenstruck/messenger-test": {
+        "version": "1.11",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "1.7",
+            "ref": "e0d2a904cd584d15bcbb4c4a011549840bc01daf"
+        }
     }
 }

@@ -60,6 +60,9 @@ class Send
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $body_text = null;
 
+    #[ORM\Column(type: "text")]
+    private string $raw;
+
     public function __construct()
     {
     }
@@ -226,6 +229,17 @@ class Send
     public function setBodyText(?string $body_text): static
     {
         $this->body_text = $body_text;
+        return $this;
+    }
+
+    public function getRaw(): string
+    {
+        return $this->raw;
+    }
+
+    public function setRaw(string $raw): static
+    {
+        $this->raw = $raw;
         return $this;
     }
 

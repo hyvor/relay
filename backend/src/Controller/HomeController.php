@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Service\Email\EmailMessage;
+use App\Service\Email\Message\EmailSendMessage;
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
@@ -37,7 +37,7 @@ class HomeController extends AbstractController
             ->text('Lorem ipsum...')
             ->html('<h1>Lorem ipsum</h1> <p>...</p>');
 
-        $emailMessage = new EmailMessage($email->toString());
+        $emailMessage = new EmailSendMessage($email->toString());
 
         $this->bus->dispatch($emailMessage, [
             new AmqpStamp('email.transactional')
