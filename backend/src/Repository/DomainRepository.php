@@ -6,6 +6,9 @@ use App\Entity\Domain;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
+/**
+ * @extends ServiceEntityRepository<Domain>
+ */
 class DomainRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)

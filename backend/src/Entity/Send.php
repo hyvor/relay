@@ -39,26 +39,17 @@ class Send
 
     #[ORM\ManyToOne(targetEntity: Domain::class)]
     #[ORM\JoinColumn()]
-    private ?Domain $domain = null;
+    private Domain $domain;
 
     #[ORM\ManyToOne(targetEntity: Queue::class)]
     #[ORM\JoinColumn()]
-    private ?Queue $queue = null;
+    private Queue $queue;
 
-    #[ORM\Column(type: "string", length: 255, nullable: true)]
-    private ?string $email = null;
+    #[ORM\Column(type: "string")]
+    private string $from_address;
 
-    #[ORM\Column(type: "text", nullable: true)]
-    private ?string $content_html = null;
-
-    #[ORM\Column(type: "text", nullable: true)]
-    private ?string $content_text = null;
-
-    #[ORM\Column(type: "string", length: 255, nullable: true)]
-    private ?string $from_address = null;
-
-    #[ORM\Column(type: "text", nullable: true)]
-    private ?string $to_address = null;
+    #[ORM\Column(type: "text")]
+    private string $to_address;
 
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $subject = null;
@@ -161,78 +152,45 @@ class Send
         return $this;
     }
 
-    public function getDomain(): ?Domain
+    public function getDomain(): Domain
     {
         return $this->domain;
     }
 
-    public function setDomain(?Domain $domain): static
+    public function setDomain(Domain $domain): static
     {
         $this->domain = $domain;
         return $this;
     }
 
-    public function getQueue(): ?Queue
+    public function getQueue(): Queue
     {
         return $this->queue;
     }
 
-    public function setQueue(?Queue $queue): static
+    public function setQueue(Queue $queue): static
     {
         $this->queue = $queue;
         return $this;
     }
 
-    public function getEmail(): ?string
-    {
-        return $this->email;
-    }
-
-    public function setEmail(?string $email): static
-    {
-        $this->email = $email;
-        return $this;
-    }
-
-    public function getContentHtml(): ?string
-    {
-        return $this->content_html;
-    }
-
-    public function setContentHtml(?string $content_html): static
-    {
-        $this->content_html = $content_html;
-        return $this;
-    }
-
-    public function getContentText(): ?string
-    {
-        return $this->content_text;
-    }
-
-    public function setContentText(?string $content_text): static
-    {
-        $this->content_text = $content_text;
-        return $this;
-    }
-
-    public function getFromAddress(): ?string
+    public function getFromAddress(): string
     {
         return $this->from_address;
     }
 
-    public function setFromAddress(?string $from_address): static
+    public function setFromAddress(string $from_address): static
     {
         $this->from_address = $from_address;
         return $this;
     }
 
-    public function getToAddress(): ?string
+    public function getToAddress(): string
     {
         return $this->to_address;
     }
 
-    public function setToAddress(?string $to_address): static
+    public function setToAddress(string $to_address): static
     {
         $this->to_address = $to_address;
         return $this;

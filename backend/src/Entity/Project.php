@@ -7,7 +7,6 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ProjectRepository::class)]
 #[ORM\Table(name: 'projects')]
-#[ORM\HasLifecycleCallbacks]
 class Project
 {
     #[ORM\Id]
@@ -28,10 +27,7 @@ class Project
     private \DateTimeImmutable $updated_at;
 
     public function __construct()
-    {
-        $this->created_at = new \DateTimeImmutable();
-        $this->updated_at = new \DateTimeImmutable();
-    }
+    {}
 
     public function getId(): int
     {
@@ -71,14 +67,21 @@ class Project
         return $this->created_at;
     }
 
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    {
+        $this->created_at = $createdAt;
+        return $this;
+    }
+
     public function getUpdatedAt(): \DateTimeImmutable
     {
         return $this->updated_at;
     }
 
-    #[ORM\PreUpdate]
-    public function setUpdatedAt(): void
+    public function setUpdatedAt(\DateTimeImmutable $updatedAt): static
     {
-        $this->updated_at = new \DateTimeImmutable();
+        $this->updated_at = $updatedAt;
+        return $this;
     }
+
 }

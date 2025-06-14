@@ -7,7 +7,6 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: DomainRepository::class)]
 #[ORM\Table(name: 'domains')]
-#[ORM\HasLifecycleCallbacks]
 class Domain
 {
     #[ORM\Id]
@@ -34,14 +33,17 @@ class Domain
     private string $dkim_private_key;
 
     public function __construct()
-    {
-        $this->created_at = new \DateTimeImmutable();
-        $this->updated_at = new \DateTimeImmutable();
-    }
+    {}
 
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->created_at;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    {
+        $this->created_at = $createdAt;
+        return $this;
     }
 
     public function getUpdatedAt(): \DateTimeImmutable
@@ -49,10 +51,10 @@ class Domain
         return $this->updated_at;
     }
 
-    #[ORM\PreUpdate]
-    public function setUpdatedAt(): void
+    public function setUpdatedAt(\DateTimeImmutable $updatedAt): static
     {
-        $this->updated_at = new \DateTimeImmutable();
+        $this->updated_at = $updatedAt;
+        return $this;
     }
 
     public function getId(): int

@@ -7,7 +7,7 @@ namespace DoctrineMigrations;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
-final class Version20250607093659 extends AbstractMigration
+final class Version20250613093659 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -28,13 +28,10 @@ final class Version20250607093659 extends AbstractMigration
             failed_at TIMESTAMPTZ,
             status sends_status NOT NULL,
             project_id BIGINT NOT NULL references projects(id) ON DELETE CASCADE,
-            domain_id BIGINT references domains(id),
-            queue_id BIGINT references queues(id),
-            email VARCHAR(255),
-            content_html TEXT,
-            content_text TEXT,
-            from_address VARCHAR(255),
-            to_address text,
+            domain_id BIGINT NOT NULL references domains(id),
+            queue_id BIGINT NOT NULL references queues(id),
+            from_address VARCHAR(255) NOT NULL,
+            to_address text NOT NULL,
             subject text,
             body_html text,
             body_text text

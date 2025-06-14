@@ -230,6 +230,15 @@
             "templates/base.html.twig"
         ]
     },
+    "symfony/uid": {
+        "version": "7.2",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "7.0",
+            "ref": "0df5844274d871b37fc3816c57a768ffc60a43a5"
+        }
+    },
     "symfony/ux-twig-component": {
         "version": "2.26",
         "recipe": {

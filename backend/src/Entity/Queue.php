@@ -25,7 +25,7 @@ class Queue
     #[ORM\Column(type: "string", length: 255, unique: true)]
     private string $name;
 
-    #[ORM\Column(type: "string", enumType: QueueType::class)]
+    #[ORM\Column(enumType: QueueType::class)]
     private QueueType $type;
 
     public function __construct()
