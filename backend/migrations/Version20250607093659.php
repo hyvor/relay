@@ -16,17 +16,27 @@ final class Version20250607093659 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
+        $this->addSql("CREATE TYPE sends_status AS ENUM ('queued', 'sent', 'failed')");
+
         $this->addSql('
         CREATE TABLE sends (
             id SERIAL PRIMARY KEY,
             uuid UUID NOT NULL UNIQUE,
             created_at TIMESTAMPTZ NOT NULL,
             updated_at TIMESTAMPTZ NOT NULL,
-            project_id INTEGER NOT NULL references projects(id) ON DELETE CASCADE,
+            sent_at TIMESTAMPTZ,
+            delivered_at TIMESTAMPTZ,
+            project_id BIGINT NOT NULL references projects(id) ON DELETE CASCADE,
+            domain_id BIGINT references domains(id),
+            queue_id BIGINT references queues(id),
             email VARCHAR(255),
             content_html TEXT,
             content_text TEXT,
-            "from" VARCHAR(255)
+            from_address VARCHAR(255),
+            to_address text,
+            subject text,
+            body_html text,
+            body_text text,
         )
         ');
 
