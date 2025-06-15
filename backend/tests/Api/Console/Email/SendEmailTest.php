@@ -10,7 +10,7 @@ use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
 
-class SendTransactionalEmailTest extends WebTestCase
+class SendEmailTest extends WebTestCase
 {
 
     public function test_queues_mail(): void

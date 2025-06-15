@@ -23,7 +23,7 @@ class EmailController extends AbstractController
     {
     }
 
-    #[Route('/email/transactional', methods: 'POST')]
+    #[Route('/email', methods: 'POST')]
     public function sendTransactionalEmail(
         Project $project,
         #[MapRequestPayload] SendEmailInput $sendEmailInput

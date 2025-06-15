@@ -1,5 +1,5 @@
 <script>
-	import { CodeBlock } from '@hyvor/design/components';
+	import { CodeBlock, TabbedCodeBlock } from '@hyvor/design/components';
 </script>
 
 <h1>Send Transactional Emails</h1>
@@ -47,45 +47,77 @@
 
 <p id="email-request-object">
 	This is an <code>EmailRequest</code> object, which is used to define the email you want to send.
+</p>
+
+<TabbedCodeBlock tabs={['Types', 'JSON Example']}>
 	<CodeBlock
 		code={`
-    interface EmailRequest {
-        
-        // The email address of the sender (required)
-        // the domain of the email address must be verified
-        from: string;
+interface EmailRequest {
+	
+	// The email address of the sender (required)
+	// the domain of the email address must be verified
+	from: Address;
 
-        // The email address of the recipient (required)
-        // can be a single email address or an array of email addresses
-        // email format:
-        //  - test@example.com
-        //  - Test <test@example.com>
-        to: string|string[];
+	// The email address of the recipient (required)
+	// can be a single email address or an array of email addresses
+	// email format:
+	//  - test@example.com
+	//  - Test <test@example.com>
+	to: Address|Address[];
 
-        // The subject of the email
-        subject?: string;
+	// The subject of the email
+	subject?: string;
 
-        // The body of the email in HTML format
-        // required if body_text is not provided
-        body_html?: string;
+	// The body of the email in HTML format
+	// required if body_text is not provided
+	body_html?: string;
 
-        // The body of the email in plain text format
-        // required if body_html is not provided
-        body_text?: string;
+	// The body of the email in plain text format
+	// required if body_html is not provided
+	body_text?: string;
 
-        // CC, BCC, and Reply-To fields
-        cc?: string|string[];
-        bcc?: string|string[];
-        reply_to?: string|string[];
+	// CC, BCC, and Reply-To fields
+	cc?: Address|Address[];
+	bcc?: Address|Address[];
+	reply_to?: Address|Address[];
 
-        // additional headers
-        headers?: Record<string, string>;
+	// additional headers
+	headers?: Record<string, string>;
 
-    }
+}
+	
+type Address = string | {
+	name?: string;
+	email: string;
+};
 `}
 		language="ts"
 	/>
-</p>
+
+	<CodeBlock
+		code={`
+{
+	// email address with a name
+	"from": {
+		"name": "HYVOR",
+		"email": "contact@hyvor.com"
+	},
+
+	// multiple email addresses
+	"to": ["user@example.org", "user2@example.org"],
+
+	"subject": "Welcome to HYVOR",
+	"body_html": "<h1>Welcome to HYVOR</h1><p>Thank you for signing up!</p>",
+	"body_text": "Welcome to HYVOR\\n\\nThank you for signing up!",
+
+	"headers": {
+		"X-Custom-Header": "Custom Value"
+	}
+}
+`}
+		language="json"
+	/>
+</TabbedCodeBlock>
 
 <h2 id="retrying">Retrying Failed Requests</h2>
 
