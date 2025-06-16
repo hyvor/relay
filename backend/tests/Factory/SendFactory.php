@@ -4,6 +4,7 @@ namespace App\Tests\Factory;
 
 use App\Entity\Send;
 use App\Entity\Project;
+use App\Entity\Type\SendStatus;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
 /**
@@ -29,10 +30,11 @@ final class SendFactory extends PersistentProxyObjectFactory
     {
         return [
             'project' => ProjectFactory::new(),
-            'email' => self::faker()->optional(0.9)->email(),
-            'content_html' => self::faker()->optional(0.8)->randomHtml(),
-            'content_text' => self::faker()->optional(0.7)->text(500),
-            'from' => self::faker()->optional(0.9)->email(),
+            'uuid' => self::faker()->uuid(),
+            'status' => self::faker()->randomElement(SendStatus::class),
+            'to_address' => self::faker()->email(),
+            'from_address' => self::faker()->email(),
+            'raw' => self::faker()->text(),
             'created_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'updated_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
         ];
