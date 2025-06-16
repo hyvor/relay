@@ -38,16 +38,4 @@ class EmailBuilder
         return $email->toString();
     }
 
-    /**
-     * @param string|array{email: string, name?: string} $inputAddress
-     */
-    public static function createAddressFromInput(string|array $inputAddress): Address
-    {
-        if (is_string($inputAddress)) {
-            return new Address($inputAddress);
-        } else {
-            return new Address($inputAddress['email'], $inputAddress['name'] ?? '');
-        }
-    }
-
 }

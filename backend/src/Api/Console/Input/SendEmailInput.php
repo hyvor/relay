@@ -18,14 +18,17 @@ class SendEmailInput
     public string|array $from;
 
     /**
-     * @var array<string|array{email: string, name?: string}>
+     * @var string|array{email: string, name?: string}|array<string|array{email: string, name?: string}>
      */
     #[Assert\NotBlank]
-    #[Assert\All([
-        new Assert\NotBlank(),
-        new EmailAddress()
+    #[Assert\AtLeastOneOf([
+        new EmailAddress(),
+        new Assert\All([
+            new Assert\NotBlank(),
+            new EmailAddress()
+        ])
     ])]
-    public array $to;
+    public string|array $to;
 
     public string $subject = '';
 
@@ -46,13 +49,78 @@ class SendEmailInput
     public ?string $body_text = null;
 
     /**
+     * @var string|array{email: string, name?: string}|array<string|array{email: string, name?: string}>
+     */
+    #[Assert\AtLeastOneOf([
+        new EmailAddress(),
+        new Assert\All([
+            new EmailAddress()
+        ])
+    ])]
+    public string|array $cc = [];
+
+    /**
+     * @var string|array{email: string, name?: string}|array<string|array{email: string, name?: string}>
+     */
+    #[Assert\AtLeastOneOf([
+        new EmailAddress(),
+        new Assert\All([
+            new EmailAddress()
+        ])
+    ])]
+    public string|array $bcc = [];
+
+    /**
+     * @var string|array{email: string, name?: string}|array<string|array{email: string, name?: string}>
+     */
+    #[Assert\AtLeastOneOf([
+        new EmailAddress(),
+        new Assert\All([
+            new EmailAddress()
+        ])
+    ])]
+    public string|array $reply_to = [];
+
+    /**
      * @var array<string, string>
      */
     public array $headers = [];
 
     public function getFromAddress(): Address
     {
-        return EmailBuilder::createAddressFromInput($this->from);
+        return InputToAddress::createAddressFromInput($this->from);
+    }
+
+    /**
+     * @return Address[]
+     */
+    public function getToAddresses(): array
+    {
+        return InputToAddress::createAddressesFromInput($this->to);
+    }
+
+    /**
+     * @return Address[]
+     */
+    public function getCcAddresses(): array
+    {
+        return InputToAddress::createAddressesFromInput($this->cc);
+    }
+
+    /**
+     * @return Address[]
+     */
+    public function getBccAddresses(): array
+    {
+        return InputToAddress::createAddressesFromInput($this->bcc);
+    }
+
+    /**
+     * @return Address[]
+     */
+    public function getReplyToAddresses(): array
+    {
+        return InputToAddress::createAddressesFromInput($this->reply_to);
     }
 
 }

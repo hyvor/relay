@@ -30,8 +30,8 @@ class EmailController extends AbstractController
     ): JsonResponse
     {
 
-        $fromAddress = $sendEmailInput->from;
-        $domainName = explode('@', $fromAddress)[1] ?? null;
+        $fromAddress = $sendEmailInput->getFromAddress();
+        $domainName = explode('@', $fromAddress->getAddress())[1] ?? null;
         assert($domainName !== null);
         $domain = $this->domainService->getDomainByName($domainName);
         assert($domain !== null);
@@ -44,7 +44,9 @@ class EmailController extends AbstractController
             $domain,
             $queue,
             $fromAddress,
-            $sendEmailInput->to,
+            $sendEmailInput->getToAddresses(),
+            $sendEmailInput->getCcAddresses(),
+            $sendEmailInput->getBccAddresses(),
             $sendEmailInput->subject,
             $sendEmailInput->body_html,
             $sendEmailInput->body_text

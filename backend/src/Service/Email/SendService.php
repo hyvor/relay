@@ -28,6 +28,8 @@ class SendService
 
     /**
      * @param Address[] $to
+     * @param Address[] $cc
+     * @param Address[] $bcc
      */
     public function createSend(
         Project $project,
@@ -35,6 +37,8 @@ class SendService
         Queue $queue,
         Address $from,
         array $to,
+        array $cc,
+        array $bcc,
         ?string $subject,
         ?string $bodyHtml,
         ?string $bodyText,
@@ -72,8 +76,8 @@ class SendService
 
             $this->bus->dispatch(new EmailSendMessage(
                 sendId: $send->getId(),
-                from: $fromAddress,
-                to: $toAddress,
+                from: $from->getAddress(),
+                to: $to->getAddress(),
                 rawEmail: $rawEmail
             ));
 

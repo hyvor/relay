@@ -25,7 +25,7 @@ class SendEmailTest extends WebTestCase
         $this->consoleApi(
             $project,
             'POST',
-            '/email/transactional',
+            '/email',
             data: [
                 'from' => 'supun@hyvor.com',
                 'to' => 'somebody@example.com',
