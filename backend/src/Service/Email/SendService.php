@@ -11,6 +11,7 @@ use App\Service\Email\Message\EmailSendMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Mime\Address;
 use Symfony\Component\Uid\Uuid;
 
 class SendService
@@ -25,12 +26,15 @@ class SendService
     {
     }
 
+    /**
+     * @param Address[] $to
+     */
     public function createSend(
         Project $project,
         Domain $domain,
         Queue $queue,
-        string $fromAddress,
-        string $toAddress,
+        Address $from,
+        array $to,
         ?string $subject,
         ?string $bodyHtml,
         ?string $bodyText,
@@ -38,8 +42,8 @@ class SendService
     {
 
         $rawEmail = $this->emailBuilder->build(
-            $fromAddress,
-            $toAddress,
+            $from,
+            $to,
             $subject,
             $bodyHtml,
             $bodyText
@@ -57,8 +61,8 @@ class SendService
             $send->setProject($project);
             $send->setDomain($domain);
             $send->setQueue($queue);
-            $send->setFromAddress($fromAddress);
-            $send->setToAddress($toAddress);
+            $send->setFromAddress($from->getAddress());
+            $send->setToAddress($to[0]->getAddress());
             $send->setSubject($subject);
             $send->setBodyHtml($bodyHtml);
             $send->setBodyText($bodyText);
