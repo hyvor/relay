@@ -53,7 +53,6 @@
 	<CodeBlock
 		code={`
 interface EmailRequest {
-	
 	// The email address of the sender (required)
 	// the domain of the email address must be verified
 	from: Address;
@@ -74,7 +73,6 @@ interface EmailRequest {
 
 	// additional headers
 	headers?: Record<string, string>;
-
 }
 	
 type Address = string | {

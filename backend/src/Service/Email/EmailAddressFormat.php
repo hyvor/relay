@@ -1,12 +1,22 @@
 <?php
 
-namespace App\Api\Console\Input;
+namespace App\Service\Email;
 
-use App\Service\Email\EmailBuilder;
 use Symfony\Component\Mime\Address;
 
-class InputToAddress
+class EmailAddressFormat
 {
+
+    /**
+     * @param string $email must be a valid email address
+     * @throws \Exception
+     */
+    public static function getDomainFromEmail(string $email): string
+    {
+        $parts = explode('@', $email);
+        assert(count($parts) > 1, 'Email address must contain a domain part: ' . $email);
+        return $parts[1];
+    }
 
     /**
      * Creates an Address object from a string or an associative array.
