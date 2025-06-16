@@ -8,12 +8,9 @@ use Symfony\Component\Mime\Email;
 class EmailBuilder
 {
 
-    /**
-     * @param Address[] $toAddress
-     */
     public function build(
         Address $from,
-        array $toAddress,
+        Address $to,
         ?string $subject,
         ?string $bodyHtml,
         ?string $bodyText
@@ -21,7 +18,7 @@ class EmailBuilder
     {
         $email = new Email()
             ->from($from)
-            ->to(...$toAddress);
+            ->to($to);
 
         if ($subject !== null) {
             $email->subject($subject);

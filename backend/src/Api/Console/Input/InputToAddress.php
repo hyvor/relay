@@ -22,18 +22,18 @@ class InputToAddress
     }
 
     /**
-     *
+     * @deprecated
      * @param string|array{email: string, name?: string}|array<string|array{email: string, name?: string}> $inputAddresses
      * @return Address[]
      */
-    public static function createAddressesFromInput(string|array $inputAddresses, bool $nestedAllowed = true): array
+    /*public static function createAddressesFromInput(string|array $inputAddresses, bool $nestedAllowed = true): array
     {
         if (is_string($inputAddresses)) {
             return [self::createAddressFromInput($inputAddresses)];
         }
 
         if (array_key_exists('email', $inputAddresses)) {
-            /** @var array{email: string, name?: string} $to */
+            /** @var array{email: string, name?: string} $to /
             $to = $inputAddresses;
             return [self::createAddressFromInput($to)];
         }
@@ -49,6 +49,6 @@ class InputToAddress
         }
 
         return $addresses;
-    }
+    }*/
 
 }

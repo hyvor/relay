@@ -44,9 +44,7 @@ class EmailController extends AbstractController
             $domain,
             $queue,
             $fromAddress,
-            $sendEmailInput->getToAddresses(),
-            $sendEmailInput->getCcAddresses(),
-            $sendEmailInput->getBccAddresses(),
+            $sendEmailInput->getToAddress(),
             $sendEmailInput->subject,
             $sendEmailInput->body_html,
             $sendEmailInput->body_text

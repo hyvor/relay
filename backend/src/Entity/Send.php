@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Entity\Type\SendStatus;
 use App\Repository\SendRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SendRepository::class)]
@@ -34,22 +36,28 @@ class Send
     private SendStatus $status;
 
     #[ORM\ManyToOne(targetEntity: Project::class)]
-    #[ORM\JoinColumn()]
+    #[ORM\JoinColumn]
     private Project $project;
 
     #[ORM\ManyToOne(targetEntity: Domain::class)]
-    #[ORM\JoinColumn()]
+    #[ORM\JoinColumn]
     private Domain $domain;
 
     #[ORM\ManyToOne(targetEntity: Queue::class)]
-    #[ORM\JoinColumn()]
+    #[ORM\JoinColumn]
     private Queue $queue;
 
     #[ORM\Column(type: "string")]
     private string $from_address;
 
+    #[ORM\Column(type: "string", nullable: true)]
+    private ?string $from_name = null;
+
     #[ORM\Column(type: "text")]
     private string $to_address;
+
+    #[ORM\Column(type: "string", nullable: true)]
+    private ?string $to_name = null;
 
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $subject = null;
@@ -188,6 +196,17 @@ class Send
         return $this;
     }
 
+    public function getFromName(): ?string
+    {
+        return $this->from_name;
+    }
+
+    public function setFromName(?string $from_name): static
+    {
+        $this->from_name = $from_name;
+        return $this;
+    }
+
     public function getToAddress(): string
     {
         return $this->to_address;
@@ -196,6 +215,17 @@ class Send
     public function setToAddress(string $to_address): static
     {
         $this->to_address = $to_address;
+        return $this;
+    }
+
+    public function getToName(): ?string
+    {
+        return $this->to_name;
+    }
+
+    public function setToName(?string $to_name): static
+    {
+        $this->to_name = $to_name;
         return $this;
     }
 

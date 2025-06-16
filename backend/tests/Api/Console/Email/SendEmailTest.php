@@ -36,7 +36,6 @@ class SendEmailTest extends WebTestCase
         );
 
         $this->assertResponseStatusCodeSame(200);
-        $json = $this->getJson();
 
         $send = $this->em->getRepository(Send::class)->findAll();
         $this->assertCount(1, $send);

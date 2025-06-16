@@ -59,11 +59,7 @@ interface EmailRequest {
 	from: Address;
 
 	// The email address of the recipient (required)
-	// can be a single email address or an array of email addresses
-	// email format:
-	//  - test@example.com
-	//  - Test <test@example.com>
-	to: Address|Address[];
+	to: Address;
 
 	// The subject of the email
 	subject?: string;
@@ -75,11 +71,6 @@ interface EmailRequest {
 	// The body of the email in plain text format
 	// required if body_html is not provided
 	body_text?: string;
-
-	// CC, BCC, and Reply-To fields
-	cc?: Address|Address[];
-	bcc?: Address|Address[];
-	reply_to?: Address|Address[];
 
 	// additional headers
 	headers?: Record<string, string>;
@@ -103,8 +94,8 @@ type Address = string | {
 		"email": "contact@hyvor.com"
 	},
 
-	// multiple email addresses
-	"to": ["user@example.org", "user2@example.org"],
+	// email address without a name
+	"to": "user@example.org",
 
 	"subject": "Welcome to HYVOR",
 	"body_html": "<h1>Welcome to HYVOR</h1><p>Thank you for signing up!</p>",

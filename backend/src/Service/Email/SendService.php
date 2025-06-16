@@ -26,19 +26,12 @@ class SendService
     {
     }
 
-    /**
-     * @param Address[] $to
-     * @param Address[] $cc
-     * @param Address[] $bcc
-     */
     public function createSend(
         Project $project,
         Domain $domain,
         Queue $queue,
         Address $from,
-        array $to,
-        array $cc,
-        array $bcc,
+        Address $to,
         ?string $subject,
         ?string $bodyHtml,
         ?string $bodyText,
@@ -66,7 +59,9 @@ class SendService
             $send->setDomain($domain);
             $send->setQueue($queue);
             $send->setFromAddress($from->getAddress());
-            $send->setToAddress($to[0]->getAddress());
+            $send->setFromName($from->getName());
+            $send->setToAddress($to->getAddress());
+            $send->setToName($to->getName());
             $send->setSubject($subject);
             $send->setBodyHtml($bodyHtml);
             $send->setBodyText($bodyText);
