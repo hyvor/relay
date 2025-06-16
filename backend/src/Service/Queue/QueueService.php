@@ -26,6 +26,21 @@ class QueueService
         return $this->em->getRepository(Queue::class)->findAll();
     }
 
+    public function getQueueByName(string $name): ?Queue
+    {
+        return $this->em->getRepository(Queue::class)->findOneBy(['name' => $name]);
+    }
+
+    public function getTransactionalQueue(): ?Queue
+    {
+        return $this->getQueueByName(self::TRANSACTIONAL_QUEUE_NAME);
+    }
+
+    public function getDistributionalQueue(): ?Queue
+    {
+        return $this->getQueueByName(self::DISTRIBUTIONAL_QUEUE_NAME);
+    }
+
     public function hasDefaultQueues(): bool
     {
         return $this->em->createQueryBuilder()

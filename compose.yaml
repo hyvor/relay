@@ -45,11 +45,20 @@ services:
       test: ls
       disable: true
 
+  worker:
+    container_name: hyvor-relay-worker
+    image: cosmtrek/air
+    working_dir: /worker
+    volumes:
+      - ./worker/:/worker/
+    networks:
+      - hyvor-network
+
   rabbitmq:
     image: rabbitmq:4.1-management
     container_name: hyvor-relay-rabbitmq
     ports:
-      # - "5672:5672"   # AMQP protocol
+      # - "5672:5672" # AMQP protocol
       - "15672:15672" # Management UI
     environment:
       RABBITMQ_DEFAULT_USER: rabbit
