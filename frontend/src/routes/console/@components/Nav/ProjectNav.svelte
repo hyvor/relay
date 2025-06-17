@@ -10,22 +10,25 @@
 	import NavItem from './NavItem.svelte';
 	import { page } from '$app/state';
 	import IconEnvelope from '@hyvor/icons/IconEnvelope';
+	import { selectingProject } from '../../lib/stores/consoleStore';
+	import { projectStore } from '../../lib/stores/projectStore';
 
 	let width: number;
 
-    // Dummy data
-    let projectName = "Project Name"
-    let projectId = 1;
+	function triggerProjectSelection() {
+		console.log('triggerProjectSelection');
+		selectingProject.set(true);
+	}
 	
 </script>
 
 <svelte:window bind:innerWidth={width} />
 
 <div class="wrap hds-box">
-	<button class="current">
+	<button class="current" on:click={triggerProjectSelection}>
 		<div class="left">
 			<div class="name">
-				Project
+				{$projectStore.name}
 			</div>
 		</div>
 		<IconChevronExpand />
@@ -33,8 +36,8 @@
 
 	<div class="nav-links">
 		<NavLink
-			href={'/console/' + projectId.toString()}
-			active={page.url.pathname === `/console/${projectId}`}
+			href={'/console/' + $projectStore.id.toString()}
+			active={page.url.pathname === `/console/${$projectStore.id}`}
 		>
 			<NavItem>
 				<IconGraphUp slot="icon" />
@@ -43,8 +46,8 @@
 		</NavLink>
 
 		<NavLink
-			href={'/console/' + projectId.toString() + '/emails'}
-			active={page.url.pathname === `/console/${projectId}/emails`}
+			href={'/console/' + $projectStore.id.toString() + '/emails'}
+			active={page.url.pathname === `/console/${$projectStore.id}/emails`}
 		>
 			<NavItem>
 				<IconEnvelope slot="icon" />
@@ -53,8 +56,8 @@
 		</NavLink>
 
 		<NavLink
-			href={'/console/' + projectId.toString() + '/webhooks'}
-			active={page.url.pathname.startsWith(`/console/${projectId}/webhooks`)}
+			href={'/console/' + $projectStore.id.toString() + '/webhooks'}
+			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/webhooks`)}
 		>
 			<NavItem>
 				<IconSend slot="icon" />
@@ -63,8 +66,8 @@
 		</NavLink>
 
 		<NavLink
-			href={'/console/' + projectId.toString() + '/settings'}
-			active={page.url.pathname.startsWith(`/console/${projectId}/settings`)}
+			href={'/console/' + $projectStore.id.toString() + '/settings'}
+			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/settings`)}
 		>
 			<NavItem>
 				<IconGear slot="icon" />

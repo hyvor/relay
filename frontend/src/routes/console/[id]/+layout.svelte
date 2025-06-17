@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Loader } from '@hyvor/design/components';
 	import Nav from '../@components/nav/Nav.svelte';
+	import ProjectSelector from '../@components/Nav/ProjectSelector.svelte';
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -18,6 +19,7 @@
 		</div>
 	{:else}
 		<Nav />
+		<ProjectSelector />
 		<div class="content">
 			{@render children?.()}
 		</div>

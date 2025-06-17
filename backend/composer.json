@@ -30,6 +30,7 @@
         "symfony/property-info": "7.2.*",
         "symfony/runtime": "7.2.*",
         "symfony/scheduler": "7.2.*",
+        "symfony/security-bundle": "7.2.*",
         "symfony/serializer": "7.2.*",
         "symfony/uid": "7.2.*",
         "symfony/yaml": "7.2.*"
