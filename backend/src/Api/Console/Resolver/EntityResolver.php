@@ -17,7 +17,7 @@ class EntityResolver implements ValueResolverInterface
 {
 
     public const ENTITIES = [
-        'send' => Send::class,
+        'emails' => Send::class,
         'domain' => Domain::class
     ];
 

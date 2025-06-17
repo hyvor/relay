@@ -55,12 +55,12 @@ class SendService
         }
 
         if ($fromSearch !== null) {
-            $qb->andWhere('s.from_address LIKE :$fromSearch')
+            $qb->andWhere('s.from_address LIKE :fromSearch')
                 ->setParameter('fromSearch', '%' . $fromSearch . '%');
         }
 
         if ($toSearch !== null) {
-            $qb->andWhere('s.to_address LIKE :$toSearch')
+            $qb->andWhere('s.to_address LIKE :toSearch')
                 ->setParameter('toSearch', '%' . $toSearch . '%');
         }
 
