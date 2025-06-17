@@ -105,6 +105,14 @@ class SendService
             $send->setSentAt($update->sentAt);
         }
 
+        if ($update->failedAtSet) {
+            $send->setFailedAt($update->failedAt);
+        }
+
+        if ($update->resultSet) {
+            $send->setResult($update->result);
+        }
+
         $send->setUpdatedAt($this->now());
 
         $this->em->persist($send);
