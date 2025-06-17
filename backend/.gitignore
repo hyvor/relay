@@ -7,6 +7,7 @@
 /public/bundles/
 /var/
 /vendor/
+/packages/
 ###< symfony/framework-bundle ###
 
 ###> phpunit/phpunit ###
@@ -17,3 +18,4 @@
 ###> phpstan/phpstan ###
 phpstan.neon
 ###< phpstan/phpstan ###
+/packages/
