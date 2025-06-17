@@ -7,6 +7,7 @@ use App\Entity\Project;
 use App\Entity\Queue;
 use App\Entity\Send;
 use App\Entity\Type\SendStatus;
+use App\Service\Email\Dto\SendUpdateDto;
 use App\Service\Email\Message\EmailSendMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -24,6 +25,11 @@ class SendService
         private MessageBusInterface $bus,
     )
     {
+    }
+
+    public function getSendById(int $id): ?Send
+    {
+        return $this->em->getRepository(Send::class)->find($id);
     }
 
     public function createSend(
@@ -86,6 +92,25 @@ class SendService
 
         }
 
+    }
+
+    public function updateSend(Send $send, SendUpdateDto $update): Send
+    {
+
+        if ($update->statusSet) {
+            $send->setStatus($update->status);
+        }
+
+        if ($update->sentAtSet) {
+            $send->setSentAt($update->sentAt);
+        }
+
+        $send->setUpdatedAt($this->now());
+
+        $this->em->persist($send);
+        $this->em->flush();
+
+        return $send;
 
     }
 
