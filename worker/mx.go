@@ -64,5 +64,4 @@ func getMxHostsFromEmail(email string) ([]string, error) {
 	}
 
 	return hosts, nil
-
 }

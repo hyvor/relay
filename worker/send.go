@@ -15,13 +15,13 @@ var ErrSendEmailFailed = errors.New("failed to send email")
 type SmtpStepName string
 
 const (
-	SmtpStepDial      SmtpStepName = "dial"
-	SmtpStepHello     SmtpStepName = "hello"
-	SmtpStepMail      SmtpStepName = "mail"
-	SmtpStepRcpt      SmtpStepName = "rcpt"
-	SmtpStepData      SmtpStepName = "data"
-	SmtpStepDataWrite SmtpStepName = "write"
-	SmtpStepQuit      SmtpStepName = "quit"
+	SmtpStepDial  SmtpStepName = "dial"
+	SmtpStepHello SmtpStepName = "hello"
+	SmtpStepMail  SmtpStepName = "mail"
+	SmtpStepRcpt  SmtpStepName = "rcpt"
+	SmtpStepData  SmtpStepName = "data"
+	SmtpStepQuit  SmtpStepName = "quit"
+	SmtpStepClose SmtpStepName = "close"
 )
 
 type LatencyDuration time.Duration
@@ -108,6 +108,19 @@ func sendEmail(
 	return result
 }
 
+var createSmtpClient = func(host string) (SmtpClient, error) {
+	return smtp.Dial(host + ":25")
+}
+
+type SmtpClient interface {
+	Hello(localName string) error
+	Mail(from string, opts *smtp.MailOptions) error
+	Rcpt(to string, opts *smtp.RcptOptions) error
+	Data() (*smtp.DataCommand, error)
+	Quit() error
+	Close() error
+}
+
 func sendEmailToHost(
 	message *EmailSendMessage,
 	host string,
@@ -118,8 +131,7 @@ func sendEmailToHost(
 	latency := NewSmtpLatency()
 	result.SmtpLatency[host] = latency
 
-	c, err := smtp.Dial(host + ":25")
-	c.DebugWriter = logger
+	c, err := createSmtpClient(host)
 	if err != nil {
 		fmt.Fprintf(logger, "ERROR: %s\n", err)
 		return err
@@ -155,15 +167,15 @@ func sendEmailToHost(
 		return err
 	}
 
-	latency.RecordStep(SmtpStepData)
-
 	_, err = w.Write([]byte(message.RawEmail))
 	if err != nil {
 		fmt.Fprintf(logger, "ERROR: Writing data failed - %s\n", err)
 		return err
 	}
 
-	latency.RecordStep(SmtpStepDataWrite)
+	w.Close() // TODO: error handling
+
+	latency.RecordStep(SmtpStepData)
 
 	_ = c.Quit() // ignore QUIT error
 
