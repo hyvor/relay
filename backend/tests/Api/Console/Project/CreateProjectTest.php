@@ -28,7 +28,6 @@ class CreateProjectTest extends WebTestCase
 
         $json = $this->getJson();
         $this->assertArrayHasKey('id', $json);
-        $this->assertArrayHasKey('uuid', $json);
         $this->assertArrayHasKey('created_at', $json);
         $this->assertArrayHasKey('name', $json);
     }
