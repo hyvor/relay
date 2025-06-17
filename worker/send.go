@@ -24,33 +24,32 @@ const (
 	SmtpStepQuit      SmtpStepName = "quit"
 )
 
+type LatencyDuration time.Duration
+
+func (d LatencyDuration) MarshalJSON() ([]byte, error) {
+	str := fmt.Sprintf("%dms", time.Duration(d).Milliseconds())
+	return json.Marshal(str)
+}
+
 type SmtpLatency struct {
 	start time.Time
 	last  time.Time
-	Steps map[SmtpStepName]time.Duration // ns durations
-	Total time.Duration
+	Steps map[SmtpStepName]LatencyDuration // ns durations
+	Total LatencyDuration
 }
 
 func (s *SmtpLatency) RecordStep(step SmtpStepName) {
 	stepTime := time.Since(s.start)
-	s.Steps[step] = stepTime
+	s.Steps[step] = LatencyDuration(stepTime)
 	s.last = time.Now()
-	s.Total += stepTime
-}
-
-func (s *SmtpLatency) String() string {
-	result := fmt.Sprintf("Total: %s\n", s.Total)
-	for step, duration := range s.Steps {
-		result += fmt.Sprintf("%s: %s\n", step, duration)
-	}
-	return result
+	s.Total += LatencyDuration(stepTime)
 }
 
 func NewSmtpLatency() *SmtpLatency {
 	return &SmtpLatency{
 		start: time.Now(),
 		last:  time.Now(),
-		Steps: make(map[SmtpStepName]time.Duration),
+		Steps: make(map[SmtpStepName]LatencyDuration),
 	}
 }
 
