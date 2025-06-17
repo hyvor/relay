@@ -33,7 +33,7 @@ class LocalController extends AbstractController
         }
 
         $update = new SendUpdateDto();
-        $status = $input->getStatus();
+        $status = $input->getStatusEnum();
 
         $update->status = $status;
         $update->result = $input->result;

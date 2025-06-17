@@ -12,14 +12,13 @@ class SendDoneInput
     public int $sendId;
 
     #[Assert\NotBlank]
-    #[Assert\Choice(choices: ['sent', 'failed'], message: 'Invalid status.')]
+    #[Assert\Choice(['sent', 'failed'], message: 'Invalid status.')]
     public string $status;
 
-    #[Assert\NotBlank]
     #[Assert\Json]
     public string $result;
 
-    public function getStatus(): SendStatus
+    public function getStatusEnum(): SendStatus
     {
         return SendStatus::from($this->status);
     }
