@@ -24,7 +24,7 @@ func TestErrorOnLookupFailed(t *testing.T) {
 
 	_, err := getMxHostsFromEmail("test@hyvor.com")
 
-	if err != ErrSmtpMxLookupFailed {
+	if errors.Is(err, ErrSmtpMxLookupFailed) != true {
 		t.Errorf("Expected error %v, got %v", ErrSmtpMxLookupFailed, err)
 	}
 }

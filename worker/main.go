@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"os"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -93,7 +94,7 @@ func listenRabbitMq() {
 				continue
 			}
 
-			sendEmail(message)
+			sendEmail(&message, os.Stdout)
 		}
 	}()
 

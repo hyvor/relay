@@ -12,7 +12,7 @@ readonly class EmailSendMessage
         public int $sendId,
         public string $from,
         public string $to,
-        public string $rawEmail
+        public string $rawEmail,
     )
     {
     }

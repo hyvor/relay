@@ -1,92 +1,174 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
-	"log"
+	"fmt"
+	"io"
+	"time"
 
 	smtp "github.com/emersion/go-smtp"
 )
 
 var ErrSendEmailFailed = errors.New("failed to send email")
 
-func sendEmail(message EmailSendMessage) error {
+type SmtpStepName string
 
-	log.Printf("Starting to send email. Getting MX records for: %s", message.To)
+const (
+	SmtpStepDial      SmtpStepName = "dial"
+	SmtpStepHello     SmtpStepName = "hello"
+	SmtpStepMail      SmtpStepName = "mail"
+	SmtpStepRcpt      SmtpStepName = "rcpt"
+	SmtpStepData      SmtpStepName = "data"
+	SmtpStepDataWrite SmtpStepName = "write"
+	SmtpStepQuit      SmtpStepName = "quit"
+)
+
+type SmtpLatency struct {
+	start time.Time
+	last  time.Time
+	Steps map[SmtpStepName]time.Duration // ns durations
+	Total time.Duration
+}
+
+func (s *SmtpLatency) RecordStep(step SmtpStepName) {
+	stepTime := time.Since(s.start)
+	s.Steps[step] = stepTime
+	s.last = time.Now()
+	s.Total += stepTime
+}
+
+func (s *SmtpLatency) String() string {
+	result := fmt.Sprintf("Total: %s\n", s.Total)
+	for step, duration := range s.Steps {
+		result += fmt.Sprintf("%s: %s\n", step, duration)
+	}
+	return result
+}
+
+func NewSmtpLatency() *SmtpLatency {
+	return &SmtpLatency{
+		start: time.Now(),
+		last:  time.Now(),
+		Steps: make(map[SmtpStepName]time.Duration),
+	}
+}
+
+type SendResult struct {
+	MxHosts     []string
+	SentHost    string
+	SmtpLatency map[string]*SmtpLatency // host -> latency
+	Error       error
+}
+
+func sendEmail(
+	message *EmailSendMessage,
+	logger io.Writer,
+) *SendResult {
+
+	result := &SendResult{
+		SmtpLatency: make(map[string]*SmtpLatency),
+	}
+
+	fmt.Fprintf(logger, "\n== New email ==\n")
+	fmt.Fprintf(logger, "From: %s\n", message.From)
+	fmt.Fprintf(logger, "To: %s\n", message.To)
 
 	mxHosts, err := getMxHostsFromEmail(message.To)
 
 	if err != nil {
-		log.Printf("Error getting MX records: %s", err)
-		return err
+		fmt.Fprintf(logger, "ERROR: %s\n", err)
+		result.Error = err
+		return result
 	}
 
-	log.Printf("MX records found: %v", mxHosts)
+	fmt.Fprintf(logger, "INFO: MX records found: %v\n", mxHosts)
+
+	result.MxHosts = mxHosts
 
 	for _, host := range mxHosts {
-		log.Printf("Trying to send email to host: %s", host)
+		fmt.Fprintf(logger, "INFO: Sending to host: %s\n", host)
 
-		err = sendEmailToHost(message, host)
+		err = sendEmailToHost(message, host, logger, result)
 
 		if err == nil {
-			log.Printf("Email sent successfully to %s", message.To)
-			return nil
+			result.SentHost = host
+			fmt.Fprintf(logger, "INFO: Email successfully sent\n")
+
+			resultsJson, _ := json.MarshalIndent(result, "", "  ")
+			fmt.Fprintf(logger, "Result: %+v\n", string(resultsJson))
+			return result
 		} else {
-			log.Printf("Failed to send email to %s: %s", host, err)
+			fmt.Fprintf(logger, "ERROR: Failed to send email to %s: %s\n", host, err)
 		}
 	}
 
-	log.Printf("All attempts to send email failed for %s", message.To)
-	return ErrSendEmailFailed
+	fmt.Fprintf(logger, "ERROR: All attempts to send email failed for %s", message.To)
 
+	result.Error = ErrSendEmailFailed
+	return result
 }
 
-func sendEmailToHost(message EmailSendMessage, host string) error {
+func sendEmailToHost(
+	message *EmailSendMessage,
+	host string,
+	logger io.Writer,
+	result *SendResult,
+) error {
 
-	log.Printf("SMTP host: %s", host)
+	latency := NewSmtpLatency()
+	result.SmtpLatency[host] = latency
 
 	c, err := smtp.Dial(host + ":25")
+	c.DebugWriter = logger
 	if err != nil {
-		log.Printf("Error connecting to SMTP server: %s", err)
+		fmt.Fprintf(logger, "ERROR: %s\n", err)
 		return err
 	}
 	defer c.Close()
 
+	latency.RecordStep(SmtpStepDial)
+
 	if err := c.Hello("relay.hyvor.com"); err != nil {
-		log.Printf("Error during HELO: %s", err)
+		fmt.Fprintf(logger, "ERROR: EHLO failed - %s\n", err)
 		return err
 	}
+
+	latency.RecordStep(SmtpStepHello)
 
 	if err := c.Mail(message.From, nil); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := c.Rcpt(message.To, nil); err != nil {
-		log.Printf("Error during RCPT: %s", err)
+		fmt.Fprintf(logger, "ERROR: MAIL FROM failed - %s\n", err)
 		return err
 	}
+
+	latency.RecordStep(SmtpStepMail)
+
+	if err := c.Rcpt(message.To, nil); err != nil {
+		fmt.Fprintf(logger, "ERROR: RCPT failed - %s\n", err)
+		return err
+	}
+
+	latency.RecordStep(SmtpStepRcpt)
 
 	w, err := c.Data()
 	if err != nil {
-		log.Printf("Error during DATA: %s", err)
+		fmt.Fprintf(logger, "ERROR: DATA failed - %s\n", err)
 		return err
 	}
+
+	latency.RecordStep(SmtpStepData)
 
 	_, err = w.Write([]byte(message.RawEmail))
 	if err != nil {
-		log.Printf("Error writing email data: %s", err)
+		fmt.Fprintf(logger, "ERROR: Writing data failed - %s\n", err)
 		return err
 	}
 
-	if err := w.Close(); err != nil {
-		log.Printf("Error closing email data: %s", err)
-		return err
-	}
+	latency.RecordStep(SmtpStepDataWrite)
 
-	// TODO: do not throw error, call c.Close() directly
-	if err := c.Quit(); err != nil {
-		log.Printf("Error during QUIT: %s", err)
-		return err
-	}
+	_ = c.Quit() // ignore QUIT error
+
+	latency.RecordStep(SmtpStepQuit)
 
 	return nil
 
