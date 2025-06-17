@@ -25,7 +25,7 @@ class SendEmailTest extends WebTestCase
         $this->consoleApi(
             $project,
             'POST',
-            '/email/transactional',
+            '/email',
             data: [
                 'from' => 'supun@hyvor.com',
                 'to' => 'somebody@example.com',
@@ -36,7 +36,6 @@ class SendEmailTest extends WebTestCase
         );
 
         $this->assertResponseStatusCodeSame(200);
-        $json = $this->getJson();
 
         $send = $this->em->getRepository(Send::class)->findAll();
         $this->assertCount(1, $send);

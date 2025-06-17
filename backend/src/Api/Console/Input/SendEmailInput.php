@@ -3,7 +3,7 @@
 namespace App\Api\Console\Input;
 
 use App\Api\Console\Validation\EmailAddress;
-use App\Service\Email\EmailBuilder;
+use App\Service\Email\EmailAddressFormat;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -18,14 +18,11 @@ class SendEmailInput
     public string|array $from;
 
     /**
-     * @var array<string|array{email: string, name?: string}>
+     * @var string|array{email: string, name?: string}
      */
     #[Assert\NotBlank]
-    #[Assert\All([
-        new Assert\NotBlank(),
-        new EmailAddress()
-    ])]
-    public array $to;
+    #[EmailAddress]
+    public string|array $to;
 
     public string $subject = '';
 
@@ -52,7 +49,12 @@ class SendEmailInput
 
     public function getFromAddress(): Address
     {
-        return EmailBuilder::createAddressFromInput($this->from);
+        return EmailAddressFormat::createAddressFromInput($this->from);
+    }
+
+    public function getToAddress(): Address
+    {
+        return EmailAddressFormat::createAddressFromInput($this->to);
     }
 
 }

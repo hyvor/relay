@@ -5,9 +5,11 @@ namespace App\Api\Console\Controller;
 use App\Api\Console\Input\SendEmailInput;
 use App\Entity\Project;
 use App\Service\Domain\DomainService;
+use App\Service\Email\EmailAddressFormat;
 use App\Service\Email\SendService;
 use App\Service\Queue\QueueService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
@@ -30,11 +32,14 @@ class EmailController extends AbstractController
     ): JsonResponse
     {
 
-        $fromAddress = $sendEmailInput->from;
-        $domainName = explode('@', $fromAddress)[1] ?? null;
-        assert($domainName !== null);
+        $fromAddress = $sendEmailInput->getFromAddress();
+
+        $domainName = EmailAddressFormat::getDomainFromEmail($fromAddress->getAddress());
         $domain = $this->domainService->getDomainByName($domainName);
-        assert($domain !== null);
+
+        if ($domain === null) {
+            throw new BadRequestException("Domain $domainName not found for email address " . $fromAddress->getAddress());
+        }
 
         $queue = $this->queueService->getTransactionalQueue();
         assert($queue !== null, 'Transactional queue not found');
@@ -44,7 +49,7 @@ class EmailController extends AbstractController
             $domain,
             $queue,
             $fromAddress,
-            $sendEmailInput->to,
+            $sendEmailInput->getToAddress(),
             $sendEmailInput->subject,
             $sendEmailInput->body_html,
             $sendEmailInput->body_text
