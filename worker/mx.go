@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"strings"
 	"sync"
@@ -23,12 +24,12 @@ var mxCache = mxCacheType{
 	mu:   sync.Mutex{},
 }
 
-var ErrSmtpMxLookupFailed = errors.New("SMTP MX lookup failed")
-var ErrSmtpMxNoRecords = errors.New("SMTP MX lookup returned no records")
+var ErrSmtpMxLookupFailed = errors.New("MX lookup failed")
+var ErrSmtpMxNoRecords = errors.New("MX lookup returned no records")
 
 var lookupMxFunc = net.LookupMX
 
-func SmtpHostFromEmail(email string) ([]string, error) {
+func getMxHostsFromEmail(email string) ([]string, error) {
 	domain := email[strings.Index(email, "@")+1:]
 
 	mxCache.mu.Lock()
@@ -41,12 +42,15 @@ func SmtpHostFromEmail(email string) ([]string, error) {
 	mx, err := lookupMxFunc(domain)
 
 	if err != nil {
-		return nil, ErrSmtpMxLookupFailed
+		return nil, fmt.Errorf("%w: %s", ErrSmtpMxLookupFailed, err)
 	}
 
 	if len(mx) == 0 {
 		return nil, ErrSmtpMxNoRecords
 	}
+
+	// todo: sort by preference
+	// todo: remove duplicates
 
 	var hosts []string
 	for _, mxRecord := range mx {
@@ -60,5 +64,4 @@ func SmtpHostFromEmail(email string) ([]string, error) {
 	}
 
 	return hosts, nil
-
 }

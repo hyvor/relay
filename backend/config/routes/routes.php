@@ -14,4 +14,9 @@ return static function (RoutingConfigurator $routes): void {
         ->prefix('/api/console')
         ->namePrefix('api_console_');
 
+    // local API
+    $routes->import('../../src/Api/Local/Controller', 'attribute')
+        ->prefix('/api/local')
+        ->namePrefix('api_local_');
+
 };
