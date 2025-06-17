@@ -3,10 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
-	"net"
-	"strings"
 
-	smtp "github.com/emersion/go-smtp"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -101,78 +98,5 @@ func listenRabbitMq() {
 	}()
 
 	<-forever
-
-}
-
-func sendEmail(message EmailSendMessage) {
-
-	log.Printf("Sending email")
-
-	smtpServerAddress := getSmtpServerAddress(message.To)
-
-	log.Printf("SMTP server address: %s", smtpServerAddress)
-
-	c, err := smtp.Dial(smtpServerAddress + ":25")
-	if err != nil {
-		log.Printf("Error connecting to SMTP server: %s", err)
-		return
-	}
-	defer c.Close()
-
-	err = c.Hello("relay.hyvor.com")
-	if err != nil {
-		log.Printf("Error during HELO: %s", err)
-		return
-	}
-
-	if err := c.Mail(message.From, nil); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := c.Rcpt(message.To, nil); err != nil {
-		log.Printf("Error during RCPT: %s", err)
-		return
-	}
-
-	w, err := c.Data()
-	if err != nil {
-		log.Printf("Error during DATA: %s", err)
-		return
-	}
-
-	_, err = w.Write([]byte(message.RawEmail))
-	if err != nil {
-		log.Printf("Error writing email data: %s", err)
-		return
-	}
-
-	if err := w.Close(); err != nil {
-		log.Printf("Error closing email data: %s", err)
-		return
-	}
-
-	log.Printf("Email sent successfully to %s", message.To)
-	if err := c.Quit(); err != nil {
-		log.Printf("Error during QUIT: %s", err)
-		return
-	}
-
-}
-
-func getSmtpServerAddress(email string) string {
-
-	domain := email[strings.Index(email, "@")+1:]
-	mx, err := net.LookupMX(domain)
-
-	if err != nil || len(mx) == 0 {
-		log.Printf("Error looking up MX records for domain %s: %s", domain, err)
-		return ""
-	}
-
-	for i := range mx {
-		log.Printf("Domain %s, Found MX record: %s", domain, mx[i].Host)
-	}
-
-	return mx[0].Host
 
 }

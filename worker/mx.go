@@ -28,7 +28,7 @@ var ErrSmtpMxNoRecords = errors.New("SMTP MX lookup returned no records")
 
 var lookupMxFunc = net.LookupMX
 
-func SmtpHostFromEmail(email string) ([]string, error) {
+func getMxHostsFromEmail(email string) ([]string, error) {
 	domain := email[strings.Index(email, "@")+1:]
 
 	mxCache.mu.Lock()
