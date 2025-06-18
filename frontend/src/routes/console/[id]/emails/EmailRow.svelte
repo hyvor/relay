@@ -28,11 +28,12 @@
 				<span class="email-label">To:</span>
 				<span class="email-address">{email.to_address}</span>
 			</div>
-			<div class="email-row">
-				<span class="email-label">Subject:</span>
-				<span class="email-subject">{email.subject}</span>
-			</div>
 		</div>
+	</div>
+
+	<div class="subject-wrap">
+		<div class="subject-label">Subject:</div>
+		<div class="subject">{email.subject}</div>
 	</div>
 
 	<div class="status-wrap">
@@ -60,10 +61,12 @@
 	.email {
 		padding: 15px 25px;
 		border-radius: var(--box-radius);
-		display: flex;
+		display: grid;
+		grid-template-columns: minmax(250px, 1fr) minmax(300px, 2fr) auto;
 		text-align: left;
 		width: 100%;
 		align-items: center;
+		gap: 20px;
 	}
 	.email:hover {
 		background: var(--hover);
@@ -74,7 +77,26 @@
 	}
 
 	.email-wrap {
-		flex: 1;
+		min-width: 250px;
+	}
+
+	.subject-wrap {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.subject-label {
+		font-size: 12px;
+		color: var(--text-light);
+		font-weight: 500;
+	}
+
+	.subject {
+		font-weight: 600;
+		color: var(--text);
+		font-size: 14px;
 	}
 
 	.email-details {
@@ -102,15 +124,10 @@
 		font-size: 14px;
 	}
 
-	.email-subject {
-		font-weight: 600;
-		color: var(--text);
-		font-size: 14px;
-	}
-
 	.status-wrap {
 		display: flex;
 		align-items: center;
+		justify-content: flex-end;
 	}
 
 	.status {
@@ -141,9 +158,19 @@
 
 	@media (max-width: 992px) {
 		.email {
+			display: flex;
 			flex-direction: column;
 			align-items: flex-start;
 			gap: 10px;
+		}
+
+		.subject-wrap {
+			width: 100%;
+		}
+
+		.status-wrap {
+			width: 100%;
+			justify-content: flex-start;
 		}
 
 		.status {
