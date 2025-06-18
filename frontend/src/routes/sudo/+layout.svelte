@@ -6,6 +6,7 @@
 	import IconActivity from '@hyvor/icons/IconActivity';
 	import relativeTime from 'dayjs/plugin/relativeTime';
 	import dayjs from 'dayjs';
+	import InstanceDomain from './InstanceDomain.svelte';
 
 	dayjs.extend(relativeTime);
 
@@ -27,6 +28,8 @@
 		<div id="wrap">
 			<nav>
 				<div class="hds-box nav-inner">
+					<InstanceDomain />
+
 					<div class="nav-title">Infrastructure</div>
 
 					<NavLink href="/sudo/health" active={page.url.pathname === '/sudo/health'}>
@@ -103,10 +106,11 @@
 		padding: 15px 0;
 	}
 	.nav-title {
-		font-weight: 600;
 		padding: 15px 30px;
 		font-size: 14px;
 		margin-top: 5px;
+		color: var(--text-light);
+		display: none;
 	}
 	.content {
 		flex: 1;

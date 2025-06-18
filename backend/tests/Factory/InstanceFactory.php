@@ -2,14 +2,13 @@
 
 namespace App\Tests\Factory;
 
-use App\Entity\IpAddress;
-use App\Entity\Server;
+use App\Entity\Instance;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<IpAddress>
+ * @extends PersistentProxyObjectFactory<Instance>
  */
-final class IpAddressFactory extends PersistentProxyObjectFactory
+final class InstanceFactory extends PersistentProxyObjectFactory
 {
 
     public function __construct()
@@ -19,7 +18,7 @@ final class IpAddressFactory extends PersistentProxyObjectFactory
 
     public static function class(): string
     {
-        return IpAddress::class;
+        return Instance::class;
     }
 
     /**
@@ -28,10 +27,7 @@ final class IpAddressFactory extends PersistentProxyObjectFactory
     protected function defaults(): array
     {
         return [
-            'server' => ServerFactory::new(),
-            'ip_address' => self::faker()->ipv4(),
-            'queue' => null,
-            'is_enabled' => self::faker()->boolean(80),
+            'domain' => self::faker()->domainName(),
             'created_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'updated_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
         ];

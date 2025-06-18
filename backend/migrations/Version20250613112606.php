@@ -7,7 +7,7 @@ namespace DoctrineMigrations;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
-final class Version20250609112606 extends AbstractMigration
+final class Version20250613112606 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -24,7 +24,7 @@ final class Version20250609112606 extends AbstractMigration
             updated_at TIMESTAMPTZ NOT NULL,
             server_id INTEGER NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
             ip_address VARCHAR(45) NOT NULL,
-            email_queue VARCHAR(255),
+            queue_id INTEGER NULL REFERENCES queues(id) ON DELETE SET NULL,
             is_active BOOLEAN NOT NULL DEFAULT FALSE, -- Indicates if the IP was found last time
             is_enabled BOOLEAN NOT NULL DEFAULT TRUE, -- Whether this IP is enabled for use to send emails
             UNIQUE (server_id, ip_address)

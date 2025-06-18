@@ -13,7 +13,19 @@ class SendDoneTest extends WebTestCase
 
     public function test_cannot_call_from_non_localhost_ip(): void
     {
-        //
+        $response = $this->localApi(
+            "POST",
+            "/send/done",
+            [
+                "sendId" => 9999,
+                "status" => "sent",
+            ],
+            server: [
+                'REMOTE_ADDR' => '8.8.8.8'
+            ]
+        );
+
+        $this->assertResponseStatusCodeSame(401);
     }
 
     public function test_fails_on_no_send_found(): void

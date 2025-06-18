@@ -103,19 +103,21 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
 
     /**
      * @param array<string, mixed> $data
+     * @param array<string, string> $server
      */
     public function localApi(
         string $method,
         string $uri,
         array $data = [],
+        array $server = [],
     ): Response {
 
         $this->client->request(
             $method,
             '/api/local' . $uri,
-            server: [
+            server: array_merge([
                 'CONTENT_TYPE' => 'application/json',
-            ],
+            ], $server),
             content: (string)json_encode($data),
         );
 
