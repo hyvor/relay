@@ -6,6 +6,9 @@ class IpService
 {
 
     public function __construct(
+        /**
+         * @var callable $netGetInterfacesFunction
+         */
         private mixed $netGetInterfacesFunction = '\net_get_interfaces',
     )
     {}
@@ -18,6 +21,8 @@ class IpService
     public function getPublicV4IpAddresses(): array
     {
         $ips = [];
+
+        /** @var array<array{up: bool, unicast: array{address: string|false}}> $interfaces */
         $interfaces = call_user_func($this->netGetInterfacesFunction);
 
         foreach ($interfaces as $interface) {
@@ -37,6 +42,7 @@ class IpService
         }
 
         // Remove duplicates
+        /** @var string[] $ips */
         $ips = array_unique($ips);
 
         // Sort the IPs

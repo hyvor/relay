@@ -32,7 +32,7 @@
 			{ip.email_queue ? 'Change' : 'Assign'}
 		</Button>
 	</td>
-	<td> relay.hyvor.com </td>
+	<td> {ip.ptr} </td>
 	<td class="">
 		<Tag size="small" color="green">Enabled</Tag>
 	</td>

@@ -9,6 +9,7 @@ use App\Service\Email\SendService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Routing\Attribute\Route;
@@ -25,7 +26,10 @@ class LocalController extends AbstractController
     }
 
     #[Route('/send/done', methods: 'POST')]
-    public function sendDone(#[MapRequestPayload] SendDoneInput $input): JsonResponse
+    public function sendDone(
+        #[MapRequestPayload] SendDoneInput $input,
+        Request $request
+    ): JsonResponse
     {
         $send = $this->sendService->getSendById($input->sendId);
 
