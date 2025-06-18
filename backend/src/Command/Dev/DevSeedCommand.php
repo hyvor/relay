@@ -3,8 +3,10 @@
 namespace App\Command\Dev;
 
 use App\Tests\Factory\DomainFactory;
+use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
+use App\Tests\Factory\ServerFactory;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -36,6 +38,14 @@ class DevSeedCommand extends Command
         }
 
         QueueFactory::createTransactional();
+        QueueFactory::createDistributional();
+
+        $server = ServerFactory::createOne();
+        IpAddressFactory::createMany(2, [
+            'server' => $server,
+            'email_queue' => null
+        ]);
+
         $domain = DomainFactory::createOne(['domain' => 'example.com']);
         $project = ProjectFactory::createOne([
             'name' => 'Test Project',

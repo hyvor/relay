@@ -8,7 +8,7 @@ when@dev:
             main:
                 type: stream
                 path: php://stderr
-                level: debug
+                level: error
 
 when@test:
     monolog:

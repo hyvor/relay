@@ -13,16 +13,16 @@
 
 	function getWorkerName() {
 		return {
-			api: 'API',
-			email: 'Email',
-			webhook: 'Webhook'
+			api: 'API Workers',
+			email: 'Email Workers per IP',
+			webhook: 'Webhook Workers'
 		}[worker];
 	}
 
 	function getTipText() {
 		return {
 			api: 'Each worker can consume around 5MB of memory. Scale based on your API load. Default is CPU cores * 2.',
-			email: 'Number of Go workers senidng emails from the queue.',
+			email: 'Number of Go workers sending emails per IP. Default is 4.',
 			webhook: ''
 		}[worker];
 	}
