@@ -3,6 +3,7 @@
 namespace App\Service\Management\Health;
 
 use App\Entity\IpAddress;
+use App\Service\Ip\Ptr;
 use Doctrine\ORM\EntityManagerInterface;
 
 class AllActiveIpsHaveCorrectPtrHealthCheck extends HealthCheckAbstract
@@ -10,6 +11,7 @@ class AllActiveIpsHaveCorrectPtrHealthCheck extends HealthCheckAbstract
 
     public function __construct(
         private EntityManagerInterface $em,
+        private Ptr $ptr,
         /**
          * @var callable
          */
