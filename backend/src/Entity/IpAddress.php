@@ -31,8 +31,9 @@ class IpAddress
     #[ORM\Column(type: 'string', length: 45)]
     private string $ip_address;
 
-    #[ORM\Column(type: 'string', length: 255)]
-    private ?string $email_queue;
+    #[ORM\ManyToOne(targetEntity: Queue::class)]
+    #[ORM\JoinColumn()]
+    private ?Queue $queue;
 
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $is_active = false;
@@ -110,14 +111,14 @@ class IpAddress
         return $this;
     }
 
-    public function getEmailQueue(): ?string
+    public function getQueue(): ?Queue
     {
-        return $this->email_queue;
+        return $this->queue;
     }
 
-    public function setEmailQueue(?string $emailQueue): static
+    public function setQueue(?Queue $queue): static
     {
-        $this->email_queue = $emailQueue;
+        $this->queue = $queue;
         return $this;
     }
 
