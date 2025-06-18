@@ -1,0 +1,157 @@
+<script lang="ts">
+	import type { Email } from '../../types';
+	import EmailStatus from './EmailStatus.svelte';
+	import RelativeTime from '../../@components/content/RelativeTime.svelte';
+
+	interface Props {
+		email: Email;
+		refreshList: () => void;
+	}
+
+	let { email, refreshList }: Props = $props();
+
+	// Get the relevant timestamp based on status
+	const statusTimestamp = $derived(
+		email.status === 'sent' ? email.sent_at : 
+		email.status === 'failed' ? email.failed_at : null
+	);
+</script>
+
+<button class="email">
+	<div class="email-wrap">
+		<div class="email-details">
+			<div class="email-row">
+				<span class="email-label">From:</span>
+				<span class="email-address">{email.from_address}</span>
+			</div>
+			<div class="email-row">
+				<span class="email-label">To:</span>
+				<span class="email-address">{email.to_address}</span>
+			</div>
+			<div class="email-row">
+				<span class="email-label">Subject:</span>
+				<span class="email-subject">{email.subject}</span>
+			</div>
+		</div>
+	</div>
+
+	<div class="status-wrap">
+		<div class="status">
+			<EmailStatus status={email.status} />
+			<div class="timestamps">
+				<div class="timestamp">
+					<span class="timestamp-label">Created:</span>
+					<RelativeTime unix={email.created_at} />
+				</div>
+				{#if statusTimestamp}
+					<div class="timestamp">
+						<span class="timestamp-label">
+							{email.status === 'sent' ? 'Sent:' : 'Failed:'}
+						</span>
+						<RelativeTime unix={statusTimestamp} />
+					</div>
+				{/if}
+			</div>
+		</div>
+	</div>
+</button>
+
+<style>
+	.email {
+		padding: 15px 25px;
+		border-radius: var(--box-radius);
+		display: flex;
+		text-align: left;
+		width: 100%;
+		align-items: center;
+	}
+	.email:hover {
+		background: var(--hover);
+	}
+
+	.checkbox {
+		margin-right: 15px;
+	}
+
+	.email-wrap {
+		flex: 1;
+	}
+
+	.email-details {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.email-row {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.email-label {
+		font-size: 12px;
+		color: var(--text-light);
+		font-weight: 500;
+		min-width: 35px;
+	}
+
+	.email-address {
+		font-weight: 600;
+		color: var(--text);
+		font-size: 14px;
+	}
+
+	.email-subject {
+		font-weight: 600;
+		color: var(--text);
+		font-size: 14px;
+	}
+
+	.status-wrap {
+		display: flex;
+		align-items: center;
+	}
+
+	.status {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 4px;
+	}
+
+	.timestamps {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 2px;
+	}
+
+	.timestamp {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		font-size: 12px;
+		color: var(--text-light);
+	}
+
+	.timestamp-label {
+		font-weight: 500;
+	}
+
+	@media (max-width: 992px) {
+		.email {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 10px;
+		}
+
+		.status {
+			align-items: flex-start;
+		}
+
+		.timestamps {
+			align-items: flex-start;
+		}
+	}
+</style>

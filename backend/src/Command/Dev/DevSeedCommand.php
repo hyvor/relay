@@ -2,9 +2,11 @@
 
 namespace App\Command\Dev;
 
+use App\Entity\Type\SendStatus;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
+use App\Tests\Factory\SendFactory;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -39,6 +41,26 @@ class DevSeedCommand extends Command
         $domain = DomainFactory::createOne(['domain' => 'example.com']);
         $project = ProjectFactory::createOne([
             'name' => 'Test Project',
+        ]);
+
+        $sends_queued = SendFactory::createMany(2, [
+            'project' => $project,
+            'domain' => $domain,
+            'status' => SendStatus::QUEUED,
+        ]);
+
+        $sends_sent = SendFactory::createMany(5, [
+            'project' => $project,
+            'domain' => $domain,
+            'sent_at' => new \DateTimeImmutable(),
+            'status' => SendStatus::SENT,
+        ]);
+
+        $sent_failed = SendFactory::createMany(1, [
+            'project' => $project,
+            'domain' => $domain,
+            'failed_at' => new \DateTimeImmutable(),
+            'status' => SendStatus::FAILED,
         ]);
 
         $output->writeln('<info>Database seeded with test data.</info>');
