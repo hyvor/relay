@@ -22,9 +22,9 @@ func TestErrorOnLookupFailed(t *testing.T) {
 		return nil, errors.New("lookup failed")
 	}
 
-	_, err := SmtpHostFromEmail("test@hyvor.com")
+	_, err := getMxHostsFromEmail("test@hyvor.com")
 
-	if err != ErrSmtpMxLookupFailed {
+	if errors.Is(err, ErrSmtpMxLookupFailed) != true {
 		t.Errorf("Expected error %v, got %v", ErrSmtpMxLookupFailed, err)
 	}
 }
@@ -34,7 +34,7 @@ func TestErrorOnNoRecords(t *testing.T) {
 		return []*net.MX{}, nil
 	}
 
-	_, err := SmtpHostFromEmail("test@hyvor.com")
+	_, err := getMxHostsFromEmail("test@hyvor.com")
 	if err != ErrSmtpMxNoRecords {
 		t.Errorf("Expected error %v, got %v", ErrSmtpMxNoRecords, err)
 	}
@@ -48,7 +48,7 @@ func TestValidMxLookupAndCache(t *testing.T) {
 		}, nil
 	}
 
-	hosts, err := SmtpHostFromEmail("test@hyvor.com")
+	hosts, err := getMxHostsFromEmail("test@hyvor.com")
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -81,7 +81,7 @@ func TestGetHostsFromCache(t *testing.T) {
 		Expiry: time.Now().Add(5 * time.Minute),
 	}
 
-	hosts, err := SmtpHostFromEmail("test@hyvor.com")
+	hosts, err := getMxHostsFromEmail("test@hyvor.com")
 
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)

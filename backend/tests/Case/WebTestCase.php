@@ -101,4 +101,34 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         return $response;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function localApi(
+        string $method,
+        string $uri,
+        array $data = [],
+    ): Response {
+
+        $this->client->request(
+            $method,
+            '/api/local' . $uri,
+            server: [
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            content: (string)json_encode($data),
+        );
+
+        $response = $this->client->getResponse();
+
+        if ($response->getStatusCode() === 500) {
+            throw new \Exception(
+                'API call failed with status code 500. ' .
+                'Response: ' . $response->getContent()
+            );
+        }
+
+        return $response;
+    }
+
 }

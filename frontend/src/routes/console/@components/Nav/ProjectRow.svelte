@@ -4,13 +4,14 @@
 	import { projectStore } from '../../lib/stores/projectStore';
 	import type { Project } from '../../types';
 	import { selectingProject } from '../../lib/stores/consoleStore';
+	import { loadProject } from '../../lib/projectLoader';
 
 	export let project: Project;
 
 	function onClick() {
 		projectStore.set(project);
 		goto(`/console/${project.id}`);
-		//loadNewsletter(String(newsletterList.newsletter.id));
+		loadProject(String(project.id));
 		selectingProject.set(false);
 	}
 </script>

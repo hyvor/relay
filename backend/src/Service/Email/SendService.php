@@ -8,6 +8,7 @@ use App\Entity\Queue;
 use App\Entity\Send;
 use App\Entity\Type\SendStatus;
 use App\Repository\SendRepository;
+use App\Service\Email\Dto\SendUpdateDto;
 use App\Service\Email\Message\EmailSendMessage;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -72,6 +73,11 @@ class SendService
     }
 
 
+    public function getSendById(int $id): ?Send
+    {
+        return $this->em->getRepository(Send::class)->find($id);
+    }
+
     public function createSend(
         Project $project,
         Domain $domain,
@@ -132,6 +138,33 @@ class SendService
 
         }
 
+    }
+
+    public function updateSend(Send $send, SendUpdateDto $update): Send
+    {
+
+        if ($update->statusSet) {
+            $send->setStatus($update->status);
+        }
+
+        if ($update->sentAtSet) {
+            $send->setSentAt($update->sentAt);
+        }
+
+        if ($update->failedAtSet) {
+            $send->setFailedAt($update->failedAt);
+        }
+
+        if ($update->resultSet) {
+            $send->setResult($update->result);
+        }
+
+        $send->setUpdatedAt($this->now());
+
+        $this->em->persist($send);
+        $this->em->flush();
+
+        return $send;
 
     }
 

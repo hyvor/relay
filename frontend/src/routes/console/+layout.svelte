@@ -6,6 +6,12 @@
 		Loader,
 		toast
 	} from '@hyvor/design/components';
+	import { onMount } from 'svelte';
+	import type { Project } from './types';
+	import consoleApi from './lib/consoleApi';
+	import { userProjectStore } from './lib/stores/userProjectStore';
+	import { projectStore } from './lib/stores/projectStore';
+	import { page } from '$app/stores';
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -13,7 +19,38 @@
 
 	let { children }: Props = $props();
 
-	let isLoading = $state(false);
+	interface InitResponse {
+		//config: AppConfig;
+		projects: Project[];
+	}
+
+
+	let isLoading = $state(true);
+
+	onMount(() => {
+		consoleApi
+			.get<InitResponse>({
+				userApi: true,
+				endpoint: 'init'
+			})
+			.then((res) => {
+
+				userProjectStore.set(res.projects);
+				if (res.projects.length != 0) {
+					projectStore.set(res.projects[0]);
+				}
+				isLoading = false;
+			})
+			.catch((err) => {
+				if (err.code === 401) {
+					const toPage = $page.url.searchParams.has('signup') ? 'signup' : 'login';
+					location.href =
+						`/api/auth/${toPage}?redirect=` + encodeURIComponent(location.href);
+				} else {
+					toast.error(err.message);
+				}
+			});
+	});
 </script>
 
 <svelte:head>
