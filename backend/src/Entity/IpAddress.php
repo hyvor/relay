@@ -40,13 +40,19 @@ class IpAddress
      * This might be false if the IP was no longer available on the server
      */
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
-    private bool $is_active = false;
+    private bool $is_available = false;
 
     /**
      * This is used for manually enabling or disabling an IP address.
      */
     #[ORM\Column(type: 'boolean')]
     private bool $is_enabled = true;
+
+    #[ORM\Column(type: 'boolean')]
+    private bool $is_ptr_forward_valid = true;
+
+    #[ORM\Column(type: 'boolean')]
+    private bool $is_ptr_reverse_valid = true;
 
     public function __construct()
     {}
@@ -129,14 +135,14 @@ class IpAddress
         return $this;
     }
 
-    public function getIsActive(): bool
+    public function getIsAvailable(): bool
     {
-        return $this->is_active;
+        return $this->is_available;
     }
 
-    public function setIsActive(bool $isActive): static
+    public function setIsAvailable(bool $isActive): static
     {
-        $this->is_active = $isActive;
+        $this->is_available = $isActive;
         return $this;
     }
 
@@ -150,4 +156,27 @@ class IpAddress
         $this->is_enabled = $isEnabled;
         return $this;
     }
+
+    public function getIsPtrForwardValid(): bool
+    {
+        return $this->is_ptr_forward_valid;
+    }
+
+    public function setIsPtrForwardValid(bool $isPtrForwardValid): static
+    {
+        $this->is_ptr_forward_valid = $isPtrForwardValid;
+        return $this;
+    }
+
+    public function getIsPtrReverseValid(): bool
+    {
+        return $this->is_ptr_reverse_valid;
+    }
+
+    public function setIsPtrReverseValid(bool $isPtrReverseValid): static
+    {
+        $this->is_ptr_reverse_valid = $isPtrReverseValid;
+        return $this;
+    }
+    
 }

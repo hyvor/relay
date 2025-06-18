@@ -27,7 +27,7 @@ class IpAddressObject
         $this->ptr = Ptr::getPtrDomain($ipAddress, $instance->getDomain());
         $queue = $ipAddress->getQueue();
         $this->queue = $queue ? new QueueObject($queue) : null;
-        $this->is_active = $ipAddress->getIsActive();
+        $this->is_active = $ipAddress->getIsAvailable();
         $this->is_enabled = $ipAddress->getIsEnabled();
     }
 
