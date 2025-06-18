@@ -1,7 +1,10 @@
 <script lang="ts">
-	import { Loader } from '@hyvor/design/components';
+	import { Loader, toast } from '@hyvor/design/components';
 	import Nav from '../@components/nav/Nav.svelte';
 	import ProjectSelector from '../@components/Nav/ProjectSelector.svelte';
+	import { onMount } from 'svelte';
+	import { page } from '$app/state';
+	import { loadProject } from '../lib/projectLoader';
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -9,7 +12,18 @@
 
 	let { children }: Props = $props();
 
-	let isLoading = $state(false);
+	let isLoading = $state(true);
+
+	onMount(() => {
+		const projectId = page.params.id;
+		loadProject(projectId)
+			.then(() => {
+				isLoading = false;
+			})
+			.catch((e) => {
+				toast.error('Unable to load Project');
+			});
+	});
 </script>
 
 <div class="main-inner">

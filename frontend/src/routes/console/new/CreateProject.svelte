@@ -12,6 +12,7 @@
 	import IconCaretLeft from '@hyvor/icons/IconCaretLeft';
 	import { addUserProject, userProjectStore } from '../lib/stores/userProjectStore';
 	import { createProject } from '../lib/actions/projectActions';
+	import { selectingProject } from '../lib/stores/consoleStore';
 
 	let name = $state('');
 
@@ -53,6 +54,8 @@
 				addUserProject(res);
 
 				goto('/console/' + res.id);
+
+				selectingProject.set(false);
 			})
 			.catch((e) => {
 				toast.error(e.message);

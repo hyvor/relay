@@ -42,10 +42,10 @@ function getConsoleApi() {
 
         if (!userApi) {
             const project = get(projectStore);
-            headers['HTTP_X_PROJECT_ID'] = project.id.toString();
+            headers['X_Project_ID'] = project.id.toString();
         }
         else if (projectId) {
-            headers['HTTP_X_PROJECT_ID'] = projectId;
+            headers['X_Project_ID'] = projectId;
         }
 
         if (!(data instanceof FormData)) {
