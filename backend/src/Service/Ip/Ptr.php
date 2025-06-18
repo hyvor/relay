@@ -10,6 +10,6 @@ class Ptr
 
     public static function getPtrDomain(IpAddress $ipAddress, string $instanceDomain): string
     {
-        return self::PTR_PREFIX . $ipAddress->getId() . $instanceDomain;
+        return self::PTR_PREFIX . $ipAddress->getId() . '.' . $instanceDomain;
     }
 }
