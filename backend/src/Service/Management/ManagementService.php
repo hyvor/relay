@@ -3,6 +3,7 @@
 namespace App\Service\Management;
 
 use App\Entity\Server;
+use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
 use App\Service\Queue\QueueService;
 use App\Service\Server\ServerService;
@@ -18,6 +19,7 @@ class ManagementService
 
     public function __construct(
         private ServerService $serverService,
+        private InstanceService $instanceService,
         private IpAddressService $ipAddressService,
         private QueueService $queueService,
         private EntityManagerInterface $entityManager,
@@ -35,10 +37,23 @@ class ManagementService
     public function initialize(): void
     {
         $this->entityManager->wrapInTransaction(function() {
+            $this->initializeInstance();
             $server = $this->initializeServer();
             $this->initializeIpAddresses($server);
             $this->initializeDefaultQueues();
         });
+    }
+
+    private function initializeInstance(): void
+    {
+
+        $instance = $this->instanceService->tryGetInstance();
+
+        if ($instance === null) {
+            $this->output->writeln('<info>Initiating the instance...</info>');
+            $this->instanceService->createInstance();
+        }
+
     }
 
     private function initializeServer(): Server

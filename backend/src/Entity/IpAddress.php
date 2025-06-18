@@ -35,9 +35,16 @@ class IpAddress
     #[ORM\JoinColumn()]
     private ?Queue $queue;
 
+    /**
+     * Indicates if the IP was found last time management:init command was run.
+     * This might be false if the IP was no longer available on the server
+     */
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $is_active = false;
 
+    /**
+     * This is used for manually enabling or disabling an IP address.
+     */
     #[ORM\Column(type: 'boolean')]
     private bool $is_enabled = true;
 

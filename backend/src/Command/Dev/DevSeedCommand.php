@@ -2,7 +2,9 @@
 
 namespace App\Command\Dev;
 
+use App\Service\Instance\InstanceService;
 use App\Tests\Factory\DomainFactory;
+use App\Tests\Factory\InstanceFactory;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
@@ -37,13 +39,17 @@ class DevSeedCommand extends Command
             return Command::FAILURE;
         }
 
+        InstanceFactory::createOne([
+            'domain' => InstanceService::DEFAULT_DOMAIN
+        ]);
+
         QueueFactory::createTransactional();
         QueueFactory::createDistributional();
 
         $server = ServerFactory::createOne();
         IpAddressFactory::createMany(2, [
             'server' => $server,
-            'email_queue' => null
+            'queue' => null
         ]);
 
         $domain = DomainFactory::createOne(['domain' => 'example.com']);
