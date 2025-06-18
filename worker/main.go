@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"net"
+	"strings"
 
 	smtp "github.com/emersion/go-smtp"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -106,7 +108,11 @@ func sendEmail(message EmailSendMessage) {
 
 	log.Printf("Sending email")
 
-	c, err := smtp.Dial("hyvor-service-mailpit:1025")
+	smtpServerAddress := getSmtpServerAddress(message.To)
+
+	log.Printf("SMTP server address: %s", smtpServerAddress)
+
+	c, err := smtp.Dial(smtpServerAddress + ":25")
 	if err != nil {
 		log.Printf("Error connecting to SMTP server: %s", err)
 		return
@@ -150,5 +156,23 @@ func sendEmail(message EmailSendMessage) {
 		log.Printf("Error during QUIT: %s", err)
 		return
 	}
+
+}
+
+func getSmtpServerAddress(email string) string {
+
+	domain := email[strings.Index(email, "@")+1:]
+	mx, err := net.LookupMX(domain)
+
+	if err != nil || len(mx) == 0 {
+		log.Printf("Error looking up MX records for domain %s: %s", domain, err)
+		return ""
+	}
+
+	for i := range mx {
+		log.Printf("Domain %s, Found MX record: %s", domain, mx[i].Host)
+	}
+
+	return mx[0].Host
 
 }
