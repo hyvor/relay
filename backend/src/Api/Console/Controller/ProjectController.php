@@ -4,6 +4,7 @@ namespace App\Api\Console\Controller;
 
 use App\Api\Console\Input\CreateProjectInput;
 use App\Api\Console\Object\ProjectObject;
+use App\Entity\Project;
 use App\Service\Project\ProjectService;
 use Hyvor\Internal\Bundle\Security\HasHyvorUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -28,6 +29,12 @@ class ProjectController extends AbstractController
         $user = $this->getHyvorUser();
 
         $project = $this->projectService->createProject($user->id, $input->name);
+        return $this->json(new ProjectObject($project));
+    }
+
+    #[Route('/project', methods: 'GET', condition: 'request.headers.get("X-Project-Id") !== null')]
+    public function getNewsletterById(Project $project): JsonResponse
+    {
         return $this->json(new ProjectObject($project));
     }
 }
