@@ -47,7 +47,7 @@
 
 		<NavLink
 			href={'/console/' + $projectStore.id.toString() + '/emails'}
-			active={page.url.pathname === `/console/${$projectStore.id}/emails`}
+			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/emails`)}
 		>
 			<NavItem>
 				<IconEnvelope slot="icon" />

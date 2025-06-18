@@ -7,6 +7,7 @@ use App\Entity\Send;
 class SendObject
 {
     public int $id;
+    public string $uuid;
     public int $created_at;
     public ?int $sent_at;
     public ?int $failed_at;
@@ -21,6 +22,7 @@ class SendObject
     public function __construct(Send $send)
     {
         $this->id = $send->getId();
+        $this->uuid = $send->getUuid();
         $this->created_at = $send->getCreatedAt()->getTimestamp();
         $this->sent_at = $send->getSentAt()?->getTimestamp();
         $this->failed_at = $send->getFailedAt()?->getTimestamp();

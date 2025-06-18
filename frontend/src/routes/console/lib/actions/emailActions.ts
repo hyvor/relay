@@ -19,3 +19,9 @@ export function getEmails(
 		}
 	});
 }
+
+export function getEmail(id: number) {
+	return consoleApi.get<Email>({
+		endpoint: `emails/${id}`
+	});
+}

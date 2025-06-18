@@ -2,6 +2,7 @@
 	import type { Email } from '../../types';
 	import EmailStatus from './EmailStatus.svelte';
 	import RelativeTime from '../../@components/content/RelativeTime.svelte';
+	import { consoleUrlProject } from '../../lib/consoleUrl';
 
 	interface Props {
 		email: Email;
@@ -17,7 +18,7 @@
 	);
 </script>
 
-<button class="email">
+<a class="email" href={consoleUrlProject(`emails/${email.uuid}`)}>
 	<div class="email-wrap">
 		<div class="email-details">
 			<div class="email-row">
@@ -55,7 +56,7 @@
 			</div>
 		</div>
 	</div>
-</button>
+</a>
 
 <style>
 	.email {

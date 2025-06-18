@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { IconMessage, LoadButton, Loader } from '@hyvor/design/components';
 	import type { Email, EmailStatus } from '../../types';
+	import { emailStore } from '../../lib/stores/projectStore';
 	import { getEmails } from '../../lib/actions/emailActions';
 	import EmailRow from './EmailRow.svelte';
 
@@ -27,8 +28,8 @@
 
 		getEmails(status, from_search, to_search, EMAILS_PER_PAGE, more ? emails.length : 0)
 			.then((data) => {
-				console.log(data);
 				emails = more ? [...emails, ...data] : data;
+				emailStore.set(emails);
 				hasMore = data.length === EMAILS_PER_PAGE;
 			})
 			.catch((e) => {

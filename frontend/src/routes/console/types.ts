@@ -8,6 +8,7 @@ export type EmailStatus = 'queued' | 'sent' | 'failed';
 
 export type Email = {
     id: number;
+    uuid: string;
     created_at : number;
     sent_at?: number;
     failed_at?: number;
