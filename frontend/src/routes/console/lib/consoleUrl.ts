@@ -11,8 +11,8 @@ export function consoleUrl(path: string) {
 }
 
 
-export function consoleUrlWithNewsletter(path: string) {
-    const newsletterId = get(projectStore).id;
+export function consoleUrlProject(path: string) {
+    const projectId = get(projectStore).id;
     path = path.replace(/^\//, '');
-    return consoleUrl(`${newsletterId}/${path}`)
+    return consoleUrl(`${projectId}/${path}`)
 }

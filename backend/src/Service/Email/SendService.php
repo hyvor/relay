@@ -7,8 +7,10 @@ use App\Entity\Project;
 use App\Entity\Queue;
 use App\Entity\Send;
 use App\Entity\Type\SendStatus;
+use App\Repository\SendRepository;
 use App\Service\Email\Dto\SendUpdateDto;
 use App\Service\Email\Message\EmailSendMessage;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -23,9 +25,53 @@ class SendService
         private EntityManagerInterface $em,
         private EmailBuilder $emailBuilder,
         private MessageBusInterface $bus,
+        private SendRepository $sendRepository,
     )
     {
     }
+
+    /**
+     * @return ArrayCollection<int, Send>
+     */
+    public function getSends(
+        Project $project,
+        ?SendStatus $status,
+        ?string $fromSearch,
+        ?string $toSearch,
+        int $limit,
+        int $offset
+    ): ArrayCollection {
+        $qb = $this->sendRepository->createQueryBuilder('s');
+
+        $qb
+            ->distinct()
+            ->where('s.project = :project')
+            ->setParameter('project', $project)
+            ->setMaxResults($limit)
+            ->setFirstResult($offset);
+
+        if ($status !== null) {
+            $qb->andWhere('s.status = :status')
+                ->setParameter('status', $status->value);
+        }
+
+        if ($fromSearch !== null) {
+            $qb->andWhere('s.from_address LIKE :fromSearch')
+                ->setParameter('fromSearch', '%' . $fromSearch . '%');
+        }
+
+        if ($toSearch !== null) {
+            $qb->andWhere('s.to_address LIKE :toSearch')
+                ->setParameter('toSearch', '%' . $toSearch . '%');
+        }
+
+        // dd($qb->getQuery()->getSQL());
+        /** @var Send[] $results */
+        $results = $qb->getQuery()->getResult();
+
+        return new ArrayCollection($results);
+    }
+
 
     public function getSendById(int $id): ?Send
     {

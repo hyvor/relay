@@ -8,9 +8,9 @@
 {#if $selectingProject}
 	<Modal size="large" bind:show={$selectingProject}>
 		{#snippet title()}
-			<span class="title">Choose a newsletter </span>
+			<span class="title">Choose a project </span>
 			<Button as="a" href="/console/new" on:click={() => selectingProject.set(false)}>
-				Create new newsletter
+				Create new project
 				{#snippet end()}
 					<IconPlus size={12} />
 				{/snippet}

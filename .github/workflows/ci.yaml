@@ -1,0 +1,64 @@
+name: CI
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+
+  frontend-check:
+    name: "Frontend Check"
+    runs-on: ubuntu-latest
+
+    steps:
+      -   name: Checkout
+          uses: actions/checkout@v3
+
+      -   name: Build Docker image
+          run: docker build -t frontend-dev . --target frontend-dev
+
+      -   name: Run Svelte Check
+          run: docker run frontend-dev npm run check
+
+  phpstan:
+    name: PHPStan
+    runs-on: ubuntu-latest
+
+    steps:
+      -   name: Checkout
+          uses: actions/checkout@v2
+
+      -   name: Build Docker image
+          run: docker build -t backend-dev . --target backend-dev
+
+      -   name: Run PHPStan
+          run: docker run backend-dev ./vendor/bin/phpstan analyse --memory-limit=1G --ansi
+
+  php-tests:
+    name: "PHP Tests"
+    runs-on: ubuntu-latest
+
+    steps:
+      -   name: Checkout
+          uses: actions/checkout@v3
+
+      -   name: Set up services
+          run: |
+            docker network create ci
+            docker compose -f meta/ci/compose.ci.yaml up -d
+
+      -   name: Build Docker image
+          run: docker build -t backend-dev . --target backend-dev
+
+      -   name: Run Tests
+          run: |
+            docker run \
+            -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/hyvor_post_testing?serverVersion=16&charset=utf8" \
+            --network ci \
+            backend-dev sh -c "
+            php bin/console doctrine:migrations:migrate --no-interaction &&
+            ./vendor/bin/phpunit"
+      
