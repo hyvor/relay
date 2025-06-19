@@ -71,6 +71,7 @@
 								<IconBoxArrowUpRight size={12} />
 							</a>
 						</th>
+						<th>Incoming</th>
 						<th>Status</th>
 					</tr>
 				</thead>
@@ -123,6 +124,7 @@
 
 	.ips {
 		padding: 20px 10px;
+		overflow: auto;
 	}
 
 	.workers {

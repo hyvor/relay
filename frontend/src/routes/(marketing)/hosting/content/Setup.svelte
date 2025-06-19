@@ -11,19 +11,21 @@
 	emails are accepted by the recipient's mail servers and land in the inbox.
 </p>
 
-<ul>
+<p>Checklist:</p>
+
+<ul style="list-style-type: none;">
 	<li>
-		<a href="#domain"> Primary Domain </a>
+		<a href="#domain">(1) Primary Domain </a>
 	</li>
 	<li>
-		<a href="#ptr-dns">PTR & DNS Records</a>
+		<a href="#ptr-dns">(2) PTR & DNS Records</a>
 	</li>
 	<li>
-		<a href="#return-path">Return-Path & SPF</a>
+		<a href="#return-path">(3) Return-Path & SPF</a>
 	</li>
 </ul>
 
-<h2 id="domain">Primary Domain</h2>
+<h2 id="domain">(1) Primary Domain</h2>
 
 <p>
 	First, visit Sudo of your Hyvor Relay installation (<code>http://{'<server-ip>'}/sudo</code>). On
@@ -49,7 +51,7 @@
 	<code>A record</code>: <code>relay.yourdomain.com</code> &rarr; <code>&lt;server-ip&gt;</code>
 </p>
 
-<h2 id="ptr-dns">PTR & DNS Records</h2>
+<h2 id="ptr-dns">(2) PTR & DNS Records</h2>
 
 <p>
 	Each SMTP message has a <code>EHLO yourdomain.com</code> command, which identifies the sending server.
@@ -116,7 +118,7 @@
 	</TableRow>
 </Table>
 
-<h2 id="return-path">Return-Path & SPF</h2>
+<h2 id="return-path">(3) Return-Path (SPF & MX)</h2>
 
 <p>
 	In a SMTP message, <code>MAIL FROM</code>, a.k.a <code>Return-Path</code>, is set to the email
@@ -137,3 +139,121 @@
 	verification, not the <code>From</code> address domain of the email. Therefore, you need to only set
 	up for your primary domain.
 </p>
+
+<p>Example SPF record:</p>
+
+<Table columns="1fr 2fr 2fr">
+	<TableRow head>
+		<div>Type</div>
+		<div>Host</div>
+		<div>Value</div>
+	</TableRow>
+	<TableRow>
+		<div>TXT</div>
+		<div>relay.yourdomain.com</div>
+		<div><code>v=spf1 ip4:8.8.8.8 -all</code></div>
+	</TableRow>
+</Table>
+
+<p>You should add all sending IP addresses of your Hyvor Relay installation to the SPF record.</p>
+
+<ul>
+	<li>
+		Add all IPs one by one:
+		<code>v=spf1 ip4:1.1.1.1 ip4:2.2.2.2 -all</code>
+
+		<p>
+			If you have many IP addresses, this can be tedious. You can copy the full value of the SPF
+			record from the Sudo &rarr; Health section.
+		</p>
+	</li>
+	<li>
+		Add IP ranges:
+		<code>v=spf1 ip4:1.1.1.0/24 -all</code>
+
+		<p>
+			If all your IP addresses are in a range, you can use CIDR notation to specify the range. Make
+			sure you control all the IP addresses in that range to avoid spoofing.
+		</p>
+	</li>
+</ul>
+
+<p>SPF Breakdown:</p>
+
+<ul>
+	<li>
+		<code>v=spf1</code>: Indicates that the TXT record is an SPF record.
+	</li>
+	<li>
+		<code>ip4:{'<ip>'}</code>: Allow the specified IPv4 address or range to send emails for this
+		domain.
+	</li>
+	<li>
+		<code>-all</code>: Indicates that all other IP addresses are not allowed to send emails for this
+		domain. This is a strict policy. You can use <code>~all</code> (with tilde) for a soft policy, which
+		allows other IPs but marks them as suspicious.
+	</li>
+</ul>
+
+<h2 id="mx">MX</h2>
+
+<p>
+	When you send a SMTP message, sometimes, the recipient's mail server will accept the email but
+	later fail to deliver it to the recipient's mailbox in cases like the mailbox being full. Such
+	cases cannot be known by the sender just by looking at the SMTP response. The standard way that
+	email providers handle such cases is to send a bounce email to the <code>Return-Path</code> address.
+</p>
+
+<p>
+	First, in sudo enable "Incoming" setting for at least one of your IP addresses. This will start a
+	process that listens to port 25 of the IP address and accepts incoming emails. In production
+	systems, we recommend enabling <strong>one IP per server</strong> and having at least two servers for
+	redundancy.
+</p>
+
+<DocsImage src="/img/docs/setup-incoming.png" alt="Incoming Setting in Hyvor Relay Sudo" />
+
+<p>
+	Then, create an MX record for your <a href="#domain">primary domain</a>. Here we chose
+	<code>mx.</code> subdomain.
+</p>
+
+<Table columns="1fr 2fr 2fr">
+	<TableRow head>
+		<div>Type</div>
+		<div>Host</div>
+		<div>Value</div>
+	</TableRow>
+	<TableRow>
+		<div>MX</div>
+		<div><code>relay.yourdomain.com</code></div>
+		<div><code>mx.relay.yourdomain.com</code></div>
+	</TableRow>
+</Table>
+
+<p>
+	Then, set up one <code>A</code> record for each IP address that you have enabled for incoming emails.
+</p>
+
+<Table columns="1fr 2fr 1fr">
+	<TableRow head>
+		<div>Type</div>
+		<div>Host</div>
+		<div>IP Address</div>
+	</TableRow>
+	<TableRow>
+		<div>A</div>
+		<div><code>mx.relay.yourdomain.com</code></div>
+		<div><code>1.1.1.1</code></div>
+	</TableRow>
+	<TableRow>
+		<div>A</div>
+		<div><code>mx.relay.yourdomain.com</code></div>
+		<div><code>2.2.2.2</code></div>
+	</TableRow>
+	<TableRow>
+		<div>...</div>
+		<div>...</div>
+		<div>...</div>
+	</TableRow>
+</Table>

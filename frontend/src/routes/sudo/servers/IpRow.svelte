@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Tag, Tooltip } from '@hyvor/design/components';
+	import { Button, Switch, Tag, Tooltip } from '@hyvor/design/components';
 	import type { IpAddress } from '../sudoTypes';
 	import IconExclamationCircle from '@hyvor/icons/IconExclamationCircle';
 
@@ -41,6 +41,9 @@
 			<Tag size="small" color="green">Forward ok</Tag>
 			<Tag size="small" color="green">Reverse ok</Tag>
 		</div>
+	</td>
+	<td>
+		<Switch />
 	</td>
 	<td class="">
 		<Tag size="small" color="green">Enabled</Tag>
