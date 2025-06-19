@@ -2,6 +2,7 @@
 
 namespace App\Api\Console\Resolver;
 
+use App\Entity\ApiKey;
 use App\Entity\Domain;
 use App\Entity\Project;
 use App\Entity\Send;
@@ -18,7 +19,8 @@ class EntityResolver implements ValueResolverInterface
 
     public const ENTITIES = [
         'emails' => Send::class,
-        'domain' => Domain::class
+        'domain' => Domain::class,
+        'api-keys' => ApiKey::class,
     ];
 
     public function __construct(

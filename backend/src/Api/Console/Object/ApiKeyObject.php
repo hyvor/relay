@@ -13,6 +13,7 @@ class ApiKeyObject
     public string $key;
 
     public string $created_at;
+    public bool $is_enabled;
 
     public function __construct(ApiKey $apiKey)
     {
@@ -20,5 +21,6 @@ class ApiKeyObject
         $this->scope = $apiKey->getScope()->value;
         $this->key = $apiKey->getKey();
         $this->created_at = $apiKey->getCreatedAt()->getTimestamp();
+        $this->is_enabled = $apiKey->getIsEnabled();
     }
 }

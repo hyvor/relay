@@ -118,12 +118,12 @@ class ApiKey
         return $this;
     }
 
-    public function isEnabled(): bool
+    public function getIsEnabled(): bool
     {
         return $this->is_enabled;
     }
 
-    public function setEnabled(bool $is_enabled): self
+    public function setIsEnabled(bool $is_enabled): self
     {
         $this->is_enabled = $is_enabled;
         return $this;
