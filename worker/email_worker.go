@@ -7,38 +7,48 @@ import (
 	"time"
 )
 
-type EmailWorkersState struct {
+type EmailWorkersPool struct {
+	ctx        context.Context
 	mu         sync.Mutex
 	wg         sync.WaitGroup
 	cancelFunc context.CancelFunc
 }
 
-func NewEmailWorkersState() *EmailWorkersState {
-	return &EmailWorkersState{}
+func NewEmailWorkersPool(
+	ctx context.Context,
+) *EmailWorkersPool {
+	pool := &EmailWorkersPool{
+		ctx: ctx,
+	}
+
+	go func() {
+		<-ctx.Done()
+		pool.StopWorkers()
+		log.Println("Email workers pool stopped")
+	}()
+
+	return pool
 }
 
 // Starts or restarts the email workers state.
-func (s *EmailWorkersState) Start(workers_count int) {
+func (s *EmailWorkersPool) Set(workersCount int) {
+
+	s.StopWorkers()
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.cancelFunc != nil {
-		s.cancelFunc()
-		s.wg.Wait()
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(s.ctx)
 	s.cancelFunc = cancel
 
-	for i := 0; i < workers_count; i++ {
+	for i := 0; i < workersCount; i++ {
 		s.wg.Add(1)
 		go emailWorker(ctx, i, &s.wg)
 	}
 
 }
 
-func (s *EmailWorkersState) StopWorkers() {
+func (s *EmailWorkersPool) StopWorkers() {
 
 	s.mu.Lock()
 	defer s.mu.Unlock()

@@ -1,36 +1,42 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+// GoState object from backend
+type GoState struct {
+	Hostname string      `json:"hostname"`
+	Ips      []GoStateIp `json:"ips"`
+}
+
+type GoStateIp struct {
+	Ip       string `json:"ip"`
+	Ptr      string `json:"ptr"`
+	Queue    string `json:"queue"`
+	Incoming bool   `json:"incoming"`
+}
+
 func main() {
 
-	listenRabbitMq()
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	emailPool := NewEmailWorkersPool(ctx)
+	StartHttpServer(ctx, emailPool)
+
+	// listenRabbitMq()
+
+	<-ctx.Done()
+
 	return
-
-	// ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	// defer stop()
-
-	// emailWorkersState := NewEmailWorkersState()
-	// srv := NewHttpServer(emailWorkersState)
-
-	// go func() {
-
-	// 	httpServer := &http.Server{
-	// 		Addr:    "localhost:8085",
-	// 		Handler: srv,
-	// 	}
-
-	// 	if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-	// 		fmt.Fprintf(os.Stderr, "error listening and serving: %s\n", err)
-	// 	}
-
-	// }()
 
 	// <-ctx.Done()
 	// fmt.Println("Shutting down server...")
