@@ -30,12 +30,12 @@ final class Version20250619104621 extends AbstractMigration
                 created_at TIMESTAMPTZ NOT NULL,
                 updated_at TIMESTAMPTZ NOT NULL,
                 project_id BIGINT NOT NULL references projects(id) ON DELETE CASCADE,
-                key CHAR(32) NOT NULL UNIQUE,
+                key CHAR(64) NOT NULL UNIQUE,
                 name VARCHAR(255) NOT NULL,
                 scope scope NOT NULL DEFAULT 'send_email',
                 is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
-                last_accessed_at TIMESTAMPTZ DEFAULT NULL,
-            ');
+                last_accessed_at TIMESTAMPTZ DEFAULT NULL
+            );
          SQL
         );
     }

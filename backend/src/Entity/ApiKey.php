@@ -3,8 +3,11 @@
 namespace App\Entity;
 
 use App\Entity\Type\ApiKeyScope;
+use App\Repository\ApiKeyRepository;
 use Doctrine\ORM\Mapping as ORM;
 
+#[ORM\Entity(repositoryClass: ApiKeyRepository::class)]
+#[ORM\Table(name: 'api_keys')]
 class ApiKey
 {
     #[ORM\Id]
@@ -87,7 +90,7 @@ class ApiKey
         return $this->key;
     }
 
-    public function setApiKey(string $key): self
+    public function setKey(string $key): self
     {
         $this->key = $key;
         return $this;
