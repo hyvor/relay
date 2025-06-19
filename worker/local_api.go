@@ -51,7 +51,16 @@ func CallLocalApi(
 
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("%w: %s %s %d", ErrUnexpectedStatusCode, method, url, resp.StatusCode)
+
+		bodyFirst200Bytes, _ := io.ReadAll(io.LimitReader(resp.Body, 200))
+
+		return fmt.Errorf("%w: %s %s %d %s",
+			ErrUnexpectedStatusCode,
+			method,
+			url,
+			resp.StatusCode,
+			bodyFirst200Bytes,
+		)
 	}
 
 	if responseJsonObject != nil {
