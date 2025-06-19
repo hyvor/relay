@@ -51,6 +51,8 @@ services:
     working_dir: /worker
     volumes:
       - ./worker/:/worker/
+    environment:
+      GO_SYMFONY_URL: http://hyvor-relay-backend
     networks:
       - hyvor-network
 

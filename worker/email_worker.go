@@ -59,7 +59,6 @@ func (s *EmailWorkersPool) StopWorkers() {
 	}
 
 	s.wg.Wait()
-	log.Println("All email workers stopped")
 
 }
 

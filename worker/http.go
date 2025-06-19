@@ -10,12 +10,12 @@ import (
 
 func StartHttpServer(
 	ctx context.Context,
-	emailWorkersPool *EmailWorkersPool,
+	serviceState *ServiceState,
 ) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/health", handleHealth)
-	mux.HandleFunc("/state", handleState(emailWorkersPool))
+	mux.HandleFunc("/state", handleSetState(serviceState))
 
 	var handler http.Handler = mux
 
@@ -24,7 +24,7 @@ func StartHttpServer(
 		Handler: handler,
 	}
 
-	log.Println("Starting HTTP server on :8085")
+	serviceState.Logger.Info("Starting local HTTP server on :8085")
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -50,20 +50,22 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
 
-func handleState(
-	emailWorkersState *EmailWorkersPool,
+func handleSetState(
+	serviceState *ServiceState,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var state GoState
+		log.Println("Setting Go state...")
+
+		var goState GoState
 		decoder := json.NewDecoder(r.Body)
-		err := decoder.Decode(&state)
+		err := decoder.Decode(&goState)
 
 		if err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
-		emailWorkersState.Set(len(state.Ips))
+		serviceState.Set(goState)
 
 		writeJsonResponse(w, map[string]string{"message": "Go state updated"})
 	}

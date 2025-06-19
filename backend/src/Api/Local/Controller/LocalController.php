@@ -25,6 +25,14 @@ class LocalController extends AbstractController
     {
     }
 
+    #[Route('/state', methods: 'GET')]
+    public function getState(): JsonResponse
+    {
+        //
+
+        return new JsonResponse();
+    }
+
     #[Route('/send/done', methods: 'POST')]
     public function sendDone(
         #[MapRequestPayload] SendDoneInput $input,

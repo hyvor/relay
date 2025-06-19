@@ -11,26 +11,21 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-// GoState object from backend
-type GoState struct {
-	Hostname string      `json:"hostname"`
-	Ips      []GoStateIp `json:"ips"`
-}
-
-type GoStateIp struct {
-	Ip       string `json:"ip"`
-	Ptr      string `json:"ptr"`
-	Queue    string `json:"queue"`
-	Incoming bool   `json:"incoming"`
-}
-
 func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	emailPool := NewEmailWorkersPool(ctx)
-	StartHttpServer(ctx, emailPool)
+	// serviceState holds the state of the services (ex: email workers, etc.)
+	serviceState := NewServiceState(ctx)
+
+	// starting the local HTTP server so that symfony can call it
+	// to update the state
+	StartHttpServer(ctx, serviceState)
+
+	// tries to call /state symfony endpoint and get the state of the Go backend
+	// and initialize the serviceState
+	serviceState.Initialize()
 
 	// listenRabbitMq()
 
