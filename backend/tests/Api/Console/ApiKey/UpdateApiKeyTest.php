@@ -34,6 +34,7 @@ class UpdateApiKeyTest extends WebTestCase
         $content = $this->getJson();
         $this->assertArrayHasKey('is_enabled', $content);
         $this->assertFalse($content['is_enabled']);
+        $this->assertNull($content['key']);
 
         $apiKeyDb = $this->em->getRepository(ApiKey::class)->find($apiKey->getId());
         $this->assertNotNull($apiKeyDb);

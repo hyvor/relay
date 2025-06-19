@@ -27,6 +27,7 @@ class CreateApiKeyTest extends WebTestCase
         $content = $this->getJson();
 
         $this->assertArrayHasKey('key', $content);
+        $this->assertNotNull($content['key']);
         $this->assertArrayHasKey('created_at', $content);
     }
 

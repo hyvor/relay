@@ -24,9 +24,9 @@ class ApiKeyController extends AbstractController
     #[Route('/api-keys', methods: 'POST')]
     public function createApiKey(#[MapRequestPayload] CreateApiKeyInput $input, Project $project): JsonResponse
     {
-        $apiKey = $this->apiKeyService->createApiKey($project, $input->name, $input->scope);
+        $creation = $this->apiKeyService->createApiKey($project, $input->name, $input->scope);
 
-        return $this->json(new ApiKeyObject($apiKey));
+        return $this->json(new ApiKeyObject($creation['apiKey'], $creation['rawKey']));
     }
 
     #[Route('/api-keys/{id}', methods: 'PATCH')]

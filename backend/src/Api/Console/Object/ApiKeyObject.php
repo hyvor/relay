@@ -10,16 +10,16 @@ class ApiKeyObject
 
     public string $scope;
 
-    public string $key;
+    public ?string $key;
 
     public string $created_at;
     public bool $is_enabled;
 
-    public function __construct(ApiKey $apiKey)
+    public function __construct(ApiKey $apiKey, ?string $rawKey = null)
     {
         $this->name = $apiKey->getName();
         $this->scope = $apiKey->getScope()->value;
-        $this->key = $apiKey->getKey();
+        $this->key = $rawKey;
         $this->created_at = $apiKey->getCreatedAt()->getTimestamp();
         $this->is_enabled = $apiKey->getIsEnabled();
     }

@@ -20,7 +20,10 @@ class ApiKeyService
     {
     }
 
-    public function createApiKey(Project $project, string $name, ApiKeyScope $scope): ApiKey
+    /*
+     * @return array{ apiKey: ApiKey, rawKey: string }
+     */
+    public function createApiKey(Project $project, string $name, ApiKeyScope $scope): array
     {
         $key = bin2hex(random_bytes(16));
         $apiKey = new ApiKey();
@@ -28,13 +31,16 @@ class ApiKeyService
             ->setName($name)
             ->setScope($scope)
             ->setKey(hash('sha256', $key)) // Store the hashed key
-            ->setEnabled(true)
+            ->setIsEnabled(true)
             ->setCreatedAt($this->now())
             ->setUpdatedAt($this->now());
 
         $this->em->persist($apiKey);
         $this->em->flush();
-        return $apiKey;
+        return [
+            'apiKey' => $apiKey,
+            'rawKey' => $key,
+        ];
     }
 
     public function updateApiKey(ApiKey $apiKey, UpdateApiKeyDto $updates): ApiKey
