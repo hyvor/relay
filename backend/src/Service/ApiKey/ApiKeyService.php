@@ -14,6 +14,8 @@ class ApiKeyService
 
     use ClockAwareTrait;
 
+    const int MAX_API_KEY_PER_PROJECT = 5;
+
     public function __construct(
         private EntityManagerInterface $em,
     )
@@ -54,5 +56,10 @@ class ApiKeyService
         $this->em->persist($apiKey);
         $this->em->flush();
         return $apiKey;
+    }
+
+    public function getApiKeysForProject(Project $project): array
+    {
+        return $this->em->getRepository(ApiKey::class)->findBy(['project' => $project]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Tests\Api\Console\ApiKey;
 
 use App\Entity\Type\ApiKeyScope;
 use App\Tests\Case\WebTestCase;
+use App\Tests\Factory\ApiKeyFactory;
 use App\Tests\Factory\ProjectFactory;
 
 class CreateApiKeyTest extends WebTestCase
@@ -84,5 +85,30 @@ class CreateApiKeyTest extends WebTestCase
         $this->assertSame(422, $response->getStatusCode());
 
         $this->assertHasViolation('scope', 'This value should be of type full|send_email.');
+    }
+
+    public function test_create_api_key_reaching_limit(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $apiKeys = ApiKeyFactory::createMany(5, [
+            'project' => $project,
+            'is_enabled' => true,
+        ]);
+
+        $response = $this->consoleApi(
+            $project,
+            'POST',
+            '/api-keys',
+            [
+                'name' => 'Exceeding limit',
+                'scope' => ApiKeyScope::SEND_EMAIL
+            ]
+        );
+
+        $this->assertSame(400, $response->getStatusCode());
+        $content = $this->getJson();
+        $this->assertArrayHasKey('message', $content);
+        $this->assertSame('You have reached the maximum number of API keys for this project.', $content['message']);
     }
 }
