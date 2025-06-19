@@ -1,6 +1,7 @@
 
 import type { Component } from 'svelte';
 import Introduction from '../content/Introduction.svelte';
+import Setup from '../content/Setup.svelte';
 export const categories: Category[] = [
 	{
 		name: 'Hosting',
@@ -11,9 +12,9 @@ export const categories: Category[] = [
                 component: Introduction
 			},
 			{
-				slug: 'deliverability',
-				name: 'Deliverability',
-                component: Introduction
+				slug: 'setup',
+				name: 'Setup',
+                component: Setup
 			},
 			{
 				slug: 'scaling',
