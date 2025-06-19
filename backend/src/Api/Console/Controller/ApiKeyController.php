@@ -45,4 +45,12 @@ class ApiKeyController extends AbstractController
 
         return $this->json(new ApiKeyObject($updatedApiKey));
     }
+
+    #[Route('/api-keys/{id}', methods: 'DELETE')]
+    public function deleteApiKey(ApiKey $apiKey): JsonResponse
+    {
+        $this->apiKeyService->deleteApiKey($apiKey);
+
+        return $this->json([]);
+    }
 }

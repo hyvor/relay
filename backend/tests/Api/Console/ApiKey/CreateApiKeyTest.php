@@ -2,11 +2,19 @@
 
 namespace App\Tests\Api\Console\ApiKey;
 
+use App\Api\Console\Controller\ApiKeyController;
+use App\Api\Console\Object\ApiKeyObject;
 use App\Entity\Type\ApiKeyScope;
+use App\Service\ApiKey\ApiKeyService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ApiKeyFactory;
 use App\Tests\Factory\ProjectFactory;
+use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(ApiKeyController::class)]
+#[CoversClass(ApiKeyService::class)]
+#[CoversClass(ApiKeyScope::class)]
+#[CoversClass(ApiKeyObject::class)]
 class CreateApiKeyTest extends WebTestCase
 {
     public function test_create_api_key(): void

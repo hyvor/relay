@@ -62,4 +62,10 @@ class ApiKeyService
     {
         return $this->em->getRepository(ApiKey::class)->findBy(['project' => $project]);
     }
+
+    public function deleteApiKey(ApiKey $apiKey): void
+    {
+        $this->em->remove($apiKey);
+        $this->em->flush();
+    }
 }

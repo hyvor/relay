@@ -16,9 +16,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(ApiKeyService::class)]
 #[CoversClass(ApiKeyScope::class)]
 #[CoversClass(ApiKeyObject::class)]
-class UpdateApiKeyTest extends WebTestCase
+class DeleteApiKeyTest extends WebTestCase
 {
-    public function test_update_api_key(): void
+    public function test_delete_api_key(): void
     {
         $project = ProjectFactory::createOne();
 
@@ -29,24 +29,30 @@ class UpdateApiKeyTest extends WebTestCase
             ]
         );
 
+        $apiKeyId = $apiKey->getId();
+
         $response = $this->consoleApi(
             $project,
-            'PATCH',
-            '/api-keys/' . $apiKey->getId(),
-            [
-                'enabled' => false,
-            ]
+            'DELETE',
+            '/api-keys/' . $apiKey->getId()
         );
 
         $this->assertSame(200, $response->getStatusCode());
 
-        $content = $this->getJson();
-        $this->assertArrayHasKey('is_enabled', $content);
-        $this->assertFalse($content['is_enabled']);
-        $this->assertNull($content['key']);
+        $deletedApiKey = $this->em->getRepository(ApiKey::class)->find($apiKeyId);
+        $this->assertNull($deletedApiKey);
+    }
 
-        $apiKeyDb = $this->em->getRepository(ApiKey::class)->find($apiKey->getId());
-        $this->assertNotNull($apiKeyDb);
-        $this->assertFalse($apiKeyDb->getIsEnabled());
+    public function test_delete_non_existent_api_key(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $response = $this->consoleApi(
+            $project,
+            'DELETE',
+            '/api-keys/999999' // Assuming this ID does not exist
+        );
+
+        $this->assertSame(404, $response->getStatusCode());
     }
 }
