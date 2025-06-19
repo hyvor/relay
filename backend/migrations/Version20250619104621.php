@@ -16,17 +16,28 @@ final class Version20250619104621 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        // Create api_keys table
-        $this->addSql('
-        CREATE TABLE api_keys (
-            id SERIAL PRIMARY KEY,
-            created_at TIMESTAMPTZ NOT NULL,
-            updated_at TIMESTAMPTZ NOT NULL,
-            project_id BIGINT NOT NULL references projects(id) ON DELETE CASCADE,
-            api_key CHAR(32) NOT NULL UNIQUE,
-        )
-        ');
+        $this->addSql(
+            <<<SQL
+            CREATE TYPE scope AS ENUM ('full', 'send_email');
+        SQL
+        );
 
+        // Create api_keys table
+        $this->addSql(
+        <<<SQL
+            CREATE TABLE api_keys (
+                id SERIAL PRIMARY KEY,
+                created_at TIMESTAMPTZ NOT NULL,
+                updated_at TIMESTAMPTZ NOT NULL,
+                project_id BIGINT NOT NULL references projects(id) ON DELETE CASCADE,
+                key CHAR(32) NOT NULL UNIQUE,
+                name VARCHAR(255) NOT NULL,
+                scope scope NOT NULL DEFAULT 'send_email',
+                is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+                last_accessed_at TIMESTAMPTZ DEFAULT NULL,
+            ');
+         SQL
+        );
     }
 
     public function down(Schema $schema): void

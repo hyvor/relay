@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Type\ApiKeyScope;
 use Doctrine\ORM\Mapping as ORM;
 
 class ApiKey
@@ -22,7 +23,20 @@ class ApiKey
     private Project $project;
 
     #[ORM\Column(type: "string", length: 32, unique: true)]
-    private string $api_key;
+    private string $key;
+
+    #[ORM\Column(type: "string", length: 255)]
+    private string $name;
+
+    #[ORM\Column(enumType: ApiKeyScope::class)]
+    private ApiKeyScope $scope;
+
+    #[ORM\Column()]
+    private bool $is_enabled;
+
+    #[ORM\Column(type: "datetime_immutable")]
+    private \DateTimeImmutable $last_accessed_at;
+
 
     public function getId(): int
     {
@@ -68,14 +82,58 @@ class ApiKey
         return $this;
     }
 
-    public function getApiKey(): string
+    public function getKey(): string
     {
-        return $this->api_key;
+        return $this->key;
     }
 
-    public function setApiKey(string $api_key): self
+    public function setApiKey(string $key): self
     {
-        $this->api_key = $api_key;
+        $this->key = $key;
+        return $this;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function setName(string $name): self
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    public function getScope(): ApiKeyScope
+    {
+        return $this->scope;
+    }
+
+    public function setScope(ApiKeyScope $scope): self
+    {
+        $this->scope = $scope;
+        return $this;
+    }
+
+    public function isEnabled(): bool
+    {
+        return $this->is_enabled;
+    }
+
+    public function setEnabled(bool $is_enabled): self
+    {
+        $this->is_enabled = $is_enabled;
+        return $this;
+    }
+
+    public function getLastAccessedAt(): \DateTimeImmutable
+    {
+        return $this->last_accessed_at;
+    }
+
+    public function setLastAccessedAt(\DateTimeImmutable $last_accessed_at): self
+    {
+        $this->last_accessed_at = $last_accessed_at;
         return $this;
     }
 }
