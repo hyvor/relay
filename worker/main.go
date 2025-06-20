@@ -13,14 +13,16 @@ import (
 
 func main() {
 
+	StartBouncesServer()
+	os.Exit(0)
+
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	// serviceState holds the state of the services (ex: email workers, etc.)
 	serviceState := NewServiceState(ctx)
 
-	// starting the local HTTP server so that symfony can call it
-	// to update the state
+	// starting the local HTTP server so that symfony can call it to update the state if config changes
 	StartHttpServer(ctx, serviceState)
 
 	// tries to call /state symfony endpoint and get the state of the Go backend
@@ -31,15 +33,7 @@ func main() {
 
 	<-ctx.Done()
 
-	return
-
-	// <-ctx.Done()
-	// fmt.Println("Shutting down server...")
-
-	// emailWorkersState.StopWorkers()
-
-	// log.Println("Server stopped gracefully")
-
+	serviceState.Logger.Info("Received shutdown signal, stopping services...")
 }
 
 type EmailSendMessage struct {

@@ -13,7 +13,6 @@ import (
 var ErrUnexpectedStatusCode = errors.New("unexpected status code")
 
 func localApiUrl(endpoint string) string {
-
 	var envValue = os.Getenv("GO_SYMFONY_URL")
 	var baseUrl string
 
