@@ -35,6 +35,7 @@ class ApiKeyService
             ->setKey(hash('sha256', $key)) // Store the hashed key
             ->setIsEnabled(true)
             ->setCreatedAt($this->now())
+            ->setLastAccessedAt(null)
             ->setUpdatedAt($this->now());
 
         $this->em->persist($apiKey);

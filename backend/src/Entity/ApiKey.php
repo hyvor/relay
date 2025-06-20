@@ -38,7 +38,7 @@ class ApiKey
     private bool $is_enabled;
 
     #[ORM\Column(type: "datetime_immutable")]
-    private \DateTimeImmutable $last_accessed_at;
+    private ?\DateTimeImmutable $last_accessed_at = null;
 
 
     public function getId(): int
@@ -129,12 +129,12 @@ class ApiKey
         return $this;
     }
 
-    public function getLastAccessedAt(): \DateTimeImmutable
+    public function getLastAccessedAt(): ?\DateTimeImmutable
     {
         return $this->last_accessed_at;
     }
 
-    public function setLastAccessedAt(\DateTimeImmutable $last_accessed_at): self
+    public function setLastAccessedAt(?\DateTimeImmutable $last_accessed_at): self
     {
         $this->last_accessed_at = $last_accessed_at;
         return $this;

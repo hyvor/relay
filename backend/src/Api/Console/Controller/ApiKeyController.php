@@ -35,6 +35,15 @@ class ApiKeyController extends AbstractController
         return $this->json(new ApiKeyObject($creation['apiKey'], $creation['rawKey']));
     }
 
+    #[Route('/api-keys', methods: 'GET')]
+    public function getApiKeys(Project $project): JsonResponse
+    {
+        $apiKeys = $this->apiKeyService->getApiKeysForProject($project);
+        $apiKeyObjects = array_map(fn(ApiKey $apiKey) => new ApiKeyObject($apiKey), $apiKeys);
+
+        return $this->json($apiKeyObjects);
+    }
+
     #[Route('/api-keys/{id}', methods: 'PATCH')]
     public function updateApiKey(#[MapRequestPayload] UpdateApiKeyDto $input, ApiKey $apiKey): JsonResponse
     {

@@ -28,13 +28,13 @@ final class ApiKeyFactory extends PersistentProxyObjectFactory
     protected function defaults(): array
     {
         return [
-            'createdAt' => new \DateTimeImmutable(),
-            'updatedAt' => new \DateTimeImmutable(),
+            'created_at' => new \DateTimeImmutable(),
+            'updated_at' => new \DateTimeImmutable(),
             'name' => self::faker()->word(),
             'key' => self::faker()->word(),
             'scope' => self::faker()->randomElement(ApiKeyScope::class),
             'is_enabled' => true,
-            'lastAccessedAt' => new \DateTimeImmutable(),
+            'last_accessed_at' => new \DateTimeImmutable(),
         ];
     }
 

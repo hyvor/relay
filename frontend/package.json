@@ -32,7 +32,7 @@
 		"vite": "^6.2.6"
 	},
 	"dependencies": {
-		"@hyvor/design": "^1.1.4",
+		"@hyvor/design": "^1.1.5",
 		"@hyvor/icons": "^1.1.1",
 		"dayjs": "^1.11.13"
 	}
