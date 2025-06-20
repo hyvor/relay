@@ -6,6 +6,7 @@
 	import WorkerSplit from './WorkerSplit.svelte';
 	import IpRow from './IpRow.svelte';
 	import dayjs from 'dayjs';
+	import IconBoxArrowUpRight from '@hyvor/icons/IconBoxArrowUpRight';
 
 	interface Props {
 		server: Server;
@@ -60,9 +61,17 @@
 			<table>
 				<thead>
 					<tr>
+						<th>ID</th>
 						<th>IP Address</th>
 						<th>Queue</th>
-						<th>PTR</th>
+						<th>
+							PTR
+							<a class="hds-link ptr-learn-more" href="/hosting" target="_blank">
+								Learn more
+								<IconBoxArrowUpRight size={12} />
+							</a>
+						</th>
+						<th>Incoming</th>
 						<th>Status</th>
 					</tr>
 				</thead>
@@ -115,6 +124,7 @@
 
 	.ips {
 		padding: 20px 10px;
+		overflow: auto;
 	}
 
 	.workers {
@@ -129,5 +139,11 @@
 	th {
 		padding: 0.75rem;
 		text-align: left;
+	}
+
+	.ptr-learn-more {
+		font-size: 14px;
+		margin-left: 3px;
+		font-weight: normal;
 	}
 </style>

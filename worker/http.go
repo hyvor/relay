@@ -1,41 +1,81 @@
 package main
 
-import "net/http"
+import (
+	"context"
+	"encoding/json"
+	"log"
+	"net/http"
+	"time"
+)
 
-func NewHttpServer(
-	emailWorkersState *EmailWorkersState,
-) http.Handler {
-
-	mux := http.NewServeMux()
-	var handler http.Handler = mux
-	addRoutes(
-		mux,
-		emailWorkersState,
-	)
-	return handler
-
-}
-
-func addRoutes(
-	mux *http.ServeMux,
-	emailWorkersState *EmailWorkersState,
+func StartHttpServer(
+	ctx context.Context,
+	serviceState *ServiceState,
 ) {
-	mux.HandleFunc("/health", healthCheckHandler)
-	mux.HandleFunc("/email/start", startEmailWorkersHandler(emailWorkersState))
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/health", handleHealth)
+	mux.HandleFunc("/state", handleSetState(serviceState))
+
+	var handler http.Handler = mux
+
+	server := &http.Server{
+		Addr:    "localhost:8085",
+		Handler: handler,
+	}
+
+	serviceState.Logger.Info("Starting local HTTP server on :8085")
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("HTTP server error: %v", err)
+		}
+	}()
+
+	go func() {
+		<-ctx.Done()
+
+		shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownCtxCancel()
+
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			log.Fatalf("HTTP shutdown error: %v", err)
+		}
+	}()
+
 }
 
-func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+func handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
-func startEmailWorkersHandler(
-	emailWorkersState *EmailWorkersState,
+func handleSetState(
+	serviceState *ServiceState,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		workersCount := 5 // Example: you can get this from query params or request body
-		emailWorkersState.Start(workersCount)
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Email workers started"))
+		log.Println("Setting Go state...")
+
+		var goState GoState
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&goState)
+
+		if err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		serviceState.Set(goState)
+
+		writeJsonResponse(w, map[string]string{"message": "Go state updated"})
 	}
+}
+
+func writeJsonResponse(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
+
 }

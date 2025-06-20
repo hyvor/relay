@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Tag, Tooltip } from '@hyvor/design/components';
+	import { Button, Switch, Tag, Tooltip } from '@hyvor/design/components';
 	import type { IpAddress } from '../sudoTypes';
 	import IconExclamationCircle from '@hyvor/icons/IconExclamationCircle';
 
@@ -11,6 +11,9 @@
 </script>
 
 <tr>
+	<td class="id">
+		{ip.id}
+	</td>
 	<td class="ip-address">
 		{ip.ip_address}
 	</td>
@@ -32,13 +35,26 @@
 			{ip.email_queue ? 'Change' : 'Assign'}
 		</Button>
 	</td>
-	<td> {ip.ptr} </td>
+	<td>
+		<div class="ptr">{ip.ptr}</div>
+		<div class="ptr-tags">
+			<Tag size="small" color="green">Forward ok</Tag>
+			<Tag size="small" color="green">Reverse ok</Tag>
+		</div>
+	</td>
+	<td>
+		<Switch />
+	</td>
 	<td class="">
 		<Tag size="small" color="green">Enabled</Tag>
 	</td>
 </tr>
 
 <style>
+	.id {
+		color: var(--text-light);
+		font-size: 14px;
+	}
 	td {
 		padding: 0.75rem;
 		text-align: left;
@@ -51,8 +67,7 @@
 		gap: 5px;
 	}
 
-	.assign-button {
-		font-size: 14px;
-		margin-left: 5px;
+	.ptr-tags {
+		margin-top: 5px;
 	}
 </style>

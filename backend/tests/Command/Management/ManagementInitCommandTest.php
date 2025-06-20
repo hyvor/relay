@@ -43,9 +43,9 @@ class ManagementInitCommandTest extends KernelTestCase
         $this->assertCount(2, $ips);
 
         $this->assertSame('8.8.8.8', $ips[0]->getIpAddress());
-        $this->assertTrue($ips[0]->getIsActive());
+        $this->assertTrue($ips[0]->getIsAvailable());
         $this->assertSame('9.9.9.9', $ips[1]->getIpAddress());
-        $this->assertTrue($ips[1]->getIsActive());
+        $this->assertTrue($ips[1]->getIsAvailable());
 
     }
 
@@ -91,17 +91,17 @@ class ManagementInitCommandTest extends KernelTestCase
         $updatedIp1 = $this->em->getRepository(IpAddress::class)->find($ip1->getId());
         $this->assertNotNull($updatedIp1);
         $this->assertSame('8.8.8.8', $updatedIp1->getIpAddress());
-        $this->assertTrue($updatedIp1->getIsActive());
+        $this->assertTrue($updatedIp1->getIsAvailable());
 
         $updatedIp2 = $this->em->getRepository(IpAddress::class)->find($ip2->getId());
         $this->assertNotNull($updatedIp2);
         $this->assertSame('9.9.9.9', $updatedIp2->getIpAddress());
-        $this->assertTrue($updatedIp2->getIsActive());
+        $this->assertTrue($updatedIp2->getIsAvailable());
 
         $updatedIp3 = $this->em->getRepository(IpAddress::class)->find($ip3->getId());
         $this->assertNotNull($updatedIp3);
         $this->assertSame('10.10.10.10', $updatedIp3->getIpAddress());
-        $this->assertFalse($updatedIp3->getIsActive());
+        $this->assertFalse($updatedIp3->getIsAvailable());
 
     }
 
