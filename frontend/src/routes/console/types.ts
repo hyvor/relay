@@ -20,3 +20,15 @@ export type Email = {
     body_text?: string;
     raw: string;
 }
+
+export type ApiKeyScope = 'send_email' | 'full';
+
+export type ApiKey = {
+    id: number;
+    name: string;
+    scope: ApiKeyScope;
+    key?: string;
+    created_at: number;
+    is_enabled: boolean;
+    last_accessed_at?: number;
+}
