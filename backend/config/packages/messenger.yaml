@@ -3,9 +3,6 @@ framework:
         transports:
             default:
                 dsn: doctrine://default
-            email:
-                dsn: '%env(MESSENGER_EMAIL_TRANSPORT_DSN)%'
-                serializer: messenger.transport.symfony_serializer
 
 when@test:
     framework:

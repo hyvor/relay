@@ -2,13 +2,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
-
-	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
@@ -45,7 +41,7 @@ type EmailSendMessage struct {
 
 func listenRabbitMq() {
 
-	log.Println("Connecting to RabbitMQ...")
+	/* log.Println("Connecting to RabbitMQ...")
 
 	conn, err := amqp.Dial("amqp://rabbit:rabbit@hyvor-relay-rabbitmq:5672/")
 	if err != nil {
@@ -93,6 +89,6 @@ func listenRabbitMq() {
 		}
 	}()
 
-	<-forever
+	<-forever */
 
 }

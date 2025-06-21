@@ -4,8 +4,7 @@
 
 Basic architecture of the service:
 
-- Central PGSQL database for storing metadata and worker configuration
-- Central RabbitMQ for queuing emails
+- Central PGSQL database for storing emails and metadata
 - Symfony for the API
 - Go for the workers
 
@@ -17,8 +16,8 @@ Servers:
 Lifecycle of an email:
 
 - User sends an email via API
-- API server validates and queues the email to RabbitMQ
-- Worker server consumes the email from RabbitMQ
+- API server validates and queues the email
+- Workers send the queued emails
 
 Adding a worker server:
 
