@@ -12,8 +12,9 @@ class GoStateIp
         // ptr domain (same as EHLO domain)
         public string $ptr,
 
-        // email queue name to send email from this IP
-        public string $queue,
+        // email queue id, name to send email from this IP
+        public int $queueId,
+        public string $queueName,
 
         // whether the IP should handle incoming emails
         public bool $incoming,

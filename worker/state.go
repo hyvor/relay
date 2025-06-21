@@ -9,15 +9,18 @@ import (
 
 // GoState object from backend
 type GoState struct {
-	Hostname string      `json:"hostname"`
-	Ips      []GoStateIp `json:"ips"`
+	Hostname          string      `json:"hostname"`
+	Ips               []GoStateIp `json:"ips"`
+	EmailWorkersPerIp int         `json:"emailWorkersPerIp"`
+	WebhookWorkers    int         `json:"webhookWorkers"`
 }
 
 type GoStateIp struct {
-	Ip       string `json:"ip"`
-	Ptr      string `json:"ptr"`
-	Queue    string `json:"queue"`
-	Incoming bool   `json:"incoming"`
+	Ip        string `json:"ip"`
+	Ptr       string `json:"ptr"`
+	QueueId   int    `json:"queueId"`
+	QueueName string `json:"queueName"`
+	Incoming  bool   `json:"incoming"`
 }
 
 // wraps all the services based on the GoState
@@ -41,7 +44,8 @@ func (s *ServiceState) Set(goState GoState) {
 		s.Logger.Info("IP info",
 			"ip", ip.Ip,
 			"ptr", ip.Ptr,
-			"queue", ip.Queue,
+			"queueId", ip.QueueId,
+			"queueName", ip.QueueName,
 			"incoming", ip.Incoming,
 		)
 	}

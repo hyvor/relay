@@ -37,10 +37,17 @@ class GoStateFactory
                 continue;
             }
 
+            $queue = $ip->getQueue();
+
+            if ($queue === null) {
+                continue;
+            }
+
             $ips[] = new GoStateIp(
                 ip: $ip->getIpAddress(),
                 ptr: Ptr::getPtrDomain($ip, $instance->getDomain()),
-                queue: $ip->getQueue()?->getName() ?? '',
+                queueId: $queue->getId(),
+                queueName: $queue->getName(),
                 incoming: false,
             );
         }
@@ -48,7 +55,7 @@ class GoStateFactory
         return new GoState(
             hostname: $server->getHostname(),
             ips: $ips,
-            emailWorkersPerIp: $server->getApiWorkers(),
+            emailWorkersPerIp: $server->getEmailWorkers(),
             webhookWorkers: $server->getWebhookWorkers()
         );
 
