@@ -14,7 +14,7 @@ services:
       - ./frontend/svelte.config.js:/app/frontend/svelte.config.js
     labels:
       traefik.enable: true
-      traefik.http.routers.hyvor-relay-frontend.rule: Host(`relay.hyvor.dev`)
+      traefik.http.routers.hyvor-relay-frontend.rule: Host(`relay.hyvor.localhost`)
       traefik.http.routers.hyvor-relay-frontend.entrypoints: https
       traefik.http.routers.hyvor-relay-frontend.tls: true
       traefik.http.routers.hyvor-relay-frontend.middlewares: vite-retry@file
@@ -34,7 +34,7 @@ services:
       # - ./shared:/app/shared
     labels:
       traefik.enable: true
-      traefik.http.routers.hyvor-relay-backend.rule: Host(`relay.hyvor.dev`) && PathPrefix(`/api`)
+      traefik.http.routers.hyvor-relay-backend.rule: Host(`relay.hyvor.localhost`) && PathPrefix(`/api`)
       traefik.http.routers.hyvor-relay-backend.entrypoints: https
       traefik.http.routers.hyvor-relay-backend.tls: true
       traefik.http.routers.hyvor-relay-backend.service: hyvor-relay-backend
@@ -55,23 +55,6 @@ services:
       GO_SYMFONY_URL: http://hyvor-relay-backend
     networks:
       - hyvor-network
-
-  rabbitmq:
-    image: rabbitmq:4.1-management
-    container_name: hyvor-relay-rabbitmq
-    ports:
-      # - "5672:5672" # AMQP protocol
-      - "15672:15672" # Management UI
-    environment:
-      RABBITMQ_DEFAULT_USER: rabbit
-      RABBITMQ_DEFAULT_PASS: rabbit
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    networks:
-      - hyvor-network
-
-volumes:
-  rabbitmq_data:
 
 networks:
   hyvor-network:
