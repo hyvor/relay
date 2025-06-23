@@ -45,14 +45,14 @@ class DevSeedCommand extends Command
             'domain' => InstanceService::DEFAULT_DOMAIN
         ]);
 
-        QueueFactory::createTransactional();
-        QueueFactory::createDistributional();
+        $transactionalQueue = QueueFactory::createTransactional();
+        $distributionalQueue = QueueFactory::createDistributional();
 
-        $server = ServerFactory::createOne();
-        IpAddressFactory::createMany(2, [
-            'server' => $server,
-            'queue' => null
+        $server = ServerFactory::createOne([
+            'hostname' => 'hyvor-relay'
         ]);
+        IpAddressFactory::createOne(['server' => $server, 'queue_id' => $transactionalQueue->getId()]);
+        IpAddressFactory::createOne(['server' => $server, 'queue_id' => $distributionalQueue->getId()]);
 
         $domain = DomainFactory::createOne(['domain' => 'example.com']);
         $project = ProjectFactory::createOne([

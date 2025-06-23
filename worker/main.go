@@ -2,15 +2,14 @@ package main
 
 import (
 	"context"
-	"os"
 	"os/signal"
 	"syscall"
 )
 
 func main() {
 
-	StartBouncesServer()
-	os.Exit(0)
+	// StartBouncesServer()
+	// os.Exit(0)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()

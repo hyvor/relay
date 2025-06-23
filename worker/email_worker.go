@@ -76,7 +76,15 @@ func emailWorker(
 	queueName string,
 ) {
 	defer wg.Done()
+
 	log.Printf("Worker %d started\n", id)
+	_, err := NewDbConn()
+
+	if err != nil {
+		log.Printf("Worker %d failed to connect to database: %v\n", id, err)
+		return
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
