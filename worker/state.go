@@ -31,7 +31,7 @@ type ServiceState struct {
 }
 
 func (s *ServiceState) Set(goState GoState) {
-	s.EmailWorkersPool.Set(len(goState.Ips))
+	s.EmailWorkersPool.Set(goState.Ips, goState.EmailWorkersPerIp)
 
 	s.Logger.Info("Updating state",
 		"hostname", goState.Hostname,

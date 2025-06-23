@@ -31,7 +31,10 @@ func NewEmailWorkersPool(
 }
 
 // Starts or restarts the email workers state.
-func (s *EmailWorkersPool) Set(workersCount int) {
+func (s *EmailWorkersPool) Set(
+	ips []GoStateIp,
+	workersPerIp int,
+) {
 
 	s.StopWorkers()
 
@@ -41,9 +44,9 @@ func (s *EmailWorkersPool) Set(workersCount int) {
 	ctx, cancel := context.WithCancel(s.ctx)
 	s.cancelFunc = cancel
 
-	for i := 0; i < workersCount; i++ {
+	for i, ip := range ips {
 		s.wg.Add(1)
-		go emailWorker(ctx, i, &s.wg)
+		go emailWorker(ctx, i, &s.wg, ip.Ip, ip.Ptr, ip.QueueId, ip.QueueName)
 	}
 
 }
@@ -62,7 +65,16 @@ func (s *EmailWorkersPool) StopWorkers() {
 
 }
 
-func emailWorker(ctx context.Context, id int, wg *sync.WaitGroup) {
+func emailWorker(
+	ctx context.Context,
+	id int,
+	wg *sync.WaitGroup,
+
+	ip string,
+	ptr string,
+	queueId int,
+	queueName string,
+) {
 	defer wg.Done()
 	log.Printf("Worker %d started\n", id)
 	for {
