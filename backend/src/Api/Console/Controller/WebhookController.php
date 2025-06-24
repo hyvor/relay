@@ -28,4 +28,13 @@ class WebhookController extends AbstractController
 
         return $this->json(new WebhookObject($webhook));
     }
+
+    #[Route('/webhooks', methods: 'GET')]
+    public function getWebhooks(Project $project): JsonResponse
+    {
+        $webhooks = $this->webhookService->getWebhooksForProject($project);
+        $webhookObjects = array_map(fn($webhook) => new WebhookObject($webhook), $webhooks);
+
+        return $this->json($webhookObjects);
+    }
 }

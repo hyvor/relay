@@ -30,4 +30,9 @@ class WebhookService
 
         return $webhook;
     }
+
+    public function getWebhooksForProject(Project $project): array
+    {
+        return $this->em->getRepository(Webhook::class)->findBy(['project' => $project]);
+    }
 }
