@@ -52,7 +52,7 @@
             size="small"
 			on:click={() => onEdit(webhook)}
 		>
-			<IconPencil size={16} />
+			<IconPencil size={12} />
 		</IconButton>
 		<IconButton
             variant="fill-light"
@@ -60,7 +60,7 @@
             size="small"
 			on:click={() => onDelete(webhook)}
 		>
-			<IconTrash size={16} />
+			<IconTrash size={12} />
 		</IconButton>
 	</div>
 </div>
