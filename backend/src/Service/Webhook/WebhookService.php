@@ -35,4 +35,10 @@ class WebhookService
     {
         return $this->em->getRepository(Webhook::class)->findBy(['project' => $project]);
     }
+
+    public function deleteWebhook(Webhook $webhook): void
+    {
+        $this->em->remove($webhook);
+        $this->em->flush();
+    }
 }
