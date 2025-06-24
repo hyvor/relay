@@ -3,14 +3,17 @@
 namespace App\Api\Console\Controller;
 
 use App\Api\Console\Input\CreateWebhookInput;
+use App\Api\Console\Input\UpdateWebhookInput;
 use App\Api\Console\Object\WebhookDeliveryObject;
 use App\Api\Console\Object\WebhookObject;
 use App\Entity\Project;
 use App\Entity\Webhook;
+use App\Service\Webhook\Dto\UpdateWebhookDto;
 use App\Service\Webhook\WebhookDeliveryService;
 use App\Service\Webhook\WebhookService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -51,10 +54,28 @@ class WebhookController extends AbstractController
         return new JsonResponse([]);
     }
 
-    #[Route('/webhooks/deliveries', methods: 'GET')]
-    public function getWebhookDeliveries(Project $project): JsonResponse
+    #[Route('/webhooks/{id}', methods: 'PATCH')]
+    public function updateWebhook(#[MapRequestPayload] UpdateWebhookInput $input, Webhook $webhook): JsonResponse
     {
-        $deliveries = $this->webhookDeliveryService->getWebhookDeliveriesForProject($project);
+        $updates = new UpdateWebhookDto();
+        $updates->url = $input->url;
+        $updates->description = $input->description;
+        $updates->events = $input->events;
+
+        $updatedWebhook = $this->webhookService->updateWebhook($webhook, $updates);
+
+        return $this->json(new WebhookObject($updatedWebhook));
+    }
+
+    #[Route('/webhooks/deliveries', methods: 'GET')]
+    public function getWebhookDeliveries(Request $request, Project $project): JsonResponse
+    {
+        $webhookId = null;
+        if ($request->query->has('webhookId')) {
+            $webhookId = $request->query->getInt('webhookId');
+        }
+
+        $deliveries = $this->webhookDeliveryService->getWebhookDeliveriesForProject($project, $webhookId);
         $webhookDeliveryObjects = $deliveries->map(fn($delivery) => new WebhookDeliveryObject($delivery));
         return $this->json($webhookDeliveryObjects);
     }

@@ -4,6 +4,8 @@ namespace App\Service\Webhook;
 
 use App\Entity\Project;
 use App\Entity\Webhook;
+use App\Service\ApiKey\Dto\UpdateApiKeyDto;
+use App\Service\Webhook\Dto\UpdateWebhookDto;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -49,5 +51,26 @@ class WebhookService
     {
         $this->em->remove($webhook);
         $this->em->flush();
+    }
+
+    public function updateWebhook(Webhook $webhook, UpdateWebhookDto $updates): Webhook
+    {
+        if ($updates->hasProperty('url')) {
+            $webhook->setUrl($updates->url);
+        }
+
+        if ($updates->hasProperty('description')) {
+            $webhook->setDescription($updates->description);
+        }
+
+        if ($updates->hasProperty('events')) {
+            $webhook->setEvents($updates->events);
+        }
+
+        $webhook->setUpdatedAt($this->now());
+        $this->em->persist($webhook);
+        $this->em->flush();
+
+        return $webhook;
     }
 }

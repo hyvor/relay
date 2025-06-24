@@ -19,9 +19,13 @@ class WebhookDeliveryService
     /**
      * @return ArrayCollection<int, WebhookDelivery>
      */
-    public function getWebhookDeliveriesForProject(Project $project): ArrayCollection
+    public function getWebhookDeliveriesForProject(Project $project, ?int $webhookId): ArrayCollection
     {
         $webhooks = $this->webhookService->getWebhooksForProject($project);
+
+        if ($webhookId !== null) {
+            $webhooks = $webhooks->filter(fn($webhook) => $webhook->getId() === $webhookId);
+        }
 
         $deliveries = $this->em->getRepository(WebhookDelivery::class)
             ->createQueryBuilder('wd')

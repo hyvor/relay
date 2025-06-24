@@ -58,4 +58,63 @@ class GetWebhookDeliveriesTest extends WebTestCase
             $this->assertSame(WebhookDeliveryStatus::PENDING->value, $delivery['status']);
         }
     }
+
+    public function test_get_webhook_deliveries_specific_webhook(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $webhook1 = WebhookFactory::createOne(
+            [
+                'project' => $project,
+                'url' => 'https://example.com/webhook1',
+                'description' => 'Test Webhook 1',
+                'events' => ['send.delivered'],
+            ]
+        );
+
+        $webhook2 = WebhookFactory::createOne(
+            [
+                'project' => $project,
+                'url' => 'https://example.com/webhook2',
+                'description' => 'Test Webhook 2',
+                'events' => ['send.delivered'],
+            ]
+        );
+
+        WebhookDeliveryFactory::createMany(3, [
+            'webhook' => $webhook1,
+            'status' => WebhookDeliveryStatus::PENDING,
+        ]);
+
+        WebhookDeliveryFactory::createMany(2, [
+            'webhook' => $webhook2,
+            'status' => WebhookDeliveryStatus::PENDING,
+        ]);
+
+        $response = $this->consoleApi(
+            $project,
+            'GET',
+            '/webhooks/deliveries?webhookId=' . $webhook1->getId()
+        );
+        $this->assertSame(200, $response->getStatusCode());
+
+        $content = $this->getJson();
+        $this->assertCount(3, $content);
+    }
+
+    public function test_get_webhook_deliveries_empty(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $response = $this->consoleApi(
+            $project,
+            'GET',
+            '/webhooks/deliveries'
+        );
+        $this->assertSame(200, $response->getStatusCode());
+
+        $content = $this->getJson();
+        $this->assertIsArray($content);
+        $this->assertCount(0, $content);
+    }
 }
