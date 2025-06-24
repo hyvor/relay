@@ -15,7 +15,6 @@ class UpdateWebhookInput
     #[Assert\Url]
     public string $url;
 
-    #[Assert\NotBlank]
     public string $description;
 
     /**

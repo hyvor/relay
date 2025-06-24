@@ -28,7 +28,7 @@ class Webhook
     private string $url;
 
     #[ORM\Column()]
-    private string $description;
+    private ?string $description;
 
     #[ORM\Column]
     private array $events = [];
@@ -93,12 +93,12 @@ class Webhook
         return $this;
     }
 
-    public function getDescription(): string
+    public function getDescription(): ?string
     {
         return $this->description;
     }
 
-    public function setDescription(string $description): static
+    public function setDescription(?string $description): static
     {
         $this->description = $description;
 

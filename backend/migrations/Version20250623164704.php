@@ -25,7 +25,7 @@ final class Version20250623164704 extends AbstractMigration
                 updated_at TIMESTAMPTZ NOT NULL,
                 project_id BIGINT NOT NULL references projects(id) ON DELETE CASCADE,
                 url VARCHAR(255) NOT NULL,
-                description TEXT NOT NULL,
+                description TEXT,
                 events jsonb NOT NULL
             );
          SQL

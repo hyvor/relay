@@ -12,7 +12,6 @@ class CreateWebhookInput
     #[Assert\Url]
     public string $url;
 
-    #[Assert\NotBlank]
     public string $description;
 
     /**

@@ -51,6 +51,7 @@ class UpdateWebhookTest extends WebTestCase
         $this->assertContains('suppression.created', $content['events']);
 
         $webhookDb = $this->em->getRepository(Webhook::class)->find($webhook->getId());
+        $this->assertNotNull($webhookDb);
         $this->assertSame('https://example.com/new', $webhookDb->getUrl());
         $this->assertSame('New description', $webhookDb->getDescription());
         $this->assertContains('send.complained', $webhookDb->getEvents());

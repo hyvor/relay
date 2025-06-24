@@ -1,3 +1,15 @@
+export interface AppConfig {
+	hyvor: {
+		instance: string;
+	};
+
+	app: {
+		webhook: {
+            'events': string[];
+        }
+	};
+}
+
 export type Project = {
     id: string;
     name: string;
@@ -31,4 +43,22 @@ export type ApiKey = {
     created_at: number;
     is_enabled: boolean;
     last_accessed_at?: number;
+}
+
+export type Webhook = {
+    id: number;
+    url: string;
+    description: string;
+    events: string[];
+}
+
+export type WebhookDeliveryStatus = 'pending' | 'delivered' | 'failed';
+
+export type WebhookDelivery = {
+    id: number;
+    url: string;
+    event: string;
+    status: WebhookDeliveryStatus;
+    response: string;
+    created_at: number;
 }
