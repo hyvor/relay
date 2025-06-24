@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 	"sync"
 	"time"
 )
@@ -44,6 +45,8 @@ func (s *EmailWorkersPool) Set(
 	ctx, cancel := context.WithCancel(s.ctx)
 	s.cancelFunc = cancel
 
+	log.Printf("Starting %d email workers for %d IPs\n", len(ips)*workersPerIp, len(ips))
+
 	for i, ip := range ips {
 		s.wg.Add(1)
 		go emailWorker(ctx, i, &s.wg, ip.Ip, ip.Ptr, ip.QueueId, ip.QueueName)
@@ -77,23 +80,61 @@ func emailWorker(
 ) {
 	defer wg.Done()
 
-	log.Printf("Worker %d started\n", id)
-	_, err := NewDbConn()
+	// TODO: implement reconnection logic
+	conn, err := NewDbConn()
 
 	if err != nil {
 		log.Printf("Worker %d failed to connect to database: %v\n", id, err)
 		return
 	}
 
+	defer conn.Close()
+
 	for {
 		select {
 		case <-ctx.Done():
 			log.Printf("Worker %d stopping\n", id)
 			return
+
 		default:
-			// Simulate work
-			log.Printf("Worker %d working...\n", id)
+
+			batch, err := NewDbSendBatch(ctx, conn)
+
+			if err != nil {
+				log.Printf("Worker %d failed to create batch: %v\n", id, err)
+				time.Sleep(1 * time.Second)
+				batch.Rollback()
+				continue
+			}
+
+			sends, err := batch.FetchSends(queueId)
+
+			if err != nil {
+				log.Printf("Worker %d failed to get send IDs: %v\n", id, err)
+				time.Sleep(1 * time.Second)
+				batch.Rollback()
+				continue
+			}
+
+			// log.Printf("Worker %d processing %d sends from queue %s\n", id, len(sends), queueName)
+
+			for _, send := range sends {
+
+				log.Printf("Worker %d processing send ID %d from %s to %s\n", id, send.Id, send.From, send.To)
+
+				result := sendEmail(&send, os.Stdout)
+
+				if result.Error != nil {
+					log.Printf("Worker %d failed to send email for ID %d: %v\n", id, send.Id, result.Error)
+				} else {
+					log.Printf("Worker %d successfully sent email for ID %d to host %s\n", id, send.Id, result.SentHost)
+				}
+
+			}
+
 			time.Sleep(1 * time.Second)
+			batch.Commit()
+
 		}
 	}
 }

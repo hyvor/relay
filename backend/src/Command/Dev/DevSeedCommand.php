@@ -51,12 +51,13 @@ class DevSeedCommand extends Command
         $server = ServerFactory::createOne([
             'hostname' => 'hyvor-relay'
         ]);
-        IpAddressFactory::createOne(['server' => $server, 'queue_id' => $transactionalQueue->getId()]);
-        IpAddressFactory::createOne(['server' => $server, 'queue_id' => $distributionalQueue->getId()]);
+        IpAddressFactory::createOne(['server' => $server, 'queue' => $transactionalQueue, 'is_available' => true, 'is_enabled' => true]);
+        IpAddressFactory::createOne(['server' => $server, 'queue' => $distributionalQueue, 'is_available' => true, 'is_enabled' => true]);
 
-        $domain = DomainFactory::createOne(['domain' => 'example.com']);
+        $domain = DomainFactory::createOne(['domain' => 'hyvor.com']);
         $project = ProjectFactory::createOne([
             'name' => 'Test Project',
+            'hyvor_user_id' => 1,
         ]);
 
         $sends_queued = SendFactory::createMany(2, [

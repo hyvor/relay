@@ -48,7 +48,8 @@ class SendService
             ->where('s.project = :project')
             ->setParameter('project', $project)
             ->setMaxResults($limit)
-            ->setFirstResult($offset);
+            ->setFirstResult($offset)
+            ->orderBy('s.created_at', 'DESC');
 
         if ($status !== null) {
             $qb->andWhere('s.status = :status')
@@ -121,12 +122,12 @@ class SendService
             $this->em->persist($send);
             $this->em->flush();
 
-            $this->bus->dispatch(new EmailSendMessage(
+            /*$this->bus->dispatch(new EmailSendMessage(
                 sendId: $send->getId(),
                 from: $from->getAddress(),
                 to: $to->getAddress(),
                 rawEmail: $rawEmail
-            ));
+            ));*/
 
             $this->em->commit();
             return $send;

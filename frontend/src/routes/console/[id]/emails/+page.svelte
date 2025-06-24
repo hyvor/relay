@@ -72,32 +72,18 @@
 <SingleBox>
 	<div class="top">
 		<div class="left">
-			<Selector
-				name="Status"
-				bind:show={showStatus}
-				value={statusKey}
-				width={200}
-			>
+			<Selector name="Status" bind:show={showStatus} value={statusKey} width={200}>
 				<ActionList selection="single" selectionAlign="end">
 					<ActionListItem on:click={() => selectStatus(null)} selected={status === null}>
 						All
 					</ActionListItem>
-					<ActionListItem
-						on:click={() => selectStatus('queued')}
-						selected={status === 'queued'}
-					>
+					<ActionListItem on:click={() => selectStatus('queued')} selected={status === 'queued'}>
 						Queued
 					</ActionListItem>
-					<ActionListItem
-						on:click={() => selectStatus('sent')}
-						selected={status === 'sent'}
-					>
+					<ActionListItem on:click={() => selectStatus('sent')} selected={status === 'sent'}>
 						Sent
 					</ActionListItem>
-					<ActionListItem
-						on:click={() => selectStatus('failed')}
-						selected={status === 'failed'}
-					>
+					<ActionListItem on:click={() => selectStatus('failed')} selected={status === 'failed'}>
 						Failed
 					</ActionListItem>
 				</ActionList>
@@ -165,7 +151,6 @@
 		from_search={fromSearch === '' ? null : fromSearch}
 		to_search={toSearch === '' ? null : toSearch}
 	/>
-
 </SingleBox>
 
 <style>
@@ -177,7 +162,7 @@
 	.left {
 		flex: 1;
 		display: flex;
-		gap: 20px;
+		gap: 10px;
 		align-items: center;
 	}
 	.search-wrap {
