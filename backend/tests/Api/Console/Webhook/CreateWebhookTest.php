@@ -30,15 +30,22 @@ class CreateWebhookTest extends WebTestCase
             [
                 'url' => 'https://example.com/webhook',
                 'description' => 'Test Webhook',
+                'events' => [
+                    'send.delivered'
+                ],
             ]
         );
-
         $this->assertSame(200, $response->getStatusCode());
 
         $content = $this->getJson();
         $this->assertArrayHasKey('id', $content);
         $this->assertArrayHasKey('url', $content);
         $this->assertArrayHasKey('description', $content);
+        $this->assertSame('https://example.com/webhook', $content['url']);
+        $this->assertSame('Test Webhook', $content['description']);
+        $this->assertArrayHasKey('events', $content);
+        $this->assertIsArray($content['events']);
+        $this->assertContains('send.delivered', $content['events']);
     }
 
     public function test_create_webhook_with_invalid_url(): void

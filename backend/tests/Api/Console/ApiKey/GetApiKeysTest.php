@@ -35,9 +35,9 @@ class GetApiKeysTest extends WebTestCase
         $this->assertSame(200, $response->getStatusCode());
 
         $content = $this->getJson();
-        $this->assertIsArray($content);
         $this->assertCount(4, $content);
         foreach ($content as $key => $apiKeyData) {
+            $this->assertIsArray($apiKeyData);
             $this->assertArrayHasKey('id', $apiKeyData);
             $this->assertArrayHasKey('name', $apiKeyData);
             $this->assertArrayHasKey('scope', $apiKeyData);

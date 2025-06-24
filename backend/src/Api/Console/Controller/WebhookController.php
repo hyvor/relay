@@ -3,9 +3,11 @@
 namespace App\Api\Console\Controller;
 
 use App\Api\Console\Input\CreateWebhookInput;
+use App\Api\Console\Object\WebhookDeliveryObject;
 use App\Api\Console\Object\WebhookObject;
 use App\Entity\Project;
 use App\Entity\Webhook;
+use App\Service\Webhook\WebhookDeliveryService;
 use App\Service\Webhook\WebhookService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,7 +17,8 @@ use Symfony\Component\Routing\Attribute\Route;
 class WebhookController extends AbstractController
 {
     public function __construct(
-        private WebhookService $webhookService
+        private WebhookService $webhookService,
+        private WebhookDeliveryService $webhookDeliveryService,
     ) {}
 
     #[Route('/webhooks', methods: 'POST')]
@@ -24,7 +27,8 @@ class WebhookController extends AbstractController
         $webhook = $this->webhookService->createWebhook(
             $project,
             $input->url,
-            $input->description
+            $input->description,
+            $input->events
         );
 
         return $this->json(new WebhookObject($webhook));
@@ -33,10 +37,10 @@ class WebhookController extends AbstractController
     #[Route('/webhooks', methods: 'GET')]
     public function getWebhooks(Project $project): JsonResponse
     {
-        $webhooks = $this->webhookService->getWebhooksForProject($project);
-        $webhookObjects = array_map(fn($webhook) => new WebhookObject($webhook), $webhooks);
+        $webhooks = $this->webhookService->getWebhooksForProject($project)
+            ->map(fn($webhook) => new WebhookObject($webhook));
 
-        return $this->json($webhookObjects);
+        return $this->json($webhooks);
     }
 
     #[Route('/webhooks/{id}', methods: 'DELETE')]
@@ -45,5 +49,13 @@ class WebhookController extends AbstractController
         $this->webhookService->deleteWebhook($webhook);
 
         return new JsonResponse([]);
+    }
+
+    #[Route('/webhooks/deliveries', methods: 'GET')]
+    public function getWebhookDeliveries(Project $project): JsonResponse
+    {
+        $deliveries = $this->webhookDeliveryService->getWebhookDeliveriesForProject($project);
+        $webhookDeliveryObjects = $deliveries->map(fn($delivery) => new WebhookDeliveryObject($delivery));
+        return $this->json($webhookDeliveryObjects);
     }
 }

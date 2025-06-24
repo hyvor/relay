@@ -2,7 +2,7 @@
 
 namespace App\Entity\Type;
 
-enum WebhookStatus: string
+enum WebhookDeliveryStatus: string
 {
     case PENDING = 'pending';
     case DELIVERED = 'delivered';

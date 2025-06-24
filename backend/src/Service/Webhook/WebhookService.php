@@ -4,6 +4,7 @@ namespace App\Service\Webhook;
 
 use App\Entity\Project;
 use App\Entity\Webhook;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 
@@ -16,14 +17,18 @@ class WebhookService
     )
     {}
 
-    public function createWebhook(Project $project, string $url, string $description): Webhook
+    /**
+     * @param array<string> $events
+     */
+    public function createWebhook(Project $project, string $url, string $description, array $events): Webhook
     {
         $webhook = new Webhook();
         $webhook->setProject($project);
         $webhook->setUrl($url);
         $webhook->setDescription($description);
-        $webhook->setCreatedAt($this->clock?->now());
-        $webhook->setUpdatedAt($this->clock?->now());
+        $webhook->setEvents($events);
+        $webhook->setCreatedAt($this->now());
+        $webhook->setUpdatedAt($this->now());
 
         $this->em->persist($webhook);
         $this->em->flush();
@@ -31,9 +36,13 @@ class WebhookService
         return $webhook;
     }
 
-    public function getWebhooksForProject(Project $project): array
+    /**
+     * @return ArrayCollection<int, Webhook>
+     */
+    public function getWebhooksForProject(Project $project): ArrayCollection
     {
-        return $this->em->getRepository(Webhook::class)->findBy(['project' => $project]);
+        $webhooks =  $this->em->getRepository(Webhook::class)->findBy(['project' => $project]);
+        return new ArrayCollection($webhooks);
     }
 
     public function deleteWebhook(Webhook $webhook): void
