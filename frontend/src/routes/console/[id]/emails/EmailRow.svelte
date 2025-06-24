@@ -104,14 +104,13 @@
 	.email-row {
 		display: flex;
 		align-items: center;
-		gap: 8px;
+		gap: 6px;
 	}
 
 	.email-label {
 		font-size: 12px;
 		color: var(--text-light);
 		font-weight: 500;
-		min-width: 35px;
 	}
 
 	.email-address {

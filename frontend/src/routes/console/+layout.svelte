@@ -24,7 +24,6 @@
 		projects: Project[];
 	}
 
-
 	let isLoading = $state(true);
 
 	onMount(() => {
@@ -34,7 +33,6 @@
 				endpoint: 'init'
 			})
 			.then((res) => {
-
 				userProjectStore.set(res.projects);
 				if (res.projects.length != 0) {
 					projectStore.set(res.projects[0]);
@@ -44,8 +42,7 @@
 			.catch((err) => {
 				if (err.code === 401) {
 					const toPage = $page.url.searchParams.has('signup') ? 'signup' : 'login';
-					location.href =
-						`/api/auth/${toPage}?redirect=` + encodeURIComponent(location.href);
+					location.href = `/api/auth/${toPage}?redirect=` + encodeURIComponent(location.href);
 				} else {
 					toast.error(err.message);
 				}
@@ -54,10 +51,9 @@
 </script>
 
 <svelte:head>
-	<title>Console · Hyvor Post</title>
+	<title>Console · Hyvor Relay</title>
 	<meta name="robots" content="noindex" />
 </svelte:head>
-
 
 <main>
 	{#if isLoading}
@@ -69,7 +65,6 @@
 		{@render children?.()}
 	{/if}
 </main>
-
 
 <style>
 	main {

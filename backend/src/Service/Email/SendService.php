@@ -107,6 +107,7 @@ class SendService
             $send->setUuid(Uuid::v4());
             $send->setCreatedAt($this->now());
             $send->setUpdatedAt($this->now());
+            $send->setSendAfter($this->now());
             $send->setStatus(SendStatus::QUEUED);
             $send->setProject($project);
             $send->setDomain($domain);

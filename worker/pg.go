@@ -61,7 +61,7 @@ func (b *DbSendBatch) FetchSends(queueId int) ([]DbSend, error) {
 		WITH ids AS MATERIALIZED (
 			SELECT id, from_address, to_address, raw
 			FROM sends
-			WHERE status = 'queued' AND queue_id = $1
+			WHERE status = 'queued' AND queue_id = $1 AND send_after < NOW()
 			FOR UPDATE SKIP LOCKED
 			LIMIT $2
 		)

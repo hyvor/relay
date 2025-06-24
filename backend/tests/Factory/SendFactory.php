@@ -47,6 +47,7 @@ final class SendFactory extends PersistentProxyObjectFactory
             "updated_at" => \DateTimeImmutable::createFromMutable(
                 self::faker()->dateTime()
             ),
+            'send_after' => new \DateTimeImmutable()
         ];
     }
 
