@@ -6,6 +6,7 @@ use App\Repository\WebhookRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: WebhookRepository::class)]
+#[ORM\Table(name: 'webhooks')]
 class Webhook
 {
     #[ORM\Id]
