@@ -18,8 +18,8 @@
 		{ip.ip_address}
 	</td>
 	<td class="queue-name">
-		{#if ip.email_queue}
-			{ip.email_queue}
+		{#if ip.queue}
+			{ip.queue.name}
 		{:else}
 			<Tooltip
 				text="This IP address will not be used for email delivery until you assign a queue to it."
@@ -32,7 +32,7 @@
 		{/if}
 
 		<Button size="x-small" color="input" style="margin-left: 5px;">
-			{ip.email_queue ? 'Change' : 'Assign'}
+			{ip.queue ? 'Change' : 'Assign'}
 		</Button>
 	</td>
 	<td>

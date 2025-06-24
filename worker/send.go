@@ -1,13 +1,14 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"net"
+	"net/smtp"
 	"time"
-
-	smtp "github.com/emersion/go-smtp"
 )
 
 var ErrSendEmailFailed = errors.New("failed to send email")
@@ -15,13 +16,14 @@ var ErrSendEmailFailed = errors.New("failed to send email")
 type SmtpStepName string
 
 const (
-	SmtpStepDial  SmtpStepName = "dial"
-	SmtpStepHello SmtpStepName = "hello"
-	SmtpStepMail  SmtpStepName = "mail"
-	SmtpStepRcpt  SmtpStepName = "rcpt"
-	SmtpStepData  SmtpStepName = "data"
-	SmtpStepQuit  SmtpStepName = "quit"
-	SmtpStepClose SmtpStepName = "close"
+	SmtpStepDial     SmtpStepName = "dial"
+	SmtpStepHello    SmtpStepName = "hello"
+	SmtpStepStartTLS SmtpStepName = "starttls"
+	SmtpStepMail     SmtpStepName = "mail"
+	SmtpStepRcpt     SmtpStepName = "rcpt"
+	SmtpStepData     SmtpStepName = "data"
+	SmtpStepQuit     SmtpStepName = "quit"
+	SmtpStepClose    SmtpStepName = "close"
 )
 
 type LatencyDuration time.Duration
@@ -61,7 +63,7 @@ type SendResult struct {
 }
 
 func sendEmail(
-	message *EmailSendMessage,
+	message *DbSend,
 	logger io.Writer,
 ) *SendResult {
 
@@ -108,11 +110,24 @@ func sendEmail(
 	return result
 }
 
-var createSmtpClient = func(host string) (SmtpClient, error) {
-	return smtp.Dial(host + ":25")
+var createSmtpClient = func(host string) (*smtp.Client, error) {
+
+	conn, err := net.Dial("tcp", host+":25")
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to SMTP server %s: %w", host, err)
+	}
+
+	client, err := smtp.NewClient(conn, host)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create SMTP client for %s: %w", host, err)
+	}
+
+	return client, nil
 }
 
-type SmtpClient interface {
+/* type SmtpClient interface {
 	Hello(localName string) error
 	Mail(from string, opts *smtp.MailOptions) error
 	Rcpt(to string, opts *smtp.RcptOptions) error
@@ -120,9 +135,10 @@ type SmtpClient interface {
 	Quit() error
 	Close() error
 }
+*/
 
 func sendEmailToHost(
-	message *EmailSendMessage,
+	message *DbSend,
 	host string,
 	logger io.Writer,
 	result *SendResult,
@@ -147,14 +163,28 @@ func sendEmailToHost(
 
 	latency.RecordStep(SmtpStepHello)
 
-	if err := c.Mail(message.From, nil); err != nil {
+	if ok, _ := c.Extension("STARTTLS"); ok {
+		fmt.Fprintf(logger, "INFO: STARTTLS supported by %s\n", host)
+
+		if err := c.StartTLS(&tls.Config{ServerName: host}); err != nil {
+			fmt.Fprintf(logger, "ERROR: STARTTLS failed - %s\n", err)
+			return err
+		}
+		fmt.Fprintf(logger, "INFO: STARTTLS succeeded\n")
+
+		latency.RecordStep(SmtpStepStartTLS)
+	} else {
+		fmt.Fprintf(logger, "INFO: STARTTLS not supported by %s\n", host)
+	}
+
+	if err := c.Mail(message.From); err != nil {
 		fmt.Fprintf(logger, "ERROR: MAIL FROM failed - %s\n", err)
 		return err
 	}
 
 	latency.RecordStep(SmtpStepMail)
 
-	if err := c.Rcpt(message.To, nil); err != nil {
+	if err := c.Rcpt(message.To); err != nil {
 		fmt.Fprintf(logger, "ERROR: RCPT failed - %s\n", err)
 		return err
 	}

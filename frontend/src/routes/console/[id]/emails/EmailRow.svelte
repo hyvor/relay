@@ -13,8 +13,7 @@
 
 	// Get the relevant timestamp based on status
 	const statusTimestamp = $derived(
-		email.status === 'sent' ? email.sent_at : 
-		email.status === 'failed' ? email.failed_at : null
+		email.status === 'sent' ? email.sent_at : email.status === 'failed' ? email.failed_at : null
 	);
 </script>
 
@@ -71,10 +70,6 @@
 	}
 	.email:hover {
 		background: var(--hover);
-	}
-
-	.checkbox {
-		margin-right: 15px;
 	}
 
 	.email-wrap {

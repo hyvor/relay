@@ -17,7 +17,7 @@ final class Version20250613093659 extends AbstractMigration
     public function up(Schema $schema): void
     {
         $this->addSql(
-            "CREATE TYPE sends_status AS ENUM ('queued', 'sent', 'failed')"
+            "CREATE TYPE sends_status AS ENUM ('queued', 'processing', 'sent', 'failed')"
         );
 
         $this->addSql(
