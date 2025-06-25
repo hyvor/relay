@@ -100,6 +100,8 @@ func (b *DbSendBatch) FetchSends(queueId int) ([]DbSend, error) {
 
 }
 
+// func (b *DbSendBatch) MarkSendAsSent()
+
 func (b *DbSendBatch) Commit() error {
 	if err := b.tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
