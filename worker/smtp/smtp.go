@@ -89,6 +89,7 @@ func (c *Client) hello() CommandResult {
 // over the host name used. The client will introduce itself as "localhost"
 // automatically otherwise. If Hello is called, it must be called before
 // any of the other methods.
+// Verify with: 250
 func (c *Client) Hello(localName string) CommandResult {
 	if err := validateLine(localName); err != nil {
 		return NewErrorCommandResult(err)
@@ -172,17 +173,6 @@ func (c *Client) StartTLS(config *tls.Config) CommandResult {
 	c.Text = textproto.NewConn(c.conn)
 	c.tls = true
 	return c.ehlo()
-}
-
-// TLSConnectionState returns the client's TLS connection state.
-// The return values are their zero values if [Client.StartTLS] did
-// not succeed.
-func (c *Client) TLSConnectionState() (state tls.ConnectionState, ok bool) {
-	tc, ok := c.conn.(*tls.Conn)
-	if !ok {
-		return
-	}
-	return tc.ConnectionState(), true
 }
 
 // Mail issues a MAIL command to the server using the provided email address.
