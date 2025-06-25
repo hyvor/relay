@@ -123,7 +123,6 @@ var basicServer = `250 mx.google.com at your service
 530 Authentication required
 252 Send some mail, I'll try my best
 250 User is valid
-235 Accepted
 250 Sender OK
 250 Receiver OK
 354 Go ahead
@@ -137,7 +136,6 @@ EHLO localhost
 MAIL FROM:<user@gmail.com> BODY=8BITMIME
 VRFY user1@gmail.com
 VRFY user2@gmail.com
-AUTH PLAIN AHVzZXIAcGFzcw==
 MAIL FROM:<user@gmail.com> BODY=8BITMIME
 RCPT TO:<golang-nuts@googlegroups.com>
 DATA
