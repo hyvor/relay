@@ -239,7 +239,7 @@ func sendEmailToHost(
 
 		conversation.AddStep(SmtpStepStartTLS, startTlsResult.Reply.Code, startTlsResult.Reply.Message)
 
-		if !startTlsResult.CodeValid(220) {
+		if !startTlsResult.CodeValid(250) {
 			fmt.Fprintf(logger, "ERROR: STARTTLS failed with code %d: %s\n", startTlsResult.Reply.Code, startTlsResult.Reply.Message)
 			return conversation, nil, startTlsResult.Reply.Code
 		}
