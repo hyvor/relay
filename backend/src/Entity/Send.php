@@ -4,8 +4,6 @@ namespace App\Entity;
 
 use App\Entity\Type\SendStatus;
 use App\Repository\SendRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SendRepository::class)]
