@@ -6,6 +6,8 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
@@ -18,6 +20,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestErrorOnLookupFailed(t *testing.T) {
+	mxCache.Clear()
+
 	lookupMxFunc = func(_ string) ([]*net.MX, error) {
 		return nil, errors.New("lookup failed")
 	}
@@ -30,6 +34,8 @@ func TestErrorOnLookupFailed(t *testing.T) {
 }
 
 func TestErrorOnNoRecords(t *testing.T) {
+	mxCache.Clear()
+
 	lookupMxFunc = func(_ string) ([]*net.MX, error) {
 		return []*net.MX{}, nil
 	}
@@ -41,6 +47,9 @@ func TestErrorOnNoRecords(t *testing.T) {
 }
 
 func TestValidMxLookupAndCache(t *testing.T) {
+
+	mxCache.Clear()
+
 	lookupMxFunc = func(_ string) ([]*net.MX, error) {
 		return []*net.MX{
 			{Host: "mx1.hyvor.com."}, // trims the trailing dot
@@ -74,7 +83,30 @@ func TestValidMxLookupAndCache(t *testing.T) {
 	}
 }
 
+func TestRemovesDuplicatesAndSorts(t *testing.T) {
+
+	mxCache.Clear()
+
+	lookupMxFunc = func(_ string) ([]*net.MX, error) {
+		return []*net.MX{
+			{Host: "mx1.hyvor.com.", Pref: 10}, // trims the trailing dot
+			{Host: "mx2.hyvor.com", Pref: 5},
+			{Host: "mx1.hyvor.com.", Pref: 20}, // duplicate
+			{Host: "mx3.hyvor.com", Pref: 1},
+		}, nil
+	}
+
+	hosts, err := getMxHostsFromEmail("test@hyvor.com")
+
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"mx3.hyvor.com", "mx2.hyvor.com", "mx1.hyvor.com"}, hosts)
+
+}
+
 func TestGetHostsFromCache(t *testing.T) {
+
+	mxCache.Clear()
+
 	// Pre-populate the cache
 	mxCache.data["hyvor.com"] = mxCacheEntry{
 		Hosts:  []string{"mx1.hyvor.com", "mx2.hyvor.com"},

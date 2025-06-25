@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -22,6 +23,12 @@ type mxCacheType struct {
 var mxCache = mxCacheType{
 	data: make(map[string]mxCacheEntry),
 	mu:   sync.Mutex{},
+}
+
+func (m *mxCacheType) Clear() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.data = make(map[string]mxCacheEntry)
 }
 
 var ErrSmtpMxLookupFailed = errors.New("MX lookup failed")
@@ -55,12 +62,29 @@ func getMxHostsFromEmail(email string) ([]string, error) {
 		return nil, ErrSmtpMxNoRecords
 	}
 
-	// todo: sort by preference
-	// todo: remove duplicates
+	slices.SortFunc(mx, func(a, b *net.MX) int {
+		if a.Pref < b.Pref {
+			return -1
+		} else if a.Pref > b.Pref {
+			return 1
+		}
+		return 0
+	})
 
 	var hosts []string
 	for _, mxRecord := range mx {
 		host := strings.TrimSuffix(mxRecord.Host, ".")
+
+		// skip empty hosts
+		if host == "" {
+			continue
+		}
+
+		// skip duplicates
+		if slices.Contains(hosts, host) {
+			continue
+		}
+
 		hosts = append(hosts, host)
 	}
 
