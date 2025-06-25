@@ -15,6 +15,7 @@ class IpAddressService
     public function __construct(
         private ServerIp $serverIp,
         private EntityManagerInterface $em,
+        private Ptr $ptr,
     )
     {
     }
@@ -55,7 +56,7 @@ class IpAddressService
                 // IP address already exists in the database, mark is as active if not active
                 $ipAddressEntity = $currentIpAddressesEntitiesInDb[$inArrayKey];
 
-                if ($ipAddressEntity->getIsActive()) {
+                if ($ipAddressEntity->getIsAvailable()) {
                     continue;
                 }
 
@@ -89,7 +90,7 @@ class IpAddressService
         $ipAddressEntity->setIpAddress($ipAddress);
         $ipAddressEntity->setCreatedAt($this->now());
         $ipAddressEntity->setUpdatedAt($this->now());
-        $ipAddressEntity->setIsActive(true);
+        $ipAddressEntity->setIsAvailable(true);
 
         $this->em->persist($ipAddressEntity);
         $this->em->flush();
@@ -103,7 +104,7 @@ class IpAddressService
     ): IpAddress
     {
         if ($updates->isActiveSet) {
-            $ipAddress->setIsActive($updates->isActive);
+            $ipAddress->setIsAvailable($updates->isActive);
         }
 
         $ipAddress->setUpdatedAt($this->now());
@@ -112,6 +113,17 @@ class IpAddressService
         $this->em->flush();
 
         return $ipAddress;
+    }
+
+    public function updateIpPtrValidity(IpAddress $ip): void
+    {
+        $validity = $this->ptr->validate($ip);
+
+        $ip->setIsPtrForwardValid($validity['forward']);
+        $ip->setIsPtrReverseValid($validity['reverse']);
+
+        $this->em->persist($ip);
+        $this->em->flush();
     }
 
 }

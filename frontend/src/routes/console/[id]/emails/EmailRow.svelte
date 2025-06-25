@@ -13,8 +13,7 @@
 
 	// Get the relevant timestamp based on status
 	const statusTimestamp = $derived(
-		email.status === 'sent' ? email.sent_at : 
-		email.status === 'failed' ? email.failed_at : null
+		email.status === 'sent' ? email.sent_at : email.status === 'failed' ? email.failed_at : null
 	);
 </script>
 
@@ -73,10 +72,6 @@
 		background: var(--hover);
 	}
 
-	.checkbox {
-		margin-right: 15px;
-	}
-
 	.email-wrap {
 		min-width: 250px;
 	}
@@ -109,14 +104,13 @@
 	.email-row {
 		display: flex;
 		align-items: center;
-		gap: 8px;
+		gap: 6px;
 	}
 
 	.email-label {
 		font-size: 12px;
 		color: var(--text-light);
 		font-weight: 500;
-		min-width: 35px;
 	}
 
 	.email-address {

@@ -26,6 +26,9 @@ class Send
     #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable $updated_at;
 
+    #[ORM\Column(type: "datetime_immutable")]
+    private \DateTimeImmutable $send_after;
+
     #[ORM\Column(type: "datetime_immutable", nullable: true)]
     private ?\DateTimeImmutable $sent_at = null;
 
@@ -119,6 +122,17 @@ class Send
     public function setUpdatedAt(\DateTimeImmutable $updated_at): static
     {
         $this->updated_at = $updated_at;
+        return $this;
+    }
+
+    public function getSendAfter(): \DateTimeImmutable
+    {
+        return $this->send_after;
+    }
+
+    public function setSendAfter(\DateTimeImmutable $send_after): static
+    {
+        $this->send_after = $send_after;
         return $this;
     }
 

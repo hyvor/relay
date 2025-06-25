@@ -1,44 +1,34 @@
 package main
 
 import (
-	"encoding/json"
-	"log"
-	"os"
-
-	amqp "github.com/rabbitmq/amqp091-go"
+	"context"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
 
-	listenRabbitMq()
-	return
+	// StartBouncesServer()
+	// os.Exit(0)
 
-	// ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	// defer stop()
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
-	// emailWorkersState := NewEmailWorkersState()
-	// srv := NewHttpServer(emailWorkersState)
+	// serviceState holds the state of the services (ex: email workers, etc.)
+	serviceState := NewServiceState(ctx)
 
-	// go func() {
+	// starting the local HTTP server so that symfony can call it to update the state if config changes
+	StartHttpServer(ctx, serviceState)
 
-	// 	httpServer := &http.Server{
-	// 		Addr:    "localhost:8085",
-	// 		Handler: srv,
-	// 	}
+	// tries to call /state symfony endpoint and get the state of the Go backend
+	// and initialize the serviceState
+	serviceState.Initialize()
 
-	// 	if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-	// 		fmt.Fprintf(os.Stderr, "error listening and serving: %s\n", err)
-	// 	}
+	// listenRabbitMq()
 
-	// }()
+	<-ctx.Done()
 
-	// <-ctx.Done()
-	// fmt.Println("Shutting down server...")
-
-	// emailWorkersState.StopWorkers()
-
-	// log.Println("Server stopped gracefully")
-
+	serviceState.Logger.Info("Received shutdown signal, stopping services...")
 }
 
 type EmailSendMessage struct {
@@ -50,7 +40,7 @@ type EmailSendMessage struct {
 
 func listenRabbitMq() {
 
-	log.Println("Connecting to RabbitMQ...")
+	/* log.Println("Connecting to RabbitMQ...")
 
 	conn, err := amqp.Dial("amqp://rabbit:rabbit@hyvor-relay-rabbitmq:5672/")
 	if err != nil {
@@ -98,6 +88,6 @@ func listenRabbitMq() {
 		}
 	}()
 
-	<-forever
+	<-forever */
 
 }

@@ -25,8 +25,12 @@ final class Version20250613112606 extends AbstractMigration
             server_id INTEGER NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
             ip_address VARCHAR(45) NOT NULL,
             queue_id INTEGER NULL REFERENCES queues(id) ON DELETE SET NULL,
-            is_active BOOLEAN NOT NULL DEFAULT FALSE, -- Indicates if the IP was found last time
+            is_available BOOLEAN NOT NULL DEFAULT FALSE, -- Indicates if the IP is (still) available in the server
             is_enabled BOOLEAN NOT NULL DEFAULT TRUE, -- Whether this IP is enabled for use to send emails
+            
+            is_ptr_forward_valid BOOLEAN NOT NULL DEFAULT FALSE,
+            is_ptr_reverse_valid BOOLEAN NOT NULL DEFAULT FALSE,
+            
             UNIQUE (server_id, ip_address)
         )
         ');
