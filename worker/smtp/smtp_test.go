@@ -6,6 +6,8 @@ package smtp
 
 import (
 	"bufio"
+	"crypto/tls"
+	"crypto/x509"
 	"io"
 	"net"
 	"net/textproto"
@@ -134,7 +136,6 @@ Goodbye.
 QUIT
 `
 
-/*
 func TestHELOFailed(t *testing.T) {
 	serverLines := `502 EH?
 502 EH?
@@ -788,6 +789,3 @@ qgkeluku4GjxRlDMBuXk94xOBEinUs+p/hwP1Alll80Tpg==
 -----END RSA TESTING KEY-----`))
 
 func testingKey(s string) string { return strings.ReplaceAll(s, "TESTING KEY", "PRIVATE KEY") }
-
-
-*/
