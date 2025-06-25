@@ -55,6 +55,7 @@ class DevSeedCommand extends Command
         IpAddressFactory::createOne(['server' => $server, 'queue' => $distributionalQueue, 'is_available' => true, 'is_enabled' => true]);
 
         $domain = DomainFactory::createOne(['domain' => 'hyvor.com']);
+        $domain = DomainFactory::createOne(['domain' => 'hyvor.local.testing']);
         $project = ProjectFactory::createOne([
             'name' => 'Test Project',
             'hyvor_user_id' => 1,

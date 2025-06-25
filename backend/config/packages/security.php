@@ -13,10 +13,10 @@ return static function (ContainerBuilder $container, SecurityConfig $security): 
         ->lazy(true)
         ->customAuthenticators([HyvorAuthenticator::class]);
 
-    $security
+    /*$security
         ->accessControl()
         ->path('^/api/console')
-        ->roles(UserRole::HYVOR_USER);
+        ->roles(UserRole::HYVOR_USER);*/
 
     // Allow access to the API for local requests
     // source: https://symfony.com/doc/current/security/access_control.html#matching-access-control-by-ip

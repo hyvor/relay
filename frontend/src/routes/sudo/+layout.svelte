@@ -18,7 +18,7 @@
 </script>
 
 <svelte:head>
-	<title>Hyvor Relay · Admin</title>
+	<title>Hyvor Relay · Sudo</title>
 </svelte:head>
 
 <Base>
