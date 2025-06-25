@@ -4,12 +4,16 @@ import (
 	"context"
 	"os/signal"
 	"syscall"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
 
 	// StartBouncesServer()
 	// os.Exit(0)
+
+	godotenv.Load()
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()

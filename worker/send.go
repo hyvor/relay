@@ -14,6 +14,8 @@ import (
 
 var ErrSendEmailFailed = errors.New("failed to send email")
 
+const MAX_SEND_TRIES = 8
+
 type SmtpStepName string
 
 const (
@@ -92,27 +94,27 @@ func (c *SmtpConversation) AddStep(
 }
 
 type SendResult struct {
-	ResolvedMxHosts  []string
-	SentMxHost       string
-	SmtpConversation map[string]*SmtpConversation
-	Error            error
-	ShouldRequeue    bool
+	ResolvedMxHosts   []string
+	SentMxHost        string
+	SmtpConversations map[string]*SmtpConversation
+	Error             error
+	ShouldRequeue     bool
 }
 
 func sendEmail(
-	message *DbSend,
+	send *DbSend,
 	logger io.Writer,
 ) *SendResult {
 
 	result := &SendResult{
-		SmtpConversation: make(map[string]*SmtpConversation),
+		SmtpConversations: make(map[string]*SmtpConversation),
 	}
 
 	fmt.Fprintf(logger, "\n== New email ==\n")
-	fmt.Fprintf(logger, "From: %s\n", message.From)
-	fmt.Fprintf(logger, "To: %s\n", message.To)
+	fmt.Fprintf(logger, "From: %s\n", send.From)
+	fmt.Fprintf(logger, "To: %s\n", send.To)
 
-	mxHosts, err := getMxHostsFromEmail(message.To)
+	mxHosts, err := getMxHostsFromEmail(send.To)
 
 	if err != nil {
 		fmt.Fprintf(logger, "ERROR: %s\n", err)
@@ -127,8 +129,8 @@ func sendEmail(
 	for _, host := range mxHosts {
 		fmt.Fprintf(logger, "INFO: Sending to host: %s\n", host)
 
-		conversation, err, errStatus := sendEmailToHost(message, host, logger)
-		result.SmtpConversation[host] = conversation
+		conversation, err, errStatus := sendEmailToHost(send, host, logger)
+		result.SmtpConversations[host] = conversation
 
 		if err != nil {
 			// a connection-level error happened
@@ -139,10 +141,19 @@ func sendEmail(
 			fmt.Fprintf(logger, "ERROR: SMTP error %d from %s: %s\n", errStatus, host, conversation.Steps[len(conversation.Steps)-1].ReplyText)
 
 			if errStatus >= 400 && errStatus < 500 {
-				// 4xx errors are usually temporary, requeue the email
-				fmt.Fprintf(logger, "INFO: Requeuing email due to 4xx error\n")
-				result.ShouldRequeue = true
-				return result
+
+				// 4xx errors are usually temporary, requeue the email if we haven't reached the max tries
+
+				if send.TryCount >= MAX_SEND_TRIES {
+					result.Error = errors.New("Maximum send attempts reached")
+					fmt.Fprintf(logger, "ERROR: Maximum send attempts reached for %s\n", send.To)
+					return result
+				} else {
+					fmt.Fprintf(logger, "INFO: Requeuing email due to 4xx error\n")
+					result.ShouldRequeue = true
+					return result
+				}
+
 			} else {
 				result.Error = fmt.Errorf("SMTP error %d from %s: %s", errStatus, host, conversation.Steps[len(conversation.Steps)-1].ReplyText)
 				fmt.Fprintf(logger, "ERROR: %s\n", result.Error)
@@ -159,7 +170,7 @@ func sendEmail(
 		}
 	}
 
-	fmt.Fprintf(logger, "ERROR: All attempts to send email failed for %s", message.To)
+	fmt.Fprintf(logger, "ERROR: All attempts to send email failed for %s", send.To)
 
 	result.Error = ErrSendEmailFailed
 	return result

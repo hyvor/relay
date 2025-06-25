@@ -49,7 +49,16 @@ func (s *EmailWorkersPool) Set(
 
 	for i, ip := range ips {
 		s.wg.Add(1)
-		go emailWorker(ctx, i, &s.wg, ip.Ip, ip.Ptr, ip.QueueId, ip.QueueName)
+		go emailWorker(
+			ctx,
+			i,
+			&s.wg,
+			LoadDBConfig(),
+			ip.Ip,
+			ip.Ptr,
+			ip.QueueId,
+			ip.QueueName,
+		)
 	}
 
 }
@@ -72,6 +81,7 @@ func emailWorker(
 	ctx context.Context,
 	id int,
 	wg *sync.WaitGroup,
+	dbConfig *DBConfig,
 
 	ip string,
 	ptr string,
@@ -81,7 +91,7 @@ func emailWorker(
 	defer wg.Done()
 
 	// TODO: implement reconnection logic
-	conn, err := NewDbConn()
+	conn, err := NewDbConn(dbConfig)
 
 	if err != nil {
 		log.Printf("Worker %d failed to connect to database: %v\n", id, err)
@@ -116,39 +126,17 @@ func emailWorker(
 				continue
 			}
 
-			if len(sends) == 0 {
-				batch.Rollback()
-			}
-
-			// log.Printf("Worker %d processing %d sends from queue %s\n", id, len(sends), queueName)
-
 			for _, send := range sends {
-
 				log.Printf("Worker %d processing send ID %d from %s to %s\n", id, send.Id, send.From, send.To)
 
 				result := sendEmail(&send, os.Stdout)
 
-				if result.Error != nil {
-					log.Printf("Worker %d failed to send email for ID %d: %v\n", id, send.Id, result.Error)
+				err := batch.FinalizeSendBySendResult(&send, result)
 
-					if err := batch.MarkSendAsFailed(send.Id, result.Error.Error()); err != nil {
-						log.Printf("Worker %d failed to mark send ID %d as failed: %v\n", id, send.Id, err)
-					}
-				} else if result.ShouldRequeue {
-					log.Printf("Worker %d requeuing email for ID %d to host %s\n", id, send.Id, result.SentMxHost)
-
-					if err := batch.RequeueSend(send.Id); err != nil {
-						log.Printf("Worker %d failed to requeue send ID %d: %v\n", id, send.Id, err)
-					}
-
-				} else {
-					log.Printf("Worker %d successfully sent email for ID %d to host %s\n", id, send.Id, result.SentMxHost)
-
-					if err := batch.MarkSendAsSent(send.Id); err != nil {
-						log.Printf("Worker %d failed to mark send ID %d as sent: %v\n", id, send.Id, err)
-					}
+				if err != nil {
+					log.Printf("Worker %d failed to finalize send ID %d: %v\n", id, send.Id, err)
+					continue
 				}
-
 			}
 
 			batch.Commit()
