@@ -5,7 +5,13 @@
 		TextInput,
 		SplitControl,
 		toast,
-		confirm
+		confirm,
+
+		Callout,
+
+		IconButton
+
+
 	} from '@hyvor/design/components';
 	import IconPlus from '@hyvor/icons/IconPlus';
 	import IconCopy from '@hyvor/icons/IconCopy';
@@ -15,6 +21,7 @@
 	import type { ApiKey } from '../../types';
 	import { getApiKeys, updateApiKey, deleteApiKey } from '../../lib/actions/apiKeyActions';
 	import { onMount } from 'svelte';
+	import { copyAndToast } from '../../lib/helpers/copy';
 
 	let apiKeys: ApiKey[] = $state([]);
 	let loading = $state(true);
@@ -53,9 +60,14 @@
 	}
 
 	function handleToggleEnabled(apiKey: ApiKey) {
-		updateApiKey(apiKey.id, !apiKey.is_enabled)
+		const newEnabledState = !apiKey.is_enabled;
+		updateApiKey(apiKey.id, newEnabledState)
 			.then(() => {
-				loadApiKeys();
+				apiKeys = apiKeys.map(key => 
+					key.id === apiKey.id 
+						? { ...key, is_enabled: newEnabledState }
+						: key
+				);
 				toast.success(`API key ${apiKey.is_enabled ? 'disabled' : 'enabled'}`);
 			})
 			.catch((error) => {
@@ -84,14 +96,6 @@
 					toast.error('Failed to delete API key');
 				});
 		}
-	}
-
-	function copyToClipboard(text: string) {
-		navigator.clipboard.writeText(text).then(() => {
-			toast.success('Copied to clipboard');
-		}).catch(() => {
-			toast.error('Failed to copy to clipboard');
-		});
 	}
 
 	function getScopeLabel(scope: string) {
@@ -153,20 +157,24 @@
 						readonly
 						block
 					/>
-					<Button
-						variant="outline"
-						on:click={() => copyToClipboard(newApiKey?.key || '')}
+					<IconButton
+						size="small"
+						color="input"
+						style="margin-left:4px;"
+						on:click={() => copyAndToast(newApiKey?.key || '', 'API Key copied')}
 					>
-						<IconCopy size={16} />
-						Copy
-					</Button>
+						<IconCopy size={12} />
+					</IconButton>
 				</div>
 			</SplitControl>
 			
-			<div class="api-key-details">
-				<p><strong>Name:</strong> {newApiKey.name}</p>
-				<p><strong>Scope:</strong> {getScopeLabel(newApiKey.scope)}</p>
-			</div>
+			<SplitControl label="Name">
+				<span>{newApiKey.name}</span>
+			</SplitControl>
+			
+			<SplitControl label="Scope">
+				<span>{getScopeLabel(newApiKey.scope)}</span>
+			</SplitControl>
 		</div>
 	</Modal>
 {/if}

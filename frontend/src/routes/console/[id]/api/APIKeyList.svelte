@@ -1,6 +1,7 @@
 <script lang="ts">
 	import APIKeyRow from './APIKeyRow.svelte';
 	import type { ApiKey } from '../../types';
+	import { IconMessage } from '@hyvor/design/components';
 
 	export let apiKeys: ApiKey[];
 	export let loading: boolean;
@@ -11,9 +12,7 @@
 {#if loading}
 	<div class="loading">Loading...</div>
 {:else if apiKeys.length === 0}
-	<div class="empty-state">
-		<p>No API keys found. Create your first API key to get started.</p>
-	</div>
+	<IconMessage empty size="large" />
 {:else}
 	<div class="api-keys-list">
 		{#each apiKeys as apiKey (apiKey.id)}
@@ -27,7 +26,7 @@
 {/if}
 
 <style>
-	.loading, .empty-state {
+	.loading {
 		text-align: center;
 		padding: 60px 20px;
 		color: var(--text-light);
