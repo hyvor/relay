@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { 
-		Loader, 
-		TabNav, 
-		TabNavItem, 
+	import {
+		Loader,
+		TabNav,
+		TabNavItem,
 		toast,
 		IconMessage,
-		Button
+		Button,
+		CodeBlock
 	} from '@hyvor/design/components';
 	import { getEmail } from '../../../lib/actions/emailActions';
 	import type { Email } from '../../../types';
@@ -19,6 +19,7 @@
 	import IconCaretLeft from '@hyvor/icons/IconCaretLeft';
 	import { consoleUrlProject } from '../../../lib/consoleUrl';
 	import { emailStore } from '../../../lib/stores/projectStore';
+	import { page } from '$app/state';
 
 	let email: Email | null = $state(null);
 	let loading = $state(true);
@@ -26,14 +27,14 @@
 	let activeTab: 'overview' | 'raw' = $state('overview');
 
 	onMount(() => {
-		const emailUuid = $page.params.id;
-        const emailId = $emailStore.find(e => e.uuid === emailUuid)?.id;
+		const emailUuid = page.params.uuid;
+		const emailId = $emailStore.find((e) => e.uuid === emailUuid)?.id;
 
-        if (!emailId) {
-            error = 'Email not found';
-            loading = false;
-            return;
-        }
+		if (!emailId) {
+			error = 'Email not found';
+			loading = false;
+			return;
+		}
 
 		getEmail(emailId)
 			.then((result) => {
@@ -132,8 +133,10 @@
 
 			{#if activeTab === 'raw'}
 				<div class="raw-content">
-					<h3>Raw Email Message</h3>
-					<pre class="raw-message">{email.raw}</pre>
+					<div class="raw-content-note">
+						This is the raw email content, including headers and body.
+					</div>
+					<CodeBlock code={email.raw} language={null} />
 				</div>
 			{/if}
 		</div>
@@ -161,20 +164,6 @@
 		display: flex;
 		align-items: center;
 		gap: 15px;
-	}
-
-	.header h1 {
-		margin: 0;
-		font-size: 24px;
-		font-weight: 600;
-	}
-
-	.email-id {
-		font-size: 14px;
-		color: var(--text-light);
-		display: flex;
-		align-items: center;
-		gap: 8px;
 	}
 
 	.tabs {
@@ -209,65 +198,10 @@
 		border: 1px solid var(--border);
 	}
 
-	.email-body {
-		margin-top: 20px;
-	}
-
-	.email-body h3 {
-		margin: 0 0 15px 0;
-		font-size: 18px;
-		font-weight: 600;
-	}
-
-	.html-content,
-	.text-content {
-		margin-bottom: 20px;
-	}
-
-	.html-content h4,
-	.text-content h4 {
-		margin: 0 0 10px 0;
+	.raw-content-note {
+		margin-bottom: 10px;
 		font-size: 14px;
-		font-weight: 600;
 		color: var(--text-light);
-	}
-
-	.content-preview {
-		background: var(--background);
-		border: 1px solid var(--border);
-		border-radius: var(--box-radius);
-		padding: 15px;
-		max-height: 300px;
-		overflow: auto;
-		font-size: 13px;
-		line-height: 1.5;
-	}
-
-	.content-preview pre {
-		margin: 0;
-		white-space: pre-wrap;
-		word-wrap: break-word;
-	}
-
-	.raw-content h3 {
-		margin: 0 0 15px 0;
-		font-size: 18px;
-		font-weight: 600;
-	}
-
-	.raw-message {
-		background: var(--background);
-		border: 1px solid var(--border);
-		border-radius: var(--box-radius);
-		padding: 20px;
-		font-family: monospace;
-		font-size: 12px;
-		line-height: 1.4;
-		white-space: pre-wrap;
-		word-wrap: break-word;
-		max-height: 600px;
-		overflow: auto;
-		margin: 0;
 	}
 
 	@media (max-width: 768px) {
@@ -290,11 +224,6 @@
 		.info-grid {
 			grid-template-columns: 1fr;
 			gap: 15px;
-		}
-
-		.content-preview,
-		.raw-message {
-			max-height: 200px;
 		}
 	}
 </style>

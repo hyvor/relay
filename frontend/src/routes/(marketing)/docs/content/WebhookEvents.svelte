@@ -6,8 +6,12 @@
 
 <CodeBlock
 	code={`
-    "distribution.started"
-    "distribution.completed"
+"send.delivered"
+"send.bounced"
+"send.complained"
+
+"suspression.created"
+"suspression.deleted"
 `}
 	language="ts"
 />

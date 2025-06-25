@@ -29,8 +29,14 @@ var ErrSmtpMxNoRecords = errors.New("MX lookup returned no records")
 
 var lookupMxFunc = net.LookupMX
 
+const TESTING_DOMAIN = "hyvor.local.testing"
+
 func getMxHostsFromEmail(email string) ([]string, error) {
 	domain := email[strings.Index(email, "@")+1:]
+
+	if domain == TESTING_DOMAIN {
+		return []string{"hyvor-service-mailpit"}, nil
+	}
 
 	mxCache.mu.Lock()
 	defer mxCache.mu.Unlock()
