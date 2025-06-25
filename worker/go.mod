@@ -1,4 +1,4 @@
-module hyvor/relay/worker
+module github.com/hyvor/relay/worker
 
 go 1.23.4
 

@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/smtp"
 	"time"
+
+	smtp "github.com/hyvor/relay/worker/smtp"
 )
 
 var ErrSendEmailFailed = errors.New("failed to send email")
