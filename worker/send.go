@@ -55,11 +55,48 @@ func NewSmtpLatency() *SmtpLatency {
 	}
 }
 
+type SmtpStep struct {
+	Name      SmtpStepName
+	Duration  LatencyDuration
+	ReplyCode int
+	ReplyText string
+}
+
+type SmtpConversation struct {
+	StartTime time.Time
+	Steps     []*SmtpStep
+}
+
+func NewSmtpConversation() *SmtpConversation {
+	return &SmtpConversation{
+		StartTime: time.Now(),
+		Steps:     make([]*SmtpStep, 0),
+	}
+}
+
+func (c *SmtpConversation) AddStep(
+	name SmtpStepName,
+	replyCode int,
+	replyText string,
+) {
+
+	step := &SmtpStep{
+		Name:      name,
+		Duration:  LatencyDuration(time.Since(c.StartTime)),
+		ReplyCode: replyCode,
+		ReplyText: replyText,
+	}
+
+	c.Steps = append(c.Steps, step)
+
+}
+
 type SendResult struct {
-	MxHosts     []string
-	SentHost    string
-	SmtpLatency map[string]*SmtpLatency // host -> latency
-	Error       error
+	ResolvedMxHosts   []string
+	SentMxHost        string
+	SmtpSteps         map[string][]*SmtpStep // host -> steps
+	SmtpConversations map[string]*SmtpConversation
+	Error             error
 }
 
 func sendEmail(
@@ -68,7 +105,7 @@ func sendEmail(
 ) *SendResult {
 
 	result := &SendResult{
-		SmtpLatency: make(map[string]*SmtpLatency),
+		SmtpSteps: make(map[string][]*SmtpStep),
 	}
 
 	fmt.Fprintf(logger, "\n== New email ==\n")
@@ -85,15 +122,16 @@ func sendEmail(
 
 	fmt.Fprintf(logger, "INFO: MX records found: %v\n", mxHosts)
 
-	result.MxHosts = mxHosts
+	result.ResolvedMxHosts = mxHosts
 
+	// TODO: we should only try the next host if the previous one fails due to a network error, not a 4xx/5xx SMTP error
 	for _, host := range mxHosts {
 		fmt.Fprintf(logger, "INFO: Sending to host: %s\n", host)
 
 		err = sendEmailToHost(message, host, logger, result)
 
 		if err == nil {
-			result.SentHost = host
+			result.SentMxHost = host
 			fmt.Fprintf(logger, "INFO: Email successfully sent\n")
 
 			resultsJson, _ := json.MarshalIndent(result, "", "  ")
@@ -127,41 +165,32 @@ var createSmtpClient = func(host string) (*smtp.Client, error) {
 	return client, nil
 }
 
-/* type SmtpClient interface {
-	Hello(localName string) error
-	Mail(from string, opts *smtp.MailOptions) error
-	Rcpt(to string, opts *smtp.RcptOptions) error
-	Data() (*smtp.DataCommand, error)
-	Quit() error
-	Close() error
-}
-*/
-
 func sendEmailToHost(
 	message *DbSend,
 	host string,
 	logger io.Writer,
-	result *SendResult,
-) error {
+) (*SmtpConversation, error) {
 
-	latency := NewSmtpLatency()
-	result.SmtpLatency[host] = latency
+	conversation := NewSmtpConversation()
 
+	// STEP 0: Connect to SMTP server
+	// ==============================
 	c, err := createSmtpClient(host)
 	if err != nil {
 		fmt.Fprintf(logger, "ERROR: %s\n", err)
-		return err
+		return conversation, err
 	}
 	defer c.Close()
+	conversation.AddStep(SmtpStepDial, 0, "")
 
-	latency.RecordStep(SmtpStepDial)
-
-	if err := c.Hello("relay.hyvor.com"); err != nil {
+	// STEP 1: EHLO/HELO
+	// =================
+	helloErr := c.Hello("relay.hyvor.com")
+	if helloErr != nil {
 		fmt.Fprintf(logger, "ERROR: EHLO failed - %s\n", err)
-		return err
+		return conversation, err
 	}
-
-	latency.RecordStep(SmtpStepHello)
+	conversation.AddStep(SmtpStepHello, 0, "")
 
 	if ok, _ := c.Extension("STARTTLS"); ok {
 		fmt.Fprintf(logger, "INFO: STARTTLS supported by %s\n", host)

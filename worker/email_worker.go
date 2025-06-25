@@ -116,6 +116,10 @@ func emailWorker(
 				continue
 			}
 
+			if len(sends) == 0 {
+				batch.Rollback()
+			}
+
 			// log.Printf("Worker %d processing %d sends from queue %s\n", id, len(sends), queueName)
 
 			for _, send := range sends {
@@ -132,8 +136,8 @@ func emailWorker(
 
 			}
 
-			time.Sleep(1 * time.Second)
 			batch.Commit()
+			time.Sleep(1 * time.Second)
 
 		}
 	}
