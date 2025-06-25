@@ -100,7 +100,48 @@ func (b *DbSendBatch) FetchSends(queueId int) ([]DbSend, error) {
 
 }
 
-// func (b *DbSendBatch) MarkSendAsSent()
+func (b *DbSendBatch) MarkSendAsSent(sendId int) error {
+	_, err := b.tx.ExecContext(b.ctx, `
+		UPDATE sends
+		SET status = 'sent', updated_at = NOW()
+		WHERE id = $1
+	`, sendId)
+
+	if err != nil {
+		return fmt.Errorf("failed to mark send ID %d as sent: %w", sendId, err)
+	}
+
+	return nil
+}
+
+func (b *DbSendBatch) MarkSendAsFailed(sendId int, errorMessage string) error {
+	_, err := b.tx.ExecContext(b.ctx, `
+		UPDATE sends
+		SET status = 'failed', error_message = $2, updated_at = NOW()
+		WHERE id = $1
+	`, sendId, errorMessage)
+
+	if err != nil {
+		return fmt.Errorf("failed to mark send ID %d as failed: %w", sendId, err)
+	}
+
+	return nil
+}
+
+func (b *DbSendBatch) RequeueSend(sendId int) error {
+	// TODO: interval logic based on retry count
+	_, err := b.tx.ExecContext(b.ctx, `
+		UPDATE sends
+		SET status = 'queued', send_after = NOW() + INTERVAL '15 minutes'
+		WHERE id = $1
+	`, sendId)
+
+	if err != nil {
+		return fmt.Errorf("failed to requeue send ID %d: %w", sendId, err)
+	}
+
+	return nil
+}
 
 func (b *DbSendBatch) Commit() error {
 	if err := b.tx.Commit(); err != nil {

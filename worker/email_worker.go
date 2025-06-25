@@ -130,8 +130,23 @@ func emailWorker(
 
 				if result.Error != nil {
 					log.Printf("Worker %d failed to send email for ID %d: %v\n", id, send.Id, result.Error)
+
+					if err := batch.MarkSendAsFailed(send.Id, result.Error.Error()); err != nil {
+						log.Printf("Worker %d failed to mark send ID %d as failed: %v\n", id, send.Id, err)
+					}
+				} else if result.ShouldRequeue {
+					log.Printf("Worker %d requeuing email for ID %d to host %s\n", id, send.Id, result.SentMxHost)
+
+					if err := batch.RequeueSend(send.Id); err != nil {
+						log.Printf("Worker %d failed to requeue send ID %d: %v\n", id, send.Id, err)
+					}
+
 				} else {
-					log.Printf("Worker %d successfully sent email for ID %d to host %s\n", id, send.Id, result.SentHost)
+					log.Printf("Worker %d successfully sent email for ID %d to host %s\n", id, send.Id, result.SentMxHost)
+
+					if err := batch.MarkSendAsSent(send.Id); err != nil {
+						log.Printf("Worker %d failed to mark send ID %d as sent: %v\n", id, send.Id, err)
+					}
 				}
 
 			}

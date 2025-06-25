@@ -7,6 +7,7 @@ package smtp
 import (
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/textproto"
@@ -66,8 +67,8 @@ func (c *Client) hello() CommandResult {
 	if !c.didHello {
 		c.didHello = true
 
-		ehloResult := c.ehlo()
-		if ehloResult.Err != nil || !ehloResult.CodeValid(250) {
+		c.helloResult = c.ehlo()
+		if c.helloResult.Err != nil || !c.helloResult.CodeValid(250) {
 			c.helloResult = c.helo()
 		}
 	}
@@ -93,7 +94,9 @@ func (c *Client) Hello(localName string) CommandResult {
 
 // cmd is a convenience function that sends a command and returns the response
 func (c *Client) cmd(format string, args ...any) CommandResult {
-	commandResult := CommandResult{}
+	commandResult := CommandResult{
+		Command: fmt.Sprintf(format, args...),
+	}
 
 	id, err := c.Text.Cmd(format, args...)
 	if err != nil {
