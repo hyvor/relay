@@ -5,6 +5,8 @@ namespace App\Service\Domain;
 class Dkim
 {
 
+    public const string DKIM_SUBDOMAIN = '._domainkey';
+
     public static function generateDkimSelector(): string
     {
         return 'rly' . date('YmdHis') . bin2hex(random_bytes(4));
@@ -23,8 +25,12 @@ class Dkim
 
         openssl_pkey_export($privateKey, $privateKeyString);
         $details = openssl_pkey_get_details($privateKey);
+        assert($details !== false);
 
         $publicKey = $details['key'];
+
+        assert(is_string($publicKey));
+        assert(is_string($privateKeyString));
 
         return [
             'public' => $publicKey,
@@ -34,7 +40,7 @@ class Dkim
 
     public static function dkimHost(string $selector, string $domain): string
     {
-        return sprintf('%s._domainkey.%s', $selector, $domain);
+        return sprintf('%s.%s.%s', $selector, self::DKIM_SUBDOMAIN, $domain);
     }
 
     public static function dkimTxtValue(string $publicKey): string
