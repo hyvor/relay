@@ -39,8 +39,9 @@ export interface SmtpConversation {
 }
 
 export interface SmtpStep {
-    Name: 'dial' | 'helo' | 'mail' | 'rcpt' | 'data' | 'quit';
+    Name: 'dial' | 'helo' | 'mail' | 'rcpt' | 'data' | 'data_close' | 'quit';
     Duration: string;
+    Command: string;
     ReplyCode: number
     ReplyText: string;
 }

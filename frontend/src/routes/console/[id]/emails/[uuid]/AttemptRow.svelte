@@ -19,7 +19,7 @@
 			{:else if attempt.status === 'failed'}
 				<Tag color="red">Hard Fail</Tag>
 			{:else if attempt.status === 'queued'}
-				<Tag color="orange">Soft Fail (Retrying)</Tag>
+				<Tag color="orange">Soft Fail (Re-queued)</Tag>
 			{/if}
 		</div>
 		<div class="message">

@@ -29,7 +29,11 @@
 			{#if step.Name !== 'dial'}
 				<div class="step">
 					<div class="client">
-						{step.Name}
+						{#if step.Name === 'data_close'}
+							[DATA SENT]
+						{:else}
+							{step.Command}
+						{/if}
 					</div>
 					<div class="server">{`${step.ReplyCode} ${step.ReplyText}`}</div>
 				</div>
