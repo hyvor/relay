@@ -152,6 +152,19 @@ func (b *DbSendBatch) FinalizeSendBySendResult(
 		}
 	}
 
+	var sentMxHost sql.NullString
+	if sendResult.SentMxHost != "" {
+		sentMxHost = sql.NullString{
+			String: sendResult.SentMxHost,
+			Valid:  true,
+		}
+	} else {
+		sentMxHost = sql.NullString{
+			String: "",
+			Valid:  false,
+		}
+	}
+
 	resolvedMxHosts, _ := json.Marshal(sendResult.ResolvedMxHosts)
 	smtpConversations, _ := json.Marshal(sendResult.SmtpConversations)
 
@@ -183,7 +196,7 @@ func (b *DbSendBatch) FinalizeSendBySendResult(
 		status,
 		send.TryCount+1,
 		resolvedMxHosts,
-		sendResult.SentMxHost,
+		sentMxHost,
 		smtpConversations,
 		errorMessage,
 	)

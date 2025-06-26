@@ -155,17 +155,19 @@ func (c *Client) ehlo() CommandResult {
 
 // StartTLS sends the STARTTLS command and encrypts all further communication.
 // Only servers that advertise the STARTTLS extension support this function.
-func (c *Client) StartTLS(config *tls.Config) CommandResult {
+// Verify with: 220 and 250
+func (c *Client) StartTLS(config *tls.Config) (CommandResult, CommandResult) {
 	tlsResult := c.cmd("STARTTLS")
 
-	if tlsResult.Err != nil || !tlsResult.CodeValid(220) {
-		return tlsResult
+	if tlsResult.Err != nil {
+		return tlsResult, CommandResult{}
 	}
 
 	c.conn = tls.Client(c.conn, config)
 	c.Text = textproto.NewConn(c.conn)
 	c.tls = true
-	return c.ehlo()
+
+	return tlsResult, c.ehlo()
 }
 
 // Mail issues a MAIL command to the server using the provided email address.

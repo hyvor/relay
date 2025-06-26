@@ -111,6 +111,7 @@ func sendEmail(
 ) *SendResult {
 
 	result := &SendResult{
+		ResolvedMxHosts:   make([]string, 0),
 		SmtpConversations: make(map[string]*SmtpConversation),
 	}
 
@@ -234,19 +235,31 @@ func sendEmailToHost(
 	if ok, _ := c.Extension("STARTTLS"); ok {
 		fmt.Fprintf(logger, "INFO: STARTTLS supported by %s\n", host)
 
-		startTlsResult := c.StartTLS(&tls.Config{ServerName: host})
+		startTlsResult, ehloResult := c.StartTLS(&tls.Config{ServerName: host})
 
 		if startTlsResult.Err != nil {
 			fmt.Fprintf(logger, "ERROR: STARTTLS failed - %s\n", startTlsResult.Err)
 			return conversation, startTlsResult.Err, 0
 		}
 
-		conversation.AddStep(SmtpStepStartTLS, startTlsResult.Command, startTlsResult.Reply.Code, startTlsResult.Reply.Message)
+		if ehloResult.Err != nil {
+			fmt.Fprintf(logger, "ERROR: EHLO after STARTTLS failed - %s\n", ehloResult.Err)
+			return conversation, ehloResult.Err, 0
+		}
 
-		if !startTlsResult.CodeValid(250) {
+		conversation.AddStep(SmtpStepStartTLS, startTlsResult.Command, startTlsResult.Reply.Code, startTlsResult.Reply.Message)
+		conversation.AddStep(SmtpStepHello, ehloResult.Command, ehloResult.Reply.Code, ehloResult.Reply.Message)
+
+		if !startTlsResult.CodeValid(220) {
 			fmt.Fprintf(logger, "ERROR: STARTTLS failed with code %d: %s\n", startTlsResult.Reply.Code, startTlsResult.Reply.Message)
 			return conversation, nil, startTlsResult.Reply.Code
 		}
+
+		if !ehloResult.CodeValid(250) {
+			fmt.Fprintf(logger, "ERROR: EHLO after STARTTLS failed with code %d: %s\n", ehloResult.Reply.Code, ehloResult.Reply.Message)
+			return conversation, nil, ehloResult.Reply.Code
+		}
+
 		fmt.Fprintf(logger, "INFO: STARTTLS succeeded\n")
 	} else {
 		fmt.Fprintf(logger, "INFO: STARTTLS not supported by %s\n", host)

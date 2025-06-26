@@ -21,6 +21,13 @@
 
 		return null;
 	});
+
+	function codeClass(code: number): string {
+		if (code >= 400) {
+			return 'error';
+		}
+		return '';
+	}
 </script>
 
 {#if selectedConversation}
@@ -30,12 +37,14 @@
 				<div class="step">
 					<div class="client">
 						{#if step.Name === 'data_close'}
-							[DATA SENT]
+							{`<DATACLOSE>`}
 						{:else}
 							{step.Command}
 						{/if}
 					</div>
-					<div class="server">{`${step.ReplyCode} ${step.ReplyText}`}</div>
+					<div class="server {codeClass(step.ReplyCode)}">
+						{`${step.ReplyCode} ${step.ReplyText}`}
+					</div>
 				</div>
 			{/if}
 		{/each}
@@ -44,14 +53,19 @@
 
 <style>
 	.code {
-		font-family: Consolas, Monaco, 'Lucida Console', 'Courier New', monospace;
-		background-color: #1e1e2e;
-		color: #cdd6f4;
+		font-family:
+			Consolas,
+			Monaco,
+			Andale Mono,
+			Ubuntu Mono,
+			monospace;
+		background-color: #282c34;
+		color: #abb2bf;
 		padding: 15px 20px;
 		border-radius: 20px;
 		overflow-x: auto;
 		font-size: 14px;
-		margin-top: 10px;
+		margin-top: 15px;
 	}
 
 	.step {
@@ -65,6 +79,10 @@
 	}
 
 	.client {
-		color: #89b4fa;
+		color: #61aeee;
+	}
+
+	.server.error {
+		color: #e06c75;
 	}
 </style>
