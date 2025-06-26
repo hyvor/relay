@@ -1,5 +1,3 @@
-
-
 export type Project = {
     id: string;
     name: string;
@@ -45,4 +43,16 @@ export interface SmtpStep {
     Command: string;
     ReplyCode: number
     ReplyText: string;
+}
+
+export type ApiKeyScope = 'send_email' | 'full';
+
+export type ApiKey = {
+    id: number;
+    name: string;
+    scope: ApiKeyScope;
+    key?: string;
+    created_at: number;
+    is_enabled: boolean;
+    last_accessed_at?: number;
 }
