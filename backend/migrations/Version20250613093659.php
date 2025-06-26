@@ -17,7 +17,7 @@ final class Version20250613093659 extends AbstractMigration
     public function up(Schema $schema): void
     {
         $this->addSql(
-            "CREATE TYPE sends_status AS ENUM ('queued', 'sent', 'failed')"
+            "CREATE TYPE sends_status AS ENUM ('queued', 'processing', 'sent', 'failed')"
         );
 
         $this->addSql(
@@ -27,6 +27,7 @@ final class Version20250613093659 extends AbstractMigration
                 uuid UUID NOT NULL UNIQUE,
                 created_at TIMESTAMPTZ NOT NULL,
                 updated_at TIMESTAMPTZ NOT NULL,
+                send_after TIMESTAMPTZ NOT NULL,
                 sent_at TIMESTAMPTZ,
                 failed_at TIMESTAMPTZ,
                 status sends_status NOT NULL,
@@ -41,7 +42,8 @@ final class Version20250613093659 extends AbstractMigration
                 body_html text,
                 body_text text,
                 raw text NOT NULL,
-                result jsonb
+                result jsonb,
+                try_count INT NOT NULL DEFAULT 0
             )
             SQL
         );
@@ -51,6 +53,9 @@ final class Version20250613093659 extends AbstractMigration
         );
         $this->addSql("CREATE INDEX idx_sends_domain_id ON sends (domain_id)");
         $this->addSql("CREATE INDEX idx_sends_queue_id ON sends (queue_id)");
+
+        // worker index
+        $this->addSql("CREATE INDEX idx_sends_status_queue_id_send_after ON sends (queue_id, send_after) WHERE status = 'queued'");
     }
 
     public function down(Schema $schema): void

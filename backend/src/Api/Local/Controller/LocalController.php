@@ -6,6 +6,8 @@ use App\Api\Local\Input\SendDoneInput;
 use App\Entity\Type\SendStatus;
 use App\Service\Email\Dto\SendUpdateDto;
 use App\Service\Email\SendService;
+use App\Service\Management\GoState\GoStateFactory;
+use App\Service\Management\GoState\ServerNotFoundException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -23,6 +25,18 @@ class LocalController extends AbstractController
         private SendService $sendService
     )
     {
+    }
+
+    #[Route('/state', methods: 'GET')]
+    public function getState(GoStateFactory $goStateFactory): JsonResponse
+    {
+        try {
+            $state = $goStateFactory->create();
+        } catch (ServerNotFoundException $e) {
+            throw new UnprocessableEntityHttpException('Server not yet initialized', $e);
+        }
+
+        return new JsonResponse($state);
     }
 
     #[Route('/send/done', methods: 'POST')]

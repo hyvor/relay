@@ -6,6 +6,7 @@ use App\Entity\Domain;
 use App\Entity\Project;
 use App\Entity\Queue;
 use App\Entity\Send;
+use App\Entity\SendAttempt;
 use App\Entity\Type\SendStatus;
 use App\Repository\SendRepository;
 use App\Service\Email\Dto\SendUpdateDto;
@@ -48,7 +49,8 @@ class SendService
             ->where('s.project = :project')
             ->setParameter('project', $project)
             ->setMaxResults($limit)
-            ->setFirstResult($offset);
+            ->setFirstResult($offset)
+            ->orderBy('s.created_at', 'DESC');
 
         if ($status !== null) {
             $qb->andWhere('s.status = :status')
@@ -76,6 +78,11 @@ class SendService
     public function getSendById(int $id): ?Send
     {
         return $this->em->getRepository(Send::class)->find($id);
+    }
+
+    public function getSendByUuid(string $uuid): ?Send
+    {
+        return $this->em->getRepository(Send::class)->findOneBy(['uuid' => $uuid]);
     }
 
     public function createSend(
@@ -106,6 +113,7 @@ class SendService
             $send->setUuid(Uuid::v4());
             $send->setCreatedAt($this->now());
             $send->setUpdatedAt($this->now());
+            $send->setSendAfter($this->now());
             $send->setStatus(SendStatus::QUEUED);
             $send->setProject($project);
             $send->setDomain($domain);
@@ -121,12 +129,12 @@ class SendService
             $this->em->persist($send);
             $this->em->flush();
 
-            $this->bus->dispatch(new EmailSendMessage(
+            /*$this->bus->dispatch(new EmailSendMessage(
                 sendId: $send->getId(),
                 from: $from->getAddress(),
                 to: $to->getAddress(),
                 rawEmail: $rawEmail
-            ));
+            ));*/
 
             $this->em->commit();
             return $send;
@@ -166,6 +174,14 @@ class SendService
 
         return $send;
 
+    }
+
+    /**
+     * @return SendAttempt[]
+     */
+    public function getSendAttemptsOfSend(Send $send): array
+    {
+        return $this->em->getRepository(SendAttempt::class)->findBy(['send' => $send], ['id' => 'DESC']);
     }
 
 }

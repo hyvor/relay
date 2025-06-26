@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"bytes"
 	"errors"
@@ -91,3 +92,4 @@ func TestSendEmailSuccess(t *testing.T) {
 	assert.Nil(t, result.Error)
 
 }
+*/

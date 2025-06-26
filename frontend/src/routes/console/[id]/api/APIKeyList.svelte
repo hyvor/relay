@@ -16,17 +16,13 @@
 {:else}
 	<div class="api-keys-list">
 		{#each apiKeys as apiKey (apiKey.id)}
-			<APIKeyRow 
-				{apiKey} 
-				{onToggleEnabled} 
-				{onDelete} 
-			/>
+			<APIKeyRow {apiKey} {onToggleEnabled} {onDelete} />
 		{/each}
 	</div>
 {/if}
 
 <style>
-	.loading, .empty-state {
+	.loading {
 		text-align: center;
 		padding: 60px 20px;
 		color: var(--text-light);
@@ -37,4 +33,4 @@
 		flex-direction: column;
 		gap: 16px;
 	}
-</style> 
+</style>

@@ -5,7 +5,9 @@
 		TextInput,
 		SplitControl,
 		toast,
-		confirm
+		confirm,
+		Callout,
+		IconButton
 	} from '@hyvor/design/components';
 	import IconPlus from '@hyvor/icons/IconPlus';
 	import IconCopy from '@hyvor/icons/IconCopy';
@@ -15,6 +17,7 @@
 	import type { ApiKey } from '../../types';
 	import { getApiKeys, updateApiKey, deleteApiKey } from '../../lib/actions/apiKeyActions';
 	import { onMount } from 'svelte';
+	import { copyAndToast } from '../../lib/helpers/copy';
 
 	let apiKeys: ApiKey[] = $state([]);
 	let loading = $state(true);
@@ -53,9 +56,12 @@
 	}
 
 	function handleToggleEnabled(apiKey: ApiKey) {
-		updateApiKey(apiKey.id, !apiKey.is_enabled)
+		const newEnabledState = !apiKey.is_enabled;
+		updateApiKey(apiKey.id, newEnabledState)
 			.then(() => {
-				loadApiKeys();
+				apiKeys = apiKeys.map((key) =>
+					key.id === apiKey.id ? { ...key, is_enabled: newEnabledState } : key
+				);
 				toast.success(`API key ${apiKey.is_enabled ? 'disabled' : 'enabled'}`);
 			})
 			.catch((error) => {
@@ -86,51 +92,36 @@
 		}
 	}
 
-	function copyToClipboard(text: string) {
-		navigator.clipboard.writeText(text).then(() => {
-			toast.success('Copied to clipboard');
-		}).catch(() => {
-			toast.error('Failed to copy to clipboard');
-		});
-	}
-
 	function getScopeLabel(scope: string) {
-		return scopes.find(s => s.value === scope)?.label || scope;
+		return scopes.find((s) => s.value === scope)?.label || scope;
 	}
-
 </script>
 
 <SingleBox>
 	<div class="top">
-		<Button
-			variant="fill"
-			on:click={() => (showCreateModal = true)}
-		>
+		<Button variant="fill" on:click={() => (showCreateModal = true)}>
 			<IconPlus size={16} />
 			Create API Key
 		</Button>
 	</div>
 
 	<div class="content">
-		<APIKeyList 
-			{apiKeys} 
-			{loading} 
-			onToggleEnabled={handleToggleEnabled} 
-			onDelete={handleDeleteApiKey} 
+		<APIKeyList
+			{apiKeys}
+			{loading}
+			onToggleEnabled={handleToggleEnabled}
+			onDelete={handleDeleteApiKey}
 		/>
 	</div>
 </SingleBox>
 
-<CreateApiKeyModal 
-	bind:show={showCreateModal} 
-	onApiKeyCreated={handleApiKeyCreated}
-/>
+<CreateApiKeyModal bind:show={showCreateModal} onApiKeyCreated={handleApiKeyCreated} />
 
 <!-- Show New API Key Modal -->
 {#if showApiKeyModal && newApiKey}
 	<Modal
 		title="Your New API Key"
-		bind:show={showApiKeyModal} 
+		bind:show={showApiKeyModal}
 		size="medium"
 		footer={{
 			cancel: {
@@ -139,34 +130,33 @@
 			confirm: false
 		}}
 	>
-
 		<div class="modal-content">
 			<div class="warning-box">
-				<strong>Important:</strong> This is the only time you'll see this API key. 
-				Make sure to copy it and store it securely.
+				<strong>Important:</strong> This is the only time you'll see this API key. Make sure to copy
+				it and store it securely.
 			</div>
-			
+
 			<SplitControl label="API Key">
 				<div class="key-input-group">
-					<TextInput
-						value={newApiKey.key || ''}
-						readonly
-						block
-					/>
-					<Button
-						variant="outline"
-						on:click={() => copyToClipboard(newApiKey?.key || '')}
+					<TextInput value={newApiKey.key || ''} readonly block />
+					<IconButton
+						size="small"
+						color="input"
+						style="margin-left:4px;"
+						on:click={() => copyAndToast(newApiKey?.key || '', 'API Key copied')}
 					>
-						<IconCopy size={16} />
-						Copy
-					</Button>
+						<IconCopy size={12} />
+					</IconButton>
 				</div>
 			</SplitControl>
-			
-			<div class="api-key-details">
-				<p><strong>Name:</strong> {newApiKey.name}</p>
-				<p><strong>Scope:</strong> {getScopeLabel(newApiKey.scope)}</p>
-			</div>
+
+			<SplitControl label="Name">
+				<span>{newApiKey.name}</span>
+			</SplitControl>
+
+			<SplitControl label="Scope">
+				<span>{getScopeLabel(newApiKey.scope)}</span>
+			</SplitControl>
 		</div>
 	</Modal>
 {/if}

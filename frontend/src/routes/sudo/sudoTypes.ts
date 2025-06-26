@@ -17,7 +17,7 @@ export interface IpAddress {
     server_id: number;
     ip_address: string;
     ptr: string;
-    email_queue: string | null;
+    queue: Queue | null;
     is_active: boolean;
     is_enabled: boolean;
 }

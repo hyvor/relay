@@ -3,6 +3,7 @@
 namespace App\Api\Console\Object;
 
 use App\Entity\Send;
+use App\Entity\SendAttempt;
 
 class SendObject
 {
@@ -19,7 +20,13 @@ class SendObject
     public ?string $body_text;
     public string $raw;
 
-    public function __construct(Send $send)
+
+    public ?array $attempts = null;
+
+    /**
+     * @param SendAttempt[] $attempts
+     */
+    public function __construct(Send $send, array $attempts = [])
     {
         $this->id = $send->getId();
         $this->uuid = $send->getUuid();
@@ -33,5 +40,6 @@ class SendObject
         $this->body_html = $send->getBodyHtml();
         $this->body_text = $send->getBodyText();
         $this->raw = $send->getRaw();
+        $this->attempts = array_map(fn (SendAttempt $attempt) => new SendAttemptObject($attempt), $attempts);
     }
 }

@@ -1,8 +1,18 @@
 <script lang="ts">
-	import { Modal, Button, TextInput, SplitControl, ActionList, ActionListItem, toast } from '@hyvor/design/components';
+	import {
+		Modal,
+		Button,
+		TextInput,
+		SplitControl,
+		ActionList,
+		ActionListItem,
+		toast,
+		Radio,
+		InputGroup,
+		Callout
+	} from '@hyvor/design/components';
 	import { createApiKey } from '../../lib/actions/apiKeyActions';
 	import type { ApiKey, ApiKeyScope } from '../../types';
-	import Selector from '../../@components/content/Selector.svelte';
 
 	interface Props {
 		show: boolean;
@@ -15,7 +25,6 @@
 	let scope = $state<ApiKeyScope>('send_email');
 	let loading = $state(false);
 	let errors = $state<Record<string, string>>({});
-	let showScopeSelector = $state(false);
 
 	const scopes: Array<{ value: ApiKeyScope; label: string }> = [
 		{ value: 'send_email', label: 'Send Email' },
@@ -26,7 +35,6 @@
 		name = '';
 		scope = 'send_email';
 		errors = {};
-		showScopeSelector = false;
 	}
 
 	function validateForm(): boolean {
@@ -71,95 +79,58 @@
 		show = false;
 		resetForm();
 	}
-
-	function selectScope(selectedScope: ApiKeyScope) {
-		scope = selectedScope;
-		showScopeSelector = false;
-		errors.scope = '';
-	}
-
-	function getScopeLabel(scopeValue: ApiKeyScope) {
-		return scopes.find(s => s.value === scopeValue)?.label || scopeValue;
-	}
-
-	function handleScopeTriggerClick() {
-		showScopeSelector = !showScopeSelector;
-	}
 </script>
 
-<Modal 
-	bind:show 
-	size="medium" 
+<Modal
+	bind:show
+	{loading}
+	size="medium"
 	footer={{
 		cancel: {
 			text: 'Cancel'
 		},
 		confirm: {
-			text: 'Create API Key',
+			text: 'Create API Key'
 		}
 	}}
 	title="Create API Key"
 	on:cancel={handleClose}
-	on:confirm={handleSubmit}>
-
+	on:confirm={handleSubmit}
+>
 	<div class="modal-content">
-		<SplitControl label="Name" error={errors.name}>
-			<TextInput
-				bind:value={name}
-				placeholder="Enter API key name"
-				block
-				disabled={loading}
-			/>
+		<SplitControl
+			label="Name"
+			caption="A descriptive name to identify this API key"
+			error={errors.name}
+		>
+			<TextInput bind:value={name} placeholder="Enter API key name" block disabled={loading} />
 		</SplitControl>
 
-		<SplitControl label="Scope" error={errors.scope}>
-			<Selector
-				name="Scope"
-				bind:show={showScopeSelector}
-				value={getScopeLabel(scope)}
-				width={400}
-				disabled={loading}
-				handleTriggerClick={handleScopeTriggerClick}
-			>
-				<ActionList selection="single" selectionAlign="end">
-					{#each scopes as scopeOption}
-						<ActionListItem
-							on:click={() => selectScope(scopeOption.value)}
-							selected={scope === scopeOption.value}
-						>
-							{scopeOption.label}
-						</ActionListItem>
-					{/each}
-				</ActionList>
-			</Selector>
+		<SplitControl
+			label="Scope"
+			caption="Define what actions this API key can perform"
+			error={errors.scope}
+		>
+			<InputGroup>
+				{#each scopes as scopeOption}
+					<Radio name="scope" value={scopeOption.value} bind:group={scope} disabled={loading}>
+						{scopeOption.label}
+					</Radio>
+				{/each}
+			</InputGroup>
 		</SplitControl>
-
-		<div class="scope-description">
+		<Callout type="info">
 			{#if scope === 'send_email'}
-				<p>This API key can only be used to send emails.</p>
+				This API key can only be used to send emails.
 			{:else if scope === 'full'}
-				<p>This API key has full access to all project resources.</p>
+				This API key has full access to all project resources.
 			{/if}
-		</div>
+		</Callout>
 	</div>
 </Modal>
 
 <style>
 	.modal-content {
 		padding: 20px 0;
-	}
-
-	.scope-description {
-		margin-top: 16px;
-		padding: 12px;
-		background: var(--bg-light);
-		border-radius: 6px;
-		border: 1px solid var(--border);
-	}
-
-	.scope-description p {
-		margin: 0;
-		font-size: 14px;
-		color: var(--text-light);
 	}
 </style>

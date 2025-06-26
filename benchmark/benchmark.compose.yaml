@@ -1,0 +1,14 @@
+services:
+  k6:
+    container_name: hyvor-relay-benchmark
+    image: grafana/k6
+    volumes:
+      - .:/scripts
+    working_dir: /scripts
+    entrypoint: ["k6", "run", "/scripts/benchmark.js"]
+    networks:
+      - hyvor-network
+
+networks:
+  hyvor-network:
+    external: true

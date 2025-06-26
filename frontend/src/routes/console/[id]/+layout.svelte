@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Loader, toast } from '@hyvor/design/components';
-	import Nav from '../@components/nav/Nav.svelte';
+	import Nav from '../@components/Nav/Nav.svelte';
 	import ProjectSelector from '../@components/Nav/ProjectSelector.svelte';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';

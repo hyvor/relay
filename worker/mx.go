@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -24,13 +25,25 @@ var mxCache = mxCacheType{
 	mu:   sync.Mutex{},
 }
 
+func (m *mxCacheType) Clear() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.data = make(map[string]mxCacheEntry)
+}
+
 var ErrSmtpMxLookupFailed = errors.New("MX lookup failed")
 var ErrSmtpMxNoRecords = errors.New("MX lookup returned no records")
 
 var lookupMxFunc = net.LookupMX
 
+const TESTING_DOMAIN = "hyvor.local.testing"
+
 func getMxHostsFromEmail(email string) ([]string, error) {
 	domain := email[strings.Index(email, "@")+1:]
+
+	if domain == TESTING_DOMAIN {
+		return []string{"hyvor-service-mailpit"}, nil
+	}
 
 	mxCache.mu.Lock()
 	defer mxCache.mu.Unlock()
@@ -45,17 +58,34 @@ func getMxHostsFromEmail(email string) ([]string, error) {
 		return nil, fmt.Errorf("%w: %s", ErrSmtpMxLookupFailed, err)
 	}
 
-	if len(mx) == 0 {
-		return nil, ErrSmtpMxNoRecords
-	}
-
-	// todo: sort by preference
-	// todo: remove duplicates
+	slices.SortFunc(mx, func(a, b *net.MX) int {
+		if a.Pref < b.Pref {
+			return -1
+		} else if a.Pref > b.Pref {
+			return 1
+		}
+		return 0
+	})
 
 	var hosts []string
 	for _, mxRecord := range mx {
 		host := strings.TrimSuffix(mxRecord.Host, ".")
+
+		// skip empty hosts
+		if host == "" {
+			continue
+		}
+
+		// skip duplicates
+		if slices.Contains(hosts, host) {
+			continue
+		}
+
 		hosts = append(hosts, host)
+	}
+
+	if len(hosts) == 0 {
+		return nil, ErrSmtpMxNoRecords
 	}
 
 	mxCache.data[domain] = mxCacheEntry{

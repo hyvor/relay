@@ -2,7 +2,7 @@
 
 namespace App\Tests\Service\Ip;
 
-use App\Service\Ip\IpService;
+use App\Service\Ip\CurrentServerIp;
 use PHPUnit\Framework\TestCase;
 
 class IpServiceTest extends TestCase
@@ -10,14 +10,14 @@ class IpServiceTest extends TestCase
 
     public function test_get_public_ips(): void
     {
-        $ipService = new IpService();
+        $ipService = new CurrentServerIp();
         $addresses = $ipService->getPublicV4IpAddresses();
         $this->assertIsArray($addresses);
     }
 
     public function test_get_public_ips_mocked(): void
     {
-        $ipService = new IpService(
+        $ipService = new CurrentServerIp(
             netGetInterfacesFunction: [$this, 'getMockedNetGetInterfaces']
         );
         $addresses = $ipService->getPublicV4IpAddresses();
