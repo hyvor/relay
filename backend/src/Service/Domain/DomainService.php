@@ -19,12 +19,9 @@ class DomainService
     {
     }
 
-    /**
-     * @deprecated must be removed
-     */
-    public function getDomainByName(string $domainName): ?Domain
+    public function getDomainById(int $domainId): ?Domain
     {
-        return $this->domainRepository->findOneBy(['domain' => $domainName]);
+        return $this->domainRepository->find($domainId);
     }
 
     public function getDomainByProjectAndName(Project $project, string $domainName): ?Domain
