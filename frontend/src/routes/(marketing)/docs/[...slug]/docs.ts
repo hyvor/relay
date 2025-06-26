@@ -4,6 +4,7 @@ import Introduction from '../content/Introduction.svelte';
 import EmailTransactional from '../content/EmailTransactional.svelte';
 import EmailDistributional from '../content/EmailDistributional.svelte';
 import WebhookEvents from '../content/WebhookEvents.svelte';
+import ConsoleApi from '../content/ConsoleApi.svelte';
 
 export const categories: Category[] = [
 	{
@@ -22,8 +23,8 @@ export const categories: Category[] = [
 		pages: [
 			{
 				slug: 'api-console',
-				name: 'Console API Intro',
-				component: EmailTransactional
+				name: 'Console API',
+				component: ConsoleApi
 			},
 			{
 				slug: 'send-transactional',

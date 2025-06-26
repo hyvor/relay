@@ -27,10 +27,11 @@ final class DomainFactory extends PersistentProxyObjectFactory
     protected function defaults(): array
     {
         return [
-            'hyvor_user_id' => self::faker()->numberBetween(1, 10000),
+            'project' => ProjectFactory::createOne(),
             'domain' => self::faker()->domainName(),
+            'dkim_selector' => 'rly' . self::faker()->word(),
             'dkim_public_key' => self::faker()->text(500),
-            'dkim_private_key' => self::faker()->text(500),
+            'dkim_private_key_encrypted' => self::faker()->text(500),
             'created_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'updated_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
         ];
