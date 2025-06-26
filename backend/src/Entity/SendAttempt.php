@@ -2,8 +2,10 @@
 
 namespace App\Entity;
 
+use App\Entity\Type\SendAttemptStatus;
 use App\Repository\SendAttemptRepository;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\Type\SendStatus;
 
 #[ORM\Entity(repositoryClass: SendAttemptRepository::class)]
 #[ORM\Table(name: "send_attempts")]
@@ -27,8 +29,14 @@ class SendAttempt
     #[ORM\Column(type: "json")]
     private array $resolved_mx_hosts = [];
 
+    #[ORM\Column(type: "string", enumType: SendAttemptStatus::class)]
+    private SendAttemptStatus $status;
+
+    #[ORM\Column(type: "integer", options: ["default" => 0])]
+    private int $try_count = 0;
+
     #[ORM\Column(type: "string", nullable: true)]
-    private ?string $send_mx_host = null;
+    private ?string $sent_mx_host = null;
 
     #[ORM\Column(type: "json")]
     private array $smtp_conversations = [];
@@ -93,14 +101,36 @@ class SendAttempt
         return $this;
     }
 
-    public function getSendMxHost(): ?string
+    public function getSentMxhost(): ?string
     {
-        return $this->send_mx_host;
+        return $this->sent_mx_host;
     }
 
-    public function setSendMxHost(?string $send_mx_host): static
+    public function setSentMxhost(?string $sent_mx_host): static
     {
-        $this->send_mx_host = $send_mx_host;
+        $this->sent_mx_host = $sent_mx_host;
+        return $this;
+    }
+
+    public function getStatus(): SendAttemptStatus
+    {
+        return $this->status;
+    }
+
+    public function setStatus(SendAttemptStatus $status): static
+    {
+        $this->status = $status;
+        return $this;
+    }
+
+    public function getTryCount(): int
+    {
+        return $this->try_count;
+    }
+
+    public function setTryCount(int $try_count): static
+    {
+        $this->try_count = $try_count;
         return $this;
     }
 

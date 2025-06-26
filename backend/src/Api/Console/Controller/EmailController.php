@@ -65,10 +65,21 @@ class EmailController extends AbstractController
         return $this->json($sends);
     }
 
-    #[Route('/emails/{id}', methods: 'GET')]
-    public function getById(Send $send): JsonResponse
+    #[Route('/emails/uuid/{uuid}', methods: 'GET')]
+    public function getByUuid(Project $project, string $uuid): JsonResponse
     {
-        return $this->json(new SendObject($send));
+        $send = $this->sendService->getSendByUuid($uuid);
+        if ($send === null) {
+            throw new BadRequestException("Send with UUID $uuid not found");
+        }
+
+        if ($send->getProject()->getId() !== $project->getId()) {
+            throw new BadRequestException("Send with UUID $uuid does not belong to project " . $project->getName());
+        }
+
+        $attempts = $this->sendService->getSendAttemptsOfSend($send);
+
+        return $this->json(new SendObject($send, $attempts));
     }
 
 
