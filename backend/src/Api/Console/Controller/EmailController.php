@@ -93,7 +93,7 @@ class EmailController extends AbstractController
         $fromAddress = $sendEmailInput->getFromAddress();
 
         $domainName = EmailAddressFormat::getDomainFromEmail($fromAddress->getAddress());
-        $domain = $this->domainService->getDomainByName($domainName);
+        $domain = $this->domainService->getDomainByProjectAndName($project, $domainName);
 
         if ($domain === null) {
             throw new BadRequestException("Domain $domainName not found for email address " . $fromAddress->getAddress());

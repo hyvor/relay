@@ -21,10 +21,12 @@ final class Version20250607093658 extends AbstractMigration
             id SERIAL PRIMARY KEY,
             created_at TIMESTAMPTZ NOT NULL,
             updated_at TIMESTAMPTZ NOT NULL,
-            hyvor_user_id INTEGER NOT NULL,
+            project_id BIGINT NOT NULL references projects(id) ON DELETE CASCADE,
             domain VARCHAR(255) NOT NULL,
+            dkim_selector VARCHAR(255) NOT NULL UNIQUE,
             dkim_public_key TEXT NOT NULL,
-            dkim_private_key TEXT NOT NULL
+            dkim_private_key_encrypted TEXT NOT NULL,
+            UNIQUE(project_id, domain),
         )
         ');
     }

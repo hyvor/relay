@@ -20,17 +20,21 @@ class Domain
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $updated_at;
 
-    #[ORM\Column(type: 'integer', nullable: false)]
-    private int $hyvor_user_id;
+    #[ORM\ManyToOne(targetEntity: Project::class)]
+    #[ORM\JoinColumn]
+    private Project $project;
 
     #[ORM\Column(type: 'string', length: 255)]
     private string $domain;
+
+    #[ORM\Column(type: 'string')]
+    private string $dkim_selector;
 
     #[ORM\Column(type: 'text')]
     private string $dkim_public_key;
 
     #[ORM\Column(type: 'text')]
-    private string $dkim_private_key;
+    private string $dkim_private_key_encrypted;
 
     public function __construct()
     {}
@@ -68,14 +72,14 @@ class Domain
         return $this;
     }
 
-    public function getHyvorUserId(): int
+    public function getProject(): Project
     {
-        return $this->hyvor_user_id;
+        return $this->project;
     }
 
-    public function setHyvorUserId(int $hyvorUserId): static
+    public function setProject(Project $project): static
     {
-        $this->hyvor_user_id = $hyvorUserId;
+        $this->project = $project;
         return $this;
     }
 
@@ -90,6 +94,17 @@ class Domain
         return $this;
     }
 
+    public function getDkimSelector(): string
+    {
+        return $this->dkim_selector;
+    }
+
+    public function setDkimSelector(string $dkimSelector): static
+    {
+        $this->dkim_selector = $dkimSelector;
+        return $this;
+    }
+
     public function getDkimPublicKey(): string
     {
         return $this->dkim_public_key;
@@ -101,14 +116,14 @@ class Domain
         return $this;
     }
 
-    public function getDkimPrivateKey(): ?string
+    public function getDkimPrivateKeyEncrypted(): string
     {
-        return $this->dkim_private_key;
+        return $this->dkim_private_key_encrypted;
     }
 
-    public function setDkimPrivateKey(?string $dkimPrivateKey): static
+    public function setDkimPrivateKeyEncrypted(string $dkimPrivateKey): static
     {
-        $this->dkim_private_key = $dkimPrivateKey;
+        $this->dkim_private_key_encrypted = $dkimPrivateKey;
         return $this;
     }
 }
