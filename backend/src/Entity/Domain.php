@@ -6,35 +6,44 @@ use App\Repository\DomainRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: DomainRepository::class)]
-#[ORM\Table(name: 'domains')]
+#[ORM\Table(name: "domains")]
 class Domain
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: "integer")]
     private int $id;
 
-    #[ORM\Column(type: 'datetime_immutable')]
+    #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable $created_at;
 
-    #[ORM\Column(type: 'datetime_immutable')]
+    #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable $updated_at;
 
     #[ORM\ManyToOne(targetEntity: Project::class)]
     #[ORM\JoinColumn]
     private Project $project;
 
-    #[ORM\Column(type: 'string', length: 255)]
+    #[ORM\Column(type: "string", length: 255)]
     private string $domain;
 
-    #[ORM\Column(type: 'string')]
+    #[ORM\Column(type: "string")]
     private string $dkim_selector;
 
-    #[ORM\Column(type: 'text')]
+    #[ORM\Column(type: "text")]
     private string $dkim_public_key;
 
-    #[ORM\Column(type: 'text')]
+    #[ORM\Column(type: "text")]
     private string $dkim_private_key_encrypted;
+
+    #[ORM\Column(type: "boolean")]
+    private bool $dkim_verified;
+
+    #[ORM\Column(type: "datetime_immutable", nullable: true)]
+    private ?\DateTimeImmutable $dkim_checked_at = null;
+
+    #[ORM\Column(type: "text", nullable: true)]
+    private ?string $dkim_error_message = null;
 
     public function __construct()
     {}
@@ -124,6 +133,39 @@ class Domain
     public function setDkimPrivateKeyEncrypted(string $dkimPrivateKey): static
     {
         $this->dkim_private_key_encrypted = $dkimPrivateKey;
+        return $this;
+    }
+
+    public function getDkimVerified(): bool
+    {
+        return $this->dkim_verified;
+    }
+
+    public function setDkimVerified(bool $dkimVerified): static
+    {
+        $this->dkim_verified = $dkimVerified;
+        return $this;
+    }
+
+    public function getDkimCheckedAt(): ?\DateTimeImmutable
+    {
+        return $this->dkim_checked_at;
+    }
+
+    public function setDkimCheckedAt(?\DateTimeImmutable $dkimCheckedAt): static
+    {
+        $this->dkim_checked_at = $dkimCheckedAt;
+        return $this;
+    }
+
+    public function getDkimErrorMessage(): ?string
+    {
+        return $this->dkim_error_message;
+    }
+
+    public function setDkimErrorMessage(?string $dkimErrorMessage): static
+    {
+        $this->dkim_error_message = $dkimErrorMessage;
         return $this;
     }
 }
