@@ -26,7 +26,9 @@ final class Version20250607093658 extends AbstractMigration
             dkim_selector VARCHAR(255) NOT NULL UNIQUE,
             dkim_public_key TEXT NOT NULL,
             dkim_private_key_encrypted TEXT NOT NULL,
-            UNIQUE(project_id, domain),
+            dkim_verified BOOLEAN NOT NULL DEFAULT FALSE,
+            dkim_verified_at TIMESTAMPTZ,
+            UNIQUE(project_id, domain)
         )
         ');
     }
