@@ -23,18 +23,18 @@ class SuppressionController extends AbstractController
     {
         $emailSearch = null;
         if ($request->query->has('email')) {
-            $fromSearch = $request->query->getString('email');
+            $emailSearch = $request->query->getString('email');
         }
 
-        $suppresions = $this
+        $suppressions = $this
             ->suppressionService
             ->getSuppressionsForProject($project, $emailSearch)
             ->map(fn($suppresion) => new SuppressionObject($suppresion));
 
-        return $this->json($suppresions);
+        return $this->json($suppressions);
     }
 
-    #[Route('/suppresions/{id}', methods: 'DELETE')]
+    #[Route('/suppressions/{id}', methods: 'DELETE')]
     public function deleteSuppression(Suppression $suppression): JsonResponse
     {
         $this->suppressionService->deleteSuppression($suppression);

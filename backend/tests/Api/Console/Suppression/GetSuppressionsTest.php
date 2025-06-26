@@ -2,10 +2,17 @@
 
 namespace App\Tests\Api\Console\Suppression;
 
+use App\Api\Console\Controller\SuppressionController;
+use App\Api\Console\Object\SuppressionObject;
+use App\Service\Suppression\SuppressionService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\SuppressionFactory;
+use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(SuppressionController::class)]
+#[CoversClass(SuppressionService::class)]
+#[CoversClass(SuppressionObject::class)]
 class GetSuppressionsTest extends WebTestCase
 {
     public function test_get_suppresions(): void
@@ -45,5 +52,32 @@ class GetSuppressionsTest extends WebTestCase
             $this->assertSame($suppressions[$key]->getReason()->value, $delivery['reason']);
             $this->assertSame($suppressions[$key]->getDescription(), $delivery['description']);
         }
+    }
+
+    public function test_get_suppresions_with_email_search(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $suppression = SuppressionFactory::createOne([
+            'project' => $project,
+            'email' => 'thibault@hyvor.com'
+        ]);
+
+        SuppressionFactory::createOne( [
+            'project' => $project,
+            'email' => 'supun@hyvor.com'
+        ]);
+
+        $response = $this->consoleApi(
+            $project,
+            'GET',
+            '/suppressions?email=thibault'
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+        $content = $this->getJson();
+
+        $this->assertCount(1, $content);
+        $this->assertSame($content[0]['id'], $suppression->getId());
     }
 }
