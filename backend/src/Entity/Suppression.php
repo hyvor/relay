@@ -7,6 +7,7 @@ use App\Repository\SuppressionRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SuppressionRepository::class)]
+#[ORM\Table(name: 'suppressions')]
 class Suppression
 {
     #[ORM\Id]
