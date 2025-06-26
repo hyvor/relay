@@ -26,7 +26,7 @@
 			{#if attempt.status === 'sent'}
 				Message accepted by {attempt.sent_mx_host}
 			{:else if attempt.status === 'failed'}
-				<span class="error">{attempt.er || 'No error message'}</span>
+				<span class="error">{attempt.error || 'No error message'}</span>
 			{:else}
 				<span class="info">Pending</span>
 			{/if}

@@ -30,7 +30,7 @@
 				<div class="step">
 					<div class="client">
 						{#if step.Name === 'data_close'}
-							[DATA SENT]
+							{`<DATACLOSE>`}
 						{:else}
 							{step.Command}
 						{/if}

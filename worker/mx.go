@@ -58,10 +58,6 @@ func getMxHostsFromEmail(email string) ([]string, error) {
 		return nil, fmt.Errorf("%w: %s", ErrSmtpMxLookupFailed, err)
 	}
 
-	if len(mx) == 0 {
-		return nil, ErrSmtpMxNoRecords
-	}
-
 	slices.SortFunc(mx, func(a, b *net.MX) int {
 		if a.Pref < b.Pref {
 			return -1
@@ -86,6 +82,10 @@ func getMxHostsFromEmail(email string) ([]string, error) {
 		}
 
 		hosts = append(hosts, host)
+	}
+
+	if len(hosts) == 0 {
+		return nil, ErrSmtpMxNoRecords
 	}
 
 	mxCache.data[domain] = mxCacheEntry{

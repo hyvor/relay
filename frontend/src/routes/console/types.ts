@@ -31,6 +31,7 @@ export interface SendAttempt {
     resolved_mx_hosts: string[];
     sent_mx_host: string | null;
     smtp_conversations: Record<string, SmtpConversation>;
+    error: string | null;
 }
 
 export interface SmtpConversation {
