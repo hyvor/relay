@@ -20,8 +20,8 @@ export function getEmails(
 	});
 }
 
-export function getEmail(id: number) {
+export function getEmailByUuid(uuid: string) {
 	return consoleApi.get<Email>({
-		endpoint: `emails/${id}`
+		endpoint: `emails/uuid/${uuid}`
 	});
 }

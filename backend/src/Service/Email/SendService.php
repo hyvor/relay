@@ -6,6 +6,7 @@ use App\Entity\Domain;
 use App\Entity\Project;
 use App\Entity\Queue;
 use App\Entity\Send;
+use App\Entity\SendAttempt;
 use App\Entity\Type\SendStatus;
 use App\Repository\SendRepository;
 use App\Service\Email\Dto\SendUpdateDto;
@@ -77,6 +78,11 @@ class SendService
     public function getSendById(int $id): ?Send
     {
         return $this->em->getRepository(Send::class)->find($id);
+    }
+
+    public function getSendByUuid(string $uuid): ?Send
+    {
+        return $this->em->getRepository(Send::class)->findOneBy(['uuid' => $uuid]);
     }
 
     public function createSend(
@@ -168,6 +174,14 @@ class SendService
 
         return $send;
 
+    }
+
+    /**
+     * @return SendAttempt[]
+     */
+    public function getSendAttemptsOfSend(Send $send): array
+    {
+        return $this->em->getRepository(SendAttempt::class)->findBy(['send' => $send], ['id' => 'DESC']);
     }
 
 }

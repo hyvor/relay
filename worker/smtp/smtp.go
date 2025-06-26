@@ -206,10 +206,24 @@ type dataCloser struct {
 	io.WriteCloser
 }
 
-func (d *dataCloser) Close() error {
+// Verify with: 250
+func (d *dataCloser) Close() CommandResult {
+	commandResult := CommandResult{}
+
 	d.WriteCloser.Close()
-	_, _, err := d.c.Text.ReadResponse(250)
-	return err
+	code, msg, err := d.c.Text.ReadResponse(0)
+
+	if err != nil {
+		commandResult.Err = err
+		return commandResult
+	}
+
+	commandResult.Reply = &CommandReply{
+		Code:    code,
+		Message: msg,
+	}
+
+	return commandResult
 }
 
 // Data issues a DATA command to the server and returns a writer that
@@ -217,7 +231,7 @@ func (d *dataCloser) Close() error {
 // close the writer before calling any more methods on c. A call to
 // Data must be preceded by one or more calls to [Client.Rcpt].
 // Verify with: 354
-func (c *Client) Data() (io.WriteCloser, CommandResult) {
+func (c *Client) Data() (*dataCloser, CommandResult) {
 	dataResult := c.cmd("DATA")
 
 	if dataResult.Err != nil {

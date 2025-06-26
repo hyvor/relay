@@ -19,13 +19,14 @@ const MAX_SEND_TRIES = 8
 type SmtpStepName string
 
 const (
-	SmtpStepDial     SmtpStepName = "dial"
-	SmtpStepHello    SmtpStepName = "hello"
-	SmtpStepStartTLS SmtpStepName = "starttls"
-	SmtpStepMail     SmtpStepName = "mail"
-	SmtpStepRcpt     SmtpStepName = "rcpt"
-	SmtpStepData     SmtpStepName = "data"
-	SmtpStepQuit     SmtpStepName = "quit"
+	SmtpStepDial      SmtpStepName = "dial"
+	SmtpStepHello     SmtpStepName = "hello"
+	SmtpStepStartTLS  SmtpStepName = "starttls"
+	SmtpStepMail      SmtpStepName = "mail"
+	SmtpStepRcpt      SmtpStepName = "rcpt"
+	SmtpStepData      SmtpStepName = "data"
+	SmtpStepDataClose SmtpStepName = "data_close"
+	SmtpStepQuit      SmtpStepName = "quit"
 )
 
 type LatencyDuration time.Duration
@@ -60,6 +61,7 @@ func NewSmtpLatency() *SmtpLatency {
 type SmtpStep struct {
 	Name      SmtpStepName
 	Duration  LatencyDuration
+	Command   string
 	ReplyCode int
 	ReplyText string
 }
@@ -78,6 +80,7 @@ func NewSmtpConversation() *SmtpConversation {
 
 func (c *SmtpConversation) AddStep(
 	name SmtpStepName,
+	command string,
 	replyCode int,
 	replyText string,
 ) {
@@ -85,6 +88,7 @@ func (c *SmtpConversation) AddStep(
 	step := &SmtpStep{
 		Name:      name,
 		Duration:  LatencyDuration(time.Since(c.StartTime)),
+		Command:   command,
 		ReplyCode: replyCode,
 		ReplyText: replyText,
 	}
@@ -145,7 +149,7 @@ func sendEmail(
 				// 4xx errors are usually temporary, requeue the email if we haven't reached the max tries
 
 				if send.TryCount >= MAX_SEND_TRIES {
-					result.Error = errors.New("Maximum send attempts reached")
+					result.Error = errors.New("maximum send attempts reached")
 					fmt.Fprintf(logger, "ERROR: Maximum send attempts reached for %s\n", send.To)
 					return result
 				} else {
@@ -210,7 +214,7 @@ func sendEmailToHost(
 		return conversation, err, 0
 	}
 	defer c.Close()
-	conversation.AddStep(SmtpStepDial, 0, "")
+	conversation.AddStep(SmtpStepDial, "", 0, "")
 
 	// STEP 1: EHLO/HELO
 	// =================
@@ -220,7 +224,7 @@ func sendEmailToHost(
 		fmt.Fprintf(logger, "ERROR: EHLO failed - %s\n", helloResult.Err)
 		return conversation, helloResult.Err, 0
 	}
-	conversation.AddStep(SmtpStepHello, helloResult.Reply.Code, helloResult.Reply.Message)
+	conversation.AddStep(SmtpStepHello, helloResult.Command, helloResult.Reply.Code, helloResult.Reply.Message)
 	if !helloResult.CodeValid(250) {
 		return conversation, nil, helloResult.Reply.Code
 	}
@@ -237,9 +241,9 @@ func sendEmailToHost(
 			return conversation, startTlsResult.Err, 0
 		}
 
-		conversation.AddStep(SmtpStepStartTLS, startTlsResult.Reply.Code, startTlsResult.Reply.Message)
+		conversation.AddStep(SmtpStepStartTLS, startTlsResult.Command, startTlsResult.Reply.Code, startTlsResult.Reply.Message)
 
-		if !startTlsResult.CodeValid(220) {
+		if !startTlsResult.CodeValid(250) {
 			fmt.Fprintf(logger, "ERROR: STARTTLS failed with code %d: %s\n", startTlsResult.Reply.Code, startTlsResult.Reply.Message)
 			return conversation, nil, startTlsResult.Reply.Code
 		}
@@ -255,7 +259,7 @@ func sendEmailToHost(
 		fmt.Fprintf(logger, "ERROR: MAIL FROM failed - %s\n", mailResult.Err)
 		return conversation, mailResult.Err, 0
 	}
-	conversation.AddStep(SmtpStepMail, mailResult.Reply.Code, mailResult.Reply.Message)
+	conversation.AddStep(SmtpStepMail, mailResult.Command, mailResult.Reply.Code, mailResult.Reply.Message)
 	if !mailResult.CodeValid(250) {
 		fmt.Fprintf(logger, "ERROR: MAIL FROM failed with code %d: %s\n", mailResult.Reply.Code, mailResult.Reply.Message)
 		return conversation, nil, mailResult.Reply.Code
@@ -268,7 +272,7 @@ func sendEmailToHost(
 		fmt.Fprintf(logger, "ERROR: RCPT failed - %s\n", rcptResult.Err)
 		return conversation, rcptResult.Err, 0
 	}
-	conversation.AddStep(SmtpStepRcpt, rcptResult.Reply.Code, rcptResult.Reply.Message)
+	conversation.AddStep(SmtpStepRcpt, rcptResult.Command, rcptResult.Reply.Code, rcptResult.Reply.Message)
 	if !rcptResult.CodeValid(25) {
 		fmt.Fprintf(logger, "ERROR: RCPT TO failed with code %d: %s\n", rcptResult.Reply.Code, rcptResult.Reply.Message)
 		return conversation, nil, rcptResult.Reply.Code
@@ -281,7 +285,7 @@ func sendEmailToHost(
 		fmt.Fprintf(logger, "ERROR: DATA failed - %s\n", dataResult.Err)
 		return conversation, dataResult.Err, 0
 	}
-	conversation.AddStep(SmtpStepData, dataResult.Reply.Code, dataResult.Reply.Message)
+	conversation.AddStep(SmtpStepData, dataResult.Command, dataResult.Reply.Code, dataResult.Reply.Message)
 	if !dataResult.CodeValid(354) {
 		fmt.Fprintf(logger, "ERROR: DATA failed with code %d: %s\n", dataResult.Reply.Code, dataResult.Reply.Message)
 		return conversation, nil, dataResult.Reply.Code
@@ -291,16 +295,24 @@ func sendEmailToHost(
 		fmt.Fprintf(logger, "ERROR: Writing data failed - %s\n", err)
 		return conversation, err, 0
 	}
-	err = w.Close()
-	if err != nil {
+
+	// STEP 5.1: Close DATA
+	// ============
+	closeResult := w.Close()
+	if closeResult.Err != nil {
 		fmt.Fprintf(logger, "ERROR: Closing data failed - %s\n", err)
 		return conversation, err, 0
+	}
+	conversation.AddStep(SmtpStepDataClose, closeResult.Command, closeResult.Reply.Code, closeResult.Reply.Message)
+	if !closeResult.CodeValid(250) {
+		fmt.Fprintf(logger, "ERROR: Closing data failed with code %d: %s\n", closeResult.Reply.Code, closeResult.Reply.Message)
+		return conversation, nil, closeResult.Reply.Code
 	}
 
 	// STEP 6: QUIT
 	// ============
 	quitResult := c.Quit() // ignore QUIT error
-	conversation.AddStep(SmtpStepQuit, quitResult.Reply.Code, quitResult.Reply.Message)
+	conversation.AddStep(SmtpStepQuit, quitResult.Command, quitResult.Reply.Code, quitResult.Reply.Message)
 
 	return conversation, nil, 0
 
