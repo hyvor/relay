@@ -6,12 +6,8 @@
 		SplitControl,
 		toast,
 		confirm,
-
 		Callout,
-
 		IconButton
-
-
 	} from '@hyvor/design/components';
 	import IconPlus from '@hyvor/icons/IconPlus';
 	import IconCopy from '@hyvor/icons/IconCopy';
@@ -63,10 +59,8 @@
 		const newEnabledState = !apiKey.is_enabled;
 		updateApiKey(apiKey.id, newEnabledState)
 			.then(() => {
-				apiKeys = apiKeys.map(key => 
-					key.id === apiKey.id 
-						? { ...key, is_enabled: newEnabledState }
-						: key
+				apiKeys = apiKeys.map((key) =>
+					key.id === apiKey.id ? { ...key, is_enabled: newEnabledState } : key
 				);
 				toast.success(`API key ${apiKey.is_enabled ? 'disabled' : 'enabled'}`);
 			})
@@ -99,42 +93,35 @@
 	}
 
 	function getScopeLabel(scope: string) {
-		return scopes.find(s => s.value === scope)?.label || scope;
+		return scopes.find((s) => s.value === scope)?.label || scope;
 	}
-
 </script>
 
 <SingleBox>
 	<div class="top">
-		<Button
-			variant="fill"
-			on:click={() => (showCreateModal = true)}
-		>
+		<Button variant="fill" on:click={() => (showCreateModal = true)}>
 			<IconPlus size={16} />
 			Create API Key
 		</Button>
 	</div>
 
 	<div class="content">
-		<APIKeyList 
-			{apiKeys} 
-			{loading} 
-			onToggleEnabled={handleToggleEnabled} 
-			onDelete={handleDeleteApiKey} 
+		<APIKeyList
+			{apiKeys}
+			{loading}
+			onToggleEnabled={handleToggleEnabled}
+			onDelete={handleDeleteApiKey}
 		/>
 	</div>
 </SingleBox>
 
-<CreateApiKeyModal 
-	bind:show={showCreateModal} 
-	onApiKeyCreated={handleApiKeyCreated}
-/>
+<CreateApiKeyModal bind:show={showCreateModal} onApiKeyCreated={handleApiKeyCreated} />
 
 <!-- Show New API Key Modal -->
 {#if showApiKeyModal && newApiKey}
 	<Modal
 		title="Your New API Key"
-		bind:show={showApiKeyModal} 
+		bind:show={showApiKeyModal}
 		size="medium"
 		footer={{
 			cancel: {
@@ -143,20 +130,15 @@
 			confirm: false
 		}}
 	>
-
 		<div class="modal-content">
 			<div class="warning-box">
-				<strong>Important:</strong> This is the only time you'll see this API key. 
-				Make sure to copy it and store it securely.
+				<strong>Important:</strong> This is the only time you'll see this API key. Make sure to copy
+				it and store it securely.
 			</div>
-			
+
 			<SplitControl label="API Key">
 				<div class="key-input-group">
-					<TextInput
-						value={newApiKey.key || ''}
-						readonly
-						block
-					/>
+					<TextInput value={newApiKey.key || ''} readonly block />
 					<IconButton
 						size="small"
 						color="input"
@@ -167,11 +149,11 @@
 					</IconButton>
 				</div>
 			</SplitControl>
-			
+
 			<SplitControl label="Name">
 				<span>{newApiKey.name}</span>
 			</SplitControl>
-			
+
 			<SplitControl label="Scope">
 				<span>{getScopeLabel(newApiKey.scope)}</span>
 			</SplitControl>

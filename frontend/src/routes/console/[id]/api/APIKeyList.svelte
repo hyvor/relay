@@ -16,11 +16,7 @@
 {:else}
 	<div class="api-keys-list">
 		{#each apiKeys as apiKey (apiKey.id)}
-			<APIKeyRow 
-				{apiKey} 
-				{onToggleEnabled} 
-				{onDelete} 
-			/>
+			<APIKeyRow {apiKey} {onToggleEnabled} {onDelete} />
 		{/each}
 	</div>
 {/if}
@@ -37,4 +33,4 @@
 		flex-direction: column;
 		gap: 16px;
 	}
-</style> 
+</style>

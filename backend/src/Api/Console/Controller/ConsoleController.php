@@ -10,6 +10,7 @@ use Hyvor\Internal\InternalConfig;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Entity\Type\WebhooksEventEnum;
 
 class ConsoleController extends AbstractController
 {
@@ -38,6 +39,13 @@ class ConsoleController extends AbstractController
             'config' => [
                 'hyvor' => [
                     'instance' => $this->internalConfig->getInstance(),
+                ],
+                'app' => [
+                    'webhook' => [
+                        'events' => array_map(
+                            fn($event) => $event->value, WebhooksEventEnum::cases()
+                        ),
+                    ],
                 ],
             ],
         ]);

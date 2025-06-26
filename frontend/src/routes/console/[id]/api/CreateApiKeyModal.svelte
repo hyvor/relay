@@ -1,5 +1,16 @@
 <script lang="ts">
-	import { Modal, Button, TextInput, SplitControl, ActionList, ActionListItem, toast, Radio, InputGroup, Callout } from '@hyvor/design/components';
+	import {
+		Modal,
+		Button,
+		TextInput,
+		SplitControl,
+		ActionList,
+		ActionListItem,
+		toast,
+		Radio,
+		InputGroup,
+		Callout
+	} from '@hyvor/design/components';
 	import { createApiKey } from '../../lib/actions/apiKeyActions';
 	import type { ApiKey, ApiKeyScope } from '../../types';
 
@@ -70,49 +81,39 @@
 	}
 </script>
 
-<Modal 
-	bind:show 
-	loading={loading}
-	size="medium" 
+<Modal
+	bind:show
+	{loading}
+	size="medium"
 	footer={{
 		cancel: {
 			text: 'Cancel'
 		},
 		confirm: {
-			text: 'Create API Key',
+			text: 'Create API Key'
 		}
 	}}
 	title="Create API Key"
 	on:cancel={handleClose}
-	on:confirm={handleSubmit}>
-
+	on:confirm={handleSubmit}
+>
 	<div class="modal-content">
-		<SplitControl 
-			label="Name" 
+		<SplitControl
+			label="Name"
 			caption="A descriptive name to identify this API key"
 			error={errors.name}
 		>
-			<TextInput
-				bind:value={name}
-				placeholder="Enter API key name"
-				block
-				disabled={loading}
-			/>
+			<TextInput bind:value={name} placeholder="Enter API key name" block disabled={loading} />
 		</SplitControl>
 
-		<SplitControl 
-			label="Scope" 
+		<SplitControl
+			label="Scope"
 			caption="Define what actions this API key can perform"
 			error={errors.scope}
 		>
 			<InputGroup>
 				{#each scopes as scopeOption}
-					<Radio 
-						name="scope" 
-						value={scopeOption.value} 
-						bind:group={scope}
-						disabled={loading}
-					>
+					<Radio name="scope" value={scopeOption.value} bind:group={scope} disabled={loading}>
 						{scopeOption.label}
 					</Radio>
 				{/each}

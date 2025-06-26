@@ -7,11 +7,12 @@
 		toast
 	} from '@hyvor/design/components';
 	import { onMount } from 'svelte';
-	import type { Project } from './types';
+	import type { AppConfig, Project } from './types';
 	import consoleApi from './lib/consoleApi';
 	import { userProjectStore } from './lib/stores/userProjectStore';
 	import { projectStore } from './lib/stores/projectStore';
 	import { page } from '$app/stores';
+	import { setAppConfig } from './lib/stores/consoleStore';
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -20,7 +21,7 @@
 	let { children }: Props = $props();
 
 	interface InitResponse {
-		//config: AppConfig;
+		config: AppConfig;
 		projects: Project[];
 	}
 
@@ -33,6 +34,7 @@
 				endpoint: 'init'
 			})
 			.then((res) => {
+				setAppConfig(res.config);
 				userProjectStore.set(res.projects);
 				if (res.projects.length != 0) {
 					projectStore.set(res.projects[0]);
