@@ -4,19 +4,10 @@ package smtp
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Copied from https://cs.opensource.google/go/go/+/refs/tags/go1.24.4:src/net/smtp/smtp.go
-// Modifications:
-// - All commands return a Reply struct instead of just error. This gives access to the raw server response.
-// - Removed the Client.SendMail function
-// - Removed the Client.Auth method
-// - Removed the Client.Verify method (nobody supports it)
-// - Implements enhanced status codes as per RFC 3463
-// - Does not validate automatically for server status (e.g. 250 for successful commands).
-// - Other methods do not implicitly call Hello
-
 import (
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/textproto"
@@ -76,8 +67,8 @@ func (c *Client) hello() CommandResult {
 	if !c.didHello {
 		c.didHello = true
 
-		ehloResult := c.ehlo()
-		if ehloResult.Err != nil || !ehloResult.CodeValid(250) {
+		c.helloResult = c.ehlo()
+		if c.helloResult.Err != nil || !c.helloResult.CodeValid(250) {
 			c.helloResult = c.helo()
 		}
 	}
@@ -103,7 +94,9 @@ func (c *Client) Hello(localName string) CommandResult {
 
 // cmd is a convenience function that sends a command and returns the response
 func (c *Client) cmd(format string, args ...any) CommandResult {
-	commandResult := CommandResult{}
+	commandResult := CommandResult{
+		Command: fmt.Sprintf(format, args...),
+	}
 
 	id, err := c.Text.Cmd(format, args...)
 	if err != nil {
@@ -162,17 +155,19 @@ func (c *Client) ehlo() CommandResult {
 
 // StartTLS sends the STARTTLS command and encrypts all further communication.
 // Only servers that advertise the STARTTLS extension support this function.
-func (c *Client) StartTLS(config *tls.Config) CommandResult {
+// Verify with: 220 and 250
+func (c *Client) StartTLS(config *tls.Config) (CommandResult, CommandResult) {
 	tlsResult := c.cmd("STARTTLS")
 
-	if tlsResult.Err != nil || !tlsResult.CodeValid(220) {
-		return tlsResult
+	if tlsResult.Err != nil {
+		return tlsResult, CommandResult{}
 	}
 
 	c.conn = tls.Client(c.conn, config)
 	c.Text = textproto.NewConn(c.conn)
 	c.tls = true
-	return c.ehlo()
+
+	return tlsResult, c.ehlo()
 }
 
 // Mail issues a MAIL command to the server using the provided email address.
@@ -213,10 +208,24 @@ type dataCloser struct {
 	io.WriteCloser
 }
 
-func (d *dataCloser) Close() error {
+// Verify with: 250
+func (d *dataCloser) Close() CommandResult {
+	commandResult := CommandResult{}
+
 	d.WriteCloser.Close()
-	_, _, err := d.c.Text.ReadResponse(250)
-	return err
+	code, msg, err := d.c.Text.ReadResponse(0)
+
+	if err != nil {
+		commandResult.Err = err
+		return commandResult
+	}
+
+	commandResult.Reply = &CommandReply{
+		Code:    code,
+		Message: msg,
+	}
+
+	return commandResult
 }
 
 // Data issues a DATA command to the server and returns a writer that
@@ -224,7 +233,7 @@ func (d *dataCloser) Close() error {
 // close the writer before calling any more methods on c. A call to
 // Data must be preceded by one or more calls to [Client.Rcpt].
 // Verify with: 354
-func (c *Client) Data() (io.WriteCloser, CommandResult) {
+func (c *Client) Data() (*dataCloser, CommandResult) {
 	dataResult := c.cmd("DATA")
 
 	if dataResult.Err != nil {

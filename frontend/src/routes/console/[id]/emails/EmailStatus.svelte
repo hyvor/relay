@@ -2,13 +2,15 @@
 	import { Tag } from '@hyvor/design/components';
 	import type { EmailStatus } from '../../types';
 
-	export let status: EmailStatus;
-
-	let color: 'green' | 'orange' | 'default';
-
-	$: {
-		color = status === 'sent' ? 'green' : status === 'failed' ? 'orange' : 'default';
+	interface Props {
+		status: EmailStatus;
 	}
+
+	let { status }: Props = $props();
+
+	let color: 'green' | 'red' | 'default' = $derived(
+		status === 'sent' ? 'green' : status === 'failed' ? 'red' : 'default'
+	);
 </script>
 
 <Tag {color}>
