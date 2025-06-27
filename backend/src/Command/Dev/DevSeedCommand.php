@@ -30,7 +30,6 @@ class DevSeedCommand extends Command
 
     public function __construct(
         private KernelInterface $kernel,
-        private DomainService $domainService,
     ) {
         parent::__construct();
     }
@@ -43,7 +42,7 @@ class DevSeedCommand extends Command
             return Command::FAILURE;
         }
 
-        InstanceFactory::createOne([
+        InstanceFactory::new()->withDefaultDkim()->create([
             'domain' => InstanceService::DEFAULT_DOMAIN
         ]);
 

@@ -33,4 +33,12 @@ final class InstanceFactory extends PersistentProxyObjectFactory
         ];
     }
 
+    public function withDefaultDkim(): self
+    {
+        return $this->with([
+            'dkim_public_key' => DomainFactory::TEST_DKIM_PUBLIC_KEY,
+            'dkim_private_key_encrypted' =>  DomainFactory::TEST_DKIM_PRIVATE_KEY_ENCRYPTED,
+        ]);
+    }
+
 }
