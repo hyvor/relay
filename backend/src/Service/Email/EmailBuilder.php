@@ -3,6 +3,7 @@
 namespace App\Service\Email;
 
 use App\Entity\Domain;
+use App\Service\Instance\InstanceService;
 use Hyvor\Internal\Util\Crypt\Encryption;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Crypto\DkimSigner;
@@ -13,7 +14,8 @@ class EmailBuilder
 {
 
     public function __construct(
-        private Encryption $encryption
+        private Encryption $encryption,
+        private InstanceService $instanceService
     )
     {
     }
@@ -43,6 +45,7 @@ class EmailBuilder
             $email->text($bodyText);
         }
 
+        // DKIM with the sending domain
         $email = $this->signEmail(
             $email,
             $domain->getDomain(),
@@ -50,11 +53,20 @@ class EmailBuilder
             $domain->getDkimSelector()
         );
 
+        // DKIM with the instance domain
+        $instance = $this->instanceService->getInstance();
+        $email = $this->signEmail(
+            $email,
+            $instance->getDomain(),
+            $instance->getDkimPrivateKeyEncrypted(),
+            InstanceService::DEFAULT_DKIM_SELECTOR
+        );
+
         return $email->toString();
     }
 
     private function signEmail(
-        Email $email,
+        Message $email,
         string $domain,
         string $dkimPrivateKeyEncrypted,
         string $dkimSelector

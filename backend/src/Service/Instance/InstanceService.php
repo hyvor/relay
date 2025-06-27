@@ -14,6 +14,7 @@ class InstanceService
     use ClockAwareTrait;
 
     public const string DEFAULT_DOMAIN = 'relay.hyvor.localhost';
+    public const string DEFAULT_DKIM_SELECTOR = 'default';
 
     public function __construct(
         private readonly EntityManagerInterface $em,
