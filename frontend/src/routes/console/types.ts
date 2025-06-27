@@ -86,3 +86,13 @@ export type WebhookDelivery = {
     response: string;
     created_at: number;
 }
+
+export type SuppressionReason = 'bounce' | 'complaint';
+
+export type Suppression = {
+    id: number;
+    email: string;
+    reason: SuppressionReason;
+    description: string | null;
+    created_at: number;
+}

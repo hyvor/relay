@@ -6,6 +6,7 @@ use App\Entity\ApiKey;
 use App\Entity\Domain;
 use App\Entity\Project;
 use App\Entity\Send;
+use App\Entity\Suppression;
 use App\Entity\Webhook;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
@@ -23,6 +24,7 @@ class EntityResolver implements ValueResolverInterface
         'domain' => Domain::class,
         'api-keys' => ApiKey::class,
         'webhooks' => Webhook::class,
+        'suppressions' => Suppression::class,
     ];
 
     public function __construct(

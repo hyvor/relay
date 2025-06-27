@@ -10,6 +10,7 @@
 	import IconEnvelope from '@hyvor/icons/IconEnvelope';
 	import { selectingProject } from '../../lib/stores/consoleStore';
 	import { projectStore } from '../../lib/stores/projectStore';
+	import IconBan from '@hyvor/icons/IconBan';
 
 	let width: number;
 
@@ -70,6 +71,16 @@
 			<NavItem>
 				<IconKey slot="icon" />
 				<span slot="text">Api</span>
+			</NavItem>
+		</NavLink>
+
+		<NavLink
+			href={'/console/' + $projectStore.id.toString() + '/suppressions'}
+			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/suppressions`)}
+		>
+			<NavItem>
+				<IconBan slot="icon" />
+				<span slot="text">Suppressions</span>
 			</NavItem>
 		</NavLink>
 
