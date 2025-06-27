@@ -37,7 +37,7 @@ class Domain
     private string $dkim_private_key_encrypted;
 
     #[ORM\Column(type: "boolean")]
-    private bool $dkim_verified;
+    private bool $dkim_verified = false;
 
     #[ORM\Column(type: "datetime_immutable", nullable: true)]
     private ?\DateTimeImmutable $dkim_checked_at = null;

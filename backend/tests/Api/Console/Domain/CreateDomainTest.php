@@ -2,6 +2,7 @@
 
 namespace App\Tests\Api\Console\Domain;
 
+use App\Entity\Domain;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
@@ -47,6 +48,7 @@ class CreateDomainTest extends WebTestCase
         $this->assertResponseStatusCodeSame(200);
 
         $json = $this->getJson();
+        dd($this->em->getRepository(Domain::class)->findAll());
 
         $this->assertSame('example.com', $json['domain']);
         $dkimSelector = $json['dkim_selector'];

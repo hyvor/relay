@@ -115,6 +115,7 @@
 	.raw-content {
 		flex: 1;
 		overflow: auto;
+		padding: 0px 25px;
 	}
 	.raw-content-note {
 		margin-bottom: 10px;
