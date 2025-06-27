@@ -45,7 +45,7 @@ class DomainService
         ] = Dkim::generateDkimKeys();
 
         $domain->setDkimPublicKey($publicKey);
-        $domain->setDkimPrivateKeyEncrypted($this->encryption->encrypt($privateKey));
+        $domain->setDkimPrivateKeyEncrypted($this->encryption->encryptString($privateKey));
 
         $this->em->persist($domain);
         $this->em->flush();

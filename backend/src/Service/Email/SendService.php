@@ -98,6 +98,7 @@ class SendService
     {
 
         $rawEmail = $this->emailBuilder->build(
+            $domain,
             $from,
             $to,
             $subject,

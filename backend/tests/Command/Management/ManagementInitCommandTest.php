@@ -3,6 +3,7 @@
 namespace App\Tests\Command\Management;
 
 use App\Command\Management\ManagementInitCommand;
+use App\Entity\Instance;
 use App\Entity\IpAddress;
 use App\Entity\Queue;
 use App\Entity\Server;
@@ -12,6 +13,7 @@ use App\Service\Server\ServerService;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ServerFactory;
+use Hyvor\Internal\Util\Crypt\Encryption;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ManagementInitCommand::class)]
@@ -20,7 +22,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 class ManagementInitCommandTest extends KernelTestCase
 {
 
-    public function test_creates_server_and_adds_ips(): void
+    public function test_creates_instance_server_and_adds_ips(): void
     {
 
         $serverIpMock = $this->createMock(ServerIp::class);
@@ -34,6 +36,20 @@ class ManagementInitCommandTest extends KernelTestCase
         $command->execute([]);
         $command->assertCommandIsSuccessful();
 
+        // INSTANCE
+        $instance = $this->em->getRepository(Instance::class)->findAll();
+        $this->assertCount(1, $instance);
+        $instance = $instance[0];
+        $this->assertSame('relay.hyvor.localhost', $instance->getDomain());
+        $this->assertStringContainsString('---BEGIN PUBLIC KEY---', $instance->getDkimPublicKey());
+
+        $privateKeyEncrypted = $instance->getDkimPrivateKeyEncrypted();
+        $encryption = $this->container->get(Encryption::class);
+        assert($encryption instanceof Encryption);
+        $privateKey = $encryption->decryptString($privateKeyEncrypted);
+        $this->assertStringContainsString('---BEGIN PRIVATE KEY---', $privateKey);
+
+        // SERVERS
         $servers = $this->em->getRepository(Server::class)->findAll();
         $this->assertCount(1, $servers);
         $server = $servers[0];

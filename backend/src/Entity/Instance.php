@@ -6,27 +6,30 @@ use App\Repository\InstanceRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: InstanceRepository::class)]
-#[ORM\Table(name: 'instances')]
-#[ORM\HasLifecycleCallbacks]
+#[ORM\Table(name: "instances")]
 class Instance
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: "integer")]
     private int $id;
 
-    #[ORM\Column(type: 'datetime_immutable')]
+    #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable $created_at;
 
-    #[ORM\Column(type: 'datetime_immutable')]
+    #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable $updated_at;
 
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[ORM\Column(type: "string", length: 255)]
     private string $domain;
 
-    public function __construct()
-    {
-    }
+    #[ORM\Column(type: "text")]
+    private string $dkim_public_key;
+
+    #[ORM\Column(type: "text")]
+    private string $dkim_private_key_encrypted;
+
+    public function __construct() {}
 
     public function getId(): int
     {
@@ -69,6 +72,29 @@ class Instance
     public function setDomain(string $domain): static
     {
         $this->domain = $domain;
+        return $this;
+    }
+
+    public function getDkimPublicKey(): string
+    {
+        return $this->dkim_public_key;
+    }
+
+    public function setDkimPublicKey(string $dkimPublicKey): static
+    {
+        $this->dkim_public_key = $dkimPublicKey;
+        return $this;
+    }
+
+    public function getDkimPrivateKeyEncrypted(): string
+    {
+        return $this->dkim_private_key_encrypted;
+    }
+
+    public function setDkimPrivateKeyEncrypted(
+        string $dkimPrivateKeyEncrypted
+    ): static {
+        $this->dkim_private_key_encrypted = $dkimPrivateKeyEncrypted;
         return $this;
     }
 }

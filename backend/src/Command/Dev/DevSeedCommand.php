@@ -2,6 +2,7 @@
 
 namespace App\Command\Dev;
 
+use App\Service\Domain\DomainService;
 use App\Service\Instance\InstanceService;
 use App\Entity\Type\SendStatus;
 use App\Tests\Factory\DomainFactory;
@@ -41,7 +42,7 @@ class DevSeedCommand extends Command
             return Command::FAILURE;
         }
 
-        InstanceFactory::createOne([
+        InstanceFactory::new()->withDefaultDkim()->create([
             'domain' => InstanceService::DEFAULT_DOMAIN
         ]);
 
@@ -59,14 +60,8 @@ class DevSeedCommand extends Command
             'hyvor_user_id' => 1,
         ]);
 
-        $domain = DomainFactory::createOne([
-            'domain' => 'hyvor.com',
-            'project' => $project,
-        ]);
-        DomainFactory::createOne([
-            'domain' => 'hyvor.local.testing',
-            'project' => $project,
-        ]);
+        DomainFactory::new()->withDefaultDkim()->create(['project' => $project, 'domain' => 'hyvor.com']);
+        $domain = DomainFactory::new()->withDefaultDkim()->create(['project' => $project, 'domain' => 'hyvor.local.testing']);
 
         $sends_queued = SendFactory::createMany(2, [
             'project' => $project,
