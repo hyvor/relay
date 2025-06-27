@@ -4,6 +4,7 @@ namespace App\Service\Suppression;
 
 use App\Entity\Project;
 use App\Entity\Suppression;
+use App\Entity\Type\SuppressionReason;
 use App\Repository\SuppressionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -20,7 +21,7 @@ class SuppressionService
     /**
      * @return ArrayCollection<int, Suppression>
      */
-    public function getSuppressionsForProject(Project $project, ?string $email,): ArrayCollection
+    public function getSuppressionsForProject(Project $project, ?string $email, ?SuppressionReason $reason = null): ArrayCollection
     {
         $qb = $this->suppressionRepository->createQueryBuilder('s');
 
@@ -33,6 +34,11 @@ class SuppressionService
         if ($email !== null) {
             $qb->andWhere('s.email LIKE :email')
                 ->setParameter('email', '%' . $email . '%');
+        }
+
+        if ($reason !== null) {
+            $qb->andWhere('s.reason = :reason')
+                ->setParameter('reason', $reason);
         }
 
         // dd($qb->getQuery()->getSQL());

@@ -1,10 +1,20 @@
-import type { Suppression } from "../../types";
+import type { Suppression, SuppressionReason } from "../../types";
 import consoleApi from "../consoleApi";
 
-export function getSuppressions(email?: string | null) {
+export function getSuppressions(email?: string | null, reason?: SuppressionReason | null) {
+	const data: Record<string, string> = {};
+	
+	if (email) {
+		data.email = email;
+	}
+	
+	if (reason) {
+		data.reason = reason;
+	}
+
 	return consoleApi.get<Suppression[]>({
 		endpoint: 'suppressions',
-		data: email ? { email } : {}
+		data: Object.keys(data).length > 0 ? data : {}
 	});
 }
 

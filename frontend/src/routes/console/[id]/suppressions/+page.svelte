@@ -4,18 +4,28 @@
 		TextInput, 
 		IconButton, 
 		toast, 
-		confirm 
+		confirm,
+		ActionList,
+		ActionListItem
 	} from '@hyvor/design/components';
 	import IconX from '@hyvor/icons/IconX';
 	import SingleBox from '../../@components/content/SingleBox.svelte';
 	import SuppressionList from './SuppressionList.svelte';
-	import type { Suppression } from '../../types';
+	import Selector from '../../@components/content/Selector.svelte';
+	import type { Suppression, SuppressionReason } from '../../types';
 	import { getSuppressions, deleteSuppression } from '../../lib/actions/suppressionActions';
 
 	let suppressions: Suppression[] = $state([]);
 	let loading = $state(true);
 	let emailSearchVal = $state('');
 	let emailSearch = $state('');
+	let reason: SuppressionReason | null = $state(null);
+	let reasonKey = $derived.by(() => {
+		if (reason === 'bounce') return 'Bounce';
+		if (reason === 'complaint') return 'Complaint';
+		return 'All';
+	});
+	let showReason = $state(false);
 
 	onMount(() => {
 		loadSuppressions();
@@ -23,7 +33,10 @@
 
 	function loadSuppressions() {
 		loading = true;
-		getSuppressions(emailSearch === '' ? null : emailSearch)
+		getSuppressions(
+			emailSearch === '' ? null : emailSearch,
+			reason
+		)
 			.then((suppressionList) => {
 				suppressions = suppressionList;
 			})
@@ -34,6 +47,12 @@
 			.finally(() => {
 				loading = false;
 			});
+	}
+
+	function selectReason(r: SuppressionReason | null) {
+		showReason = false;
+		reason = r;
+		loadSuppressions();
 	}
 
 	async function handleDeleteSuppression(suppression: Suppression) {
@@ -82,6 +101,20 @@
 <SingleBox>
 	<div class="top">
 		<div class="left">
+			<Selector name="Reason" bind:show={showReason} value={reasonKey} width={200}>
+				<ActionList selection="single" selectionAlign="end">
+					<ActionListItem on:click={() => selectReason(null)} selected={reason === null}>
+						All
+					</ActionListItem>
+					<ActionListItem on:click={() => selectReason('bounce')} selected={reason === 'bounce'}>
+						Bounce
+					</ActionListItem>
+					<ActionListItem on:click={() => selectReason('complaint')} selected={reason === 'complaint'}>
+						Complaint
+					</ActionListItem>
+				</ActionList>
+			</Selector>
+
 			<div class="search-wrap">
 				<TextInput
 					bind:value={emailSearchVal}
