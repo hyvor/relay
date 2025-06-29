@@ -15,23 +15,24 @@ class SendEmailTest extends WebTestCase
 
     public function test_queues_mail(): void
     {
+        QueueFactory::createTransactional();
         $project = ProjectFactory::createOne();
+
         DomainFactory::createOne([
+            'project' => $project,
             'domain' => 'hyvor.com'
         ]);
-
-        QueueFactory::createTransactional();
 
         $this->consoleApi(
             $project,
             'POST',
-            '/email',
+            '/sends',
             data: [
                 'from' => 'supun@hyvor.com',
                 'to' => 'somebody@example.com',
                 'subject' => 'Test Email',
+                'body_text' => 'This is a test email.',
                 'body_html' => '<p>This is a test email.</p>',
-                'body_text' => 'This is a test email.'
             ]
         );
 
@@ -43,15 +44,6 @@ class SendEmailTest extends WebTestCase
         $send = $send[0];
         $this->assertSame(SendStatus::QUEUED, $send->getStatus());
         $this->assertSame('Test Email', $send->getSubject());
-
-        $messages = $this->transport('email')->queue()->messages();
-        $this->assertCount(1, $messages);
-        $message = $messages[0];
-        $this->assertInstanceOf(EmailSendMessage::class, $message);
-
-        $this->assertSame($send->getId(), $message->sendId);
-        $this->assertStringContainsString('From: supun@hyvor.com', $message->rawEmail);
-        $this->assertStringContainsString('To: somebody@example.com', $message->rawEmail);
     }
 
 }

@@ -1,10 +1,9 @@
 
 import type { Component } from 'svelte';
-import Introduction from '../content/Introduction.svelte';
-import EmailTransactional from '../content/EmailTransactional.svelte';
-import EmailDistributional from '../content/EmailDistributional.svelte';
-import WebhookEvents from '../content/WebhookEvents.svelte';
-import ConsoleApi from '../content/ConsoleApi.svelte';
+import Introduction from './content/Introduction.svelte';
+import SendEmails from './content/SendEmails.svelte';
+import WebhookEvents from './content/WebhookEvents.svelte';
+import ConsoleApi from './content/ConsoleApi.svelte';
 
 export const categories: Category[] = [
 	{
@@ -27,14 +26,9 @@ export const categories: Category[] = [
 				component: ConsoleApi
 			},
 			{
-				slug: 'send-transactional',
-				name: 'Send Transactional',
-				component: EmailTransactional
-			},
-			{
-				slug: 'send-distributional',
-				name: 'Send Distributional',
-				component: EmailDistributional,
+				slug: 'send-emails',
+				name: 'Send Emails',
+				component: SendEmails
 			}
 		]
 	},

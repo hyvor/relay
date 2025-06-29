@@ -6,7 +6,7 @@
 		DocsNavItem as NavItem,
 		DocsContent as Content
 	} from '@hyvor/design/marketing';
-	import { categories } from './docs';
+	import { categories } from '../docs';
 
 	let { data } = $props();
 </script>

@@ -33,7 +33,8 @@ class InstanceService
         $instance = $this->tryGetInstance();
 
         if ($instance === null) {
-            // this should generally not happen
+            // this should generally not happen in production
+            // useful for tests also
             $instance = $this->createInstance();
         }
 
