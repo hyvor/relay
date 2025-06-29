@@ -24,6 +24,11 @@ class SendEmailInput
     #[EmailAddress]
     public string|array $to;
 
+    /**
+     * A sensible limit of 998 characters, based on Google's header limits:
+     * https://support.google.com/a/answer/14016360?hl=en&src=supportwidget
+     */
+    #[Assert\Length(max: 998)]
     public string $subject = '';
 
     #[Assert\When(
