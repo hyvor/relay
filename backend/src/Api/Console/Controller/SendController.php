@@ -113,7 +113,8 @@ class SendController extends AbstractController
             $sendEmailInput->getToAddress(),
             $sendEmailInput->subject,
             $sendEmailInput->body_html,
-            $sendEmailInput->body_text
+            $sendEmailInput->body_text,
+            $sendEmailInput->headers
         );
 
         return new JsonResponse([]);

@@ -2,14 +2,21 @@
 
 namespace App\Tests\Api\Console\Email;
 
+use App\Api\Console\Controller\SendController;
+use App\Api\Console\Object\SendObject;
 use App\Entity\Send;
 use App\Entity\Type\SendStatus;
+use App\Service\Email\SendService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 
+#[CoversClass(SendController::class)]
+#[CoversClass(SendService::class)]
+#[CoversClass(SendObject::class)]
 class SendEmailTest extends WebTestCase
 {
 
