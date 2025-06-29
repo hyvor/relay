@@ -85,7 +85,7 @@ class SendService
     }
 
     /**
-     * @param array<string, string> $headers
+     * @param array<string, string> $customHeaders
      */
     public function createSend(
         Project $project,
@@ -96,7 +96,7 @@ class SendService
         ?string $subject,
         ?string $bodyHtml,
         ?string $bodyText,
-        array $headers
+        array $customHeaders
     ): Send
     {
 
@@ -106,7 +106,8 @@ class SendService
             $to,
             $subject,
             $bodyHtml,
-            $bodyText
+            $bodyText,
+            $customHeaders
         );
 
         $this->em->beginTransaction();
@@ -129,7 +130,7 @@ class SendService
             $send->setSubject($subject);
             $send->setBodyHtml($bodyHtml);
             $send->setBodyText($bodyText);
-            $send->setHeaders($headers);
+            $send->setHeaders($customHeaders);
             $send->setRaw($rawEmail);
             $this->em->persist($send);
             $this->em->flush();

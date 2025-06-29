@@ -9,6 +9,29 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 class HeadersValidator extends ConstraintValidator
 {
 
+    // IMPORTANT! should be lowercase
+    private const array UNALLOWED_HEADERS = [
+        // emails
+        'from',
+        'to',
+        'cc',
+        'bcc',
+        'sender',
+
+        // other (already set by symfony)
+        'date',
+        'subject',
+        'content-type',
+        'mime-version',
+
+        // security
+        'dkim-signature',
+        'return-path',
+        'x-mailer',
+        'x-originating-ip',
+        'authentication-results',
+    ];
+
     public function validate(mixed $value, Constraint $constraint)
     {
         if (!$constraint instanceof Headers) {
@@ -40,6 +63,14 @@ class HeadersValidator extends ConstraintValidator
                     ->setParameter('{{ key }}', $key)
                     ->addViolation();
                 continue;
+            }
+
+            $headerKey = strtolower($key);
+            if (in_array($headerKey, self::UNALLOWED_HEADERS, true)) {
+                $this->context->buildViolation('The header {{ key }} is not allowed as a custom header.')
+                    ->setInvalidValue($key)
+                    ->setParameter('{{ key }}', $key)
+                    ->addViolation();
             }
         }
     }

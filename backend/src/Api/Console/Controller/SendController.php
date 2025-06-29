@@ -97,15 +97,14 @@ class SendController extends AbstractController
 
         if ($domain === null) {
             throw new BadRequestException(
-                "Domain $domainName not found for email address " .
-                    $fromAddress->getAddress()
+                "Domain $domainName is not registered for this project"
             );
         }
 
         $queue = $this->queueService->getTransactionalQueue();
         assert($queue !== null, "Transactional queue not found");
 
-        $this->sendService->createSend(
+        $send = $this->sendService->createSend(
             $project,
             $domain,
             $queue,
@@ -117,6 +116,6 @@ class SendController extends AbstractController
             $sendEmailInput->headers
         );
 
-        return new JsonResponse([]);
+        return new JsonResponse(new SendObject($send));
     }
 }

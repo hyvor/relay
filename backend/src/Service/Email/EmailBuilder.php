@@ -2,6 +2,7 @@
 
 namespace App\Service\Email;
 
+use App\Config;
 use App\Entity\Domain;
 use App\Service\Instance\InstanceService;
 use Hyvor\Internal\Util\Crypt\Encryption;
@@ -15,18 +16,23 @@ class EmailBuilder
 
     public function __construct(
         private Encryption $encryption,
-        private InstanceService $instanceService
+        private InstanceService $instanceService,
+        private Config $config
     )
     {
     }
 
+    /**
+     * @param array<string, string> $customHeaders
+     */
     public function build(
         Domain $domain,
         Address $from,
         Address $to,
         ?string $subject,
         ?string $bodyHtml,
-        ?string $bodyText
+        ?string $bodyText,
+        array $customHeaders
     ): string
     {
         $email = new Email()
@@ -44,6 +50,14 @@ class EmailBuilder
         if ($bodyText !== null) {
             $email->text($bodyText);
         }
+
+        // Add custom headers
+        foreach ($customHeaders as $key => $value) {
+            $email->getHeaders()->addTextHeader($key, $value);
+        }
+
+        // mailer header
+        $email->getHeaders()->addTextHeader('X-Mailer', 'Hyvor Relay v' . $this->config->getAppVersion());
 
         // DKIM with the sending domain
         $email = $this->signEmail(
