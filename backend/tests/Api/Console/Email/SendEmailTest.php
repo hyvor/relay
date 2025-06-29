@@ -112,6 +112,48 @@ class SendEmailTest extends WebTestCase
             "body_html must not be blank if body_text is null",
         ])
     ]
+    #[ // headers not array
+        TestWith([
+            [
+                "from" => "supun@hyvor.com",
+                "to" => "somebody@example.com",
+                "body_text" => 'test',
+                'headers' => 'not an array',
+            ],
+            "headers",
+            "This value should be of type array.",
+        ])
+    ]
+    #[ // headers array keys not strings
+        TestWith([
+            [
+                "from" => "supun@hyvor.com",
+                "to" => "somebody@example.com",
+                "body_text" => 'test',
+                'headers' => [
+                    123 => "value",
+                    "valid-header" => "value",
+                ],
+            ],
+            "headers",
+            "The header key 123 must be a string.",
+        ])
+    ]
+    #[ // headers array value not strings
+        TestWith([
+            [
+                "from" => "supun@hyvor.com",
+                "to" => "somebody@example.com",
+                "body_text" => 'test',
+                'headers' => [
+                    "valid-header" => "value",
+                    "invalid-value" => 123,
+                ],
+            ],
+            "headers",
+            "The header value of invalid-value must be a string.",
+        ])
+    ]
     public function test_validation(
         array $data,
         string $property,

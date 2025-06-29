@@ -6,9 +6,8 @@ use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
-class HeaderValidator extends ConstraintValidator
+class HeadersValidator extends ConstraintValidator
 {
-
 
     public function validate(mixed $value, Constraint $constraint)
     {
@@ -36,7 +35,7 @@ class HeaderValidator extends ConstraintValidator
                 continue;
             }
             if (!is_string($headerValue)) {
-                $this->context->buildViolation('The header value of {{ key }}  must be a string.')
+                $this->context->buildViolation('The header value of {{ key }} must be a string.')
                     ->setInvalidValue($headerValue)
                     ->setParameter('{{ key }}', $key)
                     ->addViolation();

@@ -3,6 +3,7 @@
 namespace App\Api\Console\Input;
 
 use App\Api\Console\Validation\EmailAddress;
+use App\Api\Console\Validation\Headers;
 use App\Service\Email\EmailAddressFormat;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -50,6 +51,7 @@ class SendEmailInput
     /**
      * @var array<string, string>
      */
+    #[Headers]
     public array $headers = [];
 
     public function getFromAddress(): Address
