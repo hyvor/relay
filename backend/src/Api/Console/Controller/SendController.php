@@ -19,38 +19,34 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class SendController extends AbstractController
 {
-
     public function __construct(
         private SendService $sendService,
         private DomainService $domainService,
         private QueueService $queueService
-    )
-    {
-    }
+    ) {}
 
-    #[Route('/emails', methods: 'GET')]
+    #[Route("/emails", methods: "GET")]
     public function getEmails(Request $request, Project $project): JsonResponse
     {
-        $limit = $request->query->getInt('limit', 50);
-        $offset = $request->query->getInt('offset', 0);
+        $limit = $request->query->getInt("limit", 50);
+        $offset = $request->query->getInt("offset", 0);
 
         $status = null;
-        if ($request->query->has('status')) {
-            $status = SendStatus::tryFrom($request->query->getString('status'));
+        if ($request->query->has("status")) {
+            $status = SendStatus::tryFrom($request->query->getString("status"));
         }
 
         $fromSearch = null;
-        if ($request->query->has('from_search')) {
-            $fromSearch = $request->query->getString('from_search');
+        if ($request->query->has("from_search")) {
+            $fromSearch = $request->query->getString("from_search");
         }
 
         $toSearch = null;
-        if ($request->query->has('to_search')) {
-            $toSearch = $request->query->getString('to_search');
+        if ($request->query->has("to_search")) {
+            $toSearch = $request->query->getString("to_search");
         }
 
-        $sends = $this
-            ->sendService
+        $sends = $this->sendService
             ->getSends(
                 $project,
                 $status,
@@ -64,7 +60,7 @@ class SendController extends AbstractController
         return $this->json($sends);
     }
 
-    #[Route('/emails/uuid/{uuid}', methods: 'GET')]
+    #[Route("/emails/uuid/{uuid}", methods: "GET")]
     public function getByUuid(Project $project, string $uuid): JsonResponse
     {
         $send = $this->sendService->getSendByUuid($uuid);
@@ -73,7 +69,10 @@ class SendController extends AbstractController
         }
 
         if ($send->getProject()->getId() !== $project->getId()) {
-            throw new BadRequestException("Send with UUID $uuid does not belong to project " . $project->getName());
+            throw new BadRequestException(
+                "Send with UUID $uuid does not belong to project " .
+                    $project->getName()
+            );
         }
 
         $attempts = $this->sendService->getSendAttemptsOfSend($send);
@@ -81,25 +80,30 @@ class SendController extends AbstractController
         return $this->json(new SendObject($send, $attempts));
     }
 
-
-    #[Route('/sends', methods: 'POST')]
+    #[Route("/sends", methods: "POST")]
     public function sendEmail(
         Project $project,
         #[MapRequestPayload] SendEmailInput $sendEmailInput
-    ): JsonResponse
-    {
-
+    ): JsonResponse {
         $fromAddress = $sendEmailInput->getFromAddress();
 
-        $domainName = EmailAddressFormat::getDomainFromEmail($fromAddress->getAddress());
-        $domain = $this->domainService->getDomainByProjectAndName($project, $domainName);
+        $domainName = EmailAddressFormat::getDomainFromEmail(
+            $fromAddress->getAddress()
+        );
+        $domain = $this->domainService->getDomainByProjectAndName(
+            $project,
+            $domainName
+        );
 
         if ($domain === null) {
-            throw new BadRequestException("Domain $domainName not found for email address " . $fromAddress->getAddress());
+            throw new BadRequestException(
+                "Domain $domainName not found for email address " .
+                    $fromAddress->getAddress()
+            );
         }
 
         $queue = $this->queueService->getTransactionalQueue();
-        assert($queue !== null, 'Transactional queue not found');
+        assert($queue !== null, "Transactional queue not found");
 
         $this->sendService->createSend(
             $project,
@@ -113,7 +117,5 @@ class SendController extends AbstractController
         );
 
         return new JsonResponse([]);
-
     }
-
 }
