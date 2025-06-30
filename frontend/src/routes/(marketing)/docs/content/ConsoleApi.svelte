@@ -40,7 +40,7 @@ Authorization: Bearer <your_api_key>
 <h2 id="scopes">Scopes</h2>
 
 <p>
-	Scopes are used to control access to endpoitns of the Console API. When creating an API key, you
+	Scopes are used to control access to endpoints of the Console API. When creating an API key, you
 	can select the scopes that the key will have access to. The available scopes are:
 </p>
 
@@ -50,6 +50,9 @@ Authorization: Bearer <your_api_key>
 	</li>
 	<li>
 		<strong>sends.write</strong>
+	</li>
+	<li>
+		<strong>sends.send</strong>
 	</li>
 	<li>
 		<strong>domains.read</strong>
@@ -74,13 +77,29 @@ Authorization: Bearer <your_api_key>
 
 <ul>
 	<li>
-		<a href="#sends">Sends (Emails)</a>
+		<a href="#sends">Sends</a> (Emails)
 	</li>
 	<li>
 		<a href="#domains">Domains</a>
 	</li>
 	<li>
 		<a href="#webhooks">Webhooks</a>
+	</li>
+</ul>
+
+<h3 id="sends">Sends (Emails)</h3>
+
+<p>Endpoints:</p>
+
+<ul>
+	<li>
+		<a href="#send-email">POST /sends</a> - Send an email
+	</li>
+	<li>
+		<a href="#get-sends">GET /sends</a> - Get sent emails
+	</li>
+	<li>
+		<a href="#get-send">GET /sends/:id</a> - Get a specific sent email by ID
 	</li>
 </ul>
 

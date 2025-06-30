@@ -7,6 +7,7 @@ enum Scope: string
 
     case SENDS_READ = 'sends.read';
     case SENDS_WRITE = 'sends.write';
+    case SENDS_SEND = 'sends.send';
 
     case DOMAINS_READ = 'domains.read';
     case DOMAINS_WRITE = 'domains.write';
