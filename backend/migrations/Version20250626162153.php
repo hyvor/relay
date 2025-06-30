@@ -30,9 +30,10 @@ final class Version20250626162153 extends AbstractMigration
                 created_at TIMESTAMPTZ NOT NULL,
                 updated_at TIMESTAMPTZ NOT NULL,
                 project_id BIGINT NOT NULL references projects(id) ON DELETE CASCADE,
-                email VARCHAR(255) UNIQUE NOT NULL,
+                email VARCHAR(255) NOT NULL,
                 reason reason_enum NOT NULL,
-                description TEXT
+                description TEXT,
+                UNIQUE (project_id, email)
             );
          SQL
         );
