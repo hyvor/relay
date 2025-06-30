@@ -2,8 +2,11 @@
 
 namespace App\Api\Console\Controller;
 
+use App\Api\Console\Authorization\Scope;
+use App\Api\Console\Authorization\ScopeRequired;
 use App\Api\Console\Input\SendEmailInput;
 use App\Api\Console\Object\SendObject;
+use App\Api\Console\Resolver\ProjectResolver;
 use App\Entity\Project;
 use App\Entity\Type\SendStatus;
 use App\Service\Domain\DomainService;
@@ -15,6 +18,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\HttpKernel\Attribute\ValueResolver;
 use Symfony\Component\Routing\Attribute\Route;
 
 class SendController extends AbstractController
@@ -24,6 +28,55 @@ class SendController extends AbstractController
         private DomainService $domainService,
         private QueueService $queueService
     ) {}
+
+    #[Route("/sends", methods: "POST")]
+    #[ScopeRequired(Scope::SENDS_SEND)]
+    public function sendEmail(
+        #[ValueResolver(ProjectResolver::class)] Project $project,
+        #[MapRequestPayload] SendEmailInput $sendEmailInput
+    ): JsonResponse {
+        $fromAddress = $sendEmailInput->getFromAddress();
+
+        $domainName = EmailAddressFormat::getDomainFromEmail(
+            $fromAddress->getAddress()
+        );
+        $domain = $this->domainService->getDomainByProjectAndName(
+            $project,
+            $domainName
+        );
+
+        if ($domain === null) {
+            throw new BadRequestException(
+                "Domain $domainName is not registered for this project"
+            );
+        }
+
+        if ($domain->getDkimVerified() === false) {
+            throw new BadRequestException(
+                "Domain $domainName is not verified"
+            );
+        }
+
+        $queue = $this->queueService->getTransactionalQueue();
+        assert($queue !== null, "Transactional queue not found");
+
+        $send = $this->sendService->createSend(
+            $project,
+            $domain,
+            $queue,
+            $fromAddress,
+            $sendEmailInput->getToAddress(),
+            $sendEmailInput->subject,
+            $sendEmailInput->body_html,
+            $sendEmailInput->body_text,
+            $sendEmailInput->headers
+        );
+
+        return new JsonResponse([
+            'id' => $send->getId(),
+            'message_id' => $send->getMessageId(),
+        ]);
+    }
 
     #[Route("/emails", methods: "GET")]
     public function getEmails(Request $request, Project $project): JsonResponse
@@ -80,51 +133,4 @@ class SendController extends AbstractController
         return $this->json(new SendObject($send, $attempts));
     }
 
-    #[Route("/sends", methods: "POST")]
-    public function sendEmail(
-        Project $project,
-        #[MapRequestPayload] SendEmailInput $sendEmailInput
-    ): JsonResponse {
-        $fromAddress = $sendEmailInput->getFromAddress();
-
-        $domainName = EmailAddressFormat::getDomainFromEmail(
-            $fromAddress->getAddress()
-        );
-        $domain = $this->domainService->getDomainByProjectAndName(
-            $project,
-            $domainName
-        );
-
-        if ($domain === null) {
-            throw new BadRequestException(
-                "Domain $domainName is not registered for this project"
-            );
-        }
-
-        if ($domain->getDkimVerified() === false) {
-            throw new BadRequestException(
-                "Domain $domainName is not verified"
-            );
-        }
-
-        $queue = $this->queueService->getTransactionalQueue();
-        assert($queue !== null, "Transactional queue not found");
-
-        $send = $this->sendService->createSend(
-            $project,
-            $domain,
-            $queue,
-            $fromAddress,
-            $sendEmailInput->getToAddress(),
-            $sendEmailInput->subject,
-            $sendEmailInput->body_html,
-            $sendEmailInput->body_text,
-            $sendEmailInput->headers
-        );
-
-        return new JsonResponse([
-            'id' => $send->getId(),
-            'message_id' => $send->getMessageId(),
-        ]);
-    }
 }

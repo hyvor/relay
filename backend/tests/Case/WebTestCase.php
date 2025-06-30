@@ -2,7 +2,9 @@
 
 namespace App\Tests\Case;
 
+use App\Api\Console\Authorization\Scope;
 use App\Entity\Project;
+use App\Tests\Factory\ApiKeyFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Auth\AuthFake;
 use Hyvor\Internal\Bundle\Testing\ApiTestingTrait;
@@ -67,6 +69,7 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
     /**
      * @param array<string, mixed> $data
      * @param array<string, mixed> $parameters
+     * @param true|(string|Scope)[] $scopes
      */
     public function consoleApi(
         Project|int|null $project,
@@ -74,17 +77,23 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         string $uri,
         array $data = [],
         array $parameters = [],
+        true|array $scopes = true
     ): Response {
-        $projectId = $project instanceof Project ? $project->getId() : $project;
+        $project = is_int($project) ? $this->em->getRepository(Project::class)->find($project) : $project;
 
-        $this->client->getCookieJar()->set(new Cookie('authsess', 'default'));
+        $apiKey = bin2hex(random_bytes(16));
+        $apiKeyHashed = hash('sha256', $apiKey);
+        $apiKeyFactory = ['key_hashed' => $apiKeyHashed, 'project' => $project];
+        if ($scopes !== true) $apiKeyFactory['scopes'] = array_map(fn(Scope|string $scope) => is_string($scope) ? $scope : $scope->value, $scopes);
+        ApiKeyFactory::createOne($apiKeyFactory);
+
         $this->client->request(
             $method,
             '/api/console' . $uri,
             parameters: $parameters,
             server: [
                 'CONTENT_TYPE' => 'application/json',
-                'HTTP_X_PROJECT_ID' => $projectId,
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $apiKey,
             ],
             content: (string)json_encode($data),
         );

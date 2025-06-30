@@ -2,6 +2,7 @@
 
 namespace App\Tests\Factory;
 
+use App\Api\Console\Authorization\Scope;
 use App\Entity\ApiKey;
 use App\Entity\Type\ApiKeyScope;
 use App\Entity\Type\SendStatus;
@@ -31,8 +32,11 @@ final class ApiKeyFactory extends PersistentProxyObjectFactory
             'created_at' => new \DateTimeImmutable(),
             'updated_at' => new \DateTimeImmutable(),
             'name' => self::faker()->word(),
-            'key' => self::faker()->word(),
-            'scope' => self::faker()->randomElement(ApiKeyScope::class),
+            'key_hashed' => hash('sha256', self::faker()->uuid()),
+            'scopes' => [...array_map(
+                fn(Scope $scope) => $scope->value,
+                Scope::cases()
+            )],
             'is_enabled' => true,
             'last_accessed_at' => new \DateTimeImmutable(),
         ];
