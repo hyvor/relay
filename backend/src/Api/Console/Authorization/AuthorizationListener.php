@@ -11,7 +11,7 @@ use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 
-#[AsEventListener(event: KernelEvents::CONTROLLER)]
+#[AsEventListener(event: KernelEvents::CONTROLLER, priority: 100)]
 class AuthorizationListener
 {
 
