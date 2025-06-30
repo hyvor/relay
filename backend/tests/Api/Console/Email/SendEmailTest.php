@@ -68,6 +68,18 @@ class SendEmailTest extends WebTestCase
         ];
     }
 
+    protected function getAttachmentMaxSizeForEachData(): mixed
+    {
+        return [
+            "from" => "supun@hyvor.com",
+            "to" => "somebody@example.com",
+            "body_text" => 'test',
+            'attachments' => [
+                ['content' => str_repeat('a', 10 * 1024 * 1024 + 1), 'name' => 'large.txt', 'content_type' => 'text/plain'],
+            ]
+        ];
+    }
+
     /**
      * @param array<string, mixed> $data
      */
@@ -291,6 +303,13 @@ class SendEmailTest extends WebTestCase
             ],
             "attachments",
             "You can attach a maximum of 10 files.",
+        ])
+    ]
+    #[ // attachments max size for each
+        TestWith([
+            'getAttachmentMaxSizeForEachData',
+            "attachments[0][content]",
+            "Attachment content must not exceed 10MB.",
         ])
     ]
     public function test_validation(
