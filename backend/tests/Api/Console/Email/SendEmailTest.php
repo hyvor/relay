@@ -7,8 +7,8 @@ use App\Api\Console\Controller\SendController;
 use App\Api\Console\Object\SendObject;
 use App\Entity\Send;
 use App\Entity\Type\SendStatus;
-use App\Service\Email\EmailBuilder;
-use App\Service\Email\SendService;
+use App\Service\Send\EmailBuilder;
+use App\Service\Send\SendService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
@@ -48,6 +48,36 @@ class SendEmailTest extends WebTestCase
             $json['message']
         );
 
+    }
+
+    protected function getHtmlBodyTooLargeData(): mixed
+    {
+        return [
+            "from" => "supun@hyvor.com",
+            "to" => "somebody@example.com",
+            "body_html" => str_repeat('a', 2 * 1024 * 1024 + 1), // 2MB + 1
+        ];
+    }
+
+    protected function getTextBodyTooLargeData(): mixed
+    {
+        return [
+            "from" => "supun@hyvor.com",
+            "to" => "somebody@example.com",
+            "body_text" => str_repeat('a', 2 * 1024 * 1024 + 1), // 2MB + 1
+        ];
+    }
+
+    protected function getAttachmentMaxSizeForEachData(): mixed
+    {
+        return [
+            "from" => "supun@hyvor.com",
+            "to" => "somebody@example.com",
+            "body_text" => 'test',
+            'attachments' => [
+                ['content' => str_repeat('a', 10 * 1024 * 1024 + 1), 'name' => 'large.txt', 'content_type' => 'text/plain'],
+            ]
+        ];
     }
 
     /**
@@ -137,6 +167,13 @@ class SendEmailTest extends WebTestCase
             "body_text must not be blank if body_html is null",
         ])
     ]
+    #[ // body_text to large
+        TestWith([
+            'getTextBodyTooLargeData',
+            "body_text",
+            "body_text must not exceed 2MB.",
+        ])
+    ]
     #[ // body_html empty
         TestWith([
             [
@@ -147,6 +184,13 @@ class SendEmailTest extends WebTestCase
             ],
             "body_html",
             "body_html must not be blank if body_text is null",
+        ])
+    ]
+    #[ // body_html to large
+        TestWith([
+            'getHtmlBodyTooLargeData',
+            "body_html",
+            "body_html must not exceed 2MB.",
         ])
     ]
     #[ // headers not array
@@ -205,8 +249,71 @@ class SendEmailTest extends WebTestCase
             "The header from is not allowed as a custom header.",
         ])
     ]
+    #[ // attachments content required
+        TestWith([
+            [
+                "from" => "supun@hyvor.com",
+                "to" => "somebody@example.com",
+                "body_text" => 'test',
+                'attachments' => [
+                    ['content' => '']
+                ]
+            ],
+            "attachments[0][content]",
+            "This value should not be blank.",
+        ])
+    ]
+    #[ // attachments content non-string
+        TestWith([
+            [
+                "from" => "supun@hyvor.com",
+                "to" => "somebody@example.com",
+                "body_text" => 'test',
+                'attachments' => [
+                    [
+                        'content' => 123,
+                        'name' => 'file.txt',
+                        'content_type' => 'text/plain',
+                    ]
+                ]
+            ],
+            "attachments[0][content]",
+            "This value should be of type string.",
+        ])
+    ]
+    #[ // attachments max limit
+        TestWith([
+            [
+                "from" => "supun@hyvor.com",
+                "to" => "somebody@example.com",
+                "body_text" => 'test',
+                'attachments' => [
+                    ['content' => '1'],
+                    ['content' => '2'],
+                    ['content' => '3'],
+                    ['content' => '4'],
+                    ['content' => '5'],
+                    ['content' => '6'],
+                    ['content' => '7'],
+                    ['content' => '8'],
+                    ['content' => '9'],
+                    ['content' => '10'],
+                    ['content' => '11'], // 11th attachment
+                ]
+            ],
+            "attachments",
+            "You can attach a maximum of 10 files.",
+        ])
+    ]
+    #[ // attachments max size for each
+        TestWith([
+            'getAttachmentMaxSizeForEachData',
+            "attachments[0][content]",
+            "Attachment content must not exceed 10MB.",
+        ])
+    ]
     public function test_validation(
-        array $data,
+        array|string $data,
         string $property,
         string $violationMessage
     ): void {
@@ -217,6 +324,12 @@ class SendEmailTest extends WebTestCase
             "project" => $project,
             "domain" => "hyvor.com",
         ]);
+
+        if (is_string($data)) {
+            /** @var callable(): array<string, mixed> $callable */
+            $callable = [$this, $data];
+            $data = call_user_func($callable);
+        }
 
         $this->consoleApi($project, "POST", "/sends", data: $data);
 
@@ -380,6 +493,105 @@ class SendEmailTest extends WebTestCase
         $json = $this->getJson();
         $this->assertSame(
             "Domain hyvor.com is not verified",
+            $json['message']
+        );
+
+    }
+
+    public function test_with_attachments(): void
+    {
+
+        QueueFactory::createTransactional();
+        $project = ProjectFactory::createOne();
+
+        DomainFactory::createOne([
+            "project" => $project,
+            "domain" => "hyvor.com",
+            'dkim_verified' => true,
+        ]);
+
+        $this->consoleApi($project, "POST", "/sends", data: [
+            'from' => 'test@hyvor.com',
+            'to' => 'test@example.com',
+            'body_text' => 'Test email',
+            'body_html' => '<p>Test email</p>',
+            'attachments' => [
+                [
+                    'content' => base64_encode('This is a test file.'),
+                    'name' => 'test.txt',
+                    'content_type' => 'text/plain',
+                ],
+                [
+                    'content' => base64_encode('This is another test file.'),
+                    'name' => 'test2.txt',
+                    'content_type' => 'text/plain',
+                ]
+            ]
+        ]);
+
+        $this->assertResponseStatusCodeSame(200);
+
+        $send = $this->em->getRepository(Send::class)->findBy([
+            'project' => $project->getId(),
+        ]);
+        $this->assertCount(1, $send);
+
+        $send = $send[0];
+
+        $rawEmail = $send->getRaw();
+
+        $this->assertStringContainsString("Content-Type: multipart/mixed; boundary=", $rawEmail);
+        $this->assertStringContainsString("Content-Type: text/plain;", $rawEmail);
+        $this->assertStringContainsString(base64_encode('This is a test file.'), $rawEmail);
+        $this->assertStringContainsString("Content-Disposition: attachment; name=test.txt; filename=test.txt", $rawEmail);
+        $this->assertStringContainsString("Content-Type: text/plain;", $rawEmail);
+        $this->assertStringContainsString(base64_encode('This is another test file.'), $rawEmail);
+        $this->assertStringContainsString("Content-Disposition: attachment; name=test2.txt; filename=test2.txt", $rawEmail);
+
+    }
+
+    public function test_email_max10mb(): void
+    {
+        /*
+         Note: this is slow because of DKIM signing. DkimSigner::hashBody is the bottleneck
+         $_ENV['start'] = microtime(true);
+        dd(microtime(true) - $_ENV['start']);
+        Update: moved the size check to before DKIM signing in EmailBuilder.
+        */
+
+
+        ini_set('memory_limit', '256M');
+
+        QueueFactory::createTransactional();
+        $project = ProjectFactory::createOne();
+
+        DomainFactory::createOne([
+            "project" => $project,
+            "domain" => "hyvor.com",
+            'dkim_verified' => true,
+        ]);
+
+        $attachment = [
+            'content' => base64_encode(str_repeat('a', 4 * 1024 * 1024)), // 4MB
+        ];
+
+        $this->consoleApi($project, "POST", "/sends", data: [
+            'from' => 'test@hyvor.com',
+            'to' => 'test@example.com',
+            'body_text' => 'Test email',
+            'attachments' => [
+                // total 12MB
+                $attachment,
+                $attachment,
+                $attachment
+            ]
+        ]);
+
+        $this->assertResponseStatusCodeSame(400);
+
+        $json = $this->getJson();
+        $this->assertSame(
+            "Email size exceeds the maximum allowed size of 10MB.",
             $json['message']
         );
 

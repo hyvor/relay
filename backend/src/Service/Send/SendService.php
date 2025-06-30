@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\Email;
+namespace App\Service\Send;
 
 use App\Entity\Domain;
 use App\Entity\Project;
@@ -9,8 +9,10 @@ use App\Entity\Send;
 use App\Entity\SendAttempt;
 use App\Entity\Type\SendStatus;
 use App\Repository\SendRepository;
-use App\Service\Email\Dto\SendUpdateDto;
-use App\Service\Email\Message\EmailSendMessage;
+use App\Service\Send\Dto\SendingAttachment;
+use App\Service\Send\Dto\SendUpdateDto;
+use App\Service\Send\Exception\EmailTooLargeException;
+use App\Service\Send\Message\EmailSendMessage;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -86,6 +88,8 @@ class SendService
 
     /**
      * @param array<string, string> $customHeaders
+     * @param array<SendingAttachment> $attachments
+     * @throws EmailTooLargeException
      */
     public function createSend(
         Project $project,
@@ -96,7 +100,8 @@ class SendService
         ?string $subject,
         ?string $bodyHtml,
         ?string $bodyText,
-        array $customHeaders
+        array $customHeaders,
+        array $attachments,
     ): Send
     {
 
@@ -110,7 +115,8 @@ class SendService
             $subject,
             $bodyHtml,
             $bodyText,
-            $customHeaders
+            $customHeaders,
+            $attachments
         );
 
         $this->em->beginTransaction();

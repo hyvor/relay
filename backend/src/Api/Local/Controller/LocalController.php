@@ -4,8 +4,8 @@ namespace App\Api\Local\Controller;
 
 use App\Api\Local\Input\SendDoneInput;
 use App\Entity\Type\SendStatus;
-use App\Service\Email\Dto\SendUpdateDto;
-use App\Service\Email\SendService;
+use App\Service\Send\Dto\SendUpdateDto;
+use App\Service\Send\SendService;
 use App\Service\Management\GoState\GoStateFactory;
 use App\Service\Management\GoState\ServerNotFoundException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;

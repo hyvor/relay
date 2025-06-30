@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\Email\Message;
+namespace App\Service\Send\Message;
 
 use Symfony\Component\Messenger\Attribute\AsMessage;
 

@@ -1,10 +1,12 @@
 <?php
 
-namespace App\Service\Email;
+namespace App\Service\Send;
 
 use App\Config;
 use App\Entity\Domain;
+use App\Service\Send\Dto\SendingAttachment;
 use App\Service\Instance\InstanceService;
+use App\Service\Send\Exception\EmailTooLargeException;
 use Hyvor\Internal\Util\Crypt\Encryption;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Crypto\DkimSigner;
@@ -24,7 +26,9 @@ class EmailBuilder
 
     /**
      * @param array<string, string> $customHeaders
+     * @param array<SendingAttachment> $attachments
      * @return array{raw: string, messageId: string}
+     * @throws EmailTooLargeException
      */
     public function build(
         Domain $domain,
@@ -33,7 +37,8 @@ class EmailBuilder
         ?string $subject,
         ?string $bodyHtml,
         ?string $bodyText,
-        array $customHeaders
+        array $customHeaders,
+        array $attachments
     ): array
     {
         $email = new Email()
@@ -52,6 +57,15 @@ class EmailBuilder
             $email->text($bodyText);
         }
 
+        // add attachments
+        foreach ($attachments as $attachment) {
+            $email->attach(
+                $attachment->content,
+                $attachment->name,
+                $attachment->contentType
+            );
+        }
+
         // Add custom headers
         foreach ($customHeaders as $key => $value) {
             $email->getHeaders()->addTextHeader($key, $value);
@@ -63,6 +77,15 @@ class EmailBuilder
 
         // mailer header
         $email->getHeaders()->addTextHeader('X-Mailer', 'Hyvor Relay v' . $this->config->getAppVersion());
+
+        /**
+         * Here we check the email size before signing it because
+         * DKIM signing is expensive and slow. It will only add a couple of KBs at most,
+         * so checking the size before signing is fine.
+         */
+        if (strlen($email->toString()) > SendLimits::MAX_EMAIL_SIZE) {
+            throw new EmailTooLargeException();
+        }
 
         // DKIM with the sending domain
         $email = $this->signEmail(
@@ -81,8 +104,10 @@ class EmailBuilder
             InstanceService::DEFAULT_DKIM_SELECTOR
         );
 
+        $raw = $email->toString();
+
         return [
-            'raw' => $email->toString(),
+            'raw' => $raw,
             'messageId' => $messageId,
         ];
     }
