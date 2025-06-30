@@ -8,5 +8,7 @@ when@test:
     framework:
         messenger:
             transports:
-                email: 'test://'
+                default: 'test://'
+                scheduler_global: 'test://'
+                scheduler_server: 'test://'
 

@@ -4,6 +4,7 @@ namespace App\Api\Console\Controller;
 
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Authorization\ScopeRequired;
+use App\Api\Console\Idempotency\IdempotencySupported;
 use App\Api\Console\Input\SendEmail\SendEmailInput;
 use App\Api\Console\Input\SendEmail\UnableToDecodeAttachmentBase64Exception;
 use App\Api\Console\Object\SendObject;
@@ -33,6 +34,7 @@ class SendController extends AbstractController
 
     #[Route("/sends", methods: "POST")]
     #[ScopeRequired(Scope::SENDS_SEND)]
+    #[IdempotencySupported]
     public function sendEmail(
         #[ValueResolver(ProjectResolver::class)] Project $project,
         #[MapRequestPayload] SendEmailInput $sendEmailInput

@@ -1,5 +1,6 @@
 <script>
-	import { CodeBlock } from '@hyvor/design/components';
+	import { CodeBlock, Tag } from '@hyvor/design/components';
+	import Scope from './component/Scope.svelte';
 </script>
 
 <h1>Console API</h1>
@@ -93,7 +94,8 @@ Authorization: Bearer <your_api_key>
 
 <ul>
 	<li>
-		<a href="#send-email">POST /sends</a> - Send an email
+		<a href="#send-email">POST /sends</a>
+		<Scope>Idempotency Supported</Scope> - Send an email
 	</li>
 	<li>
 		<a href="#get-sends">GET /sends</a> - Get sent emails

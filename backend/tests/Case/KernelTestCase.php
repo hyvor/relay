@@ -7,9 +7,12 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\Container;
+use Zenstruck\Messenger\Test\InteractsWithMessenger;
 
 class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
 {
+
+    use InteractsWithMessenger;
 
     protected Container $container;
     protected Application $application;
