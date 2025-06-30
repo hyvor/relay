@@ -64,6 +64,12 @@ class ApiKeyService
         return $this->em->getRepository(ApiKey::class)->findBy(['project' => $project]);
     }
 
+    public function getByRawKey(string $rawKey): ?ApiKey
+    {
+        $hashedKey = hash('sha256', $rawKey);
+        return $this->em->getRepository(ApiKey::class)->findOneBy(['key_hashed' => $hashedKey]);
+    }
+
     public function deleteApiKey(ApiKey $apiKey): void
     {
         $this->em->remove($apiKey);

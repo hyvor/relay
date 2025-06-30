@@ -2,6 +2,7 @@
 
 namespace App\Tests\Api\Console\Email;
 
+use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\SendController;
 use App\Api\Console\Object\SendObject;
 use App\Entity\Send;
@@ -21,6 +22,33 @@ use PHPUnit\Framework\Attributes\TestWith;
 #[CoversClass(EmailBuilder::class)]
 class SendEmailTest extends WebTestCase
 {
+
+    public function test_scope(): void
+    {
+        QueueFactory::createTransactional();
+        $project = ProjectFactory::createOne();
+
+        $this->consoleApi(
+            $project,
+            "POST",
+            "/sends",
+            data: [
+                'from' => 'test@hyvor.com',
+                'to' => 'test@example.com',
+                'body_text' => 'Test email',
+            ],
+            scopes: [Scope::SENDS_READ] // Missing sends.send
+        );
+
+        $this->assertResponseStatusCodeSame(403);
+
+        $json = $this->getJson();
+        $this->assertSame(
+            "You do not have the required scope 'sends.send' to access this resource.",
+            $json['message']
+        );
+
+    }
 
     /**
      * @param array<string, mixed> $data
@@ -237,7 +265,8 @@ class SendEmailTest extends WebTestCase
                 "headers" => [
                     "X-Custom-Header" => "Custom Value",
                 ],
-            ]
+            ],
+            scopes: [Scope::SENDS_SEND]
         );
 
         $this->assertResponseStatusCodeSame(200);

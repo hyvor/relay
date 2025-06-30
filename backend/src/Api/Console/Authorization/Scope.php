@@ -4,7 +4,6 @@ namespace App\Api\Console\Authorization;
 
 enum Scope: string
 {
-
     case SENDS_READ = 'sends.read';
     case SENDS_WRITE = 'sends.write';
     case SENDS_SEND = 'sends.send';

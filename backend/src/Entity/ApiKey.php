@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use App\Entity\Type\ApiKeyScope;
 use App\Repository\ApiKeyRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -26,13 +25,16 @@ class ApiKey
     private Project $project;
 
     #[ORM\Column(type: "string", length: 32, unique: true)]
-    private string $key;
+    private string $key_hashed;
 
     #[ORM\Column(type: "string", length: 255)]
     private string $name;
 
-    #[ORM\Column(enumType: ApiKeyScope::class)]
-    private ApiKeyScope $scope;
+    /**
+     * @var string[]
+     */
+    #[ORM\Column(type: "json")]
+    private array $scopes = [];
 
     #[ORM\Column()]
     private bool $is_enabled;
@@ -85,14 +87,14 @@ class ApiKey
         return $this;
     }
 
-    public function getKey(): string
+    public function getKeyHashed(): string
     {
-        return $this->key;
+        return $this->key_hashed;
     }
 
-    public function setKey(string $key): self
+    public function setKeyHashed(string $key_hashed): self
     {
-        $this->key = $key;
+        $this->key_hashed = $key_hashed;
         return $this;
     }
 
@@ -107,14 +109,20 @@ class ApiKey
         return $this;
     }
 
-    public function getScope(): ApiKeyScope
+    /**
+     * @return string[]
+     */
+    public function getScopes(): array
     {
-        return $this->scope;
+        return $this->scopes;
     }
 
-    public function setScope(ApiKeyScope $scope): self
+    /**
+     * @param string[] $scopes
+     */
+    public function setScopes(array $scopes): self
     {
-        $this->scope = $scope;
+        $this->scopes = $scopes;
         return $this;
     }
 
