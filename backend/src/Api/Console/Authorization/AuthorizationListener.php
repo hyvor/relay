@@ -29,9 +29,7 @@ class AuthorizationListener
     public function __invoke(ControllerEvent $event): void
     {
         // only console API requests
-        if (!str_starts_with($event->getRequest()->getPathInfo(), '/api/console')) {
-            return;
-        }
+        if (!str_starts_with($event->getRequest()->getPathInfo(), '/api/console')) return;
 
         $request = $event->getRequest();
 
@@ -80,9 +78,8 @@ class AuthorizationListener
         $projectId = $request->headers->get('x-project-id');
         $sessionCookie = $request->cookies->get(Auth::HYVOR_SESSION_COOKIE_NAME);
 
-        if ($projectId === null || $sessionCookie === null) {
-            throw new AccessDeniedHttpException('Project ID or session is missing.');
-        }
+        assert($projectId !== null);
+        assert($sessionCookie !== null);
 
         $project = $this->projectService->getProjectById((int) $projectId);
 
@@ -115,9 +112,10 @@ class AuthorizationListener
         $attributes = $event->getAttributes();
         $scopeRequiredAttribute = $attributes[ScopeRequired::class][0] ?? null;
 
-        if (!$scopeRequiredAttribute instanceof ScopeRequired) {
-            throw new \Exception('Every controller method that requires authorization must have a ScopeRequired attribute.');
-        }
+        assert(
+            $scopeRequiredAttribute instanceof ScopeRequired,
+            'ScopeRequired attribute must be set on the controller method.'
+        );
 
         $requiredScope = $scopeRequiredAttribute->scope->value;
 
