@@ -4,6 +4,7 @@ namespace App\Service\Email;
 
 use App\Config;
 use App\Entity\Domain;
+use App\Service\Email\Dto\SendingAttachment;
 use App\Service\Instance\InstanceService;
 use Hyvor\Internal\Util\Crypt\Encryption;
 use Symfony\Component\Mime\Address;
@@ -24,6 +25,7 @@ class EmailBuilder
 
     /**
      * @param array<string, string> $customHeaders
+     * @param array<SendingAttachment> $attachments
      * @return array{raw: string, messageId: string}
      */
     public function build(
@@ -33,7 +35,8 @@ class EmailBuilder
         ?string $subject,
         ?string $bodyHtml,
         ?string $bodyText,
-        array $customHeaders
+        array $customHeaders,
+        array $attachments
     ): array
     {
         $email = new Email()
@@ -50,6 +53,15 @@ class EmailBuilder
 
         if ($bodyText !== null) {
             $email->text($bodyText);
+        }
+
+        // add attachments
+        foreach ($attachments as $attachment) {
+            $email->attach(
+                $attachment->content,
+                $attachment->name,
+                $attachment->contentType
+            );
         }
 
         // Add custom headers

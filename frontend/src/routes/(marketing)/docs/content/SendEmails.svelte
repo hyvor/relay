@@ -163,4 +163,8 @@ type Address = string | {
 	<li>
 		<strong>Subject</strong> is limited to <strong>998</strong> characters.
 	</li>
+	<li>
+		<strong>Attachments</strong> are limited to <strong>10</strong> per email. There is no size limit
+		for each attachment, but the total email size must not exceed 10MB.
+	</li>
 </ul>

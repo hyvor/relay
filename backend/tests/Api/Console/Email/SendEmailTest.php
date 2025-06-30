@@ -237,6 +237,62 @@ class SendEmailTest extends WebTestCase
             "The header from is not allowed as a custom header.",
         ])
     ]
+    #[ // attachments content required
+        TestWith([
+            [
+                "from" => "supun@hyvor.com",
+                "to" => "somebody@example.com",
+                "body_text" => 'test',
+                'attachments' => [
+                    ['content' => '']
+                ]
+            ],
+            "attachments[0][content]",
+            "This value should not be blank.",
+        ])
+    ]
+    #[ // attachments content non-string
+        TestWith([
+            [
+                "from" => "supun@hyvor.com",
+                "to" => "somebody@example.com",
+                "body_text" => 'test',
+                'attachments' => [
+                    [
+                        'content' => 123,
+                        'name' => 'file.txt',
+                        'content_type' => 'text/plain',
+                    ]
+                ]
+            ],
+            "attachments[0][content]",
+            "This value should be of type string.",
+        ])
+    ]
+    #[ // attachments max limit
+        TestWith([
+            [
+                "from" => "supun@hyvor.com",
+                "to" => "somebody@example.com",
+                "body_text" => 'test',
+                'attachments' => [
+                    ['content' => '1'],
+                    ['content' => '2'],
+                    ['content' => '3'],
+                    ['content' => '4'],
+                    ['content' => '5'],
+                    ['content' => '6'],
+                    ['content' => '7'],
+                    ['content' => '8'],
+                    ['content' => '9'],
+                    ['content' => '10'],
+                    ['content' => '11'], // 11th attachment
+                ]
+            ],
+            "attachments",
+            "You can attach a maximum of 10 files.",
+        ])
+    ]
     public function test_validation(
         array|string $data,
         string $property,
@@ -420,6 +476,53 @@ class SendEmailTest extends WebTestCase
             "Domain hyvor.com is not verified",
             $json['message']
         );
+
+    }
+
+    public function test_with_attachments(): void
+    {
+
+        QueueFactory::createTransactional();
+        $project = ProjectFactory::createOne();
+
+        DomainFactory::createOne([
+            "project" => $project,
+            "domain" => "hyvor.com",
+            'dkim_verified' => true,
+        ]);
+
+        $this->consoleApi($project, "POST", "/sends", data: [
+            'from' => 'test@hyvor.com',
+            'to' => 'test@example.com',
+            'body_text' => 'Test email',
+            'attachments' => [
+                [
+                    'content' => base64_encode('This is a test file.'),
+                    'name' => 'test.txt',
+                    'content_type' => 'text/plain',
+                ],
+                [
+                    'content' => base64_encode('This is another test file.'),
+                    'name' => 'test2.txt',
+                    'content_type' => 'text/plain',
+                ]
+            ]
+        ]);
+
+        $this->assertResponseStatusCodeSame(200);
+
+        $send = $this->em->getRepository(Send::class)->findBy([
+            'project' => $project->getId(),
+        ]);
+        $this->assertCount(1, $send);
+
+        $send = $send[0];
+
+        $rawEmail = $send->getRaw();
+
+        $this->assertStringContainsString("Content-Type: multipart/mixed; boundary=", $rawEmail);
+        $this->assertStringContainsString("Content-Type: text/plain;", $rawEmail);
+
 
     }
 
