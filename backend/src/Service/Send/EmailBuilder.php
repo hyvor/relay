@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Service\Email;
+namespace App\Service\Send;
 
 use App\Config;
 use App\Entity\Domain;
-use App\Service\Email\Dto\SendingAttachment;
+use App\Service\Send\Dto\SendingAttachment;
 use App\Service\Instance\InstanceService;
 use Hyvor\Internal\Util\Crypt\Encryption;
 use Symfony\Component\Mime\Address;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\Email\Dto;
+namespace App\Service\Send\Dto;
 
 class SendingAttachment
 {

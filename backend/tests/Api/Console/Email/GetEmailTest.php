@@ -4,7 +4,7 @@ namespace App\Tests\Api\Console\Email;
 
 use App\Api\Console\Controller\SendController;
 use App\Api\Console\Object\SendObject;
-use App\Service\Email\SendService;
+use App\Service\Send\SendService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;

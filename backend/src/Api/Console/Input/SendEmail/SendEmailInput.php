@@ -4,9 +4,9 @@ namespace App\Api\Console\Input\SendEmail;
 
 use App\Api\Console\Validation\EmailAddress;
 use App\Api\Console\Validation\Headers;
-use App\Service\Email\Dto\SendingAttachment;
-use App\Service\Email\EmailAddressFormat;
-use App\Service\Email\SendLimits;
+use App\Service\Send\Dto\SendingAttachment;
+use App\Service\Send\EmailAddressFormat;
+use App\Service\Send\SendLimits;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Validator\Constraints as Assert;
 

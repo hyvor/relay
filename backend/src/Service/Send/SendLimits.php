@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\Email;
+namespace App\Service\Send;
 
 class SendLimits
 {
