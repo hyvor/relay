@@ -22,18 +22,18 @@ final class Version20250630150236 extends AbstractMigration
         // Create api_idempotency_records table
         $this->addSql(
             <<<SQL
-   CREATE TABLE api_idempotency_records (
-       id SERIAL PRIMARY KEY,
-       created_at TIMESTAMPTZ NOT NULL,
-       updated_at TIMESTAMPTZ NOT NULL,
-       project_id BIGINT NOT NULL references projects(id) ON DELETE CASCADE,
-       idempotency_key TEXT NOT NULL,
-       endpoint TEXT NOT NULL,
-       response JSONB,
-       status_code INTEGER NOT NULL,
-       UNIQUE (project_id, idempotency_key)
-   );
-SQL
+            CREATE TABLE api_idempotency_records (
+                id SERIAL PRIMARY KEY,
+                created_at TIMESTAMPTZ NOT NULL,
+                updated_at TIMESTAMPTZ NOT NULL,
+                project_id BIGINT NOT NULL references projects(id) ON DELETE CASCADE,
+                idempotency_key TEXT NOT NULL,
+                endpoint TEXT NOT NULL,
+                response JSONB NOT NULL,
+                status_code INTEGER NOT NULL,
+                UNIQUE (project_id, endpoint, idempotency_key)
+            );
+            SQL
         );
     }
 

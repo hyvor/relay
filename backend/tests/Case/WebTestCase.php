@@ -76,6 +76,7 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
 
     /**
      * @param array<string, mixed> $data
+     * @param array<string, mixed> $server
      * @param array<string, mixed> $parameters
      * @param true|(string|Scope)[] $scopes
      */
@@ -85,6 +86,7 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         string $uri,
         array $data = [],
         array $parameters = [],
+        array $server = [],
         true|array $scopes = true
     ): Response {
         $project = is_int($project) ? $this->em->getRepository(Project::class)->find($project) : $project;
@@ -99,10 +101,10 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
             $method,
             '/api/console' . $uri,
             parameters: $parameters,
-            server: [
+            server: array_merge([
                 'CONTENT_TYPE' => 'application/json',
                 'HTTP_AUTHORIZATION' => 'Bearer ' . $apiKey,
-            ],
+            ], $server),
             content: (string)json_encode($data),
         );
 

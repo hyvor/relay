@@ -31,11 +31,20 @@ class ApiIdempotencyRecord
     #[ORM\Column(type: 'text')]
     private string $endpoint;
 
-    #[ORM\Column(type: 'json', nullable: true)]
-    private ?array $response = null;
+    /**
+     * @var array<mixed>
+     */
+    #[ORM\Column(type: 'json')]
+    private array $response;
 
     #[ORM\Column]
     private int $status_code;
+
+    public function __construct()
+    {
+        $this->created_at = new \DateTimeImmutable();
+        $this->updated_at = new \DateTimeImmutable();
+    }
 
     public function getId(): int
     {
@@ -109,12 +118,18 @@ class ApiIdempotencyRecord
         return $this;
     }
 
-    public function getResponse(): ?array
+    /**
+     * @return mixed[]
+     */
+    public function getResponse(): array
     {
         return $this->response;
     }
 
-    public function setResponse(?array $response): static
+    /**
+     * @param array<mixed> $response
+     */
+    public function setResponse(array $response): static
     {
         $this->response = $response;
 

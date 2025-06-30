@@ -11,7 +11,7 @@ use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 
-#[AsEventListener(event: KernelEvents::CONTROLLER, priority: 100)]
+#[AsEventListener(event: KernelEvents::CONTROLLER, priority: 200)]
 class AuthorizationListener
 {
 
@@ -30,6 +30,7 @@ class AuthorizationListener
     {
         // only console API requests
         if (!str_starts_with($event->getRequest()->getPathInfo(), '/api/console')) return;
+        if ($event->isMainRequest() === false) return;
 
         $request = $event->getRequest();
 
@@ -109,12 +110,12 @@ class AuthorizationListener
     private function verifyScopes(array $scopes, ControllerEvent $event): void
     {
 
-        $attributes = $event->getAttributes();
-        $scopeRequiredAttribute = $attributes[ScopeRequired::class][0] ?? null;
+        $attributes = $event->getAttributes(ScopeRequired::class);
+        $scopeRequiredAttribute = $attributes[0] ?? null;
 
         assert(
             $scopeRequiredAttribute instanceof ScopeRequired,
-            'ScopeRequired attribute must be set on the controller method.'
+            'ScopeRequired attribute must be set on the controller method'
         );
 
         $requiredScope = $scopeRequiredAttribute->scope->value;
