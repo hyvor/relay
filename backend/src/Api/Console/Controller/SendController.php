@@ -101,6 +101,12 @@ class SendController extends AbstractController
             );
         }
 
+        if ($domain->getDkimVerified() === false) {
+            throw new BadRequestException(
+                "Domain $domainName is not verified"
+            );
+        }
+
         $queue = $this->queueService->getTransactionalQueue();
         assert($queue !== null, "Transactional queue not found");
 

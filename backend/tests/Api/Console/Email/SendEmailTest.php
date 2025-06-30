@@ -212,6 +212,7 @@ class SendEmailTest extends WebTestCase
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
+            'dkim_verified' => true,
         ]);
 
         $fromAddress = "supun@hyvor.com";
@@ -327,4 +328,32 @@ class SendEmailTest extends WebTestCase
         );
 
     }
+
+    public function test_does_not_allow_from_unverified_domain(): void
+    {
+        QueueFactory::createTransactional();
+        $project = ProjectFactory::createOne();
+
+        DomainFactory::createOne([
+            "project" => $project,
+            "domain" => "hyvor.com",
+            'dkim_verified' => false,
+        ]);
+
+        $this->consoleApi($project, "POST", "/sends", data: [
+            'from' => 'test@hyvor.com',
+            'to' => 'test@example.com',
+            'body_text' => 'Test email',
+        ]);
+
+        $this->assertResponseStatusCodeSame(400);
+
+        $json = $this->getJson();
+        $this->assertSame(
+            "Domain hyvor.com is not verified",
+            $json['message']
+        );
+
+    }
+
 }
