@@ -42,6 +42,15 @@ class ProjectResolver implements ValueResolverInterface
 
         $projectId = $request->headers->get('X-Project-Id');
 
+        $project = null;
+        if ($request->headers->get('X-Project-Id')) {
+            $project = $this->fromSession($request);
+        } else if ($request->headers->get('Authorization')) {
+            $project = $this->fromAuthorizationHeader($request);
+        } else {
+            //
+        }
+
         if (!$projectId) {
             throw new BadRequestException('Missing X-Project-Id header');
         }

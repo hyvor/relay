@@ -22,7 +22,6 @@ final class Version20250619104621 extends AbstractMigration
         SQL
         );
 
-        // Create api_keys table
         $this->addSql(
         <<<SQL
             CREATE TABLE api_keys (
