@@ -1,6 +1,6 @@
 <?php
 
-namespace Api\Console\Validation;
+namespace App\Tests\Api\Console\Validation;
 
 use App\Api\Console\Validation\EmailAddress;
 use App\Api\Console\Validation\EmailAddressValidator;
