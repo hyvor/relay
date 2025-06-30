@@ -14,5 +14,8 @@ enum Scope: string
     case WEBHOOKS_READ = 'webhooks.read';
     case WEBHOOKS_WRITE = 'webhooks.write';
 
+    case API_KEYS_READ = 'api_keys.read';
+    case API_KEYS_WRITE = 'api_keys.write';
+
     case SUSPENSIONS_READ = 'suspensions.read';
 }

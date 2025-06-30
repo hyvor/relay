@@ -16,76 +16,94 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(IdempotencyService::class)]
 class IdempotencyTest extends WebTestCase
 {
-
     public function test_idempotency_from_storage(): void
     {
-
         $project = ProjectFactory::createOne();
 
         $idempotencyRecord = ApiIdempotencyRecordFactory::createOne([
-            'project' => $project,
-            'idempotency_key' => 'idempotency-key-123',
-            'endpoint' => '/api/console/sends',
-            'response' => ['status' => 'ok-idm'],
-            'status_code' => 200,
+            "project" => $project,
+            "idempotency_key" => "idempotency-key-123",
+            "endpoint" => "/api/console/sends",
+            "response" => ["status" => "ok-idm"],
+            "status_code" => 200,
         ]);
 
         $this->consoleApi(
             $project,
-            'POST',
-            '/sends',
+            "POST",
+            "/sends",
             server: [
-                'HTTP_X_IDEMPOTENCY_KEY' => 'idempotency-key-123',
-            ],
+                "HTTP_X_IDEMPOTENCY_KEY" => "idempotency-key-123",
+            ]
         );
 
         $this->assertResponseStatusCodeSame(200);
+        $this->assertResponseHasHeader('X-Idempotency-Short-Circuit', 'true');
 
         $json = $this->getJson();
-        $this->assertSame(['status' => 'ok-idm'], $json);
-
+        $this->assertSame(["status" => "ok-idm"], $json);
     }
 
     public function test_idempotency_response_saved(): void
     {
-
         $project = ProjectFactory::createOne();
 
         QueueFactory::createTransactional();
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
-            'dkim_verified' => true,
+            "dkim_verified" => true,
         ]);
 
         $this->consoleApi(
             $project,
-            'POST',
-            '/sends',
+            "POST",
+            "/sends",
             data: [
-                'from' => 'test@hyvor.com',
-                'to' => 'test@example.com',
-                'body_text' => 'Test email',
+                "from" => "test@hyvor.com",
+                "to" => "test@example.com",
+                "body_text" => "Test email",
             ],
             server: [
-                'HTTP_X_IDEMPOTENCY_KEY' => 'idempotency-key-123',
-            ],
+                "HTTP_X_IDEMPOTENCY_KEY" => "idempotency-key-123",
+            ]
         );
 
         $this->assertResponseStatusCodeSame(200);
 
         $idempotencyRecords = $this->em
             ->getRepository(ApiIdempotencyRecord::class)
-            ->findBy(['project' => $project->getId()]);
+            ->findBy(["project" => $project->getId()]);
 
         $this->assertCount(1, $idempotencyRecords);
 
         $record = $idempotencyRecords[0];
-        $this->assertSame('idempotency-key-123', $record->getIdempotencyKey());
-        $this->assertSame('/api/console/sends', $record->getEndpoint());
+        $this->assertSame("idempotency-key-123", $record->getIdempotencyKey());
+        $this->assertSame("/api/console/sends", $record->getEndpoint());
         $this->assertSame(200, $record->getStatusCode());
-        $this->assertArrayHasKey('message_id', $record->getResponse());
+        $this->assertArrayHasKey("message_id", $record->getResponse());
+    }
 
+    public function test_idempotency_not_supported_endpoint_throws_exception(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $this->consoleApi(
+            $project,
+            "GET",
+            "/api-keys", // This endpoint doesn't have IdempotencySupported attribute
+            server: [
+                "HTTP_X_IDEMPOTENCY_KEY" => "idempotency-key-123",
+            ]
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+
+        $json = $this->getJson();
+        $this->assertSame(
+            'This endpoint does not support idempotency. Retry without the "X-Idempotency-Key" header.',
+            $json["message"]
+        );
     }
 
 }

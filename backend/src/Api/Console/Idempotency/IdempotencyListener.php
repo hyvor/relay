@@ -63,6 +63,8 @@ class IdempotencyListener
         $status = $idempotencyRecord->getStatusCode();
 
         $response = new JsonResponse($json, $status);
+        $response->headers->set('X-Idempotency-Short-Circuit', 'true');
+
         $event->setController(fn () => $response);
     }
 
