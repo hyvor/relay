@@ -550,4 +550,51 @@ class SendEmailTest extends WebTestCase
 
     }
 
+    public function test_email_max10mb(): void
+    {
+        /*
+         Note: this is slow because of DKIM signing. DkimSigner::hashBody is the bottleneck
+         $_ENV['start'] = microtime(true);
+        dd(microtime(true) - $_ENV['start']);
+        Update: moved the size check to before DKIM signing in EmailBuilder.
+        */
+
+
+        ini_set('memory_limit', '256M');
+
+        QueueFactory::createTransactional();
+        $project = ProjectFactory::createOne();
+
+        DomainFactory::createOne([
+            "project" => $project,
+            "domain" => "hyvor.com",
+            'dkim_verified' => true,
+        ]);
+
+        $attachment = [
+            'content' => base64_encode(str_repeat('a', 4 * 1024 * 1024)), // 4MB
+        ];
+
+        $this->consoleApi($project, "POST", "/sends", data: [
+            'from' => 'test@hyvor.com',
+            'to' => 'test@example.com',
+            'body_text' => 'Test email',
+            'attachments' => [
+                // total 12MB
+                $attachment,
+                $attachment,
+                $attachment
+            ]
+        ]);
+
+        $this->assertResponseStatusCodeSame(400);
+
+        $json = $this->getJson();
+        $this->assertSame(
+            "Email size exceeds the maximum allowed size of 10MB.",
+            $json['message']
+        );
+
+    }
+
 }

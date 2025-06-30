@@ -12,6 +12,7 @@ use App\Entity\Project;
 use App\Entity\Type\SendStatus;
 use App\Service\Domain\DomainService;
 use App\Service\Send\EmailAddressFormat;
+use App\Service\Send\Exception\EmailTooLargeException;
 use App\Service\Send\SendService;
 use App\Service\Queue\QueueService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -69,18 +70,24 @@ class SendController extends AbstractController
             );
         }
 
-        $send = $this->sendService->createSend(
-            $project,
-            $domain,
-            $queue,
-            $fromAddress,
-            $sendEmailInput->getToAddress(),
-            $sendEmailInput->subject,
-            $sendEmailInput->body_html,
-            $sendEmailInput->body_text,
-            $sendEmailInput->headers,
-            $attachments
-        );
+        try {
+            $send = $this->sendService->createSend(
+                $project,
+                $domain,
+                $queue,
+                $fromAddress,
+                $sendEmailInput->getToAddress(),
+                $sendEmailInput->subject,
+                $sendEmailInput->body_html,
+                $sendEmailInput->body_text,
+                $sendEmailInput->headers,
+                $attachments
+            );
+        } catch (EmailTooLargeException) {
+            throw new BadRequestException(
+                "Email size exceeds the maximum allowed size of 10MB."
+            );
+        }
 
         return new JsonResponse([
             'id' => $send->getId(),

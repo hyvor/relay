@@ -11,6 +11,7 @@ use App\Entity\Type\SendStatus;
 use App\Repository\SendRepository;
 use App\Service\Send\Dto\SendingAttachment;
 use App\Service\Send\Dto\SendUpdateDto;
+use App\Service\Send\Exception\EmailTooLargeException;
 use App\Service\Send\Message\EmailSendMessage;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -88,6 +89,7 @@ class SendService
     /**
      * @param array<string, string> $customHeaders
      * @param array<SendingAttachment> $attachments
+     * @throws EmailTooLargeException
      */
     public function createSend(
         Project $project,
