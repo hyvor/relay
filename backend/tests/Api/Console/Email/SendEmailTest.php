@@ -50,6 +50,24 @@ class SendEmailTest extends WebTestCase
 
     }
 
+    protected function getHtmlBodyTooLargeData(): mixed
+    {
+        return [
+            "from" => "supun@hyvor.com",
+            "to" => "somebody@example.com",
+            "body_html" => str_repeat('a', 2 * 1024 * 1024 + 1), // 2MB + 1
+        ];
+    }
+
+    protected function getTextBodyTooLargeData(): mixed
+    {
+        return [
+            "from" => "supun@hyvor.com",
+            "to" => "somebody@example.com",
+            "body_text" => str_repeat('a', 2 * 1024 * 1024 + 1), // 2MB + 1
+        ];
+    }
+
     /**
      * @param array<string, mixed> $data
      */
@@ -137,6 +155,13 @@ class SendEmailTest extends WebTestCase
             "body_text must not be blank if body_html is null",
         ])
     ]
+    #[ // body_text to large
+        TestWith([
+            'getTextBodyTooLargeData',
+            "body_text",
+            "body_text must not exceed 2MB.",
+        ])
+    ]
     #[ // body_html empty
         TestWith([
             [
@@ -147,6 +172,13 @@ class SendEmailTest extends WebTestCase
             ],
             "body_html",
             "body_html must not be blank if body_text is null",
+        ])
+    ]
+    #[ // body_html to large
+        TestWith([
+            'getHtmlBodyTooLargeData',
+            "body_html",
+            "body_html must not exceed 2MB.",
         ])
     ]
     #[ // headers not array
@@ -206,7 +238,7 @@ class SendEmailTest extends WebTestCase
         ])
     ]
     public function test_validation(
-        array $data,
+        array|string $data,
         string $property,
         string $violationMessage
     ): void {
@@ -217,6 +249,12 @@ class SendEmailTest extends WebTestCase
             "project" => $project,
             "domain" => "hyvor.com",
         ]);
+
+        if (is_string($data)) {
+            /** @var callable(): array<string, mixed> $callable */
+            $callable = [$this, $data];
+            $data = call_user_func($callable);
+        }
 
         $this->consoleApi($project, "POST", "/sends", data: $data);
 

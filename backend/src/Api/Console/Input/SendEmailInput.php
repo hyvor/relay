@@ -12,6 +12,13 @@ class SendEmailInput
 {
 
     /**
+     * A sensible limit of 998 characters, based on Google's header limits:
+     * https://support.google.com/a/answer/14016360?hl=en&src=supportwidget
+     */
+    private const MAX_SUBJECT_LENGTH = 998;
+    private const MAX_BODY_LENGTH = 2 * 1024 * 1024; // 2MB
+
+    /**
      * @var string|array{email: string, name?: string}
      */
     #[Assert\NotBlank]
@@ -25,13 +32,11 @@ class SendEmailInput
     #[EmailAddress]
     public string|array $to;
 
-    /**
-     * A sensible limit of 998 characters, based on Google's header limits:
-     * https://support.google.com/a/answer/14016360?hl=en&src=supportwidget
-     */
-    #[Assert\Length(max: 998)]
+
+    #[Assert\Length(max: self::MAX_SUBJECT_LENGTH)]
     public string $subject = '';
 
+    #[Assert\Length(max: self::MAX_BODY_LENGTH, maxMessage: 'body_html must not exceed 2MB.')]
     #[Assert\When(
         expression: "this.body_text === null",
         constraints: [
@@ -46,6 +51,7 @@ class SendEmailInput
             new Assert\NotBlank(message: 'body_text must not be blank if body_html is null'),
         ]
     )]
+    #[Assert\Length(max: self::MAX_BODY_LENGTH, maxMessage: 'body_text must not exceed 2MB.')]
     public ?string $body_text = null;
 
     /**

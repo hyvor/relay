@@ -19,6 +19,12 @@
 	<li>
 		<a href="#retrying">Retrying Failed Requests</a>
 	</li>
+	<li>
+		<a href="#rate-limit">Rate Limiting</a>
+	</li>
+	<li>
+		<a href="#limits">Other Limits</a>
+	</li>
 </ul>
 
 <h2 id="sending">Sending Emails</h2>
@@ -134,5 +140,27 @@ type Address = string | {
 		<code>
 			order-confirmation-{'{orderId}'}
 		</code> <br />(since the order confirmation email is sent only once for an order)
+	</li>
+</ul>
+
+<!-- <h2 id="rate-limit">Rate Limiting</h2>
+
+<p>TODO</p> -->
+
+<h2 id="limits">Other Limits</h2>
+
+<ul>
+	<li>
+		<strong>Total email size</strong> is limited to <strong>10MB</strong> <br /> (including headers,
+		body, and attachments).
+	</li>
+	<li>
+		<strong>HTML body size</strong> is limited to <strong>2MB</strong>.
+	</li>
+	<li>
+		<strong>Plain text body size</strong> is limited to <strong>2MB</strong>.
+	</li>
+	<li>
+		<strong>Subject</strong> is limited to <strong>998</strong> characters.
 	</li>
 </ul>
