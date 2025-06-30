@@ -3,6 +3,7 @@
 namespace App\Api\Console\Input;
 
 use App\Api\Console\Validation\EmailAddress;
+use App\Api\Console\Validation\Headers;
 use App\Service\Email\EmailAddressFormat;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -24,6 +25,11 @@ class SendEmailInput
     #[EmailAddress]
     public string|array $to;
 
+    /**
+     * A sensible limit of 998 characters, based on Google's header limits:
+     * https://support.google.com/a/answer/14016360?hl=en&src=supportwidget
+     */
+    #[Assert\Length(max: 998)]
     public string $subject = '';
 
     #[Assert\When(
@@ -45,6 +51,7 @@ class SendEmailInput
     /**
      * @var array<string, string>
      */
+    #[Headers]
     public array $headers = [];
 
     public function getFromAddress(): Address

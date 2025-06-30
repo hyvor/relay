@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\Email;
 
-use App\Api\Console\Controller\EmailController;
+use App\Api\Console\Controller\SendController;
 use App\Api\Console\Object\SendObject;
 use App\Service\Email\SendService;
 use App\Tests\Case\WebTestCase;
@@ -12,7 +12,7 @@ use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\SendFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(EmailController::class)]
+#[CoversClass(SendController::class)]
 #[CoversClass(SendService::class)]
 #[CoversClass(SendObject::class)]
 class GetEmailTest extends WebTestCase

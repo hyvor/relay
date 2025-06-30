@@ -37,17 +37,71 @@ Authorization: Bearer <your_api_key>
 	</li>
 </ul>
 
+<h2 id="scopes">Scopes</h2>
+
+<p>
+	Scopes are used to control access to endpoints of the Console API. When creating an API key, you
+	can select the scopes that the key will have access to. The available scopes are:
+</p>
+
+<ul>
+	<li>
+		<strong>sends.read</strong>
+	</li>
+	<li>
+		<strong>sends.write</strong>
+	</li>
+	<li>
+		<strong>sends.send</strong>
+	</li>
+	<li>
+		<strong>domains.read</strong>
+	</li>
+	<li>
+		<strong>domains.write</strong>
+	</li>
+	<li>
+		<strong>webhooks.read</strong>
+	</li>
+	<li>
+		<strong>webhooks.write</strong>
+	</li>
+	<li>
+		<strong>suspensions.read</strong>
+	</li>
+</ul>
+
+<p>Each endpoint requires specific scopes to be included in the API key.</p>
+
 <h2 id="endpoints">Endpoints</h2>
 
 <ul>
-	<li><a href="#emails">Emails</a></li>
-	<li><a href="#domains">Domains</a></li>
+	<li>
+		<a href="#sends">Sends</a> (Emails)
+	</li>
+	<li>
+		<a href="#domains">Domains</a>
+	</li>
+	<li>
+		<a href="#webhooks">Webhooks</a>
+	</li>
 </ul>
 
-<!-- <h3 id="emails">Emails</h3>
+<h3 id="sends">Sends (Emails)</h3>
 
-<p>
-</p> -->
+<p>Endpoints:</p>
+
+<ul>
+	<li>
+		<a href="#send-email">POST /sends</a> - Send an email
+	</li>
+	<li>
+		<a href="#get-sends">GET /sends</a> - Get sent emails
+	</li>
+	<li>
+		<a href="#get-send">GET /sends/:id</a> - Get a specific sent email by ID
+	</li>
+</ul>
 
 <h3 id="domains">Domains</h3>
 
@@ -81,7 +135,7 @@ Authorization: Bearer <your_api_key>
 <h4 id="get-domains">Get Domains</h4>
 
 <p>
-	<code>GET /domains</code>
+	<code>GET /domains</code> (scope: <strong>domains.read</strong>)
 </p>
 
 <CodeBlock
@@ -99,7 +153,7 @@ Authorization: Bearer <your_api_key>
 <h4 id="create-domain">Create Domain</h4>
 
 <p>
-	<code>POST /domains</code>
+	<code>POST /domains</code> (scope: <strong>domains.write</strong>)
 </p>
 
 <CodeBlock
@@ -115,7 +169,7 @@ Authorization: Bearer <your_api_key>
 <h4 id="get-domain">Get Domain</h4>
 
 <p>
-	<code>GET /domains/:id</code>
+	<code>GET /domains/:id</code> (scope: <strong>domains.read</strong>)
 </p>
 
 <CodeBlock
@@ -129,7 +183,7 @@ Authorization: Bearer <your_api_key>
 <h4 id="delete-domain">Delete Domain</h4>
 
 <p>
-	<code>DELETE /domains/:id</code>
+	<code>DELETE /domains/:id</code> (scope: <strong>domains.write</strong>)
 </p>
 
 <CodeBlock

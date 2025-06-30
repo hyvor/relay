@@ -25,7 +25,6 @@ class SendService
     public function __construct(
         private EntityManagerInterface $em,
         private EmailBuilder $emailBuilder,
-        private MessageBusInterface $bus,
         private SendRepository $sendRepository,
     )
     {
@@ -85,6 +84,9 @@ class SendService
         return $this->em->getRepository(Send::class)->findOneBy(['uuid' => $uuid]);
     }
 
+    /**
+     * @param array<string, string> $customHeaders
+     */
     public function createSend(
         Project $project,
         Domain $domain,
@@ -94,16 +96,21 @@ class SendService
         ?string $subject,
         ?string $bodyHtml,
         ?string $bodyText,
+        array $customHeaders
     ): Send
     {
 
-        $rawEmail = $this->emailBuilder->build(
+        [
+            'raw' => $rawEmail,
+            'messageId' => $messageId
+        ] = $this->emailBuilder->build(
             $domain,
             $from,
             $to,
             $subject,
             $bodyHtml,
-            $bodyText
+            $bodyText,
+            $customHeaders
         );
 
         $this->em->beginTransaction();
@@ -126,16 +133,11 @@ class SendService
             $send->setSubject($subject);
             $send->setBodyHtml($bodyHtml);
             $send->setBodyText($bodyText);
+            $send->setHeaders($customHeaders);
+            $send->setMessageId($messageId);
             $send->setRaw($rawEmail);
             $this->em->persist($send);
             $this->em->flush();
-
-            /*$this->bus->dispatch(new EmailSendMessage(
-                sendId: $send->getId(),
-                from: $from->getAddress(),
-                to: $to->getAddress(),
-                rawEmail: $rawEmail
-            ));*/
 
             $this->em->commit();
             return $send;

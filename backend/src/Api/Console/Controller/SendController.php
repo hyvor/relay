@@ -5,7 +5,6 @@ namespace App\Api\Console\Controller;
 use App\Api\Console\Input\SendEmailInput;
 use App\Api\Console\Object\SendObject;
 use App\Entity\Project;
-use App\Entity\Send;
 use App\Entity\Type\SendStatus;
 use App\Service\Domain\DomainService;
 use App\Service\Email\EmailAddressFormat;
@@ -18,40 +17,36 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 
-class EmailController extends AbstractController
+class SendController extends AbstractController
 {
-
     public function __construct(
         private SendService $sendService,
         private DomainService $domainService,
         private QueueService $queueService
-    )
-    {
-    }
+    ) {}
 
-    #[Route('/emails', methods: 'GET')]
+    #[Route("/emails", methods: "GET")]
     public function getEmails(Request $request, Project $project): JsonResponse
     {
-        $limit = $request->query->getInt('limit', 50);
-        $offset = $request->query->getInt('offset', 0);
+        $limit = $request->query->getInt("limit", 50);
+        $offset = $request->query->getInt("offset", 0);
 
         $status = null;
-        if ($request->query->has('status')) {
-            $status = SendStatus::tryFrom($request->query->getString('status'));
+        if ($request->query->has("status")) {
+            $status = SendStatus::tryFrom($request->query->getString("status"));
         }
 
         $fromSearch = null;
-        if ($request->query->has('from_search')) {
-            $fromSearch = $request->query->getString('from_search');
+        if ($request->query->has("from_search")) {
+            $fromSearch = $request->query->getString("from_search");
         }
 
         $toSearch = null;
-        if ($request->query->has('to_search')) {
-            $toSearch = $request->query->getString('to_search');
+        if ($request->query->has("to_search")) {
+            $toSearch = $request->query->getString("to_search");
         }
 
-        $sends = $this
-            ->sendService
+        $sends = $this->sendService
             ->getSends(
                 $project,
                 $status,
@@ -65,7 +60,7 @@ class EmailController extends AbstractController
         return $this->json($sends);
     }
 
-    #[Route('/emails/uuid/{uuid}', methods: 'GET')]
+    #[Route("/emails/uuid/{uuid}", methods: "GET")]
     public function getByUuid(Project $project, string $uuid): JsonResponse
     {
         $send = $this->sendService->getSendByUuid($uuid);
@@ -74,7 +69,10 @@ class EmailController extends AbstractController
         }
 
         if ($send->getProject()->getId() !== $project->getId()) {
-            throw new BadRequestException("Send with UUID $uuid does not belong to project " . $project->getName());
+            throw new BadRequestException(
+                "Send with UUID $uuid does not belong to project " .
+                    $project->getName()
+            );
         }
 
         $attempts = $this->sendService->getSendAttemptsOfSend($send);
@@ -82,27 +80,37 @@ class EmailController extends AbstractController
         return $this->json(new SendObject($send, $attempts));
     }
 
-
-    #[Route('/email', methods: 'POST')]
-    public function sendTransactionalEmail(
+    #[Route("/sends", methods: "POST")]
+    public function sendEmail(
         Project $project,
         #[MapRequestPayload] SendEmailInput $sendEmailInput
-    ): JsonResponse
-    {
-
+    ): JsonResponse {
         $fromAddress = $sendEmailInput->getFromAddress();
 
-        $domainName = EmailAddressFormat::getDomainFromEmail($fromAddress->getAddress());
-        $domain = $this->domainService->getDomainByProjectAndName($project, $domainName);
+        $domainName = EmailAddressFormat::getDomainFromEmail(
+            $fromAddress->getAddress()
+        );
+        $domain = $this->domainService->getDomainByProjectAndName(
+            $project,
+            $domainName
+        );
 
         if ($domain === null) {
-            throw new BadRequestException("Domain $domainName not found for email address " . $fromAddress->getAddress());
+            throw new BadRequestException(
+                "Domain $domainName is not registered for this project"
+            );
+        }
+
+        if ($domain->getDkimVerified() === false) {
+            throw new BadRequestException(
+                "Domain $domainName is not verified"
+            );
         }
 
         $queue = $this->queueService->getTransactionalQueue();
-        assert($queue !== null, 'Transactional queue not found');
+        assert($queue !== null, "Transactional queue not found");
 
-        $this->sendService->createSend(
+        $send = $this->sendService->createSend(
             $project,
             $domain,
             $queue,
@@ -110,11 +118,13 @@ class EmailController extends AbstractController
             $sendEmailInput->getToAddress(),
             $sendEmailInput->subject,
             $sendEmailInput->body_html,
-            $sendEmailInput->body_text
+            $sendEmailInput->body_text,
+            $sendEmailInput->headers
         );
 
-        return new JsonResponse([]);
-
+        return new JsonResponse([
+            'id' => $send->getId(),
+            'message_id' => $send->getMessageId(),
+        ]);
     }
-
 }

@@ -1,0 +1,19 @@
+<?php
+
+namespace App\Api\Console\Authorization;
+
+enum Scope: string
+{
+
+    case SENDS_READ = 'sends.read';
+    case SENDS_WRITE = 'sends.write';
+    case SENDS_SEND = 'sends.send';
+
+    case DOMAINS_READ = 'domains.read';
+    case DOMAINS_WRITE = 'domains.write';
+
+    case WEBHOOKS_READ = 'webhooks.read';
+    case WEBHOOKS_WRITE = 'webhooks.write';
+
+    case SUSPENSIONS_READ = 'suspensions.read';
+}

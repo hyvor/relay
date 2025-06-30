@@ -2,57 +2,50 @@
 	import { CodeBlock, TabbedCodeBlock } from '@hyvor/design/components';
 </script>
 
-<h1>Send Transactional Emails</h1>
+<h1>Send Emails</h1>
 
 <p>
-	<strong>Transactional emails</strong> are sent to a single recipient, typically in response to an action
-	they have taken, such as signing up for a service or making a purchase.
-</p>
-
-<p>
-	If you want to send emails to multiple recipients, such as newsletters or marketing campaigns, you
-	should use
-	<a href="/docs/send-distributional">distributional emails</a> instead. Before getting started,
-	make sure to <a href="/docs">set up a project</a> and familiarize yourself with the
+	This page explains how to send emails using the Console API. Before getting started, make sure to <a
+		href="/docs">set up a project</a
+	>
+	and familiarize yourself with the
 	<a href="/docs/api-console">Console API</a>.
 </p>
 
 <ul>
 	<li>
-		<a href="#sending">Sending Transactional Emails</a>
+		<a href="#sending">Sending Emails</a>
 	</li>
 	<li>
 		<a href="#retrying">Retrying Failed Requests</a>
 	</li>
 </ul>
 
-<h2 id="sending">Sending Transactional Emails</h2>
-
-<p>Sending a transactional email is simple and only requires one HTTP request.</p>
+<h2 id="sending">Sending Emails</h2>
 
 <p>
 	<strong>Endpoint:</strong><br />
-	<code>POST /api/console/email</code>
+	<code>POST /api/console/sends</code>
 </p>
 
 <p>
 	<strong>Request:</strong>
 	<CodeBlock
 		code={`
-    type Request = EmailRequest;
+    type Request = SendRequest;
 `}
 		language="ts"
 	/>
 </p>
 
 <p id="email-request-object">
-	This is an <code>EmailRequest</code> object, which is used to define the email you want to send.
+	This is an <code>SendRequest</code> object, which is used to define the email you want to send.
 </p>
 
 <TabbedCodeBlock tabs={['Types', 'JSON Example']}>
 	<CodeBlock
 		code={`
-interface EmailRequest {
+interface SendRequest {
 	// The email address of the sender (required)
 	// the domain of the email address must be verified
 	from: Address;

@@ -20,8 +20,10 @@ class SendObject
     public ?string $body_text;
     public string $raw;
 
-
-    public ?array $attempts = null;
+    /**
+     * @var SendAttemptObject[]
+     */
+    public array $attempts = [];
 
     /**
      * @param SendAttempt[] $attempts
