@@ -495,6 +495,7 @@ class SendEmailTest extends WebTestCase
             'from' => 'test@hyvor.com',
             'to' => 'test@example.com',
             'body_text' => 'Test email',
+            'body_html' => '<p>Test email</p>',
             'attachments' => [
                 [
                     'content' => base64_encode('This is a test file.'),
@@ -522,7 +523,11 @@ class SendEmailTest extends WebTestCase
 
         $this->assertStringContainsString("Content-Type: multipart/mixed; boundary=", $rawEmail);
         $this->assertStringContainsString("Content-Type: text/plain;", $rawEmail);
-
+        $this->assertStringContainsString(base64_encode('This is a test file.'), $rawEmail);
+        $this->assertStringContainsString("Content-Disposition: attachment; name=test.txt; filename=test.txt", $rawEmail);
+        $this->assertStringContainsString("Content-Type: text/plain;", $rawEmail);
+        $this->assertStringContainsString(base64_encode('This is another test file.'), $rawEmail);
+        $this->assertStringContainsString("Content-Disposition: attachment; name=test2.txt; filename=test2.txt", $rawEmail);
 
     }
 

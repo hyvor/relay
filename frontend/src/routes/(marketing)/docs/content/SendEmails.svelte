@@ -72,11 +72,19 @@ interface SendRequest {
 
 	// additional headers
 	headers?: Record<string, string>;
+
+	attachments?: Attachment[];
 }
 	
 type Address = string | {
 	name?: string;
 	email: string;
+};
+
+type Attachment = {
+	content: string; // base64 encoded
+	name?: string;
+	content_type?: string; // MIME type
 };
 `}
 		language="ts"
@@ -100,7 +108,15 @@ type Address = string | {
 
 	"headers": {
 		"X-Custom-Header": "Custom Value"
-	}
+	},
+
+	"attachments": [
+		{
+			"content": "SFlWT1IgUm9ja3Mh",
+			"name": "hello.txt",
+			"content_type": "text/plain"
+		}
+	]
 }
 `}
 		language="json"

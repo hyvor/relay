@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Api\Console\Input;
+namespace App\Api\Console\Input\SendEmail;
 
 use App\Api\Console\Validation\EmailAddress;
 use App\Api\Console\Validation\Headers;
@@ -62,7 +62,7 @@ class SendEmailInput
     public array $headers = [];
 
     /**
-     * @var array<string, array{content: string, name: ?string, content_type: ?string}>
+     * @var array<array{content: string, name: ?string, content_type: ?string}>
      */
     #[Assert\All([
         new Assert\Collection(
@@ -92,13 +92,20 @@ class SendEmailInput
 
     /**
      * @return SendingAttachment[]
+     * @throws UnableToDecodeAttachmentBase64Exception
      */
     public function getAttachments(): array
     {
         $attachments = [];
-        foreach ($this->attachments as $attachment) {
+        foreach ($this->attachments as $i => $attachment) {
             $sendEmailAttachment = new SendingAttachment();
-            $sendEmailAttachment->content = base64_decode($attachment['content']);
+
+            $content = base64_decode($attachment['content'], true);
+            if ($content === false) {
+                throw new UnableToDecodeAttachmentBase64Exception($i);
+            }
+
+            $sendEmailAttachment->content = $content;
             $sendEmailAttachment->contentType = $attachment['content_type'] ?? null;
             $sendEmailAttachment->name = $attachment['name'] ?? null;
             $attachments[] = $sendEmailAttachment;

@@ -4,7 +4,8 @@ namespace App\Api\Console\Controller;
 
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Authorization\ScopeRequired;
-use App\Api\Console\Input\SendEmailInput;
+use App\Api\Console\Input\SendEmail\SendEmailInput;
+use App\Api\Console\Input\SendEmail\UnableToDecodeAttachmentBase64Exception;
 use App\Api\Console\Object\SendObject;
 use App\Api\Console\Resolver\ProjectResolver;
 use App\Entity\Project;
@@ -13,10 +14,10 @@ use App\Service\Domain\DomainService;
 use App\Service\Email\EmailAddressFormat;
 use App\Service\Email\SendService;
 use App\Service\Queue\QueueService;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Attribute\ValueResolver;
 use Symfony\Component\Routing\Attribute\Route;
@@ -60,6 +61,14 @@ class SendController extends AbstractController
         $queue = $this->queueService->getTransactionalQueue();
         assert($queue !== null, "Transactional queue not found");
 
+        try {
+            $attachments = $sendEmailInput->getAttachments();
+        } catch (UnableToDecodeAttachmentBase64Exception $exception) {
+            throw new BadRequestException(
+                "Base64 decoding of attachment failed: index $exception->attachmentIndex"
+            );
+        }
+
         $send = $this->sendService->createSend(
             $project,
             $domain,
@@ -70,7 +79,7 @@ class SendController extends AbstractController
             $sendEmailInput->body_html,
             $sendEmailInput->body_text,
             $sendEmailInput->headers,
-            $sendEmailInput->getAttachments()
+            $attachments
         );
 
         return new JsonResponse([
