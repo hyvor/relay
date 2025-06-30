@@ -95,8 +95,9 @@ class SendController extends AbstractController
         ]);
     }
 
-    #[Route("/emails", methods: "GET")]
-    public function getEmails(Request $request, Project $project): JsonResponse
+    #[Route("/sends", methods: "GET")]
+    #[ScopeRequired(Scope::SENDS_READ)]
+    public function getSends(Request $request, Project $project): JsonResponse
     {
         $limit = $request->query->getInt("limit", 50);
         $offset = $request->query->getInt("offset", 0);

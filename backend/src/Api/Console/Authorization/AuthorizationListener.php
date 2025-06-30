@@ -3,6 +3,9 @@
 namespace App\Api\Console\Authorization;
 
 use App\Service\ApiKey\ApiKeyService;
+use App\Service\Project\ProjectService;
+use Hyvor\Internal\Auth\Auth;
+use Hyvor\Internal\Auth\AuthInterface;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -13,16 +16,18 @@ class AuthorizationListener
 {
 
     public const string RESOLVED_PROJECT_ATTRIBUTE_KEY = 'console_api_resolved_project';
+    public const string RESOLVED_USER_ATTRIBUTE_KEY = 'console_api_resolved_user';
 
     public function __construct(
-        private ApiKeyService $apiKeyService
+        private ProjectService $projectService,
+        private ApiKeyService $apiKeyService,
+        private AuthInterface $auth,
     )
     {
     }
 
     public function __invoke(ControllerEvent $event): void
     {
-
         // only console API requests
         if (!str_starts_with($event->getRequest()->getPathInfo(), '/api/console')) {
             return;
@@ -32,10 +37,11 @@ class AuthorizationListener
 
         if ($request->headers->has('authorization')) {
             $this->handleAuthorizationHeader($event);
+        } else if ($request->headers->has('x-project-id') && $request->cookies->has(Auth::HYVOR_SESSION_COOKIE_NAME)) {
+            $this->handleSession($event);
+        } else {
+            throw new AccessDeniedHttpException('Authorization method not supported. Use either Bearer token or a session.');
         }
-
-        // TODO: handle session-based authentication
-
     }
 
     private function handleAuthorizationHeader(ControllerEvent $event): void
@@ -65,6 +71,39 @@ class AuthorizationListener
 
         $project = $apiKeyModel->getProject();
         $request->attributes->set(self::RESOLVED_PROJECT_ATTRIBUTE_KEY, $project);
+    }
+
+    private function handleSession(ControllerEvent $event): void
+    {
+
+        $request = $event->getRequest();
+        $projectId = $request->headers->get('x-project-id');
+        $sessionCookie = $request->cookies->get(Auth::HYVOR_SESSION_COOKIE_NAME);
+
+        if ($projectId === null || $sessionCookie === null) {
+            throw new AccessDeniedHttpException('Project ID or session is missing.');
+        }
+
+        $project = $this->projectService->getProjectById((int) $projectId);
+
+        if ($project === null) {
+            throw new AccessDeniedHttpException('Invalid project ID.');
+        }
+
+        $user = $this->auth->check((string) $sessionCookie);
+
+        if ($user === false) {
+            throw new AccessDeniedHttpException('Invalid session.');
+        }
+
+        if ($project->getHyvorUserId() !== $user->id) {
+            // to-do: later user scopes are needed
+            throw new AccessDeniedHttpException('You do not have access to this project.');
+        }
+
+        $request->attributes->set(self::RESOLVED_PROJECT_ATTRIBUTE_KEY, $project);
+        $request->attributes->set(self::RESOLVED_USER_ATTRIBUTE_KEY, $user);
+
     }
 
     /**
