@@ -195,16 +195,29 @@ type Attachment = {
 		<div>No action needed.</div>
 	</TableRow>
 	<TableRow>
-		<div>400</div>
-		<div>Bad request.</div>
+		<div>4xx</div>
+		<div>Client/request error.</div>
 		<div>Correct the request and retry with a new idempotency key.</div>
+	</TableRow>
+	<TableRow>
+		<div>429</div>
+		<div>Too Many Requests.</div>
+		<div>
+			Retry after the specified <code>Retry-After</code> header value. If you are using an idempotency
+			key, you can retry with the same key.
+		</div>
+	</TableRow>
+	<TableRow>
+		<div>5xx</div>
+		<div>Server error.</div>
+		<div>Retry the request with the same idempotency key after a short delay.</div>
 	</TableRow>
 </Table>
 
 <p>
 	If the server returns a 5xx status code, idempotency keys are not saved, and retrying the request
-	is recommended. For 4xx status codes, the idempotency key is saved, and retrying the request will
-	not have any effect unless you change the request and use a new idempotency key.
+	is recommended. For 4xx status codes, except 429, the idempotency key is saved, and retrying the
+	request will not have any effect unless you change the request and use a new idempotency key.
 </p>
 
 <!-- <h2 id="rate-limit">Rate Limiting</h2>

@@ -71,7 +71,6 @@ class IdempotencyListener
     public function onResponse(ResponseEvent $event): void
     {
         $request = $event->getRequest();
-
         $idempotencyKey = $request->attributes->get(self::IDEMPOTENCY_KEY_IN_REQUEST);
         if (!is_string($idempotencyKey)) return;
 
@@ -85,6 +84,11 @@ class IdempotencyListener
 
         // Do not save 500 error responses
         if ($response->getStatusCode() >= 500) {
+            return;
+        }
+
+        // If the response is rate limited (429), we do not save it
+        if ($response->getStatusCode() === 429) {
             return;
         }
 

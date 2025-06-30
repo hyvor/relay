@@ -11,6 +11,12 @@ use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\TestWith;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 #[CoversClass(IdempotencyListener::class)]
 #[CoversClass(IdempotencyService::class)]
@@ -104,6 +110,38 @@ class IdempotencyTest extends WebTestCase
             'This endpoint does not support idempotency. Retry without the "X-Idempotency-Key" header.',
             $json["message"]
         );
+    }
+
+    #[TestWith([500])]
+    #[TestWith([429])]
+    #[TestWith([200, true])]
+    public function test_does_not_save_when_response_code_is_wrong(int $statusCode, bool $notJson = false): void
+    {
+
+        /** @var IdempotencyListener $listener */
+        $listener = $this->container->get(IdempotencyListener::class);
+        /** @var KernelInterface $kernel */
+        $kernel = self::$kernel;
+
+        $request = new Request();
+        $request->attributes->set('idempotency_key_in_request', 'somekey');
+
+        $responseEvent = new ResponseEvent(
+            $kernel,
+            $request,
+            0,
+            $notJson ?
+                new Response('', $statusCode) :
+                new JsonResponse([], $statusCode)
+        );
+
+        $listener->onResponse($responseEvent);
+
+        $idempotencyRecords = $this->em
+            ->getRepository(ApiIdempotencyRecord::class)
+            ->findAll();
+        $this->assertCount(0, $idempotencyRecords);
+
     }
 
 }
