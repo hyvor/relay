@@ -241,7 +241,15 @@ class SendEmailTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(200);
 
-        $send = $this->em->getRepository(Send::class)->findAll();
+        $json = $this->getJson();
+        $sendId = $json['id'];
+        $this->assertIsInt($sendId);
+        $messageId = $json['message_id'];
+        $this->assertIsString($messageId);
+
+        $send = $this->em->getRepository(Send::class)->findBy([
+            'id' => $sendId,
+        ]);
         $this->assertCount(1, $send);
 
         $send = $send[0];
@@ -249,6 +257,7 @@ class SendEmailTest extends WebTestCase
         $this->assertSame("Test Email", $send->getSubject());
         $this->assertSame("This is a test email.", $send->getBodyText());
         $this->assertSame("<p>This is a test email.</p>", $send->getBodyHtml());
+        $this->assertSame($messageId, $send->getMessageId());
         $this->assertSame($fromAddress, $send->getFromAddress());
         $this->assertSame($toAddress, $send->getToAddress());
 
@@ -280,8 +289,7 @@ class SendEmailTest extends WebTestCase
         $this->assertStringContainsString("Subject: Test Email\r\n", $rawHeaders);
         $this->assertStringContainsString("MIME-Version: 1.0\r\n", $rawHeaders);
         $this->assertStringContainsString("\r\nDate:", $rawHeaders);
-        $this->assertStringContainsString("\r\nMessage-ID:", $rawHeaders);
-
+        $this->assertStringContainsString("\r\nMessage-ID: <$messageId>", $rawHeaders);
 
         $this->assertStringContainsString("\r\nDKIM-Signature: v=1; q=dns/txt; a=rsa-sha256;\r\n", $rawHeaders);
         // signed from the FROM domain

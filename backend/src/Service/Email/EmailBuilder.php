@@ -24,6 +24,7 @@ class EmailBuilder
 
     /**
      * @param array<string, string> $customHeaders
+     * @return array{raw: string, messageId: string}
      */
     public function build(
         Domain $domain,
@@ -33,7 +34,7 @@ class EmailBuilder
         ?string $bodyHtml,
         ?string $bodyText,
         array $customHeaders
-    ): string
+    ): array
     {
         $email = new Email()
             ->from($from)
@@ -56,6 +57,10 @@ class EmailBuilder
             $email->getHeaders()->addTextHeader($key, $value);
         }
 
+        // add message-id if not set
+        $messageId = $email->generateMessageId();
+        $email->getHeaders()->addIdHeader('Message-ID', $messageId);
+
         // mailer header
         $email->getHeaders()->addTextHeader('X-Mailer', 'Hyvor Relay v' . $this->config->getAppVersion());
 
@@ -76,7 +81,10 @@ class EmailBuilder
             InstanceService::DEFAULT_DKIM_SELECTOR
         );
 
-        return $email->toString();
+        return [
+            'raw' => $email->toString(),
+            'messageId' => $messageId,
+        ];
     }
 
     private function signEmail(

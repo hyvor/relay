@@ -116,6 +116,9 @@ class SendController extends AbstractController
             $sendEmailInput->headers
         );
 
-        return new JsonResponse(new SendObject($send));
+        return new JsonResponse([
+            'id' => $send->getId(),
+            'message_id' => $send->getMessageId(),
+        ]);
     }
 }

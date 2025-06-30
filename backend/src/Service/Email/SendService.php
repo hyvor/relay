@@ -100,7 +100,10 @@ class SendService
     ): Send
     {
 
-        $rawEmail = $this->emailBuilder->build(
+        [
+            'raw' => $rawEmail,
+            'messageId' => $messageId
+        ] = $this->emailBuilder->build(
             $domain,
             $from,
             $to,
@@ -131,6 +134,7 @@ class SendService
             $send->setBodyHtml($bodyHtml);
             $send->setBodyText($bodyText);
             $send->setHeaders($customHeaders);
+            $send->setMessageId($messageId);
             $send->setRaw($rawEmail);
             $this->em->persist($send);
             $this->em->flush();

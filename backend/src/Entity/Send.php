@@ -76,6 +76,9 @@ class Send
     private array $headers = [];
 
     #[ORM\Column(type: "text")]
+    private string $message_id;
+
+    #[ORM\Column(type: "text")]
     private string $raw;
 
     #[ORM\Column(type: "text", nullable: true)]
@@ -297,6 +300,17 @@ class Send
     public function setHeaders(array $headers): static
     {
         $this->headers = $headers;
+        return $this;
+    }
+
+    public function getMessageId(): string
+    {
+        return $this->message_id;
+    }
+
+    public function setMessageId(string $message_id): static
+    {
+        $this->message_id = $message_id;
         return $this;
     }
 
