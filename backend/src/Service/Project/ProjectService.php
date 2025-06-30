@@ -14,6 +14,11 @@ class ProjectService
     ) {
     }
 
+    public function getProjectById(int $id): ?Project
+    {
+        return $this->em->getRepository(Project::class)->find($id);
+    }
+
     public function createProject(
         int $userId,
         string $name

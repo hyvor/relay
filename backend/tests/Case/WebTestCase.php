@@ -29,11 +29,19 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         parent::setUp();
         $this->client = static::createClient();
         $this->container = static::getContainer();
-        AuthFake::enableForSymfony($this->container, ['id' => 1]);
+
+        if ($this->shouldEnableAuthFake()) {
+            AuthFake::enableForSymfony($this->container, ['id' => 1]);
+        }
 
         /** @var EntityManagerInterface $em */
         $em = $this->container->get(EntityManagerInterface::class);
         $this->em = $em;
+    }
+
+    protected function shouldEnableAuthFake(): bool
+    {
+        return true;
     }
 
     /**
