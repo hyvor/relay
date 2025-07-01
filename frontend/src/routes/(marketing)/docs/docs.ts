@@ -2,7 +2,7 @@
 import type { Component } from 'svelte';
 import Introduction from './content/Introduction.svelte';
 import SendEmails from './content/SendEmails.svelte';
-import WebhookEvents from './content/WebhookEvents.svelte';
+import Webhooks from './content/Webhooks.svelte';
 import ConsoleApi from './content/ConsoleApi.svelte';
 
 export const categories: Category[] = [
@@ -18,7 +18,7 @@ export const categories: Category[] = [
 	},
 
 	{
-		name: 'Console API',
+		name: 'Developers',
 		pages: [
 			{
 				slug: 'api-console',
@@ -29,22 +29,11 @@ export const categories: Category[] = [
 				slug: 'send-emails',
 				name: 'Send Emails',
 				component: SendEmails
-			}
-		]
-	},
-
-	{
-		name: 'Webhooks',
-		pages: [
-			{
-				slug: 'webhooks',
-				name: 'Webhooks Intro',
-				component: Introduction
 			},
 			{
-				slug: 'webhooks-events',
-				name: 'Events',
-				component: WebhookEvents
+				slug: 'webhooks',
+				name: 'Webhooks',
+				component: Webhooks
 			}
 		]
 	},
