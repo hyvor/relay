@@ -16,7 +16,6 @@ final class Version20250623164704 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        // Create api_keys table
         $this->addSql(
         <<<SQL
             CREATE TABLE webhooks (

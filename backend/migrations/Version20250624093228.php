@@ -16,13 +16,8 @@ final class Version20250624093228 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql(
-            <<<SQL
-            CREATE TYPE webhook_status AS ENUM ('pending', 'delivered', 'failed');
-        SQL
-        );
+        $this->addSql("CREATE TYPE webhook_delivery_status AS ENUM ('pending', 'delivered', 'failed');");
 
-        // Create api_keys table
         $this->addSql(
         <<<SQL
             CREATE TABLE webhook_deliveries (
@@ -32,7 +27,7 @@ final class Version20250624093228 extends AbstractMigration
                 webhook_id BIGINT NOT NULL references webhooks(id) ON DELETE CASCADE,
                 url VARCHAR(255) NOT NULL,
                 event VARCHAR(255) NOT NULL,
-                status webhook_status NOT NULL DEFAULT 'pending',
+                status webhook_delivery_status NOT NULL DEFAULT 'pending',
                 request_body TEXT NOT NULL,
                 response TEXT NOT NULL
             );
@@ -42,6 +37,6 @@ final class Version20250624093228 extends AbstractMigration
 
     public function down(Schema $schema): void
     {
-        $this->addSql("DROP TABLE webhooks");
+        $this->addSql("DROP TABLE webhook_deliveries");
     }
 }
