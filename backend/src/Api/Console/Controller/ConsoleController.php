@@ -2,6 +2,7 @@
 
 namespace App\Api\Console\Controller;
 
+use App\Api\Console\Authorization\UserLevelEndpoint;
 use App\Api\Console\Object\ProjectObject;
 use App\Entity\Project;
 use App\Service\Project\ProjectService;
@@ -24,6 +25,7 @@ class ConsoleController extends AbstractController
     }
 
     #[Route('/init', methods: 'GET')]
+    #[UserLevelEndpoint]
     public function initConsole(): JsonResponse
     {
         $user = $this->getHyvorUser();
