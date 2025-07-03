@@ -89,8 +89,8 @@ Goodbye.`
 	if _, err := w.Write([]byte(msg)); err != nil {
 		t.Fatalf("Data write failed: %s", err)
 	}
-	if err := w.Close(); err != nil {
-		t.Fatalf("Bad data response: %s", err)
+	if result := w.Close(); result.Err != nil {
+		t.Fatalf("Bad data response: %s", result.Err)
 	}
 
 	if quitResult := c.Quit(); quitResult.Err != nil {
@@ -546,7 +546,7 @@ func TestHello(t *testing.T) {
 			err = helloResult.Err
 		case 1:
 			c.Hello("customhost")
-			startTLSResult := c.StartTLS(nil)
+			startTLSResult, _ := c.StartTLS(nil)
 			if startTLSResult.Err != nil && startTLSResult.Err.Error() == "502 Not implemented" {
 				err = nil
 			} else {
