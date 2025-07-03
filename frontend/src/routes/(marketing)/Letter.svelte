@@ -15,11 +15,6 @@
 
 <style lang="scss">
 	.wrap {
-		margin-top: 5rem;
-		margin-bottom: 9rem;
-		margin-right: 9rem;
-		margin-left: 9rem;
-		padding: 32px 50px 0 50px;
 		font-style: normal;
 		line-height: 32px;
 	}

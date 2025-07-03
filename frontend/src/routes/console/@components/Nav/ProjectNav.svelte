@@ -11,6 +11,7 @@
 	import { selectingProject } from '../../lib/stores/consoleStore';
 	import { projectStore } from '../../lib/stores/projectStore';
 	import IconSlashCircle from '@hyvor/icons/IconSlashCircle';
+	import IconDatabase from '@hyvor/icons/IconDatabase';
 
 	let width: number;
 
@@ -53,13 +54,10 @@
 			</NavItem>
 		</NavLink>
 
-		<NavLink
-			href={'/console/' + $projectStore.id.toString() + '/webhooks'}
-			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/webhooks`)}
-		>
+		<NavLink href="/console/domains" active={page.url.pathname === '/console/domains'}>
 			<NavItem>
-				<IconSend slot="icon" />
-				<span slot="text">Webhooks</span>
+				<IconDatabase slot="icon" />
+				<span slot="text">Domains</span>
 			</NavItem>
 		</NavLink>
 
@@ -69,7 +67,17 @@
 		>
 			<NavItem>
 				<IconKey slot="icon" />
-				<span slot="text">Api</span>
+				<span slot="text">API</span>
+			</NavItem>
+		</NavLink>
+
+		<NavLink
+			href={'/console/' + $projectStore.id.toString() + '/webhooks'}
+			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/webhooks`)}
+		>
+			<NavItem>
+				<IconSend slot="icon" />
+				<span slot="text">Webhooks</span>
 			</NavItem>
 		</NavLink>
 

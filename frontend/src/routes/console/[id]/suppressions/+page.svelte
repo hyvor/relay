@@ -55,7 +55,7 @@
 	async function handleDeleteSuppression(suppression: Suppression) {
 		const confirmed = await confirm({
 			title: 'Remove suppression',
-			content: `Are you sure you want to remove the suppression for "${suppression.email}"? This email address will be able to receive emails again.`,
+			content: `Are you sure you want to remove the suppression for "${suppression.email}"? We advise you to only remove suppressions if you are sure that the email is not a spam trap or a hard bounce.`,
 			confirmText: 'Remove',
 			cancelText: 'Cancel',
 			danger: true

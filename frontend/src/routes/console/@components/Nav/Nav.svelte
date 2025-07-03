@@ -1,13 +1,13 @@
 <script>
-	import AccountNav from "./AccountNav.svelte";
-	import ProjectNav from "./ProjectNav.svelte";
+	import AccountNav from './AccountNav.svelte';
+	import ProjectNav from './ProjectNav.svelte';
 </script>
 
 <div id="nav">
 	<div id="nav-wrap">
-		<div class="account-nav">
+		<!-- <div class="account-nav">
 			<AccountNav />
-		</div>
+		</div> -->
 		<div class="project-nav">
 			<ProjectNav />
 		</div>
