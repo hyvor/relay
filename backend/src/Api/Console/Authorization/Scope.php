@@ -17,5 +17,6 @@ enum Scope: string
     case API_KEYS_READ = 'api_keys.read';
     case API_KEYS_WRITE = 'api_keys.write';
 
-    case SUSPENSIONS_READ = 'suspensions.read';
+    case SUPPRESSIONS_READ = 'suspensions.read';
+    case SUPPRESSIONS_WRITE = 'suspensions.write';
 }

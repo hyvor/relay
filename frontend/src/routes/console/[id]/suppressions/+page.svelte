@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { 
-		TextInput, 
-		IconButton, 
-		toast, 
+	import {
+		TextInput,
+		IconButton,
+		toast,
 		confirm,
 		ActionList,
 		ActionListItem
@@ -33,10 +33,7 @@
 
 	function loadSuppressions() {
 		loading = true;
-		getSuppressions(
-			emailSearch === '' ? null : emailSearch,
-			reason
-		)
+		getSuppressions(emailSearch === '' ? null : emailSearch, reason)
 			.then((suppressionList) => {
 				suppressions = suppressionList;
 			})
@@ -58,7 +55,7 @@
 	async function handleDeleteSuppression(suppression: Suppression) {
 		const confirmed = await confirm({
 			title: 'Remove suppression',
-			content: `Are you sure you want to remove the suppression for "${suppression.email}"? This email address will be able to receive emails again.`,
+			content: `Are you sure you want to remove the suppression for "${suppression.email}"? We advise you to only remove suppressions if you are sure that the email is not a spam trap or a hard bounce.`,
 			confirmText: 'Remove',
 			cancelText: 'Cancel',
 			danger: true
@@ -67,7 +64,7 @@
 		if (confirmed) {
 			deleteSuppression(suppression.id)
 				.then(() => {
-					suppressions = suppressions.filter(s => s.id !== suppression.id);
+					suppressions = suppressions.filter((s) => s.id !== suppression.id);
 					toast.success('Suppression removed');
 				})
 				.catch((error) => {
@@ -109,7 +106,10 @@
 					<ActionListItem on:click={() => selectReason('bounce')} selected={reason === 'bounce'}>
 						Bounce
 					</ActionListItem>
-					<ActionListItem on:click={() => selectReason('complaint')} selected={reason === 'complaint'}>
+					<ActionListItem
+						on:click={() => selectReason('complaint')}
+						selected={reason === 'complaint'}
+					>
 						Complaint
 					</ActionListItem>
 				</ActionList>
@@ -118,7 +118,7 @@
 			<div class="search-wrap">
 				<TextInput
 					bind:value={emailSearchVal}
-					placeholder="Search by email address"
+					placeholder="Search by email"
 					on:keydown={searchActions.onKeydown}
 					on:blur={searchActions.onBlur}
 					size="small"
@@ -145,11 +145,7 @@
 	</div>
 
 	<div class="content">
-		<SuppressionList 
-			{suppressions} 
-			{loading} 
-			onDelete={handleDeleteSuppression} 
-		/>
+		<SuppressionList {suppressions} {loading} onDelete={handleDeleteSuppression} />
 	</div>
 </SingleBox>
 
@@ -178,13 +174,15 @@
 			font-size: 14px;
 			margin-left: 4px;
 		}
-		
+
 		:global(input) {
 			font-size: 14px;
 		}
 	}
 
 	.content {
-		padding: 30px;
+		padding: 15px 30px;
+		flex: 1;
+		overflow: auto;
 	}
 </style>

@@ -36,7 +36,7 @@ class AuthorizationListener
 
         if ($request->headers->has('authorization')) {
             $this->handleAuthorizationHeader($event);
-        } else if ($request->headers->has('x-project-id') && $request->cookies->has(Auth::HYVOR_SESSION_COOKIE_NAME)) {
+        } else if ($request->cookies->has(Auth::HYVOR_SESSION_COOKIE_NAME)) {
             $this->handleSession($event);
         } else {
             throw new AccessDeniedHttpException('Authorization method not supported. Use either Bearer token or a session.');
@@ -78,15 +78,8 @@ class AuthorizationListener
         $request = $event->getRequest();
         $projectId = $request->headers->get('x-project-id');
         $sessionCookie = $request->cookies->get(Auth::HYVOR_SESSION_COOKIE_NAME);
-
-        assert($projectId !== null);
         assert($sessionCookie !== null);
-
-        $project = $this->projectService->getProjectById((int) $projectId);
-
-        if ($project === null) {
-            throw new AccessDeniedHttpException('Invalid project ID.');
-        }
+        $isUserLevelEndpoint = count($event->getAttributes(UserLevelEndpoint::class)) > 0;
 
         $user = $this->auth->check((string) $sessionCookie);
 
@@ -94,12 +87,26 @@ class AuthorizationListener
             throw new AccessDeniedHttpException('Invalid session.');
         }
 
-        if ($project->getHyvorUserId() !== $user->id) {
-            // to-do: later user scopes are needed
-            throw new AccessDeniedHttpException('You do not have access to this project.');
+        // user-level endpoints do not have a project ID
+        if ($isUserLevelEndpoint === false) {
+            if ($projectId === null)  {
+                throw new AccessDeniedHttpException('X-Project-ID is required for this endpoint.');
+            }
+
+            $project = $this->projectService->getProjectById((int) $projectId);
+
+            if ($project === null) {
+                throw new AccessDeniedHttpException('Invalid project ID.');
+            }
+
+            if ($project->getHyvorUserId() !== $user->id) {
+                // to-do: later user scopes are needed
+                throw new AccessDeniedHttpException('You do not have access to this project.');
+            }
+
+            $request->attributes->set(self::RESOLVED_PROJECT_ATTRIBUTE_KEY, $project);
         }
 
-        $request->attributes->set(self::RESOLVED_PROJECT_ATTRIBUTE_KEY, $project);
         $request->attributes->set(self::RESOLVED_USER_ATTRIBUTE_KEY, $user);
 
     }

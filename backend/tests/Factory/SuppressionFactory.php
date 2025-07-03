@@ -30,7 +30,7 @@ final class SuppressionFactory extends PersistentProxyObjectFactory
             'created_at' => new \DateTimeImmutable(),
             'updated_at' => new \DateTimeImmutable(),
             'email' => self::faker()->email(),
-            'reason' => SuppressionReason::BOUNCE,
+            'reason' => self::faker()->randomElement([SuppressionReason::BOUNCE, SuppressionReason::COMPLAINT]),
             'description' => self::faker()->text(255),
         ];
     }
