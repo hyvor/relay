@@ -155,6 +155,7 @@ func (c *Client) ehlo() CommandResult {
 
 // StartTLS sends the STARTTLS command and encrypts all further communication.
 // Only servers that advertise the STARTTLS extension support this function.
+// returns STARTTLS command result and the result of the EHLO command after
 // Verify with: 220 and 250
 func (c *Client) StartTLS(config *tls.Config) (CommandResult, CommandResult) {
 	tlsResult := c.cmd("STARTTLS")
