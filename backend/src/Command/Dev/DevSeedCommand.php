@@ -12,6 +12,7 @@ use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\ServerFactory;
 use App\Tests\Factory\SendFactory;
+use App\Tests\Factory\SuppressionFactory;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -60,8 +61,8 @@ class DevSeedCommand extends Command
             'hyvor_user_id' => 1,
         ]);
 
-        DomainFactory::new()->withDefaultDkim()->create(['project' => $project, 'domain' => 'hyvor.com']);
-        $domain = DomainFactory::new()->withDefaultDkim()->create(['project' => $project, 'domain' => 'hyvor.local.testing']);
+        DomainFactory::createOne(['project' => $project, 'domain' => 'hyvor.com']);
+        $domain = DomainFactory::createOne(['project' => $project, 'domain' => 'hyvor.local.testing']);
 
         $sends_queued = SendFactory::createMany(2, [
             'project' => $project,
@@ -81,6 +82,10 @@ class DevSeedCommand extends Command
             'domain' => $domain,
             'failed_at' => new \DateTimeImmutable(),
             'status' => SendStatus::FAILED,
+        ]);
+
+        SuppressionFactory::createMany(16, [
+            'project' => $project,
         ]);
 
         $output->writeln('<info>Database seeded with test data.</info>');

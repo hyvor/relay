@@ -4,13 +4,13 @@
 	import IconSend from '@hyvor/icons/IconSend';
 	import IconGear from '@hyvor/icons/IconGear';
 	import IconKey from '@hyvor/icons/IconKey';
-    import IconGraphUp from '@hyvor/icons/IconGraphUp';
+	import IconGraphUp from '@hyvor/icons/IconGraphUp';
 	import NavItem from './NavItem.svelte';
 	import { page } from '$app/state';
 	import IconEnvelope from '@hyvor/icons/IconEnvelope';
 	import { selectingProject } from '../../lib/stores/consoleStore';
 	import { projectStore } from '../../lib/stores/projectStore';
-	import IconBan from '@hyvor/icons/IconBan';
+	import IconSlashCircle from '@hyvor/icons/IconSlashCircle';
 
 	let width: number;
 
@@ -18,7 +18,6 @@
 		console.log('triggerProjectSelection');
 		selectingProject.set(true);
 	}
-	
 </script>
 
 <svelte:window bind:innerWidth={width} />
@@ -79,7 +78,7 @@
 			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/suppressions`)}
 		>
 			<NavItem>
-				<IconBan slot="icon" />
+				<IconSlashCircle slot="icon" />
 				<span slot="text">Suppressions</span>
 			</NavItem>
 		</NavLink>
