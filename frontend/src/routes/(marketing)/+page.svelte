@@ -3,6 +3,7 @@
 	import Letter from './Letter.svelte';
 	import IconCode from '@hyvor/icons/IconCode';
 	import IconHouse from '@hyvor/icons/IconHouse';
+	import Features from './Features.svelte';
 </script>
 
 <svelte:head>
@@ -38,7 +39,8 @@
 			<Button as="a" href="/hosting" size="large" color="gray">Self-Host Now</Button>
 		</div>
 	</section>
-	<Letter />
+	<Features />
+	<!-- <Letter /> -->
 </div>
 
 <style>
