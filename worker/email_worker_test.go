@@ -37,7 +37,7 @@ func TestEmailWorkersPoolSet(t *testing.T) {
 
 	var called []int
 	var mu sync.Mutex
-	mockWorker := func(ctx context.Context, id int, wg *sync.WaitGroup, config *DBConfig, ip GoStateIp) {
+	mockWorker := func(ctx context.Context, id int, wg *sync.WaitGroup, config *DBConfig, logger *slog.Logger, ip GoStateIp) {
 		defer wg.Done()
 		mu.Lock()
 		called = append(called, id)
@@ -80,20 +80,5 @@ func TestEmailWorkersPoolStopWorkers(t *testing.T) {
 
 	assert.True(t, canceled)
 	assert.Nil(t, pool.cancelFunc)
-
-}
-
-func TestEmailWorker(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	var buf bytes.Buffer
-	logger := slog.New(slog.NewTextHandler(&buf, nil))
-
-	ip := GoStateIp{
-		Ip:        "1.1.1.1",
-		QueueId:   1,
-		QueueName: "transactional",
-	}
 
 }
