@@ -18,3 +18,10 @@ export function getQueues() {
 		endpoint: '/queues'
 	});
 }
+
+
+export function getLogs() {
+	return sudoApi.get<string[]>({
+		endpoint: '/logs'
+	});
+}

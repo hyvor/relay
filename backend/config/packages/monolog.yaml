@@ -1,14 +1,15 @@
 monolog:
+    handlers:
+        app_database:
+            type: service
+            id: "App\\Service\\Log\\DatabaseAppLogger"
+            channels: app
+        stderr:
+            type: stream
+            path: php://stderr
+            level: error
     channels:
         - deprecation # Deprecations are logged in the dedicated "deprecation" channel when it exists
-
-when@dev:
-    monolog:
-        handlers:
-            main:
-                type: stream
-                path: php://stderr
-                level: error
 
 when@test:
     monolog:
