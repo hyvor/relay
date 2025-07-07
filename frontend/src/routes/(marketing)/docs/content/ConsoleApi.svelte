@@ -68,7 +68,16 @@ Authorization: Bearer <your_api_key>
 		<strong>webhooks.write</strong>
 	</li>
 	<li>
-		<strong>suspensions.read</strong>
+		<strong>api_keys.read</strong>
+	</li>
+	<li>
+		<strong>api_keys.write</strong>
+	</li>
+	<li>
+		<strong>suppressions.write</strong>
+	</li>
+	<li>
+		<strong>suppressions.read</strong>
 	</li>
 </ul>
 

@@ -6,6 +6,9 @@ export interface AppConfig {
 	app: {
 		webhook: {
             'events': string[];
+        },
+        api_keys: {
+            scopes: string[];
         }
 	};
 }
@@ -57,12 +60,10 @@ export interface SmtpStep {
     ReplyText: string;
 }
 
-export type ApiKeyScope = 'send_email' | 'full';
-
 export type ApiKey = {
     id: number;
     name: string;
-    scope: ApiKeyScope;
+    scopes: string[];
     key?: string;
     created_at: number;
     is_enabled: boolean;

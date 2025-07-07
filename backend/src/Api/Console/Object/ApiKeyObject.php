@@ -10,7 +10,8 @@ class ApiKeyObject
 
     public string $name;
 
-    public string $scope;
+    /** @var string[] $scopes */
+    public array $scopes;
 
     public ?string $key;
 
@@ -24,7 +25,7 @@ class ApiKeyObject
     {
         $this->id = $apiKey->getId();
         $this->name = $apiKey->getName();
-        $this->scope = $apiKey->getScope()->value;
+        $this->scopes = $apiKey->getScopes();
         $this->key = $rawKey;
         $this->created_at = $apiKey->getCreatedAt()->getTimestamp();
         $this->is_enabled = $apiKey->getIsEnabled();

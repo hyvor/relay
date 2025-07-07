@@ -2,9 +2,9 @@
 
 namespace App\Tests\Api\Console\ApiKey;
 
+use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\ApiKeyController;
 use App\Api\Console\Object\ApiKeyObject;
-use App\Entity\Type\ApiKeyScope;
 use App\Service\ApiKey\ApiKeyService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ApiKeyFactory;
@@ -13,7 +13,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ApiKeyController::class)]
 #[CoversClass(ApiKeyService::class)]
-#[CoversClass(ApiKeyScope::class)]
+#[CoversClass(Scope::class)]
 #[CoversClass(ApiKeyObject::class)]
 class CreateApiKeyTest extends WebTestCase
 {
@@ -27,7 +27,7 @@ class CreateApiKeyTest extends WebTestCase
             '/api-keys',
             [
                 'name' => 'Test name',
-                'scope' => ApiKeyScope::SEND_EMAIL
+                'scopes' => ['sends.read', 'sends.write', 'sends.send']
             ]
         );
 
@@ -49,7 +49,7 @@ class CreateApiKeyTest extends WebTestCase
             'POST',
             '/api-keys',
             [
-                'scope' => ApiKeyScope::SEND_EMAIL
+                'scopes' => ['sends.read', 'sends.write', 'sends.send']
             ]
         );
 
@@ -73,7 +73,7 @@ class CreateApiKeyTest extends WebTestCase
 
         $this->assertSame(422, $response->getStatusCode());
 
-        $this->assertHasViolation('scope', 'This value should not be blank.');
+        $this->assertHasViolation('scopes', 'This value should not be blank.');
     }
 
     public function test_create_api_key_invalid_scope(): void
@@ -86,13 +86,11 @@ class CreateApiKeyTest extends WebTestCase
             '/api-keys',
             [
                 'name' => 'Test name',
-                'scope' => 'invalid_scope'
+                'scopes' => ['sends.read', 'sends.write', 'invalid_scope']
             ]
         );
-
         $this->assertSame(422, $response->getStatusCode());
-
-        $this->assertHasViolation('scope', 'This value should be of type full|send_email.');
+        $this->assertHasViolation('scopes[2]', 'The value you selected is not a valid choice.');
     }
 
     public function test_create_api_key_reaching_limit(): void
@@ -110,7 +108,7 @@ class CreateApiKeyTest extends WebTestCase
             '/api-keys',
             [
                 'name' => 'Exceeding limit',
-                'scope' => ApiKeyScope::SEND_EMAIL
+                'scopes' => ['sends.read', 'sends.write', 'sends.send']
             ]
         );
 

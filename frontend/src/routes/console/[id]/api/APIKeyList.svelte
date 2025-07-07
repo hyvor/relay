@@ -3,10 +3,14 @@
 	import type { ApiKey } from '../../types';
 	import { IconMessage } from '@hyvor/design/components';
 
-	export let apiKeys: ApiKey[];
-	export let loading: boolean;
-	export let onToggleEnabled: (apiKey: ApiKey) => void;
-	export let onDelete: (apiKey: ApiKey) => void;
+	interface Props {
+		apiKeys: ApiKey[];
+		loading: boolean;
+		onDelete: (apiKey: ApiKey) => void;
+		onEdit: (apiKey: ApiKey) => void;
+	}
+
+	let { apiKeys, loading, onDelete, onEdit }: Props = $props();
 </script>
 
 {#if loading}
@@ -16,7 +20,7 @@
 {:else}
 	<div class="api-keys-list">
 		{#each apiKeys as apiKey (apiKey.id)}
-			<APIKeyRow {apiKey} {onToggleEnabled} {onDelete} />
+			<APIKeyRow {apiKey} {onDelete} {onEdit} />
 		{/each}
 	</div>
 {/if}

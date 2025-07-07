@@ -9,4 +9,11 @@ class UpdateApiKeyDto
     use OptionalPropertyTrait;
 
     public bool $enabled;
+
+    public string $name;
+
+    /**
+     * @var string[] $scopes
+     */
+    public array $scopes;
 }
