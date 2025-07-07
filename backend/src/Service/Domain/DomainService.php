@@ -6,6 +6,7 @@ use App\Entity\Domain;
 use App\Entity\Project;
 use App\Repository\DomainRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Common\Collections\ArrayCollection;
 use Hyvor\Internal\Util\Crypt\Encryption;
 
 class DomainService
@@ -51,6 +52,35 @@ class DomainService
         $this->em->flush();
 
         return $domain;
+    }
+
+    /**
+     * @return ArrayCollection<int, Domain>
+     */
+    public function getProjectDomains(
+        Project $project,
+        ?string $search,
+        int $limit,
+        int $offset
+    ): ArrayCollection {
+        $qb = $this->domainRepository->createQueryBuilder('d');
+
+        $qb
+            ->distinct()
+            ->where('d.project = :project')
+            ->orderBy('d.id', 'DESC')
+            ->setParameter('project', $project)
+            ->setMaxResults($limit)
+            ->setFirstResult($offset);
+
+        if ($search !== null) {
+            $qb->andWhere('d.domain LIKE :search')
+                ->setParameter('search', '%' . $search . '%');
+        }
+
+        /** @var Domain[] $results */
+        $results = $qb->getQuery()->getResult();
+        return new ArrayCollection($results);
     }
 
 }
