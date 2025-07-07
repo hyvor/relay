@@ -144,12 +144,6 @@
 				{/each}
 			</div>
 		</SplitControl>
-
-		{#if selectedScopes.length > 0}
-			<Callout type="info">
-				This API key will have access to: {selectedScopes.join(', ')}
-			</Callout>
-		{/if}
 	</div>
 </Modal>
 
