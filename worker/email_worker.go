@@ -103,7 +103,10 @@ func emailWorker(
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info("Worker stopped by context cancellation", "id", id)
+			logger.Info(
+				"Worker stopped by context cancellation",
+				"id", id,
+			)
 			return
 
 		default:

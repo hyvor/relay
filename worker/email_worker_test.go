@@ -120,7 +120,7 @@ func TestEmailWorker_DatabaseConnectionFailure(t *testing.T) {
 	go emailWorker(ctx, 1, &wg, dbConfig, logger, ip)
 	go func() {
 		defer wg.Done()
-		time.Sleep(50 * time.Millisecond) // Simulate some work
+		time.Sleep(40 * time.Millisecond) // Simulate some work
 		cancel()                          // Cancel the context to stop the worker
 	}()
 	wg.Wait()
