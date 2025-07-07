@@ -2,6 +2,7 @@
 
 namespace App\Api\Console\Input;
 
+use App\Api\Console\Authorization\Scope;
 use App\Entity\Type\ApiKeyScope;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -12,12 +13,20 @@ class CreateApiKeyInput
     public string $name;
 
     /**
-     * @var string[] $scopes
+     * @var string[]
      */
     #[Assert\NotBlank]
+    #[Assert\Type('array')]
     #[Assert\All([
-        new Assert\NotBlank(),
-        new Assert\Type('string'),
+        new Assert\Choice(callback: 'getScopeValues'),
     ])]
     public array $scopes;
+
+    /**
+     * @return string[]
+     */
+    public static function getScopeValues(): array
+    {
+        return array_column(Scope::cases(), 'value');
+    }
 }

@@ -89,9 +89,8 @@ class CreateApiKeyTest extends WebTestCase
                 'scopes' => ['sends.read', 'sends.write', 'invalid_scope']
             ]
         );
-        $content = $this->getJson();
-        $this->assertSame(400, $response->getStatusCode());
-        $this->assertSame('Invalid scope: invalid_scope', $content['message']);
+        $this->assertSame(422, $response->getStatusCode());
+        $this->assertHasViolation('scopes[2]', 'The value you selected is not a valid choice.');
     }
 
     public function test_create_api_key_reaching_limit(): void

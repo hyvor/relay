@@ -14,7 +14,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ApiKeyController::class)]
 #[CoversClass(ApiKeyService::class)]
-#[CoversClass(ApiKeyScope::class)]
 #[CoversClass(ApiKeyObject::class)]
 class UpdateApiKeyTest extends WebTestCase
 {
@@ -26,6 +25,7 @@ class UpdateApiKeyTest extends WebTestCase
             [
                 'project' => $project,
                 'is_enabled' => true,
+
             ]
         );
 

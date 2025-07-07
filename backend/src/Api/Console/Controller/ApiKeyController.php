@@ -5,6 +5,7 @@ namespace App\Api\Console\Controller;
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Authorization\ScopeRequired;
 use App\Api\Console\Input\CreateApiKeyInput;
+use App\Api\Console\Input\UpdateApiKeyInput;
 use App\Api\Console\Object\ApiKeyObject;
 use App\Entity\ApiKey;
 use App\Entity\Project;
@@ -33,12 +34,6 @@ class ApiKeyController extends AbstractController
             throw new BadRequestHttpException("You have reached the maximum number of API keys for this project.");
         }
 
-        foreach ($input->scopes as $scope) {
-            if (!Scope::tryFrom($scope)) {
-                throw new BadRequestHttpException("Invalid scope: $scope");
-            }
-        }
-
         $creation = $this->apiKeyService->createApiKey($project, $input->name, $input->scopes);
 
         return $this->json(new ApiKeyObject($creation['apiKey'], $creation['rawKey']));
@@ -56,10 +51,11 @@ class ApiKeyController extends AbstractController
 
     #[Route('/api-keys/{id}', methods: 'PATCH')]
     #[ScopeRequired(Scope::API_KEYS_WRITE)]
-    public function updateApiKey(#[MapRequestPayload] UpdateApiKeyDto $input, ApiKey $apiKey): JsonResponse
+    public function updateApiKey(#[MapRequestPayload] UpdateApiKeyInput $input, ApiKey $apiKey): JsonResponse
     {
         $updates = new UpdateApiKeyDto();
         $updates->enabled = $input->enabled;
+        $updates->scopes = $input->scopes;
 
         $updatedApiKey = $this->apiKeyService->updateApiKey($apiKey, $updates);
 
