@@ -61,3 +61,39 @@ func TestEmailWorkersPoolSet(t *testing.T) {
 	assert.Equal(t, 2, len(called))
 
 }
+
+func TestEmailWorkersPoolStopWorkers(t *testing.T) {
+
+	canceled := false
+	cancelFunc := func() {
+		canceled = true
+	}
+
+	pool := &EmailWorkersPool{
+		ctx:        context.Background(),
+		cancelFunc: cancelFunc,
+	}
+
+	pool.StopWorkers()
+
+	time.Sleep(10 * time.Millisecond)
+
+	assert.True(t, canceled)
+	assert.Nil(t, pool.cancelFunc)
+
+}
+
+func TestEmailWorker(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, nil))
+
+	ip := GoStateIp{
+		Ip:        "1.1.1.1",
+		QueueId:   1,
+		QueueName: "transactional",
+	}
+
+}
