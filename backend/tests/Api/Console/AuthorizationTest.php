@@ -108,6 +108,19 @@ class AuthorizationTest extends WebTestCase
         $this->assertSame("Invalid session.", $this->getJson()["message"]);
     }
 
+    public function test_fails_when_xprojectid_header_is_not_set(): void
+    {
+        AuthFake::enableForSymfony($this->container, ['id' => 1]);
+
+        $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
+        $this->client->request(
+            "GET",
+            "/api/console/sends",
+        );
+        $this->assertResponseStatusCodeSame(403);
+        $this->assertSame("X-Project-ID is required for this endpoint.", $this->getJson()["message"]);
+    }
+
     public function test_user_not_authorized_for_project(): void
     {
         AuthFake::enableForSymfony($this->container, ['id' => 1]);
@@ -192,6 +205,23 @@ class AuthorizationTest extends WebTestCase
         $userFromAttr = $this->client->getRequest()->attributes->get('console_api_resolved_user');
         $this->assertInstanceOf(AuthUser::class, $userFromAttr);
         $this->assertSame(1, $userFromAttr->id);
+    }
+
+    public function test_user_level_endpoint_works(): void
+    {
+        AuthFake::enableForSymfony($this->container, ['id' => 1]);
+
+        $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
+        $this->client->request(
+            "GET",
+            "/api/console/init",
+        );
+        $this->assertResponseStatusCodeSame(200);
+
+        $json = $this->getJson();
+        $this->assertArrayHasKey('projects', $json);
+        $this->assertArrayHasKey('config', $json);
+
     }
 
 }

@@ -8,7 +8,7 @@
 	let { children }: Props = $props();
 </script>
 
-<Header />
+<Header logo="https://hyvor.com/api/public/logo/core.svg" subName="Relay" />
 
 {@render children?.()}
 

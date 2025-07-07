@@ -2,6 +2,8 @@
 
 namespace App\Api\Console\Controller;
 
+use App\Api\Console\Authorization\Scope;
+use App\Api\Console\Authorization\ScopeRequired;
 use App\Api\Console\Object\SuppressionObject;
 use App\Entity\Project;
 use App\Entity\Suppression;
@@ -20,6 +22,7 @@ class SuppressionController extends AbstractController
     }
 
     #[Route('/suppressions', methods: 'GET')]
+    #[ScopeRequired(Scope::SUPPRESSIONS_READ)]
     public function getSuppressions(Request $request, Project $project): JsonResponse
     {
         $emailSearch = null;
@@ -42,6 +45,7 @@ class SuppressionController extends AbstractController
     }
 
     #[Route('/suppressions/{id}', methods: 'DELETE')]
+    #[ScopeRequired(Scope::SUPPRESSIONS_WRITE)]
     public function deleteSuppression(Suppression $suppression): JsonResponse
     {
         $this->suppressionService->deleteSuppression($suppression);

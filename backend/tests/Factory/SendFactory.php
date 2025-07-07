@@ -41,6 +41,7 @@ final class SendFactory extends PersistentProxyObjectFactory
             "body_html" => self::faker()->optional(0.8)->randomHtml(),
             "body_text" => self::faker()->optional(0.7)->text(500),
             "raw" => self::faker()->text(1000),
+            'message_id' => self::faker()->uuid(),
             "created_at" => \DateTimeImmutable::createFromMutable(
                 self::faker()->dateTime()
             ),

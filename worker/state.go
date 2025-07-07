@@ -86,9 +86,11 @@ func (s *ServiceState) doInitialize() error {
 }
 
 func NewServiceState(ctx context.Context) *ServiceState {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
 	return &ServiceState{
 		ctx:              ctx,
-		Logger:           slog.New(slog.NewTextHandler(os.Stdout, nil)),
-		EmailWorkersPool: NewEmailWorkersPool(ctx),
+		Logger:           logger,
+		EmailWorkersPool: NewEmailWorkersPool(ctx, logger),
 	}
 }
