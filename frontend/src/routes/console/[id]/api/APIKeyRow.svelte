@@ -32,7 +32,7 @@
 		<div class="api-key-header">
 			{apiKey.name}
 			<div class="api-key-badges">
-				<Tag color={apiKey.is_enabled ? 'green' : 'red'}>
+				<Tag size="small" color={apiKey.is_enabled ? 'green' : 'red'}>
 					{apiKey.is_enabled ? 'Enabled' : 'Disabled'}
 				</Tag>
 				<div class="scopes-tags">
@@ -66,6 +66,7 @@
 	<div class="api-key-actions">
 		<IconButton
 			variant="fill-light"
+			color="input"
 			size="small"
 			on:click={() => onEdit(apiKey)}
 		>
