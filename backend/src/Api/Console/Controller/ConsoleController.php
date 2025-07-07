@@ -8,6 +8,7 @@ use App\Entity\Project;
 use App\Service\Project\ProjectService;
 use Hyvor\Internal\Bundle\Security\HasHyvorUser;
 use Hyvor\Internal\InternalConfig;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,6 +21,7 @@ class ConsoleController extends AbstractController
     public function __construct(
         private ProjectService $projectService,
         private InternalConfig $internalConfig,
+        private LoggerInterface $logger
     )
     {
     }
@@ -28,6 +30,7 @@ class ConsoleController extends AbstractController
     #[UserLevelEndpoint]
     public function initConsole(): JsonResponse
     {
+        $this->logger->info("TESTING");
         $user = $this->getHyvorUser();
 
         $projectUsers = $this->projectService->getUsersProject($user->id);
