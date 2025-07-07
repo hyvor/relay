@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, IconButton, Tag } from '@hyvor/design/components';
+	import { Button, IconButton, Tag, Tooltip } from '@hyvor/design/components';
 	import IconTrash from '@hyvor/icons/IconTrash';
 	import RelativeTime from '../../@components/content/RelativeTime.svelte';
 	import type { ApiKey } from '../../types';
@@ -8,6 +8,17 @@
 	export let onToggleEnabled: (apiKey: ApiKey) => void;
 	export let onDelete: (apiKey: ApiKey) => void;
 
+	function getDisplayScopes(scopes: string[]): { visible: string[], remaining: string[] } {
+		if (scopes.length <= 2) {
+			return { visible: scopes, remaining: [] };
+		}
+		return {
+			visible: scopes.slice(0, 2),
+			remaining: scopes.slice(2)
+		};
+	}
+
+	$: displayScopes = getDisplayScopes(apiKey.scopes);
 
 </script>
 
@@ -20,11 +31,20 @@
 					{apiKey.is_enabled ? 'Enabled' : 'Disabled'}
 				</Tag>
 				<div class="scopes-tags">
-					{#each apiKey.scopes as scope}
-						<Tag size="small">
-							{scope}
-						</Tag>
-					{/each}
+					{#if apiKey.scopes.length === 0}
+						<Tag size="small" variant="gray">No scopes</Tag>
+					{:else}
+						{#each displayScopes.visible as scope}
+							<Tag size="small">
+								{scope}
+							</Tag>
+						{/each}
+						{#if displayScopes.remaining.length > 0}
+							<Tooltip text={displayScopes.remaining.join(', ')}>
+								<Tag size="small">+{displayScopes.remaining.length} more</Tag>
+							</Tooltip>
+						{/if}
+					{/if}
 				</div>
 	
 			</div>
