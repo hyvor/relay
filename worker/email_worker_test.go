@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"context"
+	"database/sql"
+	"errors"
 	"log/slog"
 	"sync"
 	"testing"
@@ -37,7 +39,7 @@ func TestEmailWorkersPoolSet(t *testing.T) {
 
 	var called []int
 	var mu sync.Mutex
-	mockWorker := func(ctx context.Context, id int, wg *sync.WaitGroup, config *DBConfig, ip GoStateIp) {
+	mockWorker := func(ctx context.Context, id int, wg *sync.WaitGroup, config *DBConfig, logger *slog.Logger, ip GoStateIp) {
 		defer wg.Done()
 		mu.Lock()
 		called = append(called, id)
@@ -83,17 +85,46 @@ func TestEmailWorkersPoolStopWorkers(t *testing.T) {
 
 }
 
-func TestEmailWorker(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+// worker testing
 
+func TestEmailWorker_DatabaseConnectionFailure(t *testing.T) {
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	var wg sync.WaitGroup
 	var buf bytes.Buffer
 	logger := slog.New(slog.NewTextHandler(&buf, nil))
+
+	dbConfig := &DBConfig{
+		Host:     "localhost",
+		Port:     "5432",
+		User:     "test",
+		Password: "test",
+		DBName:   "test",
+		SSLMode:  "disable",
+	}
 
 	ip := GoStateIp{
 		Ip:        "1.1.1.1",
 		QueueId:   1,
-		QueueName: "transactional",
+		QueueName: "test",
 	}
 
+	originalNewDbConn := NewDbConn
+	NewDbConn = func(config *DBConfig) (*sql.DB, error) {
+		return nil, errors.New("connection failed")
+	}
+	defer func() { NewDbConn = originalNewDbConn }()
+
+	wg.Add(2)
+	go emailWorker(ctx, 1, &wg, dbConfig, logger, ip)
+	go func() {
+		defer wg.Done()
+		time.Sleep(40 * time.Millisecond) // Simulate some work
+		cancel()                          // Cancel the context to stop the worker
+	}()
+	wg.Wait()
+
+	assert.Contains(t, buf.String(), "Failed to connect to database, retrying")
+	assert.Contains(t, buf.String(), "connection failed")
 }
