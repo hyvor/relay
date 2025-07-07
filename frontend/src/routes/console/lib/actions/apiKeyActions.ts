@@ -7,12 +7,12 @@ export function getApiKeys() {
 	});
 }
 
-export function createApiKey(name: string, scope: string) {
+export function createApiKey(name: string, scopes: string[]) {
 	return consoleApi.post<ApiKey>({
 		endpoint: 'api-keys',
 		data: {
 			name,
-			scope
+			scopes
 		}
 	});
 }

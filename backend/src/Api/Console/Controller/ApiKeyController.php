@@ -33,7 +33,13 @@ class ApiKeyController extends AbstractController
             throw new BadRequestHttpException("You have reached the maximum number of API keys for this project.");
         }
 
-        $creation = $this->apiKeyService->createApiKey($project, $input->name, $input->scope);
+        foreach ($input->scopes as $scope) {
+            if (!Scope::tryFrom($scope)) {
+                throw new BadRequestHttpException("Invalid scope: $scope");
+            }
+        }
+
+        $creation = $this->apiKeyService->createApiKey($project, $input->name, $input->scopes);
 
         return $this->json(new ApiKeyObject($creation['apiKey'], $creation['rawKey']));
     }

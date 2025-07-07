@@ -23,16 +23,17 @@ class ApiKeyService
     }
 
     /*
+     * @param string[] $scopes
      * @return array{ apiKey: ApiKey, rawKey: string }
      */
-    public function createApiKey(Project $project, string $name, ApiKeyScope $scope): array
+    public function createApiKey(Project $project, string $name, array $scopes): array
     {
         $key = bin2hex(random_bytes(16));
         $apiKey = new ApiKey();
         $apiKey->setProject($project)
             ->setName($name)
-            ->setScope($scope)
-            ->setKey(hash('sha256', $key)) // Store the hashed key
+            ->setScopes($scopes)
+            ->setKeyHashed(hash('sha256', $key)) // Store the hashed key
             ->setIsEnabled(true)
             ->setCreatedAt($this->now())
             ->setLastAccessedAt(null)

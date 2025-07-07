@@ -12,6 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Entity\Type\WebhooksEventEnum;
+use App\Api\Console\Authorization\Scope;
 
 class ConsoleController extends AbstractController
 {
@@ -48,6 +49,9 @@ class ConsoleController extends AbstractController
                             fn($event) => $event->value, WebhooksEventEnum::cases()
                         ),
                     ],
+                    'api_keys' => [
+                        'scopes' => array_map(fn($scope) => $scope->value, Scope::cases()),
+                    ]
                 ],
             ],
         ]);

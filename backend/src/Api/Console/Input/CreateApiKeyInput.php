@@ -11,6 +11,13 @@ class CreateApiKeyInput
     #[Assert\Length(max: 255)]
     public string $name;
 
+    /**
+     * @var string[] $scopes
+     */
     #[Assert\NotBlank]
-    public ApiKeyScope $scope;
+    #[Assert\All([
+        new Assert\NotBlank(),
+        new Assert\Type('string'),
+    ])]
+    public array $scopes;
 }

@@ -7,12 +7,13 @@
 		ActionList,
 		ActionListItem,
 		toast,
-		Radio,
+		Checkbox,
 		InputGroup,
 		Callout
 	} from '@hyvor/design/components';
 	import { createApiKey } from '../../lib/actions/apiKeyActions';
-	import type { ApiKey, ApiKeyScope } from '../../types';
+	import type { ApiKey } from '../../types';
+	import { getAppConfig } from '../../lib/stores/consoleStore';
 
 	interface Props {
 		show: boolean;
@@ -22,18 +23,23 @@
 	let { show = $bindable(), onApiKeyCreated = () => {} }: Props = $props();
 
 	let name = $state('');
-	let scope = $state<ApiKeyScope>('send_email');
+	let selectedScopes = $state<string[]>(['sends.send']);
 	let loading = $state(false);
 	let errors = $state<Record<string, string>>({});
 
-	const scopes: Array<{ value: ApiKeyScope; label: string }> = [
-		{ value: 'send_email', label: 'Send Email' },
-		{ value: 'full', label: 'Full Access' }
-	];
+	const appConfig = getAppConfig();
+	const scopes = appConfig.app?.api_keys?.scopes || [];
+
+	function getScopeDescription(scope: string): string | null {
+		const descriptionMap: Record<string, string> = {
+			'sends.send': 'for sending emails'
+		};
+		return descriptionMap[scope] || null;
+	}
 
 	function resetForm() {
 		name = '';
-		scope = 'send_email';
+		selectedScopes = ['sends.send'];
 		errors = {};
 	}
 
@@ -46,8 +52,8 @@
 			errors.name = 'Name must be less than 255 characters';
 		}
 
-		if (!scope) {
-			errors.scope = 'Scope is required';
+		if (selectedScopes.length === 0) {
+			errors.scopes = 'At least one scope is required';
 		}
 
 		return Object.keys(errors).length === 0;
@@ -59,7 +65,7 @@
 		}
 
 		loading = true;
-		createApiKey(name.trim(), scope)
+		createApiKey(name.trim(), selectedScopes)
 			.then((apiKey) => {
 				onApiKeyCreated(apiKey);
 				show = false;
@@ -78,6 +84,14 @@
 	function handleClose() {
 		show = false;
 		resetForm();
+	}
+
+	function handleScopeToggle(scopeValue: string) {
+		if (selectedScopes.includes(scopeValue)) {
+			selectedScopes = selectedScopes.filter(s => s !== scopeValue);
+		} else {
+			selectedScopes = [...selectedScopes, scopeValue];
+		}
 	}
 </script>
 
@@ -107,30 +121,67 @@
 		</SplitControl>
 
 		<SplitControl
-			label="Scope"
-			caption="Define what actions this API key can perform"
-			error={errors.scope}
+			label="Scopes"
+			caption="Select what actions this API key can perform"
+			error={errors.scopes}
 		>
-			<InputGroup>
-				{#each scopes as scopeOption}
-					<Radio name="scope" value={scopeOption.value} bind:group={scope} disabled={loading}>
-						{scopeOption.label}
-					</Radio>
+			<div class="scopes-container">
+				{#each scopes as scope}
+					<div class="scope-item">
+						<Checkbox
+							checked={selectedScopes.includes(scope)}
+							disabled={loading}
+							on:change={() => handleScopeToggle(scope)}
+						>
+							<div class="scope-content">
+								<span class="scope-name">{scope}</span>
+								{#if getScopeDescription(scope)}
+									<span class="scope-description">{getScopeDescription(scope)}</span>
+								{/if}
+							</div>
+						</Checkbox>
+					</div>
 				{/each}
-			</InputGroup>
+			</div>
 		</SplitControl>
-		<Callout type="info">
-			{#if scope === 'send_email'}
-				This API key can only be used to send emails.
-			{:else if scope === 'full'}
-				This API key has full access to all project resources.
-			{/if}
-		</Callout>
+
+		{#if selectedScopes.length > 0}
+			<Callout type="info">
+				This API key will have access to: {selectedScopes.join(', ')}
+			</Callout>
+		{/if}
 	</div>
 </Modal>
 
 <style>
 	.modal-content {
 		padding: 20px 0;
+	}
+
+	.scopes-container {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.scope-item {
+		display: flex;
+		align-items: center;
+	}
+
+	.scope-content {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.scope-name {
+		font-weight: 500;
+	}
+
+	.scope-description {
+		font-size: 12px;
+		color: var(--text-light);
 	}
 </style>

@@ -6,8 +6,8 @@
 		SplitControl,
 		toast,
 		confirm,
-		Callout,
-		IconButton
+		IconButton,
+		Tag
 	} from '@hyvor/design/components';
 	import IconPlus from '@hyvor/icons/IconPlus';
 	import IconCopy from '@hyvor/icons/IconCopy';
@@ -24,11 +24,6 @@
 	let showCreateModal = $state(false);
 	let showApiKeyModal = $state(false);
 	let newApiKey: ApiKey | null = $state(null);
-
-	const scopes = [
-		{ value: 'send_email', label: 'Send Email' },
-		{ value: 'full', label: 'Full Access' }
-	];
 
 	onMount(() => {
 		loadApiKeys();
@@ -91,10 +86,6 @@
 				});
 		}
 	}
-
-	function getScopeLabel(scope: string) {
-		return scopes.find((s) => s.value === scope)?.label || scope;
-	}
 </script>
 
 <SingleBox>
@@ -154,8 +145,14 @@
 				<span>{newApiKey.name}</span>
 			</SplitControl>
 
-			<SplitControl label="Scope">
-				<span>{getScopeLabel(newApiKey.scope)}</span>
+			<SplitControl label="Scopes">
+				<div class="scopes-display">
+					{#each newApiKey.scopes as scope}
+						<Tag size="small">
+							{scope}
+						</Tag>
+					{/each}
+				</div>
 			</SplitControl>
 		</div>
 	</Modal>
@@ -191,20 +188,9 @@
 		align-items: flex-end;
 	}
 
-	.api-key-details {
-		padding: 16px;
-		background: var(--bg-light);
-		border-radius: 6px;
-		border: 1px solid var(--border);
-		margin-top: 20px;
-	}
-
-	.api-key-details p {
-		margin: 0 0 8px 0;
-		font-size: 14px;
-	}
-
-	.api-key-details p:last-child {
-		margin-bottom: 0;
+	.scopes-display {
+		display: flex;
+		gap: 8px;
+		flex-wrap: wrap;
 	}
 </style>

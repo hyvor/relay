@@ -8,14 +8,7 @@
 	export let onToggleEnabled: (apiKey: ApiKey) => void;
 	export let onDelete: (apiKey: ApiKey) => void;
 
-	const scopes = [
-		{ value: 'send_email', label: 'Send Email' },
-		{ value: 'full', label: 'Full Access' }
-	];
 
-	function getScopeLabel(scope: string) {
-		return scopes.find(s => s.value === scope)?.label || scope;
-	}
 </script>
 
 <div class="api-key-item">
@@ -23,12 +16,17 @@
 		<div class="api-key-header">
 			<h3>{apiKey.name}</h3>
 			<div class="api-key-badges">
-				<Tag>
-					{getScopeLabel(apiKey.scope)}
-				</Tag>
 				<Tag color={apiKey.is_enabled ? 'green' : 'red'}>
 					{apiKey.is_enabled ? 'Enabled' : 'Disabled'}
 				</Tag>
+				<div class="scopes-tags">
+					{#each apiKey.scopes as scope}
+						<Tag size="small">
+							{scope}
+						</Tag>
+					{/each}
+				</div>
+	
 			</div>
 		</div>
 		<div class="api-key-meta">
@@ -89,6 +87,13 @@
 	.api-key-badges {
 		display: flex;
 		gap: 8px;
+		align-items: center;
+	}
+
+	.scopes-tags {
+		display: flex;
+		gap: 4px;
+		flex-wrap: wrap;
 	}
 
 	.api-key-meta {
