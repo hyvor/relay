@@ -2,6 +2,7 @@
 
 namespace App\Tests\Api\Console\ApiKey;
 
+use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\ApiKeyController;
 use App\Api\Console\Object\ApiKeyObject;
 use App\Entity\ApiKey;
@@ -35,6 +36,7 @@ class UpdateApiKeyTest extends WebTestCase
             '/api-keys/' . $apiKey->getId(),
             [
                 'enabled' => false,
+                'scopes' => ['sends.read', 'sends.write', 'webhooks.read']
             ]
         );
 
@@ -44,9 +46,16 @@ class UpdateApiKeyTest extends WebTestCase
         $this->assertArrayHasKey('is_enabled', $content);
         $this->assertFalse($content['is_enabled']);
         $this->assertNull($content['key']);
+        $this->assertArrayHasKey('scopes', $content);
+        $this->assertIsArray($content['scopes']);
+        $this->assertCount(3, $content['scopes']);
 
         $apiKeyDb = $this->em->getRepository(ApiKey::class)->find($apiKey->getId());
         $this->assertNotNull($apiKeyDb);
         $this->assertFalse($apiKeyDb->getIsEnabled());
+        $this->assertCount(3, $apiKeyDb->getScopes());
+        $this->assertContains('sends.read', $apiKeyDb->getScopes());
+        $this->assertContains('sends.write', $apiKeyDb->getScopes());
+        $this->assertContains('webhooks.read', $apiKeyDb->getScopes());
     }
 }
