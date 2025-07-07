@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"os"
 	"sync"
 	"time"
@@ -13,67 +14,67 @@ type EmailWorkersPool struct {
 	mu         sync.Mutex
 	wg         sync.WaitGroup
 	cancelFunc context.CancelFunc
+	workerFunc func(ctx context.Context, id int, wg *sync.WaitGroup, config *DBConfig, ip GoStateIp)
 }
 
 func NewEmailWorkersPool(
 	ctx context.Context,
+	logger *slog.Logger,
 ) *EmailWorkersPool {
 	pool := &EmailWorkersPool{
-		ctx: ctx,
+		ctx:        ctx,
+		workerFunc: emailWorker,
 	}
 
 	go func() {
 		<-ctx.Done()
+		logger.Info("Stopping email workers pool")
 		pool.StopWorkers()
-		log.Println("Email workers pool stopped")
 	}()
 
 	return pool
 }
 
 // Starts or restarts the email workers state.
-func (s *EmailWorkersPool) Set(
+func (pool *EmailWorkersPool) Set(
 	ips []GoStateIp,
 	workersPerIp int,
 ) {
 
-	s.StopWorkers()
+	pool.StopWorkers()
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	pool.mu.Lock()
+	defer pool.mu.Unlock()
 
-	ctx, cancel := context.WithCancel(s.ctx)
-	s.cancelFunc = cancel
+	ctx, cancel := context.WithCancel(pool.ctx)
+	pool.cancelFunc = cancel
 
 	log.Printf("Starting %d email workers for %d IPs\n", len(ips)*workersPerIp, len(ips))
 
 	for i, ip := range ips {
-		s.wg.Add(1)
-		go emailWorker(
+		pool.wg.Add(1)
+		go pool.workerFunc(
 			ctx,
 			i,
-			&s.wg,
+			&pool.wg,
 			LoadDBConfig(),
-			ip.Ip,
-			ip.Ptr,
-			ip.QueueId,
-			ip.QueueName,
+			ip,
 		)
 	}
 
 }
 
-func (s *EmailWorkersPool) StopWorkers() {
+func (pool *EmailWorkersPool) StopWorkers() {
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	pool.mu.Lock()
+	defer pool.mu.Unlock()
 
-	if s.cancelFunc != nil {
-		s.cancelFunc()
-		s.cancelFunc = nil
+	if pool.cancelFunc != nil {
+		pool.cancelFunc()
+		pool.cancelFunc = nil
 	}
 
-	s.wg.Wait()
+	pool.wg.Wait()
 
 }
 
@@ -82,11 +83,7 @@ func emailWorker(
 	id int,
 	wg *sync.WaitGroup,
 	dbConfig *DBConfig,
-
-	ip string,
-	ptr string,
-	queueId int,
-	queueName string,
+	ip GoStateIp,
 ) {
 	defer wg.Done()
 
@@ -117,7 +114,7 @@ func emailWorker(
 				continue
 			}
 
-			sends, err := batch.FetchSends(queueId)
+			sends, err := batch.FetchSends(ip.QueueId)
 
 			if err != nil {
 				log.Printf("Worker %d failed to get send IDs: %v\n", id, err)
@@ -129,7 +126,11 @@ func emailWorker(
 			for _, send := range sends {
 				log.Printf("Worker %d processing send ID %d from %s to %s\n", id, send.Id, send.From, send.To)
 
-				result := sendEmail(&send, os.Stdout)
+				result := sendEmail(
+					&send,
+					ip,
+					os.Stdout,
+				)
 
 				err := batch.FinalizeSendBySendResult(&send, result)
 

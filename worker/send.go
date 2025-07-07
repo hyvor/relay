@@ -107,6 +107,7 @@ type SendResult struct {
 
 func sendEmail(
 	send *DbSend,
+	ip GoStateIp,
 	logger io.Writer,
 ) *SendResult {
 
