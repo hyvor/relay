@@ -83,4 +83,9 @@ class DomainService
         return new ArrayCollection($results);
     }
 
+    public function deleteDomain(Domain $domain): void
+    {
+        $this->em->remove($domain);
+        $this->em->flush();
+    }
 }

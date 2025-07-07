@@ -66,4 +66,12 @@ class DomainController extends AbstractController
 
     }
 
+    #[Route('/domains/{id}', methods: 'DELETE')]
+    #[ScopeRequired(Scope::DOMAINS_WRITE)]
+    public function deleteDomain(Domain $domain): JsonResponse
+    {
+        $this->domainService->deleteDomain($domain);
+        return new JsonResponse([]);
+    }
+
 }
