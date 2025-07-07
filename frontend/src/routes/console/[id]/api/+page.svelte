@@ -12,7 +12,7 @@
 	import IconPlus from '@hyvor/icons/IconPlus';
 	import IconCopy from '@hyvor/icons/IconCopy';
 	import SingleBox from '../../@components/content/SingleBox.svelte';
-	import CreateApiKeyModal from './CreateApiKeyModal.svelte';
+	import CreateApiKeyModal from './ApiKeyModal.svelte';
 	import APIKeyList from './APIKeyList.svelte';
 	import type { ApiKey } from '../../types';
 	import { getApiKeys, updateApiKey, deleteApiKey } from '../../lib/actions/apiKeyActions';
@@ -24,6 +24,7 @@
 	let showCreateModal = $state(false);
 	let showApiKeyModal = $state(false);
 	let newApiKey: ApiKey | null = $state(null);
+	let editingApiKey: ApiKey | null = $state(null);
 
 	onMount(() => {
 		loadApiKeys();
@@ -50,19 +51,14 @@
 		loadApiKeys();
 	}
 
-	function handleToggleEnabled(apiKey: ApiKey) {
-		const newEnabledState = !apiKey.is_enabled;
-		updateApiKey(apiKey.id, newEnabledState)
-			.then(() => {
-				apiKeys = apiKeys.map((key) =>
-					key.id === apiKey.id ? { ...key, is_enabled: newEnabledState } : key
-				);
-				toast.success(`API key ${apiKey.is_enabled ? 'disabled' : 'enabled'}`);
-			})
-			.catch((error) => {
-				console.error('Failed to update API key:', error);
-				toast.error('Failed to update API key');
-			});
+	function handleApiKeyUpdated(apiKey: ApiKey) {
+		editingApiKey = null;
+		loadApiKeys();
+	}
+
+	function handleEditApiKey(apiKey: ApiKey) {
+		editingApiKey = apiKey;
+		showCreateModal = true;
 	}
 
 	async function handleDeleteApiKey(apiKey: ApiKey) {
@@ -86,6 +82,13 @@
 				});
 		}
 	}
+
+	// Watch for modal close to reset editing state
+	$effect(() => {
+		if (!showCreateModal) {
+			editingApiKey = null;
+		}
+	});
 </script>
 
 <SingleBox>
@@ -100,13 +103,18 @@
 		<APIKeyList
 			{apiKeys}
 			{loading}
-			onToggleEnabled={handleToggleEnabled}
 			onDelete={handleDeleteApiKey}
+			onEdit={handleEditApiKey}
 		/>
 	</div>
 </SingleBox>
 
-<CreateApiKeyModal bind:show={showCreateModal} onApiKeyCreated={handleApiKeyCreated} />
+<CreateApiKeyModal 
+	bind:show={showCreateModal} 
+	{editingApiKey}
+	onApiKeyCreated={handleApiKeyCreated}
+	onApiKeyUpdated={handleApiKeyUpdated}
+/>
 
 <!-- Show New API Key Modal -->
 {#if showApiKeyModal && newApiKey}

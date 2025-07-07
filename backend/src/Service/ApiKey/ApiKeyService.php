@@ -57,6 +57,10 @@ class ApiKeyService
             $apiKey->setScopes($updates->scopes);
         }
 
+        if ($updates->hasProperty('name')) {
+            $apiKey->setName($updates->name);
+        }
+
         $apiKey->setUpdatedAt($this->now());
 
         $this->em->persist($apiKey);

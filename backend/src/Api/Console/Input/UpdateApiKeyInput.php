@@ -10,6 +10,9 @@ class UpdateApiKeyInput
 {
     use OptionalPropertyTrait;
 
+    #[Assert\Length(max: 255)]
+    public string $name;
+
     public bool $enabled;
 
     /**

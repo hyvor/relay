@@ -10,6 +10,8 @@ class UpdateApiKeyDto
 
     public bool $enabled;
 
+    public string $name;
+
     /**
      * @var string[] $scopes
      */

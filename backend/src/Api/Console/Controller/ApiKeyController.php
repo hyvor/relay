@@ -58,6 +58,8 @@ class ApiKeyController extends AbstractController
             $updates->enabled = $input->enabled;
         if ($input->hasProperty('scopes'))
             $updates->scopes = $input->scopes;
+        if ($input->hasProperty('name'))
+            $updates->name = $input->name;
 
         $updatedApiKey = $this->apiKeyService->updateApiKey($apiKey, $updates);
 

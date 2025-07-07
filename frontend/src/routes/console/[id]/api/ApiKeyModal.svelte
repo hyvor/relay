@@ -1,34 +1,49 @@
 <script lang="ts">
 	import {
 		Modal,
-		Button,
 		TextInput,
 		SplitControl,
-		ActionList,
-		ActionListItem,
 		toast,
 		Checkbox,
-		InputGroup,
-		Callout
+		Switch
 	} from '@hyvor/design/components';
-	import { createApiKey } from '../../lib/actions/apiKeyActions';
+	import { createApiKey, updateApiKey } from '../../lib/actions/apiKeyActions';
 	import type { ApiKey } from '../../types';
 	import { getAppConfig } from '../../lib/stores/consoleStore';
 
 	interface Props {
 		show: boolean;
+		editingApiKey?: ApiKey | null;
 		onApiKeyCreated?: (apiKey: ApiKey) => void;
+		onApiKeyUpdated?: (apiKey: ApiKey) => void;
 	}
 
-	let { show = $bindable(), onApiKeyCreated = () => {} }: Props = $props();
+	let { 
+		show = $bindable(), 
+		editingApiKey = null,
+		onApiKeyCreated = () => {},
+		onApiKeyUpdated = () => {}
+	}: Props = $props();
 
 	let name = $state('');
 	let selectedScopes = $state<string[]>(['sends.send']);
+	let isEnabled = $state(true);
 	let loading = $state(false);
 	let errors = $state<Record<string, string>>({});
 
 	const appConfig = getAppConfig();
 	const scopes = appConfig.app?.api_keys?.scopes || [];
+
+	// Watch for editingApiKey changes to populate form
+	$effect(() => {
+		if (editingApiKey) {
+			name = editingApiKey.name;
+			selectedScopes = [...editingApiKey.scopes];
+			isEnabled = editingApiKey.is_enabled;
+		} else {
+			resetForm();
+		}
+	});
 
 	function getScopeDescription(scope: string): string | null {
 		const descriptionMap: Record<string, string> = {
@@ -40,6 +55,7 @@
 	function resetForm() {
 		name = '';
 		selectedScopes = ['sends.send'];
+		isEnabled = true;
 		errors = {};
 	}
 
@@ -65,16 +81,30 @@
 		}
 
 		loading = true;
-		createApiKey(name.trim(), selectedScopes)
+
+		const promise = editingApiKey 
+			? updateApiKey(editingApiKey.id, {
+				name: name.trim(),
+				scopes: selectedScopes,
+				enabled: isEnabled
+			})
+			: createApiKey(name.trim(), selectedScopes);
+
+		promise
 			.then((apiKey) => {
-				onApiKeyCreated(apiKey);
+				if (editingApiKey) {
+					onApiKeyUpdated(apiKey);
+					toast.success('API key updated successfully');
+				} else {
+					onApiKeyCreated(apiKey);
+					toast.success('API key created successfully');
+				}
 				show = false;
 				resetForm();
-				toast.success('API key created successfully');
 			})
 			.catch((error) => {
-				console.error('Failed to create API key:', error);
-				toast.error('Failed to create API key');
+				console.error(`Failed to ${editingApiKey ? 'update' : 'create'} API key:`, error);
+				toast.error(`Failed to ${editingApiKey ? 'update' : 'create'} API key`);
 			})
 			.finally(() => {
 				loading = false;
@@ -93,6 +123,10 @@
 			selectedScopes = [...selectedScopes, scopeValue];
 		}
 	}
+
+	const isEditing = $derived(!!editingApiKey);
+	const modalTitle = $derived(isEditing ? 'Edit API Key' : 'Create API Key');
+	const confirmText = $derived(isEditing ? 'Update API Key' : 'Create API Key');
 </script>
 
 <Modal
@@ -104,10 +138,10 @@
 			text: 'Cancel'
 		},
 		confirm: {
-			text: 'Create API Key'
+			text: confirmText
 		}
 	}}
-	title="Create API Key"
+	title={modalTitle}
 	on:cancel={handleClose}
 	on:confirm={handleSubmit}
 >
@@ -144,6 +178,17 @@
 				{/each}
 			</div>
 		</SplitControl>
+
+		{#if isEditing}
+			<SplitControl
+				label="Status"
+				caption="Enable or disable this API key"
+			>
+				<Switch bind:checked={isEnabled} disabled={loading}>
+					{isEnabled ? 'Enabled' : 'Disabled'}
+				</Switch>
+			</SplitControl>
+		{/if}
 	</div>
 </Modal>
 

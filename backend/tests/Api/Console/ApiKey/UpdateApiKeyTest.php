@@ -36,6 +36,7 @@ class UpdateApiKeyTest extends WebTestCase
             '/api-keys/' . $apiKey->getId(),
             [
                 'enabled' => false,
+                'name' => 'Updated API Key',
                 'scopes' => ['sends.read', 'sends.write', 'webhooks.read']
             ]
         );
@@ -49,6 +50,7 @@ class UpdateApiKeyTest extends WebTestCase
         $this->assertArrayHasKey('scopes', $content);
         $this->assertIsArray($content['scopes']);
         $this->assertCount(3, $content['scopes']);
+        $this->assertSame('Updated API Key', $content['name']);
 
         $apiKeyDb = $this->em->getRepository(ApiKey::class)->find($apiKey->getId());
         $this->assertNotNull($apiKeyDb);
@@ -57,5 +59,6 @@ class UpdateApiKeyTest extends WebTestCase
         $this->assertContains('sends.read', $apiKeyDb->getScopes());
         $this->assertContains('sends.write', $apiKeyDb->getScopes());
         $this->assertContains('webhooks.read', $apiKeyDb->getScopes());
+        $this->assertSame('Updated API Key', $apiKeyDb->getName());
     }
 }
