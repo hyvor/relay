@@ -54,9 +54,12 @@ func (s *Session) Rcpt(to string, opts *smtp.RcptOptions) error {
 
 func (s *Session) Data(r io.Reader) error {
 	if b, err := io.ReadAll(r); err != nil {
+		log.Println("Error reading data:", err)
 		return err
 	} else {
-		log.Println("Data:", string(b))
+		log.Println("Received data:" + string(b))
+
+		// _ := string(b[:])
 	}
 	return nil
 }
@@ -107,27 +110,30 @@ func (b *BounceServer) Shutdown() {
 		b.logger.Error("Failed to shutdown SMTP server", "error", err)
 	}
 
+	b.smtpServer = nil
+
 }
 
 func (b *BounceServer) Start(ctx context.Context, logger *slog.Logger) {
+	logger.Info("Starting Bounce server!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 	b.logger = logger
 
 	be := &BounceBackend{}
 
-	s := smtp.NewServer(be)
+	smtpServer := smtp.NewServer(be)
 
-	s.Addr = "localhost:1025"
-	s.Domain = "localhost"
-	s.WriteTimeout = 30 * time.Second
-	s.ReadTimeout = 30 * time.Second
-	s.MaxMessageBytes = 1024 * 1024
-	s.MaxRecipients = 50
-	s.AllowInsecureAuth = true
+	smtpServer.Addr = "0.0.0.0:1025"
+	smtpServer.Domain = "localhost"
+	smtpServer.WriteTimeout = 30 * time.Second
+	smtpServer.ReadTimeout = 30 * time.Second
+	smtpServer.MaxMessageBytes = 1024 * 1024
+	smtpServer.MaxRecipients = 50
+	smtpServer.AllowInsecureAuth = true
 
-	b.smtpServer = s
+	b.smtpServer = smtpServer
 
-	logger.Info("Starting Bounce server at", "addr", s.Addr)
-	if err := s.ListenAndServe(); err != nil {
+	logger.Info("Starting Bounce server at", "addr", smtpServer.Addr)
+	if err := smtpServer.ListenAndServe(); err != nil {
 		logger.Error("Failed to start Bounce server", "error", err)
 	}
 }

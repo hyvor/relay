@@ -55,6 +55,8 @@ services:
       GO_SYMFONY_URL: http://hyvor-relay-backend
     networks:
       - hyvor-network
+    ports:
+      - "10025:1025"
 
 networks:
   hyvor-network:
