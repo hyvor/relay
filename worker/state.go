@@ -30,6 +30,18 @@ type ServiceState struct {
 	ctx              context.Context
 	Logger           *slog.Logger
 	EmailWorkersPool *EmailWorkersPool
+	BounceServer     *BounceServer
+}
+
+func NewServiceState(ctx context.Context) *ServiceState {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+	return &ServiceState{
+		ctx:              ctx,
+		Logger:           logger,
+		EmailWorkersPool: NewEmailWorkersPool(ctx, logger),
+		BounceServer:     NewBounceServer(ctx, logger),
+	}
 }
 
 func (s *ServiceState) Set(goState GoState) {
@@ -38,6 +50,8 @@ func (s *ServiceState) Set(goState GoState) {
 		goState.EmailWorkersPerIp,
 		goState.InstanceDomain,
 	)
+
+	s.BounceServer.Set()
 
 	s.Logger.Info("Updating state",
 		"hostname", goState.Hostname,
@@ -89,14 +103,4 @@ func (s *ServiceState) doInitialize() error {
 	s.Set(goState)
 
 	return nil
-}
-
-func NewServiceState(ctx context.Context) *ServiceState {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-
-	return &ServiceState{
-		ctx:              ctx,
-		Logger:           logger,
-		EmailWorkersPool: NewEmailWorkersPool(ctx, logger),
-	}
 }
