@@ -10,7 +10,7 @@
 <Modal
 	bind:show
 	size="large"
-	title="DNS Records"
+	title="DNS Record"
 	footer={{
         cancel: {
             text: 'Close',

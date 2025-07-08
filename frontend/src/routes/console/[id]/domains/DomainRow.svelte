@@ -40,7 +40,7 @@
 			{#snippet start()}
 				<IconEye size={12} />
 			{/snippet}
-			DNS Records
+			DNS Record
 		</Button>
 		<Button
 			color="input"
