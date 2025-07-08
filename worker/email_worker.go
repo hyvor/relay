@@ -14,7 +14,15 @@ type EmailWorkersPool struct {
 	wg         sync.WaitGroup
 	cancelFunc context.CancelFunc
 	logger     *slog.Logger
-	workerFunc func(ctx context.Context, id int, wg *sync.WaitGroup, config *DBConfig, logger *slog.Logger, ip GoStateIp)
+	workerFunc func(
+		ctx context.Context,
+		id int,
+		wg *sync.WaitGroup,
+		config *DBConfig,
+		logger *slog.Logger,
+		ip GoStateIp,
+		instanceDomain string,
+	)
 }
 
 func NewEmailWorkersPool(
@@ -40,6 +48,7 @@ func NewEmailWorkersPool(
 func (pool *EmailWorkersPool) Set(
 	ips []GoStateIp,
 	workersPerIp int,
+	instanceDomain string,
 ) {
 
 	pool.StopWorkers()
@@ -65,6 +74,7 @@ func (pool *EmailWorkersPool) Set(
 			LoadDBConfig(),
 			pool.logger,
 			ip,
+			instanceDomain,
 		)
 	}
 
@@ -91,6 +101,7 @@ func emailWorker(
 	dbConfig *DBConfig,
 	logger *slog.Logger,
 	ip GoStateIp,
+	instanceDomain string,
 ) {
 	defer wg.Done()
 
@@ -146,7 +157,9 @@ func emailWorker(
 
 				result := sendEmail(
 					&send,
-					ip,
+					instanceDomain,
+					ip.Ip,
+					ip.Ptr,
 					os.Stdout,
 				)
 

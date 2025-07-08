@@ -53,6 +53,7 @@ class GoStateFactory
         }
 
         return new GoState(
+            instanceDomain: $instance->getDomain(),
             hostname: $server->getHostname(),
             ips: $ips,
             emailWorkersPerIp: $server->getEmailWorkers(),

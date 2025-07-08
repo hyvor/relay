@@ -9,6 +9,7 @@ import (
 
 // GoState object from backend
 type GoState struct {
+	InstanceDomain    string      `json:"instanceDomain"`
 	Hostname          string      `json:"hostname"`
 	Ips               []GoStateIp `json:"ips"`
 	EmailWorkersPerIp int         `json:"emailWorkersPerIp"`
@@ -31,7 +32,11 @@ type ServiceState struct {
 }
 
 func (s *ServiceState) Set(goState GoState) {
-	s.EmailWorkersPool.Set(goState.Ips, goState.EmailWorkersPerIp)
+	s.EmailWorkersPool.Set(
+		goState.Ips,
+		goState.EmailWorkersPerIp,
+		goState.InstanceDomain,
+	)
 
 	s.Logger.Info("Updating state",
 		"hostname", goState.Hostname,

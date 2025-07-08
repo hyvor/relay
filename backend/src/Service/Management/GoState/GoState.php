@@ -9,6 +9,14 @@ class GoState
 {
 
     public function __construct(
+        /**
+         * The domain of the Hyvor Relay instance (a.k.a. Primary Domain)
+         */
+        public string $instanceDomain,
+
+        /**
+         * Hostname of the current server
+         */
         public string $hostname,
 
         /**
