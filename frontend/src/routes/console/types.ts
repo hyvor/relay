@@ -97,3 +97,15 @@ export type Suppression = {
     description: string | null;
     created_at: number;
 }
+
+export type Domain = {
+    id: number;
+    created_at: number;
+    domain: string;
+    dkim_selector: string;
+    dkim_host: string;
+    dkim_txt_name: string;
+    dkim_public_key: string;
+    dkim_txt_value: string;
+    dkim_verified: boolean;
+}

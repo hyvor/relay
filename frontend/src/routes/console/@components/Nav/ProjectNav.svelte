@@ -54,7 +54,10 @@
 			</NavItem>
 		</NavLink>
 
-		<NavLink href="/console/domains" active={page.url.pathname === '/console/domains'}>
+		<NavLink 
+			href={'/console/' + $projectStore.id.toString() + '/domains'}
+			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/domains`)}
+		>
 			<NavItem>
 				<IconDatabase slot="icon" />
 				<span slot="text">Domains</span>

@@ -74,4 +74,20 @@ class DomainController extends AbstractController
         return new JsonResponse([]);
     }
 
+    #[Route('/domains/{id}', methods: 'POST')]
+    #[ScopeRequired(Scope::DOMAINS_WRITE)]
+    public function verifyDomain(
+        Domain $domain,
+        #[MapRequestPayload] DomainCreateInput $createInput
+    ): JsonResponse
+    {
+        if ($domain->getDomain() !== $createInput->domain) {
+            throw new BadRequestException('Domain name does not match');
+        }
+
+        // TODO: Implement domain verification logic here
+
+        return new JsonResponse(new DomainObject($domain));
+    }
+
 }
