@@ -6,12 +6,12 @@
 
 <div class="features">
 	<Feature title="API for Emails">
-		Send emails using a simple API. Supports HTML & plain text emails, attachments, custom headers,
-		and more.
+		Send emails using a simple API. Supports HTML & plain text emails, attachments, custom
+		headers, and more.
 	</Feature>
 	<Feature title="...and Everything Else">
-		Manage domains, suppressions, and more using the API. Keys management, scopes & permissions, and
-		idempotency are included.
+		Manage domains, suppressions, and more using the API. Keys management, scopes & permissions,
+		and idempotency are included.
 	</Feature>
 	<Feature title="Webhooks for Events">
 		Receive notifications for email events like accepted, bounced, suppression added, and more.
@@ -34,12 +34,12 @@
 		Desined to scale across multiple servers using Docker Swarm. Zero downtime scaling.
 	</Feature>
 	<Feature title="Deliverability">
-		Deliverability is not an afterthought. Easy multiple IPs setup, queue separation, and dedicated
-		IPs support.
+		Deliverability is not an afterthought. Easy multiple IPs setup, queue separation, and
+		dedicated IPs support.
 	</Feature>
 	<Feature title="In-built DNS Server">
-		A simple DNS server to manage forward DNS, MX, SPF, DKIM records of your installation in highly
-		dynamic environments.
+		A simple DNS server to manage forward DNS, MX, SPF, DKIM records of your installation in
+		highly dynamic environments.
 	</Feature>
 </div>
 
