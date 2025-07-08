@@ -9,6 +9,7 @@ import (
 
 // GoState object from backend
 type GoState struct {
+	InstanceDomain    string      `json:"instanceDomain"`
 	Hostname          string      `json:"hostname"`
 	Ips               []GoStateIp `json:"ips"`
 	EmailWorkersPerIp int         `json:"emailWorkersPerIp"`
@@ -16,6 +17,7 @@ type GoState struct {
 }
 
 type GoStateIp struct {
+	Id        int    `json:"id"`
 	Ip        string `json:"ip"`
 	Ptr       string `json:"ptr"`
 	QueueId   int    `json:"queueId"`
@@ -28,10 +30,28 @@ type ServiceState struct {
 	ctx              context.Context
 	Logger           *slog.Logger
 	EmailWorkersPool *EmailWorkersPool
+	BounceServer     *BounceServer
+}
+
+func NewServiceState(ctx context.Context) *ServiceState {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+	return &ServiceState{
+		ctx:              ctx,
+		Logger:           logger,
+		EmailWorkersPool: NewEmailWorkersPool(ctx, logger),
+		BounceServer:     NewBounceServer(ctx, logger),
+	}
 }
 
 func (s *ServiceState) Set(goState GoState) {
-	s.EmailWorkersPool.Set(goState.Ips, goState.EmailWorkersPerIp)
+	s.EmailWorkersPool.Set(
+		goState.Ips,
+		goState.EmailWorkersPerIp,
+		goState.InstanceDomain,
+	)
+
+	s.BounceServer.Set()
 
 	s.Logger.Info("Updating state",
 		"hostname", goState.Hostname,
@@ -83,14 +103,4 @@ func (s *ServiceState) doInitialize() error {
 	s.Set(goState)
 
 	return nil
-}
-
-func NewServiceState(ctx context.Context) *ServiceState {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-
-	return &ServiceState{
-		ctx:              ctx,
-		Logger:           logger,
-		EmailWorkersPool: NewEmailWorkersPool(ctx, logger),
-	}
 }

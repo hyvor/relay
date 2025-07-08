@@ -36,7 +36,9 @@
 			<Tooltip text="Cloud version is planned for 2026. You can self-host Hyvor Relay now.">
 				<Button disabled size="large">Sign up</Button>
 			</Tooltip>
-			<Button as="a" href="/hosting" size="large" color="gray">Self-Host Now</Button>
+			<Button as="a" href="/hosting" size="large" variant="outline">Start Self-Hosting</Button
+			>
+			<Button as="a" href="/docs" size="large" variant="outline">Product Docs</Button>
 		</div>
 	</section>
 	<Features />

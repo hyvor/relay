@@ -44,6 +44,7 @@ class GoStateFactory
             }
 
             $ips[] = new GoStateIp(
+                id: $ip->getId(),
                 ip: $ip->getIpAddress(),
                 ptr: Ptr::getPtrDomain($ip, $instance->getDomain()),
                 queueId: $queue->getId(),
@@ -53,6 +54,7 @@ class GoStateFactory
         }
 
         return new GoState(
+            instanceDomain: $instance->getDomain(),
             hostname: $server->getHostname(),
             ips: $ips,
             emailWorkersPerIp: $server->getEmailWorkers(),

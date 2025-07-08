@@ -1,20 +1,22 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"io"
 	"log"
+	"log/slog"
 	"time"
 
 	"github.com/emersion/go-sasl"
 	smtp "github.com/emersion/go-smtp"
 )
 
-// The Backend implements SMTP server methods.
-type Backend struct{}
+// The BounceBackend implements SMTP server methods.
+type BounceBackend struct{}
 
 // NewSession is called after client greeting (EHLO, HELO).
-func (bkd *Backend) NewSession(c *smtp.Conn) (smtp.Session, error) {
+func (bkd *BounceBackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 	return &Session{}, nil
 }
 
@@ -65,9 +67,52 @@ func (s *Session) Logout() error {
 	return nil
 }
 
-func StartBouncesServer() {
+type BounceServer struct {
+	ctx        context.Context
+	logger     *slog.Logger
+	smtpServer *smtp.Server
+}
 
-	be := &Backend{}
+func NewBounceServer(ctx context.Context, logger *slog.Logger) *BounceServer {
+	return &BounceServer{
+		ctx:    ctx,
+		logger: logger,
+	}
+}
+
+func (b *BounceServer) Set() {
+	b.logger.Info("Bounce server initializing...")
+
+	b.Shutdown()
+
+	go func() {
+		b.Start(b.ctx, b.logger)
+	}()
+
+	go func() {
+		<-b.ctx.Done()
+		b.Shutdown()
+	}()
+}
+
+func (b *BounceServer) Shutdown() {
+	if b.smtpServer == nil {
+		return
+	}
+
+	shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCtxCancel()
+
+	if err := b.smtpServer.Shutdown(shutdownCtx); err != nil {
+		b.logger.Error("Failed to shutdown SMTP server", "error", err)
+	}
+
+}
+
+func (b *BounceServer) Start(ctx context.Context, logger *slog.Logger) {
+	b.logger = logger
+
+	be := &BounceBackend{}
 
 	s := smtp.NewServer(be)
 
@@ -79,9 +124,10 @@ func StartBouncesServer() {
 	s.MaxRecipients = 50
 	s.AllowInsecureAuth = true
 
-	log.Println("Starting server at", s.Addr)
-	if err := s.ListenAndServe(); err != nil {
-		log.Fatal(err)
-	}
+	b.smtpServer = s
 
+	logger.Info("Starting Bounce server at", "addr", s.Addr)
+	if err := s.ListenAndServe(); err != nil {
+		logger.Error("Failed to start Bounce server", "error", err)
+	}
 }

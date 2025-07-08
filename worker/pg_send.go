@@ -154,6 +154,7 @@ func (b *DbSendBatch) FinalizeSendBySendResult(
 			created_at,
 			updated_at,
 			send_id,
+			ip_address_id,
 			status,
 			try_count,
 			resolved_mx_hosts,
@@ -170,10 +171,12 @@ func (b *DbSendBatch) FinalizeSendBySendResult(
 			$4,
 			$5,
 			$6,
-			$7
+			$7,
+			$8
 		)
 	`,
 		send.Id,
+		sendResult.SentFromIpId,
 		status,
 		send.TryCount+1,
 		resolvedMxHosts,

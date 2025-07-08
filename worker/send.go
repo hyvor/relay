@@ -98,6 +98,7 @@ func (c *SmtpConversation) AddStep(
 }
 
 type SendResult struct {
+	SentFromIpId      int
 	ResolvedMxHosts   []string
 	SentMxHost        string
 	SmtpConversations map[string]*SmtpConversation
@@ -107,11 +108,15 @@ type SendResult struct {
 
 func sendEmail(
 	send *DbSend,
-	ip GoStateIp,
+	instanceDomain string,
+	ipId int,
+	ip string,
+	ptr string,
 	logger io.Writer,
 ) *SendResult {
 
 	result := &SendResult{
+		SentFromIpId:      ipId,
 		ResolvedMxHosts:   make([]string, 0),
 		SmtpConversations: make(map[string]*SmtpConversation),
 	}
@@ -133,9 +138,9 @@ func sendEmail(
 	result.ResolvedMxHosts = mxHosts
 
 	for _, host := range mxHosts {
-		fmt.Fprintf(logger, "INFO: Sending to host: %s\n", host)
+		fmt.Fprintf(logger, "INFO: Sending to host %s from IP %s\n", host, ip)
 
-		conversation, err, errStatus := sendEmailToHost(send, host, logger)
+		conversation, err, errStatus := sendEmailToHost(send, host, instanceDomain, ip, ptr, logger)
 		result.SmtpConversations[host] = conversation
 
 		if err != nil {
@@ -182,9 +187,31 @@ func sendEmail(
 	return result
 }
 
-var createSmtpClient = func(host string) (*smtp.Client, error) {
+var createSmtpClient = func(host string, localIp string) (*smtp.Client, error) {
 
-	conn, err := net.Dial("tcp", host+":25")
+	// TODO: comment from ResolveTCPAddr
+	// "The address parameter can use a host name, but this is not
+	// recommended, because it will return at most one of the host name's
+	// IP addresses."
+	// So, we might need to resolve A records manually first.
+
+	remoteAddr, err := net.ResolveTCPAddr("tcp", host+":25")
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve remote address %s: %w", host, err)
+	}
+
+	localAddr := &net.TCPAddr{
+		IP:   net.ParseIP(localIp),
+		Port: 0, // Let the OS choose an available local port
+	}
+
+	dialer := &net.Dialer{
+		LocalAddr: localAddr,
+		Timeout:   30 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}
+
+	conn, err := dialer.Dial("tcp", remoteAddr.String())
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to SMTP server %s: %w", host, err)
@@ -201,8 +228,11 @@ var createSmtpClient = func(host string) (*smtp.Client, error) {
 
 // returns: conversation, error (network), error (smtp code)
 func sendEmailToHost(
-	message *DbSend,
+	send *DbSend,
 	host string,
+	instanceDomain string,
+	ip string,
+	ptr string,
 	logger io.Writer,
 ) (*SmtpConversation, error, int) {
 
@@ -210,7 +240,7 @@ func sendEmailToHost(
 
 	// STEP 0: Connect to SMTP server
 	// ==============================
-	c, err := createSmtpClient(host)
+	c, err := createSmtpClient(host, ip)
 	if err != nil {
 		fmt.Fprintf(logger, "ERROR: %s\n", err)
 		return conversation, err, 0
@@ -220,7 +250,7 @@ func sendEmailToHost(
 
 	// STEP 1: EHLO/HELO
 	// =================
-	helloResult := c.Hello("relay.hyvor.com")
+	helloResult := c.Hello(ptr)
 
 	if helloResult.Err != nil {
 		fmt.Fprintf(logger, "ERROR: EHLO failed - %s\n", helloResult.Err)
@@ -268,7 +298,7 @@ func sendEmailToHost(
 
 	// STEP 3: MAIL FROM
 	// ================
-	mailResult := c.Mail(message.From)
+	mailResult := c.Mail(getReturnPath(send, instanceDomain))
 	if mailResult.Err != nil {
 		fmt.Fprintf(logger, "ERROR: MAIL FROM failed - %s\n", mailResult.Err)
 		return conversation, mailResult.Err, 0
@@ -281,7 +311,7 @@ func sendEmailToHost(
 
 	// STEP 4: RCPT TO
 	// ===============
-	rcptResult := c.Rcpt(message.To)
+	rcptResult := c.Rcpt(send.To)
 	if rcptResult.Err != nil {
 		fmt.Fprintf(logger, "ERROR: RCPT failed - %s\n", rcptResult.Err)
 		return conversation, rcptResult.Err, 0
@@ -304,7 +334,7 @@ func sendEmailToHost(
 		fmt.Fprintf(logger, "ERROR: DATA failed with code %d: %s\n", dataResult.Reply.Code, dataResult.Reply.Message)
 		return conversation, nil, dataResult.Reply.Code
 	}
-	_, err = w.Write([]byte(message.RawEmail))
+	_, err = w.Write([]byte(send.RawEmail))
 	if err != nil {
 		fmt.Fprintf(logger, "ERROR: Writing data failed - %s\n", err)
 		return conversation, err, 0
@@ -330,4 +360,11 @@ func sendEmailToHost(
 
 	return conversation, nil, 0
 
+}
+
+func getReturnPath(
+	send *DbSend,
+	instanceDomain string,
+) string {
+	return fmt.Sprintf("bounce+%d@%s", send.Id, instanceDomain)
 }
