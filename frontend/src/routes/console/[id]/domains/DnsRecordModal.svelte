@@ -27,8 +27,8 @@
 
 		<div class="dns-record">
 			<SplitControl
-				label="Name"
-				caption="DNS record name/host"
+				label="Host"
+				caption="DNS record host"
 			>
 				<div class="record-value">
 					<div class="value-text">{domain.dkim_txt_name}</div>
@@ -96,10 +96,12 @@
 		padding: 8px;
 		flex: 1;
 		min-width: 0;
+		word-break: break-all;
+		word-wrap: break-word;
+		overflow-wrap: break-word;
 	}
 
 	.value-long {
-		max-height: 80px;
-		overflow-y: auto;
+		/* Remove max-height to show full text */
 	}
 </style> 
