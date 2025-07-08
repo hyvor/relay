@@ -46,22 +46,22 @@ func ParseArf(input []byte) (*Arf, error) {
 	reader := multipart.NewReader(message.Body, params["boundary"])
 
 	// Part1 is a human-readable description of the report (text/plain or text/html)
-	part1, err := readNextPartBodyAsMessage(reader, []string{"text/plain", "text/html"})
+	part1, err := reader.NextPart()
 	if err != nil {
 		return nil, err
 	}
-	part1Data, err := io.ReadAll(part1.Body)
+	if err := validatePartMimeType(part1, []string{"text/plain", "text/html"}); err != nil {
+		return nil, err
+	}
+	part1Data, err := io.ReadAll(part1)
 	if err != nil {
 		return nil, err
 	}
 	arf.ReadableText = string(part1Data)
 
 	// Part2 is the machine-readable report (message/feedback-report)
-	part2, err := reader.NextPart()
+	part2, err := readNextPartBodyAsMessage(reader, []string{"message/feedback-report"})
 	if err != nil {
-		return nil, err
-	}
-	if err := validatePartMimeType(part2, []string{"message/feedback-report"}); err != nil {
 		return nil, err
 	}
 
@@ -71,11 +71,8 @@ func ParseArf(input []byte) (*Arf, error) {
 	arf.MessageId = part2.Header.Get("Message-ID")
 
 	// Part3 is the original message (message/rfc822 or message/rfc822-headers)
-	part3, err := reader.NextPart()
+	part3, err := readNextPartBodyAsMessage(reader, []string{"message/rfc822", "message/rfc822-headers"})
 	if err != nil {
-		return nil, err
-	}
-	if err := validatePartMimeType(part3, []string{"message/rfc822", "message/rfc822-headers"}); err != nil {
 		return nil, err
 	}
 	arf.MessageId = part3.Header.Get("Message-ID")

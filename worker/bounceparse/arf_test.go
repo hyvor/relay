@@ -1,7 +1,6 @@
 package bounceparse
 
 import (
-	"log"
 	"os"
 	"testing"
 
@@ -16,6 +15,10 @@ func TestParseArf(t *testing.T) {
 	arf, err := ParseArf(content)
 	assert.Nil(t, err)
 
-	log.Printf("arf: %+v\n", arf)
+	assert.Equal(t, "abuse", arf.FeedbackType)
+	assert.Equal(t, "SomeGenerator/1.0", arf.UserAgent)
+	assert.Equal(t, "<somespammer@example.net>", arf.OriginalMailFrom)
+	assert.Equal(t, "8787KJKJ3K4J3K4J3K4J3.mail@example.net", arf.MessageId)
+	assert.Contains(t, arf.ReadableText, "This is an email abuse report for an email message received from IP")
 
 }
