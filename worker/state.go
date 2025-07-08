@@ -17,6 +17,7 @@ type GoState struct {
 }
 
 type GoStateIp struct {
+	Id        int    `json:"id"`
 	Ip        string `json:"ip"`
 	Ptr       string `json:"ptr"`
 	QueueId   int    `json:"queueId"`

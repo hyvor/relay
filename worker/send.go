@@ -98,6 +98,7 @@ func (c *SmtpConversation) AddStep(
 }
 
 type SendResult struct {
+	SentFromIpId      int
 	ResolvedMxHosts   []string
 	SentMxHost        string
 	SmtpConversations map[string]*SmtpConversation
@@ -108,12 +109,14 @@ type SendResult struct {
 func sendEmail(
 	send *DbSend,
 	instanceDomain string,
+	ipId int,
 	ip string,
 	ptr string,
 	logger io.Writer,
 ) *SendResult {
 
 	result := &SendResult{
+		SentFromIpId:      ipId,
 		ResolvedMxHosts:   make([]string, 0),
 		SmtpConversations: make(map[string]*SmtpConversation),
 	}
@@ -135,7 +138,7 @@ func sendEmail(
 	result.ResolvedMxHosts = mxHosts
 
 	for _, host := range mxHosts {
-		fmt.Fprintf(logger, "INFO: Sending to host: %s\n", host)
+		fmt.Fprintf(logger, "INFO: Sending to host %s from IP %s\n", host, ip)
 
 		conversation, err, errStatus := sendEmailToHost(send, host, instanceDomain, ip, ptr, logger)
 		result.SmtpConversations[host] = conversation

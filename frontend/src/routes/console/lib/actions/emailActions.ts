@@ -1,7 +1,7 @@
 import type { Email, EmailStatus } from "../../types";
 import consoleApi from "../consoleApi";
 
-export function getEmails(
+export function getSends(
 	status: EmailStatus | null,
 	from_search : string | null,
     to_search : string | null,
@@ -9,7 +9,7 @@ export function getEmails(
 	offset: number
 ) {
 	return consoleApi.get<Email[]>({
-		endpoint: 'emails',
+		endpoint: 'sends',
 		data: {
 			status,
 			from_search,
@@ -22,6 +22,6 @@ export function getEmails(
 
 export function getEmailByUuid(uuid: string) {
 	return consoleApi.get<Email>({
-		endpoint: `emails/uuid/${uuid}`
+		endpoint: `sends/uuid/${uuid}`
 	});
 }

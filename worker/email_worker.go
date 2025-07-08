@@ -158,6 +158,7 @@ func emailWorker(
 				result := sendEmail(
 					&send,
 					instanceDomain,
+					ip.Id,
 					ip.Ip,
 					ip.Ptr,
 					os.Stdout,

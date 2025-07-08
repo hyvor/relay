@@ -2,7 +2,7 @@
 	import { IconMessage, LoadButton, Loader } from '@hyvor/design/components';
 	import type { Email, EmailStatus } from '../../types';
 	import { emailStore } from '../../lib/stores/projectStore';
-	import { getEmails } from '../../lib/actions/emailActions';
+	import { getSends } from '../../lib/actions/emailActions';
 	import EmailRow from './EmailRow.svelte';
 
 	interface Props {
@@ -26,7 +26,7 @@
 	function load(more = false) {
 		more ? (loadingMore = true) : (loading = true);
 
-		getEmails(status, from_search, to_search, EMAILS_PER_PAGE, more ? emails.length : 0)
+		getSends(status, from_search, to_search, EMAILS_PER_PAGE, more ? emails.length : 0)
 			.then((data) => {
 				emails = more ? [...emails, ...data] : data;
 				emailStore.set(emails);

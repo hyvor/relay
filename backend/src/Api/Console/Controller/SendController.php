@@ -133,7 +133,7 @@ class SendController extends AbstractController
         return $this->json($sends);
     }
 
-    #[Route("/emails/uuid/{uuid}", methods: "GET")]
+    #[Route("/sends/uuid/{uuid}", methods: "GET")]
     public function getByUuid(Project $project, string $uuid): JsonResponse
     {
         $send = $this->sendService->getSendByUuid($uuid);

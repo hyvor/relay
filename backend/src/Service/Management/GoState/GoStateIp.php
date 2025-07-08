@@ -6,6 +6,9 @@ class GoStateIp
 {
 
     public function __construct(
+        // IP address ID
+        public int $id,
+
         // IP address
         public string $ip,
 
