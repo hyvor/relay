@@ -37,7 +37,9 @@
 			size="small"
 			on:click={() => showDnsModal = true}
 		>
-			<IconEye size={12} />
+			{#snippet start()}
+				<IconEye size={12} />
+			{/snippet}
 			DNS Records
 		</Button>
 		<Button
@@ -45,7 +47,9 @@
 			size="small"
 			on:click={() => onVerify(domain)}
 		>
-			<IconArrowClockwise size={12} />
+			{#snippet start()}
+				<IconArrowClockwise size={12} />
+			{/snippet}
 			Verify
 		</Button>
 		<IconButton
@@ -54,7 +58,7 @@
 			size="small"
 			on:click={() => onDelete(domain)}
 		>
-			<IconTrash size={12} />
+				<IconTrash size={12} />
 		</IconButton>
 	</div>
 </div>
