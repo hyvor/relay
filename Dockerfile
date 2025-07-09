@@ -28,15 +28,12 @@ FROM frankenphp AS backend-base
 ENV APP_RUNTIME="Runtime\FrankenPhpSymfony\Runtime"
 WORKDIR /app/backend
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
-COPY --from=ghcr.io/php/pie:bin /pie /usr/bin/pie
-COPY backend/composer.json backend/composer.lock /app/backend/
-# RUN install-php-extensions zip intl pdo_pgsql opcache apcu
-RUN pie install 
+RUN install-php-extensions zip intl pdo_pgsql opcache apcu amqp
 RUN apt update  && apt install -y supervisor
 
 FROM backend-base AS backend-dev
 RUN curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh' | bash && apt install -y symfony-cli
-RUN pie install pecl/pcov
+RUN install-php-extensions pcov
 COPY backend /app/backend/
 COPY meta/image/dev/Caddyfile.dev /etc/caddy/Caddyfile
 COPY meta/image/dev/run.dev /app/run
