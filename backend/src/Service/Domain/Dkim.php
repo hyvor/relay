@@ -5,7 +5,7 @@ namespace App\Service\Domain;
 class Dkim
 {
 
-    public const string DKIM_SUBDOMAIN = '._domainkey';
+    public const string DKIM_SUBDOMAIN = '_domainkey';
 
     public static function generateDkimSelector(): string
     {

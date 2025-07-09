@@ -29,8 +29,8 @@ final class DomainFactory extends PersistentProxyObjectFactory
 
         return [
             'project' => ProjectFactory::createOne(),
-            'domain' => self::faker()->domainName(),
-            'dkim_selector' => 'rly' . self::faker()->word(),
+            'domain' => self::faker()->text(),
+            'dkim_selector' => self::faker()->text(255),
             'dkim_public_key' => self::TEST_DKIM_PUBLIC_KEY,
             'dkim_private_key_encrypted' => self::TEST_DKIM_PRIVATE_KEY_ENCRYPTED,
             'created_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
