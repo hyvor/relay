@@ -27,30 +27,29 @@ type GoStateIp struct {
 
 // wraps all the services based on the GoState
 type ServiceState struct {
-	ctx              context.Context
-	Logger           *slog.Logger
-	EmailWorkersPool *EmailWorkersPool
-	BounceServer     *BounceServer
+	ctx                context.Context
+	Logger             *slog.Logger
+	EmailWorkersPool   *EmailWorkersPool
+	WebhookWorkersPool *WebhookWorkersPool
+	BounceServer       *BounceServer
 }
 
 func NewServiceState(ctx context.Context) *ServiceState {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	return &ServiceState{
-		ctx:              ctx,
-		Logger:           logger,
-		EmailWorkersPool: NewEmailWorkersPool(ctx, logger),
-		BounceServer:     NewBounceServer(ctx, logger),
+		ctx:                ctx,
+		Logger:             logger,
+		EmailWorkersPool:   NewEmailWorkersPool(ctx, logger),
+		WebhookWorkersPool: NewWebhookWorkersPool(ctx, logger),
+		BounceServer:       NewBounceServer(ctx, logger),
 	}
 }
 
 func (s *ServiceState) Set(goState GoState) {
-	s.EmailWorkersPool.Set(
-		goState.Ips,
-		goState.EmailWorkersPerIp,
-		goState.InstanceDomain,
-	)
 
+	s.EmailWorkersPool.Set(goState.Ips, goState.EmailWorkersPerIp, goState.InstanceDomain)
+	s.WebhookWorkersPool.Set(goState.WebhookWorkers, goState.InstanceDomain)
 	s.BounceServer.Set()
 
 	s.Logger.Info("Updating state",

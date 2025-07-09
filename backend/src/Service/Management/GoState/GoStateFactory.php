@@ -58,7 +58,7 @@ class GoStateFactory
             hostname: $server->getHostname(),
             ips: $ips,
             emailWorkersPerIp: $server->getEmailWorkers(),
-            webhookWorkers: $server->getWebhookWorkers()
+            webhookWorkers: $server->getWebhookWorkers() + 1
         );
 
     }
