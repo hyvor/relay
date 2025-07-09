@@ -10,6 +10,7 @@
 
 ## Features
 
+- **Self-Hosted**: Docker (compose or swarm)-based deployment.
 - **Email API**: Send emails using a simple API.
 - **Logging**: View logs of sent emails.
 - **Handle Greylisting & Retries**: Automatically manage greylisting and retries.
@@ -19,7 +20,4 @@
 - **DNS Automation**: Automatically manage DNS records for PTR, SPF, and DKIM.
 - **Webhooks**: Receive HTTP callbacks for email events.
 - **Health Checks**: Monitor the health of the service in the dashboard.
-- **Observability**:
-  - Prometheus metrics
-  - Grafana dashboards
-  - Loki logs
+- **Observability**: Prometheus metrics, Grafana dashboards, and Loki logs for monitoring.
