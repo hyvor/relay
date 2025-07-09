@@ -88,7 +88,7 @@ class DevSeedCommand extends Command
             'project' => $project,
             'domain' => $domain,
             'failed_at' => new \DateTimeImmutable(),
-            'status' => SendStatus::FAILED,
+            'status' => SendStatus::BOUNCED,
         ]);
 
         SuppressionFactory::createMany(16, [
