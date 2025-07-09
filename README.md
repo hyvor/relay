@@ -1,6 +1,6 @@
 # Hyvor Relay
 
-[Hyvor Relay](https://relay.hyvor.com) is a self-hosted, open-source email API for developers. It is designed to be simple to self-host, easy to manage, and powerful enough to handle all your email needs.
+[Hyvor Relay](https://relay.hyvor.com) is a self-hosted, open-source email API for developers. It is designed to be simple to self-host, easy to manage, and powerful enought to send millions of emails per day.
 
 <p align="center">
   <a href="https://relay.hyvor.com">
@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://relay.hyvor.com">
-    Website
+    Email API for Developers
   </a>
     <span> | </span>
     <a href="https://relay.hyvor.com/hosting">
