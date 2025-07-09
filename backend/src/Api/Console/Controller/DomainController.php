@@ -78,6 +78,10 @@ class DomainController extends AbstractController
     #[ScopeRequired(Scope::DOMAINS_WRITE)]
     public function verifyDomain(Domain $domain): JsonResponse
     {
+        if ($domain->getDkimVerified()) {
+            throw new BadRequestException('Domain is already verified');
+        }
+
         $this->domainService->verifyDkimAndUpdate($domain);
         return new JsonResponse(new DomainObject($domain));
     }
