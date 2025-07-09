@@ -40,7 +40,7 @@ COPY meta/image/dev/run.dev /app/run
 COPY meta/image/dev/supervisord.conf.dev /etc/supervisor/conf.d/supervisord.conf
 CMD ["sh", "/app/run"]
 
-FROM backend-base AS backend-prod
+FROM backend-base AS final
 COPY backend /app/backend
 RUN composer install --no-interaction --no-dev --optimize-autoloader --classmap-authoritative
 COPY --from=frontend-prod /app/frontend/build /app/static
