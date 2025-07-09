@@ -5,8 +5,8 @@ namespace App\Entity\Type;
 enum WebhooksEventEnum: string
 {
 
-    // Created by Workers
-    case SEND_DELIVERED = 'send.delivered';
+    case SEND_ACCEPTED = 'send.accepted';
+    case SEND_DEFERRED = 'send.deferred';
     case SEND_BOUNCED = 'send.bounced';
     case SEND_COMPLAINED = 'send.complained';
 

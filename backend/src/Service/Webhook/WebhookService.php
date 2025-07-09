@@ -3,6 +3,7 @@
 namespace App\Service\Webhook;
 
 use App\Entity\Project;
+use App\Entity\Type\WebhooksEventEnum;
 use App\Entity\Webhook;
 use App\Service\ApiKey\Dto\UpdateApiKeyDto;
 use App\Service\Webhook\Dto\UpdateWebhookDto;
@@ -45,6 +46,11 @@ class WebhookService
     {
         $webhooks =  $this->em->getRepository(Webhook::class)->findBy(['project' => $project]);
         return new ArrayCollection($webhooks);
+    }
+
+    public function getWebhooksForEvent(Project $project, WebhooksEventEnum $event): array
+    {
+        //
     }
 
     public function deleteWebhook(Webhook $webhook): void

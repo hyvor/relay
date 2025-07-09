@@ -81,7 +81,7 @@ class DevSeedCommand extends Command
             'project' => $project,
             'domain' => $domain,
             'sent_at' => new \DateTimeImmutable(),
-            'status' => SendStatus::SENT,
+            'status' => SendStatus::ACCEPTED,
         ]);
 
         $sent_failed = SendFactory::createMany(1, [
