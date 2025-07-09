@@ -4,6 +4,7 @@ import Introduction from './content/Introduction.svelte';
 import SendEmails from './content/SendEmails.svelte';
 import Webhooks from './content/Webhooks.svelte';
 import ConsoleApi from './content/ConsoleApi.svelte';
+import Domains from './content/Domains.svelte';
 
 export const categories: Category[] = [
 	{
@@ -13,6 +14,11 @@ export const categories: Category[] = [
 				slug: '',
 				name: 'Introduction',
                 component: Introduction
+			},
+			{
+				slug: 'domains',
+				name: 'Domains',
+                component: Domains
 			}
 		]
 	},

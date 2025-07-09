@@ -20,6 +20,10 @@
 
 "suppression.created"
 "suppression.deleted"
+
+"domain.created"
+"domain.verified"
+"domain.deleted"
 `}
 	language="ts"
 />

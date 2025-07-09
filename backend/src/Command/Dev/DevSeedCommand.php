@@ -69,6 +69,7 @@ class DevSeedCommand extends Command
 
         DomainFactory::createOne(['project' => $project, 'domain' => 'hyvor.com']);
         $domain = DomainFactory::createOne(['project' => $project, 'domain' => 'hyvor.local.testing', 'dkim_verified' => true]);
+        DomainFactory::createMany(15, ['project' => $project]);
 
         $sends_queued = SendFactory::createMany(2, [
             'project' => $project,
