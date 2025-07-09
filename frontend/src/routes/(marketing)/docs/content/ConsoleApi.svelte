@@ -138,7 +138,9 @@ Authorization: Bearer <your_api_key>
 <p>Objects:</p>
 
 <ul>
-	<li>Domain Object</li>
+	<li>
+		<a href="#domain-object">Domain Object</a>
+	</li>
 </ul>
 
 <ul></ul>
@@ -203,4 +205,26 @@ Authorization: Bearer <your_api_key>
     type Response = {}
 `}
 	language="ts"
+/>
+
+<h2 id="objects">Objects</h2>
+<h3 id="domain-object">Domain Object</h3>
+
+<CodeBlock
+	language="ts"
+	code={`
+        interface Domain = {
+	id: number;
+	created_at: number;
+	domain: string;
+	dkim_selector: string;
+	dkim_host: string;
+	dkim_txt_name: string;
+	dkim_public_key: string;
+	dkim_txt_value: string;
+	dkim_verified: boolean;
+	dkim_checked_at?: number;
+	dkim_error_message?: string;
+        }
+    `}
 />

@@ -25,9 +25,7 @@
 	}
 </script>
 
-{#if loading}
-	<div class="loading">Loading deliveries...</div>
-{:else if deliveries.length === 0}
+{#if deliveries.length === 0}
 	<IconMessage empty size="large" message="No webhook deliveries found" />
 {:else}
 	<Table columns="2fr 1fr 1fr 1fr" hover>
@@ -59,9 +57,4 @@
 {/if}
 
 <style>
-	.loading {
-		text-align: center;
-		padding: 60px 20px;
-		color: var(--text-light);
-	}
 </style> 

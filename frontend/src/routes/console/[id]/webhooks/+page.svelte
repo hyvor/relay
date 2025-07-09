@@ -4,7 +4,8 @@
 		toast,
 		confirm,
 		TabNav,
-		TabNavItem
+		TabNavItem,
+		Loader
 	} from '@hyvor/design/components';
 	import IconPlus from '@hyvor/icons/IconPlus';
 	import SingleBox from '../../@components/content/SingleBox.svelte';
@@ -121,17 +122,29 @@
 
 	<div class="content">
 		{#if activeTab === 'configure'}
-			<WebhookList 
-				{webhooks} 
-				{loading} 
-				onEdit={handleEditWebhook} 
-				onDelete={handleDeleteWebhook} 
-			/>
+			{#if loading}
+				<div class="loader-container">
+					<Loader />
+				</div>
+			{:else}
+				<WebhookList 
+					{webhooks} 
+					loading={false} 
+					onEdit={handleEditWebhook} 
+					onDelete={handleDeleteWebhook} 
+				/>
+			{/if}
 		{:else if activeTab === 'deliveries'}
-			<WebhookDeliveryList 
-				{deliveries} 
-				loading={deliveriesLoading} 
-			/>
+			{#if deliveriesLoading}
+				<div class="loader-container">
+					<Loader />
+				</div>
+			{:else}
+				<WebhookDeliveryList 
+					{deliveries} 
+					loading={false} 
+				/>
+			{/if}
 		{/if}
 	</div>
 </SingleBox>
@@ -157,5 +170,15 @@
 
 	.content {
 		padding: 30px;
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.loader-container {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		flex: 1;
 	}
 </style>

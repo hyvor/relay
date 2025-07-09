@@ -9,9 +9,7 @@
 	export let onDelete: (webhook: Webhook) => void;
 </script>
 
-{#if loading}
-	<div class="loading">Loading...</div>
-{:else if webhooks.length === 0}
+{#if webhooks.length === 0}
     <IconMessage empty size="large" />
 {:else}
 	<div class="webhooks-list">
@@ -26,15 +24,10 @@
 {/if}
 
 <style>
-	.loading {
-		text-align: center;
-		padding: 60px 20px;
-		color: var(--text-light);
-	}
-
 	.webhooks-list {
 		display: flex;
 		flex-direction: column;
 		gap: 16px;
 	}
+
 </style> 

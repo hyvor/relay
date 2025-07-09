@@ -7,7 +7,8 @@
 		toast,
 		confirm,
 		IconButton,
-		Tag
+		Tag,
+		Loader
 	} from '@hyvor/design/components';
 	import IconPlus from '@hyvor/icons/IconPlus';
 	import IconCopy from '@hyvor/icons/IconCopy';
@@ -100,12 +101,18 @@
 	</div>
 
 	<div class="content">
-		<APIKeyList
-			{apiKeys}
-			{loading}
-			onDelete={handleDeleteApiKey}
-			onEdit={handleEditApiKey}
-		/>
+		{#if loading}
+			<div class="loader-container">
+				<Loader />
+			</div>
+		{:else}
+			<APIKeyList
+				{apiKeys}
+				loading={false}
+				onDelete={handleDeleteApiKey}
+				onEdit={handleEditApiKey}
+			/>
+		{/if}
 	</div>
 </SingleBox>
 
@@ -175,6 +182,16 @@
 
 	.content {
 		padding: 30px;
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.loader-container {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		flex: 1;
 	}
 
 	.modal-content {
