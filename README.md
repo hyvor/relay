@@ -17,3 +17,9 @@
 - **Feedback Loops**: Integrate with feedback loops to manage complaints.
 - **Suppressions**: Automatically manage email suppressions (bounces, unsubscribes, etc.).
 - **DNS Automation**: Automatically manage DNS records for PTR, SPF, and DKIM.
+- **Webhooks**: Receive HTTP callbacks for email events.
+- **Health Checks**: Monitor the health of the service in the dashboard.
+- **Observability**:
+  - Prometheus metrics
+  - Grafana dashboards
+  - Loki logs
