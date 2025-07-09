@@ -147,14 +147,19 @@
 	}
 
 	function handleVerifyDomain(domain: Domain) {
+		const toastId = toast.loading('Loading...');
 		verifyDomain(domain.id, domain.domain)
 			.then((updatedDomain) => {
 				domains = domains.map(d => d.id === updatedDomain.id ? updatedDomain : d);
-				toast.success('Domain verification initiated');
+				if (updatedDomain.dkim_verified) {
+					toast.success('Domain verified', { id: toastId });
+				} else {
+					toast.error('Domain verification failed', { id: toastId });
+				}
 			})
 			.catch((error) => {
 				console.error('Failed to verify domain:', error);
-				toast.error('Failed to verify domain');
+				toast.error('Failed to verify domain', { id: toastId });
 			});
 	}
 
@@ -257,6 +262,7 @@
 		<div>
 			<div class="confirm-text">
 				You are about to delete the domain <strong>{domainToDelete.domain}</strong>. This action cannot be undone.
+				Deleting a domain will stop all sending activity from that domain and remove all associated credentials and sending logs
 				Type the domain name to confirm:
 			</div>
 			<TextInput
@@ -305,10 +311,10 @@
 	}
 
 	.content {
-		padding: 30px;
 		flex: 1;
 		display: flex;
 		flex-direction: column;
+		overflow: auto;
 	}
 	
 	.loader-container {

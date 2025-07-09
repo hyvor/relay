@@ -2,6 +2,7 @@
 	import { Modal, TextInput, SplitControl, toast } from '@hyvor/design/components';
 	import { createDomain } from '../../lib/actions/domainActions';
 	import type { Domain } from '../../types';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		show: boolean;
@@ -13,6 +14,7 @@
 	let domain = $state('');
 	let loading = $state(false);
 	let errors = $state<Record<string, string>>({});
+	let input: HTMLInputElement | null = null;
 
 	function resetForm() {
 		domain = '';
@@ -61,6 +63,12 @@
 		show = false;
 		resetForm();
 	}
+
+	$:(() => {
+		if (show && input) {
+			input.focus();
+		}
+	});
 </script>
 
 <Modal
@@ -90,6 +98,7 @@
 				placeholder="example.com"
 				block
 				disabled={loading}
+				bind:input={input!}
 			/>
 		</SplitControl>
 	</div>
