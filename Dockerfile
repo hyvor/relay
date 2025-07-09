@@ -1,6 +1,7 @@
 FROM oven/bun:1 AS bun
 FROM composer:2.8.8 AS composer
 FROM dunglas/frankenphp:1.4.4-php8.4 AS frankenphp
+FROM golang:1.23.4 AS golang
 
 FROM bun AS frontend-base
 WORKDIR /app/frontend
@@ -12,19 +13,44 @@ FROM frontend-base AS frontend-dev
 RUN bun install
 CMD ["bun", "run", "dev"]
 
+FROM frontend-base AS frontend-prod
+RUN  bun install \
+    && bun run build \
+    && find . -maxdepth 1 -not -name build -not -name . -exec rm -rf {} \;
+
+FROM golang AS worker
+WORKDIR /app/worker
+COPY worker/ /app/worker/
+RUN go mod download
+RUN go build -o /app/worker/worker .
+
 FROM frankenphp AS backend-base
+ENV APP_RUNTIME="Runtime\FrankenPhpSymfony\Runtime"
 WORKDIR /app/backend
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
-RUN install-php-extensions zip intl pdo_pgsql opcache apcu amqp
+COPY --from=ghcr.io/php/pie:bin /pie /usr/bin/pie
+COPY backend/composer.json backend/composer.lock /app/backend/
+# RUN install-php-extensions zip intl pdo_pgsql opcache apcu
+RUN pie install 
 RUN apt update  && apt install -y supervisor
 
 FROM backend-base AS backend-dev
-ENV APP_RUNTIME="Runtime\FrankenPhpSymfony\Runtime"
 RUN curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh' | bash && apt install -y symfony-cli
-RUN install-php-extensions pcov
+RUN pie install pecl/pcov
 COPY backend /app/backend/
 COPY meta/image/dev/Caddyfile.dev /etc/caddy/Caddyfile
 COPY meta/image/dev/run.dev /app/run
 COPY meta/image/dev/supervisord.conf.dev /etc/supervisor/conf.d/supervisord.conf
 CMD ["sh", "/app/run"]
 
+FROM backend-base AS backend-prod
+COPY backend /app/backend
+RUN composer install --no-interaction --no-dev --optimize-autoloader --classmap-authoritative
+COPY --from=frontend-prod /app/frontend/build /app/static
+COPY --from=worker /app/worker/worker /app/worker
+COPY meta/image/prod/Caddyfile.prod /etc/caddy/Caddyfile
+COPY meta/image/prod/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY meta/image/prod/run.prod /app/run
+
+EXPOSE 80
+CMD ["sh", "/app/run"]

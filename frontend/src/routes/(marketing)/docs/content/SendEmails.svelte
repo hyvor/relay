@@ -5,9 +5,8 @@
 <h1>Send Emails</h1>
 
 <p>
-	This page explains how to send emails using the Console API. Before getting started, make sure to <a
-		href="/docs">set up a project</a
-	>
+	This page explains how to send emails using the Console API. Before getting started, make sure
+	to <a href="/docs">set up a project</a>
 	and familiarize yourself with the
 	<a href="/docs/api-console">Console API</a>.
 </p>
@@ -129,8 +128,8 @@ type Attachment = {
 
 <p>
 	The HTTP request to send an email may fail due to network issues or other temporary problems. To
-	prevent losing emails, we recommend configuring your application to retry automatically if the API
-	returns a non-2xx status code with incremental backoff.
+	prevent losing emails, we recommend configuring your application to retry automatically if the
+	API returns a non-2xx status code with incremental backoff.
 </p>
 
 <p>
@@ -147,10 +146,10 @@ type Attachment = {
 <h3 id="idempotency">Idempotency</h3>
 
 <p>
-	When retrying it is possible that your request was already accepted and queued by the API, but the
-	response was not received by your application due to a network issue. To prevent sending the same
-	email multiple times, you can use the <code>X-Idempotency-Key</code> header in your request. This header
-	should contain a unique idempotency key for each email you send.
+	When retrying it is possible that your request was already accepted and queued by the API, but
+	the response was not received by your application due to a network issue. To prevent sending the
+	same email multiple times, you can use the <code>X-Idempotency-Key</code> header in your request.
+	This header should contain a unique idempotency key for each email you send.
 </p>
 
 <p>Some idempotency key examples:</p>
@@ -164,16 +163,16 @@ type Attachment = {
 	<li>
 		<code>
 			order-confirmation-{'{orderId}'}
-		</code> <br />(since the order confirmation email is sent only once for an order). Note that you
-		should use a new key if you have a "resend" option for an email.
+		</code> <br />(since the order confirmation email is sent only once for an order). Note that
+		you should use a new key if you have a "resend" option for an email.
 	</li>
 </ul>
 
 <p>
 	Idempotency keys are saved for 24 hours. If you retry a request with the same idempotency key
-	before the 24-hour period ends, the API will return the same response as the first request without
-	actually processing it. If the idempotency key is not found, the API will process the request as
-	usual and return a new response.
+	before the 24-hour period ends, the API will return the same response as the first request
+	without actually processing it. If the idempotency key is not found, the API will process the
+	request as usual and return a new response.
 </p>
 
 <p>
@@ -215,12 +214,15 @@ type Attachment = {
 </Table>
 
 <p>
-	If the server returns a 5xx status code, idempotency keys are not saved, and retrying the request
-	is recommended. For 4xx status codes, except 429, the idempotency key is saved, and retrying the
-	request will not have any effect unless you change the request and use a new idempotency key.
+	If the server returns a 5xx status code, idempotency keys are not saved, and retrying the
+	request is recommended. For 4xx status codes, except 429, the idempotency key is saved, and
+	retrying the request will not have any effect unless you change the request and use a new
+	idempotency key.
 </p>
 
-<!-- <h2 id="rate-limit">Rate Limiting</h2>
+<h2 id="rate-limit">Rate Limiting</h2>
+
+<!-- 
 
 <p>TODO</p> -->
 

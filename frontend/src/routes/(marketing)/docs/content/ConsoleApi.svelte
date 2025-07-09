@@ -7,9 +7,7 @@
 
 <p>
 	The Console API provides a way to interact with the features of the Console programmatically. It
-	is also used to send
-	<a href="/docs/send-transactional">transactional</a> and
-	<a href="/docs/send-distributional">distributional</a> emails.
+	is also used to <a href="/docs/send-emails">send emails</a>.
 </p>
 
 <p>
@@ -26,8 +24,8 @@
 		<strong>Content-Type</strong>: <code>application/json</code> (both for requests and responses)
 	</li>
 	<li>
-		<strong>Authentication</strong>: Set the <code>Authorization</code> header with your API key as
-		a Bearer token:
+		<strong>Authentication</strong>: Set the <code>Authorization</code> header with your API key
+		as a Bearer token:
 
 		<CodeBlock
 			code={`
@@ -93,7 +91,7 @@ Authorization: Bearer <your_api_key>
 		<a href="#domains">Domains</a>
 	</li>
 	<li>
-		<a href="#webhooks">Webhooks</a>
+		<!-- <a href="#webhooks">Webhooks</a> -->
 	</li>
 </ul>
 
@@ -113,6 +111,10 @@ Authorization: Bearer <your_api_key>
 		<a href="#get-send">GET /sends/:id</a> - Get a specific sent email by ID
 	</li>
 </ul>
+
+<h4 id="send-email">Send Email</h4>
+<h4 id="get-sends">Get Sends</h4>
+<h4 id="get-send">Get Send</h4>
 
 <h3 id="domains">Domains</h3>
 
@@ -136,9 +138,7 @@ Authorization: Bearer <your_api_key>
 <p>Objects:</p>
 
 <ul>
-	<li>
-		<a href="#domain-object">Domain Object</a>
-	</li>
+	<li>Domain Object</li>
 </ul>
 
 <ul></ul>
