@@ -5,6 +5,8 @@ namespace App\Service\Domain;
 use App\Entity\Domain;
 use App\Entity\Project;
 use App\Repository\DomainRepository;
+use App\Service\Domain\Event\DomainCreatedEvent;
+use App\Service\Domain\Event\DomainDeletedEvent;
 use App\Service\Domain\Event\DomainVerifiedEvent;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -58,6 +60,8 @@ class DomainService
         $this->em->persist($domain);
         $this->em->flush();
 
+        $this->eventDispatcher->dispatch(new DomainCreatedEvent($domain));
+
         return $domain;
     }
 
@@ -98,17 +102,19 @@ class DomainService
         $domain->setDkimCheckedAt($this->now());
         $domain->setDkimErrorMessage($result->errorMessage);
 
+        $this->em->persist($domain);
+        $this->em->flush();
+
         if ($result->verified) {
             $this->eventDispatcher->dispatch(new DomainVerifiedEvent($domain, $result));
         }
-
-        $this->em->persist($domain);
-        $this->em->flush();
     }
 
     public function deleteDomain(Domain $domain): void
     {
         $this->em->remove($domain);
         $this->em->flush();
+
+        $this->eventDispatcher->dispatch(new DomainDeletedEvent($domain));
     }
 }
