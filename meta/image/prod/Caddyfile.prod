@@ -1,0 +1,38 @@
+{
+	frankenphp {
+        worker "/app/backend/public/index.php" {$WORKERS:0}
+    }
+}
+
+:80 {
+	# backend
+	@backend {
+		path /api/*
+	}
+	handle @backend {
+		root * /app/backend/public
+		php_server {
+		   file_server off
+           try_files index.php
+        }
+    }
+
+	# static pages
+	handle {
+		root * /app/static
+		file_server {
+			pass_thru
+		}
+		encode zstd gzip
+		try_files {path} {path}.html
+	}
+
+	# fallback
+	handle {
+		root * /app/static
+		encode zstd gzip
+		file_server
+        header Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+		rewrite * /200.html
+	}
+}

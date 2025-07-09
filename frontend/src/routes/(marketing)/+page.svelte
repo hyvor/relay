@@ -12,7 +12,7 @@
 	<link rel="canonical" href="https://post.hyvor.com" />
 </svelte:head>
 
-<div class="hds-container">
+<div class="hds-container wrap">
 	<section>
 		<h1>Hyvor Relay</h1>
 		<h2>Email API for Developers</h2>
@@ -63,6 +63,10 @@
 		margin-top: 12px;
 		margin-bottom: 18px;
 		color: var(--text-light);
+	}
+
+	.wrap {
+		padding-bottom: 100px;
 	}
 
 	.tags {

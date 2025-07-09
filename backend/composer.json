@@ -8,20 +8,21 @@
         "ext-ctype": "*",
         "ext-iconv": "*",
         "ext-openssl": "*",
-        "doctrine/dbal": "^3.9.4",
-        "doctrine/doctrine-bundle": "^2.14",
+        "ext-pdo_pgsql": "*",
+        "ext-apcu": "*",
+        "doctrine/dbal": "^3.9.5",
+        "doctrine/doctrine-bundle": "^2.15",
         "doctrine/doctrine-migrations-bundle": "^3.4.2",
-        "doctrine/orm": "^3.3.3",
+        "doctrine/orm": "^3.5.0",
         "egulias/email-validator": "^4.0.4",
         "hyvor/internal": "^3.0.5",
         "phpdocumentor/reflection-docblock": "^5.6.2",
         "phpmailer/phpmailer": "^6.10",
         "phpstan/phpdoc-parser": "^2.1",
         "runtime/frankenphp-symfony": "^0.2.0",
-        "symfony/amqp-messenger": "7.2.*",
         "symfony/console": "7.2.*",
         "symfony/dotenv": "7.2.*",
-        "symfony/flex": "^2.7.1",
+        "symfony/flex": "^2.8.1",
         "symfony/framework-bundle": "7.2.*",
         "symfony/lock": "7.2.*",
         "symfony/messenger": "7.2.*",
@@ -69,13 +70,7 @@
         "auto-scripts": {
             "cache:clear": "symfony-cmd",
             "assets:install %PUBLIC_DIR%": "symfony-cmd"
-        },
-        "post-install-cmd": [
-            "@auto-scripts"
-        ],
-        "post-update-cmd": [
-            "@auto-scripts"
-        ]
+        }
     },
     "conflict": {
         "symfony/symfony": "*"
@@ -89,11 +84,11 @@
     },
     "require-dev": {
         "dama/doctrine-test-bundle": "^8.3",
-        "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^12.2.1",
+        "phpstan/phpstan": "^2.1.17",
+        "phpunit/phpunit": "^12.2.6",
         "symfony/browser-kit": "7.2.*",
         "symfony/css-selector": "7.2.*",
-        "symfony/maker-bundle": "^1.63",
+        "symfony/maker-bundle": "^1.64",
         "zenstruck/foundry": "^2.6",
         "zenstruck/messenger-test": "^1.11"
     }
