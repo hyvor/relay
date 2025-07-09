@@ -44,6 +44,12 @@
 - The frontend is built with **SvelteKit** and [**Hyvor Design System**](https://github.com/hyvor/design).
 - **PGSQL** is used for the database as well as for the queue.
 
+## Roadmap & Community
+
+- [Roadmap](https://hyvor.com/roadmap)
+- [HYVOR Community](https://hyvor.community) (Best for discussions and community support)
+- [Discord](https://hyvor.com/discord) (Best for keeping up with the latest updates)
+
 ## Contributing
 
 Visit [hyvor/dev](https://github.com/hyvor/dev) to set up HYVOR development environment. Then, run `./run relay` to start Hyvor Relay at `https://relay.hyvor.localhost`.
@@ -52,12 +58,16 @@ Visit [hyvor/dev](https://github.com/hyvor/dev) to set up HYVOR development envi
 - `/frontend`: SvelteKit frontend
 - `/worker`: Go services (single binary)
 
+Even though it is written for AI agents, [AGENTS.md](https://github.com/hyvor/relay/blob/readme/AGENTS.md) contains useful information on the project structure and development practices.
+
 <!-- ## Performance
 
 TODO -->
 
 ## License
 
-Hyvor Relay is licensed under the [AGPL-3.0 License](https://github.com/hyvor/relay/blob/readme/LICENSE). AGPLv3 requires you to share the source code of your modifications if you run the software on a server and allow others to use it. If you want to use Hyvor Relay in a closed-source project, please contact us for an [Enterprise License](https://hyvor.com/enterprise).
+Hyvor Relay is licensed under the [AGPL-3.0 License](https://github.com/hyvor/relay/blob/readme/LICENSE). AGPLv3 requires you to share the source code of your modifications if you run the software on a server and allow others to use it. For
+
+[Enterprise License](https://hyvor.com/enterprise).
 
 Copyright © HYVOR. HYVOR name and logo are trademarks of HYVOR.
