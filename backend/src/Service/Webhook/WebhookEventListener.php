@@ -13,13 +13,27 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 class WebhookEventListener
 {
 
+    public function __construct(
+        private WebhookService $webhookService,
+    )
+    {
+    }
+
     /**
      * @param callable(): object $objectFactory
      */
     private function sendWebhooks(Project $project, WebhooksEventEnum $eventType, callable $objectFactory): void
     {
 
-        $webhooks =
+        $webhooks = $this->webhookService->getWebhooksForEvent($project, $eventType);
+
+        foreach ($webhooks as $webhook) {
+            $this->webhookService->createWebhookDelivery(
+                $webhook,
+                $eventType,
+                $objectFactory()
+            );
+        }
 
     }
 

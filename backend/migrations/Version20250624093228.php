@@ -29,7 +29,7 @@ final class Version20250624093228 extends AbstractMigration
                 event VARCHAR(255) NOT NULL,
                 status webhook_delivery_status NOT NULL DEFAULT 'pending',
                 request_body TEXT NOT NULL,
-                response TEXT NOT NULL
+                response TEXT
             );
          SQL
         );

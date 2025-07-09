@@ -30,6 +30,7 @@ final class WebhookFactory extends PersistentProxyObjectFactory
             'updated_at' => new \DateTimeImmutable(),
             'url' => self::faker()->url(),
             'description' => self::faker()->text(),
+            'project' => ProjectFactory::new(),
             'events' => [],
         ];
     }

@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Entity\Type\WebhookDeliveryStatus;
+use App\Entity\Type\WebhooksEventEnum;
 use App\Repository\WebhookDeliveryRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -28,8 +29,8 @@ class WebhookDelivery
     #[ORM\Column(length: 255)]
     private string $url;
 
-    #[ORM\Column(length: 255)]
-    private string $event;
+    #[ORM\Column(enumType: WebhooksEventEnum::class)]
+    private WebhooksEventEnum $event;
 
     #[ORM\Column(enumType: WebhookDeliveryStatus::class)]
     private WebhookDeliveryStatus $status ;
@@ -38,7 +39,7 @@ class WebhookDelivery
     private string $request_body;
 
     #[ORM\Column()]
-    private string $response;
+    private ?string $response;
 
     public function getId(): int
     {
@@ -100,12 +101,12 @@ class WebhookDelivery
         return $this;
     }
 
-    public function getEvent(): string
+    public function getEvent(): WebhooksEventEnum
     {
         return $this->event;
     }
 
-    public function setEvent(string $event): static
+    public function setEvent(WebhooksEventEnum $event): static
     {
         $this->event = $event;
 
@@ -136,12 +137,12 @@ class WebhookDelivery
         return $this;
     }
 
-    public function getResponse(): string
+    public function getResponse(): ?string
     {
         return $this->response;
     }
 
-    public function setResponse(string $response): static
+    public function setResponse(?string $response): static
     {
         $this->response = $response;
 
