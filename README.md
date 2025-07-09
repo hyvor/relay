@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://relay.hyvor.com">
-    Website
+    Email API for Developers
   </a>
     <span> | </span>
     <a href="https://relay.hyvor.com/hosting">
