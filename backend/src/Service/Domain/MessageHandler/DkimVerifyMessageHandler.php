@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\Domain\Handler;
+namespace App\Service\Domain\MessageHandler;
 
 use App\Service\Domain\DomainService;
 use App\Service\Domain\Message\DkimVerifyMessage;
