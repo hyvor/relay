@@ -42,16 +42,18 @@
 			{/snippet}
 			DNS Record
 		</Button>
-		<Button
-			color="input"
-			size="small"
-			on:click={() => onVerify(domain)}
-		>
-			{#snippet start()}
-				<IconArrowClockwise size={12} />
-			{/snippet}
-			Verify
-		</Button>
+		{#if !domain.dkim_verified}
+			<Button
+				color="input"
+				size="small"
+				on:click={() => onVerify(domain)}
+			>
+				{#snippet start()}
+					<IconArrowClockwise size={12} />
+				{/snippet}
+				Verify
+			</Button>
+		{/if}
 		<IconButton
 			variant="fill-light"
 			color="red"
@@ -70,7 +72,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-start;
-		padding: 20px;
+		padding: 10px;
 	}
 
 	.domain-info {

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import DomainRow from './DomainRow.svelte';
 	import type { Domain } from '../../types';
-	import { IconMessage, Loader } from '@hyvor/design/components';
+	import { IconMessage } from '@hyvor/design/components';
 
 	interface Props {
 		domains: Domain[];
@@ -13,9 +13,7 @@
 	let { domains, loading, onDelete, onVerify }: Props = $props();
 </script>
 
-{#if loading}
-	<Loader />
-{:else if domains.length === 0}
+{#if domains.length === 0}
 	<IconMessage empty size="large" />
 {:else}
 	<div class="domains-list">

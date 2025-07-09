@@ -13,9 +13,7 @@
 	let { apiKeys, loading, onDelete, onEdit }: Props = $props();
 </script>
 
-{#if loading}
-	<div class="loading">Loading...</div>
-{:else if apiKeys.length === 0}
+{#if apiKeys.length === 0}
 	<IconMessage empty size="large" />
 {:else}
 	<div class="api-keys-list">
@@ -26,12 +24,6 @@
 {/if}
 
 <style>
-	.loading {
-		text-align: center;
-		padding: 60px 20px;
-		color: var(--text-light);
-	}
-
 	.api-keys-list {
 		display: flex;
 		flex-direction: column;
