@@ -37,6 +37,10 @@
 - **Easy scaling**: Add more servers and IP addresses as needed.
 - **Observability**: Prometheus metrics, Grafana dashboards, and Loki logs for monitoring.
 
+## Architecture
+
+Hyvor Relay's API is written in **PHP + Symfony**. The email workers, webhook handlers, DNS server, and the incoming SMTP server are written in **Go**. The frontend is built with **SvelteKit** and [**Hyvor Design System**](https://github.com/hyvor/design). **PGSQL** is used for the database. The queue also uses PGSQL with `LOCK FOR UPDATE`.
+
 ## Contributing
 
-Visit [hyvor/dev](https://github.com/hyvor/dev) to set up HYVOR development environment.
+Visit [hyvor/dev](https://github.com/hyvor/dev) to set up HYVOR development environment. Run `./run relay` to start Hyvor Relay at `https://relay.hyvor.localhost`.
