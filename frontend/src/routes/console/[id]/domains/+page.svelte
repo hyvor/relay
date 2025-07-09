@@ -148,8 +148,8 @@
 
 	function handleVerifyDomain(domain: Domain) {
 		verifyDomain(domain.id, domain.domain)
-			.then(() => {
-				loadDomains(true);
+			.then((updatedDomain) => {
+				domains = domains.map(d => d.id === updatedDomain.id ? updatedDomain : d);
 				toast.success('Domain verification initiated');
 			})
 			.catch((error) => {
