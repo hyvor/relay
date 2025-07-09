@@ -130,9 +130,7 @@
 			background-color: var(--hover);
 		}
 	}
-	.nav-links :global(a.active) {
-		background-color: var(--accent-light-mid);
-	}
+
 
 	@media (max-width: 992px) {
 		.wrap {
