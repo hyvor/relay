@@ -39,8 +39,25 @@
 
 ## Architecture
 
-Hyvor Relay's API is written in **PHP + Symfony**. The email workers, webhook handlers, DNS server, and the incoming SMTP server are written in **Go**. The frontend is built with **SvelteKit** and [**Hyvor Design System**](https://github.com/hyvor/design). **PGSQL** is used for the database. The queue also uses PGSQL with `LOCK FOR UPDATE`.
+- The API is written in **PHP + Symfony**.
+- The email workers, webhook handlers, DNS server, and the incoming SMTP server are written in **Go**.
+- The frontend is built with **SvelteKit** and [**Hyvor Design System**](https://github.com/hyvor/design).
+- **PGSQL** is used for the database as well as for the queue.
 
 ## Contributing
 
-Visit [hyvor/dev](https://github.com/hyvor/dev) to set up HYVOR development environment. Run `./run relay` to start Hyvor Relay at `https://relay.hyvor.localhost`.
+Visit [hyvor/dev](https://github.com/hyvor/dev) to set up HYVOR development environment. Then, run `./run relay` to start Hyvor Relay at `https://relay.hyvor.localhost`.
+
+- `/backend`: Symfony API backend
+- `/frontend`: SvelteKit frontend
+- `/worker`: Go services (single binary)
+
+<!-- ## Performance
+
+TODO -->
+
+## License
+
+Hyvor Relay is licensed under the [AGPL-3.0 License](https://github.com/hyvor/relay/blob/readme/LICENSE). AGPLv3 requires you to share the source code of your modifications if you run the software on a server and allow others to use it. If you want to use Hyvor Relay in a closed-source project, please contact us for an [Enterprise License](https://hyvor.com/enterprise).
+
+Copyright © HYVOR. HYVOR name and logo are trademarks of HYVOR.
