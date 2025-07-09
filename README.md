@@ -1,27 +1,71 @@
-## Hyvor Relay
+# Hyvor Relay
+
+[Hyvor Relay](https://relay.hyvor.com) is a self-hosted, open-source email API for developers. It is designed to be simple to self-host, easy to manage, and powerful enough to handle all your email needs.
+
+<p align="center">
+  <a href="https://relay.hyvor.com">
+    <img src="https://hyvor.com/img/logo.png" alt="Hyvor Relay Logo" width="130"/>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://relay.hyvor.com">
+    Website
+  </a>
+    <span> | </span>
+    <a href="https://relay.hyvor.com/hosting">
+    Self-Hosting Docs
+  </a>
+    <span> | </span>
+    <a href="https://relay.hyvor.com/docs">
+    Product Docs
+  </a>
+</p>
+
+## Features
+
+- **Self-Hosted**: Docker compose or swarm-based deployment.
+- **Email API**: Send emails using a simple API.
+- **Logging**: View logs of sent emails.
+- **Handle Greylisting & Retries**: Automatically manage greylisting and retries.
+- **Bounce Handling**: Automatically handle bounced emails.
+- **Feedback Loops**: Integrate with feedback loops to manage complaints.
+- **Suppressions**: Automatically manage email suppressions (bounces, unsubscribes, etc.).
+- **DNS Automation**: Automatically manage DNS records for PTR, SPF, and DKIM.
+- **Webhooks**: Receive HTTP callbacks for email events.
+- **Health Checks**: Monitor the health of the service in the dashboard.
+- **Easy scaling**: Add more servers and IP addresses as needed.
+- **Observability**: Prometheus metrics, Grafana dashboards, and Loki logs for monitoring.
 
 ## Architecture
 
-Basic architecture of the service:
+- **PHP + Symfony** for the API backend.
+- **Go** for email workers, webhook handlers, DNS server, and the incoming SMTP server.
+- **SvelteKit** and [**Hyvor Design System**](https://github.com/hyvor/design) for the frontend.
+- **PGSQL** is used for the database as well as for the queue.
 
-- Central PGSQL database for storing emails and metadata
-- Symfony for the API
-- Go for the workers
+## Roadmap & Community
 
-Servers:
+- [Roadmap](https://hyvor.com/roadmap)
+- [HYVOR Community](https://hyvor.community) (best for discussions and support)
+- [Discord](https://hyvor.com/discord) (best for latest updates)
 
-- API servers: handles HTTP requests
-- Worker servers: process queued emails.
+## Contributing
 
-Lifecycle of an email:
+Visit [hyvor/dev](https://github.com/hyvor/dev) to set up the HYVOR development environment. Then, run `./run relay` to start Hyvor Relay at `https://relay.hyvor.localhost`.
 
-- User sends an email via API
-- API server validates and queues the email
-- Workers send the queued emails
+- `/backend`: Symfony API backend
+- `/frontend`: SvelteKit frontend
+- `/worker`: Go services (single binary)
 
-Adding a worker server:
+Even though it is written for AI agents, [AGENTS.md](https://github.com/hyvor/relay/blob/readme/AGENTS.md) contains useful information on the project structure and development practices.
 
-- First, you add the worker server in the configuration with a unique worker ID.
-- Then, you start the worker server with the same `WORKER_ID` env.
-- Once the server is ready for consuming emails (pings are sent to the database), you can start the warmup process.
-- It will eventually (in a couple of days) reach the maximum sending rate defined in the configuration.
+<!-- ## Performance
+
+TODO -->
+
+## License
+
+Hyvor Relay is licensed under the [AGPL-3.0 License](https://github.com/hyvor/relay/blob/readme/LICENSE). AGPLv3 requires you to share the source code of your modifications if you run the software on a server and allow others to use it. For other use cases where you cannot use AGPLv3, contact HYVOR for an [Enterprise License](https://hyvor.com/enterprise).
+
+Copyright © HYVOR. HYVOR name and logo are trademarks of HYVOR.
