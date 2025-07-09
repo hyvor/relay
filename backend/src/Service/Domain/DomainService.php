@@ -8,14 +8,18 @@ use App\Repository\DomainRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Hyvor\Internal\Util\Crypt\Encryption;
+use Symfony\Component\Clock\ClockAwareTrait;
 
 class DomainService
 {
 
+    use ClockAwareTrait;
+
     public function __construct(
         private DomainRepository $domainRepository,
         private EntityManagerInterface $em,
-        private Encryption $encryption
+        private Encryption $encryption,
+        private DkimVerificationService $dkimVerificationService
     )
     {
     }
@@ -81,6 +85,18 @@ class DomainService
         /** @var Domain[] $results */
         $results = $qb->getQuery()->getResult();
         return new ArrayCollection($results);
+    }
+
+    public function verifyDkimAndUpdate(Domain $domain): void
+    {
+        $result = $this->dkimVerificationService->verify($domain);
+
+        $domain->setDkimVerified($result->verified);
+        $domain->setDkimCheckedAt($this->now());
+        $domain->setDkimErrorMessage($result->errorMessage);
+
+        $this->em->persist($domain);
+        $this->em->flush();
     }
 
     public function deleteDomain(Domain $domain): void

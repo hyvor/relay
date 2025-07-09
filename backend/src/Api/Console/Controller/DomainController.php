@@ -74,19 +74,15 @@ class DomainController extends AbstractController
         return new JsonResponse([]);
     }
 
-    #[Route('/domains/{id}', methods: 'POST')]
+    #[Route('/domains/{id}/verify', methods: 'POST')]
     #[ScopeRequired(Scope::DOMAINS_WRITE)]
-    public function verifyDomain(
-        Domain $domain,
-        #[MapRequestPayload] DomainCreateInput $createInput
-    ): JsonResponse
+    public function verifyDomain(Domain $domain): JsonResponse
     {
-        if ($domain->getDomain() !== $createInput->domain) {
-            throw new BadRequestException('Domain name does not match');
+        if ($domain->getDkimVerified()) {
+            throw new BadRequestException('Domain is already verified');
         }
 
-        // TODO: Implement domain verification logic here
-
+        $this->domainService->verifyDkimAndUpdate($domain);
         return new JsonResponse(new DomainObject($domain));
     }
 
