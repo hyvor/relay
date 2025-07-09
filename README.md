@@ -39,20 +39,20 @@
 
 ## Architecture
 
-- The API is written in **PHP + Symfony**.
-- The email workers, webhook handlers, DNS server, and the incoming SMTP server are written in **Go**.
-- The frontend is built with **SvelteKit** and [**Hyvor Design System**](https://github.com/hyvor/design).
+- **PHP + Symfony** for the API backend.
+- **Go** for email workers, webhook handlers, DNS server, and the incoming SMTP server.
+- **SvelteKit** and [**Hyvor Design System**](https://github.com/hyvor/design) for the frontend.
 - **PGSQL** is used for the database as well as for the queue.
 
 ## Roadmap & Community
 
 - [Roadmap](https://hyvor.com/roadmap)
-- [HYVOR Community](https://hyvor.community) (Best for discussions and community support)
-- [Discord](https://hyvor.com/discord) (Best for keeping up with the latest updates)
+- [HYVOR Community](https://hyvor.community) (best for discussions and support)
+- [Discord](https://hyvor.com/discord) (best for latest updates)
 
 ## Contributing
 
-Visit [hyvor/dev](https://github.com/hyvor/dev) to set up HYVOR development environment. Then, run `./run relay` to start Hyvor Relay at `https://relay.hyvor.localhost`.
+Visit [hyvor/dev](https://github.com/hyvor/dev) to set up the HYVOR development environment. Then, run `./run relay` to start Hyvor Relay at `https://relay.hyvor.localhost`.
 
 - `/backend`: Symfony API backend
 - `/frontend`: SvelteKit frontend
@@ -66,8 +66,6 @@ TODO -->
 
 ## License
 
-Hyvor Relay is licensed under the [AGPL-3.0 License](https://github.com/hyvor/relay/blob/readme/LICENSE). AGPLv3 requires you to share the source code of your modifications if you run the software on a server and allow others to use it. For
-
-[Enterprise License](https://hyvor.com/enterprise).
+Hyvor Relay is licensed under the [AGPL-3.0 License](https://github.com/hyvor/relay/blob/readme/LICENSE). AGPLv3 requires you to share the source code of your modifications if you run the software on a server and allow others to use it. For other where you cannot use AGPLv3, you can purchase an [Enterprise License](https://hyvor.com/enterprise).
 
 Copyright © HYVOR. HYVOR name and logo are trademarks of HYVOR.
