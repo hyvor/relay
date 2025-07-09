@@ -29,6 +29,12 @@
 		</div>
 		<div class="domain-meta">
 			<span>Created <RelativeTime unix={domain.created_at} /></span>
+			{#if !domain.dkim_verified && domain.dkim_checked_at}
+				<span>Last Check: <RelativeTime unix={domain.dkim_checked_at} /></span>
+			{/if}
+			{#if !domain.dkim_verified && domain.dkim_error_message}
+				<span>Error: {domain.dkim_error_message}</span>
+			{/if}
 		</div>
 	</div>
 	<div class="domain-actions">
@@ -42,16 +48,18 @@
 			{/snippet}
 			DNS Record
 		</Button>
-		<Button
-			color="input"
-			size="small"
-			on:click={() => onVerify(domain)}
-		>
-			{#snippet start()}
-				<IconArrowClockwise size={12} />
-			{/snippet}
-			Verify
-		</Button>
+		{#if !domain.dkim_verified}
+			<Button
+				color="input"
+				size="small"
+				on:click={() => onVerify(domain)}
+			>
+				{#snippet start()}
+					<IconArrowClockwise size={12} />
+				{/snippet}
+				Verify
+			</Button>
+		{/if}
 		<IconButton
 			variant="fill-light"
 			color="red"
@@ -70,7 +78,9 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-start;
-		padding: 20px;
+		padding: 16px;
+		border-radius: 8px;
+		background-color: var(--bg-light);
 	}
 
 	.domain-info {

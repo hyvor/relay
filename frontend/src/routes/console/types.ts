@@ -108,4 +108,6 @@ export type Domain = {
     dkim_public_key: string;
     dkim_txt_value: string;
     dkim_verified: boolean;
+    dkim_checked_at?: number;
+    dkim_error_message?: string;
 }

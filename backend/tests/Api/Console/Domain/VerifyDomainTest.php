@@ -42,7 +42,6 @@ class VerifyDomainTest extends WebTestCase
 
     public function testVerifyDomainSuccess(): void
     {
-
         $project = ProjectFactory::createOne();
         $domain = DomainFactory::createOne([
             "project" => $project,
@@ -88,7 +87,6 @@ class VerifyDomainTest extends WebTestCase
 
     public function testVerifyDomainFailure(): void
     {
-
         $project = ProjectFactory::createOne();
         $domain = DomainFactory::createOne([
             "project" => $project,

@@ -34,7 +34,7 @@ export function deleteDomain(id: number) {
 
 export function verifyDomain(id: number, domain: string) {
 	return consoleApi.post<Domain>({
-		endpoint: `domains/${id}`,
+		endpoint: `domains/${id}/verify`,
 		data: {
 			domain
 		}

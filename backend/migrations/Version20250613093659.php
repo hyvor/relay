@@ -32,7 +32,7 @@ final class Version20250613093659 extends AbstractMigration
                 failed_at TIMESTAMPTZ,
                 status sends_status NOT NULL,
                 project_id BIGINT NOT NULL references projects(id) ON DELETE CASCADE,
-                domain_id BIGINT NOT NULL references domains(id),
+                domain_id BIGINT NOT NULL references domains(id) ON DELETE CASCADE,
                 queue_id BIGINT NOT NULL references queues(id),
                 from_address text NOT NULL,
                 from_name text,
