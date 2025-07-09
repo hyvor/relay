@@ -64,7 +64,7 @@
 		resetForm();
 	}
 
-	$:(() => {
+	$effect(() => {
 		if (show && input) {
 			input.focus();
 		}

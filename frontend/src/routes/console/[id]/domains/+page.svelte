@@ -27,6 +27,7 @@
 	let domainToDelete = $state<Domain | null>(null);
 	let deleteConfirmationText = $state('');
 	let selectedDomain = $state<Domain | null>(null);
+	let deleteInput: HTMLInputElement | null = null;
 	let domainSearchVal = $state('');
 	let domainSearch = $state('');
 	let hasMore = $state(true);
@@ -163,6 +164,11 @@
 			});
 	}
 
+	$effect(() => {
+		if (showDeleteModal && deleteInput) {
+			(deleteInput as HTMLInputElement).focus();
+		}
+	});
 
 </script>
 
@@ -269,7 +275,7 @@
 				bind:value={deleteConfirmationText}
 				placeholder={domainToDelete.domain}
 				block
-				autofocus
+				bind:input={deleteInput!}
 			/>
 		
 		</div>
@@ -314,6 +320,7 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
+		padding: 30px;
 		overflow: auto;
 	}
 	
