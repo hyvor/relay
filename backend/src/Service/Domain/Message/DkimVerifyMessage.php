@@ -2,7 +2,10 @@
 
 namespace App\Service\Domain\Message;
 
-class DkimVerifyMessage
+use Symfony\Component\Messenger\Attribute\AsMessage;
+
+#[AsMessage('sync')]
+readonly class DkimVerifyMessage
 {
 
     public function __construct(

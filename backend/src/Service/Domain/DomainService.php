@@ -5,10 +5,12 @@ namespace App\Service\Domain;
 use App\Entity\Domain;
 use App\Entity\Project;
 use App\Repository\DomainRepository;
+use App\Service\Domain\Event\DomainVerifiedEvent;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Hyvor\Internal\Util\Crypt\Encryption;
 use Symfony\Component\Clock\ClockAwareTrait;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class DomainService
 {
@@ -19,7 +21,8 @@ class DomainService
         private DomainRepository $domainRepository,
         private EntityManagerInterface $em,
         private Encryption $encryption,
-        private DkimVerificationService $dkimVerificationService
+        private DkimVerificationService $dkimVerificationService,
+        private EventDispatcherInterface $eventDispatcher
     )
     {
     }
@@ -94,6 +97,10 @@ class DomainService
         $domain->setDkimVerified($result->verified);
         $domain->setDkimCheckedAt($this->now());
         $domain->setDkimErrorMessage($result->errorMessage);
+
+        if ($result->verified) {
+            $this->eventDispatcher->dispatch(new DomainVerifiedEvent($domain, $result));
+        }
 
         $this->em->persist($domain);
         $this->em->flush();
