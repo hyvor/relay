@@ -21,7 +21,7 @@ jobs:
           run: docker build -t frontend-dev . --target frontend-dev
 
       -   name: Run Svelte Check
-          run: docker run frontend-dev npm run check
+          run: docker run frontend-dev bun run check
 
   phpstan:
     name: PHPStan

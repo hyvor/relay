@@ -3,22 +3,21 @@
 	import type { Webhook } from '../../types';
 	import { IconMessage } from '@hyvor/design/components';
 
-	export let webhooks: Webhook[];
-	export let loading: boolean;
-	export let onEdit: (webhook: Webhook) => void;
-	export let onDelete: (webhook: Webhook) => void;
+	interface Props {
+		webhooks: Webhook[];
+		onEdit: (webhook: Webhook) => void;
+		onDelete: (webhook: Webhook) => void;
+	}
+
+	let { webhooks, onEdit, onDelete }: Props = $props();
 </script>
 
 {#if webhooks.length === 0}
-    <IconMessage empty size="large" />
+	<IconMessage empty size="large" />
 {:else}
 	<div class="webhooks-list">
 		{#each webhooks as webhook (webhook.id)}
-			<WebhookRow 
-				{webhook} 
-				{onEdit} 
-				{onDelete} 
-			/>
+			<WebhookRow {webhook} {onEdit} {onDelete} />
 		{/each}
 	</div>
 {/if}
@@ -29,5 +28,4 @@
 		flex-direction: column;
 		gap: 16px;
 	}
-
-</style> 
+</style>
