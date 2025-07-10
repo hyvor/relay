@@ -73,13 +73,13 @@ func (f *TestFactory) Project() (int, error) {
 	return projectId, nil
 }
 
-func (f *TestFactory) WebhookDelivery(url string, requestBody string) error {
+func (f *TestFactory) WebhookDelivery(url string, requestBody string) (int, error) {
 	now := time.Now()
 
 	// First create a project
 	projectId, err := f.Project()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// Then create a webhook
@@ -91,14 +91,64 @@ func (f *TestFactory) WebhookDelivery(url string, requestBody string) error {
 	`, now, now, projectId, url, "Test webhook", `["test.event"]`).Scan(&webhookId)
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// Finally create the webhook delivery
-	_, err = f.conn.Exec(`
+	var webhookDeliveryId int
+	err = f.conn.QueryRow(`
 		INSERT INTO webhook_deliveries (created_at, updated_at, send_after, webhook_id, url, event, status, request_body, try_count)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-	`, now, now, now, webhookId, url, "test.event", "pending", requestBody, 0)
+		RETURNING id
+	`, now, now, now, webhookId, url, "test.event", "pending", requestBody, 0).Scan(&webhookDeliveryId)
 
-	return err
+	if err != nil {
+		return 0, err
+	}
+
+	return webhookDeliveryId, nil
+}
+
+type WebhookDeliveryEntity struct {
+	ID           int
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	SendAfter    time.Time
+	WebhookID    int64
+	URL          string
+	Event        string
+	Status       string
+	RequestBody  string
+	Response     sql.NullString
+	ResponseCode sql.NullInt64
+	TryCount     int
+}
+
+func getWebhookDeliveryEntityById(db *sql.DB, id int) (*WebhookDeliveryEntity, error) {
+	var delivery WebhookDeliveryEntity
+	row := db.QueryRow(`
+		SELECT 
+			id, created_at, updated_at, 
+			send_after, webhook_id, url, 
+			event, status, request_body, response, 
+			response_code, try_count
+		FROM webhook_deliveries WHERE id = $1
+	`, id)
+	if err := row.Scan(
+		&delivery.ID,
+		&delivery.CreatedAt,
+		&delivery.UpdatedAt,
+		&delivery.SendAfter,
+		&delivery.WebhookID,
+		&delivery.URL,
+		&delivery.Event,
+		&delivery.Status,
+		&delivery.RequestBody,
+		&delivery.Response,
+		&delivery.ResponseCode,
+		&delivery.TryCount,
+	); err != nil {
+		return nil, err
+	}
+	return &delivery, nil
 }

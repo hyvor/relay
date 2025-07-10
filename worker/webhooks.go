@@ -182,6 +182,15 @@ func webhookWorker(
 							"error", err,
 						)
 					}
+
+					logger.Debug(
+						"Worker finalized webhook delivery",
+						"worker_id", id,
+						"webhook_delivery_id", delivery.Id,
+						"success", result.Success,
+						"response_status_code", result.ResponseStatusCode,
+						"response_body", result.ResponseBody,
+					)
 				}(delivery)
 
 			}

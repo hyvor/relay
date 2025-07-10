@@ -103,22 +103,21 @@ func (b *WebhooksBatch) FinalizeWebhookByResult(delivery *WebhookDelivery, resul
 	currentTry := delivery.TryCount + 1
 
 	sendAfter := getRetryInterval(currentTry, result.Success)
-	sendAfter = fmt.Sprintf("NOW() + INTERVAL '%s'", sendAfter)
 
 	_, err := b.tx.ExecContext(b.ctx, `
 		UPDATE webhook_deliveries
 		SET 
 			status = $1, 
-			response_body = $2, 
-			response_status_code = $3, 
+			response = $2, 
+			response_code = $3, 
 			updated_at = NOW(),
-			try_count = try_count + 1
+			try_count = try_count + 1,
 			send_after = `+sendAfter+`
-		WHERE id = $5
+		WHERE id = $4
 	`,
 		func() string {
 			if result.Success {
-				return "success"
+				return "delivered"
 			} else if currentTry >= WEBHOOKS_MAX_RETRIES {
 				return "failed"
 			} else {
@@ -127,7 +126,6 @@ func (b *WebhooksBatch) FinalizeWebhookByResult(delivery *WebhookDelivery, resul
 		}(),
 		result.ResponseBody,
 		result.ResponseStatusCode,
-		sendAfter,
 		delivery.Id,
 	)
 

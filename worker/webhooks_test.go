@@ -139,19 +139,28 @@ func (suite *WebhookWorkerTestSuite) TestWebhookDeliverySent() {
 	factory, err := NewTestFactory()
 	suite.NoError(err, "Failed to create test factory")
 
-	delivery := factory.WebhookDelivery(server.URL+"/webhook", `{"key": "value"}`)
-	suite.NoError(delivery, "Failed to create webhook delivery")
+	deliveryId, err := factory.WebhookDelivery(server.URL+"/webhook", `{"key": "value"}`)
+	suite.NoError(err, "Failed to create webhook delivery")
 
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go webhookWorker(ctx, 1, &wg, getTestDbConfig(), logger)
 	go func() {
 		defer wg.Done()
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 		cancel()
 	}()
 	wg.Wait()
 
 	suite.Contains(buf.String(), "Worker found webhook deliveries")
 	suite.Contains(buf.String(), "count=1")
+	suite.Contains(buf.String(), "Worker finalized webhook delivery")
+
+	delivery, err := getWebhookDeliveryEntityById(factory.conn, deliveryId)
+	suite.NoError(err, "Failed to get webhook delivery by ID")
+
+	suite.Equal("delivered", delivery.Status)
+	suite.Equal("OK", delivery.Response.String)
+	suite.Equal(200, int(delivery.ResponseCode.Int64))
+	suite.Equal(1, delivery.TryCount)
 }
