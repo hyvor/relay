@@ -32,9 +32,11 @@
 <h2 id="domains-in-console">Automating Domains using the API</h2>
 
 <p>
-	You can also use the <a href="/docs/api-console">Console API</a> to automate domain
-	configuration. This is useful if you allow your users to send emails using their own domains or
-	if you have a large number of domains to configure. See
+	Manually configuring domains might not be feasible if you have a large number of domains or if
+	you allow your users to send emails using their own domains. In such cases, use the <a
+		href="/docs/api-console">Console API</a
+	>
+	to automate domain configuration. See
 	<a href="/docs/api-console#domains">Domains in Console API</a> to get started.
 </p>
 

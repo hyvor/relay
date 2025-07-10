@@ -6,3 +6,5 @@ parameters:
         - public/
         - src/
         - tests/
+    scanDirectories:
+        - var/cache/dev/Symfony/Config/

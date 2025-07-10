@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"io"
 	"log/slog"
 	"sync"
 	"testing"
@@ -39,7 +40,7 @@ func TestEmailWorkersPoolSet(t *testing.T) {
 
 	var called []int
 	var mu sync.Mutex
-	mockWorker := func(ctx context.Context, id int, wg *sync.WaitGroup, config *DBConfig, logger *slog.Logger, ip GoStateIp) {
+	mockWorker := func(ctx context.Context, id int, wg *sync.WaitGroup, config *DBConfig, logger *slog.Logger, ip GoStateIp, instanceDomain string) {
 		defer wg.Done()
 		mu.Lock()
 		called = append(called, id)
@@ -50,12 +51,13 @@ func TestEmailWorkersPoolSet(t *testing.T) {
 		ctx:        context.Background(),
 		cancelFunc: cancelFunc,
 		workerFunc: mockWorker,
+		logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
 
 	pool.Set([]GoStateIp{
 		{Ip: "1.1.1.1", QueueId: 1, QueueName: "transactional"},
 		{Ip: "2.2.2.2", QueueId: 2, QueueName: "distributional"},
-	}, 2)
+	}, 2, "relay.hyvor.com")
 
 	time.Sleep(20 * time.Millisecond)
 
@@ -117,7 +119,7 @@ func TestEmailWorker_DatabaseConnectionFailure(t *testing.T) {
 	defer func() { NewDbConn = originalNewDbConn }()
 
 	wg.Add(2)
-	go emailWorker(ctx, 1, &wg, dbConfig, logger, ip)
+	go emailWorker(ctx, 1, &wg, dbConfig, logger, ip, "relay.hyvor.com")
 	go func() {
 		defer wg.Done()
 		time.Sleep(40 * time.Millisecond) // Simulate some work

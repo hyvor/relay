@@ -3,8 +3,11 @@
 	import type { WebhookDelivery } from '../../types';
 	import RelativeTime from '../../@components/content/RelativeTime.svelte';
 
-	export let deliveries: WebhookDelivery[];
-	export let loading: boolean;
+	interface Props {
+		deliveries: WebhookDelivery[];
+	}
+
+	let { deliveries }: Props = $props();
 
 	function getStatusColor(status: string) {
 		switch (status) {
@@ -57,4 +60,4 @@
 {/if}
 
 <style>
-</style> 
+</style>

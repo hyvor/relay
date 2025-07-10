@@ -57,7 +57,7 @@ class LocalController extends AbstractController
         $update->status = $status;
         $update->result = $input->result;
 
-        if ($status === SendStatus::SENT) {
+        if ($status === SendStatus::ACCEPTED) {
             $update->sentAt = $this->now();
         } else {
             $update->failedAt = $this->now();

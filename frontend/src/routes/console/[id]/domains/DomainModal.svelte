@@ -2,7 +2,6 @@
 	import { Modal, TextInput, SplitControl, toast } from '@hyvor/design/components';
 	import { createDomain } from '../../lib/actions/domainActions';
 	import type { Domain } from '../../types';
-	import { onMount } from 'svelte';
 
 	interface Props {
 		show: boolean;
@@ -14,7 +13,7 @@
 	let domain = $state('');
 	let loading = $state(false);
 	let errors = $state<Record<string, string>>({});
-	let input: HTMLInputElement | null = null;
+	let input: HTMLInputElement | null = $state(null);
 
 	function resetForm() {
 		domain = '';
@@ -28,7 +27,8 @@
 			errors.domain = 'Domain is required';
 		} else {
 			// Basic domain validation
-			const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*$/;
+			const domainRegex =
+				/^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*$/;
 			if (!domainRegex.test(domain.trim())) {
 				errors.domain = 'Please enter a valid domain name';
 			}
@@ -108,4 +108,4 @@
 	.modal-content {
 		padding: 20px 0;
 	}
-</style> 
+</style>

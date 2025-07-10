@@ -18,8 +18,8 @@
 		onApiKeyUpdated?: (apiKey: ApiKey) => void;
 	}
 
-	let { 
-		show = $bindable(), 
+	let {
+		show = $bindable(),
 		editingApiKey = null,
 		onApiKeyCreated = () => {},
 		onApiKeyUpdated = () => {}
@@ -82,12 +82,12 @@
 
 		loading = true;
 
-		const promise = editingApiKey 
+		const promise = editingApiKey
 			? updateApiKey(editingApiKey.id, {
-				name: name.trim(),
-				scopes: selectedScopes,
-				enabled: isEnabled
-			})
+					name: name.trim(),
+					scopes: selectedScopes,
+					enabled: isEnabled
+				})
 			: createApiKey(name.trim(), selectedScopes);
 
 		promise
@@ -118,7 +118,7 @@
 
 	function handleScopeToggle(scopeValue: string) {
 		if (selectedScopes.includes(scopeValue)) {
-			selectedScopes = selectedScopes.filter(s => s !== scopeValue);
+			selectedScopes = selectedScopes.filter((s) => s !== scopeValue);
 		} else {
 			selectedScopes = [...selectedScopes, scopeValue];
 		}
@@ -151,7 +151,12 @@
 			caption="A descriptive name to identify this API key"
 			error={errors.name}
 		>
-			<TextInput bind:value={name} placeholder="Enter API key name" block disabled={loading} />
+			<TextInput
+				bind:value={name}
+				placeholder="Enter API key name"
+				block
+				disabled={loading}
+			/>
 		</SplitControl>
 
 		<SplitControl
@@ -161,19 +166,19 @@
 		>
 			<div class="scopes-header">
 				<div class="scopes-actions">
-					<button 
-						type="button" 
-						class="scope-action-btn" 
+					<button
+						type="button"
+						class="scope-action-btn"
 						disabled={loading || selectedScopes.length === scopes.length}
-						on:click={() => selectedScopes = [...scopes]}
+						onclick={() => (selectedScopes = [...scopes])}
 					>
 						Select all
 					</button>
-					<button 
-						type="button" 
-						class="scope-action-btn" 
+					<button
+						type="button"
+						class="scope-action-btn"
 						disabled={loading || selectedScopes.length === 0}
-						on:click={() => selectedScopes = []}
+						onclick={() => (selectedScopes = [])}
 					>
 						Deselect all
 					</button>
@@ -190,7 +195,9 @@
 							<div class="scope-content">
 								<span class="scope-name">{scope}</span>
 								{#if getScopeDescription(scope)}
-									<span class="scope-description">{getScopeDescription(scope)}</span>
+									<span class="scope-description"
+										>{getScopeDescription(scope)}</span
+									>
 								{/if}
 							</div>
 						</Checkbox>
@@ -200,10 +207,7 @@
 		</SplitControl>
 
 		{#if isEditing}
-			<SplitControl
-				label="Status"
-				caption="Enable or disable this API key"
-			>
+			<SplitControl label="Status" caption="Enable or disable this API key">
 				<Switch bind:checked={isEnabled} disabled={loading}>
 					{isEnabled ? 'Enabled' : 'Disabled'}
 				</Switch>

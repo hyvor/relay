@@ -12,24 +12,21 @@
 	size="large"
 	title="DNS Record"
 	footer={{
-        cancel: {
-            text: 'Close',
-        }, 
+		cancel: {
+			text: 'Close'
+		},
 		confirm: false
-    }}
-	on:cancel={() => show = false}
+	}}
+	on:cancel={() => (show = false)}
 >
 	<div class="modal-content">
 		<div class="verify-note">
-			Add the following TXT record to your DNS settings, and click the button above to verify your
-			domain.
+			Add the following TXT record to your DNS settings, and click the button above to verify
+			your domain.
 		</div>
 
 		<div class="dns-record">
-			<SplitControl
-				label="Host"
-				caption="DNS record host"
-			>
+			<SplitControl label="Host" caption="DNS record host">
 				<div class="record-value">
 					<div class="value-text">{domain.dkim_txt_name}</div>
 					<Button
@@ -42,10 +39,7 @@
 				</div>
 			</SplitControl>
 
-			<SplitControl
-				label="Value"
-				caption="DNS record value/content"
-			>
+			<SplitControl label="Value" caption="DNS record value/content">
 				<div class="record-value">
 					<div class="value-text value-long">{domain.dkim_txt_value}</div>
 					<Button
@@ -100,8 +94,4 @@
 		word-wrap: break-word;
 		overflow-wrap: break-word;
 	}
-
-	.value-long {
-		/* Remove max-height to show full text */
-	}
-</style> 
+</style>
