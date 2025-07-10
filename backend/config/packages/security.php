@@ -1,7 +1,6 @@
 <?php
 
 use Hyvor\Internal\Bundle\Security\HyvorAuthenticator;
-use Hyvor\Internal\Bundle\Security\UserRole;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Config\SecurityConfig;
 
