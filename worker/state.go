@@ -49,7 +49,7 @@ func NewServiceState(ctx context.Context) *ServiceState {
 func (s *ServiceState) Set(goState GoState) {
 
 	s.EmailWorkersPool.Set(goState.Ips, goState.EmailWorkersPerIp, goState.InstanceDomain)
-	s.WebhookWorkersPool.Set(goState.WebhookWorkers, goState.InstanceDomain)
+	s.WebhookWorkersPool.Set(goState.WebhookWorkers)
 	s.BounceServer.Set()
 
 	s.Logger.Info("Updating state",

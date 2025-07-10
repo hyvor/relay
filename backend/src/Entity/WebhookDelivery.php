@@ -22,6 +22,9 @@ class WebhookDelivery
     #[ORM\Column]
     private \DateTimeImmutable $updated_at;
 
+    #[ORM\Column]
+    private \DateTimeImmutable $send_after;
+
     #[ORM\ManyToOne(targetEntity: Webhook::class)]
     #[ORM\JoinColumn]
     private Webhook $webhook;
@@ -40,6 +43,12 @@ class WebhookDelivery
 
     #[ORM\Column()]
     private ?string $response;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $response_code = null;
+
+    #[ORM\Column]
+    private int $try_count = 0;
 
     public function getId(): int
     {
@@ -73,6 +82,18 @@ class WebhookDelivery
     public function setUpdatedAt(\DateTimeImmutable $updated_at): static
     {
         $this->updated_at = $updated_at;
+
+        return $this;
+    }
+
+    public function getSendAfter(): \DateTimeImmutable
+    {
+        return $this->send_after;
+    }
+
+    public function setSendAfter(\DateTimeImmutable $send_after): static
+    {
+        $this->send_after = $send_after;
 
         return $this;
     }
@@ -145,6 +166,30 @@ class WebhookDelivery
     public function setResponse(?string $response): static
     {
         $this->response = $response;
+
+        return $this;
+    }
+
+    public function getResponseCode(): ?int
+    {
+        return $this->response_code;
+    }
+
+    public function setResponseCode(?int $responseCode): static
+    {
+        $this->response_code = $responseCode;
+
+        return $this;
+    }
+
+    public function getTryCount(): int
+    {
+        return $this->try_count;
+    }
+
+    public function setTryCount(int $tryCount): static
+    {
+        $this->try_count = $tryCount;
 
         return $this;
     }

@@ -4,7 +4,22 @@
 
 <h1>Webhooks</h1>
 
-<h2 id="events">Events & Payload</h2>
+<p>
+	Webhooks are a way to receive HTTP POST requests from Hyvor Relay when certain events occur.
+	They are useful to sync state (email sending status) between Hyvor Relay and your application or
+	to trigger actions in your application based on events in Hyvor Relay.
+</p>
+
+<ul>
+	<li>
+		<a href="#events">Events & Payloads</a>
+	</li>
+	<li>
+		<a href="#retrying">Retrying</a>
+	</li>
+</ul>
+
+<h2 id="events">Events & Payloads</h2>
 
 <ul>
 	<li>
@@ -129,3 +144,26 @@
 `}
 	language="ts"
 />
+
+<h2 id="retrying">Retrying</h2>
+
+<p>
+	When Hyvor Relay sends a webhook, it expects a <code>2xx</code> HTTP response code from your
+	application. If it does not receive a <code>2xx</code> response, it will retry sending the webhook
+	up to 6 times with the following intervals between retries:
+</p>
+
+<ul>
+	<li>1 minute</li>
+	<li>5 minutes</li>
+	<li>15 minutes</li>
+	<li>1 hour</li>
+	<li>4 hours</li>
+	<li>24 hours</li>
+</ul>
+
+<p>
+	If all retries fail, the webhook delivery will be marked as failed, and you can view the
+	delivery status in the Hyvor Relay Console, including the error message received from your
+	server.
+</p>

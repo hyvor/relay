@@ -3,7 +3,10 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net/http"
+	"strings"
 	"sync"
+	"time"
 )
 
 type WebhookWorkersPool struct {
@@ -18,7 +21,6 @@ type WebhookWorkersPool struct {
 		wg *sync.WaitGroup,
 		config *DBConfig,
 		logger *slog.Logger,
-		instanceDomain string,
 	)
 }
 
@@ -42,7 +44,7 @@ func NewWebhookWorkersPool(
 }
 
 // Starts or restarts the email workers state.
-func (pool *WebhookWorkersPool) Set(workers int, instanceDomain string) {
+func (pool *WebhookWorkersPool) Set(workers int) {
 
 	pool.StopWorkers()
 
@@ -65,7 +67,6 @@ func (pool *WebhookWorkersPool) Set(workers int, instanceDomain string) {
 			&pool.wg,
 			LoadDBConfig(),
 			pool.logger,
-			instanceDomain,
 		)
 	}
 
@@ -91,22 +92,117 @@ func webhookWorker(
 	wg *sync.WaitGroup,
 	dbConfig *DBConfig,
 	logger *slog.Logger,
-	instanceDomain string,
 ) {
 	defer wg.Done()
 	logger.Info("Webhook worker started", "id", id)
 
 	conn, err := NewRetryingDbConn(ctx, dbConfig, logger)
 	if err != nil {
+		logger.Error(
+			"Webhook worker failed to connect to database",
+			"worker_id", id,
+			"error", err,
+		)
 		return
 	}
 	defer conn.Close()
 
-	select {
-	case <-ctx.Done():
-		logger.Info("Webhook worker stopped", "id", id)
-		return
-	default:
-		// Do the actual work here
+	for {
+		select {
+		case <-ctx.Done():
+			logger.Info("Webhook worker stopped", "id", id)
+			return
+		default:
+			batch, err := NewWebhooksBatch(ctx, conn)
+
+			if err != nil {
+				logger.Error(
+					"Webhook worker failed to create batch",
+					"worker_id", id,
+					"error", err,
+				)
+				time.Sleep(1 * time.Second)
+				batch.Rollback()
+				continue
+			}
+
+			deliveries, err := batch.FetchWebhooks()
+
+			if err != nil {
+				logger.Error(
+					"Worker failed to fetch webhook deliveries",
+					"worker_id", id,
+					"error", err,
+				)
+				time.Sleep(1 * time.Second)
+				batch.Rollback()
+				continue
+			}
+
+			if len(deliveries) == 0 {
+				logger.Debug(
+					"Worker found no webhook deliveries",
+					"worker_id", id,
+				)
+				time.Sleep(1 * time.Second)
+				batch.Rollback()
+				continue
+			}
+
+			logger.Debug(
+				"Worker found webhook deliveries",
+				"worker_id", id,
+				"count", len(deliveries),
+			)
+
+			var wg sync.WaitGroup
+			wg.Add(len(deliveries))
+
+			for _, delivery := range deliveries {
+
+				go func(delivery WebhookDelivery) {
+					defer wg.Done()
+
+					logger.Info(
+						"Worker processing webhook delivery",
+						"worker_id", id,
+						"webhook_delivery_id", delivery.Id,
+					)
+
+					sendWebhook(&delivery)
+
+					/* err := batch.FinalizeWebhookByResult(&send, result)
+
+					if err != nil {
+						logger.Error(
+							"Worker failed to finalize webhook delivery",
+							"worker_id", id,
+							"webhook_id", send.Id,
+							"error", err,
+						)
+					} */
+				}(delivery)
+			}
+
+			wg.Wait()
+
+			batch.Commit()
+			time.Sleep(1 * time.Second)
+
+		}
 	}
+}
+
+type WebhookResult struct {
+}
+
+func sendWebhook(delivery *WebhookDelivery) *WebhookResult {
+
+	// resp, err :=
+	http.Post(delivery.Url, "application/json", strings.NewReader(delivery.RequestBody))
+
+	//
+
+	return &WebhookResult{}
+
 }
