@@ -139,7 +139,7 @@ func (suite *WebhookWorkerTestSuite) TestWebhookDeliverySent() {
 	factory, err := NewTestFactory()
 	suite.NoError(err, "Failed to create test factory")
 
-	deliveryId, err := factory.WebhookDelivery(server.URL+"/webhook", `{"key": "value"}`)
+	deliveryId, err := factory.WebhookDelivery(server.URL+"/webhook", `{"key": "value"}`, 0)
 	suite.NoError(err, "Failed to create webhook delivery")
 
 	var wg sync.WaitGroup
@@ -183,7 +183,7 @@ func (suite *WebhookWorkerTestSuite) TestWebhookDeliveryRequeuedOnFailure() {
 	factory, err := NewTestFactory()
 	suite.NoError(err, "Failed to create test factory")
 
-	deliveryId, err := factory.WebhookDelivery(server.URL+"/webhook", `{"key": "value"}`)
+	deliveryId, err := factory.WebhookDelivery(server.URL+"/webhook", `{"key": "value"}`, 5)
 	suite.NoError(err, "Failed to create webhook delivery")
 
 	var wg sync.WaitGroup

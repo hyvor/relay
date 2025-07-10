@@ -73,7 +73,11 @@ func (f *TestFactory) Project() (int, error) {
 	return projectId, nil
 }
 
-func (f *TestFactory) WebhookDelivery(url string, requestBody string) (int, error) {
+func (f *TestFactory) WebhookDelivery(
+	url string,
+	requestBody string,
+	tryCount int,
+) (int, error) {
 	now := time.Now()
 
 	// First create a project
@@ -100,7 +104,7 @@ func (f *TestFactory) WebhookDelivery(url string, requestBody string) (int, erro
 		INSERT INTO webhook_deliveries (created_at, updated_at, send_after, webhook_id, url, event, status, request_body, try_count)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id
-	`, now, now, now, webhookId, url, "test.event", "pending", requestBody, 0).Scan(&webhookDeliveryId)
+	`, now, now, now, webhookId, url, "test.event", "pending", requestBody, tryCount).Scan(&webhookDeliveryId)
 
 	if err != nil {
 		return 0, err
