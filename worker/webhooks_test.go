@@ -202,5 +202,46 @@ func (suite *WebhookWorkerTestSuite) TestWebhookDeliveryRequeuedOnFailure() {
 	suite.Equal("pending", delivery.Status)
 	suite.Equal("Internal Server Error", delivery.Response.String)
 	suite.Equal(500, int(delivery.ResponseCode.Int64))
-	suite.Equal(1, delivery.TryCount)
+	suite.Equal(6, delivery.TryCount)
+}
+
+func (suite *WebhookWorkerTestSuite) TestWebhookDeliveryMarkedFailedAfterMaxRetries() {
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		suite.Equal(req.URL.String(), "/webhook")
+		rw.WriteHeader(422)
+		rw.Write([]byte(`Unprocessable Entity`))
+	}))
+	defer server.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+
+	factory, err := NewTestFactory()
+	suite.NoError(err, "Failed to create test factory")
+
+	// Set try_count to 6 (WEBHOOKS_MAX_RETRIES - 1)
+	deliveryId, err := factory.WebhookDelivery(server.URL+"/webhook", `{"key": "value"}`, 6)
+	suite.NoError(err, "Failed to create webhook delivery")
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go webhookWorker(ctx, 1, &wg, getTestDbConfig(), logger)
+	go func() {
+		defer wg.Done()
+		time.Sleep(100 * time.Millisecond)
+		cancel()
+	}()
+	wg.Wait()
+
+	delivery, err := getWebhookDeliveryEntityById(factory.conn, deliveryId)
+	suite.NoError(err, "Failed to get webhook delivery by ID")
+
+	suite.Equal("failed", delivery.Status)
+	suite.Equal("Unprocessable Entity", delivery.Response.String)
+	suite.Equal(422, int(delivery.ResponseCode.Int64))
+	suite.Equal(7, delivery.TryCount)
 }
