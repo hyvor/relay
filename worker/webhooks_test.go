@@ -164,3 +164,43 @@ func (suite *WebhookWorkerTestSuite) TestWebhookDeliverySent() {
 	suite.Equal(200, int(delivery.ResponseCode.Int64))
 	suite.Equal(1, delivery.TryCount)
 }
+
+func (suite *WebhookWorkerTestSuite) TestWebhookDeliveryRequeuedOnFailure() {
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		suite.Equal(req.URL.String(), "/webhook")
+		rw.WriteHeader(500)
+		rw.Write([]byte(`Internal Server Error`))
+	}))
+	defer server.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+
+	factory, err := NewTestFactory()
+	suite.NoError(err, "Failed to create test factory")
+
+	deliveryId, err := factory.WebhookDelivery(server.URL+"/webhook", `{"key": "value"}`)
+	suite.NoError(err, "Failed to create webhook delivery")
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go webhookWorker(ctx, 1, &wg, getTestDbConfig(), logger)
+	go func() {
+		defer wg.Done()
+		time.Sleep(100 * time.Millisecond)
+		cancel()
+	}()
+	wg.Wait()
+
+	delivery, err := getWebhookDeliveryEntityById(factory.conn, deliveryId)
+	suite.NoError(err, "Failed to get webhook delivery by ID")
+
+	suite.Equal("pending", delivery.Status)
+	suite.Equal("Internal Server Error", delivery.Response.String)
+	suite.Equal(500, int(delivery.ResponseCode.Int64))
+	suite.Equal(1, delivery.TryCount)
+}
