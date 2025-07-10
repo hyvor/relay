@@ -57,6 +57,7 @@ jobs:
           run: |
             docker run \
             --network ci \
+            -e APP_ENV=test \
             backend-dev sh -c "
             php bin/console doctrine:migrations:migrate --no-interaction &&
             ./vendor/bin/phpunit"
