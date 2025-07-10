@@ -14,7 +14,7 @@
 </script>
 
 {#if apiKeys.length === 0}
-	<IconMessage empty size="large" />
+	<IconMessage empty size="large" message="No API keys configured" />
 {:else}
 	<div class="api-keys-list">
 		{#each apiKeys as apiKey (apiKey.id)}

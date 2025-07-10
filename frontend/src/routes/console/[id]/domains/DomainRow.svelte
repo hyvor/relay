@@ -78,7 +78,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-start;
-		padding: 16px;
+		padding: 4px;
 		border-radius: 8px;
 		background-color: var(--bg-light);
 	}
