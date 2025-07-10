@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -169,19 +170,20 @@ func webhookWorker(
 						"webhook_delivery_id", delivery.Id,
 					)
 
-					sendWebhook(&delivery)
+					result := sendWebhook(&delivery)
 
-					/* err := batch.FinalizeWebhookByResult(&send, result)
+					err := batch.FinalizeWebhookByResult(&delivery, result)
 
 					if err != nil {
 						logger.Error(
 							"Worker failed to finalize webhook delivery",
 							"worker_id", id,
-							"webhook_id", send.Id,
+							"webhook_delivery_id", delivery.Id,
 							"error", err,
 						)
-					} */
+					}
 				}(delivery)
+
 			}
 
 			wg.Wait()
@@ -194,15 +196,37 @@ func webhookWorker(
 }
 
 type WebhookResult struct {
+	Success            bool
+	ResponseBody       string // upto 1024 bytes
+	ResponseStatusCode int
 }
+
+var httpClient = &http.Client{}
 
 func sendWebhook(delivery *WebhookDelivery) *WebhookResult {
 
-	// resp, err :=
-	http.Post(delivery.Url, "application/json", strings.NewReader(delivery.RequestBody))
+	result := &WebhookResult{
+		Success: false,
+	}
 
-	//
+	resp, err := httpClient.Post(delivery.Url, "application/json", strings.NewReader(delivery.RequestBody))
 
-	return &WebhookResult{}
+	if err != nil {
+		result.ResponseBody = "Network error: " + err.Error()
+		return result
+	}
+
+	defer resp.Body.Close()
+
+	limitReader := io.LimitReader(resp.Body, 1024)
+	responseBody, _ := io.ReadAll(limitReader)
+	result.ResponseBody = string(responseBody)
+	result.ResponseStatusCode = resp.StatusCode
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		result.Success = true
+	}
+
+	return result
 
 }

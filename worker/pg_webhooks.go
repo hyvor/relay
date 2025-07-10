@@ -14,6 +14,7 @@ type WebhookDelivery struct {
 }
 
 const WEBHOOKS_PER_BATCH = 10
+const WEBHOOKS_MAX_RETRIES = 7
 
 type WebhooksBatch struct {
 	tx  *sql.Tx
@@ -94,4 +95,67 @@ func (b *WebhooksBatch) Rollback() error {
 		return fmt.Errorf("failed to rollback transaction: %w", err)
 	}
 	return nil
+}
+
+func (b *WebhooksBatch) FinalizeWebhookByResult(delivery *WebhookDelivery, result *WebhookResult) error {
+
+	// 1 for the first, 2 for the second, etc.
+	currentTry := delivery.TryCount + 1
+
+	sendAfter := getRetryInterval(currentTry, result.Success)
+	sendAfter = fmt.Sprintf("NOW() + INTERVAL '%s'", sendAfter)
+
+	_, err := b.tx.ExecContext(b.ctx, `
+		UPDATE webhook_deliveries
+		SET 
+			status = $1, 
+			response_body = $2, 
+			response_status_code = $3, 
+			updated_at = NOW(),
+			try_count = try_count + 1
+			send_after = `+sendAfter+`
+		WHERE id = $5
+	`,
+		func() string {
+			if result.Success {
+				return "success"
+			} else if currentTry >= WEBHOOKS_MAX_RETRIES {
+				return "failed"
+			} else {
+				return "pending"
+			}
+		}(),
+		result.ResponseBody,
+		result.ResponseStatusCode,
+		sendAfter,
+		delivery.Id,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to finalize webhook delivery: %w", err)
+	}
+
+	return nil
+}
+
+func getRetryInterval(currentTry int, currentSuccess bool) string {
+	if currentSuccess || currentTry >= WEBHOOKS_MAX_RETRIES {
+		return "send_after"
+	} else {
+		retryIntervalMap := map[int]string{
+			0: "1 minute",
+			1: "5 minutes",
+			2: "15 minutes",
+			3: "1 hour",
+			4: "4 hours",
+			5: "24 hours",
+		}
+		interval, ok := retryIntervalMap[currentTry]
+
+		if !ok {
+			interval = "24 hours"
+		}
+
+		return fmt.Sprintf("NOW() + INTERVAL '%s'", interval)
+	}
 }

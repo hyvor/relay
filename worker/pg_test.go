@@ -1,6 +1,11 @@
 package main
 
-import "database/sql"
+import (
+	"database/sql"
+	"fmt"
+	"math/rand"
+	"time"
+)
 
 func getTestDbConfig() *DBConfig {
 	return &DBConfig{
@@ -50,9 +55,50 @@ func NewTestFactory() (*TestFactory, error) {
 }
 
 func (f *TestFactory) Project() (int, error) {
-	// execute query and return project ID
+	now := time.Now()
+	randomUserId := rand.Intn(1000000) + 1
+	randomName := fmt.Sprintf("Test Project %d", rand.Intn(1000000))
+
+	var projectId int
+	err := f.conn.QueryRow(`
+		INSERT INTO projects (created_at, updated_at, hyvor_user_id, name)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id
+	`, now, now, randomUserId, randomName).Scan(&projectId)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return projectId, nil
 }
 
 func (f *TestFactory) WebhookDelivery(url string, requestBody string) error {
-	// insert a new webhook + webhook delivery into the database
+	now := time.Now()
+
+	// First create a project
+	projectId, err := f.Project()
+	if err != nil {
+		return err
+	}
+
+	// Then create a webhook
+	var webhookId int
+	err = f.conn.QueryRow(`
+		INSERT INTO webhooks (created_at, updated_at, project_id, url, description, events)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id
+	`, now, now, projectId, url, "Test webhook", `["test.event"]`).Scan(&webhookId)
+
+	if err != nil {
+		return err
+	}
+
+	// Finally create the webhook delivery
+	_, err = f.conn.Exec(`
+		INSERT INTO webhook_deliveries (created_at, updated_at, send_after, webhook_id, url, event, status, request_body, try_count)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+	`, now, now, now, webhookId, url, "test.event", "pending", requestBody, 0)
+
+	return err
 }

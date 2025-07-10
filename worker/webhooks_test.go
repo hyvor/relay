@@ -5,6 +5,8 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"net/http"
+	"net/http/httptest"
 	"sync"
 	"testing"
 	"time"
@@ -120,6 +122,13 @@ func (suite *WebhookWorkerTestSuite) TestWhenNoWebhookDeliveriesFound() {
 }
 
 func (suite *WebhookWorkerTestSuite) TestWebhookDeliverySent() {
+
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		suite.Equal(req.URL.String(), "/webhook")
+		rw.Write([]byte(`OK`))
+	}))
+	defer server.Close()
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	var buf bytes.Buffer
@@ -127,8 +136,11 @@ func (suite *WebhookWorkerTestSuite) TestWebhookDeliverySent() {
 		Level: slog.LevelDebug,
 	}))
 
-	err := webhookDeliveryFactory("http://example.com/webhook", `{"key": "value"}`)
-	suite.NoError(err, "Failed to create webhook delivery")
+	factory, err := NewTestFactory()
+	suite.NoError(err, "Failed to create test factory")
+
+	delivery := factory.WebhookDelivery(server.URL+"/webhook", `{"key": "value"}`)
+	suite.NoError(delivery, "Failed to create webhook delivery")
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -140,5 +152,6 @@ func (suite *WebhookWorkerTestSuite) TestWebhookDeliverySent() {
 	}()
 	wg.Wait()
 
-	suite.Contains(buf.String(), "Webhook delivery sent successfully")
+	suite.Contains(buf.String(), "Worker found webhook deliveries")
+	suite.Contains(buf.String(), "count=1")
 }
