@@ -30,6 +30,8 @@ func truncateTestDb() error {
 	defer conn.Close()
 
 	_, err = conn.Exec(`
+		DELETE FROM projects;
+		DELETE FROM webhooks;
 		DELETE FROM webhook_deliveries;
 		DELETE FROM sends;
 	`)

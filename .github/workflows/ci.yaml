@@ -38,7 +38,7 @@ jobs:
           run: docker run backend-dev ./vendor/bin/phpstan analyse --memory-limit=1G --ansi
 
   php-tests:
-    name: "PHP Tests"
+    name: "PHP & Go Tests"
     runs-on: ubuntu-latest
 
     steps:
@@ -53,12 +53,18 @@ jobs:
       -   name: Build Docker image
           run: docker build -t backend-dev . --target backend-dev
 
-      -   name: Run Tests
+      -   name: Run PHP Tests
           run: |
             docker run \
-            -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/hyvor_post_testing?serverVersion=16&charset=utf8" \
             --network ci \
             backend-dev sh -c "
             php bin/console doctrine:migrations:migrate --no-interaction &&
             ./vendor/bin/phpunit"
-      
+
+      # Database already migrated from the previous step.
+      -  name: Run Go Tests
+         run: |
+            docker run \
+            --network ci \
+            worker sh -c "
+            go test -v ./... -count=1 -p 1 -timeout 30s"
