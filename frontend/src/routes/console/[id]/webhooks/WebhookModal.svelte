@@ -105,6 +105,16 @@
 		}
 		errors.events = '';
 	}
+
+	function selectAllEvents() {
+		selectedEvents = [...availableEvents];
+		errors.events = '';
+	}
+
+	function deselectAllEvents() {
+		selectedEvents = [];
+		errors.events = '';
+	}
 </script>
 
 <Modal 
@@ -141,8 +151,29 @@
 			/>
 		</SplitControl>
 
-		<SplitControl label="Events" error={errors.events}>
+		<SplitControl label="Events" error={errors.events} column>
 			<div class="events-section">
+				<div class="events-header">
+					<div class="events-actions">
+						<button 
+							type="button" 
+							class="event-action-btn" 
+							disabled={loading || selectedEvents.length === availableEvents.length}
+							on:click={selectAllEvents}
+						>
+							Select all
+						</button>
+						<button 
+							type="button" 
+							class="event-action-btn" 
+							disabled={loading || selectedEvents.length === 0}
+							on:click={deselectAllEvents}
+						>
+							Deselect all
+						</button>
+					</div>
+				</div>
+				
 				<div class="events-grid">
 					{#each availableEvents as event}
 						<div class="event-checkbox">
@@ -156,12 +187,6 @@
 						</div>
 					{/each}
 				</div>
-				
-				{#if selectedEvents.length > 0}
-					<div class="selected-count">
-						{selectedEvents.length} event{selectedEvents.length === 1 ? '' : 's'} selected
-					</div>
-				{/if}
 			</div>
 		</SplitControl>
 	</div>
@@ -172,11 +197,34 @@
 		padding: 20px 0;
 	}
 
-	.events-section {
-		border: 1px solid var(--border);
-		border-radius: 6px;
-		padding: 16px;
-		background: var(--bg);
+	.events-header {
+		margin-bottom: 12px;
+	}
+
+	.events-actions {
+		display: flex;
+		gap: 16px;
+	}
+
+	.event-action-btn {
+		background: none;
+		border: none;
+		color: var(--primary);
+		cursor: pointer;
+		font-size: 14px;
+		padding: 0;
+		text-decoration: underline;
+		transition: color 0.2s;
+	}
+
+	.event-action-btn:hover:not(:disabled) {
+		color: var(--primary-dark);
+	}
+
+	.event-action-btn:disabled {
+		color: var(--text-light);
+		cursor: not-allowed;
+		text-decoration: none;
 	}
 
 	.events-grid {

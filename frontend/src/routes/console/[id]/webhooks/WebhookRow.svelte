@@ -48,7 +48,7 @@
 	<div class="webhook-actions">
 		<IconButton
             variant="fill-light"
-            color="accent"
+            color="input"
             size="small"
 			on:click={() => onEdit(webhook)}
 		>

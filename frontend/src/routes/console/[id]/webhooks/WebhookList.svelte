@@ -13,7 +13,7 @@
 </script>
 
 {#if webhooks.length === 0}
-	<IconMessage empty size="large" />
+    <IconMessage empty size="large" message="No webhooks configured" />
 {:else}
 	<div class="webhooks-list">
 		{#each webhooks as webhook (webhook.id)}

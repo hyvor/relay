@@ -159,6 +159,26 @@
 			caption="Select what actions this API key can perform"
 			error={errors.scopes}
 		>
+			<div class="scopes-header">
+				<div class="scopes-actions">
+					<button 
+						type="button" 
+						class="scope-action-btn" 
+						disabled={loading || selectedScopes.length === scopes.length}
+						on:click={() => selectedScopes = [...scopes]}
+					>
+						Select all
+					</button>
+					<button 
+						type="button" 
+						class="scope-action-btn" 
+						disabled={loading || selectedScopes.length === 0}
+						on:click={() => selectedScopes = []}
+					>
+						Deselect all
+					</button>
+				</div>
+			</div>
 			<div class="scopes-container">
 				{#each scopes as scope}
 					<div class="scope-item">
@@ -195,6 +215,36 @@
 <style>
 	.modal-content {
 		padding: 20px 0;
+	}
+
+	.scopes-header {
+		margin-bottom: 12px;
+	}
+
+	.scopes-actions {
+		display: flex;
+		gap: 16px;
+	}
+
+	.scope-action-btn {
+		background: none;
+		border: none;
+		color: var(--primary);
+		cursor: pointer;
+		font-size: 14px;
+		padding: 0;
+		text-decoration: underline;
+		transition: color 0.2s;
+	}
+
+	.scope-action-btn:hover:not(:disabled) {
+		color: var(--primary-dark);
+	}
+
+	.scope-action-btn:disabled {
+		color: var(--text-light);
+		cursor: not-allowed;
+		text-decoration: none;
 	}
 
 	.scopes-container {
