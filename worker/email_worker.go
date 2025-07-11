@@ -191,25 +191,27 @@ func emailWorker(
 				)
 			}
 
-			go func(sendAttemptIds []int) {
-				err := CallLocalApi(
-					ctx,
-					"POST",
-					"/send-attempt/done",
-					map[string]interface{}{
-						"send_attempt_ids": sendAttemptIds,
-					},
-					nil,
-				)
-				if err != nil {
-					logger.Error(
-						"Worker failed to notify send attempt done via local API",
-						"worker_id", id,
-						"send_attempt_ids", sendAttemptIds,
-						"error", err,
+			if len(sendAttemptIds) > 0 {
+				go func(sendAttemptIds []int) {
+					err := CallLocalApi(
+						ctx,
+						"POST",
+						"/send-attempts/done",
+						map[string]interface{}{
+							"send_attempt_ids": sendAttemptIds,
+						},
+						nil,
 					)
-				}
-			}(sendAttemptIds)
+					if err != nil {
+						logger.Error(
+							"Worker failed to notify send attempt done via local API",
+							"worker_id", id,
+							"send_attempt_ids", sendAttemptIds,
+							"error", err,
+						)
+					}
+				}(sendAttemptIds)
+			}
 
 			time.Sleep(1 * time.Second)
 

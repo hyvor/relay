@@ -53,6 +53,8 @@ func CallLocalApi(
 		return err
 	}
 
+	req.Header.Set("Content-Type", "application/json")
+
 	client := &http.Client{}
 	resp, err := client.Do(req)
 

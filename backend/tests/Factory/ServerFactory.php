@@ -28,7 +28,6 @@ final class ServerFactory extends PersistentProxyObjectFactory
     {
         return [
             'hostname' => self::faker()->domainName(),
-            'docker_hostname' => self::faker()->domainName(),
             'created_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'updated_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'last_ping_at' => self::faker()->optional(0.7)->passthrough(

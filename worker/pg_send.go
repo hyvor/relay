@@ -88,17 +88,17 @@ func (b *DbSendBatch) FinalizeSendBySendResult(
 	sendResult *SendResult,
 ) (int, error) {
 
-	status := "sent"
+	status := "accepted"
 	if sendResult.Error != nil {
-		status = "failed"
+		status = "bounced"
 	} else if sendResult.ShouldRequeue {
-		status = "queued"
+		status = "deferred"
 	}
 
 	var err error
 	var sendAfterInterval string
 
-	if status == "queued" {
+	if status == "deferred" {
 		sendAfterInterval = fmt.Sprintf("NOW() + INTERVAL '%s'", getSendAfterInterval(send.TryCount))
 	} else {
 		sendAfterInterval = "send_after"
@@ -159,7 +159,7 @@ func (b *DbSendBatch) FinalizeSendBySendResult(
 			status,
 			try_count,
 			resolved_mx_hosts,
-			sent_mx_host,
+			accepted_mx_host,
 			smtp_conversations,
 			error
 		)

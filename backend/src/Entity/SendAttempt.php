@@ -26,6 +26,10 @@ class SendAttempt
     #[ORM\JoinColumn(name: "send_id", nullable: false, onDelete: "CASCADE")]
     private Send $send;
 
+    #[ORM\ManyToOne(targetEntity: IpAddress::class)]
+    #[ORM\JoinColumn()]
+    private IpAddress $ip_address;
+
     /** @var string[] */
     #[ORM\Column(type: "json")]
     private array $resolved_mx_hosts = [];
@@ -37,7 +41,7 @@ class SendAttempt
     private int $try_count = 0;
 
     #[ORM\Column(type: "string", nullable: true)]
-    private ?string $sent_mx_host = null;
+    private ?string $accepted_mx_host = null;
 
     /** @var array<string, array<string, mixed>> */
     #[ORM\Column(type: "json")]
@@ -92,6 +96,17 @@ class SendAttempt
         return $this;
     }
 
+    public function getIpAddress(): IpAddress
+    {
+        return $this->ip_address;
+    }
+
+    public function setIpAddress(IpAddress $ip_address): static
+    {
+        $this->ip_address = $ip_address;
+        return $this;
+    }
+
     /**
      * @return string[]
      */
@@ -109,14 +124,14 @@ class SendAttempt
         return $this;
     }
 
-    public function getSentMxhost(): ?string
+    public function getAcceptedMxHost(): ?string
     {
-        return $this->sent_mx_host;
+        return $this->accepted_mx_host;
     }
 
-    public function setSentMxhost(?string $sent_mx_host): static
+    public function setAcceptedMxHost(?string $accepted_mx_host): static
     {
-        $this->sent_mx_host = $sent_mx_host;
+        $this->accepted_mx_host = $accepted_mx_host;
         return $this;
     }
 

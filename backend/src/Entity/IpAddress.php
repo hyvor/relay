@@ -21,9 +21,6 @@ class IpAddress
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $updated_at;
 
-    #[ORM\Column(type: 'integer', nullable: false)]
-    private int $server_id;
-
     #[ORM\ManyToOne(targetEntity: Server::class)]
     #[ORM\JoinColumn()]
     private Server $server;
@@ -90,17 +87,6 @@ class IpAddress
         return $this;
     }
 
-    public function getServerId(): int
-    {
-        return $this->server_id;
-    }
-
-    public function setServerId(int $serverId): static
-    {
-        $this->server_id = $serverId;
-        return $this;
-    }
-
     public function getServer(): Server
     {
         return $this->server;
@@ -109,7 +95,6 @@ class IpAddress
     public function setServer(Server $server): static
     {
         $this->server = $server;
-        $this->server_id = $server->getId();
         return $this;
     }
 

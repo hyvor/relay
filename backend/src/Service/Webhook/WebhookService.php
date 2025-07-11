@@ -123,6 +123,7 @@ class WebhookService
         $delivery = new WebhookDelivery();
         $delivery->setCreatedAt($this->now());
         $delivery->setUpdatedAt($this->now());
+        $delivery->setSendAfter($this->now());
         $delivery->setWebhook($webhook);
         $delivery->setUrl($webhook->getUrl());
         $delivery->setStatus(WebhookDeliveryStatus::PENDING);

@@ -40,7 +40,7 @@ class LocalController extends AbstractController
         return new JsonResponse($state);
     }
 
-    #[Route('/send-attempt/done', methods: 'POST')]
+    #[Route('/send-attempts/done', methods: 'POST')]
     public function sendAttemptDone(
         #[MapRequestPayload] SendAttemptDoneInput $input,
     ): JsonResponse
