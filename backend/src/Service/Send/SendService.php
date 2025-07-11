@@ -12,12 +12,10 @@ use App\Repository\SendRepository;
 use App\Service\Send\Dto\SendingAttachment;
 use App\Service\Send\Dto\SendUpdateDto;
 use App\Service\Send\Exception\EmailTooLargeException;
-use App\Service\Send\Message\EmailSendMessage;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Uid\Uuid;
 
