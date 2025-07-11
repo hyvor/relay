@@ -48,7 +48,7 @@
 		<div class="email-detail">
 			<div class="header">
 				<div class="header-left">
-					<Button size="small" color="input" as="a" href={consoleUrlProject(`emails`)}>
+					<Button size="small" color="input" as="a" href={consoleUrlProject(`sends`)}>
 						{#snippet start()}
 							<IconCaretLeft size={12} />
 						{/snippet}

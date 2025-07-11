@@ -72,10 +72,13 @@ Authorization: Bearer <your_api_key>
 		<strong>api_keys.write</strong>
 	</li>
 	<li>
+		<strong>suppressions.read</strong>
+	</li>
+	<li>
 		<strong>suppressions.write</strong>
 	</li>
 	<li>
-		<strong>suppressions.read</strong>
+		<strong>analytics.read</strong>
 	</li>
 </ul>
 
