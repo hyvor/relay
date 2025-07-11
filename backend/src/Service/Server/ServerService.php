@@ -40,6 +40,11 @@ class ServerService
         return $this->em->getRepository(Server::class)->findOneBy(['hostname' => $hostname]);
     }
 
+    public function getServerById(int $id): ?Server
+    {
+        return $this->em->getRepository(Server::class)->find($id);
+    }
+
     public function createServerFromConfig(): Server
     {
 
@@ -61,6 +66,18 @@ class ServerService
     {
         if ($updates->lastPingAtSet) {
             $server->setLastPingAt($updates->lastPingAt);
+        }
+
+        if ($updates->apiWorkersSet) {
+            $server->setApiWorkers($updates->apiWorkers);
+        }
+
+        if ($updates->emailWorkersSet) {
+            $server->setEmailWorkers($updates->emailWorkers);
+        }
+
+        if ($updates->webhookWorkersSet) {
+            $server->setWebhookWorkers($updates->webhookWorkers);
         }
 
         $server->setUpdatedAt($this->now());
