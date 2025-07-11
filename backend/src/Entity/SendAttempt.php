@@ -26,6 +26,7 @@ class SendAttempt
     #[ORM\JoinColumn(name: "send_id", nullable: false, onDelete: "CASCADE")]
     private Send $send;
 
+    /** @var string[] */
     #[ORM\Column(type: "json")]
     private array $resolved_mx_hosts = [];
 
@@ -38,6 +39,7 @@ class SendAttempt
     #[ORM\Column(type: "string", nullable: true)]
     private ?string $sent_mx_host = null;
 
+    /** @var array<string, array<string, mixed>> */
     #[ORM\Column(type: "json")]
     private array $smtp_conversations = [];
 
@@ -90,14 +92,20 @@ class SendAttempt
         return $this;
     }
 
+    /**
+     * @return string[]
+     */
     public function getResolvedMxHosts(): array
     {
         return $this->resolved_mx_hosts;
     }
 
-    public function setResolvedMxHosts(array $resolved_mx_hosts): static
+    /**
+     * @param string[] $resolvedMxHosts
+     */
+    public function setResolvedMxHosts(array $resolvedMxHosts): static
     {
-        $this->resolved_mx_hosts = $resolved_mx_hosts;
+        $this->resolved_mx_hosts = $resolvedMxHosts;
         return $this;
     }
 
@@ -134,14 +142,20 @@ class SendAttempt
         return $this;
     }
 
+    /**
+     * @return array<string, array<string, mixed>>
+     */
     public function getSmtpConversations(): array
     {
         return $this->smtp_conversations;
     }
 
-    public function setSmtpConversations(array $smtp_conversations): static
+    /**
+     * @param array<string, array<string, mixed>> $smtpConversations
+     */
+    public function setSmtpConversations(array $smtpConversations): static
     {
-        $this->smtp_conversations = $smtp_conversations;
+        $this->smtp_conversations = $smtpConversations;
         return $this;
     }
 

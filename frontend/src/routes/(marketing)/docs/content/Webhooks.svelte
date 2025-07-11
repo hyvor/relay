@@ -56,7 +56,7 @@
 	code={`
 {
 	send: Send;
-	last_attempt: SendAttempt;
+	attempt: SendAttempt;
 }
 `}
 	language="ts"
@@ -78,7 +78,7 @@
 	code={`
 {
 	send: Send;
-	last_attempt: SendAttempt;
+	attempt: SendAttempt;
 }
 `}
 	language="ts"
@@ -117,7 +117,7 @@
 	code={`
 {
 	send: Send;
-	last_attempt: SendAttempt | null;
+	attempt: SendAttempt | null;
 	bounce: Bounce;
 }
 `}

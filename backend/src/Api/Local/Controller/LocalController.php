@@ -45,13 +45,16 @@ class LocalController extends AbstractController
         #[MapRequestPayload] SendAttemptDoneInput $input,
     ): JsonResponse
     {
-        $sendAttempt = $this->sendService->getSendAttemptById($input->send_attempt_id);
 
-        if ($sendAttempt === null) {
-            throw new UnprocessableEntityHttpException('Send not found');
+        foreach ($input->send_attempt_ids as $id) {
+            $sendAttempt = $this->sendService->getSendAttemptById($id);
+
+            if ($sendAttempt === null) {
+                continue;
+            }
+
+            $this->sendService->dispatchSendAttemptCreatedEvent($sendAttempt);
         }
-
-        $this->sendService->dispatchSendAttemptCreatedEvent($sendAttempt);
 
         return new JsonResponse([]);
     }
