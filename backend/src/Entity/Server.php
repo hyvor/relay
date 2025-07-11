@@ -21,6 +21,7 @@ class Server
     #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable $updated_at;
 
+    // hostname of the server
     #[ORM\Column(type: "string", length: 255)]
     private string $hostname;
 
@@ -90,17 +91,6 @@ class Server
     public function setLastPingAt(?\DateTimeImmutable $lastPingAt): static
     {
         $this->last_ping_at = $lastPingAt;
-        return $this;
-    }
-
-    public function getApiOn(): bool
-    {
-        return $this->api_on;
-    }
-
-    public function setApiOn(bool $apiOn): static
-    {
-        $this->api_on = $apiOn;
         return $this;
     }
 

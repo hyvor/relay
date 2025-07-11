@@ -32,7 +32,6 @@ return static function (ContainerBuilder $container, SecurityConfig $security): 
             ->roles(['ROLE_NO_ACCESS']);
     }
 
-
     # other access control
 
 };

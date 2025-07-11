@@ -1,13 +1,25 @@
 
 import type { Component } from 'svelte';
-import Introduction from '../content/Introduction.svelte';
-import Setup from '../content/Setup.svelte';
+import Introduction from './content/Introduction.svelte';
+import Setup from './content/Setup.svelte';
+import Deploy from './content/Deploy.svelte';
+
 export const categories: Category[] = [
 	{
 		name: 'Hosting',
 		pages: [
 			{
 				slug: '',
+				name: 'Getting Started',
+                component: Introduction
+			},
+			{
+				slug: 'deploy',
+				name: 'Deploy',
+                component: Deploy
+			},
+			{
+				slug: 'install',
 				name: 'Install & Run',
                 component: Introduction
 			},
@@ -33,6 +45,16 @@ export const categories: Category[] = [
 			}
 		]
 	},
+	{
+		name: 'Other',
+		pages: [
+			{
+				slug: 'deploy-easy',
+				name: 'Easy Deploy',
+				component: Introduction,
+			}
+		]
+	}
 ];
 
 export const pages = categories.reduce((acc, category) => acc.concat(category.pages), [] as Page[]);

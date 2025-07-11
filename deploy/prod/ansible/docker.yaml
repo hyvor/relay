@@ -1,0 +1,97 @@
+---
+- name: Install Docker on server
+  hosts: servers
+  become: true
+
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg-agent
+          - software-properties-common
+        state: present
+        update_cache: yes
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker APT repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+        state: present
+        filename: docker
+
+    - name: Install Docker Engine
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+        update_cache: yes
+
+    - name: Enable and start Docker
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+- name: Initialize Docker Swarm on the first server
+  hosts: servers_managers[0]
+  become: true
+  tasks:
+    - name: Get Private IP address
+      set_fact:
+        private_ip: "{{ ansible_all_ipv4_addresses | ipaddr('10.0.0.0/8') | first }}"
+    
+    - name: Check Docker Swarm status  # Checks if the host is part of a Swarm
+      ansible.builtin.shell: docker info --format '{{ "{{.Swarm.LocalNodeState}}" }}'
+      register: docker_swarm_status
+      changed_when: false
+
+    - name: Initialize Docker Swarm  # Initializes the Swarm if not already active
+      ansible.builtin.shell:
+        cmd: docker swarm init --advertise-addr {{ private_ip }}
+      when: "'inactive' in docker_swarm_status.stdout"  # Conditional execution
+      register: swarm_init
+      changed_when: "'Swarm initialized' in swarm_init.stdout"
+
+    - name: Retrieve Docker Swarm manager token  # Gets token for joining as a manager
+      ansible.builtin.shell: docker swarm join-token manager -q
+      register: manager_token
+      changed_when: false
+
+    - name: Retrieve Docker Swarm worker token  # Gets token for joining as a worker
+      ansible.builtin.shell: docker swarm join-token worker -q
+      register: worker_token
+      changed_when: false
+
+# - name: Join remaining servers to Docker Swarm
+#   hosts: servers_managers:!servers_managers[0]
+#   become: true
+#   tasks:
+#     - name: Check Docker Swarm status before attempting to join
+#       ansible.builtin.shell: docker info --format '{{ "{{.Swarm.LocalNodeState}}" }}'
+#       register: docker_swarm_status
+#       changed_when: false
+
+#     - name: Join Swarm as manager
+#       ansible.builtin.shell:
+#         cmd: docker swarm join --token {{ hostvars[groups['int_swarm_managers'][0]]['manager_token'].stdout }} {{ hostvars[groups['int_swarm_managers'][0]]['ansible_default_ipv4']['address'] }}:2377
+#       when: hostvars[groups['int_swarm_managers'][0]]['manager_token'].stdout is defined and docker_swarm_status.stdout != "active"
+#       register: swarm_join
+#       changed_when: "'This node joined a swarm as a manager' in swarm_join.stdout"
+
+#     - name: Label Docker Swarm manager nodes  # Applies a label to manager nodes for identification
+#       ansible.builtin.shell:
+#         cmd: docker node update --label-add manager=true {{ item }}
+#       loop: "{{ groups['int_swarm_managers'] }}"
+#       loop_control:
+#         loop_var: item
+#       when: swarm_join is changed
+#       changed_when: false

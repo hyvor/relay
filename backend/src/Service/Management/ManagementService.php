@@ -67,6 +67,8 @@ class ManagementService
         }
 
         $this->output->writeln(sprintf('<info>Server ID: %d</info>', $server->getId()));
+        $this->output->writeln(sprintf('<info>Server Hostname: %s</info>', $server->getHostname()));
+        $this->output->writeln(sprintf('<info>Server Docker Hostname: %s</info>', $server->getDockerHostname()));
 
         return $server;
     }
