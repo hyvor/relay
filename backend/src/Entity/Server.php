@@ -25,10 +25,6 @@ class Server
     #[ORM\Column(type: "string", length: 255)]
     private string $hostname;
 
-    // hostname of the Docker container
-    #[ORM\Column(type: "text")]
-    private string $docker_hostname;
-
     #[ORM\Column(type: "datetime_immutable", nullable: true)]
     private ?\DateTimeImmutable $last_ping_at = null;
 
@@ -87,17 +83,6 @@ class Server
         return $this;
     }
 
-    public function getDockerHostname(): string
-    {
-        return $this->docker_hostname;
-    }
-
-    public function setDockerHostname(string $dockerHostname): static
-    {
-        $this->docker_hostname = $dockerHostname;
-        return $this;
-    }
-
     public function getLastPingAt(): ?\DateTimeImmutable
     {
         return $this->last_ping_at;
@@ -106,17 +91,6 @@ class Server
     public function setLastPingAt(?\DateTimeImmutable $lastPingAt): static
     {
         $this->last_ping_at = $lastPingAt;
-        return $this;
-    }
-
-    public function getApiOn(): bool
-    {
-        return $this->api_on;
-    }
-
-    public function setApiOn(bool $apiOn): static
-    {
-        $this->api_on = $apiOn;
         return $this;
     }
 
