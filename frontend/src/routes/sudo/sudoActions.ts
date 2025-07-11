@@ -19,6 +19,12 @@ export function getQueues() {
 	});
 }
 
+export function updateIpAddress(ipId: number, data: { queue_id?: number | null; is_active?: boolean }) {
+	return sudoApi.patch<IpAddress>({
+		endpoint: `/ip-addresses/${ipId}`,
+		data
+	});
+}
 
 export function getLogs() {
 	return sudoApi.get<string[]>({
