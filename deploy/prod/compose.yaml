@@ -1,0 +1,12 @@
+services:
+  relay:
+    image: hyvor/relay:latest
+    deploy:
+      mode: global
+    networks:
+      - hostnet
+
+networks:
+  hostnet:
+    name: "host"
+    external: true
