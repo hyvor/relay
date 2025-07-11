@@ -26,8 +26,12 @@
 
 - **Self-Hosted**: Docker compose or swarm-based deployment.
 - **Email API**: Send emails using a simple API.
-- **Logging**: View logs of sent emails.
-- **Handle Greylisting & Retries**: Automatically manage greylisting and retries.
+- **Logging**: View logs of sent emails with 30 days of retention.
+- **Multi-Tenancy**: Support for multiple tenants with scoped access.
+- **Project Management**: Support for multiple isolated projects within a tenant.
+- **Queues**: Two queues for sending emails: transactional and distributional.
+- **Dedicated IPs**: Support for dedicated IPs users.
+- **Greylisting & Retries Handling**: Automatically manage greylisting and retries.
 - **Bounce Handling**: Automatically handle bounced emails.
 - **Feedback Loops**: Integrate with feedback loops to manage complaints.
 - **Suppressions**: Automatically manage email suppressions (bounces, unsubscribes, etc.).

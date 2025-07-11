@@ -19,6 +19,10 @@
 	<Feature title="Bounce & Complaint Handling">
 		Hyvor Relay automatically handles bounces and complaints.
 	</Feature>
+	<Feature title="Email Logs">
+		Detailed logs of sent emails including status, headers, SMTP conversations, and more. 30
+		days of retention.
+	</Feature>
 </div>
 
 <h3 id="features">Self-Hosting</h3>
