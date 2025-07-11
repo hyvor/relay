@@ -21,8 +21,13 @@ class Server
     #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable $updated_at;
 
+    // hostname of the server
     #[ORM\Column(type: "string", length: 255)]
     private string $hostname;
+
+    // hostname of the Docker container
+    #[ORM\Column(type: "text")]
+    private string $docker_hostname;
 
     #[ORM\Column(type: "datetime_immutable", nullable: true)]
     private ?\DateTimeImmutable $last_ping_at = null;
@@ -79,6 +84,17 @@ class Server
     public function setHostname(string $hostname): static
     {
         $this->hostname = $hostname;
+        return $this;
+    }
+
+    public function getDockerHostname(): string
+    {
+        return $this->docker_hostname;
+    }
+
+    public function setDockerHostname(string $dockerHostname): static
+    {
+        $this->docker_hostname = $dockerHostname;
         return $this;
     }
 

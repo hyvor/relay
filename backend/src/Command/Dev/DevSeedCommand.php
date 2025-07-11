@@ -51,7 +51,8 @@ class DevSeedCommand extends Command
         $distributionalQueue = QueueFactory::createDistributional();
 
         $server = ServerFactory::createOne([
-            'hostname' => 'hyvor-relay'
+            'hostname' => 'hyvor-relay',
+            'docker_hostname' => (string) gethostname(),
         ]);
         IpAddressFactory::createOne([
             'server' => $server,

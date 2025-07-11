@@ -26,8 +26,8 @@ class GlobalSchedule implements ScheduleProviderInterface
     public function getSchedule(): SymfonySchedule
     {
         return new SymfonySchedule()
-            ->add(RecurringMessage::every('1 hour', new ClearExpiredIdempotencyRecordsMessage))
-            ->lock($this->lockFactory->createLock('global-schedule'));
+            ->add(RecurringMessage::every('1 hour', new ClearExpiredIdempotencyRecordsMessage));
+            // ->lock($this->lockFactory->createLock('global-schedule', 20));
     }
 
 }
