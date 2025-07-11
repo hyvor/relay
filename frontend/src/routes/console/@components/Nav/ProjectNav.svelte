@@ -45,16 +45,16 @@
 		</NavLink>
 
 		<NavLink
-			href={'/console/' + $projectStore.id.toString() + '/emails'}
-			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/emails`)}
+			href={'/console/' + $projectStore.id.toString() + '/sends'}
+			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/sends`)}
 		>
 			<NavItem>
 				<IconEnvelope slot="icon" />
-				<span slot="text">Emails</span>
+				<span slot="text">Sends</span>
 			</NavItem>
 		</NavLink>
 
-		<NavLink 
+		<NavLink
 			href={'/console/' + $projectStore.id.toString() + '/domains'}
 			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/domains`)}
 		>
@@ -130,7 +130,6 @@
 			background-color: var(--hover);
 		}
 	}
-
 
 	@media (max-width: 992px) {
 		.wrap {
