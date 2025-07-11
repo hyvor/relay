@@ -62,4 +62,17 @@ class ServerController extends AbstractController
         return $this->json(new ServerObject($server));
     }
 
+    #[Route('/servers/{id}/re-init', methods: 'POST')]
+    public function reInitServer(int $id): JsonResponse
+    {
+        $server = $this->serverService->getServerById($id);
+
+        if ($server === null) {
+            throw new NotFoundHttpException('Server not found');
+        }
+
+        // TODO: Re-initialize server logic here
+
+        return $this->json(new ServerObject($server));
+    }
 }

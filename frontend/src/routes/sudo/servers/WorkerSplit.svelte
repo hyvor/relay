@@ -1,6 +1,8 @@
 <script lang="ts">
-	import { SplitControl, TextInput } from '@hyvor/design/components';
+	import { SplitControl, TextInput, toast } from '@hyvor/design/components';
 	import type { Server } from '../sudoTypes';
+	import { updateServer } from '../sudoActions';
+	import { serversStore } from '../sudoStore';
 
 	interface Props {
 		worker: 'api' | 'email' | 'webhook';
@@ -10,6 +12,26 @@
 	let { worker, server }: Props = $props();
 
 	let value = $state(server[`${worker}_workers`]);
+
+	$effect(() => {
+		if (value === server[`${worker}_workers`]) return;
+
+		const workerField = `${worker}_workers` as const;
+		const updateData = { [workerField]: value };
+		
+		updateServer(server.id, updateData)
+			.then((updatedServer) => {
+				serversStore.update(servers => 
+					servers.map(s => s.id === server.id ? updatedServer : s)
+				);
+				
+				toast.success(`${getWorkerName()} updated successfully`);
+			})
+			.catch((error) => {
+				toast.error(`Failed to update ${getWorkerName()}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+				value = server[`${worker}_workers`];
+			});
+	});
 
 	function getWorkerName() {
 		return {
@@ -30,7 +52,7 @@
 
 <SplitControl label={getWorkerName()}>
 	<TextInput bind:value type="number" min={0} block />
-
+	
 	<div class="tip">
 		{getTipText()}
 	</div>

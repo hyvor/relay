@@ -19,6 +19,12 @@ export function getQueues() {
 	});
 }
 
+export function updateServer(serverId: number, data: Partial<Pick<Server, 'api_workers' | 'email_workers' | 'webhook_workers'>>) {
+	return sudoApi.patch<Server>({
+		endpoint: `/servers/${serverId}`,
+		data
+	});
+}
 
 export function getLogs() {
 	return sudoApi.get<string[]>({
