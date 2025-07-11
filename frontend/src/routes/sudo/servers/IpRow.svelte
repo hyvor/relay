@@ -2,12 +2,27 @@
 	import { Button, Switch, Tag, Tooltip } from '@hyvor/design/components';
 	import type { IpAddress } from '../sudoTypes';
 	import IconExclamationCircle from '@hyvor/icons/IconExclamationCircle';
+	import QueueSelectModal from '../queues/QueueSelectModal.svelte';
 
 	interface Props {
 		ip: IpAddress;
 	}
 
-	let { ip }: Props = $props();
+	let { ip = $bindable() }: Props = $props();
+
+	let showQueueModal = $state(false);
+
+	function handleQueueButtonClick() {
+		showQueueModal = true;
+	}
+
+	function handleModalClose() {
+		showQueueModal = false;
+	}
+
+	function handleIpUpdate(updatedIp: IpAddress) {
+		ip = updatedIp;
+	}
 </script>
 
 <tr>
@@ -31,7 +46,7 @@
 			</Tooltip>
 		{/if}
 
-		<Button size="x-small" color="input" style="margin-left: 5px;">
+		<Button size="x-small" color="input" style="margin-left: 5px;" on:click={handleQueueButtonClick}>
 			{ip.queue ? 'Change' : 'Assign'}
 		</Button>
 	</td>
@@ -49,6 +64,13 @@
 		<Tag size="small" color="green">Enabled</Tag>
 	</td>
 </tr>
+
+<QueueSelectModal
+	bind:show={showQueueModal}
+	{ip}
+	onClose={handleModalClose}
+	onUpdate={handleIpUpdate}
+/>
 
 <style>
 	.id {
