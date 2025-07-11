@@ -1,6 +1,6 @@
 <?php
 
-namespace Api\Local;
+namespace App\Tests\Api\Local;
 
 use App\Entity\Type\SendStatus;
 use App\Tests\Case\WebTestCase;

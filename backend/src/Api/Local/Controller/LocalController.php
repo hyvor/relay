@@ -2,6 +2,7 @@
 
 namespace App\Api\Local\Controller;
 
+use App\Api\Local\Input\SendAttemptDoneInput;
 use App\Api\Local\Input\SendDoneInput;
 use App\Entity\Type\SendStatus;
 use App\Service\Send\Dto\SendUpdateDto;
@@ -37,6 +38,22 @@ class LocalController extends AbstractController
         }
 
         return new JsonResponse($state);
+    }
+
+    #[Route('/send-attempt/done', methods: 'POST')]
+    public function sendAttemptDone(
+        #[MapRequestPayload] SendAttemptDoneInput $input,
+    ): JsonResponse
+    {
+        $sendAttempt = $this->sendService->getSendAttemptById($input->send_attempt_id);
+
+        if ($sendAttempt === null) {
+            throw new UnprocessableEntityHttpException('Send not found');
+        }
+
+        $this->sendService->dispatchSendAttemptCreatedEvent($sendAttempt);
+
+        return new JsonResponse([]);
     }
 
     #[Route('/send/done', methods: 'POST')]

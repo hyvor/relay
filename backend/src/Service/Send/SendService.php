@@ -16,6 +16,7 @@ use App\Service\Send\Message\EmailSendMessage;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Uid\Uuid;
@@ -28,6 +29,7 @@ class SendService
         private EntityManagerInterface $em,
         private EmailBuilder $emailBuilder,
         private SendRepository $sendRepository,
+        private EventDispatcherInterface $eventDispatcher
     )
     {
     }
@@ -191,6 +193,17 @@ class SendService
     public function getSendAttemptsOfSend(Send $send): array
     {
         return $this->em->getRepository(SendAttempt::class)->findBy(['send' => $send], ['id' => 'DESC']);
+    }
+
+    public function getSendAttemptById(int $id): ?SendAttempt
+    {
+        return $this->em->getRepository(SendAttempt::class)->find($id);
+    }
+
+    public function dispatchSendAttemptCreatedEvent(SendAttempt $sendAttempt): void
+    {
+        $event = new Event\SendAttemptCreatedEvent($sendAttempt);
+        $this->eventDispatcher->dispatch($event);
     }
 
 }
