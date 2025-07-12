@@ -17,7 +17,7 @@
 	);
 </script>
 
-<a class="email" href={consoleUrlProject(`emails/${email.uuid}`)}>
+<a class="email" href={consoleUrlProject(`sends/${email.uuid}`)}>
 	<div class="email-wrap">
 		<div class="email-details">
 			<div class="email-row">

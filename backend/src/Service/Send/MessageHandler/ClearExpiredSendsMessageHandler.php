@@ -21,7 +21,7 @@ class ClearExpiredSendsMessageHandler
             DELETE FROM App\Entity\Send s
             WHERE s.created_at <= :date
         DQL)
-            ->setParameter('date', new \DateTimeImmutable('-1 month'))
+            ->setParameter('date', new \DateTimeImmutable('-30 days'))
             ->execute();
 
     }

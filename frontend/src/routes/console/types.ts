@@ -9,6 +9,14 @@ export interface AppConfig {
         },
         api_keys: {
             scopes: string[];
+        },
+        compliance: {
+            rates: {
+                bounce_rate_warning: number; // 0.02 for 2%
+                bounce_rate_error: number;
+                complaint_rate_warning: number; // 0.05 for 5%
+                complaint_rate_error: number;
+            }
         }
 	};
 }
@@ -110,4 +118,11 @@ export type Domain = {
     dkim_verified: boolean;
     dkim_checked_at?: number;
     dkim_error_message?: string;
+}
+
+
+export interface AnalyticsStats {
+    sends_30d: number;
+    bounce_rate_30d: number;
+    complaint_rate_30d: number;
 }

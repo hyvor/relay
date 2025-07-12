@@ -1,17 +1,7 @@
 <script lang="ts">
-	import {
-		Button,
-		ButtonGroup,
-		ActionList,
-		ActionListItem,
-		TextInput,
-		IconButton
-	} from '@hyvor/design/components';
-	import IconBoxArrowInDown from '@hyvor/icons/IconBoxArrowInDown';
-	import IconPlus from '@hyvor/icons/IconPlus';
+	import { ActionList, ActionListItem, TextInput, IconButton } from '@hyvor/design/components';
 	import SingleBox from '../../@components/content/SingleBox.svelte';
 	import type { Email, EmailStatus } from '../../types';
-	import { emailStore } from '../../lib/stores/projectStore';
 	import Selector from '../../@components/content/Selector.svelte';
 	import IconX from '@hyvor/icons/IconX';
 	import EmailList from './EmailList.svelte';
@@ -77,13 +67,22 @@
 					<ActionListItem on:click={() => selectStatus(null)} selected={status === null}>
 						All
 					</ActionListItem>
-					<ActionListItem on:click={() => selectStatus('queued')} selected={status === 'queued'}>
+					<ActionListItem
+						on:click={() => selectStatus('queued')}
+						selected={status === 'queued'}
+					>
 						Queued
 					</ActionListItem>
-					<ActionListItem on:click={() => selectStatus('sent')} selected={status === 'sent'}>
+					<ActionListItem
+						on:click={() => selectStatus('sent')}
+						selected={status === 'sent'}
+					>
 						Sent
 					</ActionListItem>
-					<ActionListItem on:click={() => selectStatus('failed')} selected={status === 'failed'}>
+					<ActionListItem
+						on:click={() => selectStatus('failed')}
+						selected={status === 'failed'}
+					>
 						Failed
 					</ActionListItem>
 				</ActionList>

@@ -6,6 +6,7 @@ use App\Api\Console\Authorization\UserLevelEndpoint;
 use App\Api\Console\Object\ProjectObject;
 use App\Entity\Project;
 use App\Service\Project\ProjectService;
+use App\Service\Send\Compliance;
 use Hyvor\Internal\Bundle\Security\HasHyvorUser;
 use Hyvor\Internal\InternalConfig;
 use Psr\Log\LoggerInterface;
@@ -48,13 +49,14 @@ class ConsoleController extends AbstractController
                 ],
                 'app' => [
                     'webhook' => [
-                        'events' => array_map(
-                            fn($event) => $event->value, WebhooksEventEnum::cases()
-                        ),
+                        'events' => array_map(fn($event) => $event->value, WebhooksEventEnum::cases()),
                     ],
                     'api_keys' => [
                         'scopes' => array_map(fn($scope) => $scope->value, Scope::cases()),
-                    ]
+                    ],
+                    'compliance' => [
+                        'rates' => Compliance::getRates(),
+                    ],
                 ],
             ],
         ]);
