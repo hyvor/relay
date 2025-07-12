@@ -8,4 +8,5 @@ enum SendStatus: string
     case PROCESSING = 'processing';
     case ACCEPTED = 'accepted';
     case BOUNCED = 'bounced';
+    case COMPLAINED = 'complained';
 }

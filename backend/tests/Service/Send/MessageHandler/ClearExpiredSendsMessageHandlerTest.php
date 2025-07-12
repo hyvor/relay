@@ -15,7 +15,7 @@ class ClearExpiredSendsMessageHandlerTest extends KernelTestCase
 
         $send1 = SendFactory::createOne(['createdAt' => new \DateTimeImmutable('-2 years')]);
         $send2 = SendFactory::createOne(['createdAt' => new \DateTimeImmutable('-2 months')]);
-        $send3 = SendFactory::createOne(['createdAt' => new \DateTimeImmutable('-1 month')]);
+        $send3 = SendFactory::createOne(['createdAt' => new \DateTimeImmutable('-30 days')]);
         $send4 = SendFactory::createOne(['createdAt' => new \DateTimeImmutable('-1 week')]);
         $send5 = SendFactory::createOne(['createdAt' => new \DateTimeImmutable('-1 day')]);
 
