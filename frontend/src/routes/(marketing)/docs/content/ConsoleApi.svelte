@@ -24,8 +24,8 @@
 		<strong>Content-Type</strong>: <code>application/json</code> (both for requests and responses)
 	</li>
 	<li>
-		<strong>Authentication</strong>: Set the <code>Authorization</code> header with your API key
-		as a Bearer token:
+		<strong>Authentication</strong>: Set the <code>Authorization</code> header with your API key as
+		a Bearer token:
 
 		<CodeBlock
 			code={`
@@ -562,14 +562,14 @@ Authorization: Bearer <your_api_key>
 	id: number;
 	uuid: string;
 	created_at: number;
-	sent_at?: number;
-	failed_at?: number;
+	sent_at: number | null;
+	failed_at: number | null;
 	status: string;
 	from_address: string;
 	to_address: string;
-	subject?: string;
-	body_html?: string;
-	body_text?: string;
+	subject: string | null;
+	body_html: string | null;
+	body_text: string | null;
 	raw: string;
 	attempts: SendAttempt[];
         }
@@ -587,9 +587,9 @@ Authorization: Bearer <your_api_key>
 	status: string;
 	try_count: number;
 	resolved_mx_hosts: string[];
-	accepted_mx_host?: string;
+	accepted_mx_host: string | null;
 	smtp_conversations: Record<string, any>;
-	error?: string;
+	error: string | null;
         }
     `}
 />
@@ -609,8 +609,8 @@ Authorization: Bearer <your_api_key>
 	dkim_public_key: string;
 	dkim_txt_value: string;
 	dkim_verified: boolean;
-	dkim_checked_at?: number;
-	dkim_error_message?: string;
+	dkim_checked_at: number | null;
+	dkim_error_message: string | null;
         }
     `}
 />
@@ -654,10 +654,10 @@ Authorization: Bearer <your_api_key>
 	id: number;
 	name: string;
 	scopes: string[];
-	key?: string; // Only included when creating a new key
+	key: string | null; // Only included when creating a new key
 	created_at: number;
 	is_enabled: boolean;
-	last_accessed_at?: number;
+	last_accessed_at: number | null;
         }
     `}
 />
@@ -673,7 +673,7 @@ Authorization: Bearer <your_api_key>
 	email: string;
 	project: string;
 	reason: string;
-	description?: string;
+	description: string | null;
         }
     `}
 />
