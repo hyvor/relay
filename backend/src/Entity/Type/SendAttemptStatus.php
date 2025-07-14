@@ -4,7 +4,7 @@ namespace App\Entity\Type;
 
 enum SendAttemptStatus: string
 {
-    case QUEUED = 'queued';
-    case SENT = 'sent';
-    case FAILED = 'failed';
+    case ACCEPTED = 'accepted';
+    case DEFERRED = 'deferred';
+    case BOUNCED = 'bounced';
 }

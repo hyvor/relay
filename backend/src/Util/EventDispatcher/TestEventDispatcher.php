@@ -46,6 +46,26 @@ class TestEventDispatcher extends EventDispatcher
         return $this->dispatchedEvents;
     }
 
+    /**
+     * Gets the first event. Throws an error if the event is not found.
+     *
+     * @template T of object
+     * @param class-string<T> $eventName
+     * @return T
+     */
+    public function getFirstEvent(string $eventName): object
+    {
+        /** @var T|null $val */
+        $val = array_find($this->dispatchedEvents, fn($event) => $event::class === $eventName);
+
+        Assert::assertNotNull(
+            $val,
+            "Event '$eventName' was not dispatched."
+        );
+
+        return $val;
+    }
+
     public function assertDispatched(string $eventName): void
     {
         $this->assertDispatchedCount($eventName, 1);

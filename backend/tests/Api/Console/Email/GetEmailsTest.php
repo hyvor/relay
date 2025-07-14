@@ -98,9 +98,9 @@ class GetEmailsTest extends WebTestCase
         $this->assertCount(5, $json);
     }
 
-    #[TestWith([SendStatus::QUEUED, SendStatus::SENT])]
-    #[TestWith([SendStatus::SENT, SendStatus::FAILED])]
-    #[TestWith([SendStatus::FAILED, SendStatus::QUEUED])]
+    #[TestWith([SendStatus::QUEUED, SendStatus::ACCEPTED])]
+    #[TestWith([SendStatus::ACCEPTED, SendStatus::BOUNCED])]
+    #[TestWith([SendStatus::BOUNCED, SendStatus::QUEUED])]
     public function test_list_emails_with_status_search(SendStatus $status, SendStatus $otherStatus): void
     {
         $project = ProjectFactory::createOne();

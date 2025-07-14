@@ -1,19 +1,16 @@
 <script lang="ts">
-	import {
-		Button,
-		toast,
-		confirm,
-		TabNav,
-		TabNavItem,
-		Loader
-	} from '@hyvor/design/components';
+	import { Button, toast, confirm, TabNav, TabNavItem, Loader } from '@hyvor/design/components';
 	import IconPlus from '@hyvor/icons/IconPlus';
 	import SingleBox from '../../@components/content/SingleBox.svelte';
 	import WebhookModal from './WebhookModal.svelte';
 	import WebhookList from './WebhookList.svelte';
 	import WebhookDeliveryList from './WebhookDeliveryList.svelte';
 	import type { Webhook, WebhookDelivery } from '../../types';
-	import { getWebhooks, deleteWebhook, getWebhookDeliveries } from '../../lib/actions/webhookActions';
+	import {
+		getWebhooks,
+		deleteWebhook,
+		getWebhookDeliveries
+	} from '../../lib/actions/webhookActions';
 	import { onMount } from 'svelte';
 
 	let webhooks: Webhook[] = $state([]);
@@ -110,10 +107,7 @@
 			</TabNav>
 		</div>
 		{#if activeTab === 'configure'}
-			<Button
-				variant="fill"
-				on:click={handleCreateWebhook}
-			>
+			<Button variant="fill" on:click={handleCreateWebhook}>
 				<IconPlus size={16} />
 				Create Webhook
 			</Button>
@@ -127,12 +121,7 @@
 					<Loader />
 				</div>
 			{:else}
-				<WebhookList 
-					{webhooks} 
-					loading={false} 
-					onEdit={handleEditWebhook} 
-					onDelete={handleDeleteWebhook} 
-				/>
+				<WebhookList {webhooks} onEdit={handleEditWebhook} onDelete={handleDeleteWebhook} />
 			{/if}
 		{:else if activeTab === 'deliveries'}
 			{#if deliveriesLoading}
@@ -140,17 +129,14 @@
 					<Loader />
 				</div>
 			{:else}
-				<WebhookDeliveryList 
-					{deliveries} 
-					loading={false} 
-				/>
+				<WebhookDeliveryList {deliveries} />
 			{/if}
 		{/if}
 	</div>
 </SingleBox>
 
-<WebhookModal 
-	bind:show={showModal} 
+<WebhookModal
+	bind:show={showModal}
 	bind:webhook={editingWebhook}
 	onWebhookSaved={handleWebhookSaved}
 />
@@ -175,7 +161,7 @@
 		flex-direction: column;
 		overflow: auto;
 	}
-	
+
 	.loader-container {
 		display: flex;
 		justify-content: center;

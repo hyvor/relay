@@ -17,6 +17,14 @@
 			</div>
 			<div class="check">
 				<div class="dot"></div>
+				<div>All PTR records resolve to the correct IP addresses.</div>
+			</div>
+			<div class="check">
+				<div class="dot"></div>
+				<div>All IP addresses are added in the SPF record.</div>
+			</div>
+			<div class="check">
+				<div class="dot"></div>
 				<div>None of the IP addresses are blacklisted on any major blacklist.</div>
 			</div>
 		</div>

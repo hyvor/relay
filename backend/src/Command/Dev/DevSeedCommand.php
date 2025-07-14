@@ -51,7 +51,7 @@ class DevSeedCommand extends Command
         $distributionalQueue = QueueFactory::createDistributional();
 
         $server = ServerFactory::createOne([
-            'hostname' => 'hyvor-relay'
+            'hostname' => 'hyvor-relay',
         ]);
         IpAddressFactory::createOne([
             'server' => $server,
@@ -81,14 +81,14 @@ class DevSeedCommand extends Command
             'project' => $project,
             'domain' => $domain,
             'sent_at' => new \DateTimeImmutable(),
-            'status' => SendStatus::SENT,
+            'status' => SendStatus::ACCEPTED,
         ]);
 
         $sent_failed = SendFactory::createMany(1, [
             'project' => $project,
             'domain' => $domain,
             'failed_at' => new \DateTimeImmutable(),
-            'status' => SendStatus::FAILED,
+            'status' => SendStatus::BOUNCED,
         ]);
 
         SuppressionFactory::createMany(16, [

@@ -6,6 +6,7 @@ enum SendStatus: string
 {
     case QUEUED = 'queued';
     case PROCESSING = 'processing';
-    case SENT = 'sent';
-    case FAILED = 'failed';
+    case ACCEPTED = 'accepted';
+    case BOUNCED = 'bounced';
+    case COMPLAINED = 'complained';
 }

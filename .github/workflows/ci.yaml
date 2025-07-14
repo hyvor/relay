@@ -21,7 +21,7 @@ jobs:
           run: docker build -t frontend-dev . --target frontend-dev
 
       -   name: Run Svelte Check
-          run: docker run frontend-dev npm run check
+          run: docker run frontend-dev bun run check
 
   phpstan:
     name: PHPStan
@@ -35,10 +35,14 @@ jobs:
           run: docker build -t backend-dev . --target backend-dev
 
       -   name: Run PHPStan
-          run: docker run backend-dev ./vendor/bin/phpstan analyse --memory-limit=1G --ansi
+          run: |
+            docker run backend-dev "
+              bin/console cache:warmup &&
+              ./vendor/bin/phpstan analyse --memory-limit=1G --ansi
+            "
 
   php-tests:
-    name: "PHP Tests"
+    name: "PHP & Go Tests"
     runs-on: ubuntu-latest
 
     steps:
@@ -53,12 +57,19 @@ jobs:
       -   name: Build Docker image
           run: docker build -t backend-dev . --target backend-dev
 
-      -   name: Run Tests
+      -   name: Run PHP Tests
           run: |
             docker run \
-            -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/hyvor_post_testing?serverVersion=16&charset=utf8" \
             --network ci \
+            -e APP_ENV=test \
             backend-dev sh -c "
             php bin/console doctrine:migrations:migrate --no-interaction &&
             ./vendor/bin/phpunit"
-      
+
+      # Database already migrated from the previous step.
+      -  name: Run Go Tests
+         run: |
+            docker run \
+            --network ci \
+            worker sh -c "
+            go test -v ./... -count=1 -p 1 -timeout 30s"

@@ -1,8 +1,8 @@
 framework:
     messenger:
         transports:
+            default: 'doctrine://default?auto_setup=1'
             sync: 'sync://'
-            default: 'doctrine://default'
 
 when@test:
     framework:

@@ -86,19 +86,19 @@ func (b *DbSendBatch) FetchSends(queueId int) ([]DbSend, error) {
 func (b *DbSendBatch) FinalizeSendBySendResult(
 	send *DbSend,
 	sendResult *SendResult,
-) error {
+) (int, error) {
 
-	status := "sent"
+	status := "accepted"
 	if sendResult.Error != nil {
-		status = "failed"
+		status = "bounced"
 	} else if sendResult.ShouldRequeue {
-		status = "queued"
+		status = "deferred"
 	}
 
 	var err error
 	var sendAfterInterval string
 
-	if status == "queued" {
+	if status == "deferred" {
 		sendAfterInterval = fmt.Sprintf("NOW() + INTERVAL '%s'", getSendAfterInterval(send.TryCount))
 	} else {
 		sendAfterInterval = "send_after"
@@ -116,7 +116,7 @@ func (b *DbSendBatch) FinalizeSendBySendResult(
 	`, status, send.Id)
 
 	if err != nil {
-		return fmt.Errorf("failed to update send ID %d status to %s: %w", send.Id, status, err)
+		return 0, fmt.Errorf("failed to update send ID %d status to %s: %w", send.Id, status, err)
 	}
 
 	// create send attempt
@@ -149,7 +149,8 @@ func (b *DbSendBatch) FinalizeSendBySendResult(
 	resolvedMxHosts, _ := json.Marshal(sendResult.ResolvedMxHosts)
 	smtpConversations, _ := json.Marshal(sendResult.SmtpConversations)
 
-	_, err = b.tx.ExecContext(b.ctx, `
+	var attemptId int
+	err = b.tx.QueryRowContext(b.ctx, `
 		INSERT INTO send_attempts (
 			created_at,
 			updated_at,
@@ -158,7 +159,7 @@ func (b *DbSendBatch) FinalizeSendBySendResult(
 			status,
 			try_count,
 			resolved_mx_hosts,
-			sent_mx_host,
+			accepted_mx_host,
 			smtp_conversations,
 			error
 		)
@@ -174,6 +175,7 @@ func (b *DbSendBatch) FinalizeSendBySendResult(
 			$7,
 			$8
 		)
+		RETURNING id
 	`,
 		send.Id,
 		sendResult.SentFromIpId,
@@ -183,13 +185,13 @@ func (b *DbSendBatch) FinalizeSendBySendResult(
 		sentMxHost,
 		smtpConversations,
 		errorMessage,
-	)
+	).Scan(&attemptId)
 
 	if err != nil {
-		return fmt.Errorf("failed to insert send attempt for send ID %d: %w", send.Id, err)
+		return 0, fmt.Errorf("failed to insert send attempt for send ID %d: %w", send.Id, err)
 	}
 
-	return nil
+	return attemptId, nil
 
 }
 

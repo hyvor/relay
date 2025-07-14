@@ -19,4 +19,6 @@ enum Scope: string
 
     case SUPPRESSIONS_READ = 'suppressions.read';
     case SUPPRESSIONS_WRITE = 'suppressions.write';
+
+    case ANALYTICS_READ = 'analytics.read';
 }

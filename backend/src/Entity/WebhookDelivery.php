@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Entity\Type\WebhookDeliveryStatus;
+use App\Entity\Type\WebhooksEventEnum;
 use App\Repository\WebhookDeliveryRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -21,6 +22,9 @@ class WebhookDelivery
     #[ORM\Column]
     private \DateTimeImmutable $updated_at;
 
+    #[ORM\Column]
+    private \DateTimeImmutable $send_after;
+
     #[ORM\ManyToOne(targetEntity: Webhook::class)]
     #[ORM\JoinColumn]
     private Webhook $webhook;
@@ -28,8 +32,8 @@ class WebhookDelivery
     #[ORM\Column(length: 255)]
     private string $url;
 
-    #[ORM\Column(length: 255)]
-    private string $event;
+    #[ORM\Column(enumType: WebhooksEventEnum::class)]
+    private WebhooksEventEnum $event;
 
     #[ORM\Column(enumType: WebhookDeliveryStatus::class)]
     private WebhookDeliveryStatus $status ;
@@ -38,7 +42,13 @@ class WebhookDelivery
     private string $request_body;
 
     #[ORM\Column()]
-    private string $response;
+    private ?string $response;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $response_code = null;
+
+    #[ORM\Column]
+    private int $try_count = 0;
 
     public function getId(): int
     {
@@ -76,6 +86,18 @@ class WebhookDelivery
         return $this;
     }
 
+    public function getSendAfter(): \DateTimeImmutable
+    {
+        return $this->send_after;
+    }
+
+    public function setSendAfter(\DateTimeImmutable $send_after): static
+    {
+        $this->send_after = $send_after;
+
+        return $this;
+    }
+
     public function getWebhook(): Webhook
     {
         return $this->webhook;
@@ -100,12 +122,12 @@ class WebhookDelivery
         return $this;
     }
 
-    public function getEvent(): string
+    public function getEvent(): WebhooksEventEnum
     {
         return $this->event;
     }
 
-    public function setEvent(string $event): static
+    public function setEvent(WebhooksEventEnum $event): static
     {
         $this->event = $event;
 
@@ -136,14 +158,38 @@ class WebhookDelivery
         return $this;
     }
 
-    public function getResponse(): string
+    public function getResponse(): ?string
     {
         return $this->response;
     }
 
-    public function setResponse(string $response): static
+    public function setResponse(?string $response): static
     {
         $this->response = $response;
+
+        return $this;
+    }
+
+    public function getResponseCode(): ?int
+    {
+        return $this->response_code;
+    }
+
+    public function setResponseCode(?int $responseCode): static
+    {
+        $this->response_code = $responseCode;
+
+        return $this;
+    }
+
+    public function getTryCount(): int
+    {
+        return $this->try_count;
+    }
+
+    public function setTryCount(int $tryCount): static
+    {
+        $this->try_count = $tryCount;
 
         return $this;
     }

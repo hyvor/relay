@@ -12,6 +12,7 @@ class IpServiceTest extends TestCase
     {
         $ipService = new CurrentServerIp();
         $addresses = $ipService->getPublicV4IpAddresses();
+        // @phpstan-ignore-next-line
         $this->assertIsArray($addresses);
     }
 
@@ -30,6 +31,9 @@ class IpServiceTest extends TestCase
         );
     }
 
+    /**
+     * @return array<mixed>
+     */
     public function getMockedNetGetInterfaces(): array
     {
         $addresses = [

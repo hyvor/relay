@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -29,17 +30,30 @@ func CallLocalApi(
 	ctx context.Context,
 	method string,
 	endpoint string,
-	body io.Reader,
+	body interface{},
 	responseJsonObject interface{},
 ) error {
 
 	url := localApiUrl(endpoint)
 
-	req, err := http.NewRequestWithContext(ctx, method, url, body)
+	var bodyReader io.Reader
+	if body != nil {
+		jsonBody, err := json.Marshal(body)
+		if err != nil {
+			return fmt.Errorf("failed to marshal body: %w", err)
+		}
+		bodyReader = bytes.NewReader(jsonBody)
+	} else {
+		bodyReader = nil
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, url, bodyReader)
 
 	if err != nil {
 		return err
 	}
+
+	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

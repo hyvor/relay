@@ -26,6 +26,11 @@ class SendAttempt
     #[ORM\JoinColumn(name: "send_id", nullable: false, onDelete: "CASCADE")]
     private Send $send;
 
+    #[ORM\ManyToOne(targetEntity: IpAddress::class)]
+    #[ORM\JoinColumn()]
+    private IpAddress $ip_address;
+
+    /** @var string[] */
     #[ORM\Column(type: "json")]
     private array $resolved_mx_hosts = [];
 
@@ -36,8 +41,9 @@ class SendAttempt
     private int $try_count = 0;
 
     #[ORM\Column(type: "string", nullable: true)]
-    private ?string $sent_mx_host = null;
+    private ?string $accepted_mx_host = null;
 
+    /** @var array<string, array<string, mixed>> */
     #[ORM\Column(type: "json")]
     private array $smtp_conversations = [];
 
@@ -90,25 +96,42 @@ class SendAttempt
         return $this;
     }
 
+    public function getIpAddress(): IpAddress
+    {
+        return $this->ip_address;
+    }
+
+    public function setIpAddress(IpAddress $ip_address): static
+    {
+        $this->ip_address = $ip_address;
+        return $this;
+    }
+
+    /**
+     * @return string[]
+     */
     public function getResolvedMxHosts(): array
     {
         return $this->resolved_mx_hosts;
     }
 
-    public function setResolvedMxHosts(array $resolved_mx_hosts): static
+    /**
+     * @param string[] $resolvedMxHosts
+     */
+    public function setResolvedMxHosts(array $resolvedMxHosts): static
     {
-        $this->resolved_mx_hosts = $resolved_mx_hosts;
+        $this->resolved_mx_hosts = $resolvedMxHosts;
         return $this;
     }
 
-    public function getSentMxhost(): ?string
+    public function getAcceptedMxHost(): ?string
     {
-        return $this->sent_mx_host;
+        return $this->accepted_mx_host;
     }
 
-    public function setSentMxhost(?string $sent_mx_host): static
+    public function setAcceptedMxHost(?string $accepted_mx_host): static
     {
-        $this->sent_mx_host = $sent_mx_host;
+        $this->accepted_mx_host = $accepted_mx_host;
         return $this;
     }
 
@@ -134,14 +157,20 @@ class SendAttempt
         return $this;
     }
 
+    /**
+     * @return array<string, array<string, mixed>>
+     */
     public function getSmtpConversations(): array
     {
         return $this->smtp_conversations;
     }
 
-    public function setSmtpConversations(array $smtp_conversations): static
+    /**
+     * @param array<string, array<string, mixed>> $smtpConversations
+     */
+    public function setSmtpConversations(array $smtpConversations): static
     {
-        $this->smtp_conversations = $smtp_conversations;
+        $this->smtp_conversations = $smtpConversations;
         return $this;
     }
 

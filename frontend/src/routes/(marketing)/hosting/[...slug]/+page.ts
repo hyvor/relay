@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { pages } from './docs';
+import { pages } from '../hosting';
 
 export async function load({ params } : { params: { slug?: string } }) {
 	const slug = params.slug;
