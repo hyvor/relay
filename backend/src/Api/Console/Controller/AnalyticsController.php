@@ -40,4 +40,12 @@ class AnalyticsController extends AbstractController
         ]);
     }
 
+    #[Route('/analytics/sends/chart', methods: 'GET')]
+    #[ScopeRequired(Scope::ANALYTICS_READ)]
+    public function getSendsChartData(Project $project): JsonResponse
+    {
+        $data = $this->sendAnalyticsService->getSendsChartData($project);
+        return new JsonResponse($data);
+    }
+
 }
