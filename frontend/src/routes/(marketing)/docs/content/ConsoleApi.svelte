@@ -124,6 +124,17 @@ Authorization: Bearer <your_api_key>
 	</li>
 </ul>
 
+<p>Objects:</p>
+
+<ul>
+	<li>
+		<a href="#send-object">Send Object</a>
+	</li>
+	<li>
+		<a href="#send-attempt-object">SendAttempt Object</a>
+	</li>
+</ul>
+
 <h4 id="send-email">Send Email</h4>
 
 <p>
@@ -214,8 +225,6 @@ Authorization: Bearer <your_api_key>
 	</li>
 </ul>
 
-<ul></ul>
-
 <h4 id="get-domains">Get Domains</h4>
 
 <p>
@@ -297,6 +306,17 @@ Authorization: Bearer <your_api_key>
 	</li>
 	<li>
 		<a href="#get-webhook-deliveries">GET /webhooks/deliveries</a> - Get webhook deliveries
+	</li>
+</ul>
+
+<p>Objects:</p>
+
+<ul>
+	<li>
+		<a href="#webhook-object">Webhook Object</a>
+	</li>
+	<li>
+		<a href="#webhook-delivery-object">WebhookDelivery Object</a>
 	</li>
 </ul>
 
@@ -399,6 +419,14 @@ Authorization: Bearer <your_api_key>
 	</li>
 </ul>
 
+<p>Objects:</p>
+
+<ul>
+	<li>
+		<a href="#api-key-object">ApiKey Object</a>
+	</li>
+</ul>
+
 <h4 id="get-api-keys">Get API Keys</h4>
 
 <p>
@@ -472,6 +500,14 @@ Authorization: Bearer <your_api_key>
 	</li>
 	<li>
 		<a href="#delete-suppression">DELETE /suppressions/:id</a> - Delete a suppression
+	</li>
+</ul>
+
+<p>Objects:</p>
+
+<ul>
+	<li>
+		<a href="#suppression-object">Suppression Object</a>
 	</li>
 </ul>
 
