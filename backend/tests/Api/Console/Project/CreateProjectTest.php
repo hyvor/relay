@@ -21,7 +21,8 @@ class CreateProjectTest extends WebTestCase
             '/project',
             [
                 'name' => 'Valid Project Name'
-            ]
+            ],
+            useSession: true
         );
 
         $this->assertSame(200, $response->getStatusCode());

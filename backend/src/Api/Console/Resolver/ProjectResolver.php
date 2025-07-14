@@ -21,7 +21,6 @@ class ProjectResolver implements ValueResolverInterface
     public function resolve(Request $request, ArgumentMetadata $argument): iterable
     {
         $argumentType = $argument->getType();
-
         if (!$argumentType || $argumentType !== Project::class) {
             return [];
         }
@@ -31,6 +30,7 @@ class ProjectResolver implements ValueResolverInterface
         if (!$project instanceof Project) {
             return [];
         }
+
 
         return [$project];
     }
