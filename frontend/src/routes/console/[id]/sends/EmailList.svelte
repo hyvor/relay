@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { IconMessage, LoadButton, Loader } from '@hyvor/design/components';
-	import type { Email, EmailStatus } from '../../types';
+	import type { Email, SendStatus } from '../../types';
 	import { emailStore } from '../../lib/stores/projectStore';
 	import { getSends } from '../../lib/actions/emailActions';
 	import EmailRow from './EmailRow.svelte';
 
 	interface Props {
-		status: EmailStatus | null;
+		status: SendStatus | null;
 		from_search?: string | null;
 		to_search?: string | null;
 		key: number; // just for forcing re-render
