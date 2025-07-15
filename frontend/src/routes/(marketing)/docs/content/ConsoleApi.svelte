@@ -24,8 +24,8 @@
 		<strong>Content-Type</strong>: <code>application/json</code> (both for requests and responses)
 	</li>
 	<li>
-		<strong>Authentication</strong>: Set the <code>Authorization</code> header with your API key as
-		a Bearer token:
+		<strong>Authentication</strong>: Set the <code>Authorization</code> header with your API key
+		as a Bearer token:
 
 		<CodeBlock
 			code={`
@@ -175,7 +175,7 @@ Authorization: Bearer <your_api_key>
     type Request = {
         limit?: number, // Optional. Default is 50
         offset?: number, // Optional. Default is 0
-        status?: string, // Optional. Filter by status
+        status?: 'queued' | 'processing' | 'accepted' | 'bounced' | 'complained', // Optional. Filter by status
         from_search?: string, // Optional. Search from address
         to_search?: string // Optional. Search to address
     }
@@ -521,7 +521,7 @@ Authorization: Bearer <your_api_key>
 	code={`
     type Request = {
         email?: string, // Optional. Search by email
-        reason?: string // Optional. Filter by reason
+        reason?: 'bounce' | 'complaint' // Optional. Filter by reason
     }
     type Response = Suppression[]
 `}
@@ -600,7 +600,7 @@ Authorization: Bearer <your_api_key>
 	created_at: number;
 	sent_at: number | null;
 	failed_at: number | null;
-	status: string;
+	status: 'queued' | 'accepted' | 'bounced' | 'complained';
 	from_address: string;
 	to_address: string;
 	subject: string | null;
@@ -620,7 +620,7 @@ Authorization: Bearer <your_api_key>
         interface SendAttempt {
 	id: number;
 	created_at: number;
-	status: string;
+	status: 'accepted' | 'deferred' | 'bounced';
 	try_count: number;
 	resolved_mx_hosts: string[];
 	accepted_mx_host: string | null;
@@ -674,7 +674,7 @@ Authorization: Bearer <your_api_key>
 	id: number;
 	url: string;
 	event: string;
-	status: string;
+	status: 'pending' | 'delivered' | 'failed';
 	response: string;
 	created_at: number;
         }
@@ -708,7 +708,7 @@ Authorization: Bearer <your_api_key>
 	created_at: number;
 	email: string;
 	project: string;
-	reason: string;
+	reason: 'bounce' | 'complaint';
 	description: string | null;
         }
     `}
