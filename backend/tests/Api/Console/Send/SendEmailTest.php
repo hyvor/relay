@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Api\Console\Email;
+namespace App\Tests\Api\Console\Send;
 
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\SendController;

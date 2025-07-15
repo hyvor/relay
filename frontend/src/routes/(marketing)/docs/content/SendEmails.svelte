@@ -220,11 +220,39 @@ type Attachment = {
 	idempotency key.
 </p>
 
+<h2 id="send-status">Send Status</h2>
+
+<p>
+	Send status, as in the Console API <a href="/docs/api-console#send-object">Send Object</a>, can
+	be one of the following:
+</p>
+
+<ul>
+	<li>
+		<strong>queued</strong> - Hyvor Relay has accepted the request and queued the email for sending.
+		It can also mean that the email is re-queued after a temporary failure.
+	</li>
+	<li>
+		<strong>accepted</strong> - The recipient's email server has accepted the email. The status
+		can still change to <code>bounced</code> or <code>complained</code> later.
+	</li>
+	<li>
+		<strong>bounced</strong> - The recipient's email server has rejected the email with a permanent
+		error. The email will not be retried.
+	</li>
+	<li>
+		<strong>complained</strong> - The recipient has marked the email as spam or complained about
+		it, usually after the email was delivered.
+	</li>
+</ul>
+
+<p>
+	See <a href="/docs/webhooks#send-accepted">Webhook Send Events</a> for more information on each status.
+</p>
+
 <h2 id="rate-limit">Rate Limiting</h2>
 
-<!-- 
-
-<p>TODO</p> -->
+<p>TODO</p>
 
 <h2 id="limits">Other Limits</h2>
 

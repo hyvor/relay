@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { DetailCards, DetailCard } from '@hyvor/design/components';
 	import type { Email } from '../../../types';
-	import EmailStatus from '../EmailStatus.svelte';
+	import SendStatus from '../SendStatus.svelte';
 	import RelativeTime from '../../../@components/content/RelativeTime.svelte';
 	import AttemptRow from './AttemptRow.svelte';
 
@@ -30,7 +30,7 @@
 		<DetailCard label="Subject" content={send.subject || 'No subject'} />
 
 		<DetailCard label="Status">
-			<EmailStatus status={send.status} />
+			<SendStatus status={send.status} />
 		</DetailCard>
 
 		<DetailCard label="Created">
@@ -38,17 +38,17 @@
 			<div class="relative-time">(<RelativeTime unix={send.created_at} />)</div>
 		</DetailCard>
 
-		{#if send.sent_at}
+		{#if send.accepted_at}
 			<DetailCard label="Sent">
-				<div>{formatTimestamp(send.sent_at)}</div>
-				<div class="relative-time">(<RelativeTime unix={send.sent_at} />)</div>
+				<div>{formatTimestamp(send.accepted_at)}</div>
+				<div class="relative-time">(<RelativeTime unix={send.accepted_at} />)</div>
 			</DetailCard>
 		{/if}
 
-		{#if send.failed_at}
+		{#if send.bounced_at}
 			<DetailCard label="Failed">
-				<div>{formatTimestamp(send.failed_at)}</div>
-				<div class="relative-time">(<RelativeTime unix={send.failed_at} />)</div>
+				<div>{formatTimestamp(send.bounced_at)}</div>
+				<div class="relative-time">(<RelativeTime unix={send.bounced_at} />)</div>
 			</DetailCard>
 		{/if}
 

@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { ActionList, ActionListItem, TextInput, IconButton } from '@hyvor/design/components';
 	import SingleBox from '../../@components/content/SingleBox.svelte';
-	import type { Email, EmailStatus } from '../../types';
+	import type { Email, SendStatus } from '../../types';
 	import Selector from '../../@components/content/Selector.svelte';
 	import IconX from '@hyvor/icons/IconX';
 	import EmailList from './EmailList.svelte';
 
 	let key = $state(1); // for re-rendering
-	let status: EmailStatus | null = $state(null);
+	let status: SendStatus | null = $state(null);
 	let statusKey = $derived.by(() =>
 		status ? status.charAt(0).toUpperCase() + status.slice(1) : 'All'
 	);
@@ -22,7 +22,7 @@
 	let toSearchVal: string = $state('');
 	let toSearch: string = $state('');
 
-	function selectStatus(s: EmailStatus | null) {
+	function selectStatus(s: SendStatus | null) {
 		showStatus = false;
 		status = s;
 	}

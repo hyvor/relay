@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Email } from '../../types';
-	import EmailStatus from './EmailStatus.svelte';
+	import SendStatus from './SendStatus.svelte';
 	import RelativeTime from '../../@components/content/RelativeTime.svelte';
 	import { consoleUrlProject } from '../../lib/consoleUrl';
 
@@ -11,9 +11,12 @@
 
 	let { email, refreshList }: Props = $props();
 
-	// Get the relevant timestamp based on status
 	const statusTimestamp = $derived(
-		email.status === 'sent' ? email.sent_at : email.status === 'failed' ? email.failed_at : null
+		email.status === 'accepted'
+			? email.accepted_at
+			: email.status === 'bounced'
+				? email.bounced_at
+				: null
 	);
 </script>
 
@@ -38,7 +41,7 @@
 
 	<div class="status-wrap">
 		<div class="status">
-			<EmailStatus status={email.status} />
+			<SendStatus status={email.status} />
 			<div class="timestamps">
 				<div class="timestamp">
 					<span class="timestamp-label">Created:</span>
@@ -47,7 +50,7 @@
 				{#if statusTimestamp}
 					<div class="timestamp">
 						<span class="timestamp-label">
-							{email.status === 'sent' ? 'Sent:' : 'Failed:'}
+							{email.status === 'accepted' ? 'Accepted:' : 'Failed:'}
 						</span>
 						<RelativeTime unix={statusTimestamp} />
 					</div>
