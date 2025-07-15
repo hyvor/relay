@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { toast } from '@hyvor/design/components';
 	import SaveDiscard from '../../@components/content/save/SaveDiscard.svelte';
 	import { updateProject } from '../../lib/actions/projectActions';
 	import { projectEditingStore, projectStore, setProjectStore } from '../../lib/stores/projectStore';
