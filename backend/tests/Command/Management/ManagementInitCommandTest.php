@@ -65,32 +65,32 @@ class ManagementInitCommandTest extends KernelTestCase
 
     }
 
-    public function test_updates_ip_addresses_is_active(): void
+    public function test_updates_ip_addresses_is_available(): void
     {
 
         $server = ServerFactory::createOne([
             'hostname' => 'hyvor-relay'
         ]);
 
-        // is_active must be true
+        // is_available must be true
         $ip1 = IpAddressFactory::createOne([
             'server' => $server,
             'ip_address' => '8.8.8.8',
-            'is_active' => false
+            'is_available' => false
         ]);
 
         // no changes
         $ip2 = IpAddressFactory::createOne([
             'server' => $server,
             'ip_address' => '9.9.9.9',
-            'is_active' => true
+            'is_available' => true
         ]);
 
-        // is_active must be false
+        // is_available must be false
         $ip3 = IpAddressFactory::createOne([
             'server' => $server,
             'ip_address' => '10.10.10.10',
-            'is_active' => true
+            'is_available' => true
         ]);
 
         $serverIpMock = $this->createMock(ServerIp::class);
