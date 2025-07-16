@@ -50,7 +50,7 @@ func (s *ServiceState) Set(goState GoState) {
 
 	s.EmailWorkersPool.Set(goState.Ips, goState.EmailWorkersPerIp, goState.InstanceDomain)
 	s.WebhookWorkersPool.Set(goState.WebhookWorkers)
-	s.BounceServer.Set()
+	s.BounceServer.Set(goState.InstanceDomain)
 
 	s.Logger.Info("Updating state",
 		"hostname", goState.Hostname,
