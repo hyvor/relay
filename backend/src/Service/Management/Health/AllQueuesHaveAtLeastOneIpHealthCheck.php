@@ -29,7 +29,7 @@ class AllQueuesHaveAtLeastOneIpHealthCheck extends HealthCheckAbstract
             WHERE 
                 ip_addresses.queue_id = queues.id AND
                 ip_addresses.is_enabled = true AND
-                ip_addresses.is_active = true
+                ip_addresses.is_available = true
         ) = 0
         SQL, $rsm)
             ->getArrayResult();

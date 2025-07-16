@@ -3,6 +3,7 @@
 namespace App\Schedule;
 
 use App\Service\Idempotency\Message\ClearExpiredIdempotencyRecordsMessage;
+use App\Service\Management\Message\RunHealthChecksMessage;
 use App\Service\Send\Message\ClearExpiredSendsMessage;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
@@ -29,6 +30,7 @@ class GlobalSchedule implements ScheduleProviderInterface
         return new SymfonySchedule()
             ->add(RecurringMessage::every('1 hour', new ClearExpiredIdempotencyRecordsMessage))
             ->add(RecurringMessage::every('1 day', new ClearExpiredSendsMessage))
+            ->add(RecurringMessage::every('1 second', new RunHealthChecksMessage))
             // ->lock($this->lockFactory->createLock('global-schedule', 20));
         ;
     }

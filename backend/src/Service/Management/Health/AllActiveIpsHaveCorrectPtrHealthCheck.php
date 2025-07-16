@@ -20,7 +20,7 @@ class AllActiveIpsHaveCorrectPtrHealthCheck extends HealthCheckAbstract
     {
 
         $allIps = $this->em->getRepository(IpAddress::class)
-            ->findBy(['isActive' => true, 'isEnabled' => true]);
+            ->findBy(['is_available' => true, 'is_enabled' => true]);
 
         $invalidData = [];
 
