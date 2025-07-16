@@ -29,7 +29,7 @@ class UpdateProjectTest extends WebTestCase
             [
                 'name' => 'Updated Project Name',
             ],
-            scopes: [Scope::PROJECTS_WRITE]
+            scopes: [Scope::PROJECT_WRITE]
         );
 
         $this->assertSame(200, $response->getStatusCode());

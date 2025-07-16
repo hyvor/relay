@@ -40,14 +40,14 @@ class ProjectController extends AbstractController
     }
 
     #[Route('/project', methods: 'GET', condition: 'request.headers.get("X-Project-Id") !== null')]
-    #[ScopeRequired(Scope::PROJECTS_READ)]
+    #[ScopeRequired(Scope::PROJECT_READ)]
     public function getNewsletterById(Project $project): JsonResponse
     {
         return $this->json(new ProjectObject($project));
     }
 
     #[Route('/project', methods: 'PATCH')]
-    #[ScopeRequired(Scope::PROJECTS_WRITE)]
+    #[ScopeRequired(Scope::PROJECT_WRITE)]
     public function updateProject(#[MapRequestPayload] UpdateProjectInput $input, Project $project): JsonResponse
     {
         $updates = new UpdateProjectDto();
