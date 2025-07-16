@@ -40,6 +40,7 @@ class ProjectController extends AbstractController
     }
 
     #[Route('/project', methods: 'GET', condition: 'request.headers.get("X-Project-Id") !== null')]
+    #[ScopeRequired(Scope::PROJECTS_READ)]
     public function getNewsletterById(Project $project): JsonResponse
     {
         return $this->json(new ProjectObject($project));
