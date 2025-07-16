@@ -27,7 +27,7 @@ class AllActiveIpsHaveCorrectPtrHealthCheck extends HealthCheckAbstract
         foreach ($allIps as $ip) {
             $this->ipAddressService->updateIpPtrValidity($ip);
 
-            if (!$ip->getIsPtrForwardValid() || !$ip->getIsPtrReverseValid()) {
+            if ($ip->getIsPtrForwardValid() || $ip->getIsPtrReverseValid()) {
                 $invalidData[] = [
                     'ip' => $ip->getIpAddress(),
                     'forward_valid' => $ip->getIsPtrForwardValid(),

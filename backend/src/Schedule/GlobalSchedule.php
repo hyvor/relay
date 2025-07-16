@@ -34,5 +34,4 @@ class GlobalSchedule implements ScheduleProviderInterface
             // ->lock($this->lockFactory->createLock('global-schedule', 20));
         ;
     }
-
 }
