@@ -126,3 +126,16 @@ export interface AnalyticsStats {
     bounce_rate_30d: number;
     complaint_rate_30d: number;
 }
+
+export type HealthCheck = {
+    'all_active_ips_have_correct_ptr': {
+        'passed': boolean;
+        'data': any,
+        'checked_at': string;
+    },
+    'all_queues_have_at_least_one_ip': {
+        'passed': boolean;
+        'data': any,
+        'checked_at': string;
+    }
+}

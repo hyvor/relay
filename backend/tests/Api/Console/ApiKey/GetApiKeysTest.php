@@ -2,9 +2,9 @@
 
 namespace App\Tests\Api\Console\ApiKey;
 
+use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\ApiKeyController;
 use App\Api\Console\Object\ApiKeyObject;
-use App\Entity\Type\ApiKeyScope;
 use App\Service\ApiKey\ApiKeyService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ApiKeyFactory;
@@ -13,7 +13,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ApiKeyController::class)]
 #[CoversClass(ApiKeyService::class)]
-#[CoversClass(ApiKeyScope::class)]
+#[CoversClass(Scope::class)]
 #[CoversClass(ApiKeyObject::class)]
 class GetApiKeysTest extends WebTestCase
 {
@@ -23,7 +23,6 @@ class GetApiKeysTest extends WebTestCase
 
         $apiKeys = ApiKeyFactory::createMany(4, [
             'project' => $project,
-            'scope' => ApiKeyScope::SEND_EMAIL
         ]);
 
         $response = $this->consoleApi(
@@ -36,6 +35,7 @@ class GetApiKeysTest extends WebTestCase
 
         $content = $this->getJson();
         $this->assertIsArray($content);
+        dd($content);
         $this->assertCount(4, $content);
         foreach ($content as $key => $apiKeyData) {
             $this->assertArrayHasKey('id', $apiKeyData);
@@ -46,7 +46,7 @@ class GetApiKeysTest extends WebTestCase
             $this->assertArrayHasKey('last_accessed_at', $apiKeyData);
             $this->assertSame($apiKeys[$key]->getId(), $apiKeyData['id']);
             $this->assertSame($apiKeys[$key]->getName(), $apiKeyData['name']);
-            $this->assertSame(ApiKeyScope::SEND_EMAIL->value, $apiKeyData['scope']);
+            $this->assertSame($apiKeys[$key]->getScope(), $apiKeyData['scope']);
         }
     }
 

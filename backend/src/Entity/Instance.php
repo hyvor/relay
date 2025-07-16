@@ -29,6 +29,15 @@ class Instance
     #[ORM\Column(type: "text")]
     private string $dkim_private_key_encrypted;
 
+    #[ORM\Column(type: "datetime_immutable", nullable: true)]
+    private ?\DateTimeImmutable $last_health_check_at = null;
+
+    /**
+     * @var string[]
+     */
+    #[ORM\Column(type: "json")]
+    private array $health_check_results = [];
+
     public function __construct() {}
 
     public function getId(): int
@@ -95,6 +104,34 @@ class Instance
         string $dkimPrivateKeyEncrypted
     ): static {
         $this->dkim_private_key_encrypted = $dkimPrivateKeyEncrypted;
+        return $this;
+    }
+
+    public function getLastHealthCheckAt(): ?\DateTimeImmutable
+    {
+        return $this->last_health_check_at;
+    }
+
+    public function setLastHealthCheckAt(?\DateTimeImmutable $lastHealthCheckAt): static
+    {
+        $this->last_health_check_at = $lastHealthCheckAt;
+        return $this;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getHealthCheckResults(): array
+    {
+        return $this->health_check_results;
+    }
+
+    /**
+     * @param string[] $healthCheckResults
+     */
+    public function setHealthCheckResults(array $healthCheckResults): static
+    {
+        $this->health_check_results = $healthCheckResults;
         return $this;
     }
 }

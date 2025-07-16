@@ -4,6 +4,8 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use App\Api\Console\Resolver\EntityResolver;
 use App\Api\Console\Resolver\ProjectResolver;
+use App\Service\Management\Health\AllActiveIpsHaveCorrectPtrHealthCheck;
+use App\Service\Management\Health\AllQueuesHaveAtLeastOneIpHealthCheck;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     $services = $containerConfigurator->services();
@@ -35,6 +37,13 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             'controller.argument_value_resolver',
             ['name' => 'console_api_resource', 'priority' => 150]
         );
+
+    // ================ HEALTH CHECKS =================
+    $services->set(AllQueuesHaveAtLeastOneIpHealthCheck::class)
+        ->tag('app.health_check');
+    
+    $services->set(AllActiveIpsHaveCorrectPtrHealthCheck::class)
+        ->tag('app.health_check');
 
 
 };
