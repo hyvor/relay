@@ -5,6 +5,7 @@ namespace App\Tests\Case;
 use App\Api\Console\Authorization\Scope;
 use App\Entity\Project;
 use App\Tests\Factory\ApiKeyFactory;
+use App\Tests\Factory\SudoUserFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Auth\AuthFake;
 use Hyvor\Internal\Bundle\Testing\ApiTestingTrait;
@@ -139,6 +140,42 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         $this->client->request(
             $method,
             '/api/local' . $uri,
+            server: array_merge([
+                'CONTENT_TYPE' => 'application/json',
+            ], $server),
+            content: (string)json_encode($data),
+        );
+
+        $response = $this->client->getResponse();
+
+        if ($response->getStatusCode() === 500) {
+            throw new \Exception(
+                'API call failed with status code 500. ' .
+                'Response: ' . $response->getContent()
+            );
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string> $server
+     */
+    public function sudoApi(
+        string $method,
+        string $uri,
+        array $data = [],
+        array $server = [],
+    ): Response {
+        $this->client->getCookieJar()->set(new Cookie('authsess', 'test-session'));
+
+        SudoUserFactory::createOne([
+            'hyvor_user_id' => 1,
+        ]);
+        $this->client->request(
+            $method,
+            '/api/sudo' . $uri,
             server: array_merge([
                 'CONTENT_TYPE' => 'application/json',
             ], $server),

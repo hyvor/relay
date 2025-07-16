@@ -27,15 +27,15 @@ export type Project = {
     createdAt: string;
 }
 
-export type EmailStatus = 'queued' | 'sent' | 'failed';
+export type SendStatus = 'queued' | 'accepted' | 'bounced' | 'complained';
 
 export type Email = {
     id: number;
     uuid: string;
     created_at : number;
-    sent_at?: number;
-    failed_at?: number;
-    status: EmailStatus;
+    accepted_at?: number;
+    bounced_at?: number;
+    status: SendStatus;
     from_address: string;
     to_address: string;
     subject?: string;
@@ -47,10 +47,10 @@ export type Email = {
 
 export interface SendAttempt {
     created_at: number;
-    status: 'sent' | 'failed' | 'queued';
+    status: 'accepted' | 'deferred' | 'bounced';
     try_count: number;
     resolved_mx_hosts: string[];
-    sent_mx_host: string | null;
+    accepted_mx_host: string | null;
     smtp_conversations: Record<string, SmtpConversation>;
     error: string | null;
 }

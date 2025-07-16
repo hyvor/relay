@@ -366,5 +366,5 @@ func getReturnPath(
 	send *DbSend,
 	instanceDomain string,
 ) string {
-	return fmt.Sprintf("bounce+%d@%s", send.Id, instanceDomain)
+	return fmt.Sprintf("bounce+%s@%s", send.Uuid, instanceDomain)
 }

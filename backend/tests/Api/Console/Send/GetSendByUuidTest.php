@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Tests\Api\Console\Email;
+namespace App\Tests\Api\Console\Send;
 
+use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\SendController;
 use App\Api\Console\Object\SendObject;
 use App\Service\Send\SendService;
@@ -11,11 +12,12 @@ use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\SendFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use Symfony\Component\Uid\Uuid;
 
 #[CoversClass(SendController::class)]
 #[CoversClass(SendService::class)]
 #[CoversClass(SendObject::class)]
-class GetEmailTest extends WebTestCase
+class GetSendByUuidTest extends WebTestCase
 {
     public function test_get_specific_email(): void
     {
@@ -36,7 +38,8 @@ class GetEmailTest extends WebTestCase
         $response = $this->consoleApi(
             $project,
             'GET',
-            '/emails/' . $send->getId()
+            '/sends/uuid/' . $send->getUuid(),
+            scopes: [Scope::SENDS_READ]
         );
 
         $this->assertSame(200, $response->getStatusCode());
@@ -51,15 +54,43 @@ class GetEmailTest extends WebTestCase
     {
         $project = ProjectFactory::createOne();
 
+        $uuid = Uuid::v4();
         $response = $this->consoleApi(
             $project,
             'GET',
-            '/emails/999'
+            '/sends/uuid/' . $uuid,
+            scopes: [Scope::SENDS_READ]
         );
 
         $this->assertSame(404, $response->getStatusCode());
 
-        $content = $response->getContent();
-        $this->assertNotFalse($content);
+        $json = $this->getJson();
+        $this->assertSame("Send with UUID " . $uuid . " not found", $json['message']);
+
+
+    }
+
+    public function test_cannot_get_other_project_sends(): void
+    {
+        $project = ProjectFactory::createOne();
+        $otherProject = ProjectFactory::createOne();
+
+        $send = SendFactory::createOne(
+            [
+                'project' => $project,
+            ]
+        );
+
+        $response = $this->consoleApi(
+            $otherProject,
+            'GET',
+            '/sends/uuid/' . $send->getUuid(),
+            scopes: [Scope::SENDS_READ]
+        );
+
+        $this->assertSame(400, $response->getStatusCode());
+
+        $json = $this->getJson();
+        $this->assertSame("Send with UUID " . $send->getUuid() . " does not belong to project", $json['message']);
     }
 }
