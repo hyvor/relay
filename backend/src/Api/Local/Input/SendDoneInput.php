@@ -12,7 +12,7 @@ class SendDoneInput
     public int $sendId;
 
     #[Assert\NotBlank]
-    #[Assert\Choice(['sent', 'failed'], message: 'Invalid status.')]
+    #[Assert\Choice(['queued', 'processing', 'accepted', 'bounced', 'complained'], message: 'Invalid status.')]
     public string $status;
 
     #[Assert\Json]

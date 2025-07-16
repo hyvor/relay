@@ -18,7 +18,7 @@ class SendDoneTest extends WebTestCase
             "/send/done",
             [
                 "sendId" => 9999,
-                "status" => "sent",
+                "status" => "accepted",
             ],
             server: [
                 'REMOTE_ADDR' => '8.8.8.8'
@@ -32,7 +32,7 @@ class SendDoneTest extends WebTestCase
     {
         $this->localApi("POST", "/send/done", [
             "sendId" => 9999,
-            "status" => "sent",
+            "status" => "accepted",
         ]);
 
         $this->assertResponseStatusCodeSame(422);
@@ -52,9 +52,9 @@ class SendDoneTest extends WebTestCase
             "failed_at" => null,
         ]);
 
-        $this->localApi("POST", "/send/done", [
+        $response = $this->localApi("POST", "/send/done", [
             "sendId" => $send->getId(),
-            "status" => "sent",
+            "status" => "accepted",
             "result" => '{}',
         ]);
 
@@ -78,12 +78,12 @@ class SendDoneTest extends WebTestCase
 
         $this->localApi("POST", "/send/done", [
             "sendId" => $send->getId(),
-            "status" => "failed",
+            "status" => "complained",
             "result" => '{}',
         ]);
 
         $this->assertResponseStatusCodeSame(200);
-        $this->assertSame(SendStatus::FAILED, $send->getStatus());
+        $this->assertSame(SendStatus::COMPLAINED, $send->getStatus());
         $this->assertNull($send->getSentAt());
         $this->assertSame($time->getTimestamp(), $send->getFailedAt()?->getTimestamp());
         $this->assertSame('{}', $send->getResult());

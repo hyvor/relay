@@ -2,6 +2,8 @@
 
 namespace App\Api\Console\Controller;
 
+use App\Api\Console\Authorization\Scope;
+use App\Api\Console\Authorization\ScopeRequired;
 use App\Api\Console\Input\CreateProjectInput;
 use App\Api\Console\Object\ProjectObject;
 use App\Entity\Project;
@@ -32,7 +34,8 @@ class ProjectController extends AbstractController
         return $this->json(new ProjectObject($project));
     }
 
-    #[Route('/project', methods: 'GET', condition: 'request.headers.get("X-Project-Id") !== null')]
+    #[Route('/project', methods: 'GET')]
+    #[ScopeRequired(Scope::PROJECTS_READ)]
     public function getNewsletterById(Project $project): JsonResponse
     {
         return $this->json(new ProjectObject($project));
