@@ -53,12 +53,36 @@ class GoStateFactory
             );
         }
 
+        $allIps = $this->ipAddressService->getAllIpAddresses();
+        $dnsPtrForwardRecords = [];
+        $dnsMxIps = [];
+        $dnsMxIpAddedServers = [];
+
+        foreach ($allIps as $ip) {
+            if ($ip->getIsAvailable() === false || $ip->getIsEnabled() === false) {
+                continue;
+            }
+            $dnsPtrForwardRecords[Ptr::getPtrDomain($ip, $instance->getDomain())] = $ip->getIpAddress();
+
+            $serverId = $ip->getServer()->getId();
+
+            if (!in_array($serverId, $dnsMxIpAddedServers)) {
+                $dnsMxIps[] = $ip->getIpAddress();
+                $dnsMxIpAddedServers[] = $serverId;
+            }
+        }
+
         return new GoState(
             instanceDomain: $instance->getDomain(),
             hostname: $server->getHostname(),
             ips: $ips,
             emailWorkersPerIp: $server->getEmailWorkers(),
-            webhookWorkers: $server->getWebhookWorkers() + 1
+            webhookWorkers: $server->getWebhookWorkers() + 1, // TODO:
+
+            // data for the DNS server
+            dnsServer: true, // TODO: add this as a server config
+            dnsPtrForwardRecords: $dnsPtrForwardRecords,
+            dnsMxIps: $dnsMxIps,
         );
 
     }

@@ -124,7 +124,6 @@ func (b *BounceServer) Shutdown() {
 }
 
 func (b *BounceServer) Start(ctx context.Context, logger *slog.Logger, instanceDomain string) {
-	logger.Info("Starting Bounce server!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 	b.logger = logger
 
 	be := &BounceBackend{
