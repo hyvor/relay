@@ -1,5 +1,11 @@
 import sudoApi from './sudoApi';
-import type { IpAddress, Queue, Server } from './sudoTypes';
+import type { IpAddress, Queue, Server, SudoInitResponse } from './sudoTypes';
+
+export function initSudo() {
+	return sudoApi.post<SudoInitResponse>({
+		endpoint: '/init'
+	})
+}
 
 export function getServers() {
 	return sudoApi.get<Server[]>({

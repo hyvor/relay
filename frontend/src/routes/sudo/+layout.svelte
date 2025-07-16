@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { Base, HyvorBar, NavLink } from '@hyvor/design/components';
+	import { Base, HyvorBar, Loader, NavLink, toast } from '@hyvor/design/components';
 	import IconHdd from '@hyvor/icons/IconHdd';
 	import IconSegmentedNav from '@hyvor/icons/IconSegmentedNav';
 	import IconActivity from '@hyvor/icons/IconActivity';
 	import relativeTime from 'dayjs/plugin/relativeTime';
 	import dayjs from 'dayjs';
 	import InstanceDomain from './InstanceDomain.svelte';
+	import { onMount } from 'svelte';
+	import { initSudo } from './sudoActions';
+	import { sudoConfigStore } from './sudoStore';
 
 	dayjs.extend(relativeTime);
 
@@ -15,6 +18,18 @@
 	}
 
 	let { children }: Props = $props();
+	let loading = $state(true);
+
+	onMount(() => {
+		initSudo()
+			.then((res) => {
+				sudoConfigStore.set(res.config);
+				loading = false;
+			})
+			.catch((err) => {
+				toast.error('Failed to initialize sudo:', err);
+			});
+	});
 </script>
 
 <svelte:head>
@@ -22,37 +37,49 @@
 </svelte:head>
 
 <Base>
-	<main>
-		<HyvorBar product="core" instance="https://hyvor.dev" config={{ name: 'Hyvor Relay' }} />
+	{#if loading}
+		<div style="height: 100vh;">
+			<Loader size="large" full />
+		</div>
+	{:else}
+		<main>
+			<HyvorBar
+				product="core"
+				instance={$sudoConfigStore.instance}
+				config={{ name: 'Hyvor Relay' }}
+			/>
 
-		<div id="wrap">
-			<nav>
-				<div class="hds-box nav-inner">
-					<InstanceDomain />
+			<div id="wrap">
+				<nav>
+					<div class="hds-box nav-inner">
+						<InstanceDomain />
 
-					<div class="nav-title">Infrastructure</div>
+						<div class="nav-title">Infrastructure</div>
 
-					<NavLink href="/sudo/health" active={page.url.pathname === '/sudo/health'}>
-						{#snippet start()}
-							<IconActivity />
-						{/snippet}
-						Health
-					</NavLink>
+						<NavLink href="/sudo/health" active={page.url.pathname === '/sudo/health'}>
+							{#snippet start()}
+								<IconActivity />
+							{/snippet}
+							Health
+						</NavLink>
 
-					<NavLink href="/sudo/servers" active={page.url.pathname === '/sudo/servers'}>
-						{#snippet start()}
-							<IconHdd />
-						{/snippet}
-						Servers
-					</NavLink>
-					<NavLink href="/sudo/queues" active={page.url.pathname === '/sudo/queues'}>
-						{#snippet start()}
-							<IconSegmentedNav />
-						{/snippet}
-						Queues
-					</NavLink>
+						<NavLink
+							href="/sudo/servers"
+							active={page.url.pathname === '/sudo/servers'}
+						>
+							{#snippet start()}
+								<IconHdd />
+							{/snippet}
+							Servers
+						</NavLink>
+						<NavLink href="/sudo/queues" active={page.url.pathname === '/sudo/queues'}>
+							{#snippet start()}
+								<IconSegmentedNav />
+							{/snippet}
+							Queues
+						</NavLink>
 
-					<!-- <div class="nav-title">Users</div>
+						<!-- <div class="nav-title">Users</div>
 
 					<NavLink href="/sudo/projects" active={page.url.pathname === '/sudo/projects'}>
 						{#snippet start()}
@@ -74,15 +101,20 @@
 						{/snippet}
 						Emails
 					</NavLink> -->
-				</div>
-			</nav>
+					</div>
 
-			<div class="content">
-				{@render children?.()}
-				<div class="content-inner hds-box"></div>
+					<div class="version">
+						v{$sudoConfigStore.app_version}
+					</div>
+				</nav>
+
+				<div class="content">
+					{@render children?.()}
+					<div class="content-inner hds-box"></div>
+				</div>
 			</div>
-		</div>
-	</main>
+		</main>
+	{/if}
 </Base>
 
 <style>
@@ -116,5 +148,12 @@
 		flex: 1;
 		overflow: auto;
 		padding: 15px;
+	}
+
+	.version {
+		padding: 15px;
+		font-size: 12px;
+		color: var(--text-light);
+		text-align: center;
 	}
 </style>
