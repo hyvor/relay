@@ -173,6 +173,8 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         SudoUserFactory::createOne([
             'hyvor_user_id' => 1,
         ]);
+      
+      
         $this->client->request(
             $method,
             '/api/sudo' . $uri,
