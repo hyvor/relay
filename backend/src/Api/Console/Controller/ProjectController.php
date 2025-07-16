@@ -4,6 +4,7 @@ namespace App\Api\Console\Controller;
 
 use App\Api\Console\Authorization\NoScopeRequired;
 use App\Api\Console\Authorization\Scope;
+use App\Api\Console\Authorization\ScopeRequired;
 use App\Api\Console\Authorization\UserLevelEndpoint;
 use App\Api\Console\Input\CreateProjectInput;
 use App\Api\Console\Input\UpdateProjectInput;
@@ -45,7 +46,7 @@ class ProjectController extends AbstractController
     }
 
     #[Route('/project', methods: 'PATCH')]
-    #[NoScopeRequired]
+    #[ScopeRequired(Scope::PROJECTS_WRITE)]
     public function updateProject(#[MapRequestPayload] UpdateProjectInput $input, Project $project): JsonResponse
     {
         $updates = new UpdateProjectDto();

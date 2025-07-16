@@ -2,6 +2,7 @@
 
 namespace App\Tests\Api\Console\Project;
 
+use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\ProjectController;
 use App\Api\Console\Object\ProjectObject;
 use App\Entity\Project;
@@ -27,7 +28,8 @@ class UpdateProjectTest extends WebTestCase
             '/project',
             [
                 'name' => 'Updated Project Name',
-            ]
+            ],
+            scopes: [Scope::PROJECTS_WRITE]
         );
 
         $this->assertSame(200, $response->getStatusCode());

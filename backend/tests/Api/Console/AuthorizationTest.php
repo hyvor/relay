@@ -223,18 +223,4 @@ class AuthorizationTest extends WebTestCase
         $this->assertArrayHasKey('config', $json);
 
     }
-
-    public function test_no_scope_required_endpoint_works(): void
-    {
-        $project = ProjectFactory::createOne();
-        $response = $this->consoleApi(
-            $project,
-            'PATCH',
-            '/project',
-            [
-                'name' => 'Test Project',
-            ],
-        );
-        $this->assertResponseStatusCodeSame(200);
-    }
 }
