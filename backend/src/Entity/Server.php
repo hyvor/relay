@@ -37,8 +37,6 @@ class Server
     #[ORM\Column(type: "integer")]
     private int $webhook_workers = 0;
 
-    public function __construct() {}
-
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->created_at;

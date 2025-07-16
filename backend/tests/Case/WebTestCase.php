@@ -5,6 +5,7 @@ namespace App\Tests\Case;
 use App\Api\Console\Authorization\Scope;
 use App\Entity\Project;
 use App\Tests\Factory\ApiKeyFactory;
+use App\Tests\Factory\SudoUserFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Auth\AuthFake;
 use Hyvor\Internal\Bundle\Testing\ApiTestingTrait;
@@ -162,7 +163,11 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         array $data = [],
         array $server = [],
     ): Response {
+        $this->client->getCookieJar()->set(new Cookie('authsess', 'test-session'));
 
+        SudoUserFactory::createOne([
+            'hyvor_user_id' => 1,
+        ]);
         $this->client->request(
             $method,
             '/api/sudo' . $uri,
