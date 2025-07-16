@@ -1,6 +1,7 @@
-package dns
+package main
 
 import (
+	"context"
 	"log/slog"
 	"strings"
 
@@ -8,7 +9,10 @@ import (
 )
 
 type DnsServer struct {
+	ctx    context.Context
 	logger *slog.Logger
+
+	started bool
 
 	// data
 	instanceDomain string
@@ -16,17 +20,50 @@ type DnsServer struct {
 	mxIps          []string          // list of IPs for MX records (usually one IP per server)
 }
 
-func NewDnsServer(logger *slog.Logger) *DnsServer {
+func NewDnsServer(ctx context.Context, logger *slog.Logger) *DnsServer {
 
 	return &DnsServer{
+		ctx:           ctx,
 		logger:        logger,
 		ipPtrsForward: make(map[string]string),
 	}
 
 }
 
-func (s *DnsServer) Start(domain string) {
-	// todo
+func (s *DnsServer) Set(
+	instanceDomain string,
+	ipPtrsForward map[string]string,
+	mxIps []string,
+) {
+
+	s.instanceDomain = instanceDomain
+	s.ipPtrsForward = ipPtrsForward
+	s.mxIps = mxIps
+
+	if !s.started {
+		s.started = true
+
+		go func() {
+
+			dns.HandleFunc(".", s.handleRequest)
+
+			server := &dns.Server{Addr: ":53", Net: "udp"}
+			s.logger.Info("Starting DNS server on :53")
+
+			if err := server.ListenAndServe(); err != nil {
+				s.logger.Error("Failed to start DNS server", "error", err)
+			}
+
+		}()
+
+		go func() {
+			<-s.ctx.Done()
+			s.logger.Info("Shutting down DNS server")
+			dns.HandleRemove(".")
+		}()
+
+	}
+
 }
 
 func (s *DnsServer) handleRequest(w dns.ResponseWriter, r *dns.Msg) {

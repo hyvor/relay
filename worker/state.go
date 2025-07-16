@@ -14,6 +14,10 @@ type GoState struct {
 	Ips               []GoStateIp `json:"ips"`
 	EmailWorkersPerIp int         `json:"emailWorkersPerIp"`
 	WebhookWorkers    int         `json:"webhookWorkers"`
+
+	DnsServer            bool              `json:"dnsServer"`
+	DnsPtrForwardRecords map[string]string `json:"dnsPtrForwardRecords"`
+	DnsMxIps             []string          `json:"dnsMxIps"`
 }
 
 type GoStateIp struct {
@@ -32,6 +36,7 @@ type ServiceState struct {
 	EmailWorkersPool   *EmailWorkersPool
 	WebhookWorkersPool *WebhookWorkersPool
 	BounceServer       *BounceServer
+	DnsServer          *DnsServer
 }
 
 func NewServiceState(ctx context.Context) *ServiceState {
@@ -43,6 +48,7 @@ func NewServiceState(ctx context.Context) *ServiceState {
 		EmailWorkersPool:   NewEmailWorkersPool(ctx, logger),
 		WebhookWorkersPool: NewWebhookWorkersPool(ctx, logger),
 		BounceServer:       NewBounceServer(ctx, logger),
+		DnsServer:          NewDnsServer(ctx, logger),
 	}
 }
 
@@ -51,6 +57,10 @@ func (s *ServiceState) Set(goState GoState) {
 	s.EmailWorkersPool.Set(goState.Ips, goState.EmailWorkersPerIp, goState.InstanceDomain)
 	s.WebhookWorkersPool.Set(goState.WebhookWorkers)
 	s.BounceServer.Set()
+
+	if goState.DnsServer {
+		s.DnsServer.Set(goState.InstanceDomain, goState.DnsPtrForwardRecords, goState.DnsMxIps)
+	}
 
 	s.Logger.Info("Updating state",
 		"hostname", goState.Hostname,
