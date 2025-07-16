@@ -30,7 +30,7 @@ class GlobalSchedule implements ScheduleProviderInterface
         return new SymfonySchedule()
             ->add(RecurringMessage::every('1 hour', new ClearExpiredIdempotencyRecordsMessage))
             ->add(RecurringMessage::every('1 day', new ClearExpiredSendsMessage))
-            ->add(RecurringMessage::every('1 minute', new RunHealthChecksMessage))
+            ->add(RecurringMessage::every('1 hour', new RunHealthChecksMessage))
             // ->lock($this->lockFactory->createLock('global-schedule', 20));
         ;
     }
