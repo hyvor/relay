@@ -22,7 +22,9 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Attribute\ValueResolver;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 
 class SendController extends AbstractController
 {
@@ -133,18 +135,19 @@ class SendController extends AbstractController
         return $this->json($sends);
     }
 
-    #[Route("/sends/uuid/{uuid}", methods: "GET")]
+    #[Route("/sends/uuid/{uuid}", requirements: ['uuid' => Requirement::UUID], methods: "GET")]
+    #[ScopeRequired(Scope::SENDS_READ)]
     public function getByUuid(Project $project, string $uuid): JsonResponse
     {
         $send = $this->sendService->getSendByUuid($uuid);
+
         if ($send === null) {
-            throw new BadRequestException("Send with UUID $uuid not found");
+            throw new NotFoundHttpException("Send with UUID $uuid not found");
         }
 
         if ($send->getProject()->getId() !== $project->getId()) {
             throw new BadRequestException(
-                "Send with UUID $uuid does not belong to project " .
-                    $project->getName()
+                "Send with UUID $uuid does not belong to project"
             );
         }
 
