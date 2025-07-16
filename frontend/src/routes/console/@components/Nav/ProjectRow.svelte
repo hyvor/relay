@@ -26,19 +26,17 @@
 	<div class="name-id">
 		<div class="name">{project.name}</div>
 		<div class="id">
-			<span class="id-tag">ID: </span><Tag size="x-small"
-				><strong>{project.id}</strong></Tag
-			>
+			<span class="id-tag">ID: </span><Tag size="x-small"><strong>{project.id}</strong></Tag>
 		</div>
 	</div>
 
 	<div class="right">&rarr;</div>
 </div>
 
-<style lang="scss">
+<style>
 	.wrap {
 		padding: 15px 25px;
-		background-color: var(--accent-light-mid);
+		background-color: var(--accent-light);
 		cursor: pointer;
 		border-radius: var(--box-radius);
 		display: flex;
@@ -58,9 +56,6 @@
 		color: var(--text-light);
 		margin-right: 5px;
 	}
-	.role {
-		margin-right: 15px;
-	}
 
 	@media (max-width: 768px) {
 		.wrap {
@@ -75,9 +70,6 @@
 		}
 		.name-id {
 			grid-area: 1 / 1 / 1 / 5;
-		}
-		.role {
-			grid-area: 3 / 1 / 3 / 2;
 		}
 	}
 </style>

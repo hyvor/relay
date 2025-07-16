@@ -4,7 +4,6 @@ namespace App\Tests\Factory;
 
 use App\Entity\Send;
 use App\Entity\Type\SendStatus;
-use App\Entity\Project;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
 /**

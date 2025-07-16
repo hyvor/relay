@@ -24,7 +24,7 @@ class IpAddressObject
     {
         $this->id = $ipAddress->getId();
         $this->created_at = $ipAddress->getCreatedAt()->getTimestamp();
-        $this->server_id = $ipAddress->getServerId();
+        $this->server_id = $ipAddress->getServer()->getId();
         $this->ip_address = $ipAddress->getIpAddress();
         $this->ptr = Ptr::getPtrDomain($ipAddress, $instance->getDomain());
         $queue = $ipAddress->getQueue();

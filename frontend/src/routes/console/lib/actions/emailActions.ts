@@ -1,8 +1,8 @@
-import type { Email, EmailStatus } from "../../types";
+import type { Email, SendStatus } from "../../types";
 import consoleApi from "../consoleApi";
 
 export function getSends(
-	status: EmailStatus | null,
+	status: SendStatus | null,
 	from_search : string | null,
     to_search : string | null,
 	limit: number,

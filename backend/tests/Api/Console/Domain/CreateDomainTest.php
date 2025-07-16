@@ -4,11 +4,12 @@ namespace App\Tests\Api\Console\Domain;
 
 use App\Api\Console\Controller\DomainController;
 use App\Api\Console\Object\DomainObject;
-use App\Entity\Domain;
 use App\Service\Domain\DomainService;
+use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
+use App\Util\EventDispatcher\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(DomainController::class)]
@@ -19,6 +20,7 @@ class CreateDomainTest extends WebTestCase
 
     public function test_fails_when_domain_already_exists(): void
     {
+        $eventDispatcher = TestEventDispatcher::enable($this->container);
         $project = ProjectFactory::createOne();
         $domain = DomainFactory::createOne([
             'project' => $project,
@@ -37,10 +39,14 @@ class CreateDomainTest extends WebTestCase
         $this->assertResponseStatusCodeSame(400);
         $json = $this->getJson();
         $this->assertSame('Domain already exists', $json['message']);
+
+        $eventDispatcher->assertNotDispatched(DomainCreatedEvent::class);
     }
 
     public function test_creates_domain(): void
     {
+        $eventDispatcher = TestEventDispatcher::enable($this->container);
+
         $project = ProjectFactory::createOne();
 
         $this->consoleApi(
@@ -62,6 +68,12 @@ class CreateDomainTest extends WebTestCase
         $this->assertSame($dkimSelector . '._domainkey.example.com', $json['dkim_host']);
 
         $this->assertStringStartsWith('v=DKIM1; k=rsa; p=', $json['dkim_txt_value']);
+
+        $eventDispatcher->assertDispatched(DomainCreatedEvent::class);
+        $this->assertSame(
+            $json['id'],
+            $eventDispatcher->getFirstEvent(DomainCreatedEvent::class)?->domain->getId()
+        );
     }
 
 }

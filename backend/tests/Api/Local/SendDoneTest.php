@@ -1,6 +1,6 @@
 <?php
 
-namespace Api\Local;
+namespace App\Tests\Api\Local;
 
 use App\Entity\Type\SendStatus;
 use App\Tests\Case\WebTestCase;
@@ -59,7 +59,7 @@ class SendDoneTest extends WebTestCase
         ]);
 
         $this->assertResponseStatusCodeSame(200);
-        $this->assertSame(SendStatus::SENT, $send->getStatus());
+        $this->assertSame(SendStatus::ACCEPTED, $send->getStatus());
         $this->assertSame($time->getTimestamp(), $send->getSentAt()?->getTimestamp());
         $this->assertNull($send->getFailedAt());
         $this->assertSame('{}', $send->getResult());

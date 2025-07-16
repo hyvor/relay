@@ -6,7 +6,7 @@
 		DocsNavItem as NavItem,
 		DocsContent as Content
 	} from '@hyvor/design/marketing';
-	import { categories } from './docs';
+	import { categories } from '../hosting';
 
 	let { data } = $props();
 </script>
@@ -15,7 +15,10 @@
 	<title>
 		{data.name} - Hyvor Relay Docs
 	</title>
-	<link rel="canonical" href="https://blogs.hyvor.com/hosting{data.slug ? '/' + data.slug : ''}" />
+	<link
+		rel="canonical"
+		href="https://blogs.hyvor.com/hosting{data.slug ? '/' + data.slug : ''}"
+	/>
 </svelte:head>
 
 <div class="docs-wrap">
@@ -26,7 +29,9 @@
 					<NavCategory name={category.name}>
 						{#each category.pages as page}
 							<div class="nav-item-wrap" class:has-parent={page.parent !== undefined}>
-								<NavItem href={page.slug === '' ? '/hosting' : `/hosting/${page.slug}`}>
+								<NavItem
+									href={page.slug === '' ? '/hosting' : `/hosting/${page.slug}`}
+								>
 									{page.name}
 								</NavItem>
 							</div>

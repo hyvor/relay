@@ -4,6 +4,7 @@ namespace App\Service\Server;
 
 use App\Config;
 use App\Entity\Server;
+use App\Service\Docker\DockerService;
 use App\Service\Server\Dto\UpdateServerDto;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -16,6 +17,7 @@ class ServerService
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly Config $config,
+        private readonly DockerService $dockerService
     )
     {
     }
@@ -46,6 +48,7 @@ class ServerService
             ->setCreatedAt($this->now())
             ->setUpdatedAt($this->now())
             ->setHostname($this->config->getHostname())
+            ->setDockerHostname($this->dockerService->getDockerHostname())
             ->setApiWorkers(Cpu::getCores() * 2);
 
         $this->em->persist($server);

@@ -1,7 +1,6 @@
 <?php
 
 use Hyvor\Internal\Bundle\Security\HyvorAuthenticator;
-use Hyvor\Internal\Bundle\Security\UserRole;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Config\SecurityConfig;
 
@@ -32,7 +31,6 @@ return static function (ContainerBuilder $container, SecurityConfig $security): 
             ->path('^/api/local')
             ->roles(['ROLE_NO_ACCESS']);
     }
-
 
     # other access control
 

@@ -6,9 +6,12 @@ use App\Api\Console\Controller\DomainController;
 use App\Api\Console\Object\DomainObject;
 use App\Entity\Domain;
 use App\Service\Domain\DomainService;
+use App\Service\Domain\Event\DomainCreatedEvent;
+use App\Service\Domain\Event\DomainDeletedEvent;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
+use App\Util\EventDispatcher\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(DomainController::class)]
@@ -18,6 +21,7 @@ class DeleteDomainTest extends WebTestCase
 {
     public function test_delete_domain(): void
     {
+        $eventDispatcher = TestEventDispatcher::enable($this->container);
         $project = ProjectFactory::createOne();
 
         $domain = DomainFactory::createOne(
@@ -39,6 +43,7 @@ class DeleteDomainTest extends WebTestCase
 
         $domainDb = $this->em->getRepository(Domain::class)->find($domainId);
         $this->assertNull($domainDb, 'Domain should be deleted from the database');
+        $eventDispatcher->assertDispatched(DomainDeletedEvent::class);
     }
 
     public function test_delete_non_existent_domain(): void

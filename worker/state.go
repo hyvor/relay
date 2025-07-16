@@ -14,6 +14,10 @@ type GoState struct {
 	Ips               []GoStateIp `json:"ips"`
 	EmailWorkersPerIp int         `json:"emailWorkersPerIp"`
 	WebhookWorkers    int         `json:"webhookWorkers"`
+
+	DnsServer            bool              `json:"dnsServer"`
+	DnsPtrForwardRecords map[string]string `json:"dnsPtrForwardRecords"`
+	DnsMxIps             []string          `json:"dnsMxIps"`
 }
 
 type GoStateIp struct {
@@ -27,31 +31,36 @@ type GoStateIp struct {
 
 // wraps all the services based on the GoState
 type ServiceState struct {
-	ctx              context.Context
-	Logger           *slog.Logger
-	EmailWorkersPool *EmailWorkersPool
-	BounceServer     *BounceServer
+	ctx                context.Context
+	Logger             *slog.Logger
+	EmailWorkersPool   *EmailWorkersPool
+	WebhookWorkersPool *WebhookWorkersPool
+	BounceServer       *BounceServer
+	DnsServer          *DnsServer
 }
 
 func NewServiceState(ctx context.Context) *ServiceState {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	return &ServiceState{
-		ctx:              ctx,
-		Logger:           logger,
-		EmailWorkersPool: NewEmailWorkersPool(ctx, logger),
-		BounceServer:     NewBounceServer(ctx, logger),
+		ctx:                ctx,
+		Logger:             logger,
+		EmailWorkersPool:   NewEmailWorkersPool(ctx, logger),
+		WebhookWorkersPool: NewWebhookWorkersPool(ctx, logger),
+		BounceServer:       NewBounceServer(ctx, logger),
+		DnsServer:          NewDnsServer(ctx, logger),
 	}
 }
 
 func (s *ServiceState) Set(goState GoState) {
-	s.EmailWorkersPool.Set(
-		goState.Ips,
-		goState.EmailWorkersPerIp,
-		goState.InstanceDomain,
-	)
 
-	s.BounceServer.Set()
+	s.EmailWorkersPool.Set(goState.Ips, goState.EmailWorkersPerIp, goState.InstanceDomain)
+	s.WebhookWorkersPool.Set(goState.WebhookWorkers)
+	s.BounceServer.Set(goState.InstanceDomain)
+
+	if goState.DnsServer {
+		s.DnsServer.Set(goState.InstanceDomain, goState.DnsPtrForwardRecords, goState.DnsMxIps)
+	}
 
 	s.Logger.Info("Updating state",
 		"hostname", goState.Hostname,

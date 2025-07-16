@@ -29,7 +29,7 @@ final class DomainFactory extends PersistentProxyObjectFactory
 
         return [
             'project' => ProjectFactory::createOne(),
-            'domain' => self::faker()->text(),
+            'domain' => self::faker()->unique()->domainName(),
             'dkim_selector' => self::faker()->text(255),
             'dkim_public_key' => self::TEST_DKIM_PUBLIC_KEY,
             'dkim_private_key_encrypted' => self::TEST_DKIM_PRIVATE_KEY_ENCRYPTED,

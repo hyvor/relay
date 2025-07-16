@@ -1,5 +1,12 @@
 <script lang="ts">
-	import { Modal, Button, TextInput, SplitControl, toast, Checkbox } from '@hyvor/design/components';
+	import {
+		Modal,
+		Button,
+		TextInput,
+		SplitControl,
+		toast,
+		Checkbox
+	} from '@hyvor/design/components';
 	import { createWebhook, updateWebhook } from '../../lib/actions/webhookActions';
 	import { getAppConfig } from '../../lib/stores/consoleStore';
 	import type { Webhook } from '../../types';
@@ -62,7 +69,6 @@
 	}
 
 	function handleSubmit() {
-
 		if (!validateForm()) {
 			const errorMessages = Object.values(errors);
 			if (errorMessages.length > 0) {
@@ -72,7 +78,7 @@
 		}
 
 		loading = true;
-		const action = isEditing 
+		const action = isEditing
 			? updateWebhook(webhook!.id, url.trim(), description.trim(), selectedEvents)
 			: createWebhook(url.trim(), description.trim(), selectedEvents);
 
@@ -99,7 +105,7 @@
 
 	function handleEventChange(event: string) {
 		if (selectedEvents.includes(event)) {
-			selectedEvents = selectedEvents.filter(e => e !== event);
+			selectedEvents = selectedEvents.filter((e) => e !== event);
 		} else {
 			selectedEvents = [...selectedEvents, event];
 		}
@@ -117,21 +123,21 @@
 	}
 </script>
 
-<Modal 
-	bind:show 
-	size="medium" 
+<Modal
+	bind:show
+	size="medium"
 	footer={{
 		cancel: {
 			text: 'Cancel'
 		},
 		confirm: {
-			text: submitButtonText,
+			text: submitButtonText
 		}
 	}}
 	title={modalTitle}
 	on:cancel={handleClose}
-	on:confirm={handleSubmit}>
-
+	on:confirm={handleSubmit}
+>
 	<div class="modal-content">
 		<SplitControl label="URL" error={errors.url}>
 			<TextInput
@@ -155,25 +161,25 @@
 			<div class="events-section">
 				<div class="events-header">
 					<div class="events-actions">
-						<button 
-							type="button" 
-							class="event-action-btn" 
+						<button
+							type="button"
+							class="event-action-btn"
 							disabled={loading || selectedEvents.length === availableEvents.length}
-							on:click={selectAllEvents}
+							onclick={selectAllEvents}
 						>
 							Select all
 						</button>
-						<button 
-							type="button" 
-							class="event-action-btn" 
+						<button
+							type="button"
+							class="event-action-btn"
 							disabled={loading || selectedEvents.length === 0}
-							on:click={deselectAllEvents}
+							onclick={deselectAllEvents}
 						>
 							Deselect all
 						</button>
 					</div>
 				</div>
-				
+
 				<div class="events-grid">
 					{#each availableEvents as event}
 						<div class="event-checkbox">
@@ -238,18 +244,9 @@
 		align-items: center;
 	}
 
-	.selected-count {
-		margin-top: 12px;
-		padding-top: 12px;
-		border-top: 1px solid var(--border);
-		font-size: 14px;
-		color: var(--text-light);
-		font-weight: 500;
-	}
-
 	@media (max-width: 640px) {
 		.events-grid {
 			grid-template-columns: 1fr;
 		}
 	}
-</style> 
+</style>

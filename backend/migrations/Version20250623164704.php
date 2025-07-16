@@ -29,6 +29,8 @@ final class Version20250623164704 extends AbstractMigration
             );
          SQL
         );
+
+        $this->addSql("CREATE INDEX idx_webhooks_project_id ON webhooks (project_id)");
     }
 
     public function down(Schema $schema): void

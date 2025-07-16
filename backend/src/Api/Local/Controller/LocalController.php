@@ -2,6 +2,7 @@
 
 namespace App\Api\Local\Controller;
 
+use App\Api\Local\Input\SendAttemptDoneInput;
 use App\Api\Local\Input\SendDoneInput;
 use App\Entity\Type\SendStatus;
 use App\Service\Send\Dto\SendUpdateDto;
@@ -39,6 +40,25 @@ class LocalController extends AbstractController
         return new JsonResponse($state);
     }
 
+    #[Route('/send-attempts/done', methods: 'POST')]
+    public function sendAttemptDone(
+        #[MapRequestPayload] SendAttemptDoneInput $input,
+    ): JsonResponse
+    {
+
+        foreach ($input->send_attempt_ids as $id) {
+            $sendAttempt = $this->sendService->getSendAttemptById($id);
+
+            if ($sendAttempt === null) {
+                continue;
+            }
+
+            $this->sendService->dispatchSendAttemptCreatedEvent($sendAttempt);
+        }
+
+        return new JsonResponse([]);
+    }
+
     #[Route('/send/done', methods: 'POST')]
     public function sendDone(
         #[MapRequestPayload] SendDoneInput $input,
@@ -57,7 +77,7 @@ class LocalController extends AbstractController
         $update->status = $status;
         $update->result = $input->result;
 
-        if ($status === SendStatus::SENT) {
+        if ($status === SendStatus::ACCEPTED) {
             $update->sentAt = $this->now();
         } else {
             $update->failedAt = $this->now();

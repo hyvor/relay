@@ -27,7 +27,7 @@
 	let domainToDelete = $state<Domain | null>(null);
 	let deleteConfirmationText = $state('');
 	let selectedDomain = $state<Domain | null>(null);
-	let deleteInput: HTMLInputElement | null = null;
+	let deleteInput: HTMLInputElement | null = $state(null);
 	let domainSearchVal = $state('');
 	let domainSearch = $state('');
 	let hasMore = $state(true);
@@ -48,7 +48,7 @@
 
 		const currentOffset = reset ? 0 : offset;
 		const isInitialLoad = currentOffset === 0;
-		
+
 		if (isInitialLoad) {
 			loading = true;
 		} else {
@@ -64,7 +64,7 @@
 				} else {
 					domains = [...domains, ...newDomains];
 				}
-				
+
 				hasMore = newDomains.length === LIMIT;
 				offset = currentOffset + newDomains.length;
 			})
@@ -119,7 +119,7 @@
 
 	function handleConfirmDelete() {
 		if (!domainToDelete) return;
-		
+
 		if (deleteConfirmationText.trim() !== domainToDelete.domain) {
 			toast.error('Domain name does not match');
 			return;
@@ -151,7 +151,7 @@
 		const toastId = toast.loading('Loading...');
 		verifyDomain(domain.id, domain.domain)
 			.then((updatedDomain) => {
-				domains = domains.map(d => d.id === updatedDomain.id ? updatedDomain : d);
+				domains = domains.map((d) => (d.id === updatedDomain.id ? updatedDomain : d));
 				if (updatedDomain.dkim_verified) {
 					toast.success('Domain verified', { id: toastId });
 				} else {
@@ -169,7 +169,6 @@
 			(deleteInput as HTMLInputElement).focus();
 		}
 	});
-
 </script>
 
 <SingleBox>
@@ -202,7 +201,7 @@
 				{/if}
 			</div>
 		</div>
-		
+
 		<Button variant="fill" on:click={() => (showCreateModal = true)}>
 			<IconPlus size={16} />
 			Create Domain
@@ -224,11 +223,7 @@
 
 			{#if hasMore && !loading && domains.length > 0}
 				<div class="load-more">
-					<Button
-						variant="outline"
-						on:click={handleLoadMore}
-						disabled={loadingMore}
-					>
+					<Button variant="outline" on:click={handleLoadMore} disabled={loadingMore}>
 						{loadingMore ? 'Loading...' : 'Load More'}
 					</Button>
 				</div>
@@ -237,16 +232,10 @@
 	</div>
 </SingleBox>
 
-<DomainModal 
-	bind:show={showCreateModal} 
-	onDomainCreated={handleDomainCreated}
-/>
+<DomainModal bind:show={showCreateModal} onDomainCreated={handleDomainCreated} />
 
 {#if selectedDomain}
-	<DnsRecordModal 
-		domain={selectedDomain} 
-		bind:show={showDnsModal} 
-	/>
+	<DnsRecordModal domain={selectedDomain} bind:show={showDnsModal} />
 {/if}
 
 {#if domainToDelete}
@@ -267,9 +256,10 @@
 	>
 		<div>
 			<div class="confirm-text">
-				You are about to delete the domain <strong>{domainToDelete.domain}</strong>. This action cannot be undone.
-				Deleting a domain will stop all sending activity from that domain and remove all associated credentials and sending logs
-				Type the domain name to confirm:
+				You are about to delete the domain <strong>{domainToDelete.domain}</strong>. This
+				action cannot be undone. Deleting a domain will stop all sending activity from that
+				domain and remove all associated credentials and sending logs Type the domain name
+				to confirm:
 			</div>
 			<TextInput
 				bind:value={deleteConfirmationText}
@@ -277,7 +267,6 @@
 				block
 				bind:input={deleteInput!}
 			/>
-		
 		</div>
 	</Modal>
 {/if}
@@ -323,7 +312,7 @@
 		padding: 30px;
 		overflow: auto;
 	}
-	
+
 	.loader-container {
 		display: flex;
 		justify-content: center;
