@@ -1,5 +1,5 @@
 import sudoApi from './sudoApi';
-import type { IpAddress, Queue, Server } from './sudoTypes';
+import type { IpAddress, Queue, Server, HealthCheckResults } from './sudoTypes';
 
 export function getServers() {
 	return sudoApi.get<Server[]>({
@@ -23,5 +23,17 @@ export function getQueues() {
 export function getLogs() {
 	return sudoApi.get<string[]>({
 		endpoint: '/logs'
+	});
+}
+
+export function getHealthChecks() {
+	return sudoApi.get<HealthCheckResults>({
+		endpoint: '/health-checks'
+	});
+}
+
+export function runHealthChecks() {
+	return sudoApi.post<HealthCheckResults>({
+		endpoint: '/health-checks'
 	});
 }

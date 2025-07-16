@@ -23,6 +23,25 @@ class HealthCheckController extends AbstractController
         $this->healthCheckService->runAllHealthChecks();
 
         $instance = $this->instanceService->getInstance();
-        return new JsonResponse($instance->getHealthCheckResults());
+        return new JsonResponse(
+            [
+                'results' => $instance->getHealthCheckResults(),
+                'last_checked_at' => $instance->getLastHealthCheckAt()?->getTimestamp()
+            ]
+        );
+    }
+
+    #[Route('/health-checks', methods: 'GET')]
+    public function getHealthCheckResults(): JsonResponse
+    {
+        $instance = $this->instanceService->getInstance();
+        $results = $instance->getHealthCheckResults();
+        $lastCheckedAt = $instance->getLastHealthCheckAt()?->getTimestamp();
+        return new JsonResponse(
+            [
+                'results' => $results,
+                'last_checked_at' => $lastCheckedAt
+            ]
+        );
     }
 }
