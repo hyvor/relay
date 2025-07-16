@@ -152,4 +152,36 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         return $response;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string> $server
+     */
+    public function sudoApi(
+        string $method,
+        string $uri,
+        array $data = [],
+        array $server = [],
+    ): Response {
+
+        $this->client->request(
+            $method,
+            '/api/sudo' . $uri,
+            server: array_merge([
+                'CONTENT_TYPE' => 'application/json',
+            ], $server),
+            content: (string)json_encode($data),
+        );
+
+        $response = $this->client->getResponse();
+
+        if ($response->getStatusCode() === 500) {
+            throw new \Exception(
+                'API call failed with status code 500. ' .
+                'Response: ' . $response->getContent()
+            );
+        }
+
+        return $response;
+    }
+
 }
