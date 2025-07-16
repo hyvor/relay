@@ -12,6 +12,7 @@ use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\ServerFactory;
 use App\Tests\Factory\SendFactory;
+use App\Tests\Factory\SudoUserFactory;
 use App\Tests\Factory\SuppressionFactory;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -42,6 +43,8 @@ class DevSeedCommand extends Command
             $output->writeln('<error>This command can only be run in the dev and test environments.</error>');
             return Command::FAILURE;
         }
+
+        SudoUserFactory::createOne(['hyvor_user_id' => 1]);
 
         InstanceFactory::new()->withDefaultDkim()->create([
             'domain' => InstanceService::DEFAULT_DOMAIN
