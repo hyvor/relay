@@ -5,7 +5,9 @@ namespace App\Service\Management\Health;
 use App\Entity\IpAddress;
 use App\Service\Ip\IpAddressService;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
+#[AutoconfigureTag('app.health_check')]
 class AllActiveIpsHaveCorrectPtrHealthCheck extends HealthCheckAbstract
 {
 

@@ -37,13 +37,4 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             'controller.argument_value_resolver',
             ['name' => 'console_api_resource', 'priority' => 150]
         );
-
-    // ================ HEALTH CHECKS =================
-    $services->set(AllQueuesHaveAtLeastOneIpHealthCheck::class)
-        ->tag('app.health_check');
-    
-    $services->set(AllActiveIpsHaveCorrectPtrHealthCheck::class)
-        ->tag('app.health_check');
-
-
 };
