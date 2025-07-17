@@ -4,6 +4,7 @@ namespace App\Api\Console\Controller;
 
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Authorization\ScopeRequired;
+use App\Api\Console\Authorization\UserLevelEndpoint;
 use App\Api\Console\Input\CreateProjectInput;
 use App\Api\Console\Object\ProjectObject;
 use App\Entity\Project;
@@ -26,6 +27,7 @@ class ProjectController extends AbstractController
     }
 
     #[Route('/project', methods: 'POST')]
+    #[UserLevelEndpoint]
     public function createProject(#[MapRequestPayload] CreateProjectInput $input): JsonResponse
     {
         $user = $this->getHyvorUser();

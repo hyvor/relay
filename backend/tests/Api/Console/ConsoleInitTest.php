@@ -7,7 +7,9 @@ use App\Api\Console\Object\ProjectObject;
 use App\Service\Project\ProjectService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
+use Hyvor\Internal\Auth\AuthFake;
 use PHPUnit\Framework\Attributes\CoversClass;
+use Symfony\Component\BrowserKit\Cookie;
 
 #[CoversClass(ConsoleController::class)]
 #[CoversClass(ProjectService::class)]
@@ -16,6 +18,8 @@ class ConsoleInitTest extends WebTestCase
 {
     public function test_init_console(): void
     {
+        $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
+
         $projects = ProjectFactory::createMany(5, [
             'hyvor_user_id' => 1,
         ]);
@@ -24,17 +28,18 @@ class ConsoleInitTest extends WebTestCase
             'hyvor_user_id' => 2,
         ]);
 
-        $response = $this->consoleApi(
-            null,
-            'GET',
-            '/init'
+
+        $this->client->request(
+            "GET",
+            "/api/console/init",
         );
 
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertResponseStatusCodeSame(200);
 
         $json = $this->getJson();
         $this->assertArrayHasKey('projects', $json);
+        $this->assertArrayHasKey('config', $json);
+        $this->assertIsArray($json['projects']);
         $this->assertCount(5, $json['projects']);
-        $this->assertArrayHasKey('id', $json['projects'][0]);
     }
 }
