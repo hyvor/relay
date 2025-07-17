@@ -9,6 +9,7 @@ import (
 
 type DbSend struct {
 	Id       int
+	Uuid     string
 	From     string
 	To       string
 	RawEmail string
@@ -41,7 +42,7 @@ func (b *DbSendBatch) FetchSends(queueId int) ([]DbSend, error) {
 
 	rows, err := b.tx.QueryContext(b.ctx, `
 		WITH ids AS MATERIALIZED (
-			SELECT id, from_address, to_address, raw, try_count
+			SELECT id, uuid, from_address, to_address, raw, try_count
 			FROM sends
 			WHERE status = 'queued' AND queue_id = $1 AND send_after < NOW()
 			FOR UPDATE SKIP LOCKED
@@ -50,7 +51,7 @@ func (b *DbSendBatch) FetchSends(queueId int) ([]DbSend, error) {
 		UPDATE sends
 		SET status = 'processing', updated_at = NOW()
 		WHERE id = ANY(SELECT id FROM ids)
-		RETURNING id, from_address, to_address, raw, try_count
+		RETURNING id, uuid, from_address, to_address, raw, try_count
     `, queueId, 10)
 
 	if err != nil {
@@ -64,6 +65,7 @@ func (b *DbSendBatch) FetchSends(queueId int) ([]DbSend, error) {
 
 		if err := rows.Scan(
 			&send.Id,
+			&send.Uuid,
 			&send.From,
 			&send.To,
 			&send.RawEmail,

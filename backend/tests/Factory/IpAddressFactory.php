@@ -28,7 +28,7 @@ final class IpAddressFactory extends PersistentProxyObjectFactory
     protected function defaults(): array
     {
         return [
-            'server' => ServerFactory::new(),
+            'server' => ServerFactory::createOne(),
             'ip_address' => self::faker()->ipv4(),
             'queue' => null,
             'is_enabled' => self::faker()->boolean(80),
