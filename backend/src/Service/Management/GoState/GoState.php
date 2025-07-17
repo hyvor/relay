@@ -36,6 +36,12 @@ class GoState
         public int $webhookWorkers,
 
         /**
+         * first server is always the leader
+         * it exposes global metrics
+         */
+        public bool $isLeader,
+
+        /**
          * Whether to run the DNS server and data for it
          */
         public bool $dnsServer,

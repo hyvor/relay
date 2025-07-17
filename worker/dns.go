@@ -12,7 +12,7 @@ type DnsServer struct {
 	ctx    context.Context
 	logger *slog.Logger
 
-	started bool
+	serverStarted bool
 
 	// data
 	instanceDomain string
@@ -40,8 +40,8 @@ func (s *DnsServer) Set(
 	s.ipPtrsForward = ipPtrsForward
 	s.mxIps = mxIps
 
-	if !s.started {
-		s.started = true
+	if !s.serverStarted {
+		s.serverStarted = true
 
 		go func() {
 

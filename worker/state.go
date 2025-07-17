@@ -14,6 +14,7 @@ type GoState struct {
 	Ips               []GoStateIp `json:"ips"`
 	EmailWorkersPerIp int         `json:"emailWorkersPerIp"`
 	WebhookWorkers    int         `json:"webhookWorkers"`
+	IsLeader          bool        `json:"isLeader"`
 
 	DnsServer            bool              `json:"dnsServer"`
 	DnsPtrForwardRecords map[string]string `json:"dnsPtrForwardRecords"`
@@ -26,13 +27,13 @@ type GoStateIp struct {
 	Ptr       string `json:"ptr"`
 	QueueId   int    `json:"queueId"`
 	QueueName string `json:"queueName"`
-	Incoming  bool   `json:"incoming"`
 }
 
 // wraps all the services based on the GoState
 type ServiceState struct {
 	ctx                context.Context
 	Logger             *slog.Logger
+	Metrics            *Metrics
 	EmailWorkersPool   *EmailWorkersPool
 	WebhookWorkersPool *WebhookWorkersPool
 	BounceServer       *BounceServer
@@ -41,10 +42,12 @@ type ServiceState struct {
 
 func NewServiceState(ctx context.Context) *ServiceState {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	metrics := NewMetrics(ctx, logger)
 
 	return &ServiceState{
 		ctx:                ctx,
 		Logger:             logger,
+		Metrics:            metrics,
 		EmailWorkersPool:   NewEmailWorkersPool(ctx, logger),
 		WebhookWorkersPool: NewWebhookWorkersPool(ctx, logger),
 		BounceServer:       NewBounceServer(ctx, logger),
@@ -62,6 +65,13 @@ func (s *ServiceState) Set(goState GoState) {
 		s.DnsServer.Set(goState.InstanceDomain, goState.DnsPtrForwardRecords, goState.DnsMxIps)
 	}
 
+	s.Metrics.Set(
+		goState.IsLeader,
+		len(goState.Ips),
+		goState.EmailWorkersPerIp,
+		goState.WebhookWorkers,
+	)
+
 	s.Logger.Info("Updating state",
 		"hostname", goState.Hostname,
 		"ip_count", len(goState.Ips),
@@ -75,7 +85,6 @@ func (s *ServiceState) Set(goState GoState) {
 			"ptr", ip.Ptr,
 			"queueId", ip.QueueId,
 			"queueName", ip.QueueName,
-			"incoming", ip.Incoming,
 		)
 	}
 }

@@ -27,7 +27,13 @@ class ServerService
      */
     public function getServers(): array
     {
-        return $this->em->getRepository(Server::class)->findAll();
+        return $this->em->getRepository(Server::class)->findBy([], orderBy: ['id' => 'ASC']);
+    }
+
+    public function isServerLeader(Server $server): bool
+    {
+        $firstServer = $this->em->getRepository(Server::class)->findOneBy([], orderBy: ['id' => 'ASC']);
+        return $firstServer?->getId() === $server->getId();
     }
 
     public function getServerByCurrentHostname(): ?Server

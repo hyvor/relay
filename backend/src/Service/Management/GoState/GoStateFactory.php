@@ -28,6 +28,7 @@ class GoStateFactory
             throw new ServerNotFoundException();
         }
 
+        $isLeader = $this->serverService->isServerLeader($server);
         $ips = [];
 
         $ipsFromServer = $this->ipAddressService->getIpAddressesOfServer($server);
@@ -49,7 +50,6 @@ class GoStateFactory
                 ptr: Ptr::getPtrDomain($ip, $instance->getDomain()),
                 queueId: $queue->getId(),
                 queueName: $queue->getName(),
-                incoming: false,
             );
         }
 
@@ -78,6 +78,7 @@ class GoStateFactory
             ips: $ips,
             emailWorkersPerIp: $server->getEmailWorkers(),
             webhookWorkers: $server->getWebhookWorkers() + 1, // TODO:
+            isLeader: $isLeader,
 
             // data for the DNS server
             dnsServer: true, // TODO: add this as a server config
