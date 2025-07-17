@@ -23,7 +23,7 @@ class ConsoleInitProjectTest extends WebTestCase
         $response = $this->consoleApi(
             $project,
             'GET',
-            '/init/project'
+            '/init/project',
         );
 
         $this->assertSame(200, $response->getStatusCode());

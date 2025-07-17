@@ -89,24 +89,39 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         array $server = [],
         true|array $scopes = true
     ): Response {
-        $project = is_int($project) ? $this->em->getRepository(Project::class)->find($project) : $project;
+        if ($project === null) {
+            $this->client->request(
+                $method,
+                '/api/console' . $uri,
+                parameters: $parameters,
+                server: array_merge([
+                    'CONTENT_TYPE' => 'application/json',
+                    'HTTP_AUTHORIZATION' => 'Bearer ',
+                ], $server),
+                content: (string)json_encode($data),
+            );
+        }
+        else {
+            $project = is_int($project) ? $this->em->getRepository(Project::class)->find($project) : $project;
 
-        $apiKey = bin2hex(random_bytes(16));
-        $apiKeyHashed = hash('sha256', $apiKey);
-        $apiKeyFactory = ['key_hashed' => $apiKeyHashed, 'project' => $project];
-        if ($scopes !== true) $apiKeyFactory['scopes'] = array_map(fn(Scope|string $scope) => is_string($scope) ? $scope : $scope->value, $scopes);
-        ApiKeyFactory::createOne($apiKeyFactory);
+            $apiKey = bin2hex(random_bytes(16));
+            $apiKeyHashed = hash('sha256', $apiKey);
+            $apiKeyFactory = ['key_hashed' => $apiKeyHashed, 'project' => $project];
+            if ($scopes !== true) $apiKeyFactory['scopes'] = array_map(fn(Scope|string $scope) => is_string($scope) ? $scope : $scope->value, $scopes);
+            ApiKeyFactory::createOne($apiKeyFactory);
 
-        $this->client->request(
-            $method,
-            '/api/console' . $uri,
-            parameters: $parameters,
-            server: array_merge([
-                'CONTENT_TYPE' => 'application/json',
-                'HTTP_AUTHORIZATION' => 'Bearer ' . $apiKey,
-            ], $server),
-            content: (string)json_encode($data),
-        );
+            $this->client->request(
+                $method,
+                '/api/console' . $uri,
+                parameters: $parameters,
+                server: array_merge([
+                    'CONTENT_TYPE' => 'application/json',
+                    'HTTP_AUTHORIZATION' => 'Bearer ' . $apiKey,
+                ], $server),
+                content: (string)json_encode($data),
+            );
+        }
+
 
         $response = $this->client->getResponse();
 

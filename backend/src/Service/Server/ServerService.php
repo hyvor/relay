@@ -48,7 +48,6 @@ class ServerService
             ->setCreatedAt($this->now())
             ->setUpdatedAt($this->now())
             ->setHostname($this->config->getHostname())
-            ->setDockerHostname($this->dockerService->getDockerHostname())
             ->setApiWorkers(Cpu::getCores() * 2);
 
         $this->em->persist($server);

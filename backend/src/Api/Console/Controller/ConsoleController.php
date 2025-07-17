@@ -2,6 +2,7 @@
 
 namespace App\Api\Console\Controller;
 
+use App\Api\Console\Authorization\ScopeRequired;
 use App\Api\Console\Authorization\UserLevelEndpoint;
 use App\Api\Console\Object\ProjectObject;
 use App\Entity\Project;
@@ -63,6 +64,7 @@ class ConsoleController extends AbstractController
     }
 
     #[Route('/init/project', methods: 'GET')]
+    #[ScopeRequired(Scope::PROJECTS_READ)]
     public function initProject(Project $project): JsonResponse
     {
         return new JsonResponse([
