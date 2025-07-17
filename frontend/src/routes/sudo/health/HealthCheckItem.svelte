@@ -7,17 +7,18 @@
 	dayjs.extend(relativeTime);
 
 	interface Props {
-		checkKey: string;
+		checkKey: 'all_queues_have_at_least_one_ip' | 'all_active_ips_have_correct_ptr';
 		result: HealthCheckResult;
 	}
 
 	let { checkKey, result }: Props = $props();
 
 	function formatCheckName(key: string): string {
-		return key
-			.split('_')
-			.map(word => word.charAt(0).toUpperCase() + word.slice(1))
-			.join(' ');
+		return {
+			all_queues_have_at_least_one_ip: 'All queues have at least one IP',
+			all_active_ips_have_correct_ptr:
+				'All active IPs have correct PTR records (Forward and Reverse)'
+		}[key]!;
 	}
 
 	function formatCheckedTime(checkedAt: string): string {
@@ -36,9 +37,12 @@
 
 		if (data.invalid_ptrs) {
 			const ptrData = data as HealthCheckPtrData;
-			return `Invalid PTRs: ${ptrData.invalid_ptrs.map(ptr => 
-				`${ptr.ip} (Forward: ${ptr.forward_valid ? 'Valid' : 'Invalid'}, Reverse: ${ptr.reverse_valid ? 'Valid' : 'Invalid'})`
-			).join(', ')}`;
+			return `Invalid PTRs: ${ptrData.invalid_ptrs
+				.map(
+					(ptr) =>
+						`${ptr.ip} (Forward: ${ptr.forward_valid ? 'Valid' : 'Invalid'}, Reverse: ${ptr.reverse_valid ? 'Valid' : 'Invalid'})`
+				)
+				.join(', ')}`;
 		}
 
 		return JSON.stringify(data);
@@ -119,11 +123,11 @@
 	}
 
 	.failure-callout {
-        font-size: 14px;
+		font-size: 14px;
 		margin-top: 10px;
 	}
 
 	.status {
 		flex-shrink: 0;
 	}
-</style> 
+</style>

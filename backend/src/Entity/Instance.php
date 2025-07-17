@@ -33,7 +33,7 @@ class Instance
     private ?\DateTimeImmutable $last_health_check_at = null;
 
     /**
-     * @var string[]
+     * @var array<mixed>
      */
     #[ORM\Column(type: "json")]
     private array $health_check_results = [];
@@ -119,7 +119,7 @@ class Instance
     }
 
     /**
-     * @return string[]
+     * @return array<mixed>
      */
     public function getHealthCheckResults(): array
     {
@@ -127,7 +127,7 @@ class Instance
     }
 
     /**
-     * @param string[] $healthCheckResults
+     * @param array<mixed> $healthCheckResults
      */
     public function setHealthCheckResults(array $healthCheckResults): static
     {
