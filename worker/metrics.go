@@ -20,8 +20,11 @@ type Metrics struct {
 
 	// Global metrics ====
 	// These are only exposed from the Leader server (the first registered server)
-	emailQueueSize   *prometheus.GaugeVec
-	pgsqlConnections prometheus.Gauge
+	relayInfo           *prometheus.GaugeVec
+	emailQueueSize      *prometheus.GaugeVec
+	pgsqlConnections    prometheus.Gauge
+	pgsqlMaxConnections prometheus.Gauge
+	serversTotal        prometheus.Gauge
 
 	// Instance metrics ====
 	emailSendAtteptsTotal        *prometheus.CounterVec
@@ -43,6 +46,17 @@ func NewMetrics(ctx context.Context, logger *slog.Logger) *Metrics {
 		ctx:      ctx,
 
 		// Global metrics
+		relayInfo: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "relay_info",
+				Help: "Information about the relay instance",
+			},
+			[]string{
+				"version",
+				"env",
+				"instance_domain",
+			},
+		),
 		emailQueueSize: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Name: "email_queue_size",
@@ -54,6 +68,18 @@ func NewMetrics(ctx context.Context, logger *slog.Logger) *Metrics {
 			prometheus.GaugeOpts{
 				Name: "pgsql_connections",
 				Help: "Number of active PostgreSQL connections",
+			},
+		),
+		pgsqlMaxConnections: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Name: "pgsql_max_connections",
+				Help: "Maximum number of PostgreSQL connections",
+			},
+		),
+		serversTotal: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Name: "servers_total",
+				Help: "Total number of registered servers in this Hyvor Relay instance",
 			},
 		),
 
@@ -112,18 +138,24 @@ func NewMetrics(ctx context.Context, logger *slog.Logger) *Metrics {
 
 }
 
-func (m *Metrics) Set(isLeader bool, ipCount, emailWorkersPerIp, webhookWorkers int) {
+func (m *Metrics) Set(goState GoState) {
 
-	m.isLeader = isLeader
+	m.isLeader = goState.IsLeader
 
-	if isLeader {
+	if goState.IsLeader {
 		m.registry.MustRegister(
+			m.relayInfo,
 			m.emailQueueSize,
 			m.pgsqlConnections,
+			m.pgsqlMaxConnections,
+			m.serversTotal,
 		)
 	} else {
+		m.registry.Unregister(m.relayInfo)
 		m.registry.Unregister(m.emailQueueSize)
 		m.registry.Unregister(m.pgsqlConnections)
+		m.registry.Unregister(m.pgsqlMaxConnections)
+		m.registry.Unregister(m.serversTotal)
 	}
 
 	// register all instance metrics
@@ -136,8 +168,14 @@ func (m *Metrics) Set(isLeader bool, ipCount, emailWorkersPerIp, webhookWorkers 
 	m.registry.MustRegister(m.workersWebhookTotal)
 
 	// Set static values
-	m.workersEmailTotal.Set(float64(ipCount * emailWorkersPerIp))
-	m.workersWebhookTotal.Set(float64(webhookWorkers))
+	m.relayInfo.WithLabelValues(
+		goState.Version,
+		goState.Env,
+		goState.InstanceDomain,
+	).Set(1)
+	m.workersEmailTotal.Set(float64(len(goState.Ips) * goState.EmailWorkersPerIp))
+	m.workersWebhookTotal.Set(float64(goState.WebhookWorkers))
+	m.serversTotal.Set(float64(goState.ServersCount))
 
 	if !m.serverStarted {
 		m.serverStarted = true
@@ -169,8 +207,8 @@ func (m *Metrics) Set(isLeader bool, ipCount, emailWorkersPerIp, webhookWorkers 
 				case <-m.ctx.Done():
 					return
 				default:
-					time.Sleep(10 * time.Second)
 					m.updateGlobalMetrics()
+					time.Sleep(10 * time.Second)
 				}
 			}
 
@@ -192,14 +230,25 @@ func (m *Metrics) updateGlobalMetrics() {
 
 	defer conn.Close()
 
+	// connections
 	var connections int
-
 	err = conn.QueryRow("SELECT count(*) FROM pg_stat_activity").Scan(&connections)
 	if err != nil {
 		m.logger.Error("Failed to get PostgreSQL connections", "error", err)
 		return
 	}
+	m.pgsqlConnections.Set(float64(connections))
 
+	// max connections
+	var maxConnections int
+	err = conn.QueryRow("SELECT setting::int FROM pg_settings WHERE name = 'max_connections'").Scan(&maxConnections)
+	if err != nil {
+		m.logger.Error("Failed to get PostgreSQL max connections", "error", err)
+		return
+	}
+	m.pgsqlMaxConnections.Set(float64(maxConnections))
+
+	// email queue size
 	rows, err := conn.Query(`
 		SELECT count(sends.id), queues.name
 		FROM sends
@@ -230,7 +279,5 @@ func (m *Metrics) updateGlobalMetrics() {
 		m.logger.Error("Failed to close rows", "error", err)
 		return
 	}
-
-	m.pgsqlConnections.Set(float64(connections))
 
 }

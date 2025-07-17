@@ -19,6 +19,10 @@ type GoState struct {
 	DnsServer            bool              `json:"dnsServer"`
 	DnsPtrForwardRecords map[string]string `json:"dnsPtrForwardRecords"`
 	DnsMxIps             []string          `json:"dnsMxIps"`
+
+	ServersCount int    `json:"serversCount"`
+	Env          string `json:"env"`
+	Version      string `json:"version"`
 }
 
 type GoStateIp struct {
@@ -65,18 +69,13 @@ func (s *ServiceState) Set(goState GoState) {
 		s.DnsServer.Set(goState.InstanceDomain, goState.DnsPtrForwardRecords, goState.DnsMxIps)
 	}
 
-	s.Metrics.Set(
-		goState.IsLeader,
-		len(goState.Ips),
-		goState.EmailWorkersPerIp,
-		goState.WebhookWorkers,
-	)
+	s.Metrics.Set(goState)
 
 	s.Logger.Info("Updating state",
 		"hostname", goState.Hostname,
 		"ip_count", len(goState.Ips),
 		"ips", goState.Ips,
-		"email_workers_count", len(goState.Ips),
+		"email_workers_count", len(goState.Ips)*goState.EmailWorkersPerIp,
 	)
 
 	for _, ip := range goState.Ips {

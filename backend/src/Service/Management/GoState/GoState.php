@@ -46,9 +46,13 @@ class GoState
          */
         public bool $dnsServer,
         /** @var array<string, string> */
-        public array $dnsPtrForwardRecords = [],
+        public array $dnsPtrForwardRecords,
         /** @var array<string> */
-        public array $dnsMxIps = [],
+        public array $dnsMxIps,
+
+        public int $serversCount,
+        public string $env,
+        public string $version,
     )
     {
     }

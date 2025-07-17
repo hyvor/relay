@@ -30,6 +30,11 @@ class ServerService
         return $this->em->getRepository(Server::class)->findBy([], orderBy: ['id' => 'ASC']);
     }
 
+    public function getServersCount(): int
+    {
+        return $this->em->getRepository(Server::class)->count();
+    }
+
     public function isServerLeader(Server $server): bool
     {
         $firstServer = $this->em->getRepository(Server::class)->findOneBy([], orderBy: ['id' => 'ASC']);
