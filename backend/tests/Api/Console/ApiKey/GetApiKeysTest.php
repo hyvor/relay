@@ -2,6 +2,7 @@
 
 namespace App\Tests\Api\Console\ApiKey;
 
+use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\ApiKeyController;
 use App\Api\Console\Object\ApiKeyObject;
 use App\Entity\Type\ApiKeyScope;
