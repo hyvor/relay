@@ -17,7 +17,6 @@ class ServerService
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly Config $config,
-        private readonly DockerService $dockerService
     )
     {
     }
