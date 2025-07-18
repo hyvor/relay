@@ -34,6 +34,7 @@ final class Version20250613093659 extends AbstractMigration
                 project_id BIGINT NOT NULL references projects(id) ON DELETE CASCADE,
                 domain_id BIGINT NOT NULL references domains(id) ON DELETE CASCADE,
                 queue_id BIGINT NOT NULL references queues(id),
+                queue_name text NOT NULL, -- denormalized
                 from_address text NOT NULL,
                 from_name text,
                 to_address text NOT NULL,

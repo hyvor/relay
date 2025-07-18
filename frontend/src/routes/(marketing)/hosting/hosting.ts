@@ -3,6 +3,7 @@ import type { Component } from 'svelte';
 import Introduction from './content/Introduction.svelte';
 import Setup from './content/Setup.svelte';
 import Deploy from './content/Deploy.svelte';
+import Monitoring from './content/Monitoring.svelte';
 
 export const categories: Category[] = [
 	{
@@ -34,9 +35,9 @@ export const categories: Category[] = [
                 component: Introduction
 			},
 			{
-				slug: 'debugging',
-				name: 'Debugging',
-				component: Introduction
+				slug: 'monitoring',
+				name: 'Monitoring',
+				component: Monitoring
 			},
 			{
 				slug: 'api-sudo',

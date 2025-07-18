@@ -14,10 +14,15 @@ type GoState struct {
 	Ips               []GoStateIp `json:"ips"`
 	EmailWorkersPerIp int         `json:"emailWorkersPerIp"`
 	WebhookWorkers    int         `json:"webhookWorkers"`
+	IsLeader          bool        `json:"isLeader"`
 
 	DnsServer            bool              `json:"dnsServer"`
 	DnsPtrForwardRecords map[string]string `json:"dnsPtrForwardRecords"`
 	DnsMxIps             []string          `json:"dnsMxIps"`
+
+	ServersCount int    `json:"serversCount"`
+	Env          string `json:"env"`
+	Version      string `json:"version"`
 }
 
 type GoStateIp struct {
@@ -26,13 +31,13 @@ type GoStateIp struct {
 	Ptr       string `json:"ptr"`
 	QueueId   int    `json:"queueId"`
 	QueueName string `json:"queueName"`
-	Incoming  bool   `json:"incoming"`
 }
 
 // wraps all the services based on the GoState
 type ServiceState struct {
 	ctx                context.Context
 	Logger             *slog.Logger
+	MetricsServer      *MetricsServer
 	EmailWorkersPool   *EmailWorkersPool
 	WebhookWorkersPool *WebhookWorkersPool
 	BounceServer       *BounceServer
@@ -41,11 +46,13 @@ type ServiceState struct {
 
 func NewServiceState(ctx context.Context) *ServiceState {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	metricsServer := NewMetricsServer(ctx, logger)
 
 	return &ServiceState{
 		ctx:                ctx,
 		Logger:             logger,
-		EmailWorkersPool:   NewEmailWorkersPool(ctx, logger),
+		MetricsServer:      metricsServer,
+		EmailWorkersPool:   NewEmailWorkersPool(ctx, logger, metricsServer.metrics),
 		WebhookWorkersPool: NewWebhookWorkersPool(ctx, logger),
 		BounceServer:       NewBounceServer(ctx, logger),
 		DnsServer:          NewDnsServer(ctx, logger),
@@ -62,11 +69,13 @@ func (s *ServiceState) Set(goState GoState) {
 		s.DnsServer.Set(goState.InstanceDomain, goState.DnsPtrForwardRecords, goState.DnsMxIps)
 	}
 
+	s.MetricsServer.Set(goState)
+
 	s.Logger.Info("Updating state",
 		"hostname", goState.Hostname,
 		"ip_count", len(goState.Ips),
 		"ips", goState.Ips,
-		"email_workers_count", len(goState.Ips),
+		"email_workers_count", len(goState.Ips)*goState.EmailWorkersPerIp,
 	)
 
 	for _, ip := range goState.Ips {
@@ -75,7 +84,6 @@ func (s *ServiceState) Set(goState GoState) {
 			"ptr", ip.Ptr,
 			"queueId", ip.QueueId,
 			"queueName", ip.QueueName,
-			"incoming", ip.Incoming,
 		)
 	}
 }

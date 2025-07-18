@@ -14,12 +14,14 @@ type EmailWorkersPool struct {
 	wg         sync.WaitGroup
 	cancelFunc context.CancelFunc
 	logger     *slog.Logger
+	metrics    *Metrics
 	workerFunc func(
 		ctx context.Context,
 		id int,
 		wg *sync.WaitGroup,
 		config *DBConfig,
 		logger *slog.Logger,
+		metrics *Metrics,
 		ip GoStateIp,
 		instanceDomain string,
 	)
@@ -28,10 +30,12 @@ type EmailWorkersPool struct {
 func NewEmailWorkersPool(
 	ctx context.Context,
 	logger *slog.Logger,
+	metrics *Metrics,
 ) *EmailWorkersPool {
 	pool := &EmailWorkersPool{
 		ctx:        ctx,
 		logger:     logger,
+		metrics:    metrics,
 		workerFunc: emailWorker,
 	}
 
@@ -73,6 +77,7 @@ func (pool *EmailWorkersPool) Set(
 			&pool.wg,
 			LoadDBConfig(),
 			pool.logger,
+			pool.metrics,
 			ip,
 			instanceDomain,
 		)
@@ -100,6 +105,7 @@ func emailWorker(
 	wg *sync.WaitGroup,
 	dbConfig *DBConfig,
 	logger *slog.Logger,
+	metrics *Metrics,
 	ip GoStateIp,
 	instanceDomain string,
 ) {
@@ -178,6 +184,7 @@ func emailWorker(
 					continue
 				}
 
+				updateMetricsFromSendResult(metrics, result)
 				sendAttemptIds = append(sendAttemptIds, sendAttemptId)
 			}
 
@@ -217,4 +224,22 @@ func emailWorker(
 
 		}
 	}
+}
+
+func updateMetricsFromSendResult(
+	metrics *Metrics,
+	sendResult *SendResult,
+) {
+
+	metrics.emailSendAttemptsTotal.WithLabelValues(
+		sendResult.QueueName,
+		sendResult.SentFromIp,
+		sendResult.ToStatus(),
+	).Inc()
+
+	metrics.emailDeliveryDurationSeconds.WithLabelValues(
+		sendResult.QueueName,
+		sendResult.SentFromIp,
+	).Observe(sendResult.Duration.Seconds())
+
 }
