@@ -36,7 +36,7 @@
 <style>
 	.wrap {
 		padding: 15px 25px;
-		background-color: var(--accent-light);
+		background-color: var(--input);
 		cursor: pointer;
 		border-radius: var(--box-radius);
 		display: flex;
