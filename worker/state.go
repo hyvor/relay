@@ -37,7 +37,7 @@ type GoStateIp struct {
 type ServiceState struct {
 	ctx                context.Context
 	Logger             *slog.Logger
-	Metrics            *Metrics
+	MetricsServer      *MetricsServer
 	EmailWorkersPool   *EmailWorkersPool
 	WebhookWorkersPool *WebhookWorkersPool
 	BounceServer       *BounceServer
@@ -46,13 +46,13 @@ type ServiceState struct {
 
 func NewServiceState(ctx context.Context) *ServiceState {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	metrics := NewMetrics(ctx, logger)
+	metricsServer := NewMetricsServer(ctx, logger)
 
 	return &ServiceState{
 		ctx:                ctx,
 		Logger:             logger,
-		Metrics:            metrics,
-		EmailWorkersPool:   NewEmailWorkersPool(ctx, logger),
+		MetricsServer:      metricsServer,
+		EmailWorkersPool:   NewEmailWorkersPool(ctx, logger, metricsServer.metrics),
 		WebhookWorkersPool: NewWebhookWorkersPool(ctx, logger),
 		BounceServer:       NewBounceServer(ctx, logger),
 		DnsServer:          NewDnsServer(ctx, logger),
@@ -69,7 +69,7 @@ func (s *ServiceState) Set(goState GoState) {
 		s.DnsServer.Set(goState.InstanceDomain, goState.DnsPtrForwardRecords, goState.DnsMxIps)
 	}
 
-	s.Metrics.Set(goState)
+	s.MetricsServer.Set(goState)
 
 	s.Logger.Info("Updating state",
 		"hostname", goState.Hostname,
