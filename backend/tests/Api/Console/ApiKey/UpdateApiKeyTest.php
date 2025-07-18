@@ -6,7 +6,6 @@ use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\ApiKeyController;
 use App\Api\Console\Object\ApiKeyObject;
 use App\Entity\ApiKey;
-use App\Entity\Type\ApiKeyScope;
 use App\Service\ApiKey\ApiKeyService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ApiKeyFactory;

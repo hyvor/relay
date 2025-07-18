@@ -49,13 +49,15 @@ class GetWebhookDeliveriesTest extends WebTestCase
         $content = $this->getJson();
         $this->assertCount(5, $content);
 
-        foreach ($content as $key =>  $delivery) {
+        $i = 0;
+        foreach ($content as $delivery) {
             $this->assertIsArray($delivery);
             $this->assertArrayHasKey('id', $delivery);
             $this->assertArrayHasKey('status', $delivery);
             $this->assertArrayHasKey('created_at', $delivery);
-            $this->assertSame($webhookDeliveries[$key]->getId(), $delivery['id']);
+            $this->assertSame($webhookDeliveries[$i]->getId(), $delivery['id']);
             $this->assertSame(WebhookDeliveryStatus::PENDING->value, $delivery['status']);
+            $i++;
         }
     }
 
@@ -114,7 +116,6 @@ class GetWebhookDeliveriesTest extends WebTestCase
         $this->assertSame(200, $response->getStatusCode());
 
         $content = $this->getJson();
-        $this->assertIsArray($content);
         $this->assertCount(0, $content);
     }
 }

@@ -26,6 +26,8 @@ class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
         self::bootKernel();
 
         $this->container = static::getContainer();
+        
+        assert(self::$kernel !== null, 'Kernel should be booted');
         $this->application = new Application(self::$kernel);
 
         /** @var EntityManagerInterface $em */
@@ -49,7 +51,6 @@ class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
         assert(property_exists($config, $key));
         $reflection = new \ReflectionObject($config);
         $property = $reflection->getProperty($key);
-        $property->setAccessible(true);
         $property->setValue($config, $value);
     }
 
