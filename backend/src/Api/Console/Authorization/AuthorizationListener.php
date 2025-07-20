@@ -10,6 +10,7 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Hyvor\Internal\Bundle\Api\DataCarryingHttpException;
 
 #[AsEventListener(event: KernelEvents::CONTROLLER, priority: 200)]
 class AuthorizationListener
@@ -36,10 +37,8 @@ class AuthorizationListener
 
         if ($request->headers->has('authorization')) {
             $this->handleAuthorizationHeader($event);
-        } else if ($request->cookies->has(Auth::HYVOR_SESSION_COOKIE_NAME)) {
-            $this->handleSession($event);
         } else {
-            throw new AccessDeniedHttpException('Authorization method not supported. Use either Bearer token or a session.');
+            $this->handleSession($event);
         }
     }
 
@@ -72,21 +71,35 @@ class AuthorizationListener
         $request->attributes->set(self::RESOLVED_PROJECT_ATTRIBUTE_KEY, $project);
     }
 
+    private function throwNotLoggedIn(): void
+    {
+        throw new DataCarryingHttpException(
+            403,
+            [
+                'login_url' => $this->auth->authUrl('login'),
+                'signup_url' => $this->auth->authUrl('signup'),
+            ],
+            'not_logged_in',
+        );
+    }
+
     private function handleSession(ControllerEvent $event): void
     {
 
         $request = $event->getRequest();
         $projectId = $request->headers->get('x-project-id');
         $sessionCookie = $request->cookies->get(Auth::HYVOR_SESSION_COOKIE_NAME);
-        assert($sessionCookie !== null);
-        $isUserLevelEndpoint = count($event->getAttributes(UserLevelEndpoint::class)) > 0;
 
-        $user = $this->auth->check((string) $sessionCookie);
-
-        if ($user === false) {
-            throw new AccessDeniedHttpException('Invalid session.');
+        if ($sessionCookie === null) {
+            $this->throwNotLoggedIn();
         }
 
+        $user = $this->auth->check((string) $sessionCookie);
+        if ($user === false) {
+            $this->throwNotLoggedIn();
+        }
+
+        $isUserLevelEndpoint = count($event->getAttributes(UserLevelEndpoint::class)) > 0;
         // user-level endpoints do not have a project ID
         if ($isUserLevelEndpoint === false) {
             if ($projectId === null)  {

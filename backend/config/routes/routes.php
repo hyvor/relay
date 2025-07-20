@@ -19,4 +19,6 @@ return static function (RoutingConfigurator $routes): void {
         ->prefix('/api/local')
         ->namePrefix('api_local_');
 
+    $routes->import('@InternalBundle/src/Controller/OidcController.php', 'attribute');
+
 };

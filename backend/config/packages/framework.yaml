@@ -1,6 +1,7 @@
 # see https://symfony.com/doc/current/reference/configuration/framework.html
 framework:
     secret: '%env(APP_SECRET)%'
+    trusted_proxies: '127.0.0.1,PRIVATE_SUBNETS'
 
     # Note that the session will be started ONLY if you read or write from it.
     session: true

@@ -42,9 +42,8 @@
 				isLoading = false;
 			})
 			.catch((err) => {
-				if (err.code === 401) {
-					const toPage = $page.url.searchParams.has('signup') ? 'signup' : 'login';
-					location.href = `/api/auth/${toPage}?redirect=` + encodeURIComponent(location.href);
+				if (err.message === 'not_logged_in') {
+					location.href = err.data.signup_url;
 				} else {
 					toast.error(err.message);
 				}
