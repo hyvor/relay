@@ -4,6 +4,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use App\Api\Console\Resolver\EntityResolver;
 use App\Api\Console\Resolver\ProjectResolver;
+use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     $services = $containerConfigurator->services();
@@ -22,6 +23,15 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             '../src/DependencyInjection/',
             '../src/Entity/',
             '../src/Kernel.php',
+        ]);
+
+    // sessions
+    $services->set(PdoSessionHandler::class)
+        ->args([
+            env('DATABASE_URL'),
+            [
+                'db_table' => 'oidc_sessions',
+            ],
         ]);
 
     // ================ CONSOLE API =================
