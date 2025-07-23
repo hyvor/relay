@@ -16,7 +16,7 @@
 
 	const ips = $derived($ipAddressesStore.filter((ip) => ip.server_id === server.id));
 
-	let activeTab: 'ips' | 'workers' = $state('ips');
+	let activeTab: 'ips' | 'settings' = $state('ips');
 
 	function getReadablePing() {
 		if (!server.last_ping_at) return 'N/A';
@@ -52,7 +52,7 @@
 	<div class="tabs">
 		<TabNav bind:active={activeTab}>
 			<TabNavItem name="ips">Ip Addresses</TabNavItem>
-			<TabNavItem name="workers">Workers</TabNavItem>
+			<TabNavItem name="settings">Settings</TabNavItem>
 		</TabNav>
 	</div>
 
@@ -71,7 +71,6 @@
 								<IconBoxArrowUpRight size={12} />
 							</a>
 						</th>
-						<th>Incoming</th>
 						<th>Status</th>
 					</tr>
 				</thead>
@@ -84,7 +83,7 @@
 		</div>
 	{/if}
 
-	{#if activeTab === 'workers'}
+	{#if activeTab === 'settings'}
 		<div class="workers">
 			<WorkerSplit worker="api" {server} />
 			<WorkerSplit worker="email" {server} />
