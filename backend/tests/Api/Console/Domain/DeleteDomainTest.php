@@ -13,13 +13,31 @@ use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Util\EventDispatcher\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\TestWith;
 
 #[CoversClass(DomainController::class)]
 #[CoversClass(DomainService::class)]
 #[CoversClass(DomainObject::class)]
 class DeleteDomainTest extends WebTestCase
 {
-    public function test_delete_domain(): void
+
+    public function test_when_both_id_and_domain_are_null(): void
+    {
+        $project = ProjectFactory::createOne();
+        $this->consoleApi(
+            $project,
+            'DELETE',
+            '/domains',
+        );
+
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertViolationCount(2);
+        $this->assertHasViolation('id', 'Either id or domain must be provided.');
+    }
+
+    #[TestWith([true])]
+    #[TestWith([false])]
+    public function test_delete_domain(bool $useDomain): void
     {
         $eventDispatcher = TestEventDispatcher::enable($this->container);
         $project = ProjectFactory::createOne();
@@ -36,13 +54,14 @@ class DeleteDomainTest extends WebTestCase
         $this->consoleApi(
             $project,
             'DELETE',
-            '/domains/' . $domain->getId(),
+            '/domains',
+            $useDomain ? ['domain' => 'example.com'] : ['id' => $domainId]
         );
 
         $this->assertResponseStatusCodeSame(200);
 
         $domainDb = $this->em->getRepository(Domain::class)->find($domainId);
-        $this->assertNull($domainDb, 'Domain should be deleted from the database');
+        $this->assertNull($domainDb);
         $eventDispatcher->assertDispatched(DomainDeletedEvent::class);
     }
 
@@ -53,11 +72,39 @@ class DeleteDomainTest extends WebTestCase
         $this->consoleApi(
             $project,
             'DELETE',
-            '/domains/999999', // Assuming this ID does not exist
+            '/domains',
+            [
+                'id' => 999999
+            ]
         );
 
-        $this->assertResponseStatusCodeSame(404);
+        $this->assertResponseStatusCodeSame(400);
         $json = $this->getJson();
-        $this->assertSame('Entity not found', $json['message']);
+        $this->assertSame('Domain not found', $json['message']);
     }
+
+    public function test_when_domain_does_not_belong_to_project(): void
+    {
+        $project = ProjectFactory::createOne();
+        $otherProject = ProjectFactory::createOne();
+
+        $domain = DomainFactory::createOne(
+            [
+                'project' => $otherProject,
+                'domain' => 'example.com',
+            ]
+        );
+
+        $this->consoleApi(
+            $project,
+            'DELETE',
+            '/domains',
+            ['id' => $domain->getId()]
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+        $json = $this->getJson();
+        $this->assertSame('Domain does not belong to the project', $json['message']);
+    }
+
 }
