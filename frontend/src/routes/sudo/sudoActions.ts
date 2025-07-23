@@ -1,5 +1,5 @@
 import sudoApi from './sudoApi';
-import type { IpAddress, Queue, Server, SudoInitResponse } from './sudoTypes';
+import type { IpAddress, Queue, Server, SudoInitResponse, HealthCheckResults } from './sudoTypes';
 
 export function initSudo() {
 	return sudoApi.post<SudoInitResponse>({
@@ -35,5 +35,17 @@ export function updateIpAddress(ipId: number, data: { queue_id?: number | null; 
 export function getLogs() {
 	return sudoApi.get<string[]>({
 		endpoint: '/logs'
+	});
+}
+
+export function getHealthChecks() {
+	return sudoApi.get<HealthCheckResults>({
+		endpoint: '/health-checks'
+	});
+}
+
+export function runHealthChecks() {
+	return sudoApi.post<HealthCheckResults>({
+		endpoint: '/health-checks'
 	});
 }
