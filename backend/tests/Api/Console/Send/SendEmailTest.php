@@ -9,10 +9,12 @@ use App\Entity\Send;
 use App\Entity\Type\SendStatus;
 use App\Service\Send\EmailBuilder;
 use App\Service\Send\SendService;
+use App\Service\Suppression\SuppressionService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
+use App\Tests\Factory\SuppressionFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 
@@ -20,6 +22,7 @@ use PHPUnit\Framework\Attributes\TestWith;
 #[CoversClass(SendService::class)]
 #[CoversClass(SendObject::class)]
 #[CoversClass(EmailBuilder::class)]
+#[CoversClass(SuppressionService::class)]
 class SendEmailTest extends WebTestCase
 {
 
@@ -493,6 +496,38 @@ class SendEmailTest extends WebTestCase
         $json = $this->getJson();
         $this->assertSame(
             "Domain hyvor.com is not verified",
+            $json['message']
+        );
+
+    }
+
+    public function test_does_not_allow_suppressed_emails(): void
+    {
+        QueueFactory::createTransactional();
+        $project = ProjectFactory::createOne();
+
+        DomainFactory::createOne([
+            "project" => $project,
+            "domain" => "hyvor.com",
+            'dkim_verified' => true,
+        ]);
+
+        SuppressionFactory::createOne([
+            'project' => $project,
+            'email' => 'test@example.com'
+        ]);
+
+        $this->consoleApi($project, "POST", "/sends", data: [
+            'from' => 'test@hyvor.com',
+            'to' => 'test@example.com',
+            'body_text' => 'Test email',
+        ]);
+
+        $this->assertResponseStatusCodeSame(400);
+
+        $json = $this->getJson();
+        $this->assertSame(
+            "Email address test@example.com is suppressed",
             $json['message']
         );
 

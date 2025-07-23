@@ -1,6 +1,6 @@
 import type { Project } from '../types';
 import consoleApi from './consoleApi';
-import { setProjectStore } from './stores/projectStore';
+import { setProjectEditingStore, setProjectStore } from './stores/projectStore';
 
 
 interface ProjectResponse {
@@ -24,7 +24,8 @@ export function loadProject(projectId: string) {
 			})
 			.then((res) => {
 				setProjectStore(res.project);
-
+				setProjectEditingStore(res.project);
+				
 				resolve(res);
 			})
 			.catch((err) => {

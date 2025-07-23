@@ -2,6 +2,7 @@
 
 namespace App\Service\Management\GoState;
 
+use App\Config;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
 use App\Service\Ip\Ptr;
@@ -14,6 +15,7 @@ class GoStateFactory
         private ServerService $serverService,
         private IpAddressService $ipAddressService,
         private InstanceService $instanceService,
+        private Config $config,
     )
     {
     }
@@ -28,6 +30,7 @@ class GoStateFactory
             throw new ServerNotFoundException();
         }
 
+        $isLeader = $this->serverService->isServerLeader($server);
         $ips = [];
 
         $ipsFromServer = $this->ipAddressService->getIpAddressesOfServer($server);
@@ -49,16 +52,44 @@ class GoStateFactory
                 ptr: Ptr::getPtrDomain($ip, $instance->getDomain()),
                 queueId: $queue->getId(),
                 queueName: $queue->getName(),
-                incoming: false,
             );
+        }
+
+        $allIps = $this->ipAddressService->getAllIpAddresses();
+        $dnsPtrForwardRecords = [];
+        $dnsMxIps = [];
+        $dnsMxIpAddedServers = [];
+
+        foreach ($allIps as $ip) {
+            if ($ip->getIsAvailable() === false || $ip->getIsEnabled() === false) {
+                continue;
+            }
+            $dnsPtrForwardRecords[Ptr::getPtrDomain($ip, $instance->getDomain())] = $ip->getIpAddress();
+
+            $serverId = $ip->getServer()->getId();
+
+            if (!in_array($serverId, $dnsMxIpAddedServers)) {
+                $dnsMxIps[] = $ip->getIpAddress();
+                $dnsMxIpAddedServers[] = $serverId;
+            }
         }
 
         return new GoState(
             instanceDomain: $instance->getDomain(),
             hostname: $server->getHostname(),
             ips: $ips,
-            emailWorkersPerIp: $server->getEmailWorkers(),
-            webhookWorkers: $server->getWebhookWorkers() + 1
+            emailWorkersPerIp: $server->getEmailWorkers() + 4,
+            webhookWorkers: $server->getWebhookWorkers() + 1, // TODO:
+            isLeader: $isLeader,
+
+            // data for the DNS server
+            dnsServer: true, // TODO: add this as a server config
+            dnsPtrForwardRecords: $dnsPtrForwardRecords,
+            dnsMxIps: $dnsMxIps,
+
+            serversCount: $this->serverService->getServersCount(),
+            env: $this->config->getEnv(),
+            version: $this->config->getAppVersion(),
         );
 
     }

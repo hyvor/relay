@@ -18,9 +18,6 @@ class GoStateIp
         // email queue id, name to send email from this IP
         public int $queueId,
         public string $queueName,
-
-        // whether the IP should handle incoming emails
-        public bool $incoming,
     )
     {
     }
