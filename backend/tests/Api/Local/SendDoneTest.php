@@ -25,7 +25,8 @@ class SendDoneTest extends WebTestCase
             ]
         );
 
-        $this->assertResponseStatusCodeSame(401);
+        $this->assertResponseStatusCodeSame(403);
+        $this->assertSame('Only requests from localhost are allowed.', $this->getJson()["message"]);
     }
 
     public function test_fails_on_no_send_found(): void
