@@ -22,7 +22,7 @@ class ApiKeyService
     {
     }
 
-    /*
+    /**
      * @param string[] $scopes
      * @return array{ apiKey: ApiKey, rawKey: string }
      */
@@ -68,6 +68,9 @@ class ApiKeyService
         return $apiKey;
     }
 
+    /**
+     * @return ApiKey[]
+     */
     public function getApiKeysForProject(Project $project): array
     {
         return $this->em->getRepository(ApiKey::class)->findBy(['project' => $project]);

@@ -19,9 +19,7 @@ use Symfony\Component\Scheduler\ScheduleProviderInterface;
 class GlobalSchedule implements ScheduleProviderInterface
 {
 
-    public function __construct(
-        private LockFactory $lockFactory
-    )
+    public function __construct()
     {
     }
 

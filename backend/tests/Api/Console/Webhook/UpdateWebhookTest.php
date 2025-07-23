@@ -47,8 +47,8 @@ class UpdateWebhookTest extends WebTestCase
         $this->assertArrayHasKey('description', $content);
         $this->assertSame('https://example.com/new', $content['url']);
         $this->assertSame('New description', $content['description']);
-        $this->assertContains('send.complained', $content['events']);
-        $this->assertContains('suppression.created', $content['events']);
+        $this->assertContains('send.complained', (array) $content['events']);
+        $this->assertContains('suppression.created', (array) $content['events']);
 
         $webhookDb = $this->em->getRepository(Webhook::class)->find($webhook->getId());
         $this->assertNotNull($webhookDb);

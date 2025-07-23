@@ -23,13 +23,14 @@ class ConsoleInitProjectTest extends WebTestCase
         $response = $this->consoleApi(
             $project,
             'GET',
-            '/init/project'
+            '/init/project',
         );
 
         $this->assertSame(200, $response->getStatusCode());
 
         $json = $this->getJson();
         $this->assertArrayHasKey('project', $json);
+        $this->assertIsArray($json['project']);
         $this->assertArrayHasKey('id', $json['project']);
         $this->assertArrayHasKey('created_at', $json['project']);
         $this->assertArrayHasKey('name', $json['project']);

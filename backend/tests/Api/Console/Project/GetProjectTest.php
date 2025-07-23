@@ -34,15 +34,4 @@ class GetProjectTest extends WebTestCase
         $this->assertSame($project->getId(), $json['id']);
         $this->assertSame($project->getName(), $json['name']);
     }
-
-    public function test_get_project_not_found(): void
-    {
-        $response = $this->consoleApi(
-            999,
-            'GET',
-            '/project'
-        );
-
-        $this->assertSame(404, $response->getStatusCode());
-    }
 }

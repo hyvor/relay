@@ -64,8 +64,10 @@ class GetDomainsTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(200);
 
+        /** @var array<array<string, mixed>> $json */
         $json = $this->getJson();
         $this->assertCount(1, $json);
+        $this->assertArrayHasKey(0, $json);
         $this->assertSame('thibault.dev', $json[0]['domain']);
     }
 }

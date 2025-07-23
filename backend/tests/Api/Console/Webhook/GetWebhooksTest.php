@@ -41,11 +41,13 @@ class GetWebhooksTest extends WebTestCase
         $content = $this->getJson();
         $this->assertCount(10, $content);
         foreach ($content as $key => $webhookData) {
+            $this->assertIsArray($webhookData);
             $this->assertArrayHasKey('id', $webhookData);
             $this->assertArrayHasKey('url', $webhookData);
             $this->assertArrayHasKey('description', $webhookData);
-            $this->assertSame($webhooks[$key]->getUrl(), $webhookData['url']);
-            $this->assertSame($webhooks[$key]->getDescription(), $webhookData['description']);
+            $webhookIndex = (int) $key;
+            $this->assertSame($webhooks[$webhookIndex]->getUrl(), $webhookData['url']);
+            $this->assertSame($webhooks[$webhookIndex]->getDescription(), $webhookData['description']);
         }
     }
 }

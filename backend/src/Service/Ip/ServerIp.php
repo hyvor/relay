@@ -5,8 +5,11 @@ namespace App\Service\Ip;
 class ServerIp
 {
 
+    /**
+     * @param callable|string $netGetInterfacesFunction
+     */
     public function __construct(
-        private mixed $netGetInterfacesFunction = '\net_get_interfaces',
+        private $netGetInterfacesFunction = 'net_get_interfaces',
     )
     {}
 
@@ -17,18 +20,32 @@ class ServerIp
      */
     public function getPublicV4IpAddresses(): array
     {
+        /** @var string[] $ips */
         $ips = [];
+        
+        if (!is_callable($this->netGetInterfacesFunction)) {
+            return [];
+        }
+        
         $interfaces = call_user_func($this->netGetInterfacesFunction);
 
+        if (!is_array($interfaces)) {
+            return [];
+        }
+
         foreach ($interfaces as $interface) {
-            if ($interface['up'] === false) {
+            if (!is_array($interface) || !isset($interface['up']) || $interface['up'] === false) {
+                continue;
+            }
+
+            if (!isset($interface['unicast']) || !is_array($interface['unicast'])) {
                 continue;
             }
 
             $unicast = $interface['unicast'];
 
             foreach ($unicast as $address) {
-                if (empty($address['address'])) {
+                if (!is_array($address) || empty($address['address']) || !is_string($address['address'])) {
                     continue;
                 }
 

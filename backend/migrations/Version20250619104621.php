@@ -35,6 +35,6 @@ final class Version20250619104621 extends AbstractMigration
 
     public function down(Schema $schema): void
     {
-        $this->addSql("DROP TABLE ip_addresses");
+        $this->addSql("DROP TABLE api_keys");
     }
 }
