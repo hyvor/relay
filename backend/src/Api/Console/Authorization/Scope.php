@@ -21,7 +21,4 @@ enum Scope: string
     case SUPPRESSIONS_WRITE = 'suppressions.write';
 
     case ANALYTICS_READ = 'analytics.read';
-    case PROJECTS_READ = 'projects.read';
-
-    case PROJECTS_WRITE = 'projects.write';
 }
