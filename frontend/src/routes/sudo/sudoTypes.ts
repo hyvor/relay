@@ -1,4 +1,13 @@
 
+export interface SudoInitResponse {
+    config: SudoConfig
+}
+
+export interface SudoConfig {
+    app_version: string;
+    instance: string;
+}
+
 export interface Server {
     id: number;
     created_at: number;

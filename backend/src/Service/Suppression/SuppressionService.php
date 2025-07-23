@@ -48,6 +48,14 @@ class SuppressionService
         return new ArrayCollection($results);
     }
 
+    public function isSuppressed(Project $project, string $email): bool
+    {
+        return $this->suppressionRepository->findOneBy([
+            'project' => $project,
+            'email' => $email
+        ]) !== null;
+    }
+
     public function deleteSuppression(Suppression $suppression): void
     {
         $this->em->remove($suppression);

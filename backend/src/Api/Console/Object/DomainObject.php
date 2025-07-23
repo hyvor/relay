@@ -27,7 +27,7 @@ class DomainObject
         $this->domain = $domain->getDomain();
         $this->dkim_selector = $domain->getDkimSelector();
         $this->dkim_host = Dkim::dkimHost($domain->getDkimSelector(), $domain->getDomain());
-        $this->dkim_txt_name = $this->dkim_host;
+        $this->dkim_txt_name = $this->dkim_host; // TODO: duplicate
         $this->dkim_public_key = $domain->getDkimPublicKey();
         $this->dkim_txt_value = Dkim::dkimTxtValue($domain->getDkimPublicKey());
         $this->dkim_verified = $domain->getDkimVerified();

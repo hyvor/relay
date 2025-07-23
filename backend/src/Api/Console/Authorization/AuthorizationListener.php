@@ -116,7 +116,6 @@ class AuthorizationListener
      */
     private function verifyScopes(array $scopes, ControllerEvent $event): void
     {
-
         $attributes = $event->getAttributes(ScopeRequired::class);
         $scopeRequiredAttribute = $attributes[0] ?? null;
 

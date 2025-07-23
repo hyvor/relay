@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"log"
 	"log/slog"
 	"time"
 
@@ -13,16 +12,25 @@ import (
 )
 
 // The BounceBackend implements SMTP server methods.
-type BounceBackend struct{}
+type BounceBackend struct {
+	logger         *slog.Logger
+	instanceDomain string
+}
 
 // NewSession is called after client greeting (EHLO, HELO).
 func (bkd *BounceBackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
-	return &Session{}, nil
+	return &Session{
+		logger: bkd.logger,
+		bounceMail: BounceMail{
+			InstanceDomain: bkd.instanceDomain,
+		},
+	}, nil
 }
 
 // A Session is returned after successful login.
 type Session struct {
-	auth bool
+	logger     *slog.Logger
+	bounceMail BounceMail
 }
 
 // AuthMechanisms returns a slice of available auth mechanisms; only PLAIN is
@@ -33,31 +41,32 @@ func (s *Session) AuthMechanisms() []string {
 
 // Auth is the handler for supported authenticators.
 func (s *Session) Auth(mech string) (sasl.Server, error) {
-	return sasl.NewPlainServer(func(identity, username, password string) error {
-		if username != "username" || password != "password" {
-			return errors.New("Invalid username or password")
-		}
-		s.auth = true
-		return nil
-	}), nil
+	return nil, errors.New("authentication not supported")
 }
 
 func (s *Session) Mail(from string, opts *smtp.MailOptions) error {
-	log.Println("Mail from:", from)
+	s.bounceMail.MailFrom = from
 	return nil
 }
 
 func (s *Session) Rcpt(to string, opts *smtp.RcptOptions) error {
-	log.Println("Rcpt to:", to)
+	s.bounceMail.RcptTo = to
 	return nil
 }
 
 func (s *Session) Data(r io.Reader) error {
 	if b, err := io.ReadAll(r); err != nil {
-		log.Println("Error reading data:", err)
+		s.logger.Error("Error reading bounce email data", "error", err)
 		return err
 	} else {
-		log.Println("Received data:" + string(b))
+
+		s.logger.Info("Received bounce email",
+			"MAIL", s.bounceMail.MailFrom,
+			"RCPT", s.bounceMail.RcptTo,
+			"data", string(b),
+		)
+
+		s.bounceMail.Handle()
 
 		// _ := string(b[:])
 	}
@@ -83,13 +92,13 @@ func NewBounceServer(ctx context.Context, logger *slog.Logger) *BounceServer {
 	}
 }
 
-func (b *BounceServer) Set() {
+func (b *BounceServer) Set(instanceDomain string) {
 	b.logger.Info("Bounce server initializing...")
 
 	b.Shutdown()
 
 	go func() {
-		b.Start(b.ctx, b.logger)
+		b.Start(b.ctx, b.logger, instanceDomain)
 	}()
 
 	go func() {
@@ -114,18 +123,20 @@ func (b *BounceServer) Shutdown() {
 
 }
 
-func (b *BounceServer) Start(ctx context.Context, logger *slog.Logger) {
-	logger.Info("Starting Bounce server!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+func (b *BounceServer) Start(ctx context.Context, logger *slog.Logger, instanceDomain string) {
 	b.logger = logger
 
-	be := &BounceBackend{}
+	be := &BounceBackend{
+		logger:         logger,
+		instanceDomain: instanceDomain,
+	}
 
 	smtpServer := smtp.NewServer(be)
 
 	smtpServer.Addr = "0.0.0.0:1025"
 	smtpServer.Domain = "localhost"
-	smtpServer.WriteTimeout = 30 * time.Second
-	smtpServer.ReadTimeout = 30 * time.Second
+	smtpServer.WriteTimeout = 20 * time.Second
+	smtpServer.ReadTimeout = 20 * time.Second
 	smtpServer.MaxMessageBytes = 1024 * 1024
 	smtpServer.MaxRecipients = 50
 	smtpServer.AllowInsecureAuth = true

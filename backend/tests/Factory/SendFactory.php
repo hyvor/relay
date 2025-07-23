@@ -31,6 +31,7 @@ final class SendFactory extends PersistentProxyObjectFactory
             "project" => ProjectFactory::new(),
             "domain" => DomainFactory::new(),
             "queue" => QueueFactory::new(),
+            "queue_name" => self::faker()->word(),
             "status" => SendStatus::QUEUED,
             "from_address" => self::faker()->email(),
             "from_name" => self::faker()->optional(0.7)->name(),
