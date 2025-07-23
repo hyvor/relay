@@ -3,6 +3,7 @@
 namespace App\Service\Project;
 
 use App\Entity\Project;
+use App\Service\Project\Dto\UpdateProjectDto;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Illuminate\Support\Arr;
@@ -42,5 +43,18 @@ class ProjectService
     {
         $projects = $this->em->getRepository(Project::class)->findBy(['hyvor_user_id' => $userId]);
         return new ArrayCollection($projects);
+    }
+
+    public function updateProject(Project $project, UpdateProjectDto $updates): Project
+    {
+        if ($updates->hasProperty('name')) {
+            $project->setName($updates->name);
+        }
+
+        $project->setUpdatedAt(new \DateTimeImmutable());
+
+        $this->em->flush();
+
+        return $project;
     }
 }

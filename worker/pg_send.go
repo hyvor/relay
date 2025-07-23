@@ -8,11 +8,13 @@ import (
 )
 
 type DbSend struct {
-	Id       int
-	From     string
-	To       string
-	RawEmail string
-	TryCount int
+	Id        int
+	Uuid      string
+	From      string
+	To        string
+	RawEmail  string
+	TryCount  int
+	QueueName string
 }
 
 type DbSendBatch struct {
@@ -41,7 +43,7 @@ func (b *DbSendBatch) FetchSends(queueId int) ([]DbSend, error) {
 
 	rows, err := b.tx.QueryContext(b.ctx, `
 		WITH ids AS MATERIALIZED (
-			SELECT id, from_address, to_address, raw, try_count
+			SELECT id, uuid, from_address, to_address, raw, try_count, queue_name
 			FROM sends
 			WHERE status = 'queued' AND queue_id = $1 AND send_after < NOW()
 			FOR UPDATE SKIP LOCKED
@@ -50,7 +52,7 @@ func (b *DbSendBatch) FetchSends(queueId int) ([]DbSend, error) {
 		UPDATE sends
 		SET status = 'processing', updated_at = NOW()
 		WHERE id = ANY(SELECT id FROM ids)
-		RETURNING id, from_address, to_address, raw, try_count
+		RETURNING id, uuid, from_address, to_address, raw, try_count, queue_name
     `, queueId, 10)
 
 	if err != nil {
@@ -64,10 +66,12 @@ func (b *DbSendBatch) FetchSends(queueId int) ([]DbSend, error) {
 
 		if err := rows.Scan(
 			&send.Id,
+			&send.Uuid,
 			&send.From,
 			&send.To,
 			&send.RawEmail,
 			&send.TryCount,
+			&send.QueueName,
 		); err != nil {
 			return nil, err
 		}
@@ -88,12 +92,7 @@ func (b *DbSendBatch) FinalizeSendBySendResult(
 	sendResult *SendResult,
 ) (int, error) {
 
-	status := "accepted"
-	if sendResult.Error != nil {
-		status = "bounced"
-	} else if sendResult.ShouldRequeue {
-		status = "deferred"
-	}
+	status := sendResult.ToStatus()
 
 	var err error
 	var sendAfterInterval string

@@ -4,6 +4,7 @@ namespace App\Service\Ip;
 
 use App\Entity\IpAddress;
 use App\Entity\Server;
+use App\Service\Ip\Dto\UpdateIpAddressDto;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 
@@ -26,6 +27,11 @@ class IpAddressService
     public function getAllIpAddresses(): array
     {
         return $this->em->getRepository(IpAddress::class)->findAll();
+    }
+
+    public function getIpAddressById(int $id): ?IpAddress
+    {
+        return $this->em->getRepository(IpAddress::class)->find($id);
     }
 
     /**
@@ -103,8 +109,12 @@ class IpAddressService
         UpdateIpAddressDto $updates
     ): IpAddress
     {
-        if ($updates->isActiveSet) {
+        if ($updates->hasProperty('isActive')) {
             $ipAddress->setIsAvailable($updates->isActive);
+        }
+
+        if ($updates->hasProperty('queue')) {
+            $ipAddress->setQueue($updates->queue);
         }
 
         $ipAddress->setUpdatedAt($this->now());

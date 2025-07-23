@@ -16,6 +16,7 @@ use App\Service\Send\EmailAddressFormat;
 use App\Service\Send\Exception\EmailTooLargeException;
 use App\Service\Send\SendService;
 use App\Service\Queue\QueueService;
+use App\Service\Suppression\SuppressionService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -31,7 +32,8 @@ class SendController extends AbstractController
     public function __construct(
         private SendService $sendService,
         private DomainService $domainService,
-        private QueueService $queueService
+        private QueueService $queueService,
+        private SuppressionService $suppressionService
     ) {}
 
     #[Route("/sends", methods: "POST")]
@@ -60,6 +62,12 @@ class SendController extends AbstractController
         if ($domain->getDkimVerified() === false) {
             throw new BadRequestException(
                 "Domain $domainName is not verified"
+            );
+        }
+
+        if ($this->suppressionService->isSuppressed($project, $sendEmailInput->getToAddress()->getAddress())) {
+            throw new BadRequestException(
+                "Email address {$sendEmailInput->getToAddress()->getAddress()} is suppressed"
             );
         }
 

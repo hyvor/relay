@@ -3,23 +3,24 @@
 namespace App\Api\Console\Controller;
 
 use App\Api\Console\Authorization\ScopeRequired;
+use App\Api\Console\Authorization\AuthorizationListener;
 use App\Api\Console\Authorization\UserLevelEndpoint;
 use App\Api\Console\Object\ProjectObject;
 use App\Entity\Project;
 use App\Service\Project\ProjectService;
 use App\Service\Send\Compliance;
-use Hyvor\Internal\Bundle\Security\HasHyvorUser;
+use Hyvor\Internal\Auth\AuthUser;
 use Hyvor\Internal\InternalConfig;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Entity\Type\WebhooksEventEnum;
 use App\Api\Console\Authorization\Scope;
 
 class ConsoleController extends AbstractController
 {
-    use HasHyvorUser;
 
     public function __construct(
         private ProjectService $projectService,
@@ -31,10 +32,12 @@ class ConsoleController extends AbstractController
 
     #[Route('/init', methods: 'GET')]
     #[UserLevelEndpoint]
-    public function initConsole(): JsonResponse
+    public function initConsole(Request $request): JsonResponse
     {
         $this->logger->info("TESTING");
-        $user = $this->getHyvorUser();
+
+        $user = $request->attributes->get(AuthorizationListener::RESOLVED_USER_ATTRIBUTE_KEY);
+        assert($user instanceof AuthUser);
 
         $projectUsers = $this->projectService->getUsersProject($user->id);
         $projectUsers = array_map(

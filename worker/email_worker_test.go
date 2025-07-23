@@ -19,7 +19,7 @@ func TestNewEmailWorkersPool(t *testing.T) {
 
 	var buf bytes.Buffer
 	logger := slog.New(slog.NewTextHandler(&buf, nil))
-	pool := NewEmailWorkersPool(ctx, logger)
+	pool := NewEmailWorkersPool(ctx, logger, newMetrics())
 
 	assert.NotNil(t, pool)
 	assert.Equal(t, ctx, pool.ctx)
@@ -40,7 +40,7 @@ func TestEmailWorkersPoolSet(t *testing.T) {
 
 	var called []int
 	var mu sync.Mutex
-	mockWorker := func(ctx context.Context, id int, wg *sync.WaitGroup, config *DBConfig, logger *slog.Logger, ip GoStateIp, instanceDomain string) {
+	mockWorker := func(ctx context.Context, id int, wg *sync.WaitGroup, config *DBConfig, logger *slog.Logger, metrics *Metrics, ip GoStateIp, instanceDomain string) {
 		defer wg.Done()
 		mu.Lock()
 		called = append(called, id)
@@ -119,7 +119,7 @@ func TestEmailWorker_DatabaseConnectionFailure(t *testing.T) {
 	defer func() { NewDbConn = originalNewDbConn }()
 
 	wg.Add(2)
-	go emailWorker(ctx, 1, &wg, dbConfig, logger, ip, "relay.hyvor.com")
+	go emailWorker(ctx, 1, &wg, dbConfig, logger, newMetrics(), ip, "relay.hyvor.com")
 	go func() {
 		defer wg.Done()
 		time.Sleep(40 * time.Millisecond) // Simulate some work

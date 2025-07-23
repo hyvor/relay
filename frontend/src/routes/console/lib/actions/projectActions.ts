@@ -10,3 +10,12 @@ export function createProject(name: string) {
         }
     });
 }
+
+export function updateProject(name: string) {
+    return consoleApi.patch<Project>({
+        endpoint: 'project',
+        data: {
+            name,
+        },
+    });
+}

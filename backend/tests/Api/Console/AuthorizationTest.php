@@ -223,5 +223,4 @@ class AuthorizationTest extends WebTestCase
         $this->assertArrayHasKey('config', $json);
 
     }
-
 }

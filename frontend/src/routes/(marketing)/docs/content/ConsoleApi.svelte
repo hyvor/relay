@@ -213,7 +213,7 @@ Authorization: Bearer <your_api_key>
 		<a href="#get-domain">GET /domains/:id</a> - Get a specific domain by ID
 	</li>
 	<li>
-		<a href="#delete-domain">DELETE /domains/:id</a> - Delete a domain from the project
+		<a href="#delete-domain">DELETE /domains</a> - Delete a domain by ID or domain name.
 	</li>
 </ul>
 
@@ -276,12 +276,16 @@ Authorization: Bearer <your_api_key>
 <h4 id="delete-domain">Delete Domain</h4>
 
 <p>
-	<code>DELETE /domains/:id</code> (scope: <strong>domains.write</strong>)
+	<code>DELETE /domains</code> (scope: <strong>domains.write</strong>)
 </p>
 
 <CodeBlock
 	code={`
-    type Request = {}
+    type Request = {
+    	// Either id or domain must be provided
+    	id?: number,
+    	domain?: string
+    }
     type Response = {}
 `}
 	language="ts"

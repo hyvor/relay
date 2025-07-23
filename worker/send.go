@@ -99,11 +99,24 @@ func (c *SmtpConversation) AddStep(
 
 type SendResult struct {
 	SentFromIpId      int
+	SentFromIp        string
 	ResolvedMxHosts   []string
 	SentMxHost        string
 	SmtpConversations map[string]*SmtpConversation
+	QueueName         string
 	Error             error
 	ShouldRequeue     bool
+	Duration          time.Duration
+}
+
+func (r *SendResult) ToStatus() string {
+	status := "accepted"
+	if r.Error != nil {
+		status = "bounced"
+	} else if r.ShouldRequeue {
+		status = "deferred"
+	}
+	return status
 }
 
 func sendEmail(
@@ -115,11 +128,20 @@ func sendEmail(
 	logger io.Writer,
 ) *SendResult {
 
+	startTime := time.Now()
+
 	result := &SendResult{
 		SentFromIpId:      ipId,
+		SentFromIp:        ip,
 		ResolvedMxHosts:   make([]string, 0),
 		SmtpConversations: make(map[string]*SmtpConversation),
+		QueueName:         send.QueueName,
 	}
+
+	defer func() {
+		duration := time.Since(startTime)
+		result.Duration = duration
+	}()
 
 	fmt.Fprintf(logger, "\n== New email ==\n")
 	fmt.Fprintf(logger, "From: %s\n", send.From)
@@ -366,5 +388,5 @@ func getReturnPath(
 	send *DbSend,
 	instanceDomain string,
 ) string {
-	return fmt.Sprintf("bounce+%d@%s", send.Id, instanceDomain)
+	return fmt.Sprintf("bounce+%s@%s", send.Uuid, instanceDomain)
 }

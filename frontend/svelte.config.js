@@ -13,7 +13,12 @@ const config = {
 		// See https://svelte.dev/docs/kit/adapters for more information about adapters.
 		adapter: adapter({
 			fallback: "fallback.html",
-		})
+		}),
+
+		prerender: {
+			handleHttpError: "warn",
+			handleMissingId: "warn",
+		}
 	}
 };
 
