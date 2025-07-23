@@ -2,7 +2,7 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\NoScopeRequired;
+use App\Api\Console\Authorization\AuthorizationListener;
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Authorization\ScopeRequired;
 use App\Api\Console\Authorization\UserLevelEndpoint;
@@ -12,17 +12,17 @@ use App\Api\Console\Object\ProjectObject;
 use App\Entity\Project;
 use App\Service\Project\Dto\UpdateProjectDto;
 use App\Service\Project\ProjectService;
+use Hyvor\Internal\Auth\AuthUser;
 use Hyvor\Internal\Bundle\Security\HasHyvorUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 
 
 class ProjectController extends AbstractController
 {
-
-    use HasHyvorUser;
 
     public function __construct(
         private ProjectService $projectService
@@ -31,9 +31,10 @@ class ProjectController extends AbstractController
 
     #[Route('/project', methods: 'POST')]
     #[UserLevelEndpoint]
-    public function createProject(#[MapRequestPayload] CreateProjectInput $input): JsonResponse
+    public function createProject(#[MapRequestPayload] CreateProjectInput $input, Request $request): JsonResponse
     {
-        $user = $this->getHyvorUser();
+        $user = $request->attributes->get(AuthorizationListener::RESOLVED_USER_ATTRIBUTE_KEY);
+        assert($user instanceof AuthUser);
 
         $project = $this->projectService->createProject($user->id, $input->name);
         return $this->json(new ProjectObject($project));
