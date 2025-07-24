@@ -26,11 +26,7 @@ class ProjectResolver implements ValueResolverInterface
         }
 
         $project = $request->attributes->get(AuthorizationListener::RESOLVED_PROJECT_ATTRIBUTE_KEY);
-
-        if (!$project instanceof Project) {
-            return [];
-        }
-
+        assert($project instanceof Project);
 
         return [$project];
     }

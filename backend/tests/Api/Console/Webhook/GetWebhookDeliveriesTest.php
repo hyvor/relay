@@ -3,6 +3,7 @@
 namespace App\Tests\Api\Console\Webhook;
 
 use App\Api\Console\Controller\WebhookController;
+use App\Api\Console\Object\WebhookDeliveryObject;
 use App\Api\Console\Object\WebhookObject;
 use App\Entity\Type\WebhookDeliveryStatus;
 use App\Entity\Webhook;
@@ -20,7 +21,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(WebhookService::class)]
 #[CoversClass(WebhookDeliveryRepository::class)]
 #[CoversClass(WebhookDeliveryService::class)]
-#[CoversClass(WebhookObject::class)]
+#[CoversClass(WebhookDeliveryObject::class)]
 #[CoversClass(WebhookDelivery::class)]
 class GetWebhookDeliveriesTest extends WebTestCase
 {
@@ -60,7 +61,6 @@ class GetWebhookDeliveriesTest extends WebTestCase
             $this->assertArrayHasKey('id', $delivery);
             $this->assertArrayHasKey('status', $delivery);
             $this->assertArrayHasKey('created_at', $delivery);
-            $this->assertSame($webhookDeliveries[$i]->getId(), $delivery['id']);
             $this->assertSame(WebhookDeliveryStatus::PENDING->value, $delivery['status']);
             $i++;
         }

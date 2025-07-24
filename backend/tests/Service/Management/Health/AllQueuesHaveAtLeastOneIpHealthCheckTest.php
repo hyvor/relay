@@ -7,7 +7,9 @@ use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\ServerFactory;
+use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(AllQueuesHaveAtLeastOneIpHealthCheck::class)]
 class AllQueuesHaveAtLeastOneIpHealthCheckTest extends KernelTestCase
 {
     private AllQueuesHaveAtLeastOneIpHealthCheck $healthCheck;

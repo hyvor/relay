@@ -2,10 +2,13 @@
 
 namespace App\Tests\Api\Sudo;
 
+use App\Api\Sudo\Authorization\SudoAuthorizationListener;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\SudoUserFactory;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\BrowserKit\Cookie;
 
+#[CoversClass(SudoAuthorizationListener::class)]
 class SudoAuthorizationTest extends WebTestCase
 {
     public function test_sudo_api_access_with_valid_sudo_user(): void

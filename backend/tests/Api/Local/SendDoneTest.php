@@ -2,12 +2,15 @@
 
 namespace App\Tests\Api\Local;
 
+use App\Api\Local\Controller\LocalController;
 use App\Entity\Type\SendStatus;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\SendFactory;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\Clock\Clock;
 use Symfony\Component\Clock\MockClock;
 
+#[CoversClass(LocalController::class)]
 class SendDoneTest extends WebTestCase
 {
 

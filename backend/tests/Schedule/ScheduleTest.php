@@ -4,8 +4,11 @@ namespace App\Tests\Schedule;
 
 use App\Schedule\GlobalSchedule;
 use App\Schedule\ServerSchedule;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
+#[CoversClass(GlobalSchedule::class)]
+#[CoversClass(ServerSchedule::class)]
 class ScheduleTest extends TestCase
 {
 

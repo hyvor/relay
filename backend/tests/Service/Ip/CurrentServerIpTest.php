@@ -3,9 +3,11 @@
 namespace App\Tests\Service\Ip;
 
 use App\Service\Ip\CurrentServerIp;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-class IpServiceTest extends TestCase
+#[CoversClass(CurrentServerIp::class)]
+class CurrentServerIpTest extends TestCase
 {
 
     public function test_get_public_ips(): void

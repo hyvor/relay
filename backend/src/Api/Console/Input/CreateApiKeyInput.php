@@ -3,7 +3,6 @@
 namespace App\Api\Console\Input;
 
 use App\Api\Console\Authorization\Scope;
-use App\Entity\Type\ApiKeyScope;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class CreateApiKeyInput

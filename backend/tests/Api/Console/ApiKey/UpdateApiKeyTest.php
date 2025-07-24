@@ -4,6 +4,7 @@ namespace App\Tests\Api\Console\ApiKey;
 
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\ApiKeyController;
+use App\Api\Console\Input\UpdateApiKeyInput;
 use App\Api\Console\Object\ApiKeyObject;
 use App\Entity\ApiKey;
 use App\Service\ApiKey\ApiKeyService;
@@ -15,6 +16,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(ApiKeyController::class)]
 #[CoversClass(ApiKeyService::class)]
 #[CoversClass(ApiKeyObject::class)]
+#[CoversClass(UpdateApiKeyInput::class)]
 class UpdateApiKeyTest extends WebTestCase
 {
     public function test_update_api_key(): void

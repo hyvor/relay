@@ -2,11 +2,16 @@
 
 namespace App\Tests\Api\Local;
 
+use App\Api\Local\Controller\LocalController;
 use App\Service\Send\Event\SendAttemptCreatedEvent;
+use App\Service\Send\SendService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\SendAttemptFactory;
 use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
+use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(LocalController::class)]
+#[CoversClass(SendService::class)]
 class SendAttemptDoneTest extends WebTestCase
 {
 

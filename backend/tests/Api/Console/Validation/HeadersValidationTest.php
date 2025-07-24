@@ -4,6 +4,7 @@ namespace App\Tests\Api\Console\Validation;
 
 use App\Api\Console\Validation\Headers;
 use App\Api\Console\Validation\HeadersValidator;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
@@ -12,6 +13,7 @@ use Symfony\Component\Validator\Test\ConstraintValidatorTestCase;
 /**
  * @extends ConstraintValidatorTestCase<HeadersValidator>
  */
+#[CoversClass(HeadersValidator::class)]
 class HeadersValidationTest extends ConstraintValidatorTestCase
 {
 
