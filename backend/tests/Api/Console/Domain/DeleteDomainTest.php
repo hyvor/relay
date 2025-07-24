@@ -6,12 +6,11 @@ use App\Api\Console\Controller\DomainController;
 use App\Api\Console\Object\DomainObject;
 use App\Entity\Domain;
 use App\Service\Domain\DomainService;
-use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Service\Domain\Event\DomainDeletedEvent;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
-use App\Util\EventDispatcher\TestEventDispatcher;
+use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 

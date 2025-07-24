@@ -5,7 +5,6 @@ namespace App\Schedule;
 use App\Service\Idempotency\Message\ClearExpiredIdempotencyRecordsMessage;
 use App\Service\Management\Message\RunHealthChecksMessage;
 use App\Service\Send\Message\ClearExpiredSendsMessage;
-use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
 use Symfony\Component\Scheduler\RecurringMessage;
 use Symfony\Component\Scheduler\Schedule as SymfonySchedule;

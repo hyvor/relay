@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\Management\Handler;
+namespace App\Service\Management\MessageHandler;
 
 use App\Service\Management\Health\HealthCheckService;
 use App\Service\Management\Message\RunHealthChecksMessage;

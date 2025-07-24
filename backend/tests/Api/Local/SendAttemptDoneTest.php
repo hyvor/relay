@@ -5,7 +5,7 @@ namespace App\Tests\Api\Local;
 use App\Service\Send\Event\SendAttemptCreatedEvent;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\SendAttemptFactory;
-use App\Util\EventDispatcher\TestEventDispatcher;
+use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 
 class SendAttemptDoneTest extends WebTestCase
 {
