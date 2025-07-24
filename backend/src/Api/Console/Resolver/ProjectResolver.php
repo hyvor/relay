@@ -20,6 +20,11 @@ class ProjectResolver implements ValueResolverInterface
      */
     public function resolve(Request $request, ArgumentMetadata $argument): iterable
     {
+        $controllerName = $argument->getControllerName();
+        if (!str_starts_with($controllerName, 'App\Api\Console\Controller\\')) {
+            return [];
+        }
+
         $argumentType = $argument->getType();
         if (!$argumentType || $argumentType !== Project::class) {
             return [];
