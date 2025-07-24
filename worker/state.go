@@ -19,6 +19,7 @@ type GoState struct {
 	DnsServer            bool              `json:"dnsServer"`
 	DnsPtrForwardRecords map[string]string `json:"dnsPtrForwardRecords"`
 	DnsMxIps             []string          `json:"dnsMxIps"`
+	DnsDkimTxtValue      string            `json:"dnsDkimTxtValue"`
 
 	ServersCount int    `json:"serversCount"`
 	Env          string `json:"env"`
@@ -66,7 +67,12 @@ func (s *ServiceState) Set(goState GoState) {
 	s.BounceServer.Set(goState.InstanceDomain)
 
 	if goState.DnsServer {
-		s.DnsServer.Set(goState.InstanceDomain, goState.DnsPtrForwardRecords, goState.DnsMxIps)
+		s.DnsServer.Set(
+			goState.InstanceDomain,
+			goState.DnsPtrForwardRecords,
+			goState.DnsMxIps,
+			goState.DnsDkimTxtValue,
+		)
 	}
 
 	s.MetricsServer.Set(goState)

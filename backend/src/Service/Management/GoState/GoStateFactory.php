@@ -3,6 +3,7 @@
 namespace App\Service\Management\GoState;
 
 use App\Config;
+use App\Service\Domain\Dkim;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
 use App\Service\Ip\Ptr;
@@ -86,6 +87,7 @@ class GoStateFactory
             dnsServer: true, // TODO: add this as a server config
             dnsPtrForwardRecords: $dnsPtrForwardRecords,
             dnsMxIps: $dnsMxIps,
+            dnsDkimTxtValue: Dkim::dkimTxtValue($instance->getDkimPublicKey()),
 
             serversCount: $this->serverService->getServersCount(),
             env: $this->config->getEnv(),
