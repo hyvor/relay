@@ -1,12 +1,19 @@
 package main
 
-import "strings"
+import (
+	"log/slog"
+	"strings"
+
+	"github.com/hyvor/relay/worker/bounceparse"
+)
 
 type BounceMail struct {
 	MailFrom       string
 	RcptTo         string
 	Data           string
 	InstanceDomain string
+
+	logger *slog.Logger
 }
 
 // call after the data is read
@@ -24,7 +31,16 @@ func (m *BounceMail) Handle() {
 }
 
 func (m *BounceMail) handleBounce(uuid string) {
+
+	dsn, err := bounceparse.ParseDsn([]byte(m.Data))
+
+	if err != nil {
+		m.logger.Error("Error parsing bounce email", "error", err)
+		return
+	}
+
 	//
+
 }
 
 // Bounce email format: bounce+<uuid>@<instance_domain>
