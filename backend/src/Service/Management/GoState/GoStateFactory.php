@@ -78,8 +78,8 @@ class GoStateFactory
             instanceDomain: $instance->getDomain(),
             hostname: $server->getHostname(),
             ips: $ips,
-            emailWorkersPerIp: $server->getEmailWorkers() + 4,
-            webhookWorkers: $server->getWebhookWorkers() + 1, // TODO:
+            emailWorkersPerIp: $server->getEmailWorkers(),
+            webhookWorkers: $server->getWebhookWorkers(),
             isLeader: $isLeader,
 
             // data for the DNS server

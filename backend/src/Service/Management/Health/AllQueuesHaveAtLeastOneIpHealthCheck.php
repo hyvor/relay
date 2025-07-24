@@ -6,7 +6,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query\ResultSetMapping;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
-#[AutoconfigureTag('app.health_check')]
 class AllQueuesHaveAtLeastOneIpHealthCheck extends HealthCheckAbstract
 {
 

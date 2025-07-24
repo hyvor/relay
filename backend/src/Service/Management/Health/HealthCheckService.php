@@ -2,11 +2,11 @@
 
 namespace App\Service\Management\Health;
 
-use App\Entity\Instance;
 use App\Service\Instance\InstanceService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
+use Symfony\Component\String\ByteString;
 
 class HealthCheckService
 {
@@ -32,7 +32,7 @@ class HealthCheckService
         $results = [];
         
         foreach ($this->healthChecks as $healthCheck) {
-            $healthCheckType = $this->getHealthCheckType($healthCheck);
+            $healthCheckType = $this->getHealthCheckName($healthCheck);
             
             $passed = $healthCheck->check();
             $data = $healthCheck->getData();
@@ -52,20 +52,13 @@ class HealthCheckService
         $this->em->flush();
     }
 
-    /**
-     * Get the health check type string from the health check instance
-     */
-    private function getHealthCheckType(HealthCheckAbstract $healthCheck): string
+    // snake case name
+    private function getHealthCheckName(HealthCheckAbstract $healthCheck): string
     {
         $className = get_class($healthCheck);
-        
-        foreach (HealthCheckType::cases() as $type) {
-            if ($type->getClass() === $className) {
-                return $type->value;
-            }
-        }
-        
-        // Fallback to class name if not found in enum
-        return $className;
+        $classParts = explode('\\', $className);
+        $healthCheckType = end($classParts);
+        $snake = new ByteString($healthCheckType)->snake();
+        return str_replace('_health_check', '', $snake->toString());
     }
 } 

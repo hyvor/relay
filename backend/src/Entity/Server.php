@@ -32,7 +32,7 @@ class Server
     private int $api_workers = 0;
 
     #[ORM\Column(type: "integer")]
-    private int $email_workers = 0;
+    private int $email_workers = 0; // per IP
 
     #[ORM\Column(type: "integer")]
     private int $webhook_workers = 0;

@@ -37,28 +37,35 @@ export interface Queue {
     name: string;
 }
 
-export interface HealthCheckResult {
+export interface HealthCheckResult<T extends HealthCheckName = HealthCheckName> {
     passed: boolean;
-    data: any;
+    data: HealthCheckData[T];
     checked_at: string;
 }
 
-export interface HealthCheckQueueData {
-    queues_without_ip: string[];
+export interface HealthCheckData {
+    all_active_ips_have_correct_ptr: {
+        invalid_ptrs: Array<{
+            ip: string;
+            forward_valid: boolean;
+            reverse_valid: boolean;
+        }>;
+    },
+    all_queues_have_at_least_one_ip: {
+        queues_without_ip: string[];
+    },
+    instance_dkim_correct: {
+        error: string;
+        expected?: string;
+        actual?: string;
+    }
 }
 
-export interface HealthCheckPtrData {
-    invalid_ptrs: Array<{
-        ip: string;
-        forward_valid: boolean;
-        reverse_valid: boolean;
-    }>;
-}
+export type HealthCheckName = keyof HealthCheckData;
 
 export interface HealthCheckResults {
     last_checked_at: number | null;
     results: {
-        all_active_ips_have_correct_ptr: HealthCheckResult;
-        all_queues_have_at_least_one_ip: HealthCheckResult;
+        [key in HealthCheckName]: HealthCheckResult<key>;
     };
 }
