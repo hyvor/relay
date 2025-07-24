@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	"slices"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -18,6 +19,7 @@ type DnsServer struct {
 	instanceDomain string
 	ipPtrsForward  map[string]string // maps domain names to IP addresses
 	mxIps          []string          // list of IPs for MX records (usually one IP per server)
+	dkimTxtValue   string
 }
 
 func NewDnsServer(ctx context.Context, logger *slog.Logger) *DnsServer {
@@ -34,11 +36,13 @@ func (s *DnsServer) Set(
 	instanceDomain string,
 	ipPtrsForward map[string]string,
 	mxIps []string,
+	dkimTxtValue string,
 ) {
 
 	s.instanceDomain = instanceDomain
 	s.ipPtrsForward = ipPtrsForward
 	s.mxIps = mxIps
+	s.dkimTxtValue = dkimTxtValue
 
 	if !s.serverStarted {
 		s.serverStarted = true
@@ -116,6 +120,7 @@ func (s *DnsServer) handleRequest(w dns.ResponseWriter, r *dns.Msg) {
 			for _, ip := range s.ipPtrsForward {
 				allIps = append(allIps, ip)
 			}
+			slices.Sort(allIps)
 
 			// TODO: adding each IP can exceed DNS TXT record size limit
 			// We need a way to handle this. See #106 (https://github.com/hyvor/relay/issues/106)
@@ -127,6 +132,16 @@ func (s *DnsServer) handleRequest(w dns.ResponseWriter, r *dns.Msg) {
 				msg.Answer = append(msg.Answer, rr)
 			} else {
 				s.logger.Error("Failed to create TXT record", "error", err)
+			}
+			continue
+
+		} else if q.Qtype == dns.TypeTXT && name == "default._domainkey."+s.instanceDomain {
+
+			rr, err := dns.NewRR(q.Name + " 3600 IN TXT \"" + s.dkimTxtValue + "\"")
+			if err == nil {
+				msg.Answer = append(msg.Answer, rr)
+			} else {
+				s.logger.Error("Failed to create DKIM TXT record", "error", err)
 			}
 			continue
 

@@ -44,7 +44,6 @@
 			});
 	}
 
-
 	onMount(() => {
 		loadHealthChecks();
 	});
@@ -62,9 +61,9 @@
 						Last checked: <RelativeTime unix={healthCheckResults.last_checked_at!} />
 					</div>
 				</div>
-				<Button 
-					color="accent" 
-					size="small" 
+				<Button
+					color="accent"
+					size="small"
 					onclick={handleRunHealthChecks}
 					disabled={running}
 				>
@@ -74,7 +73,7 @@
 
 			<div class="checks">
 				{#each Object.entries(healthCheckResults.results) as [checkKey, result]}
-					<HealthCheckItem {checkKey} {result} />
+					<HealthCheckItem checkKey={checkKey as any} {result} />
 				{/each}
 			</div>
 		</div>
@@ -82,9 +81,7 @@
 		<div class="error">
 			<div class="title">Health Checks</div>
 			<div class="error-message">Failed to load health check results</div>
-			<Button color="accent" size="small" onclick={loadHealthChecks}>
-				Retry
-			</Button>
+			<Button color="accent" size="small" onclick={loadHealthChecks}>Retry</Button>
 		</div>
 	{/if}
 </SingleBox>

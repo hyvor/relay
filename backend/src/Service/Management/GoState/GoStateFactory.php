@@ -3,6 +3,7 @@
 namespace App\Service\Management\GoState;
 
 use App\Config;
+use App\Service\Domain\Dkim;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
 use App\Service\Ip\Ptr;
@@ -78,14 +79,15 @@ class GoStateFactory
             instanceDomain: $instance->getDomain(),
             hostname: $server->getHostname(),
             ips: $ips,
-            emailWorkersPerIp: $server->getEmailWorkers() + 4,
-            webhookWorkers: $server->getWebhookWorkers() + 1, // TODO:
+            emailWorkersPerIp: $server->getEmailWorkers(),
+            webhookWorkers: $server->getWebhookWorkers(),
             isLeader: $isLeader,
 
             // data for the DNS server
             dnsServer: true, // TODO: add this as a server config
             dnsPtrForwardRecords: $dnsPtrForwardRecords,
             dnsMxIps: $dnsMxIps,
+            dnsDkimTxtValue: Dkim::dkimTxtValue($instance->getDkimPublicKey()),
 
             serversCount: $this->serverService->getServersCount(),
             env: $this->config->getEnv(),

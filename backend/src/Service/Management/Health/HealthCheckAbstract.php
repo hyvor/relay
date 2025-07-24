@@ -2,6 +2,9 @@
 
 namespace App\Service\Management\Health;
 
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+
+#[AutoconfigureTag('app.health_check')]
 abstract class HealthCheckAbstract
 {
 

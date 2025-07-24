@@ -54,6 +54,9 @@ class DevSeedCommand extends Command
 
         $server = ServerFactory::createOne([
             'hostname' => 'hyvor-relay',
+            'api_workers' => 2,
+            'email_workers' => 2,
+            'webhook_workers' => 1,
         ]);
         IpAddressFactory::createOne([
             'server' => $server,

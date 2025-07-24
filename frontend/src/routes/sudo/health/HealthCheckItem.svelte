@@ -1,23 +1,24 @@
-<script lang="ts">
+<script lang="ts" generics="Key extends HealthCheckName">
 	import { Tag, Callout } from '@hyvor/design/components';
-	import type { HealthCheckResult, HealthCheckQueueData, HealthCheckPtrData } from '../sudoTypes';
+	import type { HealthCheckResult, HealthCheckName, HealthCheckData } from '../sudoTypes';
 	import dayjs from 'dayjs';
 	import relativeTime from 'dayjs/plugin/relativeTime';
 
 	dayjs.extend(relativeTime);
 
 	interface Props {
-		checkKey: 'all_queues_have_at_least_one_ip' | 'all_active_ips_have_correct_ptr';
-		result: HealthCheckResult;
+		checkKey: Key;
+		result: HealthCheckResult<Key>;
 	}
 
 	let { checkKey, result }: Props = $props();
 
-	function formatCheckName(key: string): string {
+	function formatCheckName(key: HealthCheckName): string {
 		return {
 			all_queues_have_at_least_one_ip: 'All queues have at least one IP',
 			all_active_ips_have_correct_ptr:
-				'All active IPs have correct PTR records (Forward and Reverse)'
+				'All active IPs have correct PTR records (Forward and Reverse)',
+			instance_dkim_correct: 'Instance DKIM is correct'
 		}[key]!;
 	}
 
@@ -25,24 +26,29 @@
 		return dayjs(checkedAt).fromNow();
 	}
 
-	function renderFailureData(data: any): string {
-		if (!data || Object.keys(data).length === 0) {
-			return '';
-		}
-
-		if (data.queues_without_ip) {
-			const queueData = data as HealthCheckQueueData;
-			return `Queues without IP: ${queueData.queues_without_ip.join(', ')}`;
-		}
-
-		if (data.invalid_ptrs) {
-			const ptrData = data as HealthCheckPtrData;
+	function renderFailureData(data: HealthCheckData[Key]): string {
+		if (checkKey === 'all_active_ips_have_correct_ptr') {
+			const ptrData = data as HealthCheckData['all_active_ips_have_correct_ptr'];
 			return `Invalid PTRs: ${ptrData.invalid_ptrs
 				.map(
 					(ptr) =>
 						`${ptr.ip} (Forward: ${ptr.forward_valid ? 'Valid' : 'Invalid'}, Reverse: ${ptr.reverse_valid ? 'Valid' : 'Invalid'})`
 				)
 				.join(', ')}`;
+		}
+
+		if (checkKey === 'all_queues_have_at_least_one_ip') {
+			const queueData = data as HealthCheckData['all_queues_have_at_least_one_ip'];
+			return `Queues without IP: ${queueData.queues_without_ip.join(', ')}`;
+		}
+
+		if (checkKey === 'instance_dkim_correct') {
+			const dkimData = data as HealthCheckData['instance_dkim_correct'];
+			return (
+				`Instance DKIM is not correct. Error: ${dkimData.error}` +
+				(dkimData.expected ? `, Expected: ${dkimData.expected}` : '') +
+				(dkimData.actual ? `, Actual: ${dkimData.actual}` : '')
+			);
 		}
 
 		return JSON.stringify(data);

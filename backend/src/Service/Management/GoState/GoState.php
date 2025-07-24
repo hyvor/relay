@@ -49,6 +49,7 @@ class GoState
         public array $dnsPtrForwardRecords,
         /** @var array<string> */
         public array $dnsMxIps,
+        public string $dnsDkimTxtValue,
 
         public int $serversCount,
         public string $env,

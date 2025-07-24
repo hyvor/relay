@@ -9,7 +9,8 @@
 	import InstanceDomain from './InstanceDomain.svelte';
 	import { onMount } from 'svelte';
 	import { initSudo } from './sudoActions';
-	import { sudoConfigStore } from './sudoStore';
+	import { instanceStore, sudoConfigStore } from './sudoStore';
+	import IconGear from '@hyvor/icons/IconGear';
 
 	dayjs.extend(relativeTime);
 
@@ -24,6 +25,7 @@
 		initSudo()
 			.then((res) => {
 				sudoConfigStore.set(res.config);
+				instanceStore.set(res.instance);
 				loading = false;
 			})
 			.catch((err) => {
@@ -77,6 +79,16 @@
 								<IconSegmentedNav />
 							{/snippet}
 							Queues
+						</NavLink>
+
+						<NavLink
+							href="/sudo/settings"
+							active={page.url.pathname === '/sudo/settings'}
+						>
+							{#snippet start()}
+								<IconGear />
+							{/snippet}
+							Settings
 						</NavLink>
 
 						<!-- <div class="nav-title">Users</div>
