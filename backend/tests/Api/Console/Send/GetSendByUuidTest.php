@@ -4,12 +4,14 @@ namespace App\Tests\Api\Console\Send;
 
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\SendController;
+use App\Api\Console\Object\SendAttemptObject;
 use App\Api\Console\Object\SendObject;
 use App\Service\Send\SendService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
+use App\Tests\Factory\SendAttemptFactory;
 use App\Tests\Factory\SendFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\Uid\Uuid;
@@ -17,6 +19,7 @@ use Symfony\Component\Uid\Uuid;
 #[CoversClass(SendController::class)]
 #[CoversClass(SendService::class)]
 #[CoversClass(SendObject::class)]
+#[CoversClass(SendAttemptObject::class)]
 class GetSendByUuidTest extends WebTestCase
 {
     public function test_get_specific_email(): void
@@ -35,6 +38,10 @@ class GetSendByUuidTest extends WebTestCase
             ]
         );
 
+        SendAttemptFactory::createOne([
+            'send' => $send,
+        ]);
+
         $response = $this->consoleApi(
             $project,
             'GET',
@@ -48,6 +55,10 @@ class GetSendByUuidTest extends WebTestCase
 
         $this->assertArrayHasKey('id', $json);
         $this->assertSame($send->getId(), $json['id']);
+
+        $attempts = $json['attempts'];
+        $this->assertIsArray($attempts);
+        $this->assertCount(1, $attempts);
     }
 
     public function test_get_specific_email_not_found(): void

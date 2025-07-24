@@ -4,6 +4,7 @@ namespace App\Tests\Api\Console\Validation;
 
 use App\Api\Console\Validation\EmailAddress;
 use App\Api\Console\Validation\EmailAddressValidator;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 use Symfony\Component\Validator\Exception\UnexpectedValueException;
@@ -13,6 +14,7 @@ use Symfony\Component\Validator\Validation;
 /**
  * @extends ConstraintValidatorTestCase<EmailAddressValidator>
  */
+#[CoversClass(EmailAddressValidator::class)]
 class EmailAddressValidationTest extends ConstraintValidatorTestCase
 {
     protected function createValidator(): EmailAddressValidator

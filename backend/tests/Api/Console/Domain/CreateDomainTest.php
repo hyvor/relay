@@ -9,8 +9,8 @@ use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
-use App\Util\EventDispatcher\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
+use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 
 #[CoversClass(DomainController::class)]
 #[CoversClass(DomainService::class)]

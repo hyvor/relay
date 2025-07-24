@@ -4,6 +4,7 @@ namespace App\Tests\Api\Console;
 
 use App\Api\Console\Authorization\AuthorizationListener;
 use App\Api\Console\Authorization\Scope;
+use App\Api\Console\Authorization\ScopeRequired;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use Hyvor\Internal\Auth\AuthFake;
@@ -12,6 +13,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\BrowserKit\Cookie;
 
 #[CoversClass(AuthorizationListener::class)]
+#[CoversClass(ScopeRequired::class)]
 class AuthorizationTest extends WebTestCase
 {
 

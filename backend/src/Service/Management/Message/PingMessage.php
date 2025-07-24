@@ -5,10 +5,6 @@ namespace App\Service\Management\Message;
 use Symfony\Component\Messenger\Attribute\AsMessage;
 
 #[AsMessage('default')]
-class PingMessage
+readonly class PingMessage
 {
-
-    public function __construct()
-    {}
-
 }

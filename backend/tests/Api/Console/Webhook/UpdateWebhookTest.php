@@ -3,8 +3,10 @@
 namespace App\Tests\Api\Console\Webhook;
 
 use App\Api\Console\Controller\WebhookController;
+use App\Api\Console\Input\UpdateWebhookInput;
 use App\Api\Console\Object\WebhookObject;
 use App\Entity\Webhook;
+use App\Repository\WebhookRepository;
 use App\Service\Webhook\WebhookService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
@@ -14,6 +16,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(WebhookController::class)]
 #[CoversClass(WebhookService::class)]
 #[CoversClass(WebhookObject::class)]
+#[CoversClass(Webhook::class)]
+#[CoversClass(WebhookRepository::class)]
+#[CoversClass(UpdateWebhookInput::class)]
 class UpdateWebhookTest extends WebTestCase
 {
     public function test_update_webhook(): void

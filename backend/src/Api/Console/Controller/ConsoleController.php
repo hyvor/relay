@@ -67,7 +67,7 @@ class ConsoleController extends AbstractController
     }
 
     #[Route('/init/project', methods: 'GET')]
-    #[ScopeRequired(Scope::PROJECTS_READ)]
+    #[ScopeRequired(Scope::PROJECT_READ)]
     public function initProject(Project $project): JsonResponse
     {
         return new JsonResponse([

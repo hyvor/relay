@@ -1,3 +1,10 @@
 #!/bin/sh
 
+# Run pending migrations
+bin/console doctrine:migrations:migrate --no-interaction
+
+# Initiate the state of the current server
+bin/console management:init
+
+# Run supervisor
 /usr/bin/supervisord

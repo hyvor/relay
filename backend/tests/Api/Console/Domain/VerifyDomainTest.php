@@ -12,7 +12,7 @@ use App\Service\Domain\Event\DomainVerifiedEvent;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
-use App\Util\EventDispatcher\TestEventDispatcher;
+use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Component\HttpFoundation\Response;

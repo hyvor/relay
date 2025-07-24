@@ -2,7 +2,6 @@
 
 namespace App\Command\Dev;
 
-use App\Service\Domain\DomainService;
 use App\Service\Instance\InstanceService;
 use App\Entity\Type\SendStatus;
 use App\Tests\Factory\DomainFactory;

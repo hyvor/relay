@@ -4,6 +4,8 @@ namespace App\Tests\Api\Console\Send;
 
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\SendController;
+use App\Api\Console\Input\SendEmail\SendEmailInput;
+use App\Api\Console\Input\SendEmail\UnableToDecodeAttachmentBase64Exception;
 use App\Api\Console\Object\SendObject;
 use App\Entity\Send;
 use App\Entity\Type\SendStatus;
@@ -20,9 +22,11 @@ use PHPUnit\Framework\Attributes\TestWith;
 
 #[CoversClass(SendController::class)]
 #[CoversClass(SendService::class)]
+#[CoversClass(SendEmailInput::class)]
 #[CoversClass(SendObject::class)]
 #[CoversClass(EmailBuilder::class)]
 #[CoversClass(SuppressionService::class)]
+#[CoversClass(UnableToDecodeAttachmentBase64Exception::class)]
 class SendEmailTest extends WebTestCase
 {
 
@@ -582,6 +586,40 @@ class SendEmailTest extends WebTestCase
         $this->assertStringContainsString("Content-Type: text/plain;", $rawEmail);
         $this->assertStringContainsString(base64_encode('This is another test file.'), $rawEmail);
         $this->assertStringContainsString("Content-Disposition: attachment; name=test2.txt; filename=test2.txt", $rawEmail);
+
+    }
+
+    public function test_fails_gracefully_when_cannot_decode_attachments(): void
+    {
+
+        QueueFactory::createTransactional();
+        $project = ProjectFactory::createOne();
+
+        DomainFactory::createOne([
+            "project" => $project,
+            "domain" => "hyvor.com",
+            'dkim_verified' => true,
+        ]);
+
+        $this->consoleApi($project, "POST", "/sends", data: [
+            'from' => 'test@hyvor.com',
+            'to' => 'test@example.com',
+            'body_text' => 'Test email',
+            'attachments' => [
+                [
+                    'content' => base64_encode('This is a test file.') . 'INVALID',
+                    'name' => 'test.txt',
+                    'content_type' => 'text/plain',
+                ],
+            ]
+        ]);
+
+        $this->assertResponseStatusCodeSame(400);
+        $json = $this->getJson();
+        $this->assertSame(
+            "Base64 decoding of attachment failed: index 0",
+            $json['message']
+        );
 
     }
 

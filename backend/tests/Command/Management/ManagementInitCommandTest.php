@@ -7,6 +7,8 @@ use App\Entity\Instance;
 use App\Entity\IpAddress;
 use App\Entity\Queue;
 use App\Entity\Server;
+use App\Service\Instance\InstanceService;
+use App\Service\Ip\IpAddressService;
 use App\Service\Ip\ServerIp;
 use App\Service\Management\ManagementService;
 use App\Service\Server\ServerService;
@@ -19,6 +21,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(ManagementInitCommand::class)]
 #[CoversClass(ManagementService::class)]
 #[CoversClass(ServerService::class)]
+#[CoversClass(InstanceService::class)]
+#[CoversClass(IpAddressService::class)]
 class ManagementInitCommandTest extends KernelTestCase
 {
 

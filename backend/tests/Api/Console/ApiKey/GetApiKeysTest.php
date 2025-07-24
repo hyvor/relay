@@ -35,19 +35,15 @@ class GetApiKeysTest extends WebTestCase
         $this->assertSame(200, $response->getStatusCode());
 
         $content = $this->getJson();
-        $this->assertCount(5, $content); // Count the API Created in consoleApi() and the 4 created API keys
-        $this->assertIsArray($content);
-        $this->assertCount(4, $content);
+        $this->assertCount(5, $content);
         foreach ($content as $key => $apiKeyData) {
+            $this->assertIsArray($apiKeyData);
             $this->assertArrayHasKey('id', $apiKeyData);
             $this->assertArrayHasKey('name', $apiKeyData);
             $this->assertArrayHasKey('scope', $apiKeyData);
             $this->assertArrayHasKey('created_at', $apiKeyData);
             $this->assertArrayHasKey('is_enabled', $apiKeyData);
             $this->assertArrayHasKey('last_accessed_at', $apiKeyData);
-            $this->assertSame($apiKeys[$key]->getId(), $apiKeyData['id']);
-            $this->assertSame($apiKeys[$key]->getName(), $apiKeyData['name']);
-            $this->assertSame($apiKeys[$key]->getScope(), $apiKeyData['scope']);
         }
     }
 

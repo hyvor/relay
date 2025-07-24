@@ -7,10 +7,11 @@ use App\Service\Management\Health\AllActiveIpsHaveCorrectPtrHealthCheck;
 use App\Service\Ip\IpAddressService;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\IpAddressFactory;
-use App\Tests\Factory\QueueFactory;
-use App\Tests\Factory\ServerFactory;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 
+#[CoversClass(AllActiveIpsHaveCorrectPtrHealthCheck::class)]
+#[CoversClass(IpAddressService::class)]
 class AllActiveIpsHaveCorrectPtrHealthCheckTest extends KernelTestCase
 {
     private AllActiveIpsHaveCorrectPtrHealthCheck $healthCheck;

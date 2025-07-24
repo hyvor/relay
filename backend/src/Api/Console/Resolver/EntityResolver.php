@@ -2,6 +2,7 @@
 
 namespace App\Api\Console\Resolver;
 
+use App\Api\Console\Authorization\AuthorizationListener;
 use App\Entity\ApiKey;
 use App\Entity\Domain;
 use App\Entity\Project;
@@ -19,8 +20,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class EntityResolver implements ValueResolverInterface
 {
 
-    public const ENTITIES = [
-        'emails' => Send::class,
+    private const ENTITIES = [
+        'sends' => Send::class,
         'domains' => Domain::class,
         'api-keys' => ApiKey::class,
         'webhooks' => Webhook::class,
@@ -29,7 +30,6 @@ class EntityResolver implements ValueResolverInterface
 
     public function __construct(
         private EntityManagerInterface $em,
-        private ProjectResolver $projectResolver,
     ) {
     }
 
@@ -44,7 +44,6 @@ class EntityResolver implements ValueResolverInterface
         }
 
         $argumentType = $argument->getType();
-
         if (!$argumentType || !str_starts_with($argumentType, 'App\Entity\\')) {
             return [];
         }
@@ -65,10 +64,7 @@ class EntityResolver implements ValueResolverInterface
 
         $parts = explode('/', $route);
         $path = $parts[1] ?? null;
-
-        if (!$path) {
-            throw new \Exception('Invalid resource');
-        }
+        assert(is_string($path));
 
         $entityClass = self::ENTITIES[$path] ?? null;
 
@@ -84,17 +80,10 @@ class EntityResolver implements ValueResolverInterface
         }
 
         $projectOfEntity = $entity->getProject();
+        $currentProject = $request->attributes->get(AuthorizationListener::RESOLVED_PROJECT_ATTRIBUTE_KEY);
+        assert($currentProject instanceof Project);
 
-        $argumentMetadata = new ArgumentMetadata(
-            'project',
-            Project::class,
-            false,
-            false,
-            null,
-            controllerName: $controllerName
-        );
-        $currentProject = (array)$this->projectResolver->resolve($request, $argumentMetadata);
-        if ($projectOfEntity->getId() !== $currentProject[0]->getId()) {
+        if ($projectOfEntity->getId() !== $currentProject->getId()) {
             throw new AccessDeniedHttpException('Entity does not belong to the project');
         }
 

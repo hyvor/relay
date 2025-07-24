@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\Management\Handler;
+namespace App\Service\Management\MessageHandler;
 
 use App\Service\Management\Message\PingMessage;
 use App\Service\Server\Dto\UpdateServerDto;

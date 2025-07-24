@@ -20,17 +20,18 @@ class ProjectResolver implements ValueResolverInterface
      */
     public function resolve(Request $request, ArgumentMetadata $argument): iterable
     {
+        $controllerName = $argument->getControllerName();
+        if (!str_starts_with($controllerName, 'App\Api\Console\Controller\\')) {
+            return [];
+        }
+
         $argumentType = $argument->getType();
         if (!$argumentType || $argumentType !== Project::class) {
             return [];
         }
 
         $project = $request->attributes->get(AuthorizationListener::RESOLVED_PROJECT_ATTRIBUTE_KEY);
-
-        if (!$project instanceof Project) {
-            return [];
-        }
-
+        assert($project instanceof Project);
 
         return [$project];
     }
