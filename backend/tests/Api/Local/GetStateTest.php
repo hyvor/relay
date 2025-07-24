@@ -32,7 +32,7 @@ class GetStateTest extends WebTestCase
         );
 
         $this->assertResponseStatusCodeSame(403);
-        $this->assertSame('Only requests from localhost are allowed.', $this->getJson()["message"]);
+        $this->assertStringStartsWith('Only requests from localhost are allowed.', $this->getJson()["message"]);
     }
 
     public function test_gets_state(): void

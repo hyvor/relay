@@ -31,6 +31,9 @@ class ServerIpTest extends TestCase
             ],
             $addresses
         );
+
+        $privateIp = $ipService->getPrivateIp();
+        $this->assertSame('10.0.0.5', $privateIp);
     }
 
     /**

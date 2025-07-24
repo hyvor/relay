@@ -25,6 +25,9 @@ class Server
     #[ORM\Column(type: "string", length: 255)]
     private string $hostname;
 
+    #[ORM\Column(type: "string")]
+    private ?string $private_ip = null;
+
     #[ORM\Column(type: "datetime_immutable", nullable: true)]
     private ?\DateTimeImmutable $last_ping_at = null;
 
@@ -78,6 +81,17 @@ class Server
     public function setHostname(string $hostname): static
     {
         $this->hostname = $hostname;
+        return $this;
+    }
+
+    public function getPrivateIp(): ?string
+    {
+        return $this->private_ip;
+    }
+
+    public function setPrivateIp(?string $privateIp): static
+    {
+        $this->private_ip = $privateIp;
         return $this;
     }
 

@@ -5,7 +5,9 @@ namespace App\Service\Management;
 use App\Entity\Server;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
+use App\Service\Ip\ServerIp;
 use App\Service\Queue\QueueService;
+use App\Service\Server\Dto\UpdateServerDto;
 use App\Service\Server\ServerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Output\NullOutput;
@@ -24,6 +26,7 @@ class ManagementService
         private QueueService $queueService,
         private EntityManagerInterface $entityManager,
         private LockFactory $lockFactory,
+        private ServerIp $serverIp
     )
     {
         $this->output = new NullOutput();
@@ -66,9 +69,18 @@ class ManagementService
             $this->output->writeln('<info>New server entry created successfully.</info>');
         }
 
+        $privateIp = $this->serverIp->getPrivateIp();
+        if ($privateIp !== $server->getPrivateIp()) {
+            $updateDto = new UpdateServerDto();
+            $updateDto->privateIp = $privateIp;
+            $this->serverService->updateServer($server, $updateDto);
+        }
+
         $this->output->writeln(sprintf('<info>Server ID: %d</info>', $server->getId()));
         $this->output->writeln(sprintf('<info>Server Hostname: %s</info>', $server->getHostname()));
         $this->output->writeln(sprintf('<info>Server Docker Hostname: %s</info>', $server->getHostname()));
+        $this->output->writeln(sprintf('<info>Server Private IP: %s</info>', $privateIp));
+
         return $server;
     }
 

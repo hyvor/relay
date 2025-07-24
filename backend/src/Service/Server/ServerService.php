@@ -56,6 +56,7 @@ class ServerService
         $server
             ->setCreatedAt($this->now())
             ->setUpdatedAt($this->now())
+            ->setLastPingAt($this->now())
             ->setHostname($this->config->getHostname())
             ->setApiWorkers(min(Cpu::getCores() * 2, 8))
             ->setEmailWorkers(4)
@@ -71,6 +72,9 @@ class ServerService
     {
         if ($updates->lastPingAtSet) {
             $server->setLastPingAt($updates->lastPingAt);
+        }
+        if ($updates->privateIpSet) {
+            $server->setPrivateIp($updates->privateIp);
         }
 
         $server->setUpdatedAt($this->now());

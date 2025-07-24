@@ -2,7 +2,6 @@
 
 namespace App\Api\Local;
 
-use Hyvor\Internal\Auth\Auth;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
@@ -27,10 +26,24 @@ class LocalAuthorizationListener
         if ($this->env === 'dev') return;
 
         $ip = $event->getRequest()->getClientIp();
+        $allowPrivateNetwork = count($event->getAttributes(AllowPrivateNetwork::class)) > 0;
 
-        if ($ip !== '127.0.0.1') {
-            throw new AccessDeniedHttpException('Only requests from localhost are allowed.');
+        if ($this->isIpAllowed($ip, $allowPrivateNetwork) === false) {
+            throw new AccessDeniedHttpException('Only requests from localhost are allowed. Current IP is: ' . $ip);
         }
+    }
+
+    private function isIpAllowed(?string $ip, bool $allowPrivateNetwork): bool
+    {
+
+        if ($ip === null) return false;
+        if ($ip === '127.0.0.1') return true;
+        if ($ip === '::1') return true; // IPv6 localhost
+
+        //
+
+        return false;
+
     }
 
 }
