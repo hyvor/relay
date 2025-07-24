@@ -10,7 +10,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 #[AsEventListener(event: KernelEvents::CONTROLLER)]
-class AuthorizationListener
+class LocalAuthorizationListener
 {
 
     public function __construct(

@@ -3,6 +3,7 @@
 namespace App\Tests\Api\Local;
 
 use App\Api\Local\Controller\LocalController;
+use App\Api\Local\LocalAuthorizationListener;
 use App\Service\Management\GoState\GoState;
 use App\Service\Management\GoState\GoStateFactory;
 use App\Service\Management\GoState\GoStateIp;
@@ -16,8 +17,23 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(GoStateFactory::class)]
 #[CoversClass(GoState::class)]
 #[CoversClass(GoStateIp::class)]
+#[CoversClass(LocalAuthorizationListener::class)]
 class GetStateTest extends WebTestCase
 {
+
+    public function test_cannot_call_from_non_localhost_ip(): void
+    {
+        $response = $this->localApi(
+            "GET",
+            "/state",
+            server: [
+                'REMOTE_ADDR' => '8.8.8.8'
+            ]
+        );
+
+        $this->assertResponseStatusCodeSame(403);
+        $this->assertSame('Only requests from localhost are allowed.', $this->getJson()["message"]);
+    }
 
     public function test_gets_state(): void
     {
