@@ -13,7 +13,6 @@ use App\Entity\Project;
 use App\Service\Project\Dto\UpdateProjectDto;
 use App\Service\Project\ProjectService;
 use Hyvor\Internal\Auth\AuthUser;
-use Hyvor\Internal\Bundle\Security\HasHyvorUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;

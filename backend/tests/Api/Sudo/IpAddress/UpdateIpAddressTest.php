@@ -22,12 +22,13 @@ class UpdateIpAddressTest extends WebTestCase
     public function test_update_ip_address_queue(): void
     {
         $ipAddress = IpAddressFactory::createOne();
+        $queue = QueueFactory::createOne();
 
         $response = $this->sudoApi(
             'PATCH',
             '/ip-addresses/' . $ipAddress->getId(),
             [
-                'queue_id' => 1,
+                'queue_id' => $queue->getId(),
             ]
         );
         $this->assertResponseIsSuccessful();
@@ -40,7 +41,7 @@ class UpdateIpAddressTest extends WebTestCase
 
         $ipAddressDb = $this->em->getRepository(IpAddress::class)->findOneBy(['id' => $ipAddress->getId()]);
         $this->assertNotNull($ipAddressDb);
-        $this->assertEquals('transactional', $ipAddressDb->getQueue()?->getName());
+        $this->assertEquals($queue->getName(), $ipAddressDb->getQueue()?->getName());
     }
 
     public function test_update_ip_address_invalid_queue(): void
