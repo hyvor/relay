@@ -1,11 +1,18 @@
 
 export interface SudoInitResponse {
-    config: SudoConfig
+    config: SudoConfig,
+    instance: Instance,
 }
 
 export interface SudoConfig {
     app_version: string;
     instance: string;
+}
+
+export interface Instance {
+    domain: string;
+    dkim_host: string;
+    dkim_txt_value: string;
 }
 
 export interface Server {
