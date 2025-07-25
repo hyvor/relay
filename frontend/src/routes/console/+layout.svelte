@@ -1,18 +1,12 @@
 <script lang="ts">
-	import {
-		HyvorBar,
-		InternationalizationProvider,
-		DarkProvider,
-		Loader,
-		toast
-	} from '@hyvor/design/components';
+	import { HyvorBar, Loader, toast } from '@hyvor/design/components';
 	import { onMount } from 'svelte';
 	import type { AppConfig, Project } from './types';
 	import consoleApi from './lib/consoleApi';
 	import { userProjectStore } from './lib/stores/userProjectStore';
 	import { projectStore } from './lib/stores/projectStore';
 	import { page } from '$app/stores';
-	import { setAppConfig } from './lib/stores/consoleStore';
+	import { getAppConfig, setAppConfig } from './lib/stores/consoleStore';
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -44,7 +38,8 @@
 			.catch((err) => {
 				if (err.code === 401) {
 					const toPage = $page.url.searchParams.has('signup') ? 'signup' : 'login';
-					location.href = `/api/auth/${toPage}?redirect=` + encodeURIComponent(location.href);
+					location.href =
+						`/api/auth/${toPage}?redirect=` + encodeURIComponent(location.href);
 				} else {
 					toast.error(err.message);
 				}
@@ -63,7 +58,11 @@
 			<Loader size="large"></Loader>
 		</div>
 	{:else}
-		<HyvorBar product="core" instance="https://hyvor.dev" config={{ name: 'Hyvor Relay' }} />
+		<HyvorBar
+			product="core"
+			instance={getAppConfig().hyvor.instance}
+			config={{ name: 'Hyvor Relay' }}
+		/>
 		{@render children?.()}
 	{/if}
 </main>

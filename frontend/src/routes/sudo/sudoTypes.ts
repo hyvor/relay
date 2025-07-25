@@ -19,6 +19,7 @@ export interface Server {
     id: number;
     created_at: number;
     hostname: string;
+    private_ip: string | null;
     last_ping_at?: number | null;
     is_alive: boolean;
     api_on: boolean;

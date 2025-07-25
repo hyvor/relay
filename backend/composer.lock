@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "67083dfb09631d22696afd296d4a9162",
+    "content-hash": "1c4914be3b8dd5280431465ab75bc36c",
     "packages": [
         {
             "name": "carbonphp/carbon-doctrine-types",
@@ -1686,16 +1686,16 @@
         },
         {
             "name": "hyvor/internal",
-            "version": "3.0.6",
+            "version": "3.0.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/hyvor/internal.git",
-                "reference": "10344ff55ec2a44ec45044e2ebb0dac7f9d8554c"
+                "reference": "fd24d922199d7f10903912c6de675c379677f588"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/hyvor/internal/zipball/10344ff55ec2a44ec45044e2ebb0dac7f9d8554c",
-                "reference": "10344ff55ec2a44ec45044e2ebb0dac7f9d8554c",
+                "url": "https://api.github.com/repos/hyvor/internal/zipball/fd24d922199d7f10903912c6de675c379677f588",
+                "reference": "fd24d922199d7f10903912c6de675c379677f588",
                 "shasum": ""
             },
             "require": {
@@ -1748,9 +1748,9 @@
             "description": "Internal Package for HYVOR Applications",
             "support": {
                 "issues": "https://github.com/hyvor/internal/issues",
-                "source": "https://github.com/hyvor/internal/tree/3.0.6"
+                "source": "https://github.com/hyvor/internal/tree/3.0.7"
             },
-            "time": "2025-07-23T22:20:09+00:00"
+            "time": "2025-07-25T00:25:52+00:00"
         },
         {
             "name": "illuminate/collections",
