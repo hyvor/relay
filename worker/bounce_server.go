@@ -11,6 +11,11 @@ import (
 	smtp "github.com/emersion/go-smtp"
 )
 
+// Bounce server is a simple SMTP server that handles incoming emails to the instance domain emails.
+// It handles:
+// 1. Bounce emails: emails sent to bounce+<uuid>@<instance_domain>. (DSN format, RFC 3464)
+// 2. Feedback loop emails: emails sent to feedback+<uuid>@<instance_domain>. (ARF format, RFC 5965).
+
 // The BounceBackend implements SMTP server methods.
 type BounceBackend struct {
 	logger         *slog.Logger
@@ -22,6 +27,7 @@ func (bkd *BounceBackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 	return &Session{
 		logger: bkd.logger,
 		bounceMail: BounceMail{
+			logger:         bkd.logger,
 			InstanceDomain: bkd.instanceDomain,
 		},
 	}, nil
