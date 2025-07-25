@@ -1,18 +1,13 @@
-<script>
+<script lang="ts">
 	import { Caption, SplitControl, Textarea, TextInput } from '@hyvor/design/components';
 	import SingleBox from '../SingleBox.svelte';
 	import { instanceStore } from '../sudoStore';
+	import InstanceDomain from './InstanceDomain.svelte';
 </script>
 
 <SingleBox>
 	<div class="settings">
-		<SplitControl label="Instance Domain">
-			<TextInput
-				placeholder="Enter the instance domain"
-				value={$instanceStore.domain}
-				block
-			/>
-		</SplitControl>
+		<InstanceDomain />
 		<SplitControl label="Instance DKIM">
 			{#snippet caption()}
 				<Caption
