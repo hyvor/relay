@@ -1,10 +1,22 @@
 import sudoApi from './sudoApi';
-import type { IpAddress, Queue, Server, SudoInitResponse, HealthCheckResults } from './sudoTypes';
+import { instanceStore } from './sudoStore';
+import type { IpAddress, Queue, Server, SudoInitResponse, HealthCheckResults, Instance } from './sudoTypes';
 
 export function initSudo() {
 	return sudoApi.post<SudoInitResponse>({
 		endpoint: '/init'
 	})
+}
+
+export async function updateInstance(updates: { domain?: string}) {
+	const response = await sudoApi.patch<Instance>({
+		endpoint: '/instance',
+		data: updates
+	});
+
+	instanceStore.set(response);
+
+	return response;
 }
 
 export function getServers() {

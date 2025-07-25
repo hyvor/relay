@@ -33,6 +33,6 @@
 		encode zstd gzip
 		file_server
         header Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
-		rewrite * /200.html
+		rewrite * /fallback.html
 	}
 }
