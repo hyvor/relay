@@ -13,7 +13,8 @@ type DnsServer struct {
 	ctx    context.Context
 	logger *slog.Logger
 
-	serverStarted bool
+	serverRunningIp string
+	server          *dns.Server
 
 	// data
 	instanceDomain string
@@ -33,6 +34,7 @@ func NewDnsServer(ctx context.Context, logger *slog.Logger) *DnsServer {
 }
 
 func (s *DnsServer) Set(
+	dnsIp string,
 	instanceDomain string,
 	ipPtrsForward map[string]string,
 	mxIps []string,
@@ -44,28 +46,44 @@ func (s *DnsServer) Set(
 	s.mxIps = mxIps
 	s.dkimTxtValue = dkimTxtValue
 
-	if !s.serverStarted {
-		s.serverStarted = true
+	s.StopServer()
+	s.StartServer(dnsIp)
 
-		go func() {
+}
 
-			dns.HandleFunc(".", s.handleRequest)
+func (s *DnsServer) StartServer(dnsIp string) {
 
-			server := &dns.Server{Addr: ":53", Net: "udp"}
-			s.logger.Info("Starting DNS server on :53")
+	go func() {
 
-			if err := server.ListenAndServe(); err != nil {
-				s.logger.Error("Failed to start DNS server", "error", err)
-			}
+		dns.HandleFunc(".", s.handleRequest)
 
-		}()
+		addr := dnsIp + ":53"
+		server := &dns.Server{Addr: addr, Net: "udp"}
+		s.server = server
 
-		go func() {
-			<-s.ctx.Done()
-			s.logger.Info("Shutting down DNS server")
-			dns.HandleRemove(".")
-		}()
+		s.logger.Info("Starting DNS server on " + addr)
+		if err := server.ListenAndServe(); err != nil {
+			s.logger.Error("Failed to start DNS server", "error", err)
+		}
 
+	}()
+
+	go func() {
+		<-s.ctx.Done()
+		s.StopServer()
+	}()
+
+}
+
+func (s *DnsServer) StopServer() {
+
+	if s.server != nil {
+		if err := s.server.Shutdown(); err != nil {
+			s.logger.Error("Failed to stop DNS server", "error", err)
+		} else {
+			s.logger.Info("DNS server stopped")
+		}
+		s.server = nil
 	}
 
 }

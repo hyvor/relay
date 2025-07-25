@@ -75,6 +75,8 @@ class GoStateFactory
             }
         }
 
+        $dnsIp = count($ips) > 0 ? $ips[0]->ip : "";
+
         return new GoState(
             instanceDomain: $instance->getDomain(),
             hostname: $server->getHostname(),
@@ -84,7 +86,7 @@ class GoStateFactory
             isLeader: $isLeader,
 
             // data for the DNS server
-            dnsServer: true, // TODO: add this as a server config
+            dnsIp: $dnsIp,
             dnsPtrForwardRecords: $dnsPtrForwardRecords,
             dnsMxIps: $dnsMxIps,
             dnsDkimTxtValue: Dkim::dkimTxtValue($instance->getDkimPublicKey()),

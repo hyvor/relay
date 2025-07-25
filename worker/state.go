@@ -16,7 +16,7 @@ type GoState struct {
 	WebhookWorkers    int         `json:"webhookWorkers"`
 	IsLeader          bool        `json:"isLeader"`
 
-	DnsServer            bool              `json:"dnsServer"`
+	DnsIp                string            `json:"dnsIp"`
 	DnsPtrForwardRecords map[string]string `json:"dnsPtrForwardRecords"`
 	DnsMxIps             []string          `json:"dnsMxIps"`
 	DnsDkimTxtValue      string            `json:"dnsDkimTxtValue"`
@@ -66,8 +66,9 @@ func (s *ServiceState) Set(goState GoState) {
 	s.WebhookWorkersPool.Set(goState.WebhookWorkers)
 	s.BounceServer.Set(goState.InstanceDomain)
 
-	if goState.DnsServer {
+	if goState.DnsIp != "" {
 		s.DnsServer.Set(
+			goState.DnsIp,
 			goState.InstanceDomain,
 			goState.DnsPtrForwardRecords,
 			goState.DnsMxIps,
