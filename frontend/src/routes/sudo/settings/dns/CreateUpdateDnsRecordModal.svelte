@@ -10,7 +10,7 @@
 	} from '@hyvor/design/components';
 	import type { DnsRecord, DnsRecordType } from '../../sudoTypes';
 	import { getHost } from './dns';
-	import { createDnsRecord } from '../../sudoActions';
+	import { createDnsRecord, updateDnsRecord } from '../../sudoActions';
 	import { dnsRecordsStore } from '../../sudoStore';
 
 	interface Props {
@@ -35,6 +35,28 @@
 		}
 
 		if (record) {
+			loading = true;
+
+			updateDnsRecord(record.id, {
+				type,
+				subdomain: subdomain.trim(),
+				content: content.trim(),
+				ttl,
+				priority
+			})
+				.then((res) => {
+					toast.success('DNS record updated successfully');
+					dnsRecordsStore.update((records) =>
+						records.map((r) => (r.id === res.id ? res : r))
+					);
+					show = false;
+				})
+				.catch((error) => {
+					toast.error('Failed to update DNS record:', error);
+				})
+				.finally(() => {
+					loading = false;
+				});
 		} else {
 			loading = true;
 

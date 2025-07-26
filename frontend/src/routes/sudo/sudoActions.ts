@@ -81,6 +81,19 @@ export function createDnsRecord(record: {
 	});
 }
 
+export function updateDnsRecord(recordId: number, record: {
+	type?: DnsRecordType;
+	subdomain?: string;
+	content?: string;
+	ttl?: number;
+	priority?: number;
+}) {
+	return sudoApi.patch<DnsRecord>({
+		endpoint: `/dns-records/${recordId}`,
+		data: record
+	});
+}
+
 export function deleteDnsRecord(recordId: number) {
 	return sudoApi.delete({
 		endpoint: `/dns-records/${recordId}`

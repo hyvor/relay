@@ -6,12 +6,14 @@
 	import IconTrash from '@hyvor/icons/IconTrash';
 	import { deleteDnsRecord } from '../../sudoActions';
 	import { dnsRecordsStore } from '../../sudoStore';
+	import CreateUpdateDnsRecordModal from './CreateUpdateDnsRecordModal.svelte';
 
 	interface Props {
 		record: DnsRecord;
 	}
 
 	let { record }: Props = $props();
+	let updating = $state(false);
 
 	async function handleDelete() {
 		const confirmed = await confirm({
@@ -54,7 +56,7 @@
 	<div class="ttl">{record.ttl} seconds</div>
 
 	<div class="actions">
-		<IconButton color="input" size="small">
+		<IconButton color="input" size="small" on:click={() => (updating = true)}>
 			<IconPencil size={12} />
 		</IconButton>
 		<IconButton color="red" variant="fill-light" size="small" on:click={handleDelete}>
@@ -62,3 +64,7 @@
 		</IconButton>
 	</div>
 </TableRow>
+
+{#if updating}
+	<CreateUpdateDnsRecordModal {record} bind:show={updating} />
+{/if}

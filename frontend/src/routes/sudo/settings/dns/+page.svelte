@@ -29,7 +29,7 @@
 	{:else}
 		<SplitControl
 			label="Custom DNS Records"
-			caption="Add custom DNS records for your instance domain {$instanceStore.domain} and its subdomains. Served from the in-built DNS server."
+			caption="Add custom DNS records for your instance domain ({$instanceStore.domain}) and its subdomains. Served from the in-built DNS server."
 		>
 			{#snippet nested()}
 				<div class="create">
@@ -37,7 +37,7 @@
 				</div>
 
 				<div class="records">
-					<Table columns="1fr 2fr 2fr 1fr 100px">
+					<Table columns="1fr 2fr 2fr 1fr 70px">
 						<TableRow head>
 							<div>Type</div>
 							<div>Host</div>
