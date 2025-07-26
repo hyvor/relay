@@ -25,7 +25,7 @@ class DnsRecord
     private DnsRecordType $type;
 
     #[ORM\Column(type: "text")]
-    private string $subdomain;
+    private string $subdomain; // empty for root domain
 
     #[ORM\Column(type: "text")]
     private string $content;

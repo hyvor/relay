@@ -87,7 +87,7 @@ export interface DnsRecord {
     subdomain: string;
     content: string;
     ttl: number;
-    priority?: number;
+    priority: number;
 }
 
 export type DnsRecordType = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT';
