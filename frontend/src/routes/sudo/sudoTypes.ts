@@ -78,16 +78,16 @@ export interface HealthCheckResults {
     };
 }
 
-
-
 // DNS Records
 export interface DnsRecord {
     id: number;
     created_at: number;
     updated_at: number;
-    type: string;
+    type: DnsRecordType;
     subdomain: string;
     content: string;
     ttl: number;
     priority?: number;
 }
+
+export type DnsRecordType = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT';

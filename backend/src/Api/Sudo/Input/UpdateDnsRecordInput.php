@@ -2,12 +2,12 @@
 
 namespace App\Api\Sudo\Input;
 
+use App\Entity\Type\DnsRecordType;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class UpdateDnsRecordInput
 {
-    #[Assert\Length(max: 10)]
-    public string $type {
+    public DnsRecordType $type {
         set {
             $this->typeSet = true;
             $this->type = $value;

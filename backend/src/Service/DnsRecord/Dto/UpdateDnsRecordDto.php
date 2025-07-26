@@ -2,9 +2,11 @@
 
 namespace App\Service\DnsRecord\Dto;
 
+use App\Entity\Type\DnsRecordType;
+
 class UpdateDnsRecordDto
 {
-    public string $type {
+    public DnsRecordType $type {
         set {
             $this->typeSet = true;
             $this->type = $value;

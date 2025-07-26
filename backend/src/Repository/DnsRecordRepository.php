@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\DnsRecord;
+use App\Entity\Type\DnsRecordType;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 

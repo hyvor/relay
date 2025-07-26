@@ -2,13 +2,13 @@
 
 namespace App\Api\Sudo\Input;
 
+use App\Entity\Type\DnsRecordType;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class CreateDnsRecordInput
 {
     #[Assert\NotBlank]
-    #[Assert\Length(max: 10)]
-    public string $type;
+    public DnsRecordType $type;
 
     public string $subdomain;
 

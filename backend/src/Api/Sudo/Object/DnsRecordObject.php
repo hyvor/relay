@@ -3,13 +3,14 @@
 namespace App\Api\Sudo\Object;
 
 use App\Entity\DnsRecord;
+use App\Entity\Type\DnsRecordType;
 
 class DnsRecordObject
 {
     public int $id;
     public int $created_at;
     public int $updated_at;
-    public string $type;
+    public DnsRecordType $type;
     public string $subdomain;
     public string $content;
     public int $ttl;

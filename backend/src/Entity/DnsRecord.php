@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Type\DnsRecordType;
 use App\Repository\DnsRecordRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -20,8 +21,8 @@ class DnsRecord
     #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable $updated_at;
 
-    #[ORM\Column(type: "string", length: 10)]
-    private string $type;
+    #[ORM\Column(type: "string", length: 10, enumType: DnsRecordType::class)]
+    private DnsRecordType $type;
 
     #[ORM\Column(type: "text")]
     private string $subdomain;
@@ -70,12 +71,12 @@ class DnsRecord
         return $this;
     }
 
-    public function getType(): string
+    public function getType(): DnsRecordType
     {
         return $this->type;
     }
 
-    public function setType(string $type): static
+    public function setType(DnsRecordType $type): static
     {
         $this->type = $type;
         return $this;
