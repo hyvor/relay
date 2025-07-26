@@ -4,6 +4,7 @@ namespace App\Command\Dev;
 
 use App\Service\Instance\InstanceService;
 use App\Entity\Type\SendStatus;
+use App\Tests\Factory\DnsRecordFactory;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\InstanceFactory;
 use App\Tests\Factory\IpAddressFactory;
@@ -51,6 +52,9 @@ class DevSeedCommand extends Command
 
         $transactionalQueue = QueueFactory::createTransactional();
         $distributionalQueue = QueueFactory::createDistributional();
+
+        DnsRecordFactory::new()->a()->create();
+        DnsRecordFactory::new()->mx()->create();
 
         $server = ServerFactory::createOne([
             'hostname' => 'hyvor-relay',

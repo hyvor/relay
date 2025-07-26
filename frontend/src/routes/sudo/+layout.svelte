@@ -80,10 +80,9 @@
 							{/snippet}
 							Queues
 						</NavLink>
-
 						<NavLink
 							href="/sudo/settings"
-							active={page.url.pathname === '/sudo/settings'}
+							active={page.url.pathname.startsWith('/sudo/settings')}
 						>
 							{#snippet start()}
 								<IconGear />

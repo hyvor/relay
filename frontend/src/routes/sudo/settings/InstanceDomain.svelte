@@ -16,9 +16,17 @@
 			return;
 		}
 
+		if (instanceDomain.trim() === $instanceStore.domain) {
+			return;
+		}
+
 		updateInstance({
 			domain: instanceDomain.trim()
 		})
+			.then(() => {
+				toast.success('Instance domain updated successfully.');
+				input.blur();
+			})
 			.finally(() => {
 				updating = false;
 			})
@@ -45,7 +53,7 @@
 		/>
 		<div class="save">
 			<Button
-				disabled={instanceDomain === $instanceStore.domain ||
+				disabled={instanceDomain.trim() === $instanceStore.domain ||
 					instanceDomain.trim() === '' ||
 					updating}
 				onclick={handleClick}

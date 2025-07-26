@@ -1,6 +1,6 @@
 import sudoApi from './sudoApi';
 import { instanceStore } from './sudoStore';
-import type { IpAddress, Queue, Server, SudoInitResponse, HealthCheckResults, Instance } from './sudoTypes';
+import type { IpAddress, Queue, Server, SudoInitResponse, HealthCheckResults, Instance, DnsRecord, DnsRecordType } from './sudoTypes';
 
 export function initSudo() {
 	return sudoApi.post<SudoInitResponse>({
@@ -59,5 +59,43 @@ export function getHealthChecks() {
 export function runHealthChecks() {
 	return sudoApi.post<HealthCheckResults>({
 		endpoint: '/health-checks'
+	});
+}
+
+export function getDnsRecords() {
+	return sudoApi.get<DnsRecord[]>({
+		endpoint: '/dns-records'
+	});
+}
+
+export function createDnsRecord(record: {
+	type: DnsRecordType;
+	subdomain: string;
+	content: string;
+	ttl: number;
+	priority: number;
+}) {
+	return sudoApi.post<DnsRecord>({
+		endpoint: '/dns-records',
+		data: record
+	});
+}
+
+export function updateDnsRecord(recordId: number, record: {
+	type?: DnsRecordType;
+	subdomain?: string;
+	content?: string;
+	ttl?: number;
+	priority?: number;
+}) {
+	return sudoApi.patch<DnsRecord>({
+		endpoint: `/dns-records/${recordId}`,
+		data: record
+	});
+}
+
+export function deleteDnsRecord(recordId: number) {
+	return sudoApi.delete({
+		endpoint: `/dns-records/${recordId}`
 	});
 }

@@ -44,12 +44,14 @@ class GoState
         /**
          * Whether to run the DNS server and data for it
          */
-        public bool $dnsServer,
+        public string $dnsIp, // empty if no IP
         /** @var array<string, string> */
         public array $dnsPtrForwardRecords,
         /** @var array<string> */
         public array $dnsMxIps,
         public string $dnsDkimTxtValue,
+        /** @var GoStateDnsRecord[] */
+        public array $dnsRecords,
 
         public int $serversCount,
         public string $env,
