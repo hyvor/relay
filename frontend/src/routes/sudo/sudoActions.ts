@@ -1,6 +1,6 @@
 import sudoApi from './sudoApi';
 import { instanceStore } from './sudoStore';
-import type { IpAddress, Queue, Server, SudoInitResponse, HealthCheckResults, Instance } from './sudoTypes';
+import type { IpAddress, Queue, Server, SudoInitResponse, HealthCheckResults, Instance, DnsRecord } from './sudoTypes';
 
 export function initSudo() {
 	return sudoApi.post<SudoInitResponse>({
@@ -59,5 +59,18 @@ export function getHealthChecks() {
 export function runHealthChecks() {
 	return sudoApi.post<HealthCheckResults>({
 		endpoint: '/health-checks'
+	});
+}
+
+export function getDnsRecords() {
+	return sudoApi.get<DnsRecord[]>({
+		endpoint: '/dns-records'
+	});
+}
+
+export function createDnsRecord(record: DnsRecord) {
+	return sudoApi.post<DnsRecord>({
+		endpoint: '/dns-records',
+		data: record
 	});
 }

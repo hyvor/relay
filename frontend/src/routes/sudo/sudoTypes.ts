@@ -77,3 +77,17 @@ export interface HealthCheckResults {
         [key in HealthCheckName]: HealthCheckResult<key>;
     };
 }
+
+
+
+// DNS Records
+export interface DnsRecord {
+    id: number;
+    created_at: number;
+    updated_at: number;
+    type: string;
+    subdomain: string;
+    content: string;
+    ttl: number;
+    priority?: number;
+}
