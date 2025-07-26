@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"log/slog"
-	"slices"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -16,35 +17,34 @@ type DnsServer struct {
 	serverRunningIp string
 	server          *dns.Server
 
+	dnsRecords []GoStateDnsRecord
+
 	// data
-	instanceDomain string
+	/* instanceDomain string
 	ipPtrsForward  map[string]string // maps domain names to IP addresses
 	mxIps          []string          // list of IPs for MX records (usually one IP per server)
-	dkimTxtValue   string
+	dkimTxtValue   string */
 }
 
 func NewDnsServer(ctx context.Context, logger *slog.Logger) *DnsServer {
 
 	return &DnsServer{
-		ctx:           ctx,
-		logger:        logger,
-		ipPtrsForward: make(map[string]string),
+		ctx:    ctx,
+		logger: logger,
 	}
 
 }
 
 func (s *DnsServer) Set(
 	dnsIp string,
-	instanceDomain string,
-	ipPtrsForward map[string]string,
-	mxIps []string,
-	dkimTxtValue string,
+	dnsRecords []GoStateDnsRecord,
 ) {
 
-	s.instanceDomain = instanceDomain
+	s.dnsRecords = dnsRecords
+	/* s.instanceDomain = instanceDomain
 	s.ipPtrsForward = ipPtrsForward
 	s.mxIps = mxIps
-	s.dkimTxtValue = dkimTxtValue
+	s.dkimTxtValue = dkimTxtValue */
 
 	s.StopServer()
 	s.StartServer(dnsIp)
@@ -98,74 +98,53 @@ func (s *DnsServer) handleRequest(w dns.ResponseWriter, r *dns.Msg) {
 		name := strings.ToLower(q.Name)
 		name = strings.TrimSuffix(name, ".")
 
-		if q.Qtype == dns.TypeA {
+		records := s.findDnsRecordsByTypeAndHost(dns.TypeToString[q.Qtype], name)
 
-			if ip, ok := s.ipPtrsForward[name]; ok {
-				rr, err := dns.NewRR(q.Name + " 3600 IN A " + ip)
-				if err == nil {
-					msg.Answer = append(msg.Answer, rr)
-				} else {
-					s.logger.Error("Failed to create DNS record", "error", err)
-				}
+		if len(records) == 0 {
+			s.logger.Warn("No DNS records found for query", "name", name, "type", dns.TypeToString[q.Qtype])
+			continue
+		}
+
+		for _, record := range records {
+
+			recordStr := ""
+
+			switch strings.ToUpper(record.Type) {
+			case "A":
+				recordStr = fmt.Sprintf("%s %d IN A %s", name, record.TTL, record.Content)
+			case "AAAA":
+				recordStr = fmt.Sprintf("%s %d IN AAAA %s", name, record.TTL, record.Content)
+			case "CNAME":
+				recordStr = fmt.Sprintf("%s %d IN CNAME %s", name, record.TTL, dns.Fqdn(record.Content))
+			case "MX":
+				recordStr = fmt.Sprintf("%s %d IN MX %d %s", name, record.TTL, record.Priority, dns.Fqdn(record.Content))
+			case "TXT":
+				recordStr = fmt.Sprintf("%s %d IN TXT \"%s\"", name, record.TTL, record.Content)
+			default:
+				log.Printf("Unsupported record type: %s", record.Type)
 				continue
 			}
 
-			if name == "mx."+s.instanceDomain {
-				for _, ip := range s.mxIps {
-					rr, err := dns.NewRR(q.Name + " 3600 IN A " + ip)
-					if err == nil {
-						msg.Answer = append(msg.Answer, rr)
-					} else {
-						s.logger.Error("Failed to create MX record", "error", err)
-					}
-				}
+			rr, err := dns.NewRR(recordStr)
+			if err != nil {
+				s.logger.Error("Failed to create DNS record", "error", err, "record", recordStr)
 				continue
 			}
 
-		} else if q.Qtype == dns.TypeMX && name == s.instanceDomain {
-
-			rr, err := dns.NewRR(q.Name + " 3600 IN MX 10 mx." + s.instanceDomain + ".")
-			if err == nil {
-				msg.Answer = append(msg.Answer, rr)
-			} else {
-				s.logger.Error("Failed to create MX record", "error", err)
-			}
-			continue
-
-		} else if q.Qtype == dns.TypeTXT && name == s.instanceDomain {
-
-			allIps := make([]string, 0, len(s.ipPtrsForward))
-			for _, ip := range s.ipPtrsForward {
-				allIps = append(allIps, ip)
-			}
-			slices.Sort(allIps)
-
-			// TODO: adding each IP can exceed DNS TXT record size limit
-			// We need a way to handle this. See #106 (https://github.com/hyvor/relay/issues/106)
-
-			spf := "v=spf1 ip4:" + strings.Join(allIps, " ip4:") + " -all"
-
-			rr, err := dns.NewRR(q.Name + " 3600 IN TXT \"" + spf + "\"")
-			if err == nil {
-				msg.Answer = append(msg.Answer, rr)
-			} else {
-				s.logger.Error("Failed to create TXT record", "error", err)
-			}
-			continue
-
-		} else if q.Qtype == dns.TypeTXT && name == "default._domainkey."+s.instanceDomain {
-
-			rr, err := dns.NewRR(q.Name + " 3600 IN TXT \"" + s.dkimTxtValue + "\"")
-			if err == nil {
-				msg.Answer = append(msg.Answer, rr)
-			} else {
-				s.logger.Error("Failed to create DKIM TXT record", "error", err)
-			}
-			continue
-
+			msg.Answer = append(msg.Answer, rr)
 		}
 
 	}
 
 	w.WriteMsg(msg)
+}
+
+func (s *DnsServer) findDnsRecordsByTypeAndHost(recordType, host string) []*GoStateDnsRecord {
+	var records []*GoStateDnsRecord
+	for _, record := range s.dnsRecords {
+		if record.Type == recordType && record.Host == host {
+			records = append(records, &record)
+		}
+	}
+	return records
 }

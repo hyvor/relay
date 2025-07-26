@@ -50,7 +50,8 @@ class GoState
         /** @var array<string> */
         public array $dnsMxIps,
         public string $dnsDkimTxtValue,
-        public array $dnsCustomRecords,
+        /** @var GoStateDnsRecord[] */
+        public array $dnsRecords,
 
         public int $serversCount,
         public string $env,

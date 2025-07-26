@@ -16,10 +16,11 @@ type GoState struct {
 	WebhookWorkers    int         `json:"webhookWorkers"`
 	IsLeader          bool        `json:"isLeader"`
 
-	DnsIp                string            `json:"dnsIp"`
-	DnsPtrForwardRecords map[string]string `json:"dnsPtrForwardRecords"`
-	DnsMxIps             []string          `json:"dnsMxIps"`
-	DnsDkimTxtValue      string            `json:"dnsDkimTxtValue"`
+	DnsIp                string             `json:"dnsIp"`
+	DnsPtrForwardRecords map[string]string  `json:"dnsPtrForwardRecords"`
+	DnsMxIps             []string           `json:"dnsMxIps"`
+	DnsDkimTxtValue      string             `json:"dnsDkimTxtValue"`
+	DnsRecords           []GoStateDnsRecord `json:"dnsRecords"`
 
 	ServersCount int    `json:"serversCount"`
 	Env          string `json:"env"`
@@ -32,6 +33,14 @@ type GoStateIp struct {
 	Ptr       string `json:"ptr"`
 	QueueId   int    `json:"queueId"`
 	QueueName string `json:"queueName"`
+}
+
+type GoStateDnsRecord struct {
+	Type     string `json:"type"`
+	Host     string `json:"host"`
+	Content  string `json:"content"`
+	TTL      int    `json:"ttl"`
+	Priority int    `json:"priority"`
 }
 
 // wraps all the services based on the GoState
@@ -69,10 +78,7 @@ func (s *ServiceState) Set(goState GoState) {
 	if goState.DnsIp != "" {
 		s.DnsServer.Set(
 			goState.DnsIp,
-			goState.InstanceDomain,
-			goState.DnsPtrForwardRecords,
-			goState.DnsMxIps,
-			goState.DnsDkimTxtValue,
+			goState.DnsRecords,
 		)
 	}
 
@@ -82,6 +88,7 @@ func (s *ServiceState) Set(goState GoState) {
 		"hostname", goState.Hostname,
 		"ip_count", len(goState.Ips),
 		"ips", goState.Ips,
+		"dns_records", goState.DnsRecords,
 		"email_workers_count", len(goState.Ips)*goState.EmailWorkersPerIp,
 	)
 
