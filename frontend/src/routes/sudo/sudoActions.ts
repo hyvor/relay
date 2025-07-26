@@ -80,3 +80,9 @@ export function createDnsRecord(record: {
 		data: record
 	});
 }
+
+export function deleteDnsRecord(recordId: number) {
+	return sudoApi.delete({
+		endpoint: `/dns-records/${recordId}`
+	});
+}

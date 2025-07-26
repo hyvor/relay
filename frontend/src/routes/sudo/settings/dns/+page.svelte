@@ -1,10 +1,13 @@
 <script>
-	import { Button, Loader, SplitControl, toast } from '@hyvor/design/components';
+	import { Button, Loader, SplitControl, Table, TableRow, toast } from '@hyvor/design/components';
 	import { dnsRecordsStore, instanceStore } from '../../sudoStore';
 	import { onMount } from 'svelte';
 	import { getDnsRecords } from '../../sudoActions';
+	import DnsRecord from './DnsRecord.svelte';
+	import CreateUpdateDnsRecordModal from './CreateUpdateDnsRecordModal.svelte';
 
 	let loading = $state(false);
+	let creating = $state(false);
 
 	onMount(() => {
 		getDnsRecords()
@@ -30,21 +33,36 @@
 		>
 			{#snippet nested()}
 				<div class="create">
-					<Button>Add Record</Button>
+					<Button onclick={() => (creating = true)}>Add Record</Button>
 				</div>
 
 				<div class="records">
-					{#each $dnsRecordsStore as record (record.id)}
-						{record.type} {record.subdomain} {record.content}
-					{/each}
+					<Table columns="1fr 2fr 2fr 1fr 100px">
+						<TableRow head>
+							<div>Type</div>
+							<div>Host</div>
+							<div>Content</div>
+							<div>TTL</div>
+						</TableRow>
+						{#each $dnsRecordsStore as record (record.id)}
+							<DnsRecord {record} />
+						{/each}
+					</Table>
 				</div>
 			{/snippet}
 		</SplitControl>
 	{/if}
 </div>
 
+{#if creating}
+	<CreateUpdateDnsRecordModal bind:show={creating} />
+{/if}
+
 <style>
 	.dns {
 		padding: 30px 40px;
+	}
+	.create {
+		margin-bottom: 20px;
 	}
 </style>

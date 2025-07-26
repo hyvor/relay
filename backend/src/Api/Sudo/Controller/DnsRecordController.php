@@ -97,6 +97,6 @@ class DnsRecordController extends AbstractController
 
         $this->dnsRecordService->deleteDnsRecord($dnsRecord);
 
-        return new JsonResponse(null, 204);
+        return new JsonResponse();
     }
 }
