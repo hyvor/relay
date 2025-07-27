@@ -68,3 +68,9 @@
 {#if updating}
 	<CreateUpdateDnsRecordModal {record} bind:show={updating} />
 {/if}
+
+<style>
+	.content {
+		word-break: break-all;
+	}
+</style>

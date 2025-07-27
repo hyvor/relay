@@ -50,7 +50,7 @@
 
 ## Roadmap & Community
 
-- [Roadmap](https://hyvor.com/roadmap)
+- [Roadmap](https://github.com/hyvor/relay/blob/main/ROADMAP.md)
 - [HYVOR Community](https://hyvor.community) (best for discussions and support)
 - [Discord](https://hyvor.com/discord) (best for latest updates)
 
@@ -62,7 +62,7 @@ Visit [hyvor/dev](https://github.com/hyvor/dev) to set up the HYVOR development 
 - `/frontend`: SvelteKit frontend
 - `/worker`: Go services (single binary)
 
-Even though it is written for AI agents, [AGENTS.md](https://github.com/hyvor/relay/blob/readme/AGENTS.md) contains useful information on the project structure and development practices.
+Even though it is written for AI agents, [AGENTS.md](https://github.com/hyvor/relay/blob/main/AGENTS.md) contains useful information on the project structure and development practices.
 
 <!-- ## Performance
 
@@ -70,6 +70,6 @@ TODO -->
 
 ## License
 
-Hyvor Relay is licensed under the [AGPL-3.0 License](https://github.com/hyvor/relay/blob/readme/LICENSE). AGPLv3 requires you to share the source code of your modifications if you run the software on a server and allow others to use it. For other use cases where you cannot use AGPLv3, contact HYVOR for an [Enterprise License](https://hyvor.com/enterprise).
+Hyvor Relay is licensed under the [AGPL-3.0 License](https://github.com/hyvor/relay/blob/main/LICENSE). AGPLv3 requires you to share the source code of your modifications if you run the software on a server and allow others to use it. For other use cases where you cannot use AGPLv3, contact HYVOR for an [Enterprise License](https://hyvor.com/enterprise).
 
 Copyright © HYVOR. HYVOR name and logo are trademarks of HYVOR.
