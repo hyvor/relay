@@ -35,7 +35,7 @@
 - **Bounce Handling**: Automatically handle bounced emails.
 - **Feedback Loops**: Integrate with feedback loops to manage complaints.
 - **Suppressions**: Automatically manage email suppressions (bounces, unsubscribes, etc.).
-- **DNS Automation**: Automatically manage DNS records for PTR, SPF, and DKIM.
+- **DNS Automation**: Delegate DNS to the in-built DNS server. No need to manage DNS records manually.
 - **Webhooks**: Receive HTTP callbacks for email events.
 - **Health Checks**: Monitor the health of the service in the dashboard.
 - **Easy scaling**: Add more servers and IP addresses as needed.
