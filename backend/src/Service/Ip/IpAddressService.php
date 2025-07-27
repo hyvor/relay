@@ -26,7 +26,10 @@ class IpAddressService
      */
     public function getAllIpAddresses(): array
     {
-        return $this->em->getRepository(IpAddress::class)->findAll();
+        return $this->em->getRepository(IpAddress::class)->findBy(
+            [],
+            ['id' => 'ASC']
+        );
     }
 
     public function getIpAddressById(int $id): ?IpAddress
@@ -39,7 +42,10 @@ class IpAddressService
      */
     public function getIpAddressesOfServer(Server $server): array
     {
-        return $this->em->getRepository(IpAddress::class)->findBy(['server' => $server]);
+        return $this->em->getRepository(IpAddress::class)->findBy(
+            ['server' => $server],
+            ['id' => 'ASC']
+        );
     }
 
     /**

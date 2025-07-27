@@ -57,6 +57,7 @@ services:
       - hyvor-network
     ports:
       - "10025:1025"
+      - "5353:53/udp"
 
 networks:
   hyvor-network:
