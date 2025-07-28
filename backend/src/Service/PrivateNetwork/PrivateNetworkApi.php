@@ -40,8 +40,18 @@ class PrivateNetworkApi
             $response = $this->httpClient->request($method, $url);
             return $response->toArray();
         } catch (ExceptionInterface $e) {
+
+            $errorContent = 'No content';
+            try {
+                $errorContent = isset($response) ? $response->getContent() : 'No response';
+            } catch (ExceptionInterface) {}
+
             throw new PrivateNetworkCallException(
-                sprintf('Failed to call private network API: %s', $e->getMessage()),
+                sprintf(
+                    'Failed to call private network API: %s, Content: %s',
+                    $e->getMessage(),
+                    $errorContent
+                ),
                 previous: $e
             );
         }

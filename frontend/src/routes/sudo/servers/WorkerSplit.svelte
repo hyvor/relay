@@ -40,8 +40,8 @@
 			.then(() => {
 				toast.success('Workers updated successfully.');
 			})
-			.catch(() => {
-				toast.error('Failed to update workers. Please try again.');
+			.catch((e) => {
+				toast.error(e.message);
 			})
 			.finally(() => {
 				saving = false;

@@ -20,11 +20,11 @@ func StartHttpServer(
 	var handler http.Handler = mux
 
 	server := &http.Server{
-		Addr:    "localhost:8085",
+		Addr:    ":8085",
 		Handler: handler,
 	}
 
-	serviceState.Logger.Info("Starting local HTTP server on :8085")
+	serviceState.Logger.Info("Starting local HTTP server on localhost:8085")
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {

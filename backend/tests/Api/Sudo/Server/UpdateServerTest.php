@@ -64,7 +64,7 @@ class UpdateServerTest extends WebTestCase
         $this->assertSame('POST', $mockResponse->getRequestMethod());
     }
 
-    public function test_does_not_update_if_state_update_api_call_fails(): void
+    public function test_rolls_back_if_state_update_api_call_fails(): void
     {
         $mockResponse = new MockResponse(info: ['error' => 'host unreachable']);
         $this->container->set(HttpClientInterface::class, new MockHttpClient($mockResponse));
@@ -72,15 +72,19 @@ class UpdateServerTest extends WebTestCase
         // Create test server
         $server = ServerFactory::createOne([
             'api_workers' => 4,
+            'email_workers' => 2,
+            'webhook_workers' => 1,
             'private_ip' => '10.0.0.1'
         ]);
 
         $this->sudoApi('PATCH', '/servers/' . $server->getId(), [
             'api_workers' => 10,
+            'email_workers' => 4,
+            'webhook_workers' => 2
         ]);
 
         $this->assertResponseStatusCodeSame(400);
-        $this->assertSame("Failed to call private network API: host unreachable", $this->getJson()['message']);
+        $this->assertSame("Failed to call private network API: host unreachable, Content: No content", $this->getJson()['message']);
 
         $servers = $this->em->getRepository(Server::class)->findAll();
         $this->assertCount(1, $servers);

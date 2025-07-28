@@ -91,6 +91,9 @@ class ServerService
         if ($updates->privateIpSet) {
             $server->setPrivateIp($updates->privateIp);
         }
+
+        $oldServer = clone $server;
+
         if ($updates->apiWorkersSet) {
             $server->setApiWorkers($updates->apiWorkers);
         }
@@ -104,14 +107,26 @@ class ServerService
         $server->setUpdatedAt($this->now());
 
         $this->em->persist($server);
+        $this->em->flush();
 
-        $this->em->wrapInTransaction(function () use ($server, $updateStateCall) {
-            $this->em->flush();
-
-            if ($updateStateCall) {
+        if ($updateStateCall) {
+            try {
                 $this->privateNetworkApi->callUpdateServerStateApi($server);
+            } catch (PrivateNetworkCallException $e) {
+                /**
+                 * We cannot use a transaction here to rollback automatically
+                 * because the external API call depends on the new state of the server,
+                 * which they do not see if th
+                 */
+
+                $server->setApiWorkers($oldServer->getApiWorkers());
+                $server->setEmailWorkers($oldServer->getEmailWorkers());
+                $server->setWebhookWorkers($oldServer->getWebhookWorkers());
+
+                $this->em->flush();
+                throw $e;
             }
-        });
+        }
 
     }
 

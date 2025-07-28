@@ -127,6 +127,16 @@ func (server *MetricsServer) Set(goState GoState) {
 
 	server.isLeader = goState.IsLeader
 
+	server.registry.Unregister(server.metrics.relayInfo)
+	server.registry.Unregister(server.metrics.emailQueueSize)
+	server.registry.Unregister(server.metrics.pgsqlConnections)
+	server.registry.Unregister(server.metrics.pgsqlMaxConnections)
+	server.registry.Unregister(server.metrics.serversTotal)
+	server.registry.Unregister(server.metrics.emailSendAttemptsTotal)
+	server.registry.Unregister(server.metrics.emailDeliveryDurationSeconds)
+	server.registry.Unregister(server.metrics.workersEmailTotal)
+	server.registry.Unregister(server.metrics.workersWebhookTotal)
+
 	if goState.IsLeader {
 		server.registry.MustRegister(
 			server.metrics.relayInfo,
@@ -135,12 +145,6 @@ func (server *MetricsServer) Set(goState GoState) {
 			server.metrics.pgsqlMaxConnections,
 			server.metrics.serversTotal,
 		)
-	} else {
-		server.registry.Unregister(server.metrics.relayInfo)
-		server.registry.Unregister(server.metrics.emailQueueSize)
-		server.registry.Unregister(server.metrics.pgsqlConnections)
-		server.registry.Unregister(server.metrics.pgsqlMaxConnections)
-		server.registry.Unregister(server.metrics.serversTotal)
 	}
 
 	// register all instance metrics
