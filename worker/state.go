@@ -16,11 +16,8 @@ type GoState struct {
 	WebhookWorkers    int         `json:"webhookWorkers"`
 	IsLeader          bool        `json:"isLeader"`
 
-	DnsIp                string             `json:"dnsIp"`
-	DnsPtrForwardRecords map[string]string  `json:"dnsPtrForwardRecords"`
-	DnsMxIps             []string           `json:"dnsMxIps"`
-	DnsDkimTxtValue      string             `json:"dnsDkimTxtValue"`
-	DnsRecords           []GoStateDnsRecord `json:"dnsRecords"`
+	DnsIp      string             `json:"dnsIp"`
+	DnsRecords []GoStateDnsRecord `json:"dnsRecords"`
 
 	ServersCount int    `json:"serversCount"`
 	Env          string `json:"env"`
@@ -52,6 +49,9 @@ type ServiceState struct {
 	WebhookWorkersPool *WebhookWorkersPool
 	BounceServer       *BounceServer
 	DnsServer          *DnsServer
+
+	// whether the service is initialized for the first time
+	IsSet bool
 }
 
 func NewServiceState(ctx context.Context) *ServiceState {
@@ -89,7 +89,7 @@ func (s *ServiceState) Set(goState GoState) {
 		"ip_count", len(goState.Ips),
 		"ips", goState.Ips,
 		"dns_records", goState.DnsRecords,
-		"email_workers_count", len(goState.Ips)*goState.EmailWorkersPerIp,
+		"email_workers_ip_per", goState.EmailWorkersPerIp,
 	)
 
 	for _, ip := range goState.Ips {

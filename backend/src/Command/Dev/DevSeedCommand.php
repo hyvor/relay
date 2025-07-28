@@ -47,7 +47,8 @@ class DevSeedCommand extends Command
         SudoUserFactory::createOne(['hyvor_user_id' => 1]);
 
         InstanceFactory::new()->withDefaultDkim()->create([
-            'domain' => InstanceService::DEFAULT_DOMAIN
+            'domain' => InstanceService::DEFAULT_DOMAIN,
+            'private_network_cidr' => '0.0.0.0/0'
         ]);
 
         $transactionalQueue = QueueFactory::createTransactional();
@@ -61,6 +62,7 @@ class DevSeedCommand extends Command
             'api_workers' => 2,
             'email_workers' => 2,
             'webhook_workers' => 1,
+            'private_ip' => '127.0.0.1',
         ]);
         IpAddressFactory::createOne([
             'server' => $server,
