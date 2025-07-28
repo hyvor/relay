@@ -56,13 +56,4 @@ class LocalController extends AbstractController
         return new JsonResponse([]);
     }
 
-    #[Route('/settings', methods: 'POST')]
-    #[AllowPrivateNetwork]
-    public function updateSettings() : JsonResponse
-    {
-
-        //
-
-    }
-
 }

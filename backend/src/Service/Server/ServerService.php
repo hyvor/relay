@@ -4,6 +4,8 @@ namespace App\Service\Server;
 
 use App\Config;
 use App\Entity\Server;
+use App\Service\PrivateNetwork\Exception\PrivateNetworkCallException;
+use App\Service\PrivateNetwork\PrivateNetworkApi;
 use App\Service\Server\Dto\UpdateServerDto;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -16,6 +18,7 @@ class ServerService
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly Config $config,
+        private PrivateNetworkApi $privateNetworkApi
     )
     {
     }
@@ -73,7 +76,14 @@ class ServerService
         return $server;
     }
 
-    public function updateServer(Server $server, UpdateServerDto $updates): void
+    /**
+     * @throws PrivateNetworkCallException
+     */
+    public function updateServer(
+        Server $server,
+        UpdateServerDto $updates,
+        bool $updateStateCall = false,
+    ): void
     {
         if ($updates->lastPingAtSet) {
             $server->setLastPingAt($updates->lastPingAt);
@@ -94,7 +104,15 @@ class ServerService
         $server->setUpdatedAt($this->now());
 
         $this->em->persist($server);
-        $this->em->flush();
+
+        $this->em->wrapInTransaction(function () use ($server, $updateStateCall) {
+            $this->em->flush();
+
+            if ($updateStateCall) {
+                $this->privateNetworkApi->callUpdateServerStateApi($server);
+            }
+        });
+
     }
 
 }

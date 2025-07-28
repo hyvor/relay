@@ -4,6 +4,7 @@ namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Input\UpdateServerInput;
 use App\Api\Sudo\Object\ServerObject;
+use App\Service\PrivateNetwork\Exception\PrivateNetworkCallException;
 use App\Service\Server\Dto\UpdateServerDto;
 use App\Service\Server\ServerService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -16,7 +17,7 @@ class ServerController extends AbstractController
 {
 
     public function __construct(
-        private ServerService $serverService
+        private ServerService $serverService,
     )
     {
     }
@@ -58,7 +59,11 @@ class ServerController extends AbstractController
             $updates->webhookWorkers = $input->webhook_workers;
         }
 
-        $this->serverService->updateServer($server, $updates);
+        try {
+            $this->serverService->updateServer($server, $updates, updateStateCall: true);
+        } catch (PrivateNetworkCallException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
 
         return $this->json(new ServerObject($server));
     }
