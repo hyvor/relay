@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { Caption, SplitControl, Textarea, TextInput } from '@hyvor/design/components';
 	import { instanceStore } from '../sudoStore';
-	import InstanceDomain from './InstanceDomain.svelte';
+	import InstanceDomain from './instance/InstanceDomain.svelte';
+	import Cidr from './instance/Cidr.svelte';
 </script>
 
 <div class="settings">
@@ -24,6 +25,7 @@
 			</SplitControl>
 		{/snippet}
 	</SplitControl>
+	<Cidr />
 </div>
 
 <style>

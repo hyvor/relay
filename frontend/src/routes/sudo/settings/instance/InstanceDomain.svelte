@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Button, SplitControl, TextInput, toast } from '@hyvor/design/components';
-	import { instanceStore } from '../sudoStore';
-	import { updateInstance } from '../sudoActions';
+	import { instanceStore } from '../../sudoStore';
+	import { updateInstance } from '../../sudoActions';
 	import { onMount } from 'svelte';
 
 	let instanceDomain = $state($instanceStore.domain);
@@ -19,6 +19,8 @@
 		if (instanceDomain.trim() === $instanceStore.domain) {
 			return;
 		}
+
+		updating = true;
 
 		updateInstance({
 			domain: instanceDomain.trim()

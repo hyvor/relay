@@ -2,6 +2,7 @@
 
 namespace App\Service\Management;
 
+use App\Entity\Instance;
 use App\Entity\Server;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
@@ -40,26 +41,26 @@ class ManagementService
     public function initialize(): void
     {
         $this->entityManager->wrapInTransaction(function() {
-            $this->initializeInstance();
-            $server = $this->initializeServer();
+            $instance = $this->initializeInstance();
+            $server = $this->initializeServer($instance);
             $this->initializeIpAddresses($server);
             $this->initializeDefaultQueues();
         });
     }
 
-    private function initializeInstance(): void
+    private function initializeInstance(): Instance
     {
-
         $instance = $this->instanceService->tryGetInstance();
 
         if ($instance === null) {
             $this->output->writeln('<info>Initiating the instance...</info>');
-            $this->instanceService->createInstance();
+            $instance = $this->instanceService->createInstance();
         }
 
+        return $instance;
     }
 
-    private function initializeServer(): Server
+    private function initializeServer(Instance $instance): Server
     {
         $server = $this->serverService->getServerByCurrentHostname();
 
@@ -69,7 +70,7 @@ class ManagementService
             $this->output->writeln('<info>New server entry created successfully.</info>');
         }
 
-        $privateIp = $this->serverIp->getPrivateIp();
+        $privateIp = $this->serverIp->getPrivateIp($instance->getPrivateNetworkCidr());
         if ($privateIp !== $server->getPrivateIp()) {
             $updateDto = new UpdateServerDto();
             $updateDto->privateIp = $privateIp;

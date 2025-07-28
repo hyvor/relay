@@ -13,6 +13,7 @@ export interface Instance {
     domain: string;
     dkim_host: string;
     dkim_txt_value: string;
+    private_network_cidr: string;
 }
 
 export interface Server {

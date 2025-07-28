@@ -8,7 +8,7 @@ export function initSudo() {
 	})
 }
 
-export async function updateInstance(updates: { domain?: string}) {
+export async function updateInstance(updates: { domain?: string, private_network_cidr?: string }) {
 	const response = await sudoApi.patch<Instance>({
 		endpoint: '/instance',
 		data: updates
