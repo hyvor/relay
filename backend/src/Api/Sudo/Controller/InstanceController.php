@@ -33,6 +33,10 @@ class InstanceController extends AbstractController
             $updates->domain = $input->domain;
         }
 
+        if ($input->private_network_cidrSet) {
+            $updates->privateNetworkCidr = $input->private_network_cidr;
+        }
+
         $this->instanceService->updateInstance($instance, $updates);
 
         return new JsonResponse(

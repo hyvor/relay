@@ -70,6 +70,10 @@ class InstanceService
             $instance->setDomain($updates->domain);
         }
 
+        if ($updates->privateNetworkCidrSet) {
+            $instance->setPrivateNetworkCidr($updates->privateNetworkCidr);
+        }
+
         $instance->setUpdatedAt($this->now());
 
         $this->em->persist($instance);

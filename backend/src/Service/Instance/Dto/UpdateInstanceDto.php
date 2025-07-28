@@ -12,6 +12,15 @@ class UpdateInstanceDto
         }
     }
 
-    private(set) bool $domainSet;
+    private(set) bool $domainSet = false;
 
+
+    public string $privateNetworkCidr {
+        set {
+            $this->privateNetworkCidrSet = true;
+            $this->privateNetworkCidr = $value;
+        }
+    }
+
+    private(set) bool $privateNetworkCidrSet = false;
 }

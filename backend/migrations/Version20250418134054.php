@@ -27,7 +27,8 @@ final class Version20250418134054 extends AbstractMigration
             dkim_public_key text NOT NULL,
             dkim_private_key_encrypted text NOT NULL,
             last_health_check_at timestamptz DEFAULT NULL,
-            health_check_results jsonb DEFAULT NULL
+            health_check_results jsonb DEFAULT NULL,
+            private_network_cidr text DEFAULT NULL
         )
         SQL);
     }
