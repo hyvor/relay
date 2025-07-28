@@ -1,5 +1,5 @@
 import sudoApi from './sudoApi';
-import { instanceStore } from './sudoStore';
+import { instanceStore, serversStore } from './sudoStore';
 import type { IpAddress, Queue, Server, SudoInitResponse, HealthCheckResults, Instance, DnsRecord, DnsRecordType } from './sudoTypes';
 
 export function initSudo() {
@@ -23,6 +23,17 @@ export function getServers() {
 	return sudoApi.get<Server[]>({
 		endpoint: '/servers'
 	});
+}
+
+export async function updateServer(serverId: number, updates: Partial<Server>) {
+	const response = await sudoApi.patch<Server>({
+		endpoint: `/servers/${serverId}`,
+		data: updates
+	});
+
+	serversStore.update(servers => servers.map(server => server.id === serverId ? response : server));
+
+	return response;
 }
 
 export function getIpAddresses() {
