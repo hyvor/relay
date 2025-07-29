@@ -11,18 +11,13 @@ export const categories: Category[] = [
 		pages: [
 			{
 				slug: '',
-				name: 'Getting Started',
+				name: 'Introduction',
                 component: Introduction
 			},
 			{
 				slug: 'deploy',
 				name: 'Deploy',
                 component: Deploy
-			},
-			{
-				slug: 'install',
-				name: 'Install & Run',
-                component: Introduction
 			},
 			{
 				slug: 'setup',
@@ -52,6 +47,11 @@ export const categories: Category[] = [
 			{
 				slug: 'deploy-easy',
 				name: 'Easy Deploy',
+				component: Introduction,
+			},
+			{
+				slug: 'learn',
+				name: 'Learn Sending Emails',
 				component: Introduction,
 			}
 		]

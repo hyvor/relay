@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"net"
+	"net/url"
 	"os"
 	"time"
 
@@ -21,13 +23,24 @@ type DBConfig struct {
 }
 
 func LoadDBConfig() *DBConfig {
+
+	databaseUrl := os.Getenv("DATABASE_URL")
+	u, err := url.Parse(databaseUrl)
+
+	if err != nil {
+		panic("Unable to parse DATABASE_URL: " + err.Error())
+	}
+
+	host, port, _ := net.SplitHostPort(u.Host)
+	password, _ := u.User.Password()
+
 	return &DBConfig{
-		Host:     os.Getenv("DB_HOST"),
-		Port:     os.Getenv("DB_PORT"),
-		User:     os.Getenv("DB_USER"),
-		Password: os.Getenv("DB_PASSWORD"),
-		DBName:   os.Getenv("DB_NAME"),
-		SSLMode:  os.Getenv("DB_SSLMODE"),
+		Host:     host,
+		Port:     port,
+		User:     u.User.Username(),
+		Password: password,
+		DBName:   u.Path[1:],
+		SSLMode:  "disable",
 	}
 }
 

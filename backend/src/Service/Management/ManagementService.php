@@ -2,10 +2,13 @@
 
 namespace App\Service\Management;
 
+use App\Entity\Instance;
 use App\Entity\Server;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
+use App\Service\Ip\ServerIp;
 use App\Service\Queue\QueueService;
+use App\Service\Server\Dto\UpdateServerDto;
 use App\Service\Server\ServerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Output\NullOutput;
@@ -24,6 +27,7 @@ class ManagementService
         private QueueService $queueService,
         private EntityManagerInterface $entityManager,
         private LockFactory $lockFactory,
+        private ServerIp $serverIp
     )
     {
         $this->output = new NullOutput();
@@ -37,26 +41,26 @@ class ManagementService
     public function initialize(): void
     {
         $this->entityManager->wrapInTransaction(function() {
-            $this->initializeInstance();
-            $server = $this->initializeServer();
+            $instance = $this->initializeInstance();
+            $server = $this->initializeServer($instance);
             $this->initializeIpAddresses($server);
             $this->initializeDefaultQueues();
         });
     }
 
-    private function initializeInstance(): void
+    private function initializeInstance(): Instance
     {
-
         $instance = $this->instanceService->tryGetInstance();
 
         if ($instance === null) {
             $this->output->writeln('<info>Initiating the instance...</info>');
-            $this->instanceService->createInstance();
+            $instance = $this->instanceService->createInstance();
         }
 
+        return $instance;
     }
 
-    private function initializeServer(): Server
+    private function initializeServer(Instance $instance): Server
     {
         $server = $this->serverService->getServerByCurrentHostname();
 
@@ -66,9 +70,18 @@ class ManagementService
             $this->output->writeln('<info>New server entry created successfully.</info>');
         }
 
+        $privateIp = $this->serverIp->getPrivateIp($instance->getPrivateNetworkCidr());
+        if ($privateIp !== $server->getPrivateIp()) {
+            $updateDto = new UpdateServerDto();
+            $updateDto->privateIp = $privateIp;
+            $this->serverService->updateServer($server, $updateDto);
+        }
+
         $this->output->writeln(sprintf('<info>Server ID: %d</info>', $server->getId()));
         $this->output->writeln(sprintf('<info>Server Hostname: %s</info>', $server->getHostname()));
         $this->output->writeln(sprintf('<info>Server Docker Hostname: %s</info>', $server->getHostname()));
+        $this->output->writeln(sprintf('<info>Server Private IP: %s</info>', $privateIp));
+
         return $server;
     }
 

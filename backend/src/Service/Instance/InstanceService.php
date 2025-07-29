@@ -5,6 +5,7 @@ namespace App\Service\Instance;
 use App\Entity\Instance;
 use App\Repository\InstanceRepository;
 use App\Service\Domain\Dkim;
+use App\Service\Instance\Dto\UpdateInstanceDto;
 use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Util\Crypt\Encryption;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -60,5 +61,23 @@ class InstanceService
         $this->em->flush();
 
         return $instance;
+    }
+
+    public function updateInstance(Instance $instance, UpdateInstanceDto $updates): void
+    {
+
+        if ($updates->domainSet) {
+            $instance->setDomain($updates->domain);
+        }
+
+        if ($updates->privateNetworkCidrSet) {
+            $instance->setPrivateNetworkCidr($updates->privateNetworkCidr);
+        }
+
+        $instance->setUpdatedAt($this->now());
+
+        $this->em->persist($instance);
+        $this->em->flush();
+
     }
 }

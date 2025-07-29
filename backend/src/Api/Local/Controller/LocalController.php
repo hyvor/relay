@@ -2,6 +2,7 @@
 
 namespace App\Api\Local\Controller;
 
+use App\Api\Local\AllowPrivateNetwork;
 use App\Api\Local\Input\SendAttemptDoneInput;
 use App\Service\Send\SendService;
 use App\Service\Management\GoState\GoStateFactory;

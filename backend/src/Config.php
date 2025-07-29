@@ -14,7 +14,7 @@ class Config
         #[Autowire('%env(string:APP_VERSION)%')]
         private string $appVersion,
         #[Autowire('%env(string:HOST_HOSTNAME)%')]
-        private string $hostname,
+        private string $envHostname,
         #[Autowire('%kernel.environment%')]
         private string $env,
     )
@@ -28,7 +28,13 @@ class Config
 
     public function getHostname(): string
     {
-        return $this->hostname;
+        if (!empty($this->envHostname)) {
+            return $this->envHostname;
+        } else {
+            $hostname = gethostname();
+            assert(is_string($hostname), 'Hostname must be a string');
+            return $hostname;
+        }
     }
 
     public function getEnv(): string
