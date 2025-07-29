@@ -60,25 +60,6 @@ class GoStateFactory
             );
         }
 
-        $allIps = $this->ipAddressService->getAllIpAddresses();
-        $dnsPtrForwardRecords = [];
-        $dnsMxIps = [];
-        $dnsMxIpAddedServers = [];
-
-        foreach ($allIps as $ip) {
-            if ($ip->getIsAvailable() === false || $ip->getIsEnabled() === false) {
-                continue;
-            }
-            $dnsPtrForwardRecords[Ptr::getPtrDomain($ip, $instance->getDomain())] = $ip->getIpAddress();
-
-            $serverId = $ip->getServer()->getId();
-
-            if (!in_array($serverId, $dnsMxIpAddedServers)) {
-                $dnsMxIps[] = $ip->getIpAddress();
-                $dnsMxIpAddedServers[] = $serverId;
-            }
-        }
-
         $dnsIp = count($ips) > 0 ? $ips[0]->ip : "";
 
         return new GoState(
@@ -91,9 +72,6 @@ class GoStateFactory
 
             // data for the DNS server
             dnsIp: $dnsIp,
-            dnsPtrForwardRecords: $dnsPtrForwardRecords,
-            dnsMxIps: $dnsMxIps,
-            dnsDkimTxtValue: Dkim::dkimTxtValue($instance->getDkimPublicKey()),
             dnsRecords: $this->getDnsRecords($instance),
 
             serversCount: $this->serverService->getServersCount(),

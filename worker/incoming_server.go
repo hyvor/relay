@@ -5,28 +5,30 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"net/mail"
+	"strings"
 	"time"
 
 	"github.com/emersion/go-sasl"
 	smtp "github.com/emersion/go-smtp"
 )
 
-// Bounce server is a simple SMTP server that handles incoming emails to the instance domain emails.
+// Inconming server is a simple SMTP server that handles incoming emails to the instance domain emails.
 // It handles:
 // 1. Bounce emails: emails sent to bounce+<uuid>@<instance_domain>. (DSN format, RFC 3464)
 // 2. Feedback loop emails: emails sent to feedback+<uuid>@<instance_domain>. (ARF format, RFC 5965).
 
-// The BounceBackend implements SMTP server methods.
-type BounceBackend struct {
+// The IncomingBackend implements SMTP server methods.
+type IncomingBackend struct {
 	logger         *slog.Logger
 	instanceDomain string
 }
 
 // NewSession is called after client greeting (EHLO, HELO).
-func (bkd *BounceBackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
+func (bkd *IncomingBackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 	return &Session{
 		logger: bkd.logger,
-		bounceMail: BounceMail{
+		incomingMail: IncomingMail{
 			logger:         bkd.logger,
 			InstanceDomain: bkd.instanceDomain,
 		},
@@ -35,8 +37,8 @@ func (bkd *BounceBackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 
 // A Session is returned after successful login.
 type Session struct {
-	logger     *slog.Logger
-	bounceMail BounceMail
+	logger       *slog.Logger
+	incomingMail IncomingMail
 }
 
 // AuthMechanisms returns a slice of available auth mechanisms; only PLAIN is
@@ -51,28 +53,45 @@ func (s *Session) Auth(mech string) (sasl.Server, error) {
 }
 
 func (s *Session) Mail(from string, opts *smtp.MailOptions) error {
-	s.bounceMail.MailFrom = from
+	s.incomingMail.MailFrom = from
 	return nil
 }
 
 func (s *Session) Rcpt(to string, opts *smtp.RcptOptions) error {
-	s.bounceMail.RcptTo = to
+	parsed, err := mail.ParseAddress(to)
+
+	if err != nil {
+		return errors.New("recipient address is invalid: " + err.Error())
+	}
+
+	atIndex := strings.LastIndex(parsed.Address, "@")
+	if atIndex == -1 || atIndex == len(parsed.Address)-1 {
+		return errors.New("recipient address is invalid: missing domain part")
+	}
+
+	domain := parsed.Address[atIndex+1:]
+
+	if domain != s.incomingMail.InstanceDomain {
+		return errors.New("this SMTP server only accepts emails for " + s.incomingMail.InstanceDomain)
+	}
+
+	s.incomingMail.RcptTo = parsed.Address
 	return nil
 }
 
 func (s *Session) Data(r io.Reader) error {
 	if b, err := io.ReadAll(r); err != nil {
-		s.logger.Error("Error reading bounce email data", "error", err)
+		s.logger.Error("Error reading email data", "error", err)
 		return err
 	} else {
 
-		s.logger.Info("Received bounce email",
-			"MAIL", s.bounceMail.MailFrom,
-			"RCPT", s.bounceMail.RcptTo,
+		s.logger.Info("Received email",
+			"MAIL", s.incomingMail.MailFrom,
+			"RCPT", s.incomingMail.RcptTo,
 			"data", string(b),
 		)
 
-		s.bounceMail.Handle()
+		s.incomingMail.Handle()
 
 		// _ := string(b[:])
 	}
@@ -132,7 +151,7 @@ func (b *BounceServer) Shutdown() {
 func (b *BounceServer) Start(ctx context.Context, logger *slog.Logger, instanceDomain string) {
 	b.logger = logger
 
-	be := &BounceBackend{
+	be := &IncomingBackend{
 		logger:         logger,
 		instanceDomain: instanceDomain,
 	}
@@ -141,10 +160,10 @@ func (b *BounceServer) Start(ctx context.Context, logger *slog.Logger, instanceD
 
 	smtpServer.Addr = "0.0.0.0:1025"
 	smtpServer.Domain = "localhost"
-	smtpServer.WriteTimeout = 20 * time.Second
-	smtpServer.ReadTimeout = 20 * time.Second
+	smtpServer.WriteTimeout = 200 * time.Second
+	smtpServer.ReadTimeout = 200 * time.Second // TODO: reduce this (for testing)
 	smtpServer.MaxMessageBytes = 1024 * 1024
-	smtpServer.MaxRecipients = 50
+	smtpServer.MaxRecipients = 10
 	smtpServer.AllowInsecureAuth = true
 
 	b.smtpServer = smtpServer

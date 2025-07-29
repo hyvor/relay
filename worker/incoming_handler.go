@@ -7,7 +7,7 @@ import (
 	"github.com/hyvor/relay/worker/bounceparse"
 )
 
-type BounceMail struct {
+type IncomingMail struct {
 	MailFrom       string
 	RcptTo         string
 	Data           string
@@ -17,7 +17,7 @@ type BounceMail struct {
 }
 
 // call after the data is read
-func (m *BounceMail) Handle() {
+func (m *IncomingMail) Handle() {
 
 	isBounce, uuid := checkBounceEmail(m.RcptTo, m.InstanceDomain)
 
@@ -30,9 +30,9 @@ func (m *BounceMail) Handle() {
 
 }
 
-func (m *BounceMail) handleBounce(uuid string) {
+func (m *IncomingMail) handleBounce(uuid string) {
 
-	dsn, err := bounceparse.ParseDsn([]byte(m.Data))
+	_, err := bounceparse.ParseDsn([]byte(m.Data))
 
 	if err != nil {
 		m.logger.Error("Error parsing bounce email", "error", err)
@@ -65,5 +65,30 @@ func checkBounceEmail(rcptTo string, instanceDomain string) (bool, string) {
 	}
 
 	return true, rcptTo[7:at]
+
+}
+
+// fbl email is: fbl@<instance_domain>
+func checkFbl(rcptTo string, instanceDomain string) bool {
+
+	if rcptTo == "" {
+		return false
+	}
+
+	at := strings.Index(rcptTo, "@")
+
+	if at < 0 {
+		return false
+	}
+
+	if !strings.HasPrefix(rcptTo[:at], "fbl") {
+		return false
+	}
+
+	if !strings.HasSuffix(rcptTo[at:], instanceDomain) {
+		return false
+	}
+
+	return true
 
 }
