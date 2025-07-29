@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"strings"
 
@@ -20,13 +21,21 @@ type IncomingMail struct {
 func (m *IncomingMail) Handle() {
 
 	isBounce, uuid := checkBounceEmail(m.RcptTo, m.InstanceDomain)
+	isFbl := checkFbl(m.RcptTo, m.InstanceDomain)
+
+	if !isBounce && !isFbl {
+		m.logger.Info(
+			"Received email that is not a bounce or FBL",
+			"MAIL", m.MailFrom,
+			"RCPT", m.RcptTo,
+		)
+		return
+	}
 
 	if isBounce {
 		m.handleBounce(uuid)
 		return
 	}
-
-	//
 
 }
 
@@ -90,5 +99,27 @@ func checkFbl(rcptTo string, instanceDomain string) bool {
 	}
 
 	return true
+
+}
+
+func incomingMailWorker(
+	ctx context.Context,
+	mailChannel chan *IncomingMail,
+	logger *slog.Logger,
+) {
+
+	logger.Info("Starting incoming mail handler")
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case mail := <-mailChannel:
+			if mail == nil {
+				continue
+			}
+			mail.Handle()
+		}
+	}
 
 }

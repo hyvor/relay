@@ -22,6 +22,7 @@ import (
 type IncomingBackend struct {
 	logger         *slog.Logger
 	instanceDomain string
+	mailChannel    chan *IncomingMail
 }
 
 // NewSession is called after client greeting (EHLO, HELO).
@@ -108,6 +109,7 @@ type BounceServer struct {
 	ctx        context.Context
 	logger     *slog.Logger
 	smtpServer *smtp.Server
+	cancelFunc context.CancelFunc
 }
 
 func NewBounceServer(ctx context.Context, logger *slog.Logger) *BounceServer {
@@ -117,13 +119,13 @@ func NewBounceServer(ctx context.Context, logger *slog.Logger) *BounceServer {
 	}
 }
 
-func (b *BounceServer) Set(instanceDomain string) {
+func (b *BounceServer) Set(instanceDomain string, numWorkers int) {
 	b.logger.Info("Bounce server initializing...")
 
 	b.Shutdown()
 
 	go func() {
-		b.Start(b.ctx, b.logger, instanceDomain)
+		b.Start(b.ctx, b.logger, instanceDomain, numWorkers)
 	}()
 
 	go func() {
@@ -137,6 +139,11 @@ func (b *BounceServer) Shutdown() {
 		return
 	}
 
+	if b.cancelFunc != nil {
+		b.cancelFunc()
+		b.cancelFunc = nil
+	}
+
 	shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCtxCancel()
 
@@ -148,12 +155,26 @@ func (b *BounceServer) Shutdown() {
 
 }
 
-func (b *BounceServer) Start(ctx context.Context, logger *slog.Logger, instanceDomain string) {
+func (b *BounceServer) Start(ctx context.Context, logger *slog.Logger, instanceDomain string, numWorkers int) {
 	b.logger = logger
+
+	mailChannel := make(chan *IncomingMail)
+	workerCtx, cancel := context.WithCancel(ctx)
+	b.cancelFunc = cancel
+	defer cancel()
 
 	be := &IncomingBackend{
 		logger:         logger,
 		instanceDomain: instanceDomain,
+		mailChannel:    mailChannel,
+	}
+
+	for i := 0; i < numWorkers; i++ {
+		go incomingMailWorker(
+			workerCtx,
+			mailChannel,
+			logger,
+		)
 	}
 
 	smtpServer := smtp.NewServer(be)

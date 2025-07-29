@@ -73,7 +73,7 @@ func (s *ServiceState) Set(goState GoState) {
 
 	s.EmailWorkersPool.Set(goState.Ips, goState.EmailWorkersPerIp, goState.InstanceDomain)
 	s.WebhookWorkersPool.Set(goState.WebhookWorkers)
-	s.BounceServer.Set(goState.InstanceDomain)
+	s.BounceServer.Set(goState.InstanceDomain, 2)
 
 	if goState.DnsIp != "" {
 		s.DnsServer.Set(
