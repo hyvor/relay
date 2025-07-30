@@ -2,6 +2,7 @@
 
 namespace App\Service\PrivateNetwork;
 
+use App\Entity\Type\DebugIncomingEmailsType;
 use App\Service\Management\GoState\GoState;
 use App\Service\PrivateNetwork\Exception\GoHttpCallException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -68,11 +69,11 @@ class GoHttpApi
      * @throws GoHttpCallException
      * @return array<mixed>
      */
-    public function parseBounceOrFbl(string $raw): array
+    public function parseBounceOrFbl(string $raw, DebugIncomingEmailsType $type): array
     {
         return $this->callApi('/debug/parse-bounce-fbl', [
             'raw' => base64_encode($raw),
-            'type' => 'bounce'
+            'type' => $type->value,
         ]);
     }
 

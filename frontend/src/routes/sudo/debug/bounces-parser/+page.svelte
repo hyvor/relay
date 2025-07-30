@@ -1,14 +1,24 @@
 <script lang="ts">
-	import { Button, IconMessage, Loader, Radio, Textarea, toast } from '@hyvor/design/components';
+	import {
+		Button,
+		CodeBlock,
+		IconMessage,
+		Loader,
+		Radio,
+		Textarea,
+		toast
+	} from '@hyvor/design/components';
 	import { debugParseBounceFBL } from '../../sudoActions';
 
 	let emailContent = $state('');
 	let type: 'bounce' | 'fbl' = $state('bounce');
 	let parsing = $state(false);
 	let error = $state('');
+	let result = $state('Mmm.... I need to parse the email first!');
 
 	function handleParse() {
 		error = '';
+		result = '';
 
 		if (!emailContent.trim()) {
 			toast.error('Please paste the raw bounce/FBL email.');
@@ -19,8 +29,7 @@
 
 		debugParseBounceFBL(emailContent, type)
 			.then((response) => {
-				// Handle the parsed response here
-				console.log('Parsed Result:', response.parsed);
+				result = JSON.stringify(response.parsed, null, 4);
 			})
 			.catch((e) => {
 				error = e.message;
@@ -53,7 +62,7 @@
 		{:else if error}
 			<IconMessage error>{error}</IconMessage>
 		{:else}
-			<p class="hds-text">Parsed result will be displayed here.</p>
+			<CodeBlock code={result} language="json" />
 		{/if}
 	</div>
 </div>
@@ -93,5 +102,6 @@
 		flex: 1;
 		border-top: 1px solid var(--border);
 		overflow-y: auto;
+		padding: 20px;
 	}
 </style>

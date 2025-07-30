@@ -28,7 +28,7 @@
 			{#snippet start()}
 				<IconSearch />
 			{/snippet}
-			Bounce/FBL Parser
+			Parse Bounce/FBL
 		</NavLink>
 	</div>
 

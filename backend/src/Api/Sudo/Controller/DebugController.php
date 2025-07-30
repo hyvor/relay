@@ -6,6 +6,7 @@ use App\Api\Sudo\Input\Debug\ParseBounceOrFblInput;
 use App\Service\PrivateNetwork\Exception\GoHttpCallException;
 use App\Service\PrivateNetwork\GoHttpApi;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Routing\Attribute\Route;
@@ -22,18 +23,19 @@ class DebugController extends AbstractController
     #[Route('/debug/parse-bounce-fbl', methods: 'POST')]
     public function parseBounceOrFbl(
         #[MapRequestPayload] ParseBounceOrFblInput $input
-    ): void
+    ): JsonResponse
     {
 
         try {
             $parsed = $this->goHttpApi->parseBounceOrFbl(
-                $input->raw
+                $input->raw,
+                $input->type
             );
         } catch (GoHttpCallException $e) {
             throw new UnprocessableEntityHttpException($e->getMessage());
         }
 
-        $this->json([
+        return $this->json([
             'parsed' => $parsed,
         ]);
 

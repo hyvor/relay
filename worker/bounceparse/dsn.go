@@ -3,6 +3,7 @@ package bounceparse
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -21,11 +22,19 @@ type Dsn struct {
 	Recipients   []DsnRecipient // List of recipients with their statuses
 }
 
-type DsnRecipient struct {
-	EmailAddress string // The email address of the recipient
-	Status       [3]int // The status code for this recipient, e.g., {5,1,1} for permanent failure
-	Action       string // Action taken, e.g., "failed", "delayed", "delivered" (https://datatracker.ietf.org/doc/html/rfc3464#section-2.3.3)
+type DsnStatus [3]int
+
+func (s DsnStatus) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf(`"%d.%d.%d"`, s[0], s[1], s[2])), nil
 }
+
+type DsnRecipient struct {
+	EmailAddress string    // The email address of the recipient
+	Status       DsnStatus // The status code for this recipient, e.g., {5,1,1} for permanent failure
+	Action       string    // Action taken, e.g., "failed", "delayed", "delivered" (https://datatracker.ietf.org/doc/html/rfc3464#section-2.3.3)
+}
+
+var ErrNotDsnReport = errors.New("not a DSN report")
 
 // ParseBounce
 func ParseDsn(input []byte) (*Dsn, error) {
@@ -45,7 +54,7 @@ func ParseDsn(input []byte) (*Dsn, error) {
 	}
 
 	if mediaType != "multipart/report" {
-		return nil, ErrNotArfReport
+		return nil, ErrNotDsnReport
 	}
 
 	multipartReader := multipart.NewReader(message.Body, params["boundary"])
@@ -85,7 +94,7 @@ func ParseDsn(input []byte) (*Dsn, error) {
 			return nil, fmt.Errorf("[%d] error reading MIME header: %w", i, err)
 		}
 
-		dsnRecipient.EmailAddress = getDsnRecipientEmailAddress(headers.Get("Original-Recipient"))
+		dsnRecipient.EmailAddress = getDsnRecipientEmailAddress(headers.Get("Final-Recipient"))
 		dsnRecipient.Status = parseDsnStatus(headers.Get("Status"))
 		dsnRecipient.Action = headers.Get("Action")
 
@@ -114,9 +123,9 @@ func getDsnRecipientEmailAddress(header string) string {
 // Status: 5.1.1
 // Status: 4.0.0 (delayed)
 // Parsed to: [3]int{5, 1, 1} or [3]int{4, 0, 0}
-func parseDsnStatus(header string) [3]int {
+func parseDsnStatus(header string) DsnStatus {
 
-	var status [3]int
+	var status DsnStatus
 
 	parts := strings.Split(header, ".")
 
