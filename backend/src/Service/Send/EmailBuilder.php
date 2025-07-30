@@ -12,6 +12,7 @@ use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Crypto\DkimSigner;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Message;
+use Symfony\Component\Uid\Uuid;
 
 class EmailBuilder
 {
@@ -27,7 +28,7 @@ class EmailBuilder
     /**
      * @param array<string, string> $customHeaders
      * @param array<SendingAttachment> $attachments
-     * @return array{raw: string, messageId: string}
+     * @return array{raw: string, uuid: string, messageId: string}
      * @throws EmailTooLargeException
      */
     public function build(
@@ -72,7 +73,8 @@ class EmailBuilder
         }
 
         // add message-id if not set
-        $messageId = $email->generateMessageId();
+        $uuid = Uuid::v4();
+        $messageId = $uuid . '@' . $domain->getDomain();
         $email->getHeaders()->addIdHeader('Message-ID', $messageId);
 
         // mailer header
@@ -108,6 +110,7 @@ class EmailBuilder
 
         return [
             'raw' => $raw,
+            'uuid' => (string) $uuid,
             'messageId' => $messageId,
         ];
     }

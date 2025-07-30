@@ -48,10 +48,11 @@ func (m *IncomingMail) Handle(pgpool *pgxpool.Pool) {
 			debugStatus = DebugIncomingStatusFailed
 			debugErrorMessage = err.Error()
 		} else {
-			debugParsedData = bounceDsn
-		}
 
-		slog.Info(bounceUuid) // TODO: remove this
+			debugParsedData = bounceDsn
+			m.finalizeBounce(bounceDsn, bounceUuid, pgpool)
+
+		}
 
 	} else if isFbl {
 
@@ -65,6 +66,7 @@ func (m *IncomingMail) Handle(pgpool *pgxpool.Pool) {
 			debugErrorMessage = err.Error()
 		} else {
 			debugParsedData = arf
+			m.finalizeFbl(arf, pgpool)
 		}
 
 	}
@@ -82,16 +84,76 @@ func (m *IncomingMail) Handle(pgpool *pgxpool.Pool) {
 
 }
 
-func (m *IncomingMail) handleBounce(uuid string) (*bounceparse.Dsn, error) {
+func (m *IncomingMail) finalizeBounce(
+	bounceDsn *bounceparse.Dsn,
+	bounceUuid string,
+	pgpool *pgxpool.Pool,
+) {
 
-	dsn, err := bounceparse.ParseDsn([]byte(m.Data))
-
-	if err != nil {
-		slog.Error("Error parsing bounce email", "error", err)
-		return nil, err
+	// since each email generates a new UUID, we can safely
+	// assume that only one reciepient is present in the DSN
+	if len(bounceDsn.Recipients) == 0 {
+		slog.Error("Received bounce with no recipients", "UUID", bounceUuid)
+		return
 	}
 
-	return dsn, nil
+	recipient := bounceDsn.Recipients[0]
+
+	// we are not interested in delayed or delivered actions
+	// most email clients do not even send delivered reports
+	if recipient.Action != "failed" {
+		slog.Info(
+			"Received bounce with non-failed action",
+			"UUID", bounceUuid,
+			"ACTION", recipient.Action,
+		)
+		return
+	}
+
+	// We are only interested in bounces that have a status code that starts with 5
+	// (permanent failures)
+	if recipient.Status[0] != 5 {
+		slog.Info(
+			"Received bounce with non-permanent status code",
+			"UUID", bounceUuid,
+			"STATUS", recipient.Status,
+		)
+		return
+	}
+
+	send, err := getSendByUuid(pgpool, bounceUuid)
+
+	if err != nil {
+		slog.Error("Failed to get send by UUID", "UUID", bounceUuid, "error", err)
+		return
+	}
+
+	createSuppression(pgpool, send.ProjectId, send.To, "bounce", bounceDsn.ReadableText)
+
+}
+
+func (m *IncomingMail) finalizeFbl(
+	arf *bounceparse.Arf,
+	pgpool *pgxpool.Pool,
+) {
+
+	parts := strings.Split(arf.MessageId, "@")
+
+	if len(parts) < 2 {
+		slog.Error("Received FBL with invalid Message-ID", "Message-ID", arf.MessageId)
+		return
+	}
+
+	uuid := parts[0]
+
+	send, err := getSendByUuid(pgpool, uuid)
+
+	if err != nil {
+		slog.Error("Failed to get send by UUID", "UUID", uuid, "error", err)
+		return
+	}
+
+	createSuppression(pgpool, send.ProjectId, send.To, "fbl", arf.ReadableText)
 
 }
 

@@ -47,6 +47,7 @@
 <style>
 	.bounces {
 		padding: 30px 40px;
+		overflow: auto;
 	}
 	.note {
 		font-size: 14px;

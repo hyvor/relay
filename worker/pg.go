@@ -113,11 +113,12 @@ func createNewRetryingDbConn(
 
 func createNewPgPool(
 	ctx context.Context,
+	config *DBConfig,
 	minConns int32,
 	maxConns int32,
 ) (*pgxpool.Pool, error) {
 
-	pgConfig, err := pgxpool.ParseConfig(LoadDBConfig().DSN())
+	pgConfig, err := pgxpool.ParseConfig(config.DSN())
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse database config: %w", err)
@@ -141,6 +142,7 @@ func createNewPgPool(
 
 func createNewRetryingPgPool(
 	ctx context.Context,
+	config *DBConfig,
 	minConns int32,
 	maxConns int32,
 ) (*pgxpool.Pool, error) {
@@ -152,7 +154,7 @@ func createNewRetryingPgPool(
 	maxBackoff := 10 * time.Second
 
 	for {
-		pgpool, err = createNewPgPool(ctx, minConns, maxConns)
+		pgpool, err = createNewPgPool(ctx, config, minConns, maxConns)
 
 		if err == nil {
 			return pgpool, nil

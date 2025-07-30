@@ -164,7 +164,7 @@ func (b *BounceServer) Start(ctx context.Context, logger *slog.Logger, instanceD
 	mailChannel := make(chan *IncomingMail)
 
 	// pgppool
-	pgpool, err := createNewRetryingPgPool(ctx, 1, int32(numWorkers))
+	pgpool, err := createNewRetryingPgPool(ctx, LoadDBConfig(), 1, int32(numWorkers))
 	if err != nil {
 		logger.Error("Failed to create pgpool", "error", err)
 		return
