@@ -22,6 +22,7 @@ final class Version20250609112605 extends AbstractMigration
             created_at timestamptz NOT NULL,
             updated_at timestamptz NOT NULL,
             hostname text NOT NULL UNIQUE,
+            private_ip text,
             last_ping_at timestamptz,
             api_workers integer DEFAULT 0,
             email_workers integer NOT NULL DEFAULT 0,

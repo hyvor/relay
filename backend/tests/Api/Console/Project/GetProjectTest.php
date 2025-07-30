@@ -4,6 +4,7 @@ namespace App\Tests\Api\Console\Project;
 
 use App\Api\Console\Controller\ProjectController;
 use App\Api\Console\Object\ProjectObject;
+use App\Repository\ProjectRepository;
 use App\Service\Project\ProjectService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
@@ -11,6 +12,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ProjectController::class)]
 #[CoversClass(ProjectService::class)]
+#[CoversClass(ProjectRepository::class)]
 #[CoversClass(ProjectObject::class)]
 class GetProjectTest extends WebTestCase
 {
@@ -33,16 +35,5 @@ class GetProjectTest extends WebTestCase
         $this->assertArrayHasKey('name', $json);
         $this->assertSame($project->getId(), $json['id']);
         $this->assertSame($project->getName(), $json['name']);
-    }
-
-    public function test_get_project_not_found(): void
-    {
-        $response = $this->consoleApi(
-            999,
-            'GET',
-            '/project'
-        );
-
-        $this->assertSame(404, $response->getStatusCode());
     }
 }

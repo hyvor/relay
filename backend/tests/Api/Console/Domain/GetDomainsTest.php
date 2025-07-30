@@ -4,6 +4,7 @@ namespace App\Tests\Api\Console\Domain;
 
 use App\Api\Console\Controller\DomainController;
 use App\Api\Console\Object\DomainObject;
+use App\Repository\DomainRepository;
 use App\Service\Domain\DomainService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
@@ -12,6 +13,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(DomainController::class)]
 #[CoversClass(DomainService::class)]
+#[CoversClass(DomainRepository::class)]
 #[CoversClass(DomainObject::class)]
 class GetDomainsTest extends WebTestCase
 {
@@ -64,8 +66,10 @@ class GetDomainsTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(200);
 
+        /** @var array<array<string, mixed>> $json */
         $json = $this->getJson();
         $this->assertCount(1, $json);
+        $this->assertArrayHasKey(0, $json);
         $this->assertSame('thibault.dev', $json[0]['domain']);
     }
 }

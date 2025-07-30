@@ -2,21 +2,20 @@
 
 namespace App\Tests\Api\Console\Webhook;
 
-use App\Api\Console\Controller\ApiKeyController;
 use App\Api\Console\Controller\WebhookController;
-use App\Api\Console\Object\ApiKeyObject;
+use App\Api\Console\Input\CreateWebhookInput;
 use App\Api\Console\Object\WebhookObject;
-use App\Entity\Type\ApiKeyScope;
-use App\Service\ApiKey\ApiKeyService;
+use App\Entity\Webhook;
 use App\Service\Webhook\WebhookService;
 use App\Tests\Case\WebTestCase;
-use App\Tests\Factory\ApiKeyFactory;
 use App\Tests\Factory\ProjectFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(WebhookController::class)]
 #[CoversClass(WebhookService::class)]
 #[CoversClass(WebhookObject::class)]
+#[CoversClass(Webhook::class)]
+#[CoversClass(CreateWebhookInput::class)]
 class CreateWebhookTest extends WebTestCase
 {
     public function test_create_webhook(): void
@@ -31,10 +30,11 @@ class CreateWebhookTest extends WebTestCase
                 'url' => 'https://example.com/webhook',
                 'description' => 'Test Webhook',
                 'events' => [
-                    'send.delivered'
+                    'send.accepted'
                 ],
             ]
         );
+
         $this->assertSame(200, $response->getStatusCode());
 
         $content = $this->getJson();
@@ -45,7 +45,7 @@ class CreateWebhookTest extends WebTestCase
         $this->assertSame('Test Webhook', $content['description']);
         $this->assertArrayHasKey('events', $content);
         $this->assertIsArray($content['events']);
-        $this->assertContains('send.delivered', $content['events']);
+        $this->assertContains('send.accepted', $content['events']);
     }
 
     public function test_create_webhook_with_invalid_url(): void

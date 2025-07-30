@@ -3,6 +3,7 @@
 namespace App\Tests\Factory;
 
 use App\Entity\Type\WebhookDeliveryStatus;
+use App\Entity\Type\WebhooksEventEnum;
 use App\Entity\WebhookDelivery;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
@@ -30,10 +31,11 @@ final class WebhookDeliveryFactory extends PersistentProxyObjectFactory
             'created_at' => new \DateTimeImmutable(),
             'updated_at' => new \DateTimeImmutable(),
             'url' => self::faker()->url(),
-            'event' => self::faker()->word(),
+            'event' => WebhooksEventEnum::DOMAIN_CREATED,
             'status' => WebhookDeliveryStatus::PENDING,
             'request_body' => self::faker()->text(),
             'response' => self::faker()->text(),
+            'send_after' => new \DateTimeImmutable(),
         ];
     }
 

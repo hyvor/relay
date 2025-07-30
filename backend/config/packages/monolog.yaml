@@ -1,9 +1,5 @@
 monolog:
     handlers:
-        app_database:
-            type: service
-            id: "App\\Service\\Log\\DatabaseAppLogger"
-            channels: app
         stderr:
             type: stream
             path: php://stderr

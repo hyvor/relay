@@ -56,7 +56,7 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
 
         $this->client->request(
             $method,
-            '/api/admin' . $uri,
+            '/api/sudo' . $uri,
             server: [
                 'CONTENT_TYPE' => 'application/json',
             ],

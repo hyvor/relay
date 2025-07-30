@@ -30,6 +30,8 @@ final class InstanceFactory extends PersistentProxyObjectFactory
             'domain' => self::faker()->domainName(),
             'created_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'updated_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
+            'dkim_public_key' => '',
+            'dkim_private_key_encrypted' => '',
         ];
     }
 

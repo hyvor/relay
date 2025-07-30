@@ -30,6 +30,9 @@ class Webhook
     #[ORM\Column()]
     private ?string $description;
 
+    /**
+     * @var string[]
+     */
     #[ORM\Column]
     private array $events = [];
 
@@ -105,11 +108,17 @@ class Webhook
         return $this;
     }
 
+    /**
+     * @return string[]
+     */
     public function getEvents(): array
     {
         return $this->events;
     }
 
+    /**
+     * @param string[] $events
+     */
     public function setEvents(array $events): static
     {
         $this->events = $events;

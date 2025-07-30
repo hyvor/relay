@@ -10,9 +10,6 @@ import (
 
 func main() {
 
-	// StartBouncesServer()
-	// os.Exit(0)
-
 	godotenv.Load()
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -27,8 +24,6 @@ func main() {
 	// tries to call /state symfony endpoint and get the state of the Go backend
 	// and initialize the serviceState
 	serviceState.Initialize()
-
-	// listenRabbitMq()
 
 	<-ctx.Done()
 

@@ -27,6 +27,7 @@ class WebhookDeliveryService
             $webhooks = $webhooks->filter(fn($webhook) => $webhook->getId() === $webhookId);
         }
 
+        /** @var WebhookDelivery[] $deliveries */
         $deliveries = $this->em->getRepository(WebhookDelivery::class)
             ->createQueryBuilder('wd')
             ->where('wd.webhook IN (:webhooks)')

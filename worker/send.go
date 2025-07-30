@@ -68,13 +68,42 @@ type SmtpStep struct {
 
 type SmtpConversation struct {
 	StartTime time.Time
-	Steps     []*SmtpStep
+
+	// network/transport error
+	// nil if the message was sent successfully (regardless of SMTP status)
+	Error error
+
+	// 0 = no SMTP error
+	// > 0 = SMTP error code
+	// can be set in the middle of the conversation
+	// e.g. non-250 on EHLO
+	SmtpErrorStatus int
+
+	Steps []*SmtpStep
+}
+
+func (s SmtpConversation) MarshalJSON() ([]byte, error) {
+	type SmtpConversationAlias SmtpConversation
+	aux := struct {
+		*SmtpConversationAlias
+		Error string
+	}{
+		SmtpConversationAlias: (*SmtpConversationAlias)(&s),
+	}
+
+	if s.Error != nil {
+		aux.Error = s.Error.Error()
+	}
+
+	return json.Marshal(aux)
 }
 
 func NewSmtpConversation() *SmtpConversation {
 	return &SmtpConversation{
-		StartTime: time.Now(),
-		Steps:     make([]*SmtpStep, 0),
+		StartTime:       time.Now(),
+		Error:           nil,
+		SmtpErrorStatus: 0,
+		Steps:           make([]*SmtpStep, 0),
 	}
 }
 
@@ -99,11 +128,24 @@ func (c *SmtpConversation) AddStep(
 
 type SendResult struct {
 	SentFromIpId      int
+	SentFromIp        string
 	ResolvedMxHosts   []string
 	SentMxHost        string
 	SmtpConversations map[string]*SmtpConversation
+	QueueName         string
 	Error             error
 	ShouldRequeue     bool
+	Duration          time.Duration
+}
+
+func (r *SendResult) ToStatus() string {
+	status := "accepted"
+	if r.Error != nil {
+		status = "bounced"
+	} else if r.ShouldRequeue {
+		status = "deferred"
+	}
+	return status
 }
 
 func sendEmail(
@@ -115,11 +157,20 @@ func sendEmail(
 	logger io.Writer,
 ) *SendResult {
 
+	startTime := time.Now()
+
 	result := &SendResult{
 		SentFromIpId:      ipId,
+		SentFromIp:        ip,
 		ResolvedMxHosts:   make([]string, 0),
 		SmtpConversations: make(map[string]*SmtpConversation),
+		QueueName:         send.QueueName,
 	}
+
+	defer func() {
+		duration := time.Since(startTime)
+		result.Duration = duration
+	}()
 
 	fmt.Fprintf(logger, "\n== New email ==\n")
 	fmt.Fprintf(logger, "From: %s\n", send.From)
@@ -140,18 +191,19 @@ func sendEmail(
 	for _, host := range mxHosts {
 		fmt.Fprintf(logger, "INFO: Sending to host %s from IP %s\n", host, ip)
 
-		conversation, err, errStatus := sendEmailToHost(send, host, instanceDomain, ip, ptr, logger)
+		conversation := sendEmailToHost(send, host, instanceDomain, ip, ptr, logger)
 		result.SmtpConversations[host] = conversation
 
-		if err != nil {
+		if conversation.Error != nil {
 			// a connection-level error happened
 			// continue the loop to try the next host
-			fmt.Fprintf(logger, "ERROR: Failed to send email to %s: %s\n", host, err)
-		} else if errStatus > 0 {
-			// an SMTP error happened (4xx/5xx)
-			fmt.Fprintf(logger, "ERROR: SMTP error %d from %s: %s\n", errStatus, host, conversation.Steps[len(conversation.Steps)-1].ReplyText)
+			fmt.Fprintf(logger, "ERROR: Failed to send email to %s: %s\n", host, conversation.Error)
+		} else if conversation.SmtpErrorStatus > 0 {
 
-			if errStatus >= 400 && errStatus < 500 {
+			// an SMTP error happened (4xx/5xx)
+			fmt.Fprintf(logger, "ERROR: SMTP error %d from %s: %s\n", conversation.SmtpErrorStatus, host, conversation.Steps[len(conversation.Steps)-1].ReplyText)
+
+			if conversation.SmtpErrorStatus >= 400 && conversation.SmtpErrorStatus < 500 {
 
 				// 4xx errors are usually temporary, requeue the email if we haven't reached the max tries
 
@@ -165,11 +217,23 @@ func sendEmail(
 					return result
 				}
 
-			} else {
-				result.Error = fmt.Errorf("SMTP error %d from %s: %s", errStatus, host, conversation.Steps[len(conversation.Steps)-1].ReplyText)
+			} else if conversation.SmtpErrorStatus >= 500 {
+
+				// 5xx errors are permanent, do not requeue
+				result.Error = fmt.Errorf(
+					"SMTP error %d from %s: %s",
+					conversation.SmtpErrorStatus,
+					host,
+					conversation.Steps[len(conversation.Steps)-1].ReplyText,
+				)
 				fmt.Fprintf(logger, "ERROR: %s\n", result.Error)
+
 				return result
 			}
+
+			// for any other error, we can continue to the next host
+			fmt.Fprintf(logger, "INFO: Continuing to next host due to SMTP error %d\n", conversation.SmtpErrorStatus)
+			continue
 
 		} else {
 			result.SentMxHost = host
@@ -234,7 +298,7 @@ func sendEmailToHost(
 	ip string,
 	ptr string,
 	logger io.Writer,
-) (*SmtpConversation, error, int) {
+) *SmtpConversation {
 
 	conversation := NewSmtpConversation()
 
@@ -243,7 +307,8 @@ func sendEmailToHost(
 	c, err := createSmtpClient(host, ip)
 	if err != nil {
 		fmt.Fprintf(logger, "ERROR: %s\n", err)
-		return conversation, err, 0
+		conversation.Error = err
+		return conversation
 	}
 	defer c.Close()
 	conversation.AddStep(SmtpStepDial, "", 0, "")
@@ -254,11 +319,13 @@ func sendEmailToHost(
 
 	if helloResult.Err != nil {
 		fmt.Fprintf(logger, "ERROR: EHLO failed - %s\n", helloResult.Err)
-		return conversation, helloResult.Err, 0
+		conversation.Error = helloResult.Err
+		return conversation
 	}
 	conversation.AddStep(SmtpStepHello, helloResult.Command, helloResult.Reply.Code, helloResult.Reply.Message)
 	if !helloResult.CodeValid(250) {
-		return conversation, nil, helloResult.Reply.Code
+		conversation.SmtpErrorStatus = helloResult.Reply.Code
+		return conversation
 	}
 
 	// STEP 2: STARTTLS
@@ -270,12 +337,14 @@ func sendEmailToHost(
 
 		if startTlsResult.Err != nil {
 			fmt.Fprintf(logger, "ERROR: STARTTLS failed - %s\n", startTlsResult.Err)
-			return conversation, startTlsResult.Err, 0
+			conversation.Error = startTlsResult.Err
+			return conversation
 		}
 
 		if ehloResult.Err != nil {
 			fmt.Fprintf(logger, "ERROR: EHLO after STARTTLS failed - %s\n", ehloResult.Err)
-			return conversation, ehloResult.Err, 0
+			conversation.Error = ehloResult.Err
+			return conversation
 		}
 
 		conversation.AddStep(SmtpStepStartTLS, startTlsResult.Command, startTlsResult.Reply.Code, startTlsResult.Reply.Message)
@@ -283,12 +352,14 @@ func sendEmailToHost(
 
 		if !startTlsResult.CodeValid(220) {
 			fmt.Fprintf(logger, "ERROR: STARTTLS failed with code %d: %s\n", startTlsResult.Reply.Code, startTlsResult.Reply.Message)
-			return conversation, nil, startTlsResult.Reply.Code
+			conversation.SmtpErrorStatus = startTlsResult.Reply.Code
+			return conversation
 		}
 
 		if !ehloResult.CodeValid(250) {
 			fmt.Fprintf(logger, "ERROR: EHLO after STARTTLS failed with code %d: %s\n", ehloResult.Reply.Code, ehloResult.Reply.Message)
-			return conversation, nil, ehloResult.Reply.Code
+			conversation.SmtpErrorStatus = ehloResult.Reply.Code
+			return conversation
 		}
 
 		fmt.Fprintf(logger, "INFO: STARTTLS succeeded\n")
@@ -301,12 +372,14 @@ func sendEmailToHost(
 	mailResult := c.Mail(getReturnPath(send, instanceDomain))
 	if mailResult.Err != nil {
 		fmt.Fprintf(logger, "ERROR: MAIL FROM failed - %s\n", mailResult.Err)
-		return conversation, mailResult.Err, 0
+		conversation.Error = mailResult.Err
+		return conversation
 	}
 	conversation.AddStep(SmtpStepMail, mailResult.Command, mailResult.Reply.Code, mailResult.Reply.Message)
 	if !mailResult.CodeValid(250) {
 		fmt.Fprintf(logger, "ERROR: MAIL FROM failed with code %d: %s\n", mailResult.Reply.Code, mailResult.Reply.Message)
-		return conversation, nil, mailResult.Reply.Code
+		conversation.SmtpErrorStatus = mailResult.Reply.Code
+		return conversation
 	}
 
 	// STEP 4: RCPT TO
@@ -314,12 +387,14 @@ func sendEmailToHost(
 	rcptResult := c.Rcpt(send.To)
 	if rcptResult.Err != nil {
 		fmt.Fprintf(logger, "ERROR: RCPT failed - %s\n", rcptResult.Err)
-		return conversation, rcptResult.Err, 0
+		conversation.Error = rcptResult.Err
+		return conversation
 	}
 	conversation.AddStep(SmtpStepRcpt, rcptResult.Command, rcptResult.Reply.Code, rcptResult.Reply.Message)
 	if !rcptResult.CodeValid(25) {
 		fmt.Fprintf(logger, "ERROR: RCPT TO failed with code %d: %s\n", rcptResult.Reply.Code, rcptResult.Reply.Message)
-		return conversation, nil, rcptResult.Reply.Code
+		conversation.SmtpErrorStatus = rcptResult.Reply.Code
+		return conversation
 	}
 
 	// STEP 5: DATA
@@ -327,17 +402,20 @@ func sendEmailToHost(
 	w, dataResult := c.Data()
 	if dataResult.Err != nil {
 		fmt.Fprintf(logger, "ERROR: DATA failed - %s\n", dataResult.Err)
-		return conversation, dataResult.Err, 0
+		conversation.Error = dataResult.Err
+		return conversation
 	}
 	conversation.AddStep(SmtpStepData, dataResult.Command, dataResult.Reply.Code, dataResult.Reply.Message)
 	if !dataResult.CodeValid(354) {
 		fmt.Fprintf(logger, "ERROR: DATA failed with code %d: %s\n", dataResult.Reply.Code, dataResult.Reply.Message)
-		return conversation, nil, dataResult.Reply.Code
+		conversation.SmtpErrorStatus = dataResult.Reply.Code
+		return conversation
 	}
 	_, err = w.Write([]byte(send.RawEmail))
 	if err != nil {
 		fmt.Fprintf(logger, "ERROR: Writing data failed - %s\n", err)
-		return conversation, err, 0
+		conversation.Error = err
+		return conversation
 	}
 
 	// STEP 5.1: Close DATA
@@ -345,12 +423,14 @@ func sendEmailToHost(
 	closeResult := w.Close()
 	if closeResult.Err != nil {
 		fmt.Fprintf(logger, "ERROR: Closing data failed - %s\n", err)
-		return conversation, err, 0
+		conversation.Error = closeResult.Err
+		return conversation
 	}
 	conversation.AddStep(SmtpStepDataClose, closeResult.Command, closeResult.Reply.Code, closeResult.Reply.Message)
 	if !closeResult.CodeValid(250) {
 		fmt.Fprintf(logger, "ERROR: Closing data failed with code %d: %s\n", closeResult.Reply.Code, closeResult.Reply.Message)
-		return conversation, nil, closeResult.Reply.Code
+		conversation.SmtpErrorStatus = closeResult.Reply.Code
+		return conversation
 	}
 
 	// STEP 6: QUIT
@@ -358,7 +438,7 @@ func sendEmailToHost(
 	quitResult := c.Quit() // ignore QUIT error
 	conversation.AddStep(SmtpStepQuit, quitResult.Command, quitResult.Reply.Code, quitResult.Reply.Message)
 
-	return conversation, nil, 0
+	return conversation
 
 }
 

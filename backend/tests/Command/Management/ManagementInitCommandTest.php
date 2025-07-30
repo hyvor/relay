@@ -7,6 +7,8 @@ use App\Entity\Instance;
 use App\Entity\IpAddress;
 use App\Entity\Queue;
 use App\Entity\Server;
+use App\Service\Instance\InstanceService;
+use App\Service\Ip\IpAddressService;
 use App\Service\Ip\ServerIp;
 use App\Service\Management\ManagementService;
 use App\Service\Server\ServerService;
@@ -19,6 +21,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(ManagementInitCommand::class)]
 #[CoversClass(ManagementService::class)]
 #[CoversClass(ServerService::class)]
+#[CoversClass(InstanceService::class)]
+#[CoversClass(IpAddressService::class)]
 class ManagementInitCommandTest extends KernelTestCase
 {
 
@@ -26,6 +30,7 @@ class ManagementInitCommandTest extends KernelTestCase
     {
 
         $serverIpMock = $this->createMock(ServerIp::class);
+        $serverIpMock->method('getPrivateIp')->willReturn('10.0.0.1');
         $serverIpMock->method('getPublicV4IpAddresses')->willReturn([
             '8.8.8.8',
             '9.9.9.9'
@@ -54,6 +59,7 @@ class ManagementInitCommandTest extends KernelTestCase
         $this->assertCount(1, $servers);
         $server = $servers[0];
         $this->assertSame('hyvor-relay', $server->getHostname());
+        $this->assertSame('10.0.0.1', $server->getPrivateIp());
 
         $ips = $this->em->getRepository(IpAddress::class)->findBy(['server' => $server]);
         $this->assertCount(2, $ips);
@@ -65,35 +71,37 @@ class ManagementInitCommandTest extends KernelTestCase
 
     }
 
-    public function test_updates_ip_addresses_is_active(): void
+    public function test_updates_ip_addresses_is_available(): void
     {
 
         $server = ServerFactory::createOne([
-            'hostname' => 'hyvor-relay'
+            'hostname' => 'hyvor-relay',
+            'private_ip' => "10.0.0.1"
         ]);
 
-        // is_active must be true
+        // is_available must be true
         $ip1 = IpAddressFactory::createOne([
             'server' => $server,
             'ip_address' => '8.8.8.8',
-            'is_active' => false
+            'is_available' => false
         ]);
 
         // no changes
         $ip2 = IpAddressFactory::createOne([
             'server' => $server,
             'ip_address' => '9.9.9.9',
-            'is_active' => true
+            'is_available' => true
         ]);
 
-        // is_active must be false
+        // is_available must be false
         $ip3 = IpAddressFactory::createOne([
             'server' => $server,
             'ip_address' => '10.10.10.10',
-            'is_active' => true
+            'is_available' => true
         ]);
 
         $serverIpMock = $this->createMock(ServerIp::class);
+        $serverIpMock->method('getPrivateIp')->willReturn('10.0.0.2');
         $serverIpMock->method('getPublicV4IpAddresses')->willReturn([
             '8.8.8.8',
             '9.9.9.9'
@@ -103,6 +111,8 @@ class ManagementInitCommandTest extends KernelTestCase
         $command = $this->commandTester('management:init');
         $command->execute([]);
         $command->assertCommandIsSuccessful();
+
+        $this->assertSame('10.0.0.2', $server->getPrivateIp());
 
         $updatedIp1 = $this->em->getRepository(IpAddress::class)->find($ip1->getId());
         $this->assertNotNull($updatedIp1);
@@ -120,24 +130,6 @@ class ManagementInitCommandTest extends KernelTestCase
         $this->assertFalse($updatedIp3->getIsAvailable());
 
     }
-
-    /*public function test_updates_server(): void
-    {
-        $this->setConfig('apiOn', false);
-
-        $server = ServerFactory::createOne([
-            'hostname' => 'hyvor-relay'
-        ]);
-
-        $command = $this->commandTester('management:init');
-        $command->execute([]);
-        $command->assertCommandIsSuccessful();
-
-        $updatedServer = $this->em->getRepository(Server::class)->find($server->getId());
-        $this->assertNotNull($updatedServer);
-        $this->assertSame('hyvor-relay', $updatedServer->getHostname());
-        $this->assertFalse($updatedServer->getApiOn());
-    }*/
 
     public function test_adds_default_queues(): void
     {

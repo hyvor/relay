@@ -2,9 +2,9 @@
 
 namespace App\Command\Dev;
 
-use App\Service\Domain\DomainService;
 use App\Service\Instance\InstanceService;
 use App\Entity\Type\SendStatus;
+use App\Tests\Factory\DnsRecordFactory;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\InstanceFactory;
 use App\Tests\Factory\IpAddressFactory;
@@ -47,14 +47,22 @@ class DevSeedCommand extends Command
         SudoUserFactory::createOne(['hyvor_user_id' => 1]);
 
         InstanceFactory::new()->withDefaultDkim()->create([
-            'domain' => InstanceService::DEFAULT_DOMAIN
+            'domain' => InstanceService::DEFAULT_DOMAIN,
+            'private_network_cidr' => '0.0.0.0/0'
         ]);
 
         $transactionalQueue = QueueFactory::createTransactional();
         $distributionalQueue = QueueFactory::createDistributional();
 
+        DnsRecordFactory::new()->a()->create();
+        DnsRecordFactory::new()->mx()->create();
+
         $server = ServerFactory::createOne([
             'hostname' => 'hyvor-relay',
+            'api_workers' => 2,
+            'email_workers' => 2,
+            'webhook_workers' => 1,
+            'private_ip' => '127.0.0.1',
         ]);
         IpAddressFactory::createOne([
             'server' => $server,

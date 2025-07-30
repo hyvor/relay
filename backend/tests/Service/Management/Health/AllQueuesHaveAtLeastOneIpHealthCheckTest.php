@@ -7,7 +7,9 @@ use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\ServerFactory;
+use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(AllQueuesHaveAtLeastOneIpHealthCheck::class)]
 class AllQueuesHaveAtLeastOneIpHealthCheckTest extends KernelTestCase
 {
     private AllQueuesHaveAtLeastOneIpHealthCheck $healthCheck;
@@ -37,14 +39,14 @@ class AllQueuesHaveAtLeastOneIpHealthCheckTest extends KernelTestCase
         IpAddressFactory::createOne([
             "queue" => $queue1,
             "server" => $server,
-            "is_active" => true,
+            "is_available" => true,
             "is_enabled" => true,
         ]);
 
         IpAddressFactory::createOne([
             "queue" => $queue2,
             "server" => $server,
-            "is_active" => true,
+            "is_available" => true,
             "is_enabled" => true,
         ]);
 
@@ -66,7 +68,7 @@ class AllQueuesHaveAtLeastOneIpHealthCheckTest extends KernelTestCase
         IpAddressFactory::createOne([
             "queue" => $queueWithIp,
             "server" => $server,
-            "is_active" => true,
+            "is_available" => true,
             "is_enabled" => true,
         ]);
 
@@ -89,7 +91,7 @@ class AllQueuesHaveAtLeastOneIpHealthCheckTest extends KernelTestCase
         IpAddressFactory::createOne([
             "queue" => $queue,
             "server" => $server,
-            "is_active" => false,
+            "is_available" => false,
             "is_enabled" => true,
         ]);
 
@@ -114,7 +116,7 @@ class AllQueuesHaveAtLeastOneIpHealthCheckTest extends KernelTestCase
         IpAddressFactory::createOne([
             "queue" => $queue,
             "server" => $server,
-            "is_active" => true,
+            "is_available" => true,
             "is_enabled" => false,
         ]);
 
@@ -141,7 +143,7 @@ class AllQueuesHaveAtLeastOneIpHealthCheckTest extends KernelTestCase
         IpAddressFactory::createOne([
             "queue" => $queue,
             "server" => $server,
-            "is_active" => false,
+            "is_available" => false,
             "is_enabled" => false,
         ]);
 
@@ -170,7 +172,7 @@ class AllQueuesHaveAtLeastOneIpHealthCheckTest extends KernelTestCase
         IpAddressFactory::createOne([
             "queue" => $queue,
             "server" => $server,
-            "is_active" => true,
+            "is_available" => true,
             "is_enabled" => true,
         ]);
 
@@ -178,7 +180,7 @@ class AllQueuesHaveAtLeastOneIpHealthCheckTest extends KernelTestCase
         IpAddressFactory::createOne([
             "queue" => $queue,
             "server" => $server,
-            "is_active" => false,
+            "is_available" => false,
             "is_enabled" => true,
         ]);
 
@@ -186,7 +188,7 @@ class AllQueuesHaveAtLeastOneIpHealthCheckTest extends KernelTestCase
         IpAddressFactory::createOne([
             "queue" => $queue,
             "server" => $server,
-            "is_active" => true,
+            "is_available" => true,
             "is_enabled" => false,
         ]);
 
@@ -217,7 +219,7 @@ class AllQueuesHaveAtLeastOneIpHealthCheckTest extends KernelTestCase
         IpAddressFactory::createOne([
             "queue" => $queueWithIp,
             "server" => $server,
-            "is_active" => true,
+            "is_available" => true,
             "is_enabled" => true,
         ]);
 
@@ -246,7 +248,7 @@ class AllQueuesHaveAtLeastOneIpHealthCheckTest extends KernelTestCase
         IpAddressFactory::createOne([
             "queue" => null,
             "server" => $server,
-            "is_active" => true,
+            "is_available" => true,
             "is_enabled" => true,
         ]);
 

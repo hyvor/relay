@@ -96,7 +96,7 @@ func (suite *WebhookWorkerTestSuite) SetupTest() {
 	suite.NoError(err, "Failed to truncate test database")
 }
 
-func TestExampleTestSuite(t *testing.T) {
+func TestWebhookWorkerTestSuite(t *testing.T) {
 	suite.Run(t, new(WebhookWorkerTestSuite))
 }
 

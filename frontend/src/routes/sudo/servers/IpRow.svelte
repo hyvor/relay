@@ -46,7 +46,12 @@
 			</Tooltip>
 		{/if}
 
-		<Button size="x-small" color="input" style="margin-left: 5px;" on:click={handleQueueButtonClick}>
+		<Button
+			size="x-small"
+			color="input"
+			style="margin-left: 5px;"
+			on:click={handleQueueButtonClick}
+		>
 			{ip.queue ? 'Change' : 'Assign'}
 		</Button>
 	</td>
@@ -56,9 +61,6 @@
 			<Tag size="small" color="green">Forward ok</Tag>
 			<Tag size="small" color="green">Reverse ok</Tag>
 		</div>
-	</td>
-	<td>
-		<Switch />
 	</td>
 	<td class="">
 		<Tag size="small" color="green">Enabled</Tag>

@@ -1,10 +1,15 @@
 <?php
 
-namespace Api\Admin\Server;
+namespace App\Tests\Api\Sudo\Server;
 
+use App\Api\Sudo\Authorization\SudoAuthorizationListener;
+use App\Api\Sudo\Controller\ServerController;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ServerFactory;
+use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(ServerController::class)]
+#[CoversClass(SudoAuthorizationListener::class)]
 class GetServersTest extends WebTestCase
 {
 

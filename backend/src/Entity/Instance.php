@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\InstanceRepository;
+use App\Service\Ip\ServerIp;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: InstanceRepository::class)]
@@ -28,6 +29,18 @@ class Instance
 
     #[ORM\Column(type: "text")]
     private string $dkim_private_key_encrypted;
+
+    #[ORM\Column(type: "datetime_immutable", nullable: true)]
+    private ?\DateTimeImmutable $last_health_check_at = null;
+
+    /**
+     * @var array<mixed>
+     */
+    #[ORM\Column(type: "json")]
+    private array $health_check_results = [];
+
+    #[ORM\Column()]
+    private ?string $private_network_cidr = null;
 
     public function __construct() {}
 
@@ -97,4 +110,44 @@ class Instance
         $this->dkim_private_key_encrypted = $dkimPrivateKeyEncrypted;
         return $this;
     }
+
+    public function getLastHealthCheckAt(): ?\DateTimeImmutable
+    {
+        return $this->last_health_check_at;
+    }
+
+    public function setLastHealthCheckAt(?\DateTimeImmutable $lastHealthCheckAt): static
+    {
+        $this->last_health_check_at = $lastHealthCheckAt;
+        return $this;
+    }
+
+    /**
+     * @return array<mixed>
+     */
+    public function getHealthCheckResults(): array
+    {
+        return $this->health_check_results;
+    }
+
+    /**
+     * @param array<mixed> $healthCheckResults
+     */
+    public function setHealthCheckResults(array $healthCheckResults): static
+    {
+        $this->health_check_results = $healthCheckResults;
+        return $this;
+    }
+
+    public function getPrivateNetworkCidr(): string
+    {
+        return $this->private_network_cidr ?? ServerIp::DEFAULT_PRIVATE_IP_RANGE;
+    }
+
+    public function setPrivateNetworkCidr(?string $privateNetworkIpRange): static
+    {
+        $this->private_network_cidr = $privateNetworkIpRange;
+        return $this;
+    }
+
 }

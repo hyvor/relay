@@ -4,7 +4,9 @@ namespace App\Tests\Api\Console\Suppression;
 
 use App\Api\Console\Controller\SuppressionController;
 use App\Api\Console\Object\SuppressionObject;
+use App\Entity\Suppression;
 use App\Entity\Type\SuppressionReason;
+use App\Repository\SuppressionRepository;
 use App\Service\Suppression\SuppressionService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
@@ -14,6 +16,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(SuppressionController::class)]
 #[CoversClass(SuppressionService::class)]
 #[CoversClass(SuppressionObject::class)]
+#[CoversClass(SuppressionRepository::class)]
 class GetSuppressionsTest extends WebTestCase
 {
     public function test_get_suppresions(): void
@@ -48,10 +51,13 @@ class GetSuppressionsTest extends WebTestCase
             $this->assertArrayHasKey('email', $delivery);
             $this->assertArrayHasKey('reason', $delivery);
             $this->assertArrayHasKey('description', $delivery);
-            $this->assertSame($suppressions[$key]->getId(), $delivery['id']);
-            $this->assertSame($suppressions[$key]->getEmail(), $delivery['email']);
-            $this->assertSame($suppressions[$key]->getReason()->value, $delivery['reason']);
-            $this->assertSame($suppressions[$key]->getDescription(), $delivery['description']);
+            
+            // Ensure $key is treated as integer for array access
+            $suppressionIndex = (int) $key;
+            $this->assertSame($suppressions[$suppressionIndex]->getId(), $delivery['id']);
+            $this->assertSame($suppressions[$suppressionIndex]->getEmail(), $delivery['email']);
+            $this->assertSame($suppressions[$suppressionIndex]->getReason()->value, $delivery['reason']);
+            $this->assertSame($suppressions[$suppressionIndex]->getDescription(), $delivery['description']);
         }
     }
 
@@ -76,9 +82,11 @@ class GetSuppressionsTest extends WebTestCase
         );
 
         $this->assertSame(200, $response->getStatusCode());
+        /** @var array<array<string, mixed>> $content */
         $content = $this->getJson();
 
         $this->assertCount(1, $content);
+        $this->assertArrayHasKey(0, $content);
         $this->assertSame($content[0]['id'], $suppression->getId());
     }
 
@@ -106,9 +114,11 @@ class GetSuppressionsTest extends WebTestCase
         );
 
         $this->assertSame(200, $response->getStatusCode());
+        /** @var array<array<string, mixed>> $content */
         $content = $this->getJson();
 
         $this->assertCount(1, $content);
+        $this->assertArrayHasKey(0, $content);
         $this->assertSame($content[0]['id'], $bounceSuppression->getId());
         $this->assertSame($content[0]['reason'], 'bounce');
 
@@ -120,9 +130,11 @@ class GetSuppressionsTest extends WebTestCase
         );
 
         $this->assertSame(200, $response->getStatusCode());
+        /** @var array<array<string, mixed>> $content */
         $content = $this->getJson();
 
         $this->assertCount(1, $content);
+        $this->assertArrayHasKey(0, $content);
         $this->assertSame($content[0]['id'], $complaintSuppression->getId());
         $this->assertSame($content[0]['reason'], 'complaint');
     }
@@ -157,11 +169,15 @@ class GetSuppressionsTest extends WebTestCase
         );
 
         $this->assertSame(200, $response->getStatusCode());
+        
+        /** @var array<array<string, mixed>> $content */
         $content = $this->getJson();
 
         $this->assertCount(1, $content);
+        $this->assertArrayHasKey(0, $content);
         $this->assertSame($content[0]['id'], $bounceSuppression->getId());
         $this->assertSame($content[0]['reason'], 'bounce');
+        $this->assertIsString($content[0]['email']);
         $this->assertStringContainsString('thibault', $content[0]['email']);
     }
 }

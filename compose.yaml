@@ -30,7 +30,7 @@ services:
       target: backend-dev
     volumes:
       - ./backend:/app/backend
-      #- ../internal:/app/backend/vendor/hyvor/internal:ro
+      # - ../internal:/app/backend/vendor/hyvor/internal:ro
       # - ./shared:/app/shared
     labels:
       traefik.enable: true
@@ -41,8 +41,6 @@ services:
       traefik.http.services.hyvor-relay-backend.loadbalancer.server.port: 80
     networks:
       - hyvor-network
-    environment:
-      APP_VERSION: dev
     healthcheck:
       test: ls
       disable: true
@@ -59,6 +57,7 @@ services:
       - hyvor-network
     ports:
       - "10025:1025"
+      - "5353:53/udp"
 
 networks:
   hyvor-network:

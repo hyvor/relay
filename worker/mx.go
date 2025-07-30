@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -32,9 +31,9 @@ func (m *mxCacheType) Clear() {
 }
 
 var ErrSmtpMxLookupFailed = errors.New("MX lookup failed")
-var ErrSmtpMxNoRecords = errors.New("MX lookup returned no records")
 
 var lookupMxFunc = net.LookupMX
+var lookupHostFunc = net.LookupHost
 
 const TESTING_DOMAIN = "hyvor.local.testing"
 
@@ -45,53 +44,51 @@ func getMxHostsFromEmail(email string) ([]string, error) {
 		return []string{"hyvor-service-mailpit"}, nil
 	}
 
-	mxCache.mu.Lock()
-	defer mxCache.mu.Unlock()
-
+	// If the domain is already cached and not expired, return the cached hosts
 	if entry, ok := mxCache.data[domain]; ok && entry.Expiry.After(time.Now()) {
 		return entry.Hosts, nil
 	}
 
-	mx, err := lookupMxFunc(domain)
+	// Perform the MX lookup
+	// Note: mxErr can be set even if there are MX records, so we ignore it and check the length of mx
+	mx, _ := lookupMxFunc(domain)
 
-	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrSmtpMxLookupFailed, err)
+	// if there are MX records, return those hosts
+	// net.LookupMX already sorts & verifies the domains
+	if len(mx) > 0 {
+		hosts := getHostsFromMxRecords(mx)
+		setMxCacheEntry(domain, hosts)
+		return hosts, nil
 	}
 
-	slices.SortFunc(mx, func(a, b *net.MX) int {
-		if a.Pref < b.Pref {
-			return -1
-		} else if a.Pref > b.Pref {
-			return 1
-		}
-		return 0
-	})
+	// MX lookup failed or no records found
+	// We will check if current domain has any A records
+	ips, err := lookupHostFunc(domain)
 
-	var hosts []string
-	for _, mxRecord := range mx {
-		host := strings.TrimSuffix(mxRecord.Host, ".")
-
-		// skip empty hosts
-		if host == "" {
-			continue
-		}
-
-		// skip duplicates
-		if slices.Contains(hosts, host) {
-			continue
-		}
-
-		hosts = append(hosts, host)
+	if err == nil && len(ips) > 0 {
+		hosts := []string{domain}
+		setMxCacheEntry(domain, hosts)
+		return hosts, nil
 	}
 
-	if len(hosts) == 0 {
-		return nil, ErrSmtpMxNoRecords
-	}
+	return nil, fmt.Errorf("%w: %s", ErrSmtpMxLookupFailed, err)
+}
+
+func setMxCacheEntry(domain string, hosts []string) {
+	mxCache.mu.Lock()
+	defer mxCache.mu.Unlock()
 
 	mxCache.data[domain] = mxCacheEntry{
 		Hosts:  hosts,
 		Expiry: time.Now().Add(5 * time.Minute),
 	}
+}
 
-	return hosts, nil
+func getHostsFromMxRecords(mxRecords []*net.MX) []string {
+	var hosts []string
+	for _, mxRecord := range mxRecords {
+		host := strings.TrimSuffix(mxRecord.Host, ".")
+		hosts = append(hosts, host)
+	}
+	return hosts
 }

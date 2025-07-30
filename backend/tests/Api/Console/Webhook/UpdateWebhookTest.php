@@ -3,8 +3,10 @@
 namespace App\Tests\Api\Console\Webhook;
 
 use App\Api\Console\Controller\WebhookController;
+use App\Api\Console\Input\UpdateWebhookInput;
 use App\Api\Console\Object\WebhookObject;
 use App\Entity\Webhook;
+use App\Repository\WebhookRepository;
 use App\Service\Webhook\WebhookService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
@@ -14,6 +16,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(WebhookController::class)]
 #[CoversClass(WebhookService::class)]
 #[CoversClass(WebhookObject::class)]
+#[CoversClass(Webhook::class)]
+#[CoversClass(WebhookRepository::class)]
+#[CoversClass(UpdateWebhookInput::class)]
 class UpdateWebhookTest extends WebTestCase
 {
     public function test_update_webhook(): void
@@ -47,8 +52,8 @@ class UpdateWebhookTest extends WebTestCase
         $this->assertArrayHasKey('description', $content);
         $this->assertSame('https://example.com/new', $content['url']);
         $this->assertSame('New description', $content['description']);
-        $this->assertContains('send.complained', $content['events']);
-        $this->assertContains('suppression.created', $content['events']);
+        $this->assertContains('send.complained', (array) $content['events']);
+        $this->assertContains('suppression.created', (array) $content['events']);
 
         $webhookDb = $this->em->getRepository(Webhook::class)->find($webhook->getId());
         $this->assertNotNull($webhookDb);

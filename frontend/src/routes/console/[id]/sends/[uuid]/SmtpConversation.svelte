@@ -2,25 +2,10 @@
 	import type { SmtpConversation } from '../../../types';
 
 	interface Props {
-		// host => SmtpConversation
-		conversations: Record<string, SmtpConversation>;
-		sentMxHost: string | null;
+		conversation: SmtpConversation;
 	}
 
-	let { conversations, sentMxHost }: Props = $props();
-
-	let selectedConversation = $derived.by(() => {
-		if (sentMxHost && conversations[sentMxHost]) {
-			return conversations[sentMxHost];
-		}
-
-		const hosts = Object.keys(conversations);
-		if (hosts.length > 0) {
-			return conversations[hosts[0]];
-		}
-
-		return null;
-	});
+	let { conversation }: Props = $props();
 
 	function codeClass(code: number): string {
 		if (code >= 400) {
@@ -30,26 +15,24 @@
 	}
 </script>
 
-{#if selectedConversation}
-	<div class="code">
-		{#each selectedConversation.Steps as step}
-			{#if step.Name !== 'dial'}
-				<div class="step">
-					<div class="client">
-						{#if step.Name === 'data_close'}
-							{`<DATACLOSE>`}
-						{:else}
-							{step.Command}
-						{/if}
-					</div>
-					<div class="server {codeClass(step.ReplyCode)}">
-						{`${step.ReplyCode} ${step.ReplyText}`}
-					</div>
+<div class="code">
+	{#each conversation.Steps as step}
+		{#if step.Name !== 'dial'}
+			<div class="step">
+				<div class="client">
+					{#if step.Name === 'data_close'}
+						{`<DATACLOSE>`}
+					{:else}
+						{step.Command}
+					{/if}
 				</div>
-			{/if}
-		{/each}
-	</div>
-{/if}
+				<div class="server {codeClass(step.ReplyCode)}">
+					{`${step.ReplyCode} ${step.ReplyText}`}
+				</div>
+			</div>
+		{/if}
+	{/each}
+</div>
 
 <style>
 	.code {

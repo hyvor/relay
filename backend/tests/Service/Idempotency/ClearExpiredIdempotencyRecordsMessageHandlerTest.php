@@ -4,9 +4,12 @@ namespace App\Tests\Service\Idempotency;
 
 use App\Entity\ApiIdempotencyRecord;
 use App\Service\Idempotency\Message\ClearExpiredIdempotencyRecordsMessage;
+use App\Service\Idempotency\MessageHandler\ClearExpiredIdempotencyRecordsMessageHandler;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\ApiIdempotencyRecordFactory;
+use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(ClearExpiredIdempotencyRecordsMessageHandler::class)]
 class ClearExpiredIdempotencyRecordsMessageHandlerTest extends KernelTestCase
 {
 

@@ -48,6 +48,9 @@ class Send
     #[ORM\JoinColumn]
     private Queue $queue;
 
+    #[ORM\Column()]
+    private string $queue_name; // denormalized for easier access
+
     #[ORM\Column(type: "string")]
     private string $from_address;
 
@@ -206,6 +209,17 @@ class Send
     public function setQueue(Queue $queue): static
     {
         $this->queue = $queue;
+        return $this;
+    }
+
+    public function getQueueName(): string
+    {
+        return $this->queue_name;
+    }
+
+    public function setQueueName(string $queue_name): static
+    {
+        $this->queue_name = $queue_name;
         return $this;
     }
 

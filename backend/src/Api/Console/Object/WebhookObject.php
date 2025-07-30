@@ -8,7 +8,10 @@ class WebhookObject
 {
     public int $id;
     public string $url;
-    public string $description;
+    public ?string $description;
+    /**
+     * @var string[]
+     */
     public array $events;
 
     public function __construct(Webhook $webhook)

@@ -18,10 +18,13 @@ class InstanceRepository extends ServiceEntityRepository
 
     public function findFirst(): ?Instance
     {
-        return $this->createQueryBuilder('i')
+        /** @var Instance|null $result */
+        $result = $this->createQueryBuilder('i')
             ->orderBy('i.id', 'ASC')
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
+        
+        return $result;
     }
 }

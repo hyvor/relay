@@ -2,11 +2,17 @@
 
 namespace App\Tests\Api\Console\Suppression;
 
+use App\Api\Console\Controller\SuppressionController;
 use App\Entity\Suppression;
+use App\Repository\SuppressionRepository;
+use App\Service\Suppression\SuppressionService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\SuppressionFactory;
+use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(SuppressionController::class)]
+#[CoversClass(SuppressionService::class)]
 class DeleteSuppressionTest extends WebTestCase
 {
     public function test_delete_suppression(): void

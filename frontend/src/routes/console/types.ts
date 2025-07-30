@@ -57,6 +57,8 @@ export interface SendAttempt {
 
 export interface SmtpConversation {
     StartTime: string;
+    Error: string; // empty if no error
+    SmtpErrorStatus: number;
     Steps: SmtpStep[];
 }
 

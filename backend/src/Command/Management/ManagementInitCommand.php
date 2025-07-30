@@ -8,7 +8,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand('management:init', description: 'Initialize the current system in the database')]
+#[AsCommand('management:init', description: 'Initialize the current server in the database')]
 class ManagementInitCommand extends Command
 {
 

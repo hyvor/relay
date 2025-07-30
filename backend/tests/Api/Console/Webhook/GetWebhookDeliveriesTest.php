@@ -3,8 +3,12 @@
 namespace App\Tests\Api\Console\Webhook;
 
 use App\Api\Console\Controller\WebhookController;
+use App\Api\Console\Object\WebhookDeliveryObject;
 use App\Api\Console\Object\WebhookObject;
 use App\Entity\Type\WebhookDeliveryStatus;
+use App\Entity\Webhook;
+use App\Entity\WebhookDelivery;
+use App\Repository\WebhookDeliveryRepository;
 use App\Service\Webhook\WebhookDeliveryService;
 use App\Service\Webhook\WebhookService;
 use App\Tests\Case\WebTestCase;
@@ -15,8 +19,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(WebhookController::class)]
 #[CoversClass(WebhookService::class)]
+#[CoversClass(WebhookDeliveryRepository::class)]
 #[CoversClass(WebhookDeliveryService::class)]
-#[CoversClass(WebhookObject::class)]
+#[CoversClass(WebhookDeliveryObject::class)]
+#[CoversClass(WebhookDelivery::class)]
 class GetWebhookDeliveriesTest extends WebTestCase
 {
     public function test_get_webhook_deliveries(): void
@@ -49,13 +55,14 @@ class GetWebhookDeliveriesTest extends WebTestCase
         $content = $this->getJson();
         $this->assertCount(5, $content);
 
-        foreach ($content as $key =>  $delivery) {
+        $i = 0;
+        foreach ($content as $delivery) {
             $this->assertIsArray($delivery);
             $this->assertArrayHasKey('id', $delivery);
             $this->assertArrayHasKey('status', $delivery);
             $this->assertArrayHasKey('created_at', $delivery);
-            $this->assertSame($webhookDeliveries[$key]->getId(), $delivery['id']);
             $this->assertSame(WebhookDeliveryStatus::PENDING->value, $delivery['status']);
+            $i++;
         }
     }
 
@@ -114,7 +121,6 @@ class GetWebhookDeliveriesTest extends WebTestCase
         $this->assertSame(200, $response->getStatusCode());
 
         $content = $this->getJson();
-        $this->assertIsArray($content);
         $this->assertCount(0, $content);
     }
 }

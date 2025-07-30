@@ -4,9 +4,12 @@ namespace App\Tests\Service\Send\MessageHandler;
 
 use App\Entity\Send;
 use App\Service\Send\Message\ClearExpiredSendsMessage;
+use App\Service\Send\MessageHandler\ClearExpiredSendsMessageHandler;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\SendFactory;
+use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(ClearExpiredSendsMessageHandler::class)]
 class ClearExpiredSendsMessageHandlerTest extends KernelTestCase
 {
 

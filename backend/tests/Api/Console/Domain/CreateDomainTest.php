@@ -9,8 +9,8 @@ use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
-use App\Util\EventDispatcher\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
+use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 
 #[CoversClass(DomainController::class)]
 #[CoversClass(DomainService::class)]
@@ -64,15 +64,20 @@ class CreateDomainTest extends WebTestCase
 
         $this->assertSame('example.com', $json['domain']);
         $dkimSelector = $json['dkim_selector'];
+        $this->assertIsString($dkimSelector);
+        
         $this->assertStringStartsWith('rly', $dkimSelector);
         $this->assertSame($dkimSelector . '._domainkey.example.com', $json['dkim_host']);
 
-        $this->assertStringStartsWith('v=DKIM1; k=rsa; p=', $json['dkim_txt_value']);
+        $dkimTxtValue = $json['dkim_txt_value'];
+        $this->assertIsString($dkimTxtValue);
+        $this->assertStringStartsWith('v=DKIM1; k=rsa; p=', $dkimTxtValue);
 
         $eventDispatcher->assertDispatched(DomainCreatedEvent::class);
+        $firstEvent = $eventDispatcher->getFirstEvent(DomainCreatedEvent::class);
         $this->assertSame(
             $json['id'],
-            $eventDispatcher->getFirstEvent(DomainCreatedEvent::class)?->domain->getId()
+            $firstEvent->domain->getId()
         );
     }
 

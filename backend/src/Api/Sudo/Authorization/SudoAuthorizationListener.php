@@ -2,7 +2,6 @@
 
 namespace App\Api\Sudo\Authorization;
 
-use App\Repository\SudoUserRepository;
 use App\Service\SudoUser\SudoUserService;
 use Hyvor\Internal\Auth\Auth;
 use Hyvor\Internal\Auth\AuthInterface;

@@ -3,6 +3,7 @@ import type { Component } from 'svelte';
 import Introduction from './content/Introduction.svelte';
 import Setup from './content/Setup.svelte';
 import Deploy from './content/Deploy.svelte';
+import Monitoring from './content/Monitoring.svelte';
 
 export const categories: Category[] = [
 	{
@@ -10,18 +11,13 @@ export const categories: Category[] = [
 		pages: [
 			{
 				slug: '',
-				name: 'Getting Started',
+				name: 'Introduction',
                 component: Introduction
 			},
 			{
 				slug: 'deploy',
 				name: 'Deploy',
                 component: Deploy
-			},
-			{
-				slug: 'install',
-				name: 'Install & Run',
-                component: Introduction
 			},
 			{
 				slug: 'setup',
@@ -34,9 +30,9 @@ export const categories: Category[] = [
                 component: Introduction
 			},
 			{
-				slug: 'debugging',
-				name: 'Debugging',
-				component: Introduction
+				slug: 'monitoring',
+				name: 'Monitoring',
+				component: Monitoring
 			},
 			{
 				slug: 'api-sudo',
@@ -51,6 +47,11 @@ export const categories: Category[] = [
 			{
 				slug: 'deploy-easy',
 				name: 'Easy Deploy',
+				component: Introduction,
+			},
+			{
+				slug: 'learn',
+				name: 'Learn Sending Emails',
 				component: Introduction,
 			}
 		]
