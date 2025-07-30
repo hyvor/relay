@@ -26,8 +26,16 @@ class UpdateServerInput
         }
     }
 
+    public int $incoming_workers {
+        set {
+            $this->incomingWorkersSet = true;
+            $this->incoming_workers = $value;
+        }
+    }
+
     public bool $apiWorkersSet = false;
     public bool $emailWorkersSet = false;
     public bool $webhookWorkersSet = false;
+    public bool $incomingWorkersSet = false;
 
 }

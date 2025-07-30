@@ -26,6 +26,7 @@ export interface Server {
     api_workers: number;
     email_workers: number;
     webhook_workers: number;
+    incoming_workers: number;
 }
 
 export interface IpAddress {

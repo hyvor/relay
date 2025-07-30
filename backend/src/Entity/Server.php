@@ -40,6 +40,9 @@ class Server
     #[ORM\Column(type: "integer")]
     private int $webhook_workers = 0;
 
+    #[ORM\Column(type: "integer")]
+    private int $incoming_workers = 0;
+
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->created_at;
@@ -136,6 +139,17 @@ class Server
     public function setWebhookWorkers(int $webhookWorkers): static
     {
         $this->webhook_workers = $webhookWorkers;
+        return $this;
+    }
+
+    public function getIncomingWorkers(): int
+    {
+        return $this->incoming_workers;
+    }
+
+    public function setIncomingWorkers(int $incomingWorkers): static
+    {
+        $this->incoming_workers = $incomingWorkers;
         return $this;
     }
 }

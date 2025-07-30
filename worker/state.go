@@ -14,6 +14,7 @@ type GoState struct {
 	Ips               []GoStateIp `json:"ips"`
 	EmailWorkersPerIp int         `json:"emailWorkersPerIp"`
 	WebhookWorkers    int         `json:"webhookWorkers"`
+	IncomingWorkers   int         `json:"incomingWorkers"`
 	IsLeader          bool        `json:"isLeader"`
 
 	DnsIp      string             `json:"dnsIp"`
@@ -73,7 +74,7 @@ func (s *ServiceState) Set(goState GoState) {
 
 	s.EmailWorkersPool.Set(goState.Ips, goState.EmailWorkersPerIp, goState.InstanceDomain)
 	s.WebhookWorkersPool.Set(goState.WebhookWorkers)
-	s.BounceServer.Set(goState.InstanceDomain, 2)
+	s.BounceServer.Set(goState.InstanceDomain, goState.IncomingWorkers)
 
 	if goState.DnsIp != "" {
 		s.DnsServer.Set(

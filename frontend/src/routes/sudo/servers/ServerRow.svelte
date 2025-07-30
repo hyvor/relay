@@ -50,6 +50,7 @@
 			<WorkersTag text="API" value={server.api_workers} />
 			<WorkersTag text="Email" value={server.email_workers} />
 			<WorkersTag text="Webhook" value={server.webhook_workers} />
+			<WorkersTag text="Incoming" value={server.incoming_workers} />
 		</div>
 	</div>
 
@@ -92,6 +93,7 @@
 			<WorkerSplit worker="api" {server} />
 			<WorkerSplit worker="email" {server} />
 			<WorkerSplit worker="webhook" {server} />
+			<WorkerSplit worker="incoming" {server} />
 		</div>
 	{/if}
 </div>

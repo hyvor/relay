@@ -11,6 +11,7 @@ import (
 
 	"github.com/emersion/go-sasl"
 	smtp "github.com/emersion/go-smtp"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Inconming server is a simple SMTP server that handles incoming emails to the instance domain emails.
@@ -28,7 +29,8 @@ type IncomingBackend struct {
 // NewSession is called after client greeting (EHLO, HELO).
 func (bkd *IncomingBackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 	return &Session{
-		logger: bkd.logger,
+		logger:      bkd.logger,
+		mailChannel: bkd.mailChannel,
 		incomingMail: IncomingMail{
 			logger:         bkd.logger,
 			InstanceDomain: bkd.instanceDomain,
@@ -40,6 +42,7 @@ func (bkd *IncomingBackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 type Session struct {
 	logger       *slog.Logger
 	incomingMail IncomingMail
+	mailChannel  chan *IncomingMail
 }
 
 // AuthMechanisms returns a slice of available auth mechanisms; only PLAIN is
@@ -92,9 +95,8 @@ func (s *Session) Data(r io.Reader) error {
 			"data", string(b),
 		)
 
-		s.incomingMail.Handle()
-
-		// _ := string(b[:])
+		s.incomingMail.Data = b
+		s.mailChannel <- &s.incomingMail
 	}
 	return nil
 }
@@ -110,6 +112,7 @@ type BounceServer struct {
 	logger     *slog.Logger
 	smtpServer *smtp.Server
 	cancelFunc context.CancelFunc
+	pgpool     *pgxpool.Pool
 }
 
 func NewBounceServer(ctx context.Context, logger *slog.Logger) *BounceServer {
@@ -158,7 +161,18 @@ func (b *BounceServer) Shutdown() {
 func (b *BounceServer) Start(ctx context.Context, logger *slog.Logger, instanceDomain string, numWorkers int) {
 	b.logger = logger
 
+	// channel
 	mailChannel := make(chan *IncomingMail)
+
+	// pgppool
+	pgpool, err := createNewRetryingPgPool(ctx, 1, int32(numWorkers))
+	if err != nil {
+		logger.Error("Failed to create pgpool", "error", err)
+		return
+	}
+	b.pgpool = pgpool
+
+	// worker context
 	workerCtx, cancel := context.WithCancel(ctx)
 	b.cancelFunc = cancel
 	defer cancel()
@@ -174,6 +188,7 @@ func (b *BounceServer) Start(ctx context.Context, logger *slog.Logger, instanceD
 			workerCtx,
 			mailChannel,
 			logger,
+			pgpool,
 		)
 	}
 

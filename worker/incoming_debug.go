@@ -4,7 +4,7 @@ type DebugIncomingType string
 
 const (
 	DebugIncomingTypeBounce DebugIncomingType = "bounce"
-	DebugIncomingTypeFBL    DebugIncomingType = "fbl"
+	DebugIncomingTypeFbl    DebugIncomingType = "fbl"
 )
 
 type DebugIncomingStatus string
@@ -17,7 +17,7 @@ const (
 func createDebugRecord(
 	debugType DebugIncomingType,
 	status DebugIncomingStatus,
-	rawEmail string,
+	rawEmail []byte,
 	mailFrom string,
 	rcptTo string,
 	parsedData interface{},

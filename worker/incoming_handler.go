@@ -6,12 +6,13 @@ import (
 	"strings"
 
 	"github.com/hyvor/relay/worker/bounceparse"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type IncomingMail struct {
 	MailFrom       string
 	RcptTo         string
-	Data           string
+	Data           []byte
 	InstanceDomain string
 
 	logger *slog.Logger
@@ -20,7 +21,7 @@ type IncomingMail struct {
 // call after the data is read
 func (m *IncomingMail) Handle() {
 
-	isBounce, uuid := checkBounceEmail(m.RcptTo, m.InstanceDomain)
+	isBounce, bounceUuid := checkBounceEmail(m.RcptTo, m.InstanceDomain)
 	isFbl := checkFbl(m.RcptTo, m.InstanceDomain)
 
 	if !isBounce && !isFbl {
@@ -32,23 +33,66 @@ func (m *IncomingMail) Handle() {
 		return
 	}
 
+	var debugType DebugIncomingType
+	var debugStatus DebugIncomingStatus
+	var debugErrorMessage string
+	var debugParsedData interface{}
+
 	if isBounce {
-		m.handleBounce(uuid)
-		return
+
+		debugType = DebugIncomingTypeBounce
+
+		bounceDsn, err := bounceparse.ParseDsn(m.Data)
+
+		debugStatus = DebugIncomingStatusSuccess
+		debugErrorMessage = ""
+		if err != nil {
+			debugStatus = DebugIncomingStatusFailed
+			debugErrorMessage = err.Error()
+		} else {
+			debugParsedData = bounceDsn
+		}
+
+		m.logger.Info(bounceUuid) // TODO: remove this
+
+	} else if isFbl {
+
+		arf, err := bounceparse.ParseArf(m.Data)
+
+		debugType = DebugIncomingTypeFbl
+		debugStatus = DebugIncomingStatusSuccess
+		debugErrorMessage = ""
+		if err != nil {
+			debugStatus = DebugIncomingStatusFailed
+			debugErrorMessage = err.Error()
+		} else {
+			debugParsedData = arf
+		}
+
 	}
+
+	createDebugRecord(
+		debugType,
+		debugStatus,
+		m.Data,
+		m.MailFrom,
+		m.RcptTo,
+		debugParsedData,
+		debugErrorMessage,
+	)
 
 }
 
-func (m *IncomingMail) handleBounce(uuid string) {
+func (m *IncomingMail) handleBounce(uuid string) (*bounceparse.Dsn, error) {
 
-	_, err := bounceparse.ParseDsn([]byte(m.Data))
+	dsn, err := bounceparse.ParseDsn([]byte(m.Data))
 
 	if err != nil {
 		m.logger.Error("Error parsing bounce email", "error", err)
-		return
+		return nil, err
 	}
 
-	//
+	return dsn, nil
 
 }
 
@@ -106,6 +150,7 @@ func incomingMailWorker(
 	ctx context.Context,
 	mailChannel chan *IncomingMail,
 	logger *slog.Logger,
+	pgpool *pgxpool.Pool,
 ) {
 
 	logger.Info("Starting incoming mail handler")

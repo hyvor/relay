@@ -36,6 +36,11 @@ class GoState
         public int $webhookWorkers,
 
         /**
+         * The number of maximum workers to handle incoming mail
+         */
+        public int $incomingWorkers,
+
+        /**
          * first server is always the leader
          * it exposes global metrics
          */
