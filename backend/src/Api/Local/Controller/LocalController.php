@@ -55,5 +55,4 @@ class LocalController extends AbstractController
 
         return new JsonResponse([]);
     }
-
 }

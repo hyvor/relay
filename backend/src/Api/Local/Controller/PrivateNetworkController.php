@@ -43,4 +43,10 @@ class PrivateNetworkController extends AbstractController
         ]);
     }
 
+    #[Route('/ping', methods: 'GET')]
+    #[AllowPrivateNetwork]
+    public function ping() : JsonResponse
+    {
+        return new JsonResponse([]);
+    }
 }
