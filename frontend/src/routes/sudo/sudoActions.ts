@@ -110,3 +110,10 @@ export function deleteDnsRecord(recordId: number) {
 		endpoint: `/dns-records/${recordId}`
 	});
 }
+
+export function debugParseBounceFBL(raw: string, type: 'bounce' | 'fbl') {
+	return sudoApi.post<{parsed: Record<string, any>}>({
+		endpoint: '/debug/parse-bounce-fbl',
+		data: { raw, type }
+	});
+}

@@ -68,6 +68,7 @@ class GoStateFactory
             ips: $ips,
             emailWorkersPerIp: $server->getEmailWorkers(),
             webhookWorkers: $server->getWebhookWorkers(),
+            incomingWorkers: $server->getIncomingWorkers(),
             isLeader: $isLeader,
 
             // data for the DNS server

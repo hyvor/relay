@@ -64,4 +64,16 @@ class GoHttpApi
         $this->callApi('/state', (array) $goState);
     }
 
+    /**
+     * @throws GoHttpCallException
+     * @return array<mixed>
+     */
+    public function parseBounceOrFbl(string $raw): array
+    {
+        return $this->callApi('/debug/parse-bounce-fbl', [
+            'raw' => base64_encode($raw),
+            'type' => 'bounce'
+        ]);
+    }
+
 }

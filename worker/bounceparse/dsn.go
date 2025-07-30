@@ -27,6 +27,7 @@ type DsnRecipient struct {
 	Action       string // Action taken, e.g., "failed", "delayed", "delivered" (https://datatracker.ietf.org/doc/html/rfc3464#section-2.3.3)
 }
 
+// ParseBounce
 func ParseDsn(input []byte) (*Dsn, error) {
 
 	dsn := &Dsn{}

@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { NavLink } from '@hyvor/design/components';
 	import IconHandThumbsDown from '@hyvor/icons/IconHandThumbsDown';
+	import IconSearch from '@hyvor/icons/IconSearch';
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -19,6 +20,15 @@
 				<IconHandThumbsDown />
 			{/snippet}
 			Bounce/FBL Logs
+		</NavLink>
+		<NavLink
+			href="/sudo/debug/bounces-parser"
+			active={page.url.pathname === '/sudo/debug/bounces-parser'}
+		>
+			{#snippet start()}
+				<IconSearch />
+			{/snippet}
+			Bounce/FBL Parser
 		</NavLink>
 	</div>
 
