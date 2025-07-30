@@ -11,3 +11,9 @@
 <Base>
 	{@render children?.()}
 </Base>
+
+<style>
+	:global(:root) {
+		--accent-light-mid: var(--accent-lightest);
+	}
+</style>

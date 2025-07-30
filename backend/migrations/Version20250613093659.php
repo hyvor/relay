@@ -24,7 +24,7 @@ final class Version20250613093659 extends AbstractMigration
             <<<SQL
             CREATE TABLE sends (
                 id SERIAL PRIMARY KEY,
-                uuid UUID NOT NULL UNIQUE,
+                uuid UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
                 created_at TIMESTAMPTZ NOT NULL,
                 updated_at TIMESTAMPTZ NOT NULL,
                 send_after TIMESTAMPTZ NOT NULL,

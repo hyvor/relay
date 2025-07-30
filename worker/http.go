@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/hyvor/relay/worker/bounceparse"
 )
 
 func StartHttpServer(
@@ -16,6 +18,7 @@ func StartHttpServer(
 
 	mux.HandleFunc("/health", handleHealth)
 	mux.HandleFunc("/state", handleSetState(serviceState))
+	mux.HandleFunc("/debug/parse-bounce-fbl", handleParseBounceFBL())
 
 	var handler http.Handler = mux
 
@@ -69,6 +72,51 @@ func handleSetState(
 
 		writeJsonResponse(w, map[string]string{"message": "Go state updated"})
 	}
+}
+
+func handleParseBounceFBL() http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		type ParseBounceFBLRequest struct {
+			RawEmail []byte `json:"raw"`
+			Type     string `json:"type"`
+		}
+
+		var request ParseBounceFBLRequest
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&request)
+
+		if err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		var parsed interface{}
+
+		if request.Type == "bounce" {
+
+			parsed, err = bounceparse.ParseDsn(request.RawEmail)
+
+			if err != nil {
+				http.Error(w, "Failed to parse bounce email: "+err.Error(), http.StatusUnprocessableEntity)
+				return
+			}
+
+		} else if request.Type == "fbl" {
+
+			parsed, err = bounceparse.ParseArf(request.RawEmail)
+
+			if err != nil {
+				http.Error(w, "Failed to parse FBL email: "+err.Error(), http.StatusUnprocessableEntity)
+				return
+			}
+
+		}
+
+		writeJsonResponse(w, parsed)
+	}
+
 }
 
 func writeJsonResponse(w http.ResponseWriter, data interface{}) {

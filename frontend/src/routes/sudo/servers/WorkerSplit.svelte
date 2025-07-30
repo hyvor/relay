@@ -4,7 +4,7 @@
 	import { updateServer } from '../sudoActions';
 
 	interface Props {
-		worker: 'api' | 'email' | 'webhook';
+		worker: 'api' | 'email' | 'webhook' | 'incoming';
 		server: Server;
 	}
 
@@ -19,7 +19,8 @@
 		return {
 			api: 'API Workers',
 			email: 'Email Workers per IP',
-			webhook: 'Webhook Workers'
+			webhook: 'Webhook Workers',
+			incoming: 'Incoming Mail Workers'
 		}[worker];
 	}
 
@@ -27,7 +28,8 @@
 		return {
 			api: 'Each worker can consume around 5MB of memory. Scale based on your API load.',
 			email: 'Number of Go workers sending emails per IP. Default is 4.',
-			webhook: 'Number of Go workers processing webhooks. Default is 2.'
+			webhook: 'Number of Go workers processing webhooks. Default is 2.',
+			incoming: 'Number of maximum Go workers for processing incoming mails. Default is 1.'
 		}[worker];
 	}
 
@@ -52,7 +54,7 @@
 <SplitControl label={getWorkerName()}>
 	<div class="input-wrap">
 		<TextInput bind:value type="number" min={0} block />
-		<Button onclick={save} disabled={initialValue === value}>Save</Button>
+		<Button onclick={save} disabled={initialValue === value || saving}>Save</Button>
 	</div>
 
 	<div class="tip">

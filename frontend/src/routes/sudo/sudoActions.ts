@@ -1,6 +1,6 @@
 import sudoApi from './sudoApi';
 import { instanceStore, serversStore } from './sudoStore';
-import type { IpAddress, Queue, Server, SudoInitResponse, HealthCheckResults, Instance, DnsRecord, DnsRecordType } from './sudoTypes';
+import type { IpAddress, Queue, Server, SudoInitResponse, HealthCheckResults, Instance, DnsRecord, DnsRecordType, DebugIncomingEmail } from './sudoTypes';
 
 export function initSudo() {
 	return sudoApi.post<SudoInitResponse>({
@@ -108,5 +108,18 @@ export function updateDnsRecord(recordId: number, record: {
 export function deleteDnsRecord(recordId: number) {
 	return sudoApi.delete({
 		endpoint: `/dns-records/${recordId}`
+	});
+}
+
+export function debugGetIncomingMails() {
+	return sudoApi.get<DebugIncomingEmail[]>({
+		endpoint: '/debug/incoming-mails'
+	});
+}
+
+export function debugParseBounceFBL(raw: string, type: 'bounce' | 'fbl') {
+	return sudoApi.post<{parsed: Record<string, any>}>({
+		endpoint: '/debug/parse-bounce-fbl',
+		data: { raw, type }
 	});
 }

@@ -11,6 +11,7 @@
 	import { initSudo } from './sudoActions';
 	import { instanceStore, sudoConfigStore } from './sudoStore';
 	import IconGear from '@hyvor/icons/IconGear';
+	import IconBug from '@hyvor/icons/IconBug';
 
 	dayjs.extend(relativeTime);
 
@@ -90,6 +91,18 @@
 							Settings
 						</NavLink>
 
+						<div class="section-div"></div>
+
+						<NavLink
+							href="/sudo/debug"
+							active={page.url.pathname.startsWith('/sudo/debug')}
+						>
+							{#snippet start()}
+								<IconBug />
+							{/snippet}
+							Debug
+						</NavLink>
+
 						<!-- <div class="nav-title">Users</div>
 
 					<NavLink href="/sudo/projects" active={page.url.pathname === '/sudo/projects'}>
@@ -166,5 +179,10 @@
 		font-size: 12px;
 		color: var(--text-light);
 		text-align: center;
+	}
+
+	.section-div {
+		height: 25px;
+		flex-shrink: 0;
 	}
 </style>

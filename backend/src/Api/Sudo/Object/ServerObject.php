@@ -15,6 +15,7 @@ class ServerObject
     public int $api_workers;
     public int $email_workers;
     public int $webhook_workers;
+    public int $incoming_workers;
 
     public function __construct(Server $server)
     {
@@ -27,5 +28,6 @@ class ServerObject
         $this->api_workers = $server->getApiWorkers();
         $this->email_workers = $server->getEmailWorkers();
         $this->webhook_workers = $server->getWebhookWorkers();
+        $this->incoming_workers = $server->getIncomingWorkers();
     }
 }

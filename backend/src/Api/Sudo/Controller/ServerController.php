@@ -58,6 +58,9 @@ class ServerController extends AbstractController
         if ($input->webhookWorkersSet) {
             $updates->webhookWorkers = $input->webhook_workers;
         }
+        if ($input->incomingWorkersSet) {
+            $updates->incomingWorkers = $input->incoming_workers;
+        }
 
         try {
             $this->serverService->updateServer($server, $updates, updateStateCall: true);
