@@ -66,4 +66,12 @@ class PrivateNetworkApi
         $this->callApiOfServer($server, 'POST', '/state/update');
     }
 
+    /**
+     * @throws PrivateNetworkCallException
+     */
+    public function pingServer(Server $server): void
+    {
+        $this->callApiOfServer($server, 'GET', '/ping');
+    }
+
 }
