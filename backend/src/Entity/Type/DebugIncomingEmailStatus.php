@@ -2,7 +2,7 @@
 
 namespace App\Entity\Type;
 
-enum DebugIncomingEmailsStatus: string
+enum DebugIncomingEmailStatus: string
 {
     case SUCCESS = 'success';
     case FAILED = 'failed';

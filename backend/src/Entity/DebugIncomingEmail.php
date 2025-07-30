@@ -2,8 +2,8 @@
 
 namespace App\Entity;
 
-use App\Entity\Type\DebugIncomingEmailsStatus;
-use App\Entity\Type\DebugIncomingEmailsType;
+use App\Entity\Type\DebugIncomingEmailStatus;
+use App\Entity\Type\DebugIncomingEmailType;
 use App\Repository\DebugIncomingEmailRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -22,11 +22,11 @@ class DebugIncomingEmail
     #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable $updated_at;
 
-    #[ORM\Column(type: "string", enumType: DebugIncomingEmailsType::class)]
-    private DebugIncomingEmailsType $type;
+    #[ORM\Column(type: "string", enumType: DebugIncomingEmailType::class)]
+    private DebugIncomingEmailType $type;
 
-    #[ORM\Column(type: "string", enumType: DebugIncomingEmailsStatus::class)]
-    private DebugIncomingEmailsStatus $status;
+    #[ORM\Column(type: "string", enumType: DebugIncomingEmailStatus::class)]
+    private DebugIncomingEmailStatus $status;
 
     #[ORM\Column(type: "text")]
     private string $raw_email;
@@ -37,6 +37,9 @@ class DebugIncomingEmail
     #[ORM\Column(type: "text")]
     private string $rcpt_to;
 
+    /**
+     * @var array<mixed>|null
+     */
     #[ORM\Column(type: "json", nullable: true)]
     private ?array $parsed_data = null;
 
@@ -80,23 +83,23 @@ class DebugIncomingEmail
         return $this;
     }
 
-    public function getType(): DebugIncomingEmailsType
+    public function getType(): DebugIncomingEmailType
     {
         return $this->type;
     }
 
-    public function setType(DebugIncomingEmailsType $type): static
+    public function setType(DebugIncomingEmailType $type): static
     {
         $this->type = $type;
         return $this;
     }
 
-    public function getStatus(): DebugIncomingEmailsStatus
+    public function getStatus(): DebugIncomingEmailStatus
     {
         return $this->status;
     }
 
-    public function setStatus(DebugIncomingEmailsStatus $status): static
+    public function setStatus(DebugIncomingEmailStatus $status): static
     {
         $this->status = $status;
         return $this;

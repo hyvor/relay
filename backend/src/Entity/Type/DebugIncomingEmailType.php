@@ -2,7 +2,7 @@
 
 namespace App\Entity\Type;
 
-enum DebugIncomingEmailsType: string
+enum DebugIncomingEmailType: string
 {
     case BOUNCE = 'bounce';
     case FBL = 'fbl';

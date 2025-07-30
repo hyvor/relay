@@ -32,7 +32,6 @@ func (bkd *IncomingBackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 		logger:      bkd.logger,
 		mailChannel: bkd.mailChannel,
 		incomingMail: IncomingMail{
-			logger:         bkd.logger,
 			InstanceDomain: bkd.instanceDomain,
 		},
 	}, nil
@@ -187,7 +186,6 @@ func (b *BounceServer) Start(ctx context.Context, logger *slog.Logger, instanceD
 		go incomingMailWorker(
 			workerCtx,
 			mailChannel,
-			logger,
 			pgpool,
 		)
 	}

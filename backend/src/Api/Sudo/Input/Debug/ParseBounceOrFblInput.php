@@ -3,7 +3,7 @@
 namespace App\Api\Sudo\Input\Debug;
 
 
-use App\Entity\Type\DebugIncomingEmailsType;
+use App\Entity\Type\DebugIncomingEmailType;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class ParseBounceOrFblInput
@@ -12,6 +12,6 @@ class ParseBounceOrFblInput
     #[Assert\NotBlank]
     public string $raw;
 
-    public DebugIncomingEmailsType $type;
+    public DebugIncomingEmailType $type;
 
 }

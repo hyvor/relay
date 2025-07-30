@@ -14,18 +14,16 @@ type IncomingMail struct {
 	RcptTo         string
 	Data           []byte
 	InstanceDomain string
-
-	logger *slog.Logger
 }
 
 // call after the data is read
-func (m *IncomingMail) Handle() {
+func (m *IncomingMail) Handle(pgpool *pgxpool.Pool) {
 
 	isBounce, bounceUuid := checkBounceEmail(m.RcptTo, m.InstanceDomain)
 	isFbl := checkFbl(m.RcptTo, m.InstanceDomain)
 
 	if !isBounce && !isFbl {
-		m.logger.Info(
+		slog.Info(
 			"Received email that is not a bounce or FBL",
 			"MAIL", m.MailFrom,
 			"RCPT", m.RcptTo,
@@ -53,7 +51,7 @@ func (m *IncomingMail) Handle() {
 			debugParsedData = bounceDsn
 		}
 
-		m.logger.Info(bounceUuid) // TODO: remove this
+		slog.Info(bounceUuid) // TODO: remove this
 
 	} else if isFbl {
 
@@ -72,6 +70,7 @@ func (m *IncomingMail) Handle() {
 	}
 
 	createDebugRecord(
+		pgpool,
 		debugType,
 		debugStatus,
 		m.Data,
@@ -88,7 +87,7 @@ func (m *IncomingMail) handleBounce(uuid string) (*bounceparse.Dsn, error) {
 	dsn, err := bounceparse.ParseDsn([]byte(m.Data))
 
 	if err != nil {
-		m.logger.Error("Error parsing bounce email", "error", err)
+		slog.Error("Error parsing bounce email", "error", err)
 		return nil, err
 	}
 
@@ -149,11 +148,10 @@ func checkFbl(rcptTo string, instanceDomain string) bool {
 func incomingMailWorker(
 	ctx context.Context,
 	mailChannel chan *IncomingMail,
-	logger *slog.Logger,
 	pgpool *pgxpool.Pool,
 ) {
 
-	logger.Info("Starting incoming mail handler")
+	slog.Info("Starting incoming mail handler")
 
 	for {
 		select {
@@ -163,7 +161,7 @@ func incomingMailWorker(
 			if mail == nil {
 				continue
 			}
-			mail.Handle()
+			mail.Handle(pgpool)
 		}
 	}
 
