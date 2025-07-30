@@ -11,7 +11,6 @@ use Doctrine\ORM\EntityManagerInterface;
 class AllServersCanBeReachedViaPrivateNetwork extends HealthCheckAbstract
 {
     public function __construct(
-        private EntityManagerInterface $em,
         private PrivateNetworkApi $privateNetworkApi,
         private ServerService $serverService
     )
@@ -20,16 +19,13 @@ class AllServersCanBeReachedViaPrivateNetwork extends HealthCheckAbstract
 
     public function check(): bool
     {
-        $servers = $this->em->getRepository(Server::class)->findAll();
+        $servers = $this->serverService->getServers();
         $currentServer = $this->serverService->getServerByCurrentHostname();
         $unreachableServers = [];
 
         foreach ($servers as $server) {
-            // Skip pinging ourselves
-            if ($currentServer && $server->getId() === $currentServer->getId()) {
-                continue;
-            }
             if ($server->getPrivateIp() === null) {
+                $unreachableServers[] = $server->getHostname();
                 continue;
             }
             try {

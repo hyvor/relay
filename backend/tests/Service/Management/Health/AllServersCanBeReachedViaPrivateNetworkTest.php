@@ -2,39 +2,54 @@
 
 namespace App\Tests\Service\Management\Health;
 
-use App\Entity\Server;
 use App\Service\Management\Health\AllServersCanBeReachedViaPrivateNetwork;
-use App\Service\PrivateNetwork\Exception\PrivateNetworkCallException;
 use App\Service\PrivateNetwork\PrivateNetworkApi;
 use App\Service\Server\ServerService;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\ServerFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[CoversClass(AllServersCanBeReachedViaPrivateNetwork::class)]
 class AllServersCanBeReachedViaPrivateNetworkTest extends KernelTestCase
 {
     private AllServersCanBeReachedViaPrivateNetwork $healthCheck;
-    private PrivateNetworkApi&MockObject $privateNetworkApi;
     private ServerService&MockObject $serverService;
 
     protected function setUp(): void
     {
         parent::setUp();
         
-        $this->privateNetworkApi = $this->createMock(PrivateNetworkApi::class);
         $this->serverService = $this->createMock(ServerService::class);
+    }
+
+    /**
+     * @param array<MockResponse> $responses
+     */
+    private function createHealthCheckWithMockedHttpClient(array $responses): void
+    {
+        $httpClient = new MockHttpClient($responses);
+        $this->container->set(HttpClientInterface::class, $httpClient);
+        
+        $privateNetworkApi = new PrivateNetworkApi($httpClient);
         
         $this->healthCheck = new AllServersCanBeReachedViaPrivateNetwork(
-            $this->em,
-            $this->privateNetworkApi,
+            $privateNetworkApi,
             $this->serverService
         );
     }
 
     public function testCheckReturnsTrueWhenNoServersExist(): void
     {
+        $this->createHealthCheckWithMockedHttpClient([]);
+        
+        $this->serverService->expects($this->once())
+            ->method('getServers')
+            ->willReturn([]);
+
         $this->serverService->expects($this->once())
             ->method('getServerByCurrentHostname')
             ->willReturn(null);
@@ -54,6 +69,16 @@ class AllServersCanBeReachedViaPrivateNetworkTest extends KernelTestCase
         
         $this->em->flush();
 
+        $responses = [
+            new MockResponse('[]', ['http_code' => 200]),
+        ];
+        
+        $this->createHealthCheckWithMockedHttpClient($responses);
+
+        $this->serverService->expects($this->once())
+            ->method('getServers')
+            ->willReturn([$currentServer->_real()]);
+
         $this->serverService->expects($this->once())
             ->method('getServerByCurrentHostname')
             ->willReturn($currentServer->_real());
@@ -62,6 +87,9 @@ class AllServersCanBeReachedViaPrivateNetworkTest extends KernelTestCase
         
         $this->assertTrue($result);
         $this->assertEmpty($this->healthCheck->getData());
+
+        $this->assertSame('http://10.0.0.1/api/local/ping', $responses[0]->getRequestUrl());
+        $this->assertSame('GET', $responses[0]->getRequestMethod());
     }
 
     public function testCheckReturnsTrueWhenAllServersAreReachable(): void
@@ -83,21 +111,31 @@ class AllServersCanBeReachedViaPrivateNetworkTest extends KernelTestCase
         
         $this->em->flush();
 
+        $responses = [
+            new MockResponse('[]', ['http_code' => 200]), // current server ping
+            new MockResponse('[]', ['http_code' => 200]), // server1 ping
+            new MockResponse('[]', ['http_code' => 200]), // server2 ping
+        ];
+        
+        $this->createHealthCheckWithMockedHttpClient($responses);
+
+        $this->serverService->method('getServers')
+            ->willReturn([$currentServer->_real(), $server1->_real(), $server2->_real()]);
+
         $this->serverService->method('getServerByCurrentHostname')
             ->willReturn($currentServer->_real());
-
-        $this->privateNetworkApi
-            ->method('pingServer')
-            ->willReturnCallback(function ($server) use ($currentServer) {
-                $this->assertInstanceOf(Server::class, $server);
-                $this->assertNotEquals($currentServer->getHostname(), $server->getHostname());
-                $this->assertNotNull($server->getPrivateIp());
-            });
 
         $result = $this->healthCheck->check();
         
         $this->assertTrue($result);
         $this->assertEmpty($this->healthCheck->getData());
+
+        $this->assertSame('http://10.0.0.1/api/local/ping', $responses[0]->getRequestUrl());
+        $this->assertSame('GET', $responses[0]->getRequestMethod());
+        $this->assertSame('http://10.0.0.2/api/local/ping', $responses[1]->getRequestUrl());
+        $this->assertSame('GET', $responses[1]->getRequestMethod());
+        $this->assertSame('http://10.0.0.3/api/local/ping', $responses[2]->getRequestUrl());
+        $this->assertSame('GET', $responses[2]->getRequestMethod());
     }
 
     public function testCheckReturnsFalseWhenSomeServersAreUnreachable(): void
@@ -119,19 +157,19 @@ class AllServersCanBeReachedViaPrivateNetworkTest extends KernelTestCase
         
         $this->em->flush();
 
+        $responses = [
+            new MockResponse('[]', ['http_code' => 200]), // current server
+            new MockResponse('[]', ['http_code' => 200]), // reachable server
+            new MockResponse('Connection failed', ['http_code' => 500]), // unreachable server
+        ];
+        
+        $this->createHealthCheckWithMockedHttpClient($responses);
+
+        $this->serverService->method('getServers')
+            ->willReturn([$currentServer->_real(), $reachableServer->_real(), $unreachableServer->_real()]);
+
         $this->serverService->method('getServerByCurrentHostname')
             ->willReturn($currentServer->_real());
-
-        $pingCount = 0;
-        $this->privateNetworkApi->method('pingServer')
-            ->willReturnCallback(function ($server) use ($unreachableServer, &$pingCount) {
-                $pingCount++;
-                $this->assertInstanceOf(Server::class, $server);
-                // Simulate that the unreachable server throws an exception
-                if ($server->getHostname() === $unreachableServer->getHostname()) {
-                    throw new PrivateNetworkCallException('Connection failed');
-                }
-            });
 
         $result = $this->healthCheck->check();
         
@@ -142,9 +180,16 @@ class AllServersCanBeReachedViaPrivateNetworkTest extends KernelTestCase
         $this->assertArrayHasKey('checking_server', $data);
         $this->assertEquals(['unreachable-server.example.com'], $data['unreachable_servers']);
         $this->assertEquals('current-server.example.com', $data['checking_server']);
+
+        $this->assertSame('http://10.0.0.1/api/local/ping', $responses[0]->getRequestUrl());
+        $this->assertSame('GET', $responses[0]->getRequestMethod());
+        $this->assertSame('http://10.0.0.2/api/local/ping', $responses[1]->getRequestUrl());
+        $this->assertSame('GET', $responses[1]->getRequestMethod());
+        $this->assertSame('http://10.0.0.3/api/local/ping', $responses[2]->getRequestUrl());
+        $this->assertSame('GET', $responses[2]->getRequestMethod());
     }
 
-    public function testCheckSkipsServersWithoutPrivateIp(): void
+    public function testCheckReturnsFalseWithServersWithoutPrivateIp(): void
     {
         $currentServer = ServerFactory::createOne([
             'hostname' => 'current-server.example.com',
@@ -163,20 +208,33 @@ class AllServersCanBeReachedViaPrivateNetworkTest extends KernelTestCase
         
         $this->em->flush();
 
+        $responses = [
+            new MockResponse('[]', ['http_code' => 200]), // current server
+            new MockResponse('[]', ['http_code' => 200]), // server with IP
+        ];
+        
+        $this->createHealthCheckWithMockedHttpClient($responses);
+
+        $this->serverService->method('getServers')
+            ->willReturn([$currentServer->_real(), $serverWithoutIp->_real(), $serverWithIp->_real()]);
+
         $this->serverService->method('getServerByCurrentHostname')
             ->willReturn($currentServer->_real());
 
-        // Should only ping the server with IP, not the one without
-        $this->privateNetworkApi->method('pingServer')
-            ->willReturnCallback(function ($server) use ($serverWithoutIp) {
-                $this->assertInstanceOf(Server::class, $server);
-                $this->assertNotEquals($serverWithoutIp->getHostname(), $server->getHostname());
-                $this->assertNotNull($server->getPrivateIp());
-            });
         $result = $this->healthCheck->check();
+
+        $this->assertFalse($result);
         
-        $this->assertTrue($result);
-        $this->assertEmpty($this->healthCheck->getData());
+        $data = $this->healthCheck->getData();
+        $this->assertArrayHasKey('unreachable_servers', $data);
+        $this->assertArrayHasKey('checking_server', $data);
+        $this->assertEquals(['server-without-ip.example.com'], $data['unreachable_servers']);
+        $this->assertEquals('current-server.example.com', $data['checking_server']);
+
+        $this->assertSame('http://10.0.0.1/api/local/ping', $responses[0]->getRequestUrl());
+        $this->assertSame('GET', $responses[0]->getRequestMethod());
+        $this->assertSame('http://10.0.0.2/api/local/ping', $responses[1]->getRequestUrl());
+        $this->assertSame('GET', $responses[1]->getRequestMethod());
     }
 
 }
