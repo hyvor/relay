@@ -52,7 +52,7 @@
 			{record.content}
 		</div>
 	{/if}
-	<div class="ttl">{record.ttl} seconds</div>
+	<div class="ttl">{record.ttl}s</div>
 </TableRow>
 
 <style>
@@ -73,10 +73,5 @@
 		color: var(--color-primary-dark);
 		outline: 2px solid var(--color-primary);
 		outline-offset: 2px;
-	}
-	.readonly {
-		color: var(--color-text-light);
-		font-size: 12px;
-		font-style: italic;
 	}
 </style>

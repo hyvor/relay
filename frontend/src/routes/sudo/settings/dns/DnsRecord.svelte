@@ -86,7 +86,7 @@
 			{record.content}
 		</div>
 	{/if}
-	<div class="ttl">{record.ttl} seconds</div>
+	<div class="ttl">{record.ttl}s</div>
 
 	<div class="actions">
 		<IconButton color="input" size="small" on:click={() => (updating = true)}>
