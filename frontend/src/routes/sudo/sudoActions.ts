@@ -111,9 +111,10 @@ export function deleteDnsRecord(recordId: number) {
 	});
 }
 
-export function debugGetIncomingMails() {
+export function debugGetIncomingMails(limit: number = 20, offset: number = 0) {
 	return sudoApi.get<DebugIncomingEmail[]>({
-		endpoint: '/debug/incoming-mails'
+		endpoint: '/debug/incoming-mails',
+		data: { limit, offset }
 	});
 }
 

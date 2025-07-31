@@ -2,8 +2,10 @@
 
 namespace App\Command\Dev;
 
+use App\Entity\DebugIncomingEmail;
 use App\Service\Instance\InstanceService;
 use App\Entity\Type\SendStatus;
+use App\Tests\Factory\DebugIncomingEmailFactory;
 use App\Tests\Factory\DnsRecordFactory;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\InstanceFactory;
@@ -106,6 +108,8 @@ class DevSeedCommand extends Command
         SuppressionFactory::createMany(16, [
             'project' => $project,
         ]);
+
+        DebugIncomingEmailFactory::createMany(50);
 
         $output->writeln('<info>Database seeded with test data.</info>');
 
