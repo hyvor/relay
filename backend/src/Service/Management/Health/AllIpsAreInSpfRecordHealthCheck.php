@@ -28,8 +28,14 @@ class AllIpsAreInSpfRecordHealthCheck extends HealthCheckAbstract
         foreach ($ip_addresses as $ipAddress) {
             $ip = $ipAddress->getIpAddress();
             $checker = new Checker(dnsResolver: $this->dnsResolver);
-            $checkResult = $checker->check(new Environment($ip, $domain));
-            if ($checkResult->getCode() !== Result::CODE_PASS) {
+            try
+            {
+                $checkResult = $checker->check(new Environment($ip, $domain));
+                if ($checkResult->getCode() !== Result::CODE_PASS) {
+                    $invalid_ips[] = $ip;
+                }
+            }
+            catch (\Exception $e) {
                 $invalid_ips[] = $ip;
             }
         }
