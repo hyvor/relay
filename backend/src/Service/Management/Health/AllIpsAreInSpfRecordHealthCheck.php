@@ -8,6 +8,7 @@ use SPFLib\Check\Result;
 use SPFLib\Checker;
 use SPFLib\Check\Environment;
 use SPFLib\DNS\Resolver;
+use SPFLib\Exception\InvalidIPAddressException;
 
 
 class AllIpsAreInSpfRecordHealthCheck extends HealthCheckAbstract
@@ -35,7 +36,7 @@ class AllIpsAreInSpfRecordHealthCheck extends HealthCheckAbstract
                     $invalid_ips[] = $ip;
                 }
             }
-            catch (\Exception $e) {
+            catch (InvalidIPAddressException $e) {
                 $invalid_ips[] = $ip;
             }
         }
