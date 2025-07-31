@@ -18,16 +18,16 @@
 			<Button
 				size="small"
 				color="input"
-				variant={page.url.pathname.startsWith('/hosting') ? 'fill' : 'invisible'}
+				variant={page.url.pathname.startsWith('/docs') ? 'fill' : 'invisible'}
 				as="a"
-				href="/hosting">Hosting</Button
+				href="/docs">Docs</Button
 			>
 			<Button
 				size="small"
 				color="input"
-				variant={page.url.pathname.startsWith('/docs') ? 'fill' : 'invisible'}
+				variant={page.url.pathname.startsWith('/hosting') ? 'fill' : 'invisible'}
 				as="a"
-				href="/docs">Docs</Button
+				href="/hosting">Hosting</Button
 			>
 		</div>
 		<Button

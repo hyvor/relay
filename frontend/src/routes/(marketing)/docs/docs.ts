@@ -12,7 +12,7 @@ export const categories: Category[] = [
 		pages: [
 			{
 				slug: '',
-				name: 'Introduction',
+				name: 'Getting Started',
                 component: Introduction
 			},
 			{

@@ -44,6 +44,15 @@ services:
     healthcheck:
       test: ls
       disable: true
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://loki.localhost:3100/loki/api/v1/push"
+        loki-retries: "2"
+        loki-max-backoff: "800ms"
+        loki-timeout: "1s"
+        keep-file: "true"
+        mode: non-blocking
 
   worker:
     container_name: hyvor-relay-worker
@@ -58,6 +67,15 @@ services:
     ports:
       - "10025:1025"
       - "5353:53/udp"
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://loki.localhost:3100/loki/api/v1/push"
+        loki-retries: "2"
+        loki-max-backoff: "800ms"
+        loki-timeout: "1s"
+        keep-file: "true"
+        mode: non-blocking
 
 networks:
   hyvor-network:
