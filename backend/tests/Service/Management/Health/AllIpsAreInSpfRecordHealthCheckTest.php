@@ -102,4 +102,22 @@ class AllIpsAreInSpfRecordHealthCheckTest extends KernelTestCase
         $this->assertSame([$ip_address1->getIpAddress()], $data['invalid_ips']);
         $this->assertEquals('example.com', $data['domain']);
     }
+
+    public function testCheckReturnsTrueWhenIpRangeInSpfRecord(): void
+    {
+        $instance = InstanceFactory::createOne([
+            'domain' => 'example.com',
+        ]);
+
+        $ip_address1 = IpAddressFactory::createOne();
+        $ip_address2 = IpAddressFactory::createOne();
+
+        $this->dnsResolver->method('getTXTRecords')
+            ->willReturn(['v=spf1 ip4:' . $ip_address1->getIpAddress() . '/24 ip4:' . $ip_address2->getIpAddress() . ' -all']);
+
+        $result = $this->healthCheck->check();
+
+        $this->assertTrue($result);
+        $this->assertEmpty($this->healthCheck->getData());
+    }
 } 
