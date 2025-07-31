@@ -41,7 +41,7 @@
 <style>
 	.wrap {
 		padding: 15px 25px;
-		background-color: #eee;
+		background-color: #f1f1f1;
 		cursor: pointer;
 		border-radius: var(--box-radius);
 		display: flex;
