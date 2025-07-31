@@ -10,6 +10,7 @@ use App\Api\Console\Input\SendEmail\UnableToDecodeAttachmentBase64Exception;
 use App\Api\Console\Object\SendObject;
 use App\Api\Console\Resolver\ProjectResolver;
 use App\Entity\Project;
+use App\Entity\Type\ProjectSendType;
 use App\Entity\Type\SendStatus;
 use App\Service\Domain\DomainService;
 use App\Service\Send\EmailAddressFormat;
@@ -71,8 +72,10 @@ class SendController extends AbstractController
             );
         }
 
-        $queue = $this->queueService->getTransactionalQueue();
-        assert($queue !== null, "Transactional queue not found");
+        $queue = $project->getSendType() === ProjectSendType::TRANSACTIONAL ?
+            $this->queueService->getTransactionalQueue() :
+            $this->queueService->getDistributionalQueue();
+        assert($queue !== null, 'Transactional or Distributional should be set');
 
         try {
             $attachments = $sendEmailInput->getAttachments();

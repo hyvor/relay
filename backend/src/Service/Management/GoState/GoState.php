@@ -36,6 +36,11 @@ class GoState
         public int $webhookWorkers,
 
         /**
+         * The number of maximum workers to handle incoming mail
+         */
+        public int $incomingWorkers,
+
+        /**
          * first server is always the leader
          * it exposes global metrics
          */
@@ -45,11 +50,6 @@ class GoState
          * Whether to run the DNS server and data for it
          */
         public string $dnsIp, // empty if no IP
-        /** @var array<string, string> */
-        public array $dnsPtrForwardRecords,
-        /** @var array<string> */
-        public array $dnsMxIps,
-        public string $dnsDkimTxtValue,
         /** @var GoStateDnsRecord[] */
         public array $dnsRecords,
 

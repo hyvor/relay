@@ -26,7 +26,8 @@ final class Version20250609112605 extends AbstractMigration
             last_ping_at timestamptz,
             api_workers integer DEFAULT 0,
             email_workers integer NOT NULL DEFAULT 0,
-            webhook_workers integer NOT NULL DEFAULT 0
+            webhook_workers integer NOT NULL DEFAULT 0,
+            incoming_workers integer NOT NULL DEFAULT 0
         )
         ');
     }

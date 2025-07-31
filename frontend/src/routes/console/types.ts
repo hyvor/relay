@@ -24,8 +24,11 @@ export interface AppConfig {
 export type Project = {
     id: string;
     name: string;
-    createdAt: string;
+    created_at: string;
+    send_type: ProjectSendType;
 }
+
+export type ProjectSendType = 'transactional' | 'distributional';
 
 export type SendStatus = 'queued' | 'accepted' | 'bounced' | 'complained';
 

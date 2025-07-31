@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Type\ProjectSendType;
 use App\Repository\ProjectRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -26,6 +27,8 @@ class Project
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $updated_at;
 
+    #[ORM\Column(type: 'string', enumType: ProjectSendType::class)]
+    private ProjectSendType $send_type;
     public function __construct()
     {}
 
@@ -81,6 +84,17 @@ class Project
     public function setUpdatedAt(\DateTimeImmutable $updatedAt): static
     {
         $this->updated_at = $updatedAt;
+        return $this;
+    }
+
+    public function getSendType(): ProjectSendType
+    {
+        return $this->send_type;
+    }
+
+    public function setSendType(ProjectSendType $sendType): static
+    {
+        $this->send_type = $sendType;
         return $this;
     }
 

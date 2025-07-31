@@ -62,6 +62,7 @@ class DevSeedCommand extends Command
             'api_workers' => 2,
             'email_workers' => 2,
             'webhook_workers' => 1,
+            'incoming_workers' => 1,
             'private_ip' => '127.0.0.1',
         ]);
         IpAddressFactory::createOne([

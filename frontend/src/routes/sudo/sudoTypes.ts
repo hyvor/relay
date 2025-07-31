@@ -26,6 +26,7 @@ export interface Server {
     api_workers: number;
     email_workers: number;
     webhook_workers: number;
+    incoming_workers: number;
 }
 
 export interface IpAddress {
@@ -91,3 +92,17 @@ export interface DnsRecord {
 }
 
 export type DnsRecordType = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT';
+
+// Debug
+
+export interface DebugIncomingEmail {
+    id: number;
+    created_at: number;
+    type: "bounce" | "fbl";
+    status: "success" | "failed";
+    raw_email: string;
+    mail_from: string;
+    rcpt_to: string;
+    parsed_data?: Record<string, any> | null;
+    error_message?: string | null;
+}

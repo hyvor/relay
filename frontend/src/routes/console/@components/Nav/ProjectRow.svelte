@@ -5,6 +5,7 @@
 	import type { Project } from '../../types';
 	import { selectingProject } from '../../lib/stores/consoleStore';
 	import { loadProject } from '../../lib/projectLoader';
+	import ProjectSendTypeTag from './ProjectSendTypeTag.svelte';
 
 	export let project: Project;
 
@@ -30,13 +31,17 @@
 		</div>
 	</div>
 
+	<div class="type">
+		<ProjectSendTypeTag type={project.send_type} />
+	</div>
+
 	<div class="right">&rarr;</div>
 </div>
 
 <style>
 	.wrap {
 		padding: 15px 25px;
-		background-color: var(--accent-light);
+		background-color: #f1f1f1;
 		cursor: pointer;
 		border-radius: var(--box-radius);
 		display: flex;
@@ -44,6 +49,10 @@
 		position: relative;
 		overflow: hidden;
 		margin-bottom: 10px;
+		transition: box-shadow 0.2s ease;
+	}
+	.wrap:hover {
+		box-shadow: 0 0 0 2px #aaa;
 	}
 	.name-id {
 		flex: 2;
@@ -55,6 +64,10 @@
 		font-size: 12px;
 		color: var(--text-light);
 		margin-right: 5px;
+	}
+
+	.right {
+		margin-left: 10px;
 	}
 
 	@media (max-width: 768px) {

@@ -8,6 +8,7 @@ use App\Api\Console\Input\SendEmail\SendEmailInput;
 use App\Api\Console\Input\SendEmail\UnableToDecodeAttachmentBase64Exception;
 use App\Api\Console\Object\SendObject;
 use App\Entity\Send;
+use App\Entity\Type\ProjectSendType;
 use App\Entity\Type\SendStatus;
 use App\Service\Send\EmailBuilder;
 use App\Service\Send\SendService;
@@ -667,6 +668,35 @@ class SendEmailTest extends WebTestCase
             "Email size exceeds the maximum allowed size of 10MB.",
             $json['message']
         );
+
+    }
+
+    public function test_queues_on_the_correct_queue_based_on_project_send_type(): void
+    {
+        QueueFactory::createDistributional();
+
+        $project = ProjectFactory::createOne([
+            'send_type' => ProjectSendType::DISTRIBUTIONAL
+        ]);
+
+        DomainFactory::createOne([
+            "project" => $project,
+            "domain" => "hyvor.com",
+            'dkim_verified' => true,
+        ]);
+
+        $this->consoleApi($project, "POST", "/sends", data: [
+            'from' => 'test@hyvor.com',
+            'to' => 'test@example.com',
+            'body_text' => 'Test email',
+        ]);
+
+        $this->assertResponseStatusCodeSame(200);
+
+        $send = $this->em->getRepository(Send::class)->findBy(['project' => $project->getId()]);
+        $this->assertCount(1, $send);
+        $send = $send[0];
+        $this->assertSame('distributional', $send->getQueue()->getName());
 
     }
 

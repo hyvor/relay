@@ -68,7 +68,8 @@ class ServerService
             ->setHostname($this->config->getHostname())
             ->setApiWorkers(min(Cpu::getCores() * 2, 8))
             ->setEmailWorkers(4)
-            ->setWebhookWorkers(2);
+            ->setWebhookWorkers(2)
+            ->setIncomingWorkers(1);
 
         $this->em->persist($server);
         $this->em->flush();
@@ -102,6 +103,9 @@ class ServerService
         }
         if ($updates->webhookWorkersSet) {
             $server->setWebhookWorkers($updates->webhookWorkers);
+        }
+        if ($updates->incomingWorkersSet) {
+            $server->setIncomingWorkers($updates->incomingWorkers);
         }
 
         $server->setUpdatedAt($this->now());

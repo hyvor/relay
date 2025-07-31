@@ -23,6 +23,7 @@ type Arf struct {
 var ErrNotArfReport = errors.New("not an ARF report")
 var ErrInvalidMimeType = errors.New("invalid ARF MIME type")
 
+// ParseFbl
 func ParseArf(input []byte) (*Arf, error) {
 
 	arf := &Arf{}

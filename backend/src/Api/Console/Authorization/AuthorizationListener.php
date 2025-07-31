@@ -36,10 +36,8 @@ class AuthorizationListener
 
         if ($request->headers->has('authorization')) {
             $this->handleAuthorizationHeader($event);
-        } else if ($request->cookies->has(Auth::HYVOR_SESSION_COOKIE_NAME)) {
-            $this->handleSession($event);
         } else {
-            throw new AccessDeniedHttpException('Authorization method not supported. Use either Bearer token or a session.');
+            $this->handleSession($event);
         }
     }
 
@@ -78,7 +76,6 @@ class AuthorizationListener
         $request = $event->getRequest();
         $projectId = $request->headers->get('x-project-id');
         $sessionCookie = $request->cookies->get(Auth::HYVOR_SESSION_COOKIE_NAME);
-        assert($sessionCookie !== null);
         $isUserLevelEndpoint = count($event->getAttributes(UserLevelEndpoint::class)) > 0;
 
         $user = $this->auth->check((string) $sessionCookie);

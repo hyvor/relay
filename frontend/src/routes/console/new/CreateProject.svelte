@@ -4,6 +4,7 @@
 		Button,
 		FormControl,
 		Loader,
+		Radio,
 		SplitControl,
 		TextInput,
 		Validation,
@@ -15,6 +16,7 @@
 	import { selectingProject } from '../lib/stores/consoleStore';
 
 	let name = $state('');
+	let sendType: 'transactional' | 'distributional' = $state('transactional');
 
 	let nameError: string | null = $state(null);
 
@@ -47,15 +49,11 @@
 
 		isCreating = true;
 
-		createProject(name)
+		createProject(name, sendType)
 			.then((res) => {
 				toast.success('Project created successfully');
-
 				addUserProject(res);
-
 				goto('/console/' + res.id);
-
-				selectingProject.set(false);
 			})
 			.catch((e) => {
 				toast.error(e.message);
@@ -83,7 +81,7 @@
 			<div class="title">Start a new project</div>
 
 			<div class="form">
-				<SplitControl label="Name" caption="A name for your project">
+				<SplitControl label="Name" caption="Simply to identify it later." column>
 					<FormControl>
 						<TextInput
 							block
@@ -101,6 +99,36 @@
 							</Validation>
 						{/if}
 					</FormControl>
+				</SplitControl>
+
+				<SplitControl
+					label="Sending Type"
+					caption="What type of emails will you send?"
+					column
+				>
+					<div class="type-wrap">
+						<FormControl>
+							<Radio bind:group={sendType} name="type" value="transactional">
+								<div class="td">
+									<div class="t">Transactional</div>
+									<div class="d">
+										These emails are sent to users after they take certain
+										actions, like creating an account, resetting a password, or
+										confirming a purchase.
+									</div>
+								</div>
+							</Radio>
+							<Radio bind:group={sendType} name="type" value="distributional">
+								<div class="td">
+									<div class="t">Distributional</div>
+									<div class="d">
+										These emails are sent to many people at once, like
+										newsletters, product updates, or marketing campaigns.
+									</div>
+								</div>
+							</Radio>
+						</FormControl>
+					</div>
 				</SplitControl>
 			</div>
 
@@ -133,7 +161,7 @@
 		text-align: center;
 	}
 	.inner {
-		width: 550px;
+		width: 650px;
 		max-width: 100%;
 		position: relative;
 	}
@@ -144,5 +172,16 @@
 		padding: 20px;
 		padding-bottom: 30px;
 		text-align: center;
+	}
+
+	.type-wrap :global(label) {
+		height: initial;
+	}
+
+	.td .d {
+		font-size: 14px;
+		color: var(--text-light);
+		font-weight: normal;
+		margin-top: 3px;
 	}
 </style>

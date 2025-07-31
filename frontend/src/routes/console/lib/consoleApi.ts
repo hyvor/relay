@@ -80,7 +80,7 @@ function getConsoleApi() {
 
 
             if (e.violations) {
-                toThrow.message = e.violations.map((v: any) => v.message).join(', ');
+                toThrow.message = e.violations.map((v: any) => v.property + ': ' + v.message).join(', ');
             }
 
             throw toThrow;
