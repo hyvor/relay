@@ -7,6 +7,7 @@ use App\Service\Ip\IpAddressService;
 use SPFLib\Check\Result;
 use SPFLib\Checker;
 use SPFLib\Check\Environment;
+use SPFLib\DNS\Resolver;
 
 
 class AllIpsAreInSpfRecordHealthCheck extends HealthCheckAbstract
@@ -14,6 +15,7 @@ class AllIpsAreInSpfRecordHealthCheck extends HealthCheckAbstract
     public function __construct(
         private InstanceService $instanceService,
         private IpAddressService $ipAddressService,
+        private ?Resolver $dnsResolver = null,
     )
     {}
 
@@ -25,7 +27,7 @@ class AllIpsAreInSpfRecordHealthCheck extends HealthCheckAbstract
         $invalid_ips = [];
         foreach ($ip_addresses as $ipAddress) {
             $ip = $ipAddress->getIpAddress();
-            $checker = new Checker();
+            $checker = new Checker(dnsResolver: $this->dnsResolver);
             $checkResult = $checker->check(new Environment($ip, $domain));
             if ($checkResult->getCode() !== Result::CODE_PASS) {
                 $invalid_ips[] = $ip;
