@@ -35,7 +35,9 @@
 		<Nav />
 		<ProjectSelector />
 		<div class="content">
-			{@render children?.()}
+			{#key page.params.id}
+				{@render children?.()}
+			{/key}
 		</div>
 	{/if}
 </div>

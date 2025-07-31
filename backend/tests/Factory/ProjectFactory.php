@@ -3,6 +3,7 @@
 namespace App\Tests\Factory;
 
 use App\Entity\Project;
+use App\Entity\Type\ProjectSendType;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
 /**
@@ -31,6 +32,7 @@ final class ProjectFactory extends PersistentProxyObjectFactory
             'name' => self::faker()->words(2, true),
             'created_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'updated_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
+            'send_type' => ProjectSendType::TRANSACTIONAL,
         ];
     }
 

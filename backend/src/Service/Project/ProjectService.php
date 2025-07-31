@@ -3,13 +3,17 @@
 namespace App\Service\Project;
 
 use App\Entity\Project;
+use App\Entity\Type\ProjectSendType;
 use App\Service\Project\Dto\UpdateProjectDto;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Illuminate\Support\Arr;
+use Symfony\Component\Clock\ClockAwareTrait;
 
 class ProjectService
 {
+
+    use ClockAwareTrait;
     public function __construct(
         private EntityManagerInterface $em
     ) {
@@ -22,13 +26,17 @@ class ProjectService
 
     public function createProject(
         int $userId,
-        string $name
+        string $name,
+        ProjectSendType $sendType,
     ): Project {
+
         $project = new Project();
-        $project->setHyvorUserId($userId)
+        $project
+            ->setHyvorUserId($userId)
             ->setName($name)
-            ->setCreatedAt(new \DateTimeImmutable())
-            ->setUpdatedAt(new \DateTimeImmutable());
+            ->setCreatedAt($this->now())
+            ->setUpdatedAt($this->now())
+            ->setSendType($sendType);
 
         $this->em->persist($project);
         $this->em->flush();

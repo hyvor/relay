@@ -12,6 +12,7 @@
 	import { projectStore } from '../../lib/stores/projectStore';
 	import IconSlashCircle from '@hyvor/icons/IconSlashCircle';
 	import IconDatabase from '@hyvor/icons/IconDatabase';
+	import ProjectSendTypeTag from './ProjectSendTypeTag.svelte';
 
 	let width: number;
 
@@ -28,6 +29,10 @@
 		<div class="left">
 			<div class="name">
 				{$projectStore.name}
+				<span
+					class="dot"
+					class:distributional={$projectStore.send_type === 'distributional'}
+				></span>
 			</div>
 		</div>
 		<IconChevronExpand />
@@ -128,6 +133,24 @@
 		}
 		&:hover {
 			background-color: var(--hover);
+		}
+	}
+
+	.name {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+	}
+
+	.dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		display: inline-block;
+		margin-left: 5px;
+		background-color: var(--blue-light);
+		&.distributional {
+			background-color: var(--orange-light);
 		}
 	}
 
