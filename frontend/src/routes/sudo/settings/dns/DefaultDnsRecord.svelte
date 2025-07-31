@@ -53,7 +53,6 @@
 		</div>
 	{/if}
 	<div class="ttl">{record.ttl} seconds</div>
-	<div class="readonly">Read-only</div>
 </TableRow>
 
 <style>
