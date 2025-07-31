@@ -35,7 +35,12 @@ class ProjectController extends AbstractController
         $user = $request->attributes->get(AuthorizationListener::RESOLVED_USER_ATTRIBUTE_KEY);
         assert($user instanceof AuthUser);
 
-        $project = $this->projectService->createProject($user->id, $input->name);
+        $project = $this->projectService->createProject(
+            $user->id,
+            $input->name,
+            $input->send_type
+        );
+
         return $this->json(new ProjectObject($project));
     }
 
