@@ -4,13 +4,10 @@ namespace App\Tests\Api\Console;
 
 use App\Api\Console\RateLimit\RateLimit;
 use App\Api\Console\RateLimit\RateLimitListener;
+use App\Service\App\RateLimit\RateLimiterProvider;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
-use Psr\Cache\CacheItemPoolInterface;
-use Symfony\Component\Lock\LockFactory;
-use Symfony\Component\RateLimiter\RateLimiterFactory;
-use Symfony\Component\RateLimiter\Storage\CacheStorage;
 
 #[CoversClass(RateLimitListener::class)]
 #[CoversClass(RateLimit::class)]
@@ -46,14 +43,10 @@ class RateLimitTest extends WebTestCase
         $project = ProjectFactory::createOne(['hyvor_user_id' => 1]);
 
         $rateLimit = new RateLimit();
-        /** @var CacheItemPoolInterface $cacheItemPool */
-        $cacheItemPool = $this->getContainer()->get(CacheItemPoolInterface::class);
-        /** @var LockFactory $lockFactory */
-        $lockFactory = $this->getContainer()->get(LockFactory::class);
-        $storage = new CacheStorage($cacheItemPool);
-        $rateLimiterFactory = new RateLimiterFactory($rateLimit->session(), $storage, $lockFactory);
+        /** @var RateLimiterProvider $rateLimiterProvider */
+        $rateLimiterProvider = $this->getContainer()->get(RateLimiterProvider::class);
 
-        $limiter = $rateLimiterFactory->create("user:1");
+        $limiter = $rateLimiterProvider->rateLimiter($rateLimit->session(), "user:1");
         $limiter->consume(60);
         $limiter->consume(10);
 
