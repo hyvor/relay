@@ -11,13 +11,15 @@
 	let creating = $state(false);
 
 	onMount(() => {
-		Promise.all([
-			getDnsRecords(),
-			getDefaultDnsRecords()
-		])
+		Promise.all([getDnsRecords(), getDefaultDnsRecords()])
 			.then(([customRecords, defaultRecords]) => {
 				dnsRecordsStore.set(customRecords);
-				defaultDnsRecordsStore.set(defaultRecords);
+
+				defaultDnsRecordsStore.set(
+					defaultRecords.sort(
+						(a, b) => a.type.localeCompare(b.type) || a.host.localeCompare(b.host)
+					)
+				);
 			})
 			.catch((error) => {
 				toast.error('Failed to fetch DNS records:', error);
@@ -60,7 +62,7 @@
 
 		<SplitControl
 			label="Default DNS Records"
-			caption="System-managed DNS records required for proper email delivery. These records are automatically configured and cannot be modified."
+			caption="System-managed DNS records required for proper email delivery. The in-built DNS server serves these records automatically. If you do not use the in-built DNS server, you must manually add these records to your DNS provider."
 		>
 			{#snippet nested()}
 				<div class="records">
@@ -89,6 +91,7 @@
 <style>
 	.dns {
 		padding: 30px 40px;
+		overflow: auto;
 	}
 	.create {
 		margin-bottom: 20px;
