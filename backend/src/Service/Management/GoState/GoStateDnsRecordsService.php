@@ -10,7 +10,7 @@ use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
 use App\Service\Ip\Ptr;
 
-class GoStateService
+class GoStateDnsRecordsService
 {
     public function __construct(
         private IpAddressService $ipAddressService,

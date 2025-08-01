@@ -16,7 +16,7 @@ class GoStateFactory
         private IpAddressService $ipAddressService,
         private InstanceService $instanceService,
         private Config $config,
-        private GoStateService $goStateService,
+        private GoStateDnsRecordsService $goStateService,
     )
     {
     }

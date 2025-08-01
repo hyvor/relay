@@ -7,7 +7,7 @@ use App\Api\Sudo\Object\DefaultDnsRecordObject;
 use App\Api\Sudo\Object\InstanceObject;
 use App\Config;
 use App\Service\Instance\InstanceService;
-use App\Service\Management\GoState\GoStateService;
+use App\Service\Management\GoState\GoStateDnsRecordsService;
 use Hyvor\Internal\InternalConfig;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,7 +20,7 @@ class SudoController extends AbstractController
         private Config $config,
         private InternalConfig $internalConfig,
         private InstanceService $instanceService,
-        private GoStateService $goStateService
+        private GoStateDnsRecordsService $goStateDnsRecordsService
     )
     {
     }
@@ -45,7 +45,7 @@ class SudoController extends AbstractController
     public function getDefaultDns(): JsonResponse
     {
         $instance = $this->instanceService->getInstance();
-        $dnsRecords = $this->goStateService->getDnsRecords($instance);
+        $dnsRecords = $this->goStateDnsRecordsService->getDnsRecords($instance);
 
         return new JsonResponse(
             array_map(fn($record) => new DefaultDnsRecordObject($record), $dnsRecords)
