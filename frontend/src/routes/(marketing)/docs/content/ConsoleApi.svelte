@@ -84,6 +84,35 @@ Authorization: Bearer <your_api_key>
 
 <p>Each endpoint requires specific scopes to be included in the API key.</p>
 
+<h2 id="rate-limit">Rate Limiting</h2>
+
+<p>
+	See the
+	<a href="/docs/send-emails#rate-limit">Sending Emails page</a> for the rate limit of the sending
+	emails endpoint, <code>POST /sends</code>. Other endpoints have a rate limit of
+	<strong>100 requests per minute</strong>. If you exceed this limit, you will receive a
+	<code>429 Too Many Requests</code> response.
+</p>
+
+<p>
+	The following standard headers are included in the response to indicate your current rate limit
+	status:
+</p>
+
+<ul>
+	<li>
+		<code>X-RateLimit-Limit</code>: The maximum number of requests allowed in the current time
+		window.
+	</li>
+	<li>
+		<code>X-RateLimit-Remaining</code>: The number of requests remaining in the current time
+		window.
+	</li>
+	<li>
+		<code>X-RateLimit-Reset</code>: How many seconds until the rate limit resets.
+	</li>
+</ul>
+
 <h2 id="endpoints">Endpoints</h2>
 
 <ul>

@@ -2,11 +2,15 @@
 
 namespace App\Api\Console\Authorization;
 
+use App\Entity\ApiKey;
+use App\Entity\Project;
 use App\Service\ApiKey\ApiKeyService;
 use App\Service\Project\ProjectService;
 use Hyvor\Internal\Auth\Auth;
 use Hyvor\Internal\Auth\AuthInterface;
+use Hyvor\Internal\Auth\AuthUser;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -16,6 +20,7 @@ class AuthorizationListener
 {
 
     public const string RESOLVED_PROJECT_ATTRIBUTE_KEY = 'console_api_resolved_project';
+    public const string RESOLVED_API_KEY_ATTRIBUTE_KEY = 'console_api_resolved_api_key';
     public const string RESOLVED_USER_ATTRIBUTE_KEY = 'console_api_resolved_user';
 
     public function __construct(
@@ -67,6 +72,8 @@ class AuthorizationListener
         $this->verifyScopes($scopes, $event);
 
         $project = $apiKeyModel->getProject();
+
+        $request->attributes->set(self::RESOLVED_API_KEY_ATTRIBUTE_KEY, $apiKeyModel);
         $request->attributes->set(self::RESOLVED_PROJECT_ATTRIBUTE_KEY, $project);
     }
 
@@ -129,6 +136,35 @@ class AuthorizationListener
             );
         }
 
+    }
+
+    public static function hasUser(Request $request): bool
+    {
+        return $request->attributes->has(self::RESOLVED_USER_ATTRIBUTE_KEY);
+    }
+
+    // only call after hasUser()
+    public static function getUser(Request $request): AuthUser
+    {
+        $user = $request->attributes->get(self::RESOLVED_USER_ATTRIBUTE_KEY);
+        assert($user instanceof AuthUser, 'User must be an instance of AuthUser');
+        return $user;
+    }
+
+    // make sure project is set before calling this
+    public static function getProject(Request $request): Project
+    {
+        $project = $request->attributes->get(self::RESOLVED_PROJECT_ATTRIBUTE_KEY);
+        assert($project instanceof Project);
+        return $project;
+    }
+
+    // make sure API key is set before calling this
+    public static function getApiKey(Request $request): ApiKey
+    {
+        $apiKey = $request->attributes->get(self::RESOLVED_API_KEY_ATTRIBUTE_KEY);
+        assert($apiKey instanceof ApiKey);
+        return $apiKey;
     }
 
 }
