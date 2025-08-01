@@ -95,6 +95,9 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
 
         if ($useSession) {
             $this->client->getCookieJar()->set(new Cookie('authsess', 'test'));
+            if ($project) {
+                $server['HTTP_X_PROJECT_ID'] = (string)$project->getId();
+            }
         }
         else {
             $apiKey = bin2hex(random_bytes(16));

@@ -12,7 +12,7 @@ use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
-#[AsEventListener(event: KernelEvents::CONTROLLER, method: 'onController', priority: 100)] // priority less than AuthorizationListener
+#[AsEventListener(event: KernelEvents::CONTROLLER, method: 'onController', priority: 100)]
 #[AsEventListener(event: KernelEvents::RESPONSE, method: 'onResponse')]
 class IdempotencyListener
 {

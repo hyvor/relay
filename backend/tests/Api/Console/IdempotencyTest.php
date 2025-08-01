@@ -3,7 +3,9 @@
 namespace App\Tests\Api\Console;
 
 use App\Api\Console\Idempotency\IdempotencyListener;
+use App\Api\Console\RateLimit\RateLimit;
 use App\Entity\ApiIdempotencyRecord;
+use App\Service\App\RateLimit\RateLimiterProvider;
 use App\Service\Idempotency\IdempotencyService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ApiIdempotencyRecordFactory;
@@ -141,6 +143,42 @@ class IdempotencyTest extends WebTestCase
             ->getRepository(ApiIdempotencyRecord::class)
             ->findAll();
         $this->assertCount(0, $idempotencyRecords);
+
+    }
+
+    public function test_runs_rate_limits_before_idempotency(): void
+    {
+
+        $rateLimit = new RateLimit();
+        /** @var RateLimiterProvider $rateLimiterProvider */
+        $rateLimiterProvider = $this->getContainer()->get(RateLimiterProvider::class);
+
+        $limiter = $rateLimiterProvider->rateLimiter($rateLimit->session(), "user:1");
+        $limiter->consume(60);
+        $limiter->consume(60);
+
+        $project = ProjectFactory::createOne(['hyvor_user_id' => 1]);
+
+        $idempotencyRecord = ApiIdempotencyRecordFactory::createOne([
+            "project" => $project,
+            "idempotency_key" => "idempotency-key-123",
+            "endpoint" => "/api/console/sends",
+            "response" => ["status" => "ok-idm"],
+            "status_code" => 200,
+        ]);
+
+        $this->consoleApi(
+            $project,
+            "POST",
+            "/sends",
+            server: [
+                "HTTP_X_IDEMPOTENCY_KEY" => "idempotency-key-123",
+            ],
+            useSession: true
+        );
+
+        $this->assertResponseStatusCodeSame(429);
+        $this->assertResponseNotHasHeader('X-Idempotency-Short-Circuit');
 
     }
 

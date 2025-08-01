@@ -84,6 +84,40 @@ Authorization: Bearer <your_api_key>
 
 <p>Each endpoint requires specific scopes to be included in the API key.</p>
 
+<h2 id="rate-limit">Rate Limiting</h2>
+
+<p>The Console API has rate limits to prevent abuse and ensure fair usage.</p>
+
+<ul>
+	<li>
+		<strong>Default rate limit</strong>: 100 requests per minute (per API key)
+	</li>
+	<li>
+		<strong><a href="/docs/send-emails">Email sending</a> rate limit</strong>: 10 requests per
+		second (per project)
+	</li>
+</ul>
+
+<p>
+	If you exceed these limits, you will receive a
+	<code>429 Too Many Requests</code> response. The following standard headers are included in all API
+	responses to indicate the current rate limit status:
+</p>
+
+<ul>
+	<li>
+		<code>X-RateLimit-Limit</code>: The maximum number of requests allowed in the current time
+		window.
+	</li>
+	<li>
+		<code>X-RateLimit-Remaining</code>: The number of requests remaining in the current time
+		window.
+	</li>
+	<li>
+		<code>X-RateLimit-Reset</code>: How many seconds until the rate limit resets.
+	</li>
+</ul>
+
 <h2 id="endpoints">Endpoints</h2>
 
 <ul>
@@ -139,6 +173,11 @@ Authorization: Bearer <your_api_key>
 
 <p>
 	<code>POST /sends</code> (scope: <strong>sends.send</strong>)
+</p>
+
+<p>
+	Visit the <a href="/docs/send-emails">Send Emails</a> page for a detailed guide on how to send emails
+	using this endpoint.
 </p>
 
 <CodeBlock
