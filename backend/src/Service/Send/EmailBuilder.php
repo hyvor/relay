@@ -127,6 +127,9 @@ class EmailBuilder
             $dkimPrivateKey,
             $domain,
             $dkimSelector,
+            defaultOptions: [
+                'headers_to_ignore' => ['DKIM-Signature'],
+            ]
         );
 
         return $signer->sign($email);

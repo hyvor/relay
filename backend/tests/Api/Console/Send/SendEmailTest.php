@@ -362,6 +362,7 @@ class SendEmailTest extends WebTestCase
             "project" => $project,
             "domain" => "hyvor.com",
             'dkim_verified' => true,
+            'dkim_selector' => 'my-selector'
         ]);
 
         $fromAddress = "supun@hyvor.com";
@@ -456,6 +457,21 @@ class SendEmailTest extends WebTestCase
         $this->assertStringContainsString("\r\nContent-Transfer-Encoding: quoted-printable\r\n", $rawBody);
         $this->assertStringContainsString("This is a test email.", $rawBody);
         $this->assertStringContainsString("<p>This is a test email.</p>", $rawBody);
+
+        preg_match_all('/^DKIM-Signature:.*?(?:\r\n[ \t].*?)*(?=\r\n\S)/ms', $rawHeaders, $matches);
+
+        $first = $matches[0][0];
+        $first = str_replace("\r\n", "", $first);
+        $this->assertStringContainsString("h=From: To: Subject: X-Custom-Header: Message-ID: X-Mailer: MIME-Version: Date;", $first);
+        $this->assertStringContainsString("i=@hyvor.com", $first);
+        $this->assertStringContainsString("s=my-selector", $first);
+
+        $second = $matches[0][1];
+        $second = str_replace("\r\n", "", $second);
+        $this->assertStringContainsString("h=From: To: Subject: X-Custom-Header: Message-ID: X-Mailer: MIME-Version: Date;", $second);
+        $this->assertStringContainsString("i=@relay.hyvor.localhost", $second);
+        $this->assertStringContainsString("s=default", $second);
+
     }
 
     public function test_does_not_allow_unregistered_domain(): void
