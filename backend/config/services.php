@@ -4,8 +4,8 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use App\Api\Console\Resolver\EntityResolver;
 use App\Api\Console\Resolver\ProjectResolver;
-use App\Service\Management\Health\AllActiveIpsHaveCorrectPtrHealthCheck;
-use App\Service\Management\Health\AllQueuesHaveAtLeastOneIpHealthCheck;
+use App\Service\Dns\Resolve\DnsOverHttp;
+use App\Service\Dns\Resolve\DnsResolveInterface;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     $services = $containerConfigurator->services();
@@ -37,4 +37,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             'controller.argument_value_resolver',
             ['name' => 'console_api_resource', 'priority' => 150]
         );
+
+    $services->alias(DnsResolveInterface::class, DnsOverHttp::class);
 };

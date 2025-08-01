@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\DnsRecord\Dto;
+namespace App\Service\Dns\Dto;
 
 use App\Entity\Type\DnsRecordType;
 
