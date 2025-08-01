@@ -16,6 +16,7 @@
         "doctrine/orm": "^3.5.0",
         "egulias/email-validator": "^4.0.4",
         "hyvor/internal": "^3.0.7",
+        "mlocati/spf-lib": "^3.3",
         "phpdocumentor/reflection-docblock": "^5.6.2",
         "phpmailer/phpmailer": "^6.10",
         "phpstan/phpdoc-parser": "^2.2",

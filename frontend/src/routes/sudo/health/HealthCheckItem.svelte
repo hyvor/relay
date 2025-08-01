@@ -18,7 +18,9 @@
 			all_queues_have_at_least_one_ip: 'All queues have at least one IP',
 			all_active_ips_have_correct_ptr:
 				'All active IPs have correct PTR records (Forward and Reverse)',
-			instance_dkim_correct: 'Instance DKIM is correct'
+			instance_dkim_correct: 'Instance DKIM is correct',
+			all_ips_are_in_spf_record: 'All IPs are in SPF record',
+			all_servers_can_be_reached_via_private_network: 'All servers can be reached via private network'
 		}[key]!;
 	}
 
@@ -49,6 +51,16 @@
 				(dkimData.expected ? `, Expected: ${dkimData.expected}` : '') +
 				(dkimData.actual ? `, Actual: ${dkimData.actual}` : '')
 			);
+		}
+
+		if (checkKey === 'all_ips_are_in_spf_record') {
+			const spfData = data as HealthCheckData['all_ips_are_in_spf_record'];
+			return `Invalid IPs: ${spfData.invalid_ips.join(', ')}`;
+		}
+
+		if (checkKey === 'all_servers_can_be_reached_via_private_network') {
+			const unreachableServers = data as HealthCheckData['all_servers_can_be_reached_via_private_network'];
+			return `Unreachable servers: ${unreachableServers.unreachable_servers.join(', ')}`;
 		}
 
 		return JSON.stringify(data);

@@ -67,6 +67,12 @@ export interface HealthCheckData {
         error: string;
         expected?: string;
         actual?: string;
+    },
+    all_ips_are_in_spf_record: {
+        invalid_ips: string[];
+    },
+    all_servers_can_be_reached_via_private_network: {
+        unreachable_servers: string[];
     }
 }
 

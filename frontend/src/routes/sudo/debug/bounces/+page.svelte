@@ -2,26 +2,45 @@
 	import { onMount } from 'svelte';
 	import type { DebugIncomingEmail } from '../../sudoTypes';
 	import { debugGetIncomingMails } from '../../sudoActions';
-	import { toast } from '@hyvor/design/components';
+	import { IconMessage, toast, Button, LoadButton } from '@hyvor/design/components';
 	import BounceRow from './BounceRow.svelte';
 
 	let mails: DebugIncomingEmail[] = [];
+	let offset = 0;
+	let loading = false;
+	let hasMore = true;
+	const limit = 20;
 
 	function loadMails(more = false) {
-		debugGetIncomingMails()
+		if (loading) return;
+		
+		loading = true;
+		const currentOffset = more ? offset : 0;
+		
+		debugGetIncomingMails(limit, currentOffset)
 			.then((data) => {
 				if (more) {
 					mails = [...mails, ...data];
 				} else {
 					mails = data;
+					offset = 0;
 				}
+				offset = currentOffset + data.length;
+				hasMore = data.length === limit;
 			})
 			.catch((error) => {
 				toast.error(error.message);
+			})
+			.finally(() => {
+				loading = false;
 			});
 	}
 
-	onMount(loadMails);
+	function loadMore() {
+		loadMails(true);
+	}
+
+	onMount(() => loadMails());
 </script>
 
 <div class="bounces">
@@ -37,11 +56,26 @@
 		> so we can improve the parsing logic.
 	</div>
 
-	<div class="rows">
-		{#each mails as mail}
-			<BounceRow {mail} />
-		{/each}
-	</div>
+	{#if mails.length === 0 && !loading}
+		<IconMessage empty message="No bounces found" />
+	{:else}
+		<div class="rows">
+			{#each mails as mail}
+				<BounceRow {mail} />
+			{/each}
+		</div>
+		
+		{#if hasMore}
+			<div class="load-more">
+				<LoadButton
+					text="Load More"
+					loading={loading}
+					show={hasMore}
+					on:click={() => loadMails(true)}
+				/>
+			</div>
+		{/if}
+	{/if}
 </div>
 
 <style>
@@ -55,5 +89,9 @@
 	}
 	.rows {
 		margin-top: 20px;
+	}
+	.load-more {
+		margin-top: 20px;
+		text-align: center;
 	}
 </style>
