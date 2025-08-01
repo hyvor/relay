@@ -86,15 +86,22 @@ Authorization: Bearer <your_api_key>
 
 <h2 id="rate-limit">Rate Limiting</h2>
 
-<p>
-	Default rate limit: <strong>100 requests per minute</strong> (per API key) <br />
-	Email sending rate limit: <strong>10 requests per second</strong> (per project)
-</p>
+<p>The Console API has rate limits to prevent abuse and ensure fair usage.</p>
+
+<ul>
+	<li>
+		<strong>Default rate limit</strong>: 100 requests per minute (per API key)
+	</li>
+	<li>
+		<strong><a href="/docs/send-emails">Email sending</a> rate limit</strong>: 10 requests per
+		second (per project)
+	</li>
+</ul>
 
 <p>
 	If you exceed these limits, you will receive a
-	<code>429 Too Many Requests</code> response. The following standard headers are included in the response
-	to indicate your current rate limit status:
+	<code>429 Too Many Requests</code> response. The following standard headers are included in all API
+	responses to indicate the current rate limit status:
 </p>
 
 <ul>
