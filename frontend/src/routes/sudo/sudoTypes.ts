@@ -97,6 +97,14 @@ export interface DnsRecord {
     priority: number;
 }
 
+export interface DefaultDnsRecord {
+    type: DnsRecordType;
+    host: string;
+    content: string;
+    ttl: number;
+    priority: number;
+}
+
 export type DnsRecordType = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT';
 
 // Debug
