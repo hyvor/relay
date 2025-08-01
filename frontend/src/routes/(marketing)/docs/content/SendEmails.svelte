@@ -252,7 +252,15 @@ type Attachment = {
 
 <h2 id="rate-limit">Rate Limiting</h2>
 
-<p>TODO</p>
+<p>
+	The rate limit for the <code>POST /api/console/sends</code> endpoint is
+	<strong>10 requests per second</strong>
+	(per project).
+</p>
+
+<p>
+	Learn more about <a href="/docs/api-console#rate-limit">Console API Rate Limiting</a>.
+</p>
 
 <h2 id="limits">Other Limits</h2>
 

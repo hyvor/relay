@@ -59,4 +59,17 @@ class RateLimitTest extends WebTestCase
         $this->assertResponseHeaderSame('X-RateLimit-Reset', '60');
     }
 
+    public function test_for_sends_endpoint(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $response = $this->consoleApi($project, "POST", "/sends");
+
+        $this->assertResponseStatusCodeSame(422);
+
+        $this->assertResponseHeaderSame('X-RateLimit-Limit', '10');
+        $this->assertResponseHeaderSame('X-RateLimit-Remaining', '9');
+        $this->assertResponseHeaderSame('X-RateLimit-Reset', '0');
+    }
+
 }

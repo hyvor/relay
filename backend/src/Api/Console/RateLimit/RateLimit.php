@@ -50,4 +50,19 @@ class RateLimit
         ];
     }
 
+    /**
+     * Rate limit for the /sends endpoint.
+     * 10 per second
+     * @return RateLimitConfig
+     */
+    public function sends(): array
+    {
+        return [
+            'id' => 'console_api_sends',
+            'policy' => 'fixed_window',
+            'limit' => 10,
+            'interval' => '1 second',
+        ];
+    }
+
 }

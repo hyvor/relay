@@ -43,7 +43,13 @@ class RateLimitListener
         }
 
         //  otherwise, it is an API request with a project
+        $project = AuthorizationListener::getProject($request);
         $apiKey = AuthorizationListener::getApiKey($request);
+
+        // special limit for the POST /sends endpoint
+        if ($request->getMethod() === 'POST' && $request->getPathInfo() === '/api/console/sends') {
+            return $this->rateLimiterProvider->rateLimiter($this->rateLimit->sends(), 'sends:project:' . $project->getId());
+        }
 
         return  $this->rateLimiterProvider->rateLimiter($this->rateLimit->apiKey(), 'api_key:' . $apiKey->getId());
 

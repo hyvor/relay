@@ -87,16 +87,14 @@ Authorization: Bearer <your_api_key>
 <h2 id="rate-limit">Rate Limiting</h2>
 
 <p>
-	See the
-	<a href="/docs/send-emails#rate-limit">Sending Emails page</a> for the rate limit of the sending
-	emails endpoint, <code>POST /sends</code>. Other endpoints have a rate limit of
-	<strong>100 requests per minute</strong>. If you exceed this limit, you will receive a
-	<code>429 Too Many Requests</code> response.
+	Default rate limit: <strong>100 requests per minute</strong> (per API key) <br />
+	Email sending rate limit: <strong>10 requests per second</strong> (per project)
 </p>
 
 <p>
-	The following standard headers are included in the response to indicate your current rate limit
-	status:
+	If you exceed these limits, you will receive a
+	<code>429 Too Many Requests</code> response. The following standard headers are included in the response
+	to indicate your current rate limit status:
 </p>
 
 <ul>
@@ -168,6 +166,11 @@ Authorization: Bearer <your_api_key>
 
 <p>
 	<code>POST /sends</code> (scope: <strong>sends.send</strong>)
+</p>
+
+<p>
+	Visit the <a href="/docs/send-emails">Send Emails</a> page for a detailed guide on how to send emails
+	using this endpoint.
 </p>
 
 <CodeBlock
