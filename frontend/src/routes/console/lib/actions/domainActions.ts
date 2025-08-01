@@ -28,7 +28,10 @@ export function createDomain(domain: string) {
 
 export function deleteDomain(id: number) {
 	return consoleApi.delete<void>({
-		endpoint: `domains/${id}`
+		endpoint: `domains`,
+		data: {
+			id
+		}
 	});
 }
 

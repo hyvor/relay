@@ -3,6 +3,10 @@
 namespace App\Tests\Service\Management\Health;
 
 use App\Entity\Domain;
+use App\Service\Dns\Resolve\DnsResolveInterface;
+use App\Service\Dns\Resolve\DnsResolvingFailedException;
+use App\Service\Dns\Resolve\ResolveAnswer;
+use App\Service\Dns\Resolve\ResolveResult;
 use App\Service\Domain\Dkim;
 use App\Service\Domain\DkimVerificationService;
 use App\Service\Instance\InstanceService;
@@ -17,11 +21,10 @@ class InstanceDkimCorrectHealthCheckTest extends KernelTestCase
 {
 
     private function doTest(
-        callable $dnsGetRecord,
+        ResolveResult|true $result,
         bool $verified,
         ?string $errorMessage = null
-    ) : void
-    {
+    ): void {
         InstanceFactory::new()->withDefaultDkim()->create([
             'domain' => 'relay.net',
         ]);
@@ -29,7 +32,14 @@ class InstanceDkimCorrectHealthCheckTest extends KernelTestCase
         /** @var InstanceService $instanceService */
         $instanceService = $this->container->get(InstanceService::class);
 
-        $service = new InstanceDkimCorrectHealthCheck($instanceService, $dnsGetRecord);
+        $resolver = $this->createMock(DnsResolveInterface::class);
+        if ($result === true) {
+            $resolver->method('resolve')->willThrowException(new DnsResolvingFailedException('bad request'));
+        } else {
+            $resolver->method('resolve')->willReturn($result);
+        }
+
+        $service = new InstanceDkimCorrectHealthCheck($instanceService, $resolver);
         $result = $service->check();
 
         $this->assertSame($verified, $result);
@@ -41,36 +51,39 @@ class InstanceDkimCorrectHealthCheckTest extends KernelTestCase
         } else {
             $this->assertArrayNotHasKey('error', $service->getData());
         }
-
     }
 
     public function test_verification(): void
     {
-
         $this->doTest(
-            fn() => false,
+            true,
             false,
-            'DNS lookup failed for DKIM record for default._domainkey.relay.net'
+            'DNS resolving failed for default._domainkey.relay.net: bad request'
         );
 
         $this->doTest(
-            fn() => [],
+            new ResolveResult(3, []),
+            false,
+            'DNS query for default._domainkey.relay.net failed with error: Non-existent domain (NXDOMAIN)'
+        );
+
+        $this->doTest(
+            new ResolveResult(0, []),
             false,
             'No DKIM record found for default._domainkey.relay.net'
         );
 
         $this->doTest(
-            fn() => [['txt' => 'v=DKIM1; k=rsa; p=test_public_key']],
+            new ResolveResult(0, [new ResolveAnswer('domain', 'v=DKIM1; k=rsa; p=test_public_key')]),
             false,
             'DKIM record does not match expected value'
         );
 
         $txt = Dkim::dkimTxtValue(DomainFactory::TEST_DKIM_PUBLIC_KEY);
         $this->doTest(
-            fn() => [['txt' => $txt]],
+            new ResolveResult(0, [new ResolveAnswer('domain', $txt)]),
             true
         );
-
     }
 
 }

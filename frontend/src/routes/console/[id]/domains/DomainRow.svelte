@@ -38,35 +38,22 @@
 		</div>
 	</div>
 	<div class="domain-actions">
-		<Button
-			color="input"
-			size="small"
-			on:click={() => showDnsModal = true}
-		>
+		<Button color="input" size="small" on:click={() => (showDnsModal = true)}>
 			{#snippet start()}
 				<IconEye size={12} />
 			{/snippet}
 			DNS Record
 		</Button>
 		{#if !domain.dkim_verified}
-			<Button
-				color="input"
-				size="small"
-				on:click={() => onVerify(domain)}
-			>
+			<Button color="input" size="small" on:click={() => onVerify(domain)}>
 				{#snippet start()}
 					<IconArrowClockwise size={12} />
 				{/snippet}
 				Verify
 			</Button>
 		{/if}
-		<IconButton
-			variant="fill-light"
-			color="red"
-			size="small"
-			on:click={() => onDelete(domain)}
-		>
-				<IconTrash size={12} />
+		<IconButton variant="fill-light" color="red" size="small" on:click={() => onDelete(domain)}>
+			<IconTrash size={12} />
 		</IconButton>
 	</div>
 </div>
@@ -81,6 +68,7 @@
 		padding: 4px;
 		border-radius: 8px;
 		background-color: var(--bg-light);
+		word-break: break-all;
 	}
 
 	.domain-info {
@@ -119,4 +107,4 @@
 		gap: 12px;
 		margin-left: 20px;
 	}
-</style> 
+</style>

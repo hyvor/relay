@@ -8,6 +8,8 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Zenstruck\Messenger\Test\InteractsWithMessenger;
 
 class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase

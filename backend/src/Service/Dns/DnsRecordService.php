@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Service\DnsRecord;
+namespace App\Service\Dns;
 
 use App\Entity\DnsRecord;
 use App\Repository\DnsRecordRepository;
-use App\Service\DnsRecord\Dto\CreateDnsRecordDto;
-use App\Service\DnsRecord\Dto\UpdateDnsRecordDto;
+use App\Service\Dns\Dto\CreateDnsRecordDto;
+use App\Service\Dns\Dto\UpdateDnsRecordDto;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 

@@ -4,7 +4,7 @@ namespace App\Service\Management\GoState;
 
 use App\Entity\Instance;
 use App\Entity\Type\DnsRecordType;
-use App\Service\DnsRecord\DnsRecordService;
+use App\Service\Dns\DnsRecordService;
 use App\Service\Domain\Dkim;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
