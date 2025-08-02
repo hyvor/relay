@@ -6,7 +6,7 @@ use App\Entity\ApiKey;
 use App\Entity\Project;
 use App\Service\ApiKey\ApiKeyService;
 use App\Service\Project\ProjectService;
-use Hyvor\Internal\Auth\Auth;
+use Hyvor\Internal\Bundle\Api\DataCarryingHttpException;
 use Hyvor\Internal\Auth\AuthInterface;
 use Hyvor\Internal\Auth\AuthUser;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
@@ -27,15 +27,18 @@ class AuthorizationListener
         private ProjectService $projectService,
         private ApiKeyService $apiKeyService,
         private AuthInterface $auth,
-    )
-    {
+    ) {
     }
 
     public function __invoke(ControllerEvent $event): void
     {
         // only console API requests
-        if (!str_starts_with($event->getRequest()->getPathInfo(), '/api/console')) return;
-        if ($event->isMainRequest() === false) return;
+        if (!str_starts_with($event->getRequest()->getPathInfo(), '/api/console')) {
+            return;
+        }
+        if ($event->isMainRequest() === false) {
+            return;
+        }
 
         $request = $event->getRequest();
 
@@ -79,25 +82,30 @@ class AuthorizationListener
 
     private function handleSession(ControllerEvent $event): void
     {
-
         $request = $event->getRequest();
         $projectId = $request->headers->get('x-project-id');
-        $sessionCookie = $request->cookies->get(Auth::HYVOR_SESSION_COOKIE_NAME);
         $isUserLevelEndpoint = count($event->getAttributes(UserLevelEndpoint::class)) > 0;
 
-        $user = $this->auth->check((string) $sessionCookie);
+        $user = $this->auth->check($request);
 
         if ($user === false) {
-            throw new AccessDeniedHttpException('Invalid session.');
+            throw new DataCarryingHttpException(
+                401,
+                [
+                    'login_url' => $this->auth->authUrl('login'),
+                    'signup_url' => $this->auth->authUrl('signup'),
+                ],
+                'Unauthorized'
+            );
         }
 
         // user-level endpoints do not have a project ID
         if ($isUserLevelEndpoint === false) {
-            if ($projectId === null)  {
+            if ($projectId === null) {
                 throw new AccessDeniedHttpException('X-Project-ID is required for this endpoint.');
             }
 
-            $project = $this->projectService->getProjectById((int) $projectId);
+            $project = $this->projectService->getProjectById((int)$projectId);
 
             if ($project === null) {
                 throw new AccessDeniedHttpException('Invalid project ID.');
@@ -112,7 +120,6 @@ class AuthorizationListener
         }
 
         $request->attributes->set(self::RESOLVED_USER_ATTRIBUTE_KEY, $user);
-
     }
 
     /**
@@ -135,7 +142,6 @@ class AuthorizationListener
                 "You do not have the required scope '$requiredScope' to access this resource."
             );
         }
-
     }
 
     public static function hasUser(Request $request): bool

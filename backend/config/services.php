@@ -6,6 +6,7 @@ use App\Api\Console\Resolver\EntityResolver;
 use App\Api\Console\Resolver\ProjectResolver;
 use App\Service\Dns\Resolve\DnsOverHttp;
 use App\Service\Dns\Resolve\DnsResolveInterface;
+use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     $services = $containerConfigurator->services();
@@ -39,4 +40,10 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         );
 
     $services->alias(DnsResolveInterface::class, DnsOverHttp::class);
+
+    $services->set(PdoSessionHandler::class)
+        ->args([
+            env('DATABASE_URL'),
+            ['db_table' => 'oidc_sessions'],
+        ]);
 };

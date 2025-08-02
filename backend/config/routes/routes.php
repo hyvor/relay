@@ -3,7 +3,6 @@
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
 return static function (RoutingConfigurator $routes): void {
-
     // sudo API
     $routes->import('../../src/Api/Sudo/Controller', 'attribute')
         ->prefix('/api/sudo')
@@ -19,4 +18,8 @@ return static function (RoutingConfigurator $routes): void {
         ->prefix('/api/local')
         ->namePrefix('api_local_');
 
+    // OIDC routes
+    $routes->import('@InternalBundle/src/Controller/OidcController.php', 'attribute')
+        ->prefix('/api/oidc')
+        ->namePrefix('api_oidc_');
 };

@@ -1,15 +1,21 @@
 # see https://symfony.com/doc/current/reference/configuration/framework.html
 framework:
-    secret: '%env(APP_SECRET)%'
+  secret: '%env(APP_SECRET)%'
 
-    # Note that the session will be started ONLY if you read or write from it.
-    session: true
+  session:
+    handler_id: Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler
 
-    #esi: true
-    #fragments: true
+  trusted_proxies: '%env(TRUSTED_PROXIES)%'
+  
+  #esi: true
+  #fragments: true
+
+when@dev:
+  framework:
+    trusted_proxies: '172.16.0.0/12'
 
 when@test:
-    framework:
-        test: true
-        session:
-            storage_factory_id: session.storage.factory.mock_file
+  framework:
+    test: true
+    session:
+      storage_factory_id: session.storage.factory.mock_file
