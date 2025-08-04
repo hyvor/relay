@@ -31,6 +31,7 @@ final class Version20250802223829 extends AbstractMigration
           email       text NOT NULL,
           name        text NOT NULL,
           picture_url text,
+          website_url text,
           UNIQUE (iss, sub)
         );
         SQL

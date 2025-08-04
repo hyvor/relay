@@ -1663,12 +1663,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/hyvor/internal.git",
-                "reference": "47ce44f19b72a390d7a08c9c99d012637aa448be"
+                "reference": "a3010e9ed87bb4d504c060e8eea4726031dea70e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/hyvor/internal/zipball/47ce44f19b72a390d7a08c9c99d012637aa448be",
-                "reference": "47ce44f19b72a390d7a08c9c99d012637aa448be",
+                "url": "https://api.github.com/repos/hyvor/internal/zipball/a3010e9ed87bb4d504c060e8eea4726031dea70e",
+                "reference": "a3010e9ed87bb4d504c060e8eea4726031dea70e",
                 "shasum": ""
             },
             "require": {
@@ -1681,9 +1681,11 @@
                 "promphp/prometheus_client_php": "^2.14",
                 "symfony/expression-language": "^7.2",
                 "symfony/http-client": "^7.2",
+                "symfony/orm-pack": "^2.4",
+                "symfony/serializer-pack": "^1.3",
                 "symfony/twig-bundle": "^7.2",
                 "symfony/ux-twig-component": "^2.24",
-                "symfony/validator": "^7.2",
+                "symfony/validator": "^7.3",
                 "timacdonald/log-fake": "^v2.3.0"
             },
             "require-dev": {
@@ -1724,7 +1726,7 @@
                 "issues": "https://github.com/hyvor/internal/issues",
                 "source": "https://github.com/hyvor/internal/tree/openid"
             },
-            "time": "2025-08-02T22:18:34+00:00"
+            "time": "2025-08-03T16:40:05+00:00"
         },
         {
             "name": "illuminate/collections",
@@ -7346,6 +7348,55 @@
             "time": "2025-07-15T11:36:08+00:00"
         },
         {
+            "name": "symfony/orm-pack",
+            "version": "v2.4.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/orm-pack.git",
+                "reference": "9d8729016b3a8b0db854c028d15c2dcf4d19b1b4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/orm-pack/zipball/9d8729016b3a8b0db854c028d15c2dcf4d19b1b4",
+                "reference": "9d8729016b3a8b0db854c028d15c2dcf4d19b1b4",
+                "shasum": ""
+            },
+            "require": {
+                "doctrine/dbal": "^3",
+                "doctrine/doctrine-bundle": "*",
+                "doctrine/doctrine-migrations-bundle": "*",
+                "doctrine/orm": "*"
+            },
+            "conflict": {
+                "php": "<8.1"
+            },
+            "type": "symfony-pack",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "A pack for the Doctrine ORM",
+            "support": {
+                "issues": "https://github.com/symfony/orm-pack/issues",
+                "source": "https://github.com/symfony/orm-pack/tree/v2.4.1"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2024-02-13T17:58:44+00:00"
+        },
+        {
             "name": "symfony/polyfill-intl-grapheme",
             "version": "v1.32.0",
             "source": {
@@ -8489,6 +8540,57 @@
                 }
             ],
             "time": "2025-07-26T13:07:17+00:00"
+        },
+        {
+            "name": "symfony/serializer-pack",
+            "version": "v1.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/serializer-pack.git",
+                "reference": "2844d81a5fc86b617b82f44a8bfcaaba1d583eee"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/serializer-pack/zipball/2844d81a5fc86b617b82f44a8bfcaaba1d583eee",
+                "reference": "2844d81a5fc86b617b82f44a8bfcaaba1d583eee",
+                "shasum": ""
+            },
+            "require": {
+                "phpdocumentor/reflection-docblock": "*",
+                "phpstan/phpdoc-parser": "*",
+                "symfony/property-access": "*",
+                "symfony/property-info": "*",
+                "symfony/serializer": "*"
+            },
+            "conflict": {
+                "symfony/property-info": "<5.4",
+                "symfony/serializer": "<5.4"
+            },
+            "type": "symfony-pack",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "A pack for the Symfony serializer",
+            "support": {
+                "issues": "https://github.com/symfony/serializer-pack/issues",
+                "source": "https://github.com/symfony/serializer-pack/tree/v1.3.0"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2023-06-03T13:55:25+00:00"
         },
         {
             "name": "symfony/service-contracts",
