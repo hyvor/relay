@@ -63,6 +63,11 @@
 			product="core"
 			instance={getAppConfig().hyvor.instance}
 			config={{ name: 'Hyvor Relay' }}
+			cloud={getAppConfig().hosting === 'cloud'}
+			authOverride={{
+				user: getAppConfig().user,
+				logoutUrl: '/api/oidc/logout'
+			}}
 		/>
 		{@render children?.()}
 	{/if}

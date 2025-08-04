@@ -9,6 +9,10 @@ use App\Service\Dns\Resolve\DnsResolveInterface;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
+    $containerConfigurator->parameters()
+        ->set('env(HOSTING)', 'self') // Default to self-hosted
+    ;
+
     $services = $containerConfigurator->services();
 
     // ================ DEFAULTS =================

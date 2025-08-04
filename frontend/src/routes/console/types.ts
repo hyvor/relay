@@ -1,7 +1,16 @@
 export interface AppConfig {
+    hosting: 'self' | 'cloud';
+
 	hyvor: {
 		instance: string;
 	};
+
+    user: {
+        id: number;
+        name: string;
+        email: string;
+        picture_url: string | null;
+    }
 
 	app: {
 		webhook: {
