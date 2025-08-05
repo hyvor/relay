@@ -10,7 +10,6 @@ use App\Entity\Project;
 use App\Service\App\Config;
 use App\Service\Project\ProjectService;
 use App\Service\Send\Compliance;
-use Hyvor\Internal\Auth\AuthUser;
 use Hyvor\Internal\InternalConfig;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;

@@ -30,7 +30,7 @@ services:
       target: backend-dev
     volumes:
       - ./backend:/app/backend
-      - ../internal:/app/backend/vendor/hyvor/internal:ro
+      # - ../internal:/app/backend/vendor/hyvor/internal:ro
       # - ./shared:/app/shared
     labels:
       traefik.enable: true

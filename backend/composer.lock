@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "824edf7dbc3f94cdf90a5128250e6fd2",
+    "content-hash": "6bab8f30ab47008f146cea8027be60a9",
     "packages": [
         {
             "name": "carbonphp/carbon-doctrine-types",
@@ -1659,16 +1659,16 @@
         },
         {
             "name": "hyvor/internal",
-            "version": "dev-openid",
+            "version": "3.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/hyvor/internal.git",
-                "reference": "a3010e9ed87bb4d504c060e8eea4726031dea70e"
+                "reference": "a8ae399adc775bb571dcb53681fda3cb063c9ccb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/hyvor/internal/zipball/a3010e9ed87bb4d504c060e8eea4726031dea70e",
-                "reference": "a3010e9ed87bb4d504c060e8eea4726031dea70e",
+                "url": "https://api.github.com/repos/hyvor/internal/zipball/a8ae399adc775bb571dcb53681fda3cb063c9ccb",
+                "reference": "a8ae399adc775bb571dcb53681fda3cb063c9ccb",
                 "shasum": ""
             },
             "require": {
@@ -1724,9 +1724,9 @@
             "description": "Internal Package for HYVOR Applications",
             "support": {
                 "issues": "https://github.com/hyvor/internal/issues",
-                "source": "https://github.com/hyvor/internal/tree/openid"
+                "source": "https://github.com/hyvor/internal/tree/3.1.0"
             },
-            "time": "2025-08-03T16:40:05+00:00"
+            "time": "2025-08-05T02:56:24+00:00"
         },
         {
             "name": "illuminate/collections",
@@ -10986,9 +10986,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "hyvor/internal": 20
-    },
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
