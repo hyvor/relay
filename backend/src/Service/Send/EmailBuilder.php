@@ -2,10 +2,10 @@
 
 namespace App\Service\Send;
 
-use App\Config;
 use App\Entity\Domain;
-use App\Service\Send\Dto\SendingAttachment;
+use App\Service\App\Config;
 use App\Service\Instance\InstanceService;
+use App\Service\Send\Dto\SendingAttachment;
 use App\Service\Send\Exception\EmailTooLargeException;
 use Hyvor\Internal\Util\Crypt\Encryption;
 use Symfony\Component\Mime\Address;
@@ -21,8 +21,7 @@ class EmailBuilder
         private Encryption $encryption,
         private InstanceService $instanceService,
         private Config $config
-    )
-    {
+    ) {
     }
 
     /**
@@ -40,8 +39,7 @@ class EmailBuilder
         ?string $bodyText,
         array $customHeaders,
         array $attachments
-    ): array
-    {
+    ): array {
         $email = new Email()
             ->from($from)
             ->to($to);
@@ -110,7 +108,7 @@ class EmailBuilder
 
         return [
             'raw' => $raw,
-            'uuid' => (string) $uuid,
+            'uuid' => (string)$uuid,
             'messageId' => $messageId,
         ];
     }
@@ -133,7 +131,6 @@ class EmailBuilder
         );
 
         return $signer->sign($email);
-
     }
 
 }

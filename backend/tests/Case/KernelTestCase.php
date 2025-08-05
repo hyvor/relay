@@ -2,14 +2,12 @@
 
 namespace App\Tests\Case;
 
-use App\Config;
+use App\Service\App\Config;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\HttpClient\MockHttpClient;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Zenstruck\Messenger\Test\InteractsWithMessenger;
 
 class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
@@ -28,7 +26,7 @@ class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
         self::bootKernel();
 
         $this->container = static::getContainer();
-        
+
         assert(self::$kernel !== null, 'Kernel should be booted');
         $this->application = new Application(self::$kernel);
 
@@ -46,7 +44,7 @@ class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
         $command = $this->application->find($name);
         return new CommandTester($command);
     }
-  
+
     protected function setConfig(string $key, mixed $value): void
     {
         $config = $this->getContainer()->get(Config::class);

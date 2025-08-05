@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace App\Service\App;
 
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -17,8 +17,9 @@ class Config
         private string $envHostname,
         #[Autowire('%kernel.environment%')]
         private string $env,
-    )
-    {
+        #[Autowire('%env(string:HOSTING)%')]
+        private string $hosting,
+    ) {
     }
 
     public function getAppVersion(): string
@@ -40,6 +41,11 @@ class Config
     public function getEnv(): string
     {
         return $this->env;
+    }
+
+    public function getHosting(): HostingEnum
+    {
+        return HostingEnum::tryFrom($this->hosting) ?? HostingEnum::SELF;
     }
 
 }
