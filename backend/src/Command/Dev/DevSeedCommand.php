@@ -14,13 +14,13 @@ use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\ServerFactory;
 use App\Tests\Factory\SendFactory;
-use App\Tests\Factory\SudoUserFactory;
 use App\Tests\Factory\SuppressionFactory;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Hyvor\Internal\Sudo\SudoUserFactory;
 
 /**
  * @codeCoverageIgnore
@@ -46,7 +46,7 @@ class DevSeedCommand extends Command
             return Command::FAILURE;
         }
 
-        SudoUserFactory::createOne(['hyvor_user_id' => 1]);
+        SudoUserFactory::createOne(['user_id' => 1]);
 
         InstanceFactory::new()->withDefaultDkim()->create([
             'domain' => InstanceService::DEFAULT_DOMAIN,
@@ -74,7 +74,9 @@ class DevSeedCommand extends Command
             'is_available' => true,
             'is_enabled' => true
         ]);
-        IpAddressFactory::createOne(['server' => $server, 'queue' => $distributionalQueue, 'is_available' => true, 'is_enabled' => true]);
+        IpAddressFactory::createOne(
+            ['server' => $server, 'queue' => $distributionalQueue, 'is_available' => true, 'is_enabled' => true]
+        );
 
         $project = ProjectFactory::createOne([
             'name' => 'Test Project',
@@ -82,7 +84,9 @@ class DevSeedCommand extends Command
         ]);
 
         DomainFactory::createOne(['project' => $project, 'domain' => 'hyvor.com']);
-        $domain = DomainFactory::createOne(['project' => $project, 'domain' => 'hyvor.local.testing', 'dkim_verified' => true]);
+        $domain = DomainFactory::createOne(
+            ['project' => $project, 'domain' => 'hyvor.local.testing', 'dkim_verified' => true]
+        );
         DomainFactory::createMany(15, ['project' => $project]);
 
         $sends_queued = SendFactory::createMany(2, [
