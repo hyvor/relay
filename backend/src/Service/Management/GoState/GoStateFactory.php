@@ -2,7 +2,7 @@
 
 namespace App\Service\Management\GoState;
 
-use App\Config;
+use App\Service\App\Config;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
 use App\Service\Ip\Ptr;
@@ -17,8 +17,7 @@ class GoStateFactory
         private InstanceService $instanceService,
         private Config $config,
         private GoStateDnsRecordsService $goStateService,
-    )
-    {
+    ) {
     }
 
     public function create(): GoState
@@ -75,7 +74,6 @@ class GoStateFactory
             env: $this->config->getEnv(),
             version: $this->config->getAppVersion(),
         );
-
     }
 
 }

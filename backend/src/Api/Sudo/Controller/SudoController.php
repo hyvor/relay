@@ -2,10 +2,9 @@
 
 namespace App\Api\Sudo\Controller;
 
-use App\Api\Sudo\Object\DnsRecordObject;
 use App\Api\Sudo\Object\DefaultDnsRecordObject;
 use App\Api\Sudo\Object\InstanceObject;
-use App\Config;
+use App\Service\App\Config;
 use App\Service\Instance\InstanceService;
 use App\Service\Management\GoState\GoStateDnsRecordsService;
 use Hyvor\Internal\InternalConfig;
@@ -21,14 +20,12 @@ class SudoController extends AbstractController
         private InternalConfig $internalConfig,
         private InstanceService $instanceService,
         private GoStateDnsRecordsService $goStateDnsRecordsService
-    )
-    {
+    ) {
     }
 
     #[Route('/init', methods: 'POST')]
     public function initSudo(): JsonResponse
     {
-
         $instance = $this->instanceService->getInstance();
 
         return new JsonResponse([
@@ -38,7 +35,6 @@ class SudoController extends AbstractController
             ],
             'instance' => new InstanceObject($instance)
         ]);
-
     }
 
     #[Route('/default-dns', methods: 'GET')]

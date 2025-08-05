@@ -29,20 +29,29 @@
 				as="a"
 				href="/hosting">Hosting</Button
 			>
+			<Button
+				size="small"
+				as="a"
+				href="https://github.com/hyvor/relay"
+				target="_blank"
+				rel="noopener noreferrer"
+				color="input"
+				variant="invisible"
+			>
+				{#snippet start()}
+					<IconGithub size={14} />
+				{/snippet}
+				Github
+				{#snippet end()}
+					<IconBoxArrowUpRight size={11} />
+				{/snippet}
+			</Button>
 		</div>
-		<Button
-			size="small"
-			as="a"
-			href="https://github.com/hyvor/relay"
-			target="_blank"
-			rel="noopener noreferrer"
-		>
-			{#snippet start()}
-				<IconGithub size={14} />
-			{/snippet}
-			Github
+
+		<Button size="small" as="a" href="/console">
+			Go to Console
 			{#snippet end()}
-				<IconBoxArrowUpRight size={11} />
+				&rarr;
 			{/snippet}
 		</Button>
 	{/snippet}
@@ -55,5 +64,8 @@
 <style>
 	.docs {
 		margin-right: 5px;
+		display: flex;
+		gap: 5px;
+		align-items: center;
 	}
 </style>

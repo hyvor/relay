@@ -75,7 +75,7 @@ function getConsoleApi() {
 
             const toThrow = new Error(error) as any;
             toThrow.message = error;
-            toThrow.code = e && e.code ? e.code : 500;
+            toThrow.code = response.status;
             toThrow.data = e && e.data ? e.data : null;
 
 

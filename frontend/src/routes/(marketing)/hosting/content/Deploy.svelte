@@ -13,14 +13,23 @@
 
 <h2 id="infra">Infrastructure</h2>
 
-<p>Servers:</p>
-
 <ul>
 	<li>
 		<a href="#pgsql">PostgreSQL</a>
 	</li>
 	<li>
-		<a href="#app-server"> App Server </a> (1 or more)
+		<a href="#app-servers"> App Servers </a> (1 or more)
+		<ul style="margin-top: 8px">
+			<li>
+				<a href="#how-many">How many servers?</a>
+			</li>
+			<li>
+				<a href="#private-network">Private Network</a>
+			</li>
+			<li>
+				<a href="#ansible">Ansible</a>
+			</li>
+		</ul>
 	</li>
 </ul>
 
@@ -67,9 +76,9 @@
 	<li>Backup strategies are in place.</li>
 </ul>
 
-<h2 id="app-server">App Server</h2>
+<h2 id="app-servers">App Servers</h2>
 
-<h3 id="app-server-count">Number of App Servers</h3>
+<h3 id="how-many">How many servers?</h3>
 
 <p>
 	The number of app servers you need depends on your expected email volume. Here are some rough
@@ -94,6 +103,21 @@
 <p>
 	Also, make sure to read the <a href="/hosting/scaling">Scaling</a> page on how to scale both PostgreSQL
 	and email workers.
+</p>
+
+<h3 id="private-network">Private Network</h3>
+
+<p>
+	Hyvor Relay app servers communicate with each other for various tasks, such as propagating
+	configuration changes. Therefore, all app servers should be in a private network.
+</p>
+
+<p>
+	The default CIDR for the private network is <code>10.0.0.0/8</code>. So, whenever possible, we
+	recommend using a private IP address in that range for the app servers. If it is not possible to
+	use that CIDR (e.g., if you are using a cloud provider that does not allow it or if you have
+	other constraints), then use any other private CIDR range. Later, you can
+	<a href="/hosting/setup#private-network">configure Hyvor Relay to use that range</a>.
 </p>
 
 <h3 id="app-server-setup">App Server Setup</h3>

@@ -33,11 +33,6 @@ export const categories: Category[] = [
 				slug: 'monitoring',
 				name: 'Monitoring',
 				component: Monitoring
-			},
-			{
-				slug: 'api-sudo',
-				name: 'Sudo API',
-				component: Introduction,
 			}
 		]
 	},
@@ -49,11 +44,11 @@ export const categories: Category[] = [
 				name: 'Easy Deploy',
 				component: Introduction,
 			},
-			{
+			/* {
 				slug: 'learn',
 				name: 'Learn Sending Emails',
 				component: Introduction,
-			}
+			} */
 		]
 	}
 ];
