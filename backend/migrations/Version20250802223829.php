@@ -36,6 +36,7 @@ final class Version20250802223829 extends AbstractMigration
         );
         SQL
         );
+        $this->addSql("CREATE INDEX idx_oidc_users_email ON oidc_users (email);");
 
         $this->addSql(
             <<<SQL

@@ -3,7 +3,6 @@
 namespace App\Api\Sudo\Authorization;
 
 use App\Service\SudoUser\SudoUserService;
-use Hyvor\Internal\Auth\Auth;
 use Hyvor\Internal\Auth\AuthInterface;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
@@ -29,9 +28,7 @@ class SudoAuthorizationListener
         }
 
         $request = $event->getRequest();
-
-        $sessionCookie = $request->cookies->get(Auth::HYVOR_SESSION_COOKIE_NAME);
-        $user = $this->auth->check((string) $sessionCookie);
+        $user = $this->auth->check($request);
 
         if ($user === false) {
             throw new AccessDeniedHttpException('Invalid session.');
