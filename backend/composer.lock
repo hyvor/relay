@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6bab8f30ab47008f146cea8027be60a9",
+    "content-hash": "a87b19c244bd5a7a508829243bec9114",
     "packages": [
         {
             "name": "carbonphp/carbon-doctrine-types",
@@ -1659,16 +1659,16 @@
         },
         {
             "name": "hyvor/internal",
-            "version": "3.1.0",
+            "version": "3.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/hyvor/internal.git",
-                "reference": "a8ae399adc775bb571dcb53681fda3cb063c9ccb"
+                "reference": "3005ea29ea60883edb42bc81e23c12ca91796b5c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/hyvor/internal/zipball/a8ae399adc775bb571dcb53681fda3cb063c9ccb",
-                "reference": "a8ae399adc775bb571dcb53681fda3cb063c9ccb",
+                "url": "https://api.github.com/repos/hyvor/internal/zipball/3005ea29ea60883edb42bc81e23c12ca91796b5c",
+                "reference": "3005ea29ea60883edb42bc81e23c12ca91796b5c",
                 "shasum": ""
             },
             "require": {
@@ -1695,7 +1695,8 @@
                 "symfony/browser-kit": "^7.3",
                 "symfony/config": "^7.2",
                 "symfony/dependency-injection": "^7.2",
-                "symfony/framework-bundle": "^7.2"
+                "symfony/framework-bundle": "^7.2",
+                "zenstruck/foundry": "^2.6"
             },
             "type": "library",
             "extra": {
@@ -1724,9 +1725,9 @@
             "description": "Internal Package for HYVOR Applications",
             "support": {
                 "issues": "https://github.com/hyvor/internal/issues",
-                "source": "https://github.com/hyvor/internal/tree/3.1.0"
+                "source": "https://github.com/hyvor/internal/tree/3.1.1"
             },
-            "time": "2025-08-05T02:56:24+00:00"
+            "time": "2025-08-05T20:42:51+00:00"
         },
         {
             "name": "illuminate/collections",

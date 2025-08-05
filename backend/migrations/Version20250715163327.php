@@ -23,10 +23,9 @@ final class Version20250715163327 extends AbstractMigration
         $this->addSql(
             <<<SQL
             CREATE TABLE sudo_users (
-                id SERIAL PRIMARY KEY,
+                user_id BIGINT PRIMARY KEY,
                 created_at TIMESTAMPTZ NOT NULL,
-                updated_at TIMESTAMPTZ NOT NULL,
-                hyvor_user_id BIGINT UNIQUE NOT NULL
+                updated_at TIMESTAMPTZ NOT NULL
             );
             SQL
         );
