@@ -389,6 +389,7 @@ class SendEmailTest extends WebTestCase
                 "body_html" => "<p>This is a test email.</p>",
                 "headers" => [
                     "X-Custom-Header" => "Custom Value",
+                    'Reply-To' => 'no-reply@hyvor.com', // bug #163
                 ],
             ],
             scopes: [Scope::SENDS_SEND]
@@ -427,6 +428,7 @@ class SendEmailTest extends WebTestCase
         $this->assertSame(
             [
                 "X-Custom-Header" => "Custom Value",
+                'Reply-To' => 'no-reply@hyvor.com'
             ],
             $send->getHeaders()
         );
@@ -466,7 +468,7 @@ class SendEmailTest extends WebTestCase
         $first = $matches[0][0];
         $first = str_replace("\r\n", "", $first);
         $this->assertStringContainsString(
-            "h=From: To: Subject: X-Custom-Header: Message-ID: X-Mailer: MIME-Version: Date;",
+            "h=From: To: Subject: X-Custom-Header: Reply-To: Message-ID: X-Mailer: MIME-Version: Date;",
             $first
         );
         $this->assertStringContainsString("i=@hyvor.com", $first);
@@ -475,7 +477,7 @@ class SendEmailTest extends WebTestCase
         $second = $matches[0][1];
         $second = str_replace("\r\n", "", $second);
         $this->assertStringContainsString(
-            "h=From: To: Subject: X-Custom-Header: Message-ID: X-Mailer: MIME-Version: Date;",
+            "h=From: To: Subject: X-Custom-Header: Reply-To: Message-ID: X-Mailer: MIME-Version: Date;",
             $second
         );
         $this->assertStringContainsString("i=@relay.hyvor.localhost", $second);
