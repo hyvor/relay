@@ -36,8 +36,8 @@ export interface IpAddress {
     ip_address: string;
     ptr: string;
     queue: Queue | null;
-    is_active: boolean;
-    is_enabled: boolean;
+    is_ptr_forward_valid: boolean;
+    is_ptr_reverse_valid: boolean;
 }
 
 export interface Queue {

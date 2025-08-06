@@ -36,10 +36,6 @@ class GoStateFactory
         $ipsFromServer = $this->ipAddressService->getIpAddressesOfServer($server);
 
         foreach ($ipsFromServer as $ip) {
-            if ($ip->getIsAvailable() === false || $ip->getIsEnabled() === false) {
-                continue;
-            }
-
             $queue = $ip->getQueue();
 
             if ($queue === null) {

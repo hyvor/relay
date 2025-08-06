@@ -76,7 +76,6 @@
 								<IconBoxArrowUpRight size={12} />
 							</a>
 						</th>
-						<th>Status</th>
 					</tr>
 				</thead>
 				<tbody>

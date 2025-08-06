@@ -15,8 +15,6 @@ class IpAddressObject
     public string $ip_address;
     public string $ptr;
     public ?QueueObject $queue = null;
-    public bool $is_active = false;
-    public bool $is_enabled = true;
     public bool $is_ptr_forward_valid = false;
     public bool $is_ptr_reverse_valid = false;
 
@@ -29,8 +27,6 @@ class IpAddressObject
         $this->ptr = Ptr::getPtrDomain($ipAddress, $instance->getDomain());
         $queue = $ipAddress->getQueue();
         $this->queue = $queue ? new QueueObject($queue) : null;
-        $this->is_active = $ipAddress->getIsAvailable();
-        $this->is_enabled = $ipAddress->getIsEnabled();
         $this->is_ptr_forward_valid = $ipAddress->getIsPtrForwardValid();
         $this->is_ptr_reverse_valid = $ipAddress->getIsPtrReverseValid();
     }

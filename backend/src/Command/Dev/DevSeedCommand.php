@@ -71,11 +71,9 @@ class DevSeedCommand extends Command
             'server' => $server,
             'ip_address' => '0.0.0.0',
             'queue' => $transactionalQueue,
-            'is_available' => true,
-            'is_enabled' => true
         ]);
         IpAddressFactory::createOne(
-            ['server' => $server, 'queue' => $distributionalQueue, 'is_available' => true, 'is_enabled' => true]
+            ['server' => $server, 'queue' => $distributionalQueue]
         );
 
         $project = ProjectFactory::createOne([

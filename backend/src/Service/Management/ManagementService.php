@@ -28,8 +28,7 @@ class ManagementService
         private EntityManagerInterface $entityManager,
         private LockFactory $lockFactory,
         private ServerIp $serverIp
-    )
-    {
+    ) {
         $this->output = new NullOutput();
     }
 
@@ -40,11 +39,11 @@ class ManagementService
 
     public function initialize(): void
     {
-        $this->entityManager->wrapInTransaction(function() {
+        $this->entityManager->wrapInTransaction(function () {
             $instance = $this->initializeInstance();
+            $this->initializeDefaultQueues();
             $server = $this->initializeServer($instance);
             $this->initializeIpAddresses($server);
-            $this->initializeDefaultQueues();
         });
     }
 
@@ -103,7 +102,7 @@ class ManagementService
         $lock = $this->lockFactory->createLock('management_init_default_queues');
 
         if (!$lock->acquire()) {
-            $this->output->writeln('<info>Default queues already being created by another process.</info>');
+            $this->output->writeln('<info>Default queues are already being created by another process.</info>');
             return;
         }
 
@@ -112,7 +111,6 @@ class ManagementService
         $this->output->writeln('<info>Default queues created successfully.</info>');
 
         $lock->release();
-
     }
 
 }

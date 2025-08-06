@@ -5,6 +5,7 @@ namespace App\Service\Ip;
 use App\Entity\IpAddress;
 use App\Entity\Server;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
+use App\Service\Queue\QueueService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 
@@ -17,8 +18,8 @@ class IpAddressService
         private ServerIp $serverIp,
         private EntityManagerInterface $em,
         private Ptr $ptr,
-    )
-    {
+        private QueueService $queueService,
+    ) {
     }
 
     /**
@@ -49,10 +50,8 @@ class IpAddressService
     }
 
     /**
-     * Creates IP address records if not already present,
-     * updates existing ones to be active,
-     * and deactivates those that are not present in the server's current IP addresses.
-     * Does not delete any IP address records.
+     * Creates IP address records if not already present.
+     * Deletes IP address records that are not present in the server's current IP addresses.
      */
     public function updateIpAddressesOfServer(Server $server): void
     {
@@ -60,39 +59,22 @@ class IpAddressService
         $currentIpAddressesInDb = array_map(fn(IpAddress $ip) => $ip->getIpAddress(), $currentIpAddressesEntitiesInDb);
         $serverIpAddresses = $this->serverIp->getPublicV4IpAddresses();
 
+        // Create IP addresses that are in the server's current IP addresses but not in the database
         foreach ($serverIpAddresses as $serverIpAddress) {
-
-            $inArrayKey = array_search($serverIpAddress, $currentIpAddressesInDb);
-
-            if ($inArrayKey !== false) {
-                // IP address already exists in the database, mark is as active if not active
-                $ipAddressEntity = $currentIpAddressesEntitiesInDb[$inArrayKey];
-
-                if ($ipAddressEntity->getIsAvailable()) {
-                    continue;
-                }
-
-                $updates = new UpdateIpAddressDto();
-                $updates->isActive = true;
-                $this->updateIpAddress($ipAddressEntity, $updates);
-            } else {
-                // IP address does not exist in the database, create it
+            $inArrayKey = in_array($serverIpAddress, $currentIpAddressesInDb);
+            if ($inArrayKey === false) {
                 $this->createIpAddress($server, $serverIpAddress);
             }
         }
 
-        // Deactivate IP addresses that are in the database but not in the server's current IP addresses
-        $ipAddressesToDeactivate = array_filter(
+        // Delete IP addresses that are in the database but not in the server's current IP addresses
+        $ipAddressesToDelete = array_filter(
             $currentIpAddressesEntitiesInDb,
             fn(IpAddress $ip) => !in_array($ip->getIpAddress(), $serverIpAddresses)
         );
-        foreach ($ipAddressesToDeactivate as $ipAddress) {
-            $updates = new UpdateIpAddressDto();
-            $updates->isActive = false;
-            $this->updateIpAddress($ipAddress, $updates);
+        foreach ($ipAddressesToDelete as $ipAddress) {
+            $this->deleteIpAddress($ipAddress);
         }
-
-
     }
 
     public function createIpAddress(Server $server, string $ipAddress): IpAddress
@@ -102,7 +84,7 @@ class IpAddressService
         $ipAddressEntity->setIpAddress($ipAddress);
         $ipAddressEntity->setCreatedAt($this->now());
         $ipAddressEntity->setUpdatedAt($this->now());
-        $ipAddressEntity->setIsAvailable(true);
+        $ipAddressEntity->setQueue($this->queueService->getAQueueThatHasNoIpAddresses());
 
         $this->em->persist($ipAddressEntity);
         $this->em->flush();
@@ -110,15 +92,16 @@ class IpAddressService
         return $ipAddressEntity;
     }
 
+    public function deleteIpAddress(IpAddress $ipAddress): void
+    {
+        $this->em->remove($ipAddress);
+        $this->em->flush();
+    }
+
     public function updateIpAddress(
         IpAddress $ipAddress,
         UpdateIpAddressDto $updates
-    ): IpAddress
-    {
-        if ($updates->hasProperty('isActive')) {
-            $ipAddress->setIsAvailable($updates->isActive);
-        }
-
+    ): IpAddress {
         if ($updates->hasProperty('queue')) {
             $ipAddress->setQueue($updates->queue);
         }

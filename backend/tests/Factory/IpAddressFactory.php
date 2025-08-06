@@ -31,7 +31,6 @@ final class IpAddressFactory extends PersistentProxyObjectFactory
             'server' => ServerFactory::createOne(),
             'ip_address' => self::faker()->ipv4(),
             'queue' => null,
-            'is_enabled' => self::faker()->boolean(80),
             'created_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'updated_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
         ];

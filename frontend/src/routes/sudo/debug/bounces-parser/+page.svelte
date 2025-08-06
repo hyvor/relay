@@ -14,7 +14,7 @@
 	let type: 'bounce' | 'fbl' = $state('bounce');
 	let parsing = $state(false);
 	let error = $state('');
-	let result = $state('Mmm.... I need to parse the email first!');
+	let result = $state('Parser at your service...');
 
 	function handleParse() {
 		error = '';
