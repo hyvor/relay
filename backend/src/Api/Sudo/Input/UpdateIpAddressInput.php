@@ -11,7 +11,4 @@ class UpdateIpAddressInput
 
     #[Assert\Type('int')]
     public ?int $queue_id;
-
-    #[Assert\Type('bool')]
-    public bool $is_active = false;
 }

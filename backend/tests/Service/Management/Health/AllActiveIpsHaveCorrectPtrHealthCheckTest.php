@@ -7,6 +7,7 @@ use App\Service\Management\Health\AllActiveIpsHaveCorrectPtrHealthCheck;
 use App\Service\Ip\IpAddressService;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\IpAddressFactory;
+use App\Tests\Factory\QueueFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 
@@ -20,9 +21,9 @@ class AllActiveIpsHaveCorrectPtrHealthCheckTest extends KernelTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->ipAddressService = $this->createMock(IpAddressService::class);
-        
+
         $this->healthCheck = new AllActiveIpsHaveCorrectPtrHealthCheck(
             $this->em,
             $this->ipAddressService
@@ -33,10 +34,10 @@ class AllActiveIpsHaveCorrectPtrHealthCheckTest extends KernelTestCase
     {
         $this->ipAddressService->expects($this->never())
             ->method('updateIpPtrValidity');
-        
+
 
         $result = $this->healthCheck->check();
-        
+
         $this->assertTrue($result);
         $this->assertEmpty($this->healthCheck->getData());
     }
@@ -44,8 +45,7 @@ class AllActiveIpsHaveCorrectPtrHealthCheckTest extends KernelTestCase
     public function testCheckReturnsTrueWhenAllActiveIpsHaveCorrectPtr(): void
     {
         $ip = IpAddressFactory::createOne([
-            'is_available' => true,
-            'is_enabled' => true,
+            'queue' => QueueFactory::new(),
             'is_ptr_forward_valid' => true,
             'is_ptr_reverse_valid' => true,
         ]);
@@ -66,15 +66,13 @@ class AllActiveIpsHaveCorrectPtrHealthCheckTest extends KernelTestCase
     public function testCheckReturnsFalseWhenSomeActiveIpsHaveIncorrectPtr(): void
     {
         $ip1 = IpAddressFactory::createOne([
-            'is_available' => true,
-            'is_enabled' => true,
+            'queue' => QueueFactory::new(),
             'is_ptr_forward_valid' => false,
             'is_ptr_reverse_valid' => true,
         ]);
 
         $ip2 = IpAddressFactory::createOne([
-            'is_available' => true,
-            'is_enabled' => true,
+            'queue' => QueueFactory::new(),
             'is_ptr_forward_valid' => true,
             'is_ptr_reverse_valid' => false,
         ]);

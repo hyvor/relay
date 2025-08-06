@@ -14,15 +14,17 @@ class AllActiveIpsHaveCorrectPtrHealthCheck extends HealthCheckAbstract
     public function __construct(
         private EntityManagerInterface $em,
         private IpAddressService $ipAddressService,
-    )
-    {
+    ) {
     }
 
     public function check(): bool
     {
-
+        /** @var IpAddress[] $allIps */
         $allIps = $this->em->getRepository(IpAddress::class)
-            ->findBy(['is_available' => true, 'is_enabled' => true]);
+            ->createQueryBuilder('ip')
+            ->where('ip.queue IS NOT NULL')
+            ->getQuery()
+            ->getResult();
 
         $invalidData = [];
 
@@ -46,6 +48,5 @@ class AllActiveIpsHaveCorrectPtrHealthCheck extends HealthCheckAbstract
         }
 
         return true;
-
     }
 }

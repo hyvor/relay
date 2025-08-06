@@ -55,7 +55,6 @@ class SendEmailTest extends WebTestCase
             "You do not have the required scope 'sends.send' to access this resource.",
             $json['message']
         );
-
     }
 
     protected function getHtmlBodyTooLargeData(): mixed
@@ -83,7 +82,11 @@ class SendEmailTest extends WebTestCase
             "to" => "somebody@example.com",
             "body_text" => 'test',
             'attachments' => [
-                ['content' => str_repeat('a', 10 * 1024 * 1024 + 1), 'name' => 'large.txt', 'content_type' => 'text/plain'],
+                [
+                    'content' => str_repeat('a', 10 * 1024 * 1024 + 1),
+                    'name' => 'large.txt',
+                    'content_type' => 'text/plain'
+                ],
             ]
         ];
     }
@@ -435,7 +438,7 @@ class SendEmailTest extends WebTestCase
         $rawBody = $rawSplit[1];
 
         $fromHeader = $useArrayAddress ? "Supun <supun@hyvor.com>" : "supun@hyvor.com";
-        $toHeader =  $useArrayAddress ? "Somebody <somebody@example.com>" : "somebody@example.com";
+        $toHeader = $useArrayAddress ? "Somebody <somebody@example.com>" : "somebody@example.com";
         $this->assertStringContainsString("From: $fromHeader\r\n", $rawHeaders);
         $this->assertStringContainsString("To: $toHeader\r\n", $rawHeaders);
         $this->assertStringContainsString("Subject: Test Email\r\n", $rawHeaders);
@@ -462,16 +465,21 @@ class SendEmailTest extends WebTestCase
 
         $first = $matches[0][0];
         $first = str_replace("\r\n", "", $first);
-        $this->assertStringContainsString("h=From: To: Subject: X-Custom-Header: Message-ID: X-Mailer: MIME-Version: Date;", $first);
+        $this->assertStringContainsString(
+            "h=From: To: Subject: X-Custom-Header: Message-ID: X-Mailer: MIME-Version: Date;",
+            $first
+        );
         $this->assertStringContainsString("i=@hyvor.com", $first);
         $this->assertStringContainsString("s=my-selector", $first);
 
         $second = $matches[0][1];
         $second = str_replace("\r\n", "", $second);
-        $this->assertStringContainsString("h=From: To: Subject: X-Custom-Header: Message-ID: X-Mailer: MIME-Version: Date;", $second);
+        $this->assertStringContainsString(
+            "h=From: To: Subject: X-Custom-Header: Message-ID: X-Mailer: MIME-Version: Date;",
+            $second
+        );
         $this->assertStringContainsString("i=@relay.hyvor.localhost", $second);
         $this->assertStringContainsString("s=default", $second);
-
     }
 
     public function test_does_not_allow_unregistered_domain(): void
@@ -492,7 +500,6 @@ class SendEmailTest extends WebTestCase
             "Domain hyvor.com is not registered for this project",
             $json['message']
         );
-
     }
 
     public function test_does_not_allow_from_unverified_domain(): void
@@ -519,7 +526,6 @@ class SendEmailTest extends WebTestCase
             "Domain hyvor.com is not verified",
             $json['message']
         );
-
     }
 
     public function test_does_not_allow_suppressed_emails(): void
@@ -551,12 +557,10 @@ class SendEmailTest extends WebTestCase
             "Email address test@example.com is suppressed",
             $json['message']
         );
-
     }
 
     public function test_with_attachments(): void
     {
-
         QueueFactory::createTransactional();
         $project = ProjectFactory::createOne();
 
@@ -599,16 +603,20 @@ class SendEmailTest extends WebTestCase
         $this->assertStringContainsString("Content-Type: multipart/mixed; boundary=", $rawEmail);
         $this->assertStringContainsString("Content-Type: text/plain;", $rawEmail);
         $this->assertStringContainsString(base64_encode('This is a test file.'), $rawEmail);
-        $this->assertStringContainsString("Content-Disposition: attachment; name=test.txt; filename=test.txt", $rawEmail);
+        $this->assertStringContainsString(
+            "Content-Disposition: attachment; name=test.txt; filename=test.txt",
+            $rawEmail
+        );
         $this->assertStringContainsString("Content-Type: text/plain;", $rawEmail);
         $this->assertStringContainsString(base64_encode('This is another test file.'), $rawEmail);
-        $this->assertStringContainsString("Content-Disposition: attachment; name=test2.txt; filename=test2.txt", $rawEmail);
-
+        $this->assertStringContainsString(
+            "Content-Disposition: attachment; name=test2.txt; filename=test2.txt",
+            $rawEmail
+        );
     }
 
     public function test_fails_gracefully_when_cannot_decode_attachments(): void
     {
-
         QueueFactory::createTransactional();
         $project = ProjectFactory::createOne();
 
@@ -637,7 +645,6 @@ class SendEmailTest extends WebTestCase
             "Base64 decoding of attachment failed: index 0",
             $json['message']
         );
-
     }
 
     public function test_email_max10mb(): void
@@ -684,7 +691,6 @@ class SendEmailTest extends WebTestCase
             "Email size exceeds the maximum allowed size of 10MB.",
             $json['message']
         );
-
     }
 
     public function test_queues_on_the_correct_queue_based_on_project_send_type(): void
@@ -713,7 +719,6 @@ class SendEmailTest extends WebTestCase
         $this->assertCount(1, $send);
         $send = $send[0];
         $this->assertSame('distributional', $send->getQueue()->getName());
-
     }
 
 }
