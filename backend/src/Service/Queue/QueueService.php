@@ -6,6 +6,7 @@ use App\Entity\Queue;
 use App\Entity\Type\QueueType;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Query\ResultSetMapping;
 
 class QueueService
 {
@@ -15,8 +16,7 @@ class QueueService
 
     public function __construct(
         private EntityManagerInterface $em,
-    )
-    {
+    ) {
     }
 
     /**
@@ -50,12 +50,12 @@ class QueueService
     public function hasDefaultQueues(): bool
     {
         return $this->em->createQueryBuilder()
-            ->select('COUNT(q.id)')
-            ->from(Queue::class, 'q')
-            ->where('q.type = :type')
-            ->setParameter('type', QueueType::DEFAULT)
-            ->getQuery()
-            ->getSingleScalarResult() > 0;
+                ->select('COUNT(q.id)')
+                ->from(Queue::class, 'q')
+                ->where('q.type = :type')
+                ->setParameter('type', QueueType::DEFAULT)
+                ->getQuery()
+                ->getSingleScalarResult() > 0;
     }
 
     public function createQueue(
@@ -83,5 +83,31 @@ class QueueService
             self::DISTRIBUTIONAL_QUEUE_NAME,
             QueueType::DEFAULT
         );
+    }
+
+    public function getAQueueThatHasNoIpAddresses(): ?Queue
+    {
+        $rsm = new ResultSetMapping();
+        $rsm->addScalarResult('id', 'id', 'integer');
+
+        /** @var array<array{id: int}> $result */
+        $result = $this->em->createNativeQuery(
+            <<<SQL
+            SELECT q.id
+            FROM queues q
+            WHERE (SELECT COUNT(i.id) FROM ip_addresses i WHERE i.queue_id = q.id) = 0
+            LIMIT 1
+            SQL,
+            $rsm
+        )
+            ->getResult();
+
+        if (count($result) === 0) {
+            return null;
+        }
+
+        $queueId = $result[0]['id'];
+
+        return $this->getQueueById((int)$queueId);
     }
 }

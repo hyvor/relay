@@ -25,7 +25,6 @@ class GoStateDnsRecordsService
      */
     public function getDnsRecords(Instance $instance): array
     {
-
         /** @var GoStateDnsRecord[] $records */
         $records = [];
         $allIps = $this->ipAddressService->getAllIpAddresses();
@@ -35,10 +34,6 @@ class GoStateDnsRecordsService
         // 1. Forward A records for each IP address (reverse PTR records)
         // smtp1.hyvorrelay.email -> 1.1.1.1
         foreach ($allIps as $ip) {
-            if ($ip->getIsAvailable() === false || $ip->getIsEnabled() === false) {
-                continue;
-            }
-
             $records[] = new GoStateDnsRecord(
                 type: DnsRecordType::A,
                 host: Ptr::getPtrDomain($ip, $this->instanceService->getInstance()->getDomain()),
@@ -102,7 +97,6 @@ class GoStateDnsRecordsService
         }
 
         return $records;
-
     }
 
 }
