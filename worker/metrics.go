@@ -44,7 +44,7 @@ func NewMetricsServer(ctx context.Context, logger *slog.Logger) *MetricsServer {
 
 	metrics := &MetricsServer{
 		registry: registry,
-		logger:   logger.With("server", "metrics"),
+		logger:   logger.With("component", "metrics_server"),
 		ctx:      ctx,
 		metrics:  newMetrics(),
 	}

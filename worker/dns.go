@@ -22,7 +22,7 @@ func NewDnsServer(ctx context.Context, logger *slog.Logger) *DnsServer {
 
 	return &DnsServer{
 		ctx:    ctx,
-		logger: logger.With("server", "dns"),
+		logger: logger.With("component", "dns_server"),
 	}
 
 }

@@ -28,7 +28,7 @@ func StartHttpServer(
 		Handler: handler,
 	}
 
-	serviceState.Logger.Info("Starting local HTTP server on localhost:8085")
+	serviceState.Logger.Info("Starting local HTTP server on localhost:8085", "component", "http_local_server")
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {

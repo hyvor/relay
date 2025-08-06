@@ -34,14 +34,14 @@ func NewEmailWorkersPool(
 ) *EmailWorkersPool {
 	pool := &EmailWorkersPool{
 		ctx:        ctx,
-		logger:     logger,
+		logger:     logger.With("component", "email_workers_pool"),
 		metrics:    metrics,
 		workerFunc: emailWorker,
 	}
 
 	go func() {
 		<-ctx.Done()
-		logger.Info("Stopping email workers pool")
+		pool.logger.Info("Stopping email workers pool")
 		pool.StopWorkers()
 	}()
 

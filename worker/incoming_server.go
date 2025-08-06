@@ -117,7 +117,7 @@ type IncomingMailServer struct {
 func NewIncomingMailServer(ctx context.Context, logger *slog.Logger) *IncomingMailServer {
 	return &IncomingMailServer{
 		ctx:    ctx,
-		logger: logger,
+		logger: logger.With("component", "incoming_mail_server"),
 	}
 }
 
