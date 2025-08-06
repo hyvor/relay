@@ -91,6 +91,9 @@ func (b *WebhooksBatch) Commit() error {
 }
 
 func (b *WebhooksBatch) Rollback() error {
+	if b.tx == nil {
+		return nil
+	}
 	if err := b.tx.Rollback(); err != nil {
 		return fmt.Errorf("failed to rollback transaction: %w", err)
 	}

@@ -118,12 +118,11 @@ func webhookWorker(
 
 			if err != nil {
 				logger.Error(
-					"Webhook worker failed to create batch",
+					"Webhook worker failed to get new webhooks batch",
 					"worker_id", id,
 					"error", err,
 				)
 				time.Sleep(1 * time.Second)
-				batch.Rollback()
 				continue
 			}
 

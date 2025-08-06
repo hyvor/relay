@@ -121,7 +121,7 @@ func emailWorker(
 		select {
 		case <-ctx.Done():
 			logger.Info(
-				"Worker stopped by context cancellation",
+				"Email worker stopped by context cancellation",
 				"id", id,
 			)
 			return
@@ -132,12 +132,11 @@ func emailWorker(
 
 			if err != nil {
 				logger.Error(
-					"Worker failed to create batch",
+					"Email worker failed to get new send batch",
 					"worker_id", id,
 					"error", err,
 				)
 				time.Sleep(1 * time.Second)
-				batch.Rollback()
 				continue
 			}
 
