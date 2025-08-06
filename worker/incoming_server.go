@@ -106,7 +106,7 @@ func (s *Session) Logout() error {
 	return nil
 }
 
-type BounceServer struct {
+type IncomingMailServer struct {
 	ctx        context.Context
 	logger     *slog.Logger
 	smtpServer *smtp.Server
@@ -114,14 +114,14 @@ type BounceServer struct {
 	pgpool     *pgxpool.Pool
 }
 
-func NewBounceServer(ctx context.Context, logger *slog.Logger) *BounceServer {
-	return &BounceServer{
+func NewIncomingMailServer(ctx context.Context, logger *slog.Logger) *IncomingMailServer {
+	return &IncomingMailServer{
 		ctx:    ctx,
 		logger: logger,
 	}
 }
 
-func (b *BounceServer) Set(instanceDomain string, numWorkers int) {
+func (b *IncomingMailServer) Set(instanceDomain string, numWorkers int) {
 	b.logger.Info("Bounce server initializing...")
 
 	b.Shutdown()
@@ -136,7 +136,7 @@ func (b *BounceServer) Set(instanceDomain string, numWorkers int) {
 	}()
 }
 
-func (b *BounceServer) Shutdown() {
+func (b *IncomingMailServer) Shutdown() {
 	if b.smtpServer == nil {
 		return
 	}
@@ -157,7 +157,7 @@ func (b *BounceServer) Shutdown() {
 
 }
 
-func (b *BounceServer) Start(ctx context.Context, logger *slog.Logger, instanceDomain string, numWorkers int) {
+func (b *IncomingMailServer) Start(ctx context.Context, logger *slog.Logger, instanceDomain string, numWorkers int) {
 	b.logger = logger
 
 	// channel

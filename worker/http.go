@@ -16,7 +16,8 @@ func StartHttpServer(
 ) {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/health", handleHealth)
+	mux.HandleFunc("/ping", handlePing)
+	mux.HandleFunc("/ready", handleReady(serviceState)) // alias for /ping
 	mux.HandleFunc("/state", handleSetState(serviceState))
 	mux.HandleFunc("/debug/parse-bounce-fbl", handleParseBounceFBL())
 
@@ -48,9 +49,21 @@ func StartHttpServer(
 
 }
 
-func handleHealth(w http.ResponseWriter, r *http.Request) {
+func handlePing(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	w.Write([]byte("ok"))
+}
+
+func handleReady(serviceState *ServiceState) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if serviceState.IsSet {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("ready"))
+		} else {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("not ready"))
+		}
+	}
 }
 
 func handleSetState(
