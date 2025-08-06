@@ -91,19 +91,6 @@ func NewServiceState(ctx context.Context) *ServiceState {
 
 func (s *ServiceState) Set(goState GoState) {
 
-	s.EmailWorkersPool.Set(goState.Ips, goState.EmailWorkersPerIp, goState.InstanceDomain)
-	s.WebhookWorkersPool.Set(goState.WebhookWorkers)
-	s.IncomingMailServer.Set(goState.InstanceDomain, goState.IncomingWorkers)
-
-	if goState.DnsIp != "" {
-		s.DnsServer.Set(
-			goState.DnsIp,
-			goState.DnsRecords,
-		)
-	}
-
-	s.MetricsServer.Set(goState)
-
 	s.Logger.Info("Updating worker state",
 		"hostname", goState.Hostname,
 		"ip_count", len(goState.Ips),
@@ -116,6 +103,14 @@ func (s *ServiceState) Set(goState GoState) {
 		"env", goState.Env,
 		"version", goState.Version,
 	)
+
+	s.EmailWorkersPool.Set(goState.Ips, goState.EmailWorkersPerIp, goState.InstanceDomain)
+	s.WebhookWorkersPool.Set(goState.WebhookWorkers)
+	s.IncomingMailServer.Set(goState.InstanceDomain, goState.IncomingWorkers)
+	s.DnsServer.Set(goState.DnsIp, goState.DnsRecords)
+	s.MetricsServer.Set(goState)
+
+	s.IsSet = true
 
 }
 

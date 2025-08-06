@@ -14,23 +14,15 @@ type DnsServer struct {
 	ctx    context.Context
 	logger *slog.Logger
 
-	serverRunningIp string
-	server          *dns.Server
-
+	server     *dns.Server
 	dnsRecords []GoStateDnsRecord
-
-	// data
-	/* instanceDomain string
-	ipPtrsForward  map[string]string // maps domain names to IP addresses
-	mxIps          []string          // list of IPs for MX records (usually one IP per server)
-	dkimTxtValue   string */
 }
 
 func NewDnsServer(ctx context.Context, logger *slog.Logger) *DnsServer {
 
 	return &DnsServer{
 		ctx:    ctx,
-		logger: logger,
+		logger: logger.With("server", "dns"),
 	}
 
 }
@@ -41,10 +33,6 @@ func (s *DnsServer) Set(
 ) {
 
 	s.dnsRecords = dnsRecords
-	/* s.instanceDomain = instanceDomain
-	s.ipPtrsForward = ipPtrsForward
-	s.mxIps = mxIps
-	s.dkimTxtValue = dkimTxtValue */
 
 	s.StopServer()
 	s.StartServer(dnsIp)
