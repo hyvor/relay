@@ -67,7 +67,7 @@ class EmailBuilder
 
         // Add custom headers
         foreach ($customHeaders as $key => $value) {
-            $email->getHeaders()->addTextHeader($key, $value);
+            $email->getHeaders()->addHeader($key, $value);
         }
 
         // add message-id if not set
