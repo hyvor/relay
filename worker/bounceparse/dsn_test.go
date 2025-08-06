@@ -25,7 +25,7 @@ func TestDsnSimple(t *testing.T) {
 
 	firstRecipient := dsn.Recipients[0]
 	assert.Equal(t, "louisl@larry.slip.umd.edu", firstRecipient.EmailAddress)
-	assert.Equal(t, [3]int{4, 0, 0}, firstRecipient.Status)
+	assert.Equal(t, DsnStatus([3]int{4, 0, 0}), firstRecipient.Status)
 	assert.Equal(t, "failed", firstRecipient.Action)
 
 }
@@ -47,17 +47,17 @@ func TestDsnMultiRecipients(t *testing.T) {
 
 	firstRecipient := dsn.Recipients[0]
 	assert.Equal(t, "arathib@vnet.ibm.com", firstRecipient.EmailAddress)
-	assert.Equal(t, [3]int{5, 0, 0}, firstRecipient.Status)
+	assert.Equal(t, DsnStatus([3]int{5, 0, 0}), firstRecipient.Status)
 	assert.Equal(t, "failed", firstRecipient.Action)
 
 	secondRecipient := dsn.Recipients[1]
 	assert.Equal(t, "johnh@hpnjld.njd.hp.com", secondRecipient.EmailAddress)
-	assert.Equal(t, [3]int{4, 0, 0}, secondRecipient.Status)
+	assert.Equal(t, DsnStatus([3]int{4, 0, 0}), secondRecipient.Status)
 	assert.Equal(t, "delayed", secondRecipient.Action)
 
 	thirdRecipient := dsn.Recipients[2]
 	assert.Equal(t, "wsnell@sdcc13.ucsd.edu", thirdRecipient.EmailAddress)
-	assert.Equal(t, [3]int{5, 1, 1}, thirdRecipient.Status)
+	assert.Equal(t, DsnStatus([3]int{5, 1, 1}), thirdRecipient.Status)
 	assert.Equal(t, "failed", thirdRecipient.Action)
 
 }
