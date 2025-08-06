@@ -15,8 +15,9 @@ type MetricsServer struct {
 	logger   *slog.Logger
 	ctx      context.Context
 
-	serverStarted bool
-	isLeader      bool
+	serverStarted              bool
+	isLeader                   bool
+	cancelGlobalMetricsUpdater context.CancelFunc
 
 	metrics *Metrics
 }
@@ -30,7 +31,7 @@ type Metrics struct {
 	pgsqlMaxConnections prometheus.Gauge
 	serversTotal        prometheus.Gauge
 
-	// Instance metrics ====
+	// Server (worker) metrics ====
 	emailSendAttemptsTotal       *prometheus.CounterVec
 	emailDeliveryDurationSeconds *prometheus.HistogramVec
 	workersEmailTotal            prometheus.Gauge
@@ -43,7 +44,7 @@ func NewMetricsServer(ctx context.Context, logger *slog.Logger) *MetricsServer {
 
 	metrics := &MetricsServer{
 		registry: registry,
-		logger:   logger,
+		logger:   logger.With("server", "metrics"),
 		ctx:      ctx,
 		metrics:  newMetrics(),
 	}
@@ -92,7 +93,7 @@ func newMetrics() *Metrics {
 			},
 		),
 
-		// Instance metrics
+		// Server (worker) metrics
 		emailSendAttemptsTotal: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "email_send_attempts_total",
@@ -127,6 +128,8 @@ func (server *MetricsServer) Set(goState GoState) {
 
 	server.isLeader = goState.IsLeader
 
+	// unregister all
+	// important: make sure to unregister everything!
 	server.registry.Unregister(server.metrics.relayInfo)
 	server.registry.Unregister(server.metrics.emailQueueSize)
 	server.registry.Unregister(server.metrics.pgsqlConnections)
@@ -137,6 +140,7 @@ func (server *MetricsServer) Set(goState GoState) {
 	server.registry.Unregister(server.metrics.workersEmailTotal)
 	server.registry.Unregister(server.metrics.workersWebhookTotal)
 
+	// register global metrics if the current server is the leader
 	if goState.IsLeader {
 		server.registry.MustRegister(
 			server.metrics.relayInfo,
@@ -147,7 +151,7 @@ func (server *MetricsServer) Set(goState GoState) {
 		)
 	}
 
-	// register all instance metrics
+	// register all server metrics
 	server.registry.MustRegister(server.metrics.emailSendAttemptsTotal)
 	server.registry.MustRegister(server.metrics.emailDeliveryDurationSeconds)
 	server.registry.MustRegister(server.metrics.workersEmailTotal)
@@ -185,29 +189,45 @@ func (server *MetricsServer) Set(goState GoState) {
 			<-server.ctx.Done()
 			server.logger.Info("Shutting down metrics server")
 		}()
-
-		go func() {
-
-			for {
-				select {
-				case <-server.ctx.Done():
-					return
-				default:
-					server.updateGlobalMetrics()
-					time.Sleep(10 * time.Second)
-				}
-			}
-
-		}()
-
 	}
+
+	server.StartGlobalMetricsUpdater()
+
+}
+
+// stops and restarts the global metrics updater
+func (server *MetricsServer) StartGlobalMetricsUpdater() {
+
+	if server.cancelGlobalMetricsUpdater != nil {
+		server.cancelGlobalMetricsUpdater()
+	}
+
+	ctx, cancel := context.WithCancel(server.ctx)
+	server.cancelGlobalMetricsUpdater = cancel
+
+	if !server.isLeader {
+		return
+	}
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				server.updateGlobalMetrics()
+				time.Sleep(10 * time.Second)
+			}
+		}
+	}()
+
 }
 
 func (server *MetricsServer) updateGlobalMetrics() {
 
-	conn, err := NewDbConn(LoadDBConfig())
+	server.logger.Info("Starting to update global metrics")
 
-	server.logger.Debug("Updating global metrics...")
+	conn, err := NewDbConn(LoadDBConfig())
 
 	if err != nil {
 		server.logger.Error("Failed to connect to PostgreSQL to update metrics", "error", err)

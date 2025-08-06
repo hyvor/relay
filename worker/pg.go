@@ -35,12 +35,18 @@ func LoadDBConfig() *DBConfig {
 	host, port, _ := net.SplitHostPort(u.Host)
 	password, _ := u.User.Password()
 
+	path := u.Path
+	if path == "" {
+		path = "/"
+	}
+	dbName := path[1:]
+
 	return &DBConfig{
 		Host:     host,
 		Port:     port,
 		User:     u.User.Username(),
 		Password: password,
-		DBName:   u.Path[1:],
+		DBName:   dbName,
 		SSLMode:  "disable",
 	}
 }

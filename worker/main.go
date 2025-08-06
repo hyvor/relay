@@ -8,9 +8,13 @@ import (
 	"github.com/joho/godotenv"
 )
 
+func loadEnvFiles() {
+	godotenv.Load(".env.local", ".env")
+}
+
 func main() {
 
-	godotenv.Load()
+	loadEnvFiles()
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
