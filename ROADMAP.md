@@ -4,6 +4,7 @@ Features to implement:
 - [ ] CC, BCC support
 - [ ] Incoming email routing
 - [ ] Send via SMTP
+- [ ] Custom DKIM selector
 
 Features we will not implement:
 

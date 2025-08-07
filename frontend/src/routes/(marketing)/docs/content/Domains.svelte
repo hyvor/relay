@@ -1,16 +1,20 @@
+<script>
+	import { DocsImage } from '@hyvor/design/marketing';
+</script>
+
 <h1>Domains</h1>
 
 <p>
 	Hyvor Relay requires that all emails are authenticated using DKIM. Therefore, you need to first
 	configure the domains of the email addresses you want to send emails from (FROM address). This
-	is a one-time setup for each domain. Once you configure a domain, you can send emails from any
-	email address under that domain without any additional configuration.
+	is a one-time setup for each domain in a project. Once you configure a domain, you can send
+	emails from any email address under that domain without any additional configuration.
 </p>
 
 <p>
-	To verify your domain, you need to add a TXT record to your domain's DNS settings. We use this
-	TXT record to verify that you own the domain. Email providers use this TXT record for DKIM
-	verification.
+	To verify your domain, you need to add a TXT record to your domain's DNS settings. Hyvor Relay
+	uses this TXT record to verify that you own the domain. Email providers use this TXT record for
+	DKIM verification.
 </p>
 
 <ul>
@@ -27,7 +31,17 @@
 
 <h2 id="domains-in-console">Configuring Domains in the Console</h2>
 
-<p>You can add domains in the Hyvor Relay Console.</p>
+<p>You can add domains in the Hyvor Relay Console:</p>
+
+<DocsImage src="/img/docs/intro-domain.png" alt="Add Domain in Hyvor Relay" />
+
+<p>Then, you will see the instructions to add a TXT record to your domain's DNS settings.</p>
+
+<DocsImage src="/img/docs/domains-dns.png" alt="Add Domain in Hyvor Relay" />
+
+<p>
+	Once you add the TXT record, click the <strong>Verify</strong> button.
+</p>
 
 <h2 id="domains-in-console">Automating Domains using the API</h2>
 
@@ -62,10 +76,10 @@
 
 <p>
 	<strong> How long does it take to verify a domain?</strong> <br />
-	After adding the TXT record to your domain's DNS settings, it may take a few minutes in most cases.
+	After adding the TXT record to your domain's DNS settings, it will take a few minutes in most cases.
 	In some cases, it may take up to 24 hours for the DNS changes to propagate. You can check the status
 	of the domain in the Hyvor Relay Console or using the Console API. We run a verification check every
-	5 minutes.
+	5 minutes. You will also receive an email notification when the domain is verified.
 </p>
 
 <p>
@@ -81,12 +95,12 @@
 </p>
 
 <p>
-	<strong>Can I use emails of the subdomains of the configured domain?</strong> <br />
-	No, currently you cannot use emails of the subdomains of the configured domain. You need to configure
-	each subdomain separately.
+	<strong>Can I use emails of a subdomain of the configured domain?</strong> <br />
+	No, currently you cannot use emails of a subdomain (info@subdomain.example.com) of the configured
+	domain (example.com). You need to configure each subdomain separately.
 </p>
 
-<p>
+<!-- <p>
 	<strong>Can I use a custom DKIM selector?</strong> <br />
 	Yes, please contact us to set up a custom DKIM selector for your project.
-</p>
+</p> -->
