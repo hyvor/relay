@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
 	"strings"
 
@@ -118,7 +117,7 @@ func (s *DnsServer) handleRequest(w dns.ResponseWriter, r *dns.Msg) {
 			case "TXT":
 				recordStr = fmt.Sprintf("%s %d IN TXT \"%s\"", name, record.TTL, record.Content)
 			default:
-				log.Printf("Unsupported record type: %s", record.Type)
+				s.logger.Warn("Unsupported record type: %s", record.Type)
 				continue
 			}
 

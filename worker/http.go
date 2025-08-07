@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"log/slog"
 	"net/http"
 	"time"
@@ -35,7 +34,7 @@ func StartHttpServer(
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("HTTP server error: %v", err)
+			httpServerLogger.Error("HTTP server error: %v", err)
 		}
 	}()
 
@@ -46,7 +45,7 @@ func StartHttpServer(
 		defer shutdownCtxCancel()
 
 		if err := server.Shutdown(shutdownCtx); err != nil {
-			log.Fatalf("HTTP shutdown error: %v", err)
+			httpServerLogger.Error("HTTP shutdown error: %v", err)
 		}
 	}()
 
