@@ -4,7 +4,6 @@ namespace App\Service\ApiKey;
 
 use App\Entity\ApiKey;
 use App\Entity\Project;
-use App\Entity\Type\ApiKeyScope;
 use App\Service\ApiKey\Dto\UpdateApiKeyDto;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -14,7 +13,7 @@ class ApiKeyService
 
     use ClockAwareTrait;
 
-    const int MAX_API_KEY_PER_PROJECT = 5;
+    const int MAX_API_KEY_PER_PROJECT = 10;
 
     public function __construct(
         private EntityManagerInterface $em,

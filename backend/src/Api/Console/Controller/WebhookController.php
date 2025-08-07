@@ -24,7 +24,18 @@ class WebhookController extends AbstractController
     public function __construct(
         private WebhookService $webhookService,
         private WebhookDeliveryService $webhookDeliveryService,
-    ) {}
+    ) {
+    }
+
+    #[Route('/webhooks', methods: 'GET')]
+    #[ScopeRequired(Scope::WEBHOOKS_READ)]
+    public function getWebhooks(Project $project): JsonResponse
+    {
+        $webhooks = $this->webhookService->getWebhooksForProject($project)
+            ->map(fn($webhook) => new WebhookObject($webhook));
+
+        return $this->json($webhooks);
+    }
 
     #[Route('/webhooks', methods: 'POST')]
     #[ScopeRequired(Scope::WEBHOOKS_WRITE)]
@@ -38,25 +49,6 @@ class WebhookController extends AbstractController
         );
 
         return $this->json(new WebhookObject($webhook));
-    }
-
-    #[Route('/webhooks', methods: 'GET')]
-    #[ScopeRequired(Scope::WEBHOOKS_READ)]
-    public function getWebhooks(Project $project): JsonResponse
-    {
-        $webhooks = $this->webhookService->getWebhooksForProject($project)
-            ->map(fn($webhook) => new WebhookObject($webhook));
-
-        return $this->json($webhooks);
-    }
-
-    #[Route('/webhooks/{id}', methods: 'DELETE')]
-    #[ScopeRequired(Scope::WEBHOOKS_WRITE)]
-    public function deleteWebhook(Webhook $webhook): JsonResponse
-    {
-        $this->webhookService->deleteWebhook($webhook);
-
-        return new JsonResponse([]);
     }
 
     #[Route('/webhooks/{id}', methods: 'PATCH')]
@@ -73,13 +65,22 @@ class WebhookController extends AbstractController
         return $this->json(new WebhookObject($updatedWebhook));
     }
 
+    #[Route('/webhooks/{id}', methods: 'DELETE')]
+    #[ScopeRequired(Scope::WEBHOOKS_WRITE)]
+    public function deleteWebhook(Webhook $webhook): JsonResponse
+    {
+        $this->webhookService->deleteWebhook($webhook);
+
+        return new JsonResponse([]);
+    }
+
     #[Route('/webhooks/deliveries', methods: 'GET')]
     #[ScopeRequired(Scope::WEBHOOKS_READ)]
     public function getWebhookDeliveries(Request $request, Project $project): JsonResponse
     {
         $webhookId = null;
-        if ($request->query->has('webhookId')) {
-            $webhookId = $request->query->getInt('webhookId');
+        if ($request->query->has('webhook_id')) {
+            $webhookId = $request->query->getInt('webhook_id');
         }
 
         $deliveries = $this->webhookDeliveryService->getWebhookDeliveriesForProject($project, $webhookId);

@@ -13,7 +13,7 @@ class UpdateApiKeyInput
     #[Assert\Length(max: 255)]
     public string $name;
 
-    public bool $enabled;
+    public bool $is_enabled;
 
     /**
      * @var string[]

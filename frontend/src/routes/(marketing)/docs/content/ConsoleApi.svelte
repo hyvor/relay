@@ -433,6 +433,10 @@ type Response = Domain
 	<code>POST /webhooks</code>
 </p>
 
+<p>
+	See <a href="/docs/webhooks#events">Webhooks</a> page for available events.
+</p>
+
 <CodeBlock
 	code={`
     type Request = {
@@ -486,7 +490,7 @@ type Response = Domain
 <CodeBlock
 	code={`
     type Request = {
-        webhookId?: number // Optional. Filter by webhook ID
+        webhook_id?: number // Optional. Filter by webhook ID
     }
     type Response = WebhookDelivery[]
 `}
@@ -540,6 +544,8 @@ type Response = Domain
 	<code>POST /api-keys</code> (scope: <strong>api_keys.write</strong>)
 </p>
 
+<p>Note: Maximum of 10 API keys are allowed per project.</p>
+
 <CodeBlock
 	code={`
     type Request = {
@@ -561,7 +567,7 @@ type Response = Domain
 	code={`
     type Request = {
         name?: string,
-        enabled?: boolean,
+        is_enabled?: boolean,
         scopes?: string[]
     }
     type Response = ApiKey
@@ -752,7 +758,7 @@ type Response = Domain
         interface Webhook {
 	id: number;
 	url: string;
-	description: string;
+	description: string | null;
 	events: string[];
         }
     `}
@@ -765,11 +771,11 @@ type Response = Domain
 	code={`
         interface WebhookDelivery {
 	id: number;
+	created_at: number;
 	url: string;
 	event: string;
 	status: 'pending' | 'delivered' | 'failed';
-	response: string;
-	created_at: number;
+	response: string | null;
         }
     `}
 />

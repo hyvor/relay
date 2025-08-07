@@ -19,16 +19,17 @@ class WebhookEventListener
 
     public function __construct(
         private WebhookService $webhookService,
-    )
-    {
+    ) {
     }
 
     /**
      * @param callable(): object $objectFactory
      */
-    private function sendWebhooks(Project $project, WebhooksEventEnum $eventType, callable $objectFactory): void
-    {
-
+    private function createWebhookDeliveries(
+        Project $project,
+        WebhooksEventEnum $eventType,
+        callable $objectFactory
+    ): void {
         $webhooks = $this->webhookService->getWebhooksForEvent($project, $eventType);
 
         foreach ($webhooks as $webhook) {
@@ -38,7 +39,6 @@ class WebhookEventListener
                 $objectFactory()
             );
         }
-
     }
 
     #[AsEventListener]
@@ -53,10 +53,10 @@ class WebhookEventListener
 
         $send = $attempt->getSend();
 
-        $this->sendWebhooks(
+        $this->createWebhookDeliveries(
             $send->getProject(),
             $event,
-            fn() => (object) [
+            fn() => (object)[
                 'send' => new SendObject($send),
                 'attempt' => new SendAttemptObject($attempt)
             ]
@@ -66,7 +66,7 @@ class WebhookEventListener
     #[AsEventListener]
     public function onDomainCreate(DomainCreatedEvent $event): void
     {
-        $this->sendWebhooks(
+        $this->createWebhookDeliveries(
             $event->domain->getProject(),
             WebhooksEventEnum::DOMAIN_CREATED,
             fn() => new DomainObject($event->domain)
