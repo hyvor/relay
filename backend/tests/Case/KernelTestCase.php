@@ -4,6 +4,7 @@ namespace App\Tests\Case;
 
 use App\Service\App\Config;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\Container;
@@ -37,6 +38,8 @@ class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
         /** @var EventDispatcherInterface $eventDispatcher */
         $eventDispatcher = $this->container->get(EventDispatcherInterface::class);
         $this->eventDispatcher = $eventDispatcher;
+
+        $this->container->set(LoggerInterface::class, $this->createMock(LoggerInterface::class));
     }
 
     protected function commandTester(string $name): CommandTester
