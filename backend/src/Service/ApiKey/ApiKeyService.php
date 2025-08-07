@@ -18,8 +18,7 @@ class ApiKeyService
 
     public function __construct(
         private EntityManagerInterface $em,
-    )
-    {
+    ) {
     }
 
     /**
@@ -59,6 +58,10 @@ class ApiKeyService
 
         if ($updates->hasProperty('name')) {
             $apiKey->setName($updates->name);
+        }
+
+        if ($updates->hasProperty('lastAccessedAt')) {
+            $apiKey->setLastAccessedAt($updates->lastAccessedAt);
         }
 
         $apiKey->setUpdatedAt($this->now());

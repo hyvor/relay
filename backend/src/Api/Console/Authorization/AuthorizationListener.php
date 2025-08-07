@@ -5,10 +5,12 @@ namespace App\Api\Console\Authorization;
 use App\Entity\ApiKey;
 use App\Entity\Project;
 use App\Service\ApiKey\ApiKeyService;
+use App\Service\ApiKey\Dto\UpdateApiKeyDto;
 use App\Service\Project\ProjectService;
 use Hyvor\Internal\Bundle\Api\DataCarryingHttpException;
 use Hyvor\Internal\Auth\AuthInterface;
 use Hyvor\Internal\Auth\AuthUser;
+use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
@@ -18,6 +20,8 @@ use Symfony\Component\HttpKernel\KernelEvents;
 #[AsEventListener(event: KernelEvents::CONTROLLER, priority: 200)]
 class AuthorizationListener
 {
+
+    use ClockAwareTrait;
 
     public const string RESOLVED_PROJECT_ATTRIBUTE_KEY = 'console_api_resolved_project';
     public const string RESOLVED_API_KEY_ATTRIBUTE_KEY = 'console_api_resolved_api_key';
@@ -78,6 +82,10 @@ class AuthorizationListener
 
         $request->attributes->set(self::RESOLVED_API_KEY_ATTRIBUTE_KEY, $apiKeyModel);
         $request->attributes->set(self::RESOLVED_PROJECT_ATTRIBUTE_KEY, $project);
+
+        $apiKeyUpdates = new UpdateApiKeyDto();
+        $apiKeyUpdates->lastAccessedAt = $this->now();
+        $this->apiKeyService->updateApiKey($apiKeyModel, $apiKeyUpdates);
     }
 
     private function handleSession(ControllerEvent $event): void

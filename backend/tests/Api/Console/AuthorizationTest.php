@@ -5,12 +5,15 @@ namespace App\Tests\Api\Console;
 use App\Api\Console\Authorization\AuthorizationListener;
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Authorization\ScopeRequired;
+use App\Entity\ApiKey;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use Hyvor\Internal\Auth\AuthFake;
 use Hyvor\Internal\Auth\AuthUser;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\BrowserKit\Cookie;
+use Symfony\Component\Clock\Clock;
+use Symfony\Component\Clock\MockClock;
 
 #[CoversClass(AuthorizationListener::class)]
 #[CoversClass(ScopeRequired::class)]
@@ -159,8 +162,10 @@ class AuthorizationTest extends WebTestCase
         );
     }
 
-    public function test_authorizes_via_api_key(): void
+    public function test_authorizes_via_api_key_and_updates_last_usage(): void
     {
+        Clock::set(new MockClock('2025-06-01 00:00:00'));
+
         $project = ProjectFactory::createOne();
         $this->consoleApi(
             $project,
@@ -176,6 +181,14 @@ class AuthorizationTest extends WebTestCase
             $projectFromAttr
         );
         $this->assertSame($project->getId(), $projectFromAttr->getId());
+
+        $apiKey = $this->em->getRepository(ApiKey::class)->findOneBy(['project' => $project->_real()]);
+
+        $this->assertInstanceOf(ApiKey::class, $apiKey);
+        $this->assertSame(
+            '2025-06-01 00:00:00',
+            $apiKey->getLastAccessedAt()?->format('Y-m-d H:i:s')
+        );
     }
 
     public function test_authorizes_via_session(): void
