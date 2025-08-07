@@ -151,10 +151,13 @@ Authorization: Bearer <your_api_key>
 		<Scope>Idempotency Supported</Scope> - Send an email
 	</li>
 	<li>
-		<a href="#get-sends">GET /sends</a> - Get sent emails
+		<a href="#get-sends">GET /sends</a> - Get sends
 	</li>
 	<li>
-		<a href="#get-send">GET /sends/:id</a> - Get a specific sent email by ID
+		<a href="#get-send">GET /sends/:id</a> - Get a send by ID
+	</li>
+	<li>
+		<a href="#get-send-uuid">GET /sends/uuid/:uuid</a> - Get a send by UUID
 	</li>
 </ul>
 
@@ -223,10 +226,24 @@ Authorization: Bearer <your_api_key>
 	language="ts"
 />
 
-<h4 id="get-send">Get Send</h4>
+<h4 id="get-send">Get Send by ID</h4>
 
 <p>
-	<code>GET /sends/uuid/:uuid</code>
+	<code>GET /sends/:id</code> (scope: <strong>sends.read</strong>)
+</p>
+
+<CodeBlock
+	code={`
+	type Request = {}
+	type Response = Send // includes attempts array
+`}
+	language="ts"
+/>
+
+<h4 id="get-send-uuid">Get Send by UUID</h4>
+
+<p>
+	<code>GET /sends/uuid/:uuid</code> (scope: <strong>sends.read</strong>)
 </p>
 
 <CodeBlock
