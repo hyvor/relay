@@ -17,8 +17,7 @@ class DnsOverHttp implements DnsResolveInterface
     public function __construct(
         private HttpClientInterface $httpClient,
         private LoggerInterface $logger
-    )
-    {
+    ) {
     }
 
     /**
@@ -26,7 +25,6 @@ class DnsOverHttp implements DnsResolveInterface
      */
     public function resolve(string $domain, DnsType $dnsType): ResolveResult
     {
-
         $type = $dnsType->value;
         $url = self::CLOUDFLARE_DNS_QUERY_URL . "?name=$domain&type=$type";
 
@@ -44,9 +42,7 @@ class DnsOverHttp implements DnsResolveInterface
             $data = $response->toArray();
 
             return ResolveResult::fromArray($data);
-
         } catch (ExceptionInterface $e) {
-
             $this->logger->error(
                 'Failed to Cloudflare DNS: ' . $e->getMessage(),
                 [
@@ -55,9 +51,7 @@ class DnsOverHttp implements DnsResolveInterface
             );
 
             throw new DnsResolvingFailedException($e->getMessage(), previous: $e);
-
         }
-
     }
 
 }

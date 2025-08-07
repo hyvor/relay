@@ -32,7 +32,10 @@ class GetStateTest extends WebTestCase
         );
 
         $this->assertResponseStatusCodeSame(403);
-        $this->assertStringStartsWith('Only requests from localhost are allowed.', $this->getJson()["message"]);
+        $this->assertSame(
+            'Only requests from localhost are allowed. Current IP is: 8.8.8.8',
+            $this->getJson()["message"]
+        );
     }
 
     public function test_gets_state(): void
@@ -40,23 +43,12 @@ class GetStateTest extends WebTestCase
         $server = ServerFactory::createOne(['hostname' => 'hyvor-relay']);
         $ipEntity = IpAddressFactory::createOne([
             'server' => $server,
-            'is_available' => true,
-            'is_enabled' => true,
-            'queue' => QueueFactory::new(),
-        ]);
-
-        // not enabled
-        IpAddressFactory::createOne([
-            'server' => $server,
-            'is_enabled' => false,
             'queue' => QueueFactory::new(),
         ]);
 
         // no queue
         IpAddressFactory::createOne([
             'server' => $server,
-            'is_available' => true,
-            'is_enabled' => true,
             'queue' => null,
         ]);
 

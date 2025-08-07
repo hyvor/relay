@@ -37,17 +37,17 @@
 		font-size: 16px;
 		font-weight: bold;
 	}
-	.subtitle {
+	/* .subtitle {
 		font-size: 14px;
 		color: var(--text-light);
 		margin-top: 2px;
-	}
+	} */
 	.value {
 		font-size: 35px;
 	}
-	.below {
+	/* .below {
 		margin-top: 5px;
 		font-size: 14px;
 		color: var(--text-light);
-	}
+	} */
 </style>

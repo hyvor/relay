@@ -4,6 +4,7 @@ namespace App\Tests\Case;
 
 use App\Service\App\Config;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\Container;
@@ -13,7 +14,7 @@ use Zenstruck\Messenger\Test\InteractsWithMessenger;
 class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
 {
 
-    use InteractsWithMessenger;
+    use TestSharedTrait;
 
     protected Container $container;
     protected Application $application;
@@ -37,21 +38,14 @@ class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
         /** @var EventDispatcherInterface $eventDispatcher */
         $eventDispatcher = $this->container->get(EventDispatcherInterface::class);
         $this->eventDispatcher = $eventDispatcher;
+
+        $this->container->set(LoggerInterface::class, $this->createMock(LoggerInterface::class));
     }
 
     protected function commandTester(string $name): CommandTester
     {
         $command = $this->application->find($name);
         return new CommandTester($command);
-    }
-
-    protected function setConfig(string $key, mixed $value): void
-    {
-        $config = $this->getContainer()->get(Config::class);
-        assert(property_exists($config, $key));
-        $reflection = new \ReflectionObject($config);
-        $property = $reflection->getProperty($key);
-        $property->setValue($config, $value);
     }
 
 }

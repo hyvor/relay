@@ -62,10 +62,10 @@
 		display: flex;
 		flex-direction: column;
 	}
-	.section-div {
+	/* .section-div {
 		height: 25px;
 		flex-shrink: 0;
-	}
+	} */
 
 	@media (max-width: 992px) {
 		.debug {

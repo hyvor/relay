@@ -25,9 +25,9 @@ class AuthorizationTest extends WebTestCase
     public function test_api_key_authentication_nothing(): void
     {
         $this->client->request("GET", "/api/console/sends");
-        $this->assertResponseStatusCodeSame(403);
+        $this->assertResponseStatusCodeSame(401);
         $this->assertSame(
-            "Authorization method not supported. Use either Bearer token or a session.",
+            "Unauthorized",
             $this->getJson()["message"]
         );
     }
@@ -106,8 +106,8 @@ class AuthorizationTest extends WebTestCase
                 "HTTP_X_PROJECT_ID" => $project->getId(),
             ]
         );
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame("Invalid session.", $this->getJson()["message"]);
+        $this->assertResponseStatusCodeSame(401);
+        $this->assertSame("Unauthorized", $this->getJson()["message"]);
     }
 
     public function test_fails_when_xprojectid_header_is_not_set(): void
@@ -161,7 +161,6 @@ class AuthorizationTest extends WebTestCase
 
     public function test_authorizes_via_api_key(): void
     {
-
         $project = ProjectFactory::createOne();
         $this->consoleApi(
             $project,
@@ -177,7 +176,6 @@ class AuthorizationTest extends WebTestCase
             $projectFromAttr
         );
         $this->assertSame($project->getId(), $projectFromAttr->getId());
-
     }
 
     public function test_authorizes_via_session(): void
@@ -223,6 +221,5 @@ class AuthorizationTest extends WebTestCase
         $json = $this->getJson();
         $this->assertArrayHasKey('projects', $json);
         $this->assertArrayHasKey('config', $json);
-
     }
 }

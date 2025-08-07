@@ -18,7 +18,7 @@ class UpdateStateTest extends WebTestCase
 
     public function test_updates_state(): void
     {
-        $_ENV['HOST_HOSTNAME'] = 'goodserver';
+        $this->setConfig('envHostname', 'goodserver');
 
         ServerFactory::createOne(['hostname' => 'goodserver']);
 
@@ -44,9 +44,8 @@ class UpdateStateTest extends WebTestCase
 
     public function test_with_custom_go_host_and_failed_http(): void
     {
-
-        $_ENV['HOST_HOSTNAME'] = 'goodserver';
-        $_ENV['GO_HOST'] = 'go.com';
+        $this->setConfig('envHostname', 'goodserver');
+        $this->setConfig('goHost', 'go.com');
 
         ServerFactory::createOne(['hostname' => 'goodserver']);
 

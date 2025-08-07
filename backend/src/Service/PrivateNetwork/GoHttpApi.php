@@ -3,6 +3,7 @@
 namespace App\Service\PrivateNetwork;
 
 use App\Entity\Type\DebugIncomingEmailType;
+use App\Service\App\Config;
 use App\Service\Management\GoState\GoState;
 use App\Service\PrivateNetwork\Exception\GoHttpCallException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -14,12 +15,8 @@ class GoHttpApi
 
     public function __construct(
         private HttpClientInterface $httpClient,
-
-        // usually only needed in DEV where Go is not running on localhost
-        #[Autowire('%env(GO_HOST)%')]
-        private ?string $goHost = null
-    )
-    {
+        private Config $config,
+    ) {
     }
 
     /**
@@ -29,10 +26,9 @@ class GoHttpApi
      */
     private function callApi(string $endpoint, array $data): array
     {
-
         $endpoint = trim($endpoint, '/');
 
-        $goHost = $this->goHost ?? 'localhost';
+        $goHost = $this->config->getGoHost() ?? 'localhost';
         $url = sprintf('http://%s:8085/%s', $goHost, $endpoint);
 
         try {
@@ -54,7 +50,6 @@ class GoHttpApi
                 previous: $e
             );
         }
-
     }
 
     /**
@@ -62,12 +57,12 @@ class GoHttpApi
      */
     public function updateState(GoState $goState): void
     {
-        $this->callApi('/state', (array) $goState);
+        $this->callApi('/state', (array)$goState);
     }
 
     /**
-     * @throws GoHttpCallException
      * @return array<mixed>
+     * @throws GoHttpCallException
      */
     public function parseBounceOrFbl(string $raw, DebugIncomingEmailType $type): array
     {
