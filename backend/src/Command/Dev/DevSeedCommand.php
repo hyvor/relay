@@ -5,6 +5,7 @@ namespace App\Command\Dev;
 use App\Entity\DebugIncomingEmail;
 use App\Service\Instance\InstanceService;
 use App\Entity\Type\SendStatus;
+use App\Tests\Factory\ApiKeyFactory;
 use App\Tests\Factory\DebugIncomingEmailFactory;
 use App\Tests\Factory\DnsRecordFactory;
 use App\Tests\Factory\DomainFactory;
@@ -79,6 +80,12 @@ class DevSeedCommand extends Command
         $project = ProjectFactory::createOne([
             'name' => 'Test Project',
             'hyvor_user_id' => 1,
+        ]);
+
+        ApiKeyFactory::createOne([
+            'project' => $project,
+            'name' => 'Test API Key',
+            'key_hashed' => hash('sha256', 'test-api-key')
         ]);
 
         DomainFactory::createOne(['project' => $project, 'domain' => 'hyvor.com']);

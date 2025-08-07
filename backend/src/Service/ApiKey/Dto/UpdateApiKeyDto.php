@@ -16,4 +16,6 @@ class UpdateApiKeyDto
      * @var string[] $scopes
      */
     public array $scopes;
+
+    public \DateTimeImmutable $lastAccessedAt;
 }
