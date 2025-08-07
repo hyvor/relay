@@ -56,14 +56,16 @@ services:
 
   worker:
     container_name: hyvor-relay-worker
-    image: cosmtrek/air
-    working_dir: /worker
+    build:
+      context: .
+      target: worker-dev
     volumes:
       - ./worker/:/worker/
     environment:
       GO_SYMFONY_URL: http://hyvor-relay-backend
     networks:
       - hyvor-network
+    # command: "sleep infinity"
     ports:
       - "10025:1025"
       - "5353:53/udp"
