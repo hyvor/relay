@@ -183,7 +183,7 @@ func emailWorker(
 					continue
 				}
 
-				updateMetricsFromSendResult(metrics, result)
+				updateEmailMetricsFromSendResult(metrics, result)
 				sendAttemptIds = append(sendAttemptIds, sendAttemptId)
 			}
 
@@ -225,7 +225,7 @@ func emailWorker(
 	}
 }
 
-func updateMetricsFromSendResult(
+func updateEmailMetricsFromSendResult(
 	metrics *Metrics,
 	sendResult *SendResult,
 ) {

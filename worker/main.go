@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"log/slog"
+	"os"
 	"os/signal"
 	"syscall"
 
@@ -19,8 +21,11 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
+	// logger
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
 	// serviceState holds the state of the services (ex: email workers, etc.)
-	serviceState := NewServiceState(ctx)
+	serviceState := NewServiceState(ctx, logger)
 
 	// starting the local HTTP server so that symfony can call it to update the state if config changes
 	StartHttpServer(ctx, serviceState)

@@ -103,7 +103,7 @@ func (b *WebhooksBatch) Rollback() error {
 func (b *WebhooksBatch) FinalizeWebhookByResult(delivery *WebhookDelivery, result *WebhookResult) error {
 
 	// 1 for the first, 2 for the second, etc.
-	currentTry := delivery.TryCount + 1
+	currentTry := result.NewTryCount
 
 	sendAfter := getRetryInterval(currentTry, result.Success)
 

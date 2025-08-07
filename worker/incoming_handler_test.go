@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"testing"
 
 	"github.com/joho/godotenv"
@@ -82,7 +83,7 @@ This is a test email message.
 		InstanceDomain: "relay.com",
 	}
 
-	m.Handle(pgpool)
+	m.Handle(pgpool, &slog.Logger{}, &Metrics{})
 
 	// get debug incoming mail (table debug_incoming_emails)
 	var debugType DebugIncomingType = DebugIncomingTypeBounce

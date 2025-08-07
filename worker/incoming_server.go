@@ -107,58 +107,60 @@ func (s *Session) Logout() error {
 }
 
 type IncomingMailServer struct {
-	ctx        context.Context
-	logger     *slog.Logger
+	ctx     context.Context
+	logger  *slog.Logger
+	metrics *Metrics
+
 	smtpServer *smtp.Server
 	cancelFunc context.CancelFunc
 	pgpool     *pgxpool.Pool
 }
 
-func NewIncomingMailServer(ctx context.Context, logger *slog.Logger) *IncomingMailServer {
+func NewIncomingMailServer(ctx context.Context, logger *slog.Logger, metrics *Metrics) *IncomingMailServer {
 	return &IncomingMailServer{
-		ctx:    ctx,
-		logger: logger.With("component", "incoming_mail_server"),
+		ctx:     ctx,
+		logger:  logger.With("component", "incoming_mail_server"),
+		metrics: metrics,
 	}
 }
 
-func (b *IncomingMailServer) Set(instanceDomain string, numWorkers int) {
-	b.logger.Info("Bounce server initializing...")
+func (server *IncomingMailServer) Set(instanceDomain string, numWorkers int) {
+	server.logger.Info("Bounce server initializing...")
 
-	b.Shutdown()
+	server.Shutdown()
 
 	go func() {
-		b.Start(b.ctx, b.logger, instanceDomain, numWorkers)
+		server.Start(server.ctx, instanceDomain, numWorkers)
 	}()
 
 	go func() {
-		<-b.ctx.Done()
-		b.Shutdown()
+		<-server.ctx.Done()
+		server.Shutdown()
 	}()
 }
 
-func (b *IncomingMailServer) Shutdown() {
-	if b.smtpServer == nil {
+func (server *IncomingMailServer) Shutdown() {
+	if server.smtpServer == nil {
 		return
 	}
 
-	if b.cancelFunc != nil {
-		b.cancelFunc()
-		b.cancelFunc = nil
+	if server.cancelFunc != nil {
+		server.cancelFunc()
+		server.cancelFunc = nil
 	}
 
 	shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCtxCancel()
 
-	if err := b.smtpServer.Shutdown(shutdownCtx); err != nil {
-		b.logger.Error("Failed to shutdown SMTP server", "error", err)
+	if err := server.smtpServer.Shutdown(shutdownCtx); err != nil {
+		server.logger.Error("Failed to shutdown SMTP server", "error", err)
 	}
 
-	b.smtpServer = nil
+	server.smtpServer = nil
 
 }
 
-func (b *IncomingMailServer) Start(ctx context.Context, logger *slog.Logger, instanceDomain string, numWorkers int) {
-	b.logger = logger
+func (server *IncomingMailServer) Start(ctx context.Context, instanceDomain string, numWorkers int) {
 
 	// channel
 	mailChannel := make(chan *IncomingMail)
@@ -166,18 +168,18 @@ func (b *IncomingMailServer) Start(ctx context.Context, logger *slog.Logger, ins
 	// pgppool
 	pgpool, err := createNewRetryingPgPool(ctx, LoadDBConfig(), 1, int32(numWorkers))
 	if err != nil {
-		logger.Error("Failed to create pgpool", "error", err)
+		server.logger.Error("Failed to create pgpool", "error", err)
 		return
 	}
-	b.pgpool = pgpool
+	server.pgpool = pgpool
 
 	// worker context
 	workerCtx, cancel := context.WithCancel(ctx)
-	b.cancelFunc = cancel
+	server.cancelFunc = cancel
 	defer cancel()
 
 	be := &IncomingBackend{
-		logger:         logger,
+		logger:         server.logger,
 		instanceDomain: instanceDomain,
 		mailChannel:    mailChannel,
 	}
@@ -185,6 +187,8 @@ func (b *IncomingMailServer) Start(ctx context.Context, logger *slog.Logger, ins
 	for i := 0; i < numWorkers; i++ {
 		go incomingMailWorker(
 			workerCtx,
+			server.logger,
+			server.metrics,
 			mailChannel,
 			pgpool,
 		)
@@ -192,18 +196,18 @@ func (b *IncomingMailServer) Start(ctx context.Context, logger *slog.Logger, ins
 
 	smtpServer := smtp.NewServer(be)
 
-	smtpServer.Addr = "0.0.0.0:1025"
+	smtpServer.Addr = "0.0.0.0:25"
 	smtpServer.Domain = "localhost"
-	smtpServer.WriteTimeout = 200 * time.Second
-	smtpServer.ReadTimeout = 200 * time.Second // TODO: reduce this (for testing)
+	smtpServer.WriteTimeout = 10 * time.Second
+	smtpServer.ReadTimeout = 10 * time.Second
 	smtpServer.MaxMessageBytes = 1024 * 1024
 	smtpServer.MaxRecipients = 10
 	smtpServer.AllowInsecureAuth = true
 
-	b.smtpServer = smtpServer
+	server.smtpServer = smtpServer
 
-	logger.Info("Starting Bounce server at", "addr", smtpServer.Addr)
+	server.logger.Info("Starting Bounce server at", "addr", smtpServer.Addr)
 	if err := smtpServer.ListenAndServe(); err != nil {
-		logger.Error("Failed to start Bounce server", "error", err)
+		server.logger.Error("Failed to start Bounce server", "error", err)
 	}
 }

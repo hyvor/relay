@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log/slog"
-	"os"
 	"time"
 )
 
@@ -74,8 +73,7 @@ type ServiceState struct {
 	IsSet bool
 }
 
-func NewServiceState(ctx context.Context) *ServiceState {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+func NewServiceState(ctx context.Context, logger *slog.Logger) *ServiceState {
 	metricsServer := NewMetricsServer(ctx, logger)
 
 	return &ServiceState{
@@ -83,9 +81,9 @@ func NewServiceState(ctx context.Context) *ServiceState {
 		Logger:             logger,
 		MetricsServer:      metricsServer,
 		EmailWorkersPool:   NewEmailWorkersPool(ctx, logger, metricsServer.metrics),
-		WebhookWorkersPool: NewWebhookWorkersPool(ctx, logger),
-		IncomingMailServer: NewIncomingMailServer(ctx, logger),
-		DnsServer:          NewDnsServer(ctx, logger),
+		WebhookWorkersPool: NewWebhookWorkersPool(ctx, logger, metricsServer.metrics),
+		IncomingMailServer: NewIncomingMailServer(ctx, logger, metricsServer.metrics),
+		DnsServer:          NewDnsServer(ctx, logger, metricsServer.metrics),
 	}
 }
 

@@ -166,12 +166,6 @@ func createNewRetryingPgPool(
 			return pgpool, nil
 		}
 
-		slog.Error(
-			"Failed to connect to pgpool, retrying",
-			"error", err,
-			"backoff", backoff,
-		)
-
 		select {
 		case <-ctx.Done():
 			return nil, ctx.Err()

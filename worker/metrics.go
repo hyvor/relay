@@ -36,6 +36,9 @@ type Metrics struct {
 	emailDeliveryDurationSeconds *prometheus.HistogramVec
 	workersEmailTotal            prometheus.Gauge
 	workersWebhookTotal          prometheus.Gauge
+	webhookDeliveriesTotal       *prometheus.CounterVec
+	incomingEmailsTotal          *prometheus.CounterVec
+	dnsQueriesTotal              *prometheus.CounterVec
 }
 
 func NewMetricsServer(ctx context.Context, logger *slog.Logger) *MetricsServer {
@@ -121,6 +124,30 @@ func newMetrics() *Metrics {
 				Help: "Total number of webhook workers",
 			},
 		),
+		webhookDeliveriesTotal: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "webhook_deliveries_total",
+				Help: "Total number of webhook deliveries",
+			},
+			// success, failed, deferred
+			[]string{"status"},
+		),
+		incomingEmailsTotal: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "incoming_emails_total",
+				Help: "Total number of incoming emails",
+			},
+			// type = "bounce", "fbl", "unknown"
+			[]string{"type"},
+		),
+		dnsQueriesTotal: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "dns_queries_total",
+				Help: "Total number of DNS queries handled",
+			},
+			// status = "found", "not_found"
+			[]string{"type", "status"},
+		),
 	}
 }
 
@@ -139,6 +166,9 @@ func (server *MetricsServer) Set(goState GoState) {
 	server.registry.Unregister(server.metrics.emailDeliveryDurationSeconds)
 	server.registry.Unregister(server.metrics.workersEmailTotal)
 	server.registry.Unregister(server.metrics.workersWebhookTotal)
+	server.registry.Unregister(server.metrics.webhookDeliveriesTotal)
+	server.registry.Unregister(server.metrics.incomingEmailsTotal)
+	server.registry.Unregister(server.metrics.dnsQueriesTotal)
 
 	// register global metrics if the current server is the leader
 	if goState.IsLeader {
@@ -156,6 +186,9 @@ func (server *MetricsServer) Set(goState GoState) {
 	server.registry.MustRegister(server.metrics.emailDeliveryDurationSeconds)
 	server.registry.MustRegister(server.metrics.workersEmailTotal)
 	server.registry.MustRegister(server.metrics.workersWebhookTotal)
+	server.registry.MustRegister(server.metrics.webhookDeliveriesTotal)
+	server.registry.MustRegister(server.metrics.incomingEmailsTotal)
+	server.registry.MustRegister(server.metrics.dnsQueriesTotal)
 
 	// Set static values
 	server.metrics.relayInfo.WithLabelValues(

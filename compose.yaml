@@ -67,7 +67,7 @@ services:
       - hyvor-network
     # command: "sleep infinity"
     ports:
-      - "10025:1025"
+      - "10025:25"
       - "5353:53/udp"
     logging:
       driver: loki
