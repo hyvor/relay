@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# build the worker
+echo "Building worker... ⚒️⚒️⚒️"
+go build -o ./worker .
+ 
+# Start the worker
+./worker

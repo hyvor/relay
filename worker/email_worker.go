@@ -34,14 +34,14 @@ func NewEmailWorkersPool(
 ) *EmailWorkersPool {
 	pool := &EmailWorkersPool{
 		ctx:        ctx,
-		logger:     logger,
+		logger:     logger.With("component", "email_workers_pool"),
 		metrics:    metrics,
 		workerFunc: emailWorker,
 	}
 
 	go func() {
 		<-ctx.Done()
-		logger.Info("Stopping email workers pool")
+		pool.logger.Info("Stopping email workers pool")
 		pool.StopWorkers()
 	}()
 
@@ -121,7 +121,7 @@ func emailWorker(
 		select {
 		case <-ctx.Done():
 			logger.Info(
-				"Worker stopped by context cancellation",
+				"Email worker stopped by context cancellation",
 				"id", id,
 			)
 			return
@@ -132,12 +132,11 @@ func emailWorker(
 
 			if err != nil {
 				logger.Error(
-					"Worker failed to create batch",
+					"Email worker failed to get new send batch",
 					"worker_id", id,
 					"error", err,
 				)
 				time.Sleep(1 * time.Second)
-				batch.Rollback()
 				continue
 			}
 

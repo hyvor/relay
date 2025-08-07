@@ -35,19 +35,25 @@ func LoadDBConfig() *DBConfig {
 	host, port, _ := net.SplitHostPort(u.Host)
 	password, _ := u.User.Password()
 
+	path := u.Path
+	if path == "" {
+		path = "/"
+	}
+	dbName := path[1:]
+
 	return &DBConfig{
 		Host:     host,
 		Port:     port,
 		User:     u.User.Username(),
 		Password: password,
-		DBName:   u.Path[1:],
+		DBName:   dbName,
 		SSLMode:  "disable",
 	}
 }
 
 func (cfg *DBConfig) DSN() string {
 	return fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s connect_timeout=5",
 		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName, cfg.SSLMode,
 	)
 }
