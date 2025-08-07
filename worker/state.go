@@ -81,7 +81,7 @@ func NewServiceState(ctx context.Context, logger *slog.Logger) *ServiceState {
 		Logger:             logger,
 		MetricsServer:      metricsServer,
 		EmailWorkersPool:   NewEmailWorkersPool(ctx, logger, metricsServer.metrics),
-		WebhookWorkersPool: NewWebhookWorkersPool(ctx, logger),
+		WebhookWorkersPool: NewWebhookWorkersPool(ctx, logger, metricsServer.metrics),
 		IncomingMailServer: NewIncomingMailServer(ctx, logger),
 		DnsServer:          NewDnsServer(ctx, logger),
 	}
