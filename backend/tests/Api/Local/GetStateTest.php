@@ -43,23 +43,12 @@ class GetStateTest extends WebTestCase
         $server = ServerFactory::createOne(['hostname' => 'hyvor-relay']);
         $ipEntity = IpAddressFactory::createOne([
             'server' => $server,
-            'is_available' => true,
-            'is_enabled' => true,
-            'queue' => QueueFactory::new(),
-        ]);
-
-        // not enabled
-        IpAddressFactory::createOne([
-            'server' => $server,
-            'is_enabled' => false,
             'queue' => QueueFactory::new(),
         ]);
 
         // no queue
         IpAddressFactory::createOne([
             'server' => $server,
-            'is_available' => true,
-            'is_enabled' => true,
             'queue' => null,
         ]);
 

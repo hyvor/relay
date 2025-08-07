@@ -40,7 +40,7 @@ class GetApiKeysTest extends WebTestCase
             $this->assertIsArray($apiKeyData);
             $this->assertArrayHasKey('id', $apiKeyData);
             $this->assertArrayHasKey('name', $apiKeyData);
-            $this->assertArrayHasKey('scope', $apiKeyData);
+            $this->assertArrayHasKey('scopes', $apiKeyData);
             $this->assertArrayHasKey('created_at', $apiKeyData);
             $this->assertArrayHasKey('is_enabled', $apiKeyData);
             $this->assertArrayHasKey('last_accessed_at', $apiKeyData);

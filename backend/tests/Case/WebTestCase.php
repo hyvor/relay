@@ -13,13 +13,12 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\HttpFoundation\Response;
-use Zenstruck\Messenger\Test\InteractsWithMessenger;
 
 class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
 {
 
     use ApiTestingTrait;
-    use InteractsWithMessenger;
+    use TestSharedTrait;
 
     protected KernelBrowser $client;
     protected EntityManagerInterface $em;
@@ -178,7 +177,6 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         SudoUserFactory::createOne([
             'user_id' => 1,
         ]);
-
 
         $this->client->request(
             $method,

@@ -19,6 +19,10 @@ class Config
         private string $env,
         #[Autowire('%env(string:HOSTING)%')]
         private string $hosting,
+
+        // usually only needed in DEV where Go is not running on localhost
+        #[Autowire('%env(GO_HOST)%')]
+        private ?string $goHost = null
     ) {
     }
 
@@ -46,6 +50,11 @@ class Config
     public function getHosting(): HostingEnum
     {
         return HostingEnum::tryFrom($this->hosting) ?? HostingEnum::SELF;
+    }
+
+    public function getGoHost(): ?string
+    {
+        return $this->goHost;
     }
 
 }

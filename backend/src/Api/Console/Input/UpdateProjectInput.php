@@ -9,6 +9,6 @@ class UpdateProjectInput
 {
     use OptionalPropertyTrait;
 
-    #[Assert\Length(max: 255)]
+    #[Assert\Length(min: 1, max: 255)]
     public string $name;
 } 

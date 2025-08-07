@@ -13,7 +13,7 @@ use Zenstruck\Messenger\Test\InteractsWithMessenger;
 class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
 {
 
-    use InteractsWithMessenger;
+    use TestSharedTrait;
 
     protected Container $container;
     protected Application $application;
@@ -43,15 +43,6 @@ class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
     {
         $command = $this->application->find($name);
         return new CommandTester($command);
-    }
-
-    protected function setConfig(string $key, mixed $value): void
-    {
-        $config = $this->getContainer()->get(Config::class);
-        assert(property_exists($config, $key));
-        $reflection = new \ReflectionObject($config);
-        $property = $reflection->getProperty($key);
-        $property->setValue($config, $value);
     }
 
 }

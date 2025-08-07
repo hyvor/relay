@@ -4,6 +4,8 @@ namespace App\Tests\Api\Console\Project;
 
 use App\Api\Console\Controller\ProjectController;
 use App\Api\Console\Object\ProjectObject;
+use App\Entity\Project;
+use App\Entity\Type\ProjectSendType;
 use App\Service\Project\ProjectService;
 use App\Tests\Case\WebTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -16,14 +18,14 @@ class CreateProjectTest extends WebTestCase
 {
     public function test_create_project_valid(): void
     {
-
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
 
         $this->client->request(
             "POST",
             "/api/console/project",
             [
-                'name' => 'Valid Project Name'
+                'name' => 'Valid Project Name',
+                'send_type' => 'transactional',
             ],
         );
 
@@ -33,5 +35,10 @@ class CreateProjectTest extends WebTestCase
         $this->assertArrayHasKey('id', $json);
         $this->assertArrayHasKey('created_at', $json);
         $this->assertArrayHasKey('name', $json);
+
+        $project = $this->em->getRepository(Project::class)->find($json['id']);
+        $this->assertNotNull($project);
+        $this->assertSame('Valid Project Name', $project->getName());
+        $this->assertSame(ProjectSendType::TRANSACTIONAL, $project->getSendType());
     }
 }

@@ -43,6 +43,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             ['name' => 'console_api_resource', 'priority' => 150]
         );
 
+    // ================ OTHER SERVICES =================
     $services->alias(DnsResolveInterface::class, DnsOverHttp::class);
 
     $services->set(PdoSessionHandler::class)
