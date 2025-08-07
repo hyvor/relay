@@ -5,10 +5,10 @@ namespace App\Tests\Case;
 use App\Api\Console\Authorization\Scope;
 use App\Entity\Project;
 use App\Tests\Factory\ApiKeyFactory;
-use App\Tests\Factory\SudoUserFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Auth\AuthFake;
 use Hyvor\Internal\Bundle\Testing\ApiTestingTrait;
+use Hyvor\Internal\Sudo\SudoUserFactory;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Component\DependencyInjection\Container;
@@ -53,7 +53,6 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         string $uri,
         array $data = [],
     ): Response {
-
         $this->client->request(
             $method,
             '/api/sudo' . $uri,
@@ -98,12 +97,16 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
             if ($project) {
                 $server['HTTP_X_PROJECT_ID'] = (string)$project->getId();
             }
-        }
-        else {
+        } else {
             $apiKey = bin2hex(random_bytes(16));
             $apiKeyHashed = hash('sha256', $apiKey);
             $apiKeyFactory = ['key_hashed' => $apiKeyHashed, 'project' => $project];
-            if ($scopes !== true) $apiKeyFactory['scopes'] = array_map(fn(Scope|string $scope) => is_string($scope) ? $scope : $scope->value, $scopes);
+            if ($scopes !== true) {
+                $apiKeyFactory['scopes'] = array_map(
+                    fn(Scope|string $scope) => is_string($scope) ? $scope : $scope->value,
+                    $scopes
+                );
+            }
             ApiKeyFactory::createOne($apiKeyFactory);
             $server['HTTP_AUTHORIZATION'] = 'Bearer ' . $apiKey;
         }
@@ -139,7 +142,6 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         array $data = [],
         array $server = [],
     ): Response {
-
         $this->client->request(
             $method,
             '/api/local' . $uri,
@@ -174,10 +176,10 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         $this->client->getCookieJar()->set(new Cookie('authsess', 'test-session'));
 
         SudoUserFactory::createOne([
-            'hyvor_user_id' => 1,
+            'user_id' => 1,
         ]);
-      
-      
+
+
         $this->client->request(
             $method,
             '/api/sudo' . $uri,
