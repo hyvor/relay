@@ -64,7 +64,10 @@ class VerifyDomainTest extends WebTestCase
         $response = $this->consoleApi(
             $project,
             "POST",
-            "/domains/" . $domain->getId() . "/verify",
+            "/domains/verify",
+            data: [
+                'id' => $domain->getId(),
+            ],
             scopes: [Scope::DOMAINS_WRITE]
         );
 
@@ -109,7 +112,10 @@ class VerifyDomainTest extends WebTestCase
         $response = $this->consoleApi(
             $project,
             "POST",
-            "/domains/" . $domain->getId() . "/verify",
+            "/domains/verify",
+            data: [
+                'id' => $domain->getId(),
+            ],
             scopes: [Scope::DOMAINS_WRITE]
         );
 
@@ -152,7 +158,10 @@ class VerifyDomainTest extends WebTestCase
         $response = $this->consoleApi(
             $project,
             "POST",
-            "/domains/" . $domain->getId() . "/verify",
+            "/domains/verify",
+            data: [
+                'domain' => $domain->getDomain(),
+            ],
             scopes: [Scope::DOMAINS_WRITE]
         );
 
@@ -183,7 +192,10 @@ class VerifyDomainTest extends WebTestCase
         $response = $this->consoleApi(
             $project,
             "POST",
-            "/domains/" . $domain->getId() . "/verify",
+            "/domains/verify",
+            data: [
+                'id' => $domain->getId(),
+            ],
             scopes: [Scope::DOMAINS_READ] // Wrong scope
         );
 
@@ -198,11 +210,14 @@ class VerifyDomainTest extends WebTestCase
         $response = $this->consoleApi(
             $project,
             "POST",
-            "/domains/999999/verify",
+            "/domains/verify",
+            data: ['id' => 999999],
             scopes: [Scope::DOMAINS_WRITE]
         );
 
-        $this->assertSame(Response::HTTP_NOT_FOUND, $response->getStatusCode());
+        $this->assertSame(400, $response->getStatusCode());
+        $this->assertSame('Domain not found', $this->getJson()['message']);
+
         $this->eventDispatcher->assertNotDispatched(DomainVerifiedEvent::class);
     }
 
@@ -220,11 +235,17 @@ class VerifyDomainTest extends WebTestCase
         $response = $this->consoleApi(
             $project1, // Different project
             "POST",
-            "/domains/" . $domain->getId() . "/verify",
+            "/domains/verify",
+            data: [
+                'id' => $domain->getId(),
+            ],
             scopes: [Scope::DOMAINS_WRITE]
         );
 
-        $this->assertResponseStatusCodeSame(403);
+        $this->assertResponseStatusCodeSame(400);
+        $responseData = $this->getJson();
+        $this->assertSame("Domain does not belong to the project", $responseData['message']);
+
         $this->eventDispatcher->assertNotDispatched(DomainVerifiedEvent::class);
     }
 
@@ -252,7 +273,10 @@ class VerifyDomainTest extends WebTestCase
         $response = $this->consoleApi(
             $project,
             "POST",
-            "/domains/" . $domain->getId() . "/verify",
+            "/domains/verify",
+            data: [
+                'id' => $domain->getId(),
+            ],
             scopes: [Scope::DOMAINS_WRITE]
         );
 

@@ -3,6 +3,7 @@
 namespace App\Tests\Api\Console\Domain;
 
 use App\Api\Console\Controller\DomainController;
+use App\Api\Console\Input\Domain\DomainIdOrDomainInput;
 use App\Api\Console\Object\DomainObject;
 use App\Entity\Domain;
 use App\Service\Domain\DomainService;
@@ -15,6 +16,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 
 #[CoversClass(DomainController::class)]
+#[CoversClass(DomainIdOrDomainInput::class)]
 #[CoversClass(DomainService::class)]
 #[CoversClass(DomainObject::class)]
 class DeleteDomainTest extends WebTestCase

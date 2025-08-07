@@ -4,7 +4,7 @@ namespace App\Api\Console\Controller;
 
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Authorization\ScopeRequired;
-use App\Api\Console\Input\Domain\DeleteDomainInput;
+use App\Api\Console\Input\Domain\DomainIdOrDomainInput;
 use App\Api\Console\Input\Domain\DomainCreateInput;
 use App\Api\Console\Object\DomainObject;
 use App\Entity\Domain;
@@ -51,9 +51,7 @@ class DomainController extends AbstractController
     public function createDomain(
         Project $project,
         #[MapRequestPayload] DomainCreateInput $createInput
-    ): JsonResponse
-    {
-
+    ): JsonResponse {
         if ($this->domainService->getDomainByProjectAndName($project, $createInput->domain)) {
             throw new BadRequestException('Domain already exists');
         }
@@ -64,13 +62,16 @@ class DomainController extends AbstractController
         );
 
         return new JsonResponse(new DomainObject($domain));
-
     }
 
-    #[Route('/domains/{id}/verify', methods: 'POST')]
+    #[Route('/domains/verify', methods: 'POST')]
     #[ScopeRequired(Scope::DOMAINS_WRITE)]
-    public function verifyDomain(Domain $domain): JsonResponse
-    {
+    public function verifyDomain(
+        Project $project,
+        #[MapRequestPayload] DomainIdOrDomainInput $input
+    ): JsonResponse {
+        $domain = $input->validateAndGetDomain($project, $this->domainService);
+
         if ($domain->getDkimVerified()) {
             throw new BadRequestException('Domain is already verified');
         }
@@ -79,27 +80,24 @@ class DomainController extends AbstractController
         return new JsonResponse(new DomainObject($domain));
     }
 
+    #[Route('/domains/by', methods: 'GET')]
+    #[ScopeRequired(Scope::DOMAINS_READ)]
+    public function getDomainById(
+        Project $project,
+        #[MapRequestPayload] DomainIdOrDomainInput $input
+    ): JsonResponse {
+        $domain = $input->validateAndGetDomain($project, $this->domainService);
+        return new JsonResponse(new DomainObject($domain));
+    }
+
+
     #[Route('/domains', methods: 'DELETE')]
     #[ScopeRequired(Scope::DOMAINS_WRITE)]
     public function deleteDomain(
         Project $project,
-        #[MapRequestPayload] DeleteDomainInput $input
-    ): JsonResponse
-    {
-        if ($input->id) {
-            $domain = $this->domainService->getDomainById($input->id);
-        } else {
-            assert(is_string($input->domain));
-            $domain = $this->domainService->getDomainByProjectAndName($project, $input->domain);
-        }
-
-        if (!$domain) {
-            throw new BadRequestException('Domain not found');
-        }
-
-        if ($domain->getProject() !== $project) {
-            throw new BadRequestException('Domain does not belong to the project');
-        }
+        #[MapRequestPayload] DomainIdOrDomainInput $input
+    ): JsonResponse {
+        $domain = $input->validateAndGetDomain($project, $this->domainService);
 
         $this->domainService->deleteDomain($domain);
         return new JsonResponse([]);

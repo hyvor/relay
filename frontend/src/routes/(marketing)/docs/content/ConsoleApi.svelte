@@ -266,10 +266,13 @@ Authorization: Bearer <your_api_key>
 		<a href="#create-domain">POST /domains</a> - Create a new domain for the project
 	</li>
 	<li>
-		<a href="#get-domain">GET /domains/:id</a> - Get a specific domain by ID
+		<a href="#verify-domain">POST /domains/verify</a> - Verify a domain
 	</li>
 	<li>
-		<a href="#delete-domain">DELETE /domains</a> - Delete a domain by ID or domain name.
+		<a href="#get-domain">GET /domains/:id</a> - Get a domain by ID or domain name
+	</li>
+	<li>
+		<a href="#delete-domain">DELETE /domains</a> - Delete a domain by ID or domain name
 	</li>
 </ul>
 
@@ -315,16 +318,46 @@ Authorization: Bearer <your_api_key>
 	language="ts"
 />
 
-<h4 id="get-domain">Get Domain</h4>
+<h4 id="verify-domain">Verify Domain</h4>
 
 <p>
-	<code>GET /domains/:id</code> (scope: <strong>domains.read</strong>)
+	<code>POST /domains/verify</code> (scope: <strong>domains.write</strong>)
 </p>
 
 <CodeBlock
 	code={`
-    type Request = {}
-    type Response = Domain
+type Request = {
+	// Either id or domain must be provided
+	id?: number,
+	domain?: string
+}
+type Response = Domain
+`}
+	language="ts"
+/>
+
+<h4 id="get-domain">Get Domain</h4>
+
+<p>
+	<code>GET /domains/by</code> (scope: <strong>domains.read</strong>)
+</p>
+
+<CodeBlock
+	code={`
+type Request = {
+	// Either id or domain must be provided
+	id?: number,
+	domain?: string
+}
+type Response = Domain
+`}
+	language="ts"
+/>
+
+<CodeBlock
+	code={`
+	type Request = {}
+	type Response = Domain
 `}
 	language="ts"
 />
