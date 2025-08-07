@@ -12,7 +12,6 @@ use App\Api\Console\Object\ProjectObject;
 use App\Entity\Project;
 use App\Service\Project\Dto\UpdateProjectDto;
 use App\Service\Project\ProjectService;
-use Hyvor\Internal\Auth\AuthUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -32,8 +31,7 @@ class ProjectController extends AbstractController
     #[UserLevelEndpoint]
     public function createProject(#[MapRequestPayload] CreateProjectInput $input, Request $request): JsonResponse
     {
-        $user = $request->attributes->get(AuthorizationListener::RESOLVED_USER_ATTRIBUTE_KEY);
-        assert($user instanceof AuthUser);
+        $user = AuthorizationListener::getUser($request);
 
         $project = $this->projectService->createProject(
             $user->id,
@@ -56,7 +54,7 @@ class ProjectController extends AbstractController
     public function updateProject(#[MapRequestPayload] UpdateProjectInput $input, Project $project): JsonResponse
     {
         $updates = new UpdateProjectDto();
-        
+
         if ($input->hasProperty('name')) {
             $updates->name = $input->name;
         }

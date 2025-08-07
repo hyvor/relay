@@ -86,7 +86,7 @@
 			? updateApiKey(editingApiKey.id, {
 					name: name.trim(),
 					scopes: selectedScopes,
-					enabled: isEnabled
+					is_enabled: isEnabled
 				})
 			: createApiKey(name.trim(), selectedScopes);
 

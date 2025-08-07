@@ -38,8 +38,9 @@ class GetWebhookDeliveriesTest extends WebTestCase
             ]
         );
 
-        $webhookDeliveries = WebhookDeliveryFactory::createMany(5,
-        [
+        $webhookDeliveries = WebhookDeliveryFactory::createMany(
+            5,
+            [
                 'webhook' => $webhook,
                 'status' => WebhookDeliveryStatus::PENDING,
             ]
@@ -101,7 +102,7 @@ class GetWebhookDeliveriesTest extends WebTestCase
         $response = $this->consoleApi(
             $project,
             'GET',
-            '/webhooks/deliveries?webhookId=' . $webhook1->getId()
+            '/webhooks/deliveries?webhook_id=' . $webhook1->getId()
         );
         $this->assertSame(200, $response->getStatusCode());
 

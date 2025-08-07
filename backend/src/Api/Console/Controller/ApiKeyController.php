@@ -21,8 +21,7 @@ class ApiKeyController extends AbstractController
 {
     public function __construct(
         private ApiKeyService $apiKeyService
-    )
-    {
+    ) {
     }
 
     #[Route('/api-keys', methods: 'POST')]
@@ -54,12 +53,15 @@ class ApiKeyController extends AbstractController
     public function updateApiKey(#[MapRequestPayload] UpdateApiKeyInput $input, ApiKey $apiKey): JsonResponse
     {
         $updates = new UpdateApiKeyDto();
-        if ($input->hasProperty('enabled'))
-            $updates->enabled = $input->enabled;
-        if ($input->hasProperty('scopes'))
+        if ($input->hasProperty('is_enabled')) {
+            $updates->enabled = $input->is_enabled;
+        }
+        if ($input->hasProperty('scopes')) {
             $updates->scopes = $input->scopes;
-        if ($input->hasProperty('name'))
+        }
+        if ($input->hasProperty('name')) {
             $updates->name = $input->name;
+        }
 
         $updatedApiKey = $this->apiKeyService->updateApiKey($apiKey, $updates);
 

@@ -17,7 +17,7 @@ export function createApiKey(name: string, scopes: string[]) {
 	});
 }
 
-export function updateApiKey(id: number, data: { name?: string; scopes?: string[]; enabled?: boolean }) {
+export function updateApiKey(id: number, data: { name?: string; scopes?: string[]; is_enabled?: boolean }) {
 	return consoleApi.patch<ApiKey>({
 		endpoint: `api-keys/${id}`,
 		data
