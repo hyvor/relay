@@ -72,6 +72,6 @@ TODO -->
 
 Hyvor Relay is licensed under the [AGPL-3.0 License](https://github.com/hyvor/relay/blob/main/LICENSE). AGPLv3 requires you to share the source code of your modifications if you run the software on a server and allow others to use it. For other use cases where you cannot use AGPLv3, contact HYVOR for an [Enterprise License](https://hyvor.com/enterprise).
 
-Copyright © HYVOR. HYVOR name and logo are trademarks of HYVOR.
-
 ![HYVOR Footer](https://media.licdn.com/dms/image/v2/D4E16AQHHlspOTVTYgg/profile-displaybackgroundimage-shrink_350_1400/profile-displaybackgroundimage-shrink_350_1400/0/1723619475901?e=1757548800&v=beta&t=yhi3prmEkSeqbYx1zA6oKpXgg4zJW5uQGTt307b061Q)
+
+Copyright © HYVOR. HYVOR name and logo are trademarks of HYVOR.
