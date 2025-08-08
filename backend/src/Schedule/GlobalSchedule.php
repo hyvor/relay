@@ -2,6 +2,8 @@
 
 namespace App\Schedule;
 
+use App\Service\Domain\Message\PurgeStalePendingSuspendedDomainsMessage;
+use App\Service\Domain\Message\ReverifyAllDomainsMessage;
 use App\Service\Idempotency\Message\ClearExpiredIdempotencyRecordsMessage;
 use App\Service\Management\Message\RunHealthChecksMessage;
 use App\Service\Send\Message\ClearExpiredSendsMessage;
@@ -27,9 +29,20 @@ class GlobalSchedule implements ScheduleProviderInterface
     public function getSchedule(): SymfonySchedule
     {
         return new SymfonySchedule()
-            ->add(RecurringMessage::every('1 hour', new ClearExpiredIdempotencyRecordsMessage))
-            ->add(RecurringMessage::every('1 day', new ClearExpiredSendsMessage))
+            // infra
             ->add(RecurringMessage::every('1 hour', new RunHealthChecksMessage))
+
+            // api
+            ->add(RecurringMessage::every('1 hour', new ClearExpiredIdempotencyRecordsMessage))
+
+            // sends
+            ->add(RecurringMessage::every('1 day', new ClearExpiredSendsMessage))
+
+            // domain verification
+            ->add(RecurringMessage::every('1 hour', new PurgeStalePendingSuspendedDomainsMessage))
+            ->add(RecurringMessage::every('1 day', new ReverifyAllDomainsMessage))
+
+            // global lock
             ->lock($this->lockFactory->createLock('global-schedule', 20));
     }
 }

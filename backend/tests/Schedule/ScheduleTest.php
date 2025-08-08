@@ -19,7 +19,7 @@ class ScheduleTest extends TestCase
         $schedule = new GlobalSchedule($this->createMock(LockFactory::class));
         $s = $schedule->getSchedule();
         $messages = $s->getRecurringMessages();
-        $this->assertCount(3, $messages);
+        $this->assertCount(5, $messages);
     }
 
     public function test_server_schedule(): void

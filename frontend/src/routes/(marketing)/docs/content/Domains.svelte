@@ -56,9 +56,9 @@
 
 <ul>
 	<li>
-		<strong style="color:var(--text-light)">Unverified</strong>: The domain is added, but the
-		TXT record is not verified yet. You cannot send emails from this domain until it is
-		verified. You have 14 days to verify the domain, or it will be automatically removed.
+		<strong style="color:var(--text-light)">Pending</strong>: The domain is pending
+		verification. You cannot send emails from this domain until it is verified. You have 14 days
+		to verify the domain, or it will be automatically removed.
 	</li>
 	<li>
 		<strong style="color:var(--green)">Verified</strong>: The domain is verified, and you can
@@ -71,9 +71,10 @@
 		unverified.
 	</li>
 	<li>
-		<strong style="color:var(--red)">Banned</strong>: The domain is banned from sending emails.
-		This can happen if the domain is flagged for spam, abuse, or other issues. You cannot send
-		emails from this domain until the issue is resolved. Contact support to resolve the issue.
+		<strong style="color:var(--red)">Suspended</strong>: The domain is banned from sending
+		emails. This can happen if the domain is flagged for spam, abuse, or other issues. You
+		cannot send emails from this domain until the issue is resolved. Contact support to resolve
+		the issue. If not resolved within 14 days, the domain will be automatically removed.
 	</li>
 </ul>
 
