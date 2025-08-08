@@ -5,3 +5,10 @@ monolog:
       path: php://stderr
       level: "%env(LOG_LEVEL)%"
       formatter: monolog.formatter.json
+
+when@test:
+  monolog:
+    handlers:
+      test:
+        type: test
+        level: info
