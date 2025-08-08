@@ -4,6 +4,7 @@ namespace App\Service\Domain;
 
 use App\Entity\Domain;
 use App\Entity\Project;
+use App\Entity\Type\DomainStatus;
 use App\Repository\DomainRepository;
 use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Service\Domain\Event\DomainDeletedEvent;
@@ -25,8 +26,7 @@ class DomainService
         private Encryption $encryption,
         private DkimVerificationService $dkimVerificationService,
         private EventDispatcherInterface $eventDispatcher
-    )
-    {
+    ) {
     }
 
     public function getDomainById(int $domainId): ?Domain
@@ -42,10 +42,12 @@ class DomainService
     public function createDomain(Project $project, string $domainName): Domain
     {
         $domain = new Domain();
+        $domain->setCreatedAt($this->now());
+        $domain->setUpdatedAt($this->now());
         $domain->setProject($project);
         $domain->setDomain($domainName);
-        $domain->setCreatedAt(new \DateTimeImmutable());
-        $domain->setUpdatedAt(new \DateTimeImmutable());
+        $domain->setStatus(DomainStatus::PENDING);
+        $domain->setStatusChangedAt($this->now());
 
         $domain->setDkimSelector(Dkim::generateDkimSelector());
 
@@ -96,9 +98,18 @@ class DomainService
 
     public function verifyDkimAndUpdate(Domain $domain): void
     {
+        assert(
+            $domain->getStatus() === DomainStatus::PENDING,
+            'You can only verify a domain that is in PENDING status.'
+        );
+
         $result = $this->dkimVerificationService->verify($domain);
 
-        $domain->setDkimVerified($result->verified);
+        if ($result->verified) {
+            $domain->setStatus(DomainStatus::ACTIVE);
+            $domain->setStatusChangedAt($this->now());
+        }
+
         $domain->setDkimCheckedAt($this->now());
         $domain->setDkimErrorMessage($result->errorMessage);
 

@@ -12,7 +12,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(DomainController::class)]
 #[CoversClass(DomainObject::class)]
-class GetDomainByIdTest extends WebTestCase
+class GetDomainTest extends WebTestCase
 {
 
     public function test_fails_when_domain_not_found(): void

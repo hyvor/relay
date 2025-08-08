@@ -9,6 +9,7 @@ use App\Api\Console\Input\Domain\DomainCreateInput;
 use App\Api\Console\Object\DomainObject;
 use App\Entity\Domain;
 use App\Entity\Project;
+use App\Entity\Type\DomainStatus;
 use App\Service\Domain\DomainService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
@@ -72,11 +73,12 @@ class DomainController extends AbstractController
     ): JsonResponse {
         $domain = $input->validateAndGetDomain($project, $this->domainService);
 
-        if ($domain->getDkimVerified()) {
-            throw new BadRequestException('Domain is already verified');
+        if ($domain->getStatus() !== DomainStatus::PENDING) {
+            throw new BadRequestException('You can only verify a domain that is in PENDING status.');
         }
 
         $this->domainService->verifyDkimAndUpdate($domain);
+
         return new JsonResponse(new DomainObject($domain));
     }
 
