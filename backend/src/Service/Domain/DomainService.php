@@ -9,6 +9,7 @@ use App\Repository\DomainRepository;
 use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Service\Domain\Event\DomainDeletedEvent;
 use App\Service\Domain\Event\DomainVerifiedEvent;
+use App\Service\Domain\Exception\DkimVerificationFailedException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Hyvor\Internal\Util\Crypt\Encryption;
@@ -96,6 +97,9 @@ class DomainService
         return new ArrayCollection($results);
     }
 
+    /**
+     * @throws DkimVerificationFailedException
+     */
     public function verifyDkimAndUpdate(Domain $domain): void
     {
         assert(

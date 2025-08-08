@@ -6,16 +6,19 @@ use App\Entity\Domain;
 use App\Service\Dns\Resolve\DnsResolveInterface;
 use App\Service\Dns\Resolve\DnsResolvingFailedException;
 use App\Service\Dns\Resolve\DnsType;
+use App\Service\Domain\Exception\DkimVerificationFailedException;
 
 class DkimVerificationService
 {
 
     public function __construct(
         private DnsResolveInterface $dnsResolve,
-    )
-    {
+    ) {
     }
 
+    /**
+     * @throws DkimVerificationFailedException
+     */
     public function verify(Domain $domain): DkimVerificationResult
     {
         $startTime = new \DateTimeImmutable();
@@ -41,16 +44,17 @@ class DkimVerificationService
         return $result;
     }
 
+    /**
+     * @throws DkimVerificationFailedException
+     */
     private function verifyDkimRecord(
         string $dkimHost,
         string $publicKey,
-    ): true|string
-    {
-
+    ): true|string {
         try {
             $result = $this->dnsResolve->resolve($dkimHost, DnsType::TXT);
         } catch (DnsResolvingFailedException $e) {
-            return 'DNS resolving failed: ' . $e->getMessage();
+            throw new DkimVerificationFailedException($e->getMessage(), previous: $e);
         }
 
         if (!$result->ok()) {
@@ -76,7 +80,6 @@ class DkimVerificationService
         }
 
         return 'No valid DKIM record found';
-
     }
 
 }

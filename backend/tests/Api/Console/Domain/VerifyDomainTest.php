@@ -10,6 +10,7 @@ use App\Service\Domain\DkimVerificationResult;
 use App\Service\Domain\DkimVerificationService;
 use App\Service\Domain\DomainService;
 use App\Service\Domain\Event\DomainVerifiedEvent;
+use App\Service\Domain\Exception\DkimVerificationFailedException;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
@@ -300,5 +301,37 @@ class VerifyDomainTest extends WebTestCase
         $this->assertSame(DomainStatus::ACTIVE, $domain->getStatus());
         $this->assertNull($domain->getDkimErrorMessage());
         $this->eventDispatcher->assertDispatched(DomainVerifiedEvent::class);
+    }
+
+    public function test_returns_server_error_when_dns_query_fails(): void
+    {
+        $project = ProjectFactory::createOne();
+        $domain = DomainFactory::createOne([
+            "project" => $project,
+            "domain" => "example.com",
+        ]);
+
+        $this->dkimVerificationService
+            ->expects($this->once())
+            ->method("verify")
+            ->willThrowException(new DkimVerificationFailedException('Cloudflare down'));
+
+        $response = $this->consoleApi(
+            $project,
+            "POST",
+            "/domains/verify",
+            data: [
+                'id' => $domain->getId(),
+            ],
+            scopes: [Scope::DOMAINS_WRITE]
+        );
+
+        $this->assertSame(Response::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
+        $responseData = $this->getJson();
+        $this->assertSame('DKIM verification failed due an internal error: Cloudflare down', $responseData['message']);
+
+        $this->assertSame(DomainStatus::PENDING, $domain->getStatus());
+        $this->assertNull($domain->getDkimCheckedAt());
+        $this->assertNull($domain->getDkimErrorMessage());
     }
 }

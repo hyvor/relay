@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Auth\AuthFake;
 use Hyvor\Internal\Bundle\Testing\ApiTestingTrait;
 use Hyvor\Internal\Sudo\SudoUserFactory;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Component\DependencyInjection\Container;
@@ -122,10 +123,11 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         $response = $this->client->getResponse();
 
         if ($response->getStatusCode() === 500) {
-            throw new \Exception(
-                'API call failed with status code 500. ' .
-                'Response: ' . $response->getContent()
-            );
+            /** @var LoggerInterface $logger */
+            $logger = $this->container->get('logger');
+            $logger->error('API call failed with status code 500.', [
+                'response' => $response->getContent(),
+            ]);
         }
 
         return $response;
