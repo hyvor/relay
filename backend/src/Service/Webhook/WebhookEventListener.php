@@ -69,7 +69,7 @@ class WebhookEventListener
         $this->createWebhookDeliveries(
             $event->domain->getProject(),
             WebhooksEventEnum::DOMAIN_CREATED,
-            fn() => new DomainObject($event->domain)
+            fn() => (object)['domain' => new DomainObject($event->domain)]
         );
     }
 

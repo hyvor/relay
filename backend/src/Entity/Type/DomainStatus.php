@@ -11,4 +11,12 @@ enum DomainStatus: string
     case WARNING = 'warning';
     case SUSPENDED = 'suspended';
 
+    public function canSendEmails(): bool
+    {
+        return match ($this) {
+            self::ACTIVE, self::WARNING => true,
+            self::PENDING, self::SUSPENDED => false,
+        };
+    }
+
 }

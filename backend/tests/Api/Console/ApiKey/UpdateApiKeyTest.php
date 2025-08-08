@@ -27,7 +27,6 @@ class UpdateApiKeyTest extends WebTestCase
             [
                 'project' => $project,
                 'is_enabled' => true,
-
             ]
         );
 
@@ -36,7 +35,7 @@ class UpdateApiKeyTest extends WebTestCase
             'PATCH',
             '/api-keys/' . $apiKey->getId(),
             [
-                'enabled' => false,
+                'is_enabled' => false,
                 'name' => 'Updated API Key',
                 'scopes' => ['sends.read', 'sends.write', 'webhooks.read']
             ]

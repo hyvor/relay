@@ -8,6 +8,7 @@ use App\Service\Dns\Resolve\DnsResolvingFailedException;
 use App\Service\Dns\Resolve\ResolveAnswer;
 use App\Service\Dns\Resolve\ResolveResult;
 use App\Service\Domain\DkimVerificationService;
+use App\Service\Domain\Exception\DkimVerificationFailedException;
 use App\Tests\Case\KernelTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 
@@ -52,13 +53,6 @@ class DkimVerificationServiceTest extends KernelTestCase
 
         $this->doTest(
             $exampleDomain,
-            true,
-            false,
-            'DNS resolving failed: bad request'
-        );
-
-        $this->doTest(
-            $exampleDomain,
             new ResolveResult(3, []),
             false,
             'DNS query failed with error: Non-existent domain (NXDOMAIN)'
@@ -89,6 +83,24 @@ class DkimVerificationServiceTest extends KernelTestCase
             new ResolveResult(0, [new ResolveAnswer('example.com', 'test')]),
             false,
             'No valid DKIM record found'
+        );
+    }
+
+    public function test_error(): void
+    {
+        $this->expectException(DkimVerificationFailedException::class);
+        $this->expectExceptionMessage('DNS Resolving failed: bad request');
+
+        $exampleDomain = new Domain();
+        $exampleDomain->setDomain('example.com');
+        $exampleDomain->setDkimSelector('selector');
+        $exampleDomain->setDkimPublicKey('test_public_key');
+
+        $this->doTest(
+            $exampleDomain,
+            true,
+            false,
+            null,
         );
     }
 

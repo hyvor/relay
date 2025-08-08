@@ -54,7 +54,7 @@ class DkimVerificationService
         try {
             $result = $this->dnsResolve->resolve($dkimHost, DnsType::TXT);
         } catch (DnsResolvingFailedException $e) {
-            throw new DkimVerificationFailedException($e->getMessage(), previous: $e);
+            throw new DkimVerificationFailedException('DNS Resolving failed: ' . $e->getMessage(), previous: $e);
         }
 
         if (!$result->ok()) {

@@ -62,9 +62,9 @@ class SendController extends AbstractController
             );
         }
 
-        if ($domain->getDkimVerified() === false) {
+        if ($domain->getStatus()->canSendEmails() !== true) {
             throw new BadRequestException(
-                "Domain $domainName is not verified"
+                "Domain $domainName is not allowed to send emails (status: {$domain->getStatus()->value})"
             );
         }
 
