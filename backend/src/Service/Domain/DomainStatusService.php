@@ -6,6 +6,7 @@ use App\Entity\Domain;
 use App\Entity\Type\DomainStatus;
 use App\Service\Domain\Event\DomainStatusChangedEvent;
 use App\Service\Domain\Exception\DkimVerificationFailedException;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -16,15 +17,19 @@ class DomainStatusService
 
     public function __construct(
         private DkimVerificationService $dkimVerificationService,
-        private EventDispatcherInterface $eventDispatcher
+        private EventDispatcherInterface $eventDispatcher,
+        private EntityManagerInterface $em,
     ) {
     }
 
     /**
      * @throws DkimVerificationFailedException
      */
-    public function updateAfterDkimVerification(Domain $domain, bool $unverifyWarning = false): void
-    {
+    public function updateAfterDkimVerification(
+        Domain $domain,
+        bool $unverifyWarning = false,
+        bool $flush = false,
+    ): void {
         assert(
             $domain->getStatus() !== DomainStatus::SUSPENDED,
             'You cannot run DKIM verification on a domain that is in SUSPENDED status.'
@@ -43,7 +48,18 @@ class DomainStatusService
             $domain->setStatus($newStatus);
             $domain->setStatusChangedAt($this->now());
 
-            $this->eventDispatcher->dispatch(new DomainStatusChangedEvent($domain, $dkimResult));
+            $this->eventDispatcher->dispatch(
+                new DomainStatusChangedEvent(
+                    $domain,
+                    $oldStatus,
+                    $dkimResult
+                )
+            );
+        }
+
+        if ($flush) {
+            $this->em->persist($domain);
+            $this->em->flush();
         }
     }
 

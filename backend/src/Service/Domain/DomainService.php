@@ -8,8 +8,6 @@ use App\Entity\Type\DomainStatus;
 use App\Repository\DomainRepository;
 use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Service\Domain\Event\DomainDeletedEvent;
-use App\Service\Domain\Event\DomainStatusChangedEvent;
-use App\Service\Domain\Exception\DkimVerificationFailedException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Hyvor\Internal\Util\Crypt\Encryption;
@@ -95,34 +93,6 @@ class DomainService
         /** @var Domain[] $results */
         $results = $qb->getQuery()->getResult();
         return new ArrayCollection($results);
-    }
-
-    /**
-     * @throws DkimVerificationFailedException
-     */
-    public function verifyDkimAndUpdate(Domain $domain): void
-    {
-        assert(
-            $domain->getStatus() !== DomainStatus::SUSPENDED,
-            'You cannot verify a domain that is in SUSPENDED status.'
-        );
-
-        $result = $this->dkimVerificationService->verify($domain);
-
-        if ($result->verified) {
-            $domain->setStatus(DomainStatus::ACTIVE);
-            $domain->setStatusChangedAt($this->now());
-        }
-
-        $domain->setDkimCheckedAt($this->now());
-        $domain->setDkimErrorMessage($result->errorMessage);
-
-        $this->em->persist($domain);
-        $this->em->flush();
-
-        if ($result->verified) {
-            $this->eventDispatcher->dispatch(new DomainStatusChangedEvent($domain, $result));
-        }
     }
 
     public function deleteDomain(Domain $domain): void

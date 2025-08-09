@@ -11,6 +11,7 @@ use App\Entity\Domain;
 use App\Entity\Project;
 use App\Entity\Type\DomainStatus;
 use App\Service\Domain\DomainService;
+use App\Service\Domain\DomainStatusService;
 use App\Service\Domain\Exception\DkimVerificationFailedException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -23,8 +24,10 @@ use Symfony\Component\Routing\Attribute\Route;
 class DomainController extends AbstractController
 {
 
-    public function __construct(private DomainService $domainService)
-    {
+    public function __construct(
+        private DomainService $domainService,
+        private DomainStatusService $domainStatusService,
+    ) {
     }
 
     #[Route('/domains', methods: 'GET')]
@@ -80,7 +83,7 @@ class DomainController extends AbstractController
         }
 
         try {
-            $this->domainService->verifyDkimAndUpdate($domain);
+            $this->domainStatusService->updateAfterDkimVerification($domain, flush: true);
         } catch (DkimVerificationFailedException $e) {
             throw new HttpException(500, 'DKIM verification failed due an internal error: ' . $e->getMessage(), $e);
         }
