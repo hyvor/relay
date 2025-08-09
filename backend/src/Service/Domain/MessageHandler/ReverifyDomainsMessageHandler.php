@@ -6,7 +6,7 @@ use App\Entity\Domain;
 use App\Entity\Type\DomainStatus;
 use App\Service\Domain\DomainStatusService;
 use App\Service\Domain\Exception\DkimVerificationFailedException;
-use App\Service\Domain\Message\ReverifyVerifiedAndWarningDomainsMessage;
+use App\Service\Domain\Message\ReverifyDomainsMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -20,7 +20,7 @@ use Hyvor\Internal\Bundle\Log\ContextualLogger;
  * warning -> pending
  */
 #[AsMessageHandler]
-class ReverifyVerifiedAndWarningDomainsMessageHandler
+class ReverifyDomainsMessageHandler
 {
 
     private LoggerInterface $logger;
@@ -33,11 +33,14 @@ class ReverifyVerifiedAndWarningDomainsMessageHandler
         $this->logger = ContextualLogger::forMessageHandler($logger, self::class);
     }
 
-    public function __invoke(ReverifyVerifiedAndWarningDomainsMessage $message): void
+    public function __invoke(ReverifyDomainsMessage $message): void
     {
         $startTime = microtime(true);
 
-        $this->logger->info('Reverifying domains');
+        $this->logger->info('Reverifying domains', [
+            'statuses' => $message->getStatusNames(),
+            'batch_size' => $message->getBatchSize(),
+        ]);
 
         $iterator = $this->em->createQuery(
             <<<DQL
@@ -47,7 +50,7 @@ class ReverifyVerifiedAndWarningDomainsMessageHandler
             ORDER BY d.id ASC
         DQL
         )
-            ->setParameter('statuses', [DomainStatus::ACTIVE, DomainStatus::WARNING])
+            ->setParameter('statuses', $message->getStatuses())
             ->toIterable();
 
         $i = 0;
@@ -61,7 +64,10 @@ class ReverifyVerifiedAndWarningDomainsMessageHandler
             assert($domain instanceof Domain);
 
             try {
-                $this->domainStatusService->updateAfterDkimVerification($domain);
+                $this->domainStatusService->updateAfterDkimVerification(
+                    $domain,
+                    unverifyWarning: in_array(DomainStatus::WARNING, $message->getStatuses(), true)
+                );
                 $this->em->persist($domain);
             } catch (DkimVerificationFailedException $exception) {
                 $this->logger->error(

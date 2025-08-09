@@ -23,7 +23,7 @@ class DomainStatusService
     /**
      * @throws DkimVerificationFailedException
      */
-    public function updateAfterDkimVerification(Domain $domain): void
+    public function updateAfterDkimVerification(Domain $domain, bool $unverifyWarning = false): void
     {
         assert(
             $domain->getStatus() !== DomainStatus::SUSPENDED,
@@ -37,7 +37,7 @@ class DomainStatusService
         $domain->setDkimErrorMessage($dkimResult->errorMessage);
 
         $oldStatus = $domain->getStatus();
-        $newStatus = $this->getNewStatusAfterDkimVerification($oldStatus, $dkimResult);
+        $newStatus = $this->getNewStatusAfterDkimVerification($oldStatus, $dkimResult, $unverifyWarning);
 
         if ($newStatus !== $oldStatus) { // if status changed
             $domain->setStatus($newStatus);
@@ -49,7 +49,8 @@ class DomainStatusService
 
     private function getNewStatusAfterDkimVerification(
         DomainStatus $domainStatus,
-        DkimVerificationResult $dkimResult
+        DkimVerificationResult $dkimResult,
+        bool $unverifyWarning
     ): DomainStatus {
         if ($dkimResult->verified) {
             /**
@@ -61,11 +62,13 @@ class DomainStatusService
         } else {
             /**
              * Active -> Warning
-             * Warning -> Pending
+             * Warning -> Warning (if unverifyWarning is false) or Pending (if unverifyWarning is true)
              * Pending -> Pending
              */
             return match ($domainStatus) {
                 DomainStatus::ACTIVE => DomainStatus::WARNING,
+                // if unverifyWarning is true, then we set it to pending, otherwise it remains warning
+                DomainStatus::WARNING => $unverifyWarning ? DomainStatus::PENDING : DomainStatus::WARNING,
                 default => DomainStatus::PENDING
             };
         }
