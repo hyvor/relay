@@ -4,13 +4,12 @@ namespace App\Service\Domain\Event;
 
 use App\Entity\Domain;
 
-class DomainDeletedEvent
+readonly class DomainDeletedEvent
 {
 
     public function __construct(
         public Domain $domain
-    )
-    {
+    ) {
     }
 
 }

@@ -30,7 +30,7 @@ services:
       target: backend-dev
     volumes:
       - ./backend:/app/backend
-      # - ../internal:/app/backend/vendor/hyvor/internal:ro
+      - ../internal:/app/backend/vendor/hyvor/internal:ro
       # - ./shared:/app/shared
     labels:
       traefik.enable: true
@@ -47,7 +47,7 @@ services:
     logging:
       driver: loki
       options:
-        loki-url: "http://loki.localhost:3100/loki/api/v1/push"
+        loki-url: "http://loki.localhost/loki/api/v1/push"
         loki-retries: "2"
         loki-max-backoff: "800ms"
         loki-timeout: "1s"
@@ -72,7 +72,7 @@ services:
     logging:
       driver: loki
       options:
-        loki-url: "http://loki.localhost:3100/loki/api/v1/push"
+        loki-url: "http://loki.localhost/loki/api/v1/push"
         loki-retries: "2"
         loki-max-backoff: "800ms"
         loki-timeout: "1s"

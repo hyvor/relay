@@ -14,64 +14,80 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      -   name: Checkout
-          uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      -   name: Build Docker image
-          run: docker build -t frontend-dev . --target frontend-dev
+      - name: Build Docker image
+        run: docker build -t frontend-dev . --target frontend-dev
 
-      -   name: Run Svelte Check
-          run: docker run frontend-dev bun run check
+      - name: Run Svelte Check
+        run: docker run frontend-dev bun run check
 
   phpstan:
     name: PHPStan
     runs-on: ubuntu-latest
 
     steps:
-      -   name: Checkout
-          uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
 
-      -   name: Build Docker image
-          run: docker build -t backend-dev . --target backend-dev
+      - name: Build Docker image
+        run: docker build -t backend-dev . --target backend-dev
 
-      -   name: Run PHPStan
-          run: |
-            docker run backend-dev sh -c "
-              php bin/console cache:warmup &&
-              ./vendor/bin/phpstan analyse --memory-limit=1G --ansi"
+      - name: Run PHPStan
+        run: |
+          docker run backend-dev sh -c "
+            php bin/console cache:warmup &&
+            ./vendor/bin/phpstan analyse --memory-limit=1G --ansi"
 
   php-tests:
     name: "PHP & Go Tests"
     runs-on: ubuntu-latest
 
     steps:
-      -   name: Checkout
-          uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      -   name: Set up services
-          run: |
-            docker network create ci
-            docker compose -f meta/ci/compose.ci.yaml up -d
+      - name: Set up services
+        run: |
+          docker network create ci
+          docker compose -f meta/ci/compose.ci.yaml up -d
 
-      -   name: Build Docker image
-          run: docker build -t backend-dev . --target backend-dev
+      - name: Build Docker image
+        run: docker build -t backend-dev . --target backend-dev
 
-      -   name: Run PHP Tests
-          run: |
-            docker run \
-            --network ci \
-            -e APP_ENV=test \
-            backend-dev sh -c "
-            php bin/console doctrine:migrations:migrate --no-interaction &&
-            ./vendor/bin/phpunit"
+      - name: Run PHP Tests
+        run: |
+          docker run \
+          --network ci \
+          -e APP_ENV=test \
+          backend-dev sh -c "
+          php bin/console doctrine:migrations:migrate --no-interaction &&
+          ./vendor/bin/phpunit"
+
+  go-tests:
+    name: "Go Tests"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up services
+        run: |
+          docker network create ci
+          docker compose -f meta/ci/compose.ci.yaml up -d
+
+      - name: Build Docker image
+        run: docker build -t worker-dev . --target worker-dev
 
       # Database already migrated from the previous step.
-      -  name: Run Go Tests
-         run: |
-            docker run \
-            --network ci \
-            worker sh -c "
-            go test -v ./... -count=1 -p 1 -timeout 30s"
+      - name: Run Go Tests
+        run: |
+          docker run \
+          --network ci \
+          worker-dev sh -c "
+          go test -v ./... -count=1 -p 1 -timeout 30s"
 
   go-staticcheck:
     runs-on: ubuntu-latest

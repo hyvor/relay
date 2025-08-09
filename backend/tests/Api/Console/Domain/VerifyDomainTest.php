@@ -5,22 +5,27 @@ namespace App\Tests\Api\Console\Domain;
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\DomainController;
 use App\Api\Console\Object\DomainObject;
+use App\Entity\Type\DomainStatus;
 use App\Service\Domain\DkimVerificationResult;
 use App\Service\Domain\DkimVerificationService;
 use App\Service\Domain\DomainService;
-use App\Service\Domain\Event\DomainVerifiedEvent;
+use App\Service\Domain\Event\DomainStatusChangedEvent;
+use App\Service\Domain\Exception\DkimVerificationFailedException;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\MockObject\MockObject;
+use Symfony\Component\Clock\Clock;
+use Symfony\Component\Clock\MockClock;
 use Symfony\Component\HttpFoundation\Response;
 
 #[CoversClass(DomainController::class)]
 #[CoversClass(DomainService::class)]
 #[CoversClass(DomainObject::class)]
-#[CoversClass(DomainVerifiedEvent::class)]
+#[CoversClass(DomainStatusChangedEvent::class)]
 class VerifyDomainTest extends WebTestCase
 {
     private MockObject&DkimVerificationService $dkimVerificationService;
@@ -42,11 +47,13 @@ class VerifyDomainTest extends WebTestCase
 
     public function testVerifyDomainSuccess(): void
     {
+        Clock::set(new MockClock('2023-10-01T12:00:00Z'));
+
         $project = ProjectFactory::createOne();
         $domain = DomainFactory::createOne([
             "project" => $project,
             "domain" => "example.com",
-            "dkim_verified" => false,
+            'status' => DomainStatus::PENDING,
             "dkim_checked_at" => null,
             "dkim_error_message" => null,
         ]);
@@ -76,16 +83,18 @@ class VerifyDomainTest extends WebTestCase
         $responseData = $this->getJson();
         $this->assertArrayHasKey("domain", $responseData);
         $this->assertSame("example.com", $responseData["domain"]);
-        $this->assertTrue($responseData["dkim_verified"]);
+        $this->assertSame('active', $responseData["status"]);
         $this->assertNotNull($responseData["dkim_checked_at"]);
         $this->assertNull($responseData["dkim_error_message"]);
 
         // Verify the domain was updated in the database
-        $this->assertTrue($domain->getDkimVerified());
+        $this->assertSame(DomainStatus::ACTIVE, $domain->getStatus());
+        $this->assertSame('2023-10-01 12:00:00', $domain->getStatusChangedAt()->format('Y-m-d H:i:s'));
+
         $this->assertNotNull($domain->getDkimCheckedAt());
         $this->assertNull($domain->getDkimErrorMessage());
 
-        $this->eventDispatcher->assertDispatched(DomainVerifiedEvent::class);
+        $this->eventDispatcher->assertDispatched(DomainStatusChangedEvent::class);
     }
 
     public function testVerifyDomainFailure(): void
@@ -94,7 +103,8 @@ class VerifyDomainTest extends WebTestCase
         $domain = DomainFactory::createOne([
             "project" => $project,
             "domain" => "example.com",
-            "dkim_verified" => false,
+            'status' => DomainStatus::PENDING,
+            'status_changed_at' => new \DateTimeImmutable('2023-06-05'),
             "dkim_checked_at" => null,
             "dkim_error_message" => null,
         ]);
@@ -124,7 +134,7 @@ class VerifyDomainTest extends WebTestCase
         $responseData = $this->getJson();
         $this->assertArrayHasKey("domain", $responseData);
         $this->assertSame("example.com", $responseData["domain"]);
-        $this->assertFalse($responseData["dkim_verified"]);
+        $this->assertSame('pending', $responseData["status"]);
         $this->assertNotNull($responseData["dkim_checked_at"]);
         $this->assertSame(
             "DNS query failed",
@@ -132,20 +142,25 @@ class VerifyDomainTest extends WebTestCase
         );
 
         // Verify the domain was updated in the database
-        $this->assertFalse($domain->getDkimVerified());
+        $this->assertSame(DomainStatus::PENDING, $domain->getStatus());
+        $this->assertSame('2023-06-05', $domain->getStatusChangedAt()->format('Y-m-d'));
+
         $this->assertNotNull($domain->getDkimCheckedAt());
         $this->assertSame("DNS query failed", $domain->getDkimErrorMessage());
 
-        $this->eventDispatcher->assertNotDispatched(DomainVerifiedEvent::class);
+        $this->eventDispatcher->assertNotDispatched(DomainStatusChangedEvent::class);
     }
 
-    public function testVerifyDomainAlreadyVerified(): void
+    #[TestWith([DomainStatus::ACTIVE])]
+    #[TestWith([DomainStatus::WARNING])]
+    #[TestWith([DomainStatus::SUSPENDED])]
+    public function testVerifyDomainNonPending(DomainStatus $status): void
     {
         $project = ProjectFactory::createOne();
         $domain = DomainFactory::createOne([
             "project" => $project,
             "domain" => "example.com",
-            "dkim_verified" => true,
+            "status" => $status,
             "dkim_checked_at" => new \DateTimeImmutable(),
             "dkim_error_message" => null,
         ]);
@@ -171,13 +186,12 @@ class VerifyDomainTest extends WebTestCase
         );
 
         $responseData = $this->getJson();
-        $this->assertArrayHasKey("message", $responseData);
         $this->assertSame(
-            "Domain is already verified",
+            "You can only verify a domain that is in PENDING status.",
             $responseData["message"]
         );
 
-        $this->eventDispatcher->assertNotDispatched(DomainVerifiedEvent::class);
+        $this->eventDispatcher->assertNotDispatched(DomainStatusChangedEvent::class);
     }
 
     public function testVerifyDomainWithoutPermission(): void
@@ -186,7 +200,6 @@ class VerifyDomainTest extends WebTestCase
         $domain = DomainFactory::createOne([
             "project" => $project,
             "domain" => "example.com",
-            "dkim_verified" => false,
         ]);
 
         $response = $this->consoleApi(
@@ -200,7 +213,7 @@ class VerifyDomainTest extends WebTestCase
         );
 
         $this->assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode());
-        $this->eventDispatcher->assertNotDispatched(DomainVerifiedEvent::class);
+        $this->eventDispatcher->assertNotDispatched(DomainStatusChangedEvent::class);
     }
 
     public function testVerifyDomainNotFound(): void
@@ -218,7 +231,7 @@ class VerifyDomainTest extends WebTestCase
         $this->assertSame(400, $response->getStatusCode());
         $this->assertSame('Domain not found', $this->getJson()['message']);
 
-        $this->eventDispatcher->assertNotDispatched(DomainVerifiedEvent::class);
+        $this->eventDispatcher->assertNotDispatched(DomainStatusChangedEvent::class);
     }
 
     public function testVerifyDomainFromDifferentProject(): void
@@ -229,7 +242,6 @@ class VerifyDomainTest extends WebTestCase
         $domain = DomainFactory::createOne([
             "project" => $project2,
             "domain" => "example.com",
-            "dkim_verified" => false,
         ]);
 
         $response = $this->consoleApi(
@@ -246,7 +258,7 @@ class VerifyDomainTest extends WebTestCase
         $responseData = $this->getJson();
         $this->assertSame("Domain does not belong to the project", $responseData['message']);
 
-        $this->eventDispatcher->assertNotDispatched(DomainVerifiedEvent::class);
+        $this->eventDispatcher->assertNotDispatched(DomainStatusChangedEvent::class);
     }
 
     public function testVerifyDomainRetryAfterFailure(): void
@@ -255,7 +267,6 @@ class VerifyDomainTest extends WebTestCase
         $domain = DomainFactory::createOne([
             "project" => $project,
             "domain" => "example.com",
-            "dkim_verified" => false,
             "dkim_checked_at" => new \DateTimeImmutable("-1 hour"),
             "dkim_error_message" => "Previous error",
         ]);
@@ -283,12 +294,44 @@ class VerifyDomainTest extends WebTestCase
         $this->assertSame(Response::HTTP_OK, $response->getStatusCode());
 
         $responseData = $this->getJson();
-        $this->assertTrue($responseData["dkim_verified"]);
+        $this->assertSame('active', $responseData["status"]);
         $this->assertNull($responseData["dkim_error_message"]);
 
         // Verify the domain was updated in the database
-        $this->assertTrue($domain->getDkimVerified());
+        $this->assertSame(DomainStatus::ACTIVE, $domain->getStatus());
         $this->assertNull($domain->getDkimErrorMessage());
-        $this->eventDispatcher->assertDispatched(DomainVerifiedEvent::class);
+        $this->eventDispatcher->assertDispatched(DomainStatusChangedEvent::class);
+    }
+
+    public function test_returns_server_error_when_dns_query_fails(): void
+    {
+        $project = ProjectFactory::createOne();
+        $domain = DomainFactory::createOne([
+            "project" => $project,
+            "domain" => "example.com",
+        ]);
+
+        $this->dkimVerificationService
+            ->expects($this->once())
+            ->method("verify")
+            ->willThrowException(new DkimVerificationFailedException('Cloudflare down'));
+
+        $response = $this->consoleApi(
+            $project,
+            "POST",
+            "/domains/verify",
+            data: [
+                'id' => $domain->getId(),
+            ],
+            scopes: [Scope::DOMAINS_WRITE]
+        );
+
+        $this->assertSame(Response::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
+        $responseData = $this->getJson();
+        $this->assertSame('DKIM verification failed due an internal error: Cloudflare down', $responseData['message']);
+
+        $this->assertSame(DomainStatus::PENDING, $domain->getStatus());
+        $this->assertNull($domain->getDkimCheckedAt());
+        $this->assertNull($domain->getDkimErrorMessage());
     }
 }

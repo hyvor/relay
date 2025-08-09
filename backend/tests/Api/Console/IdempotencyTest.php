@@ -5,6 +5,7 @@ namespace App\Tests\Api\Console;
 use App\Api\Console\Idempotency\IdempotencyListener;
 use App\Api\Console\RateLimit\RateLimit;
 use App\Entity\ApiIdempotencyRecord;
+use App\Entity\Type\DomainStatus;
 use App\Service\App\RateLimit\RateLimiterProvider;
 use App\Service\Idempotency\IdempotencyService;
 use App\Tests\Case\WebTestCase;
@@ -60,7 +61,7 @@ class IdempotencyTest extends WebTestCase
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
-            "dkim_verified" => true,
+            'status' => DomainStatus::ACTIVE
         ]);
 
         $this->consoleApi(
@@ -119,7 +120,6 @@ class IdempotencyTest extends WebTestCase
     #[TestWith([200, true])]
     public function test_does_not_save_when_response_code_is_wrong(int $statusCode, bool $notJson = false): void
     {
-
         /** @var IdempotencyListener $listener */
         $listener = $this->container->get(IdempotencyListener::class);
         /** @var KernelInterface $kernel */
@@ -143,12 +143,10 @@ class IdempotencyTest extends WebTestCase
             ->getRepository(ApiIdempotencyRecord::class)
             ->findAll();
         $this->assertCount(0, $idempotencyRecords);
-
     }
 
     public function test_runs_rate_limits_before_idempotency(): void
     {
-
         $rateLimit = new RateLimit();
         /** @var RateLimiterProvider $rateLimiterProvider */
         $rateLimiterProvider = $this->getContainer()->get(RateLimiterProvider::class);
@@ -179,7 +177,6 @@ class IdempotencyTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(429);
         $this->assertResponseNotHasHeader('X-Idempotency-Short-Circuit');
-
     }
 
 }

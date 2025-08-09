@@ -738,17 +738,20 @@ type Response = Domain
 	id: number;
 	created_at: number;
 	domain: string;
+	status: 'pending' | 'active' | 'warning' | 'suspended';
 	dkim_selector: string;
 	dkim_host: string;
-	dkim_txt_name: string;
 	dkim_public_key: string;
 	dkim_txt_value: string;
-	dkim_verified: boolean;
 	dkim_checked_at: number | null;
 	dkim_error_message: string | null;
         }
     `}
 />
+
+<p>
+	More about <a href="/docs/domains#status">Domain Status</a>.
+</p>
 
 <h3 id="webhook-object">Webhook Object</h3>
 

@@ -38,8 +38,7 @@ class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
         /** @var EventDispatcherInterface $eventDispatcher */
         $eventDispatcher = $this->container->get(EventDispatcherInterface::class);
         $this->eventDispatcher = $eventDispatcher;
-
-        $this->container->set(LoggerInterface::class, $this->createMock(LoggerInterface::class));
+        // $this->container->set(LoggerInterface::class, $this->createMock(LoggerInterface::class));
     }
 
     protected function commandTester(string $name): CommandTester

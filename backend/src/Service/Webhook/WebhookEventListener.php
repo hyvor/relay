@@ -10,7 +10,7 @@ use App\Entity\Type\SendAttemptStatus;
 use App\Entity\Type\WebhooksEventEnum;
 use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Service\Domain\Event\DomainDeletedEvent;
-use App\Service\Domain\Event\DomainVerifiedEvent;
+use App\Service\Domain\Event\DomainStatusChangedEvent;
 use App\Service\Send\Event\SendAttemptCreatedEvent;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 
@@ -69,12 +69,12 @@ class WebhookEventListener
         $this->createWebhookDeliveries(
             $event->domain->getProject(),
             WebhooksEventEnum::DOMAIN_CREATED,
-            fn() => new DomainObject($event->domain)
+            fn() => (object)['domain' => new DomainObject($event->domain)]
         );
     }
 
     #[AsEventListener]
-    public function onDomainVerified(DomainVerifiedEvent $event): void
+    public function onDomainVerified(DomainStatusChangedEvent $event): void
     {
         //
     }

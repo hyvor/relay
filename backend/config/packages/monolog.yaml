@@ -1,7 +1,0 @@
-monolog:
-  handlers:
-    main:
-      type: stream
-      path: php://stderr
-      level: "%env(LOG_LEVEL)%"
-      formatter: monolog.formatter.json

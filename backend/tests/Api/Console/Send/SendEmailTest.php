@@ -8,6 +8,7 @@ use App\Api\Console\Input\SendEmail\SendEmailInput;
 use App\Api\Console\Input\SendEmail\UnableToDecodeAttachmentBase64Exception;
 use App\Api\Console\Object\SendObject;
 use App\Entity\Send;
+use App\Entity\Type\DomainStatus;
 use App\Entity\Type\ProjectSendType;
 use App\Entity\Type\SendStatus;
 use App\Service\Send\EmailBuilder;
@@ -364,7 +365,7 @@ class SendEmailTest extends WebTestCase
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
-            'dkim_verified' => true,
+            'status' => DomainStatus::ACTIVE,
             'dkim_selector' => 'my-selector'
         ]);
 
@@ -512,7 +513,6 @@ class SendEmailTest extends WebTestCase
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
-            'dkim_verified' => false,
         ]);
 
         $this->consoleApi($project, "POST", "/sends", data: [
@@ -525,7 +525,7 @@ class SendEmailTest extends WebTestCase
 
         $json = $this->getJson();
         $this->assertSame(
-            "Domain hyvor.com is not verified",
+            "Domain hyvor.com is not allowed to send emails (status: pending)",
             $json['message']
         );
     }
@@ -538,7 +538,7 @@ class SendEmailTest extends WebTestCase
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
-            'dkim_verified' => true,
+            'status' => DomainStatus::ACTIVE,
         ]);
 
         SuppressionFactory::createOne([
@@ -569,7 +569,7 @@ class SendEmailTest extends WebTestCase
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
-            'dkim_verified' => true,
+            'status' => DomainStatus::ACTIVE,
         ]);
 
         $this->consoleApi($project, "POST", "/sends", data: [
@@ -625,7 +625,7 @@ class SendEmailTest extends WebTestCase
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
-            'dkim_verified' => true,
+            'status' => DomainStatus::ACTIVE,
         ]);
 
         $this->consoleApi($project, "POST", "/sends", data: [
@@ -667,7 +667,7 @@ class SendEmailTest extends WebTestCase
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
-            'dkim_verified' => true,
+            'status' => DomainStatus::ACTIVE,
         ]);
 
         $attachment = [
@@ -706,7 +706,7 @@ class SendEmailTest extends WebTestCase
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
-            'dkim_verified' => true,
+            'status' => DomainStatus::ACTIVE,
         ]);
 
         $this->consoleApi($project, "POST", "/sends", data: [

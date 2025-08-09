@@ -99,7 +99,7 @@ class CreateApiKeyTest extends WebTestCase
     {
         $project = ProjectFactory::createOne();
 
-        $apiKeys = ApiKeyFactory::createMany(5, [
+        $apiKeys = ApiKeyFactory::createMany(10, [
             'project' => $project,
             'is_enabled' => true,
         ]);

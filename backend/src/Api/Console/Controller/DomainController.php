@@ -9,12 +9,15 @@ use App\Api\Console\Input\Domain\DomainCreateInput;
 use App\Api\Console\Object\DomainObject;
 use App\Entity\Domain;
 use App\Entity\Project;
+use App\Entity\Type\DomainStatus;
 use App\Service\Domain\DomainService;
+use App\Service\Domain\Exception\DkimVerificationFailedException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
 class DomainController extends AbstractController
@@ -53,7 +56,7 @@ class DomainController extends AbstractController
         #[MapRequestPayload] DomainCreateInput $createInput
     ): JsonResponse {
         if ($this->domainService->getDomainByProjectAndName($project, $createInput->domain)) {
-            throw new BadRequestException('Domain already exists');
+            throw new BadRequestHttpException('Domain already exists');
         }
 
         $domain = $this->domainService->createDomain(
@@ -72,11 +75,16 @@ class DomainController extends AbstractController
     ): JsonResponse {
         $domain = $input->validateAndGetDomain($project, $this->domainService);
 
-        if ($domain->getDkimVerified()) {
-            throw new BadRequestException('Domain is already verified');
+        if ($domain->getStatus() !== DomainStatus::PENDING) {
+            throw new BadRequestHttpException('You can only verify a domain that is in PENDING status.');
         }
 
-        $this->domainService->verifyDkimAndUpdate($domain);
+        try {
+            $this->domainService->verifyDkimAndUpdate($domain);
+        } catch (DkimVerificationFailedException $e) {
+            throw new HttpException(500, 'DKIM verification failed due an internal error: ' . $e->getMessage(), $e);
+        }
+
         return new JsonResponse(new DomainObject($domain));
     }
 
