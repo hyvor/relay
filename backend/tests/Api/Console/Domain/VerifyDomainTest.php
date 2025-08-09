@@ -9,7 +9,7 @@ use App\Entity\Type\DomainStatus;
 use App\Service\Domain\DkimVerificationResult;
 use App\Service\Domain\DkimVerificationService;
 use App\Service\Domain\DomainService;
-use App\Service\Domain\Event\DomainVerifiedEvent;
+use App\Service\Domain\Event\DomainStatusChangedEvent;
 use App\Service\Domain\Exception\DkimVerificationFailedException;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
@@ -25,7 +25,7 @@ use Symfony\Component\HttpFoundation\Response;
 #[CoversClass(DomainController::class)]
 #[CoversClass(DomainService::class)]
 #[CoversClass(DomainObject::class)]
-#[CoversClass(DomainVerifiedEvent::class)]
+#[CoversClass(DomainStatusChangedEvent::class)]
 class VerifyDomainTest extends WebTestCase
 {
     private MockObject&DkimVerificationService $dkimVerificationService;
@@ -94,7 +94,7 @@ class VerifyDomainTest extends WebTestCase
         $this->assertNotNull($domain->getDkimCheckedAt());
         $this->assertNull($domain->getDkimErrorMessage());
 
-        $this->eventDispatcher->assertDispatched(DomainVerifiedEvent::class);
+        $this->eventDispatcher->assertDispatched(DomainStatusChangedEvent::class);
     }
 
     public function testVerifyDomainFailure(): void
@@ -148,7 +148,7 @@ class VerifyDomainTest extends WebTestCase
         $this->assertNotNull($domain->getDkimCheckedAt());
         $this->assertSame("DNS query failed", $domain->getDkimErrorMessage());
 
-        $this->eventDispatcher->assertNotDispatched(DomainVerifiedEvent::class);
+        $this->eventDispatcher->assertNotDispatched(DomainStatusChangedEvent::class);
     }
 
     #[TestWith([DomainStatus::ACTIVE])]
@@ -191,7 +191,7 @@ class VerifyDomainTest extends WebTestCase
             $responseData["message"]
         );
 
-        $this->eventDispatcher->assertNotDispatched(DomainVerifiedEvent::class);
+        $this->eventDispatcher->assertNotDispatched(DomainStatusChangedEvent::class);
     }
 
     public function testVerifyDomainWithoutPermission(): void
@@ -213,7 +213,7 @@ class VerifyDomainTest extends WebTestCase
         );
 
         $this->assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode());
-        $this->eventDispatcher->assertNotDispatched(DomainVerifiedEvent::class);
+        $this->eventDispatcher->assertNotDispatched(DomainStatusChangedEvent::class);
     }
 
     public function testVerifyDomainNotFound(): void
@@ -231,7 +231,7 @@ class VerifyDomainTest extends WebTestCase
         $this->assertSame(400, $response->getStatusCode());
         $this->assertSame('Domain not found', $this->getJson()['message']);
 
-        $this->eventDispatcher->assertNotDispatched(DomainVerifiedEvent::class);
+        $this->eventDispatcher->assertNotDispatched(DomainStatusChangedEvent::class);
     }
 
     public function testVerifyDomainFromDifferentProject(): void
@@ -258,7 +258,7 @@ class VerifyDomainTest extends WebTestCase
         $responseData = $this->getJson();
         $this->assertSame("Domain does not belong to the project", $responseData['message']);
 
-        $this->eventDispatcher->assertNotDispatched(DomainVerifiedEvent::class);
+        $this->eventDispatcher->assertNotDispatched(DomainStatusChangedEvent::class);
     }
 
     public function testVerifyDomainRetryAfterFailure(): void
@@ -300,7 +300,7 @@ class VerifyDomainTest extends WebTestCase
         // Verify the domain was updated in the database
         $this->assertSame(DomainStatus::ACTIVE, $domain->getStatus());
         $this->assertNull($domain->getDkimErrorMessage());
-        $this->eventDispatcher->assertDispatched(DomainVerifiedEvent::class);
+        $this->eventDispatcher->assertDispatched(DomainStatusChangedEvent::class);
     }
 
     public function test_returns_server_error_when_dns_query_fails(): void

@@ -36,13 +36,13 @@
 	</li>
 	<br />
 	<li>
-		<a href="#domain-verified">domain.verification.changed</a>
+		<a href="#domain-verified">domain.created</a>
 	</li>
 	<li>
-		<a href="#domain-warned">domain.warned</a>
+		<a href="#domain-verified">domain.status.changed</a>
 	</li>
 	<li>
-		<a href="#domain-unverified">domain.unverified</a>
+		<a href="#domain-deleted">domain.deleted</a>
 	</li>
 	<br />
 	<li>

@@ -44,7 +44,7 @@ class DnsOverHttp implements DnsResolveInterface
             return ResolveResult::fromArray($data);
         } catch (ExceptionInterface $e) {
             $this->logger->error(
-                'Failed to Cloudflare DNS: ' . $e->getMessage(),
+                'Cloudflare DoH failed: ' . $e->getMessage(),
                 [
                     'url' => $url
                 ]

@@ -4,13 +4,12 @@ namespace App\Service\Domain\Event;
 
 use App\Entity\Domain;
 
-class DomainCreatedEvent
+readonly class DomainCreatedEvent
 {
 
     public function __construct(
         public Domain $domain
-    )
-    {
+    ) {
     }
 
 }

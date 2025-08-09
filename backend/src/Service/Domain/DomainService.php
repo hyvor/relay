@@ -8,7 +8,7 @@ use App\Entity\Type\DomainStatus;
 use App\Repository\DomainRepository;
 use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Service\Domain\Event\DomainDeletedEvent;
-use App\Service\Domain\Event\DomainVerifiedEvent;
+use App\Service\Domain\Event\DomainStatusChangedEvent;
 use App\Service\Domain\Exception\DkimVerificationFailedException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -103,8 +103,8 @@ class DomainService
     public function verifyDkimAndUpdate(Domain $domain): void
     {
         assert(
-            $domain->getStatus() === DomainStatus::PENDING,
-            'You can only verify a domain that is in PENDING status.'
+            $domain->getStatus() !== DomainStatus::SUSPENDED,
+            'You cannot verify a domain that is in SUSPENDED status.'
         );
 
         $result = $this->dkimVerificationService->verify($domain);
@@ -121,7 +121,7 @@ class DomainService
         $this->em->flush();
 
         if ($result->verified) {
-            $this->eventDispatcher->dispatch(new DomainVerifiedEvent($domain, $result));
+            $this->eventDispatcher->dispatch(new DomainStatusChangedEvent($domain, $result));
         }
     }
 

@@ -39,7 +39,7 @@ class PurgeStalePendingSuspendedDomainsMessageHandler
             $this->logger->info(
                 'No stale pending or suspended domains to purge',
                 [
-                    'job' => self::class
+                    'handler' => self::class
                 ]
             );
             return;
@@ -48,7 +48,7 @@ class PurgeStalePendingSuspendedDomainsMessageHandler
         $this->logger->info(
             'Purging stale pending and suspended domains',
             [
-                'job' => self::class,
+                'handler' => self::class,
                 'count' => $count,
                 'cutoff_date' => $cutoffDate
             ]

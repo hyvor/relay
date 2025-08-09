@@ -3,6 +3,7 @@
 namespace App\Command\Dev;
 
 use App\Entity\DebugIncomingEmail;
+use App\Entity\Type\DomainStatus;
 use App\Service\Instance\InstanceService;
 use App\Entity\Type\SendStatus;
 use App\Tests\Factory\ApiKeyFactory;
@@ -90,7 +91,7 @@ class DevSeedCommand extends Command
 
         DomainFactory::createOne(['project' => $project, 'domain' => 'hyvor.com']);
         $domain = DomainFactory::createOne(
-            ['project' => $project, 'domain' => 'hyvor.local.testing', 'dkim_verified' => true]
+            ['project' => $project, 'domain' => 'hyvor.local.testing', 'status' => DomainStatus::ACTIVE]
         );
         DomainFactory::createMany(15, ['project' => $project]);
 
