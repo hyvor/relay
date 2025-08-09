@@ -7,17 +7,17 @@ use App\Service\Domain\DkimVerificationResult;
 use App\Service\Domain\DkimVerificationService;
 use App\Service\Domain\DomainStatusService;
 use App\Service\Domain\Exception\DkimVerificationFailedException;
-use App\Service\Domain\Message\ReverifyAllDomainsMessage;
-use App\Service\Domain\MessageHandler\ReverifyAllDomainsMessageHandler;
+use App\Service\Domain\Message\ReverifyVerifiedAndWarningDomainsMessage;
+use App\Service\Domain\MessageHandler\ReverifyVerifiedAndWarningDomainsMessageHandler;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\DomainFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 
-#[CoversClass(ReverifyAllDomainsMessage::class)]
-#[CoversClass(ReverifyAllDomainsMessageHandler::class)]
+#[CoversClass(ReverifyVerifiedAndWarningDomainsMessage::class)]
+#[CoversClass(ReverifyVerifiedAndWarningDomainsMessageHandler::class)]
 #[CoversClass(DomainStatusService::class)]
-class ReverifyAllDomainsMessageHandlerTest extends KernelTestCase
+class ReverifyVerifiedAndWarningDomainsMessageHandlerTest extends KernelTestCase
 {
 
     #[TestWith([true])]
@@ -57,7 +57,7 @@ class ReverifyAllDomainsMessageHandlerTest extends KernelTestCase
         ]);
 
         $transport = $this->transport('default');
-        $transport->send(new ReverifyAllDomainsMessage());
+        $transport->send(new ReverifyVerifiedAndWarningDomainsMessage());
         $transport->throwExceptions()->process();
 
         $this->assertSame(DomainStatus::PENDING, $pending->getStatus());
@@ -93,7 +93,7 @@ class ReverifyAllDomainsMessageHandlerTest extends KernelTestCase
         ]);
 
         $transport = $this->transport('default');
-        $transport->send(new ReverifyAllDomainsMessage(batchSize: 2));
+        $transport->send(new ReverifyVerifiedAndWarningDomainsMessage(batchSize: 2));
         $transport->throwExceptions()->process();
 
         foreach ($domains as $domain) {
@@ -114,7 +114,7 @@ class ReverifyAllDomainsMessageHandlerTest extends KernelTestCase
         DomainFactory::createMany(10, ['status' => DomainStatus::ACTIVE]);
 
         $transport = $this->transport('default');
-        $transport->send(new ReverifyAllDomainsMessage(batchSize: 2));
+        $transport->send(new ReverifyVerifiedAndWarningDomainsMessage(batchSize: 2));
         $transport->throwExceptions()->process();
 
         $testLogger = $this->getTestLogger();

@@ -3,7 +3,7 @@
 namespace App\Schedule;
 
 use App\Service\Domain\Message\PurgeStalePendingSuspendedDomainsMessage;
-use App\Service\Domain\Message\ReverifyAllDomainsMessage;
+use App\Service\Domain\Message\ReverifyVerifiedAndWarningDomainsMessage;
 use App\Service\Idempotency\Message\ClearExpiredIdempotencyRecordsMessage;
 use App\Service\Management\Message\RunHealthChecksMessage;
 use App\Service\Send\Message\ClearExpiredSendsMessage;
@@ -40,7 +40,7 @@ class GlobalSchedule implements ScheduleProviderInterface
 
             // domain verification
             ->add(RecurringMessage::every('1 hour', new PurgeStalePendingSuspendedDomainsMessage))
-            ->add(RecurringMessage::every('1 day', new ReverifyAllDomainsMessage))
+            ->add(RecurringMessage::every('1 day', new ReverifyVerifiedAndWarningDomainsMessage))
 
             // global lock
             ->lock($this->lockFactory->createLock('global-schedule', 20));

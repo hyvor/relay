@@ -6,7 +6,7 @@ use App\Entity\Domain;
 use App\Entity\Type\DomainStatus;
 use App\Service\Domain\DomainStatusService;
 use App\Service\Domain\Exception\DkimVerificationFailedException;
-use App\Service\Domain\Message\ReverifyAllDomainsMessage;
+use App\Service\Domain\Message\ReverifyVerifiedAndWarningDomainsMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -20,7 +20,7 @@ use Hyvor\Internal\Bundle\Log\ContextualLogger;
  * warning -> pending
  */
 #[AsMessageHandler]
-class ReverifyAllDomainsMessageHandler
+class ReverifyVerifiedAndWarningDomainsMessageHandler
 {
 
     private LoggerInterface $logger;
@@ -33,7 +33,7 @@ class ReverifyAllDomainsMessageHandler
         $this->logger = ContextualLogger::forMessageHandler($logger, self::class);
     }
 
-    public function __invoke(ReverifyAllDomainsMessage $message): void
+    public function __invoke(ReverifyVerifiedAndWarningDomainsMessage $message): void
     {
         $startTime = microtime(true);
 

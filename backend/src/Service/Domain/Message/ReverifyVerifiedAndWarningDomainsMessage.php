@@ -2,7 +2,7 @@
 
 namespace App\Service\Domain\Message;
 
-readonly class ReverifyAllDomainsMessage
+readonly class ReverifyVerifiedAndWarningDomainsMessage
 {
 
     public function __construct(private int $batchSize = 40)
