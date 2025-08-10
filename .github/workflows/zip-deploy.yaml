@@ -1,3 +1,5 @@
+name: Create and Upload Deploy Tarball
+
 on:
   release:
     types: [ published ]
@@ -11,8 +13,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Zip and Upload Deploy Folder
+      - name: Create and Upload Deploy Tarball
         run: |
+          echo "${{github.event.release.tag_name}}" > deploy/VERSION.txt
           ./deploy/zip.sh
           gh release upload ${{github.event.release.tag_name}} deploy/deploy.tar.gz
         env:
