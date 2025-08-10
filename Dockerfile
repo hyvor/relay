@@ -27,6 +27,11 @@ COPY worker/ /worker/
 RUN go mod download
 CMD [ "/worker/worker.dev.run" ]
 
+FROM golang AS worker
+WORKDIR /app/worker
+COPY worker/ /app/worker/
+RUN go build -o ./worker worker/worker.go
+
 FROM frankenphp AS backend-base
 ENV APP_RUNTIME="Runtime\FrankenPhpSymfony\Runtime"
 WORKDIR /app/backend
