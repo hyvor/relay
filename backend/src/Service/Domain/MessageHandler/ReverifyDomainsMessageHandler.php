@@ -38,7 +38,7 @@ class ReverifyDomainsMessageHandler
         $startTime = microtime(true);
 
         $this->logger->info('Reverifying domains', [
-            'statuses' => $message->getStatusNames(),
+            'statuses' => implode(', ', $message->getStatusNames()),
             'batch_size' => $message->getBatchSize(),
         ]);
 

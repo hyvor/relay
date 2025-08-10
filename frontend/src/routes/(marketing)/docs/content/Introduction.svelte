@@ -24,10 +24,11 @@
 </p>
 
 <p>
-	This documentation (<a href="/docs">/docs</a>) is for developers who use any instance of Hyvor
-	Relay. If there are any differences between the cloud and self-hosted instances, we will mention
-	them in the relevant sections. If you are a system administrator who wants to spin up an
-	instance, visit
+	This documentation (<a href="/docs">/docs</a>) is for developers who use
+	<strong>any instance</strong>
+	of Hyvor Relay. If there are any differences between the cloud and self-hosted instances, we
+	will mention them in the relevant sections. If you are a system administrator who wants to spin
+	up an instance, visit
 	<a href="/hosting">/hosting</a>.
 </p>
 

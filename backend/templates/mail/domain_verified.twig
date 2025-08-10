@@ -1,0 +1,16 @@
+{% extends '@Internal/mail/mail.html.twig' %}
+
+{% block title %}
+    Domain Verified: {{ domain }}
+{% endblock %}
+
+{% block heading %}
+    Domain Verified: {{ domain }}
+{% endblock %}
+
+{% block content %}
+    <p>
+        Good news! Your domain <strong>{{ domain }}</strong> has been successfully verified.
+        You can now use it to send emails through Hyvor Relay.
+    </p>
+{% endblock %}
