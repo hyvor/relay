@@ -45,6 +45,11 @@ export const categories: Category[] = [
 				name: 'Easy Deploy',
 				component: EasyDeploy,
 			},
+			{
+				slug: 'env',
+				name: 'Environment Variables',
+				component: Introduction,
+			}
 			/* {
 				slug: 'learn',
 				name: 'Learn Sending Emails',

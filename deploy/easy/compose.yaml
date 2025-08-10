@@ -1,0 +1,20 @@
+services:
+  app:
+    image: hyvor/relay:latest
+    container_name: hyvor_relay
+    restart: unless-stopped
+    network_mode: "host"
+
+  postgres:
+    image: postgres:16.6
+    container_name: hyvor_relay_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: hyvor_relay
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

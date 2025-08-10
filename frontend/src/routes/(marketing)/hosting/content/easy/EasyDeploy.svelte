@@ -1,3 +1,7 @@
+<script>
+	import { CodeBlock } from '@hyvor/design/components';
+</script>
+
 <h1>Easy Deploy</h1>
 
 <p>
@@ -37,6 +41,80 @@
 	>.
 </p>
 
-<h2 id="compose-file">Compose File</h2>
+<h2 id="install">Install</h2>
 
-<p></p>
+<h3 id="download-tarball">1. Download Deployment Files</h3>
+
+<p>
+	First, download the latest deployment files (<a
+		href="https://github.com/hyvor/relay/tree/main/deploy"
+		target="_blank">view on Github</a
+	>).
+</p>
+
+<CodeBlock
+	code={`
+curl -LO https://github.com/hyvor/relay/releases/latest/download/deploy.tar.gz
+tar -xzf deploy.tar.gz
+cd deploy/easy
+`}
+/>
+
+<p>
+	You are now in the <code>deploy/easy</code> directory, which contains the Docker Compose files and
+	other necessary files for this deployment.
+</p>
+
+<h3 id="env">2. Configure Environment Variables</h3>
+
+<p>
+	The <a href="https://github.com/hyvor/relay/blob/main/deploy/easy/.env" target="_blank"
+		>.env file</a
+	> contains the environment variables for the deployment. Open it in a text editor and set the following
+	variables:
+</p>
+
+<h4 id="env-app-secret">2.1 App Secret</h4>
+
+<p>
+	The <code>APP_SECRET</code> variable is a 32-character string used to encrypt sensitive data (e.g.,
+	API keys, tokens) in the application. Use the following command to generate a random key:
+</p>
+
+<CodeBlock
+	code={`
+openssl rand -hex 32
+`}
+/>
+
+<h4 id="env-oidc">2.2 OIDC Configuration</h4>
+
+<p>
+	Hyvor Relay requires OIDC (OpenID Connect) for authentication. In your OIDC provider, create a
+	new application and set the following values:
+</p>
+
+<CodeBlock
+	code={`
+OIDC_ISSUER_URL=https://your-oidc-provider.com
+OIDC_CLIENT_ID=your-client-id
+OIDC_CLIENT_SECRET=your-client-secret
+`}
+/>
+
+<p>You might also need to allow the following URLs in your OIDC provider:</p>
+
+<ul>
+	<li>
+		<strong>Callback URL</strong>: <code>https://your-relay-domain.com/api/oidc/callback</code>
+	</li>
+	<li>
+		<strong>Logout URL</strong>: <code>https://your-relay-domain.com</code>
+	</li>
+</ul>
+
+<p>
+	If needed, feel free to change other environment variables. See the <a href="/hosting/env"
+		>Environment Variables</a
+	> page for all available variables.
+</p>
