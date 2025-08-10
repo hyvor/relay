@@ -4,6 +4,7 @@ import Introduction from './content/Introduction.svelte';
 import Setup from './content/Setup.svelte';
 import Deploy from './content/Deploy.svelte';
 import Monitoring from './content/Monitoring.svelte';
+import EasyDeploy from './content/easy/EasyDeploy.svelte';
 
 export const categories: Category[] = [
 	{
@@ -42,7 +43,7 @@ export const categories: Category[] = [
 			{
 				slug: 'deploy-easy',
 				name: 'Easy Deploy',
-				component: Introduction,
+				component: EasyDeploy,
 			},
 			/* {
 				slug: 'learn',
