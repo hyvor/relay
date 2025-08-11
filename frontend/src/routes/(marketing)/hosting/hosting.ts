@@ -5,6 +5,7 @@ import Setup from './content/Setup.svelte';
 import Deploy from './content/Deploy.svelte';
 import Monitoring from './content/Monitoring.svelte';
 import EasyDeploy from './content/easy/EasyDeploy.svelte';
+import Env from './content/Env.svelte';
 
 export const categories: Category[] = [
 	{
@@ -48,7 +49,7 @@ export const categories: Category[] = [
 			{
 				slug: 'env',
 				name: 'Environment Variables',
-				component: Introduction,
+				component: Env,
 			}
 			/* {
 				slug: 'learn',
