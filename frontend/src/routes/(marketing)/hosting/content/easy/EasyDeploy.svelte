@@ -6,7 +6,8 @@
 
 <p>
 	This page covers how to deploy Hyvor Relay on a single server using Docker Compose. This is the
-	easiest way to deploy Hyvor Relay, and it is suitable for small to medium-level email sending.
+	easiest way to deploy Hyvor Relay, and it is suitable for testing Hyvor Relay or for small to
+	medium-sized use cases.
 </p>
 
 <p>
@@ -16,6 +17,16 @@
 	> page, which uses multiple servers with Docker Swarm.
 </p>
 
+<ul>
+	<li>
+		<a href="#prerequisites">Prerequisites</a>
+	</li>
+	<li>
+		<a href="#install">Install</a>
+	</li>
+	<li><a href="#setup">Setup</a></li>
+</ul>
+
 <h2 id="prerequisites">Prerequisites</h2>
 
 <p>
@@ -24,14 +35,14 @@
 </p>
 
 <p>
-	<strong>IP Addresses</strong>: You need at least one static IP address for the server. This IP
+	<strong>IP Addresses</strong>: You need at least one static IPv4 address for the server. This IP
 	will be assigned to the transactional queue.
 </p>
 
 <p>
-	<strong>OS</strong>: A Linux-based OS (Ubuntu, Debian, etc.) is recommended for production use.
-	Unless your preference or organization policy requires a different distribution, we recommend
-	using Ubuntu 24.04 LTS, which is the same OS we use in our Cloud instance.
+	<strong>OS</strong>: A Linux-based OS is recommended for production use. Unless your preference
+	or organization policy requires a different distribution, we recommend using Ubuntu 24.04 LTS,
+	which is the same OS we use in our Cloud instance.
 </p>
 
 <p>
@@ -74,20 +85,20 @@ cd deploy/easy
 	variables:
 </p>
 
-<h4 id="env-app-secret">2.1 App Secret</h4>
+<h4 id="env-app-secret">App Secret</h4>
 
 <p>
-	The <code>APP_SECRET</code> variable is a 32-character string used to encrypt sensitive data (e.g.,
-	API keys, tokens) in the application. Use the following command to generate a random key:
+	The <code>APP_SECRET</code> variable is a 32-bytes key used to encrypt sensitive data (e.g., API
+	keys, tokens) in the application. Use the following command to generate a base64-encoded key:
 </p>
 
 <CodeBlock
 	code={`
-openssl rand -hex 32
+openssl rand -base64 32
 `}
 />
 
-<h4 id="env-oidc">2.2 OIDC Configuration</h4>
+<h4 id="env-oidc">OIDC Configuration</h4>
 
 <p>
 	Hyvor Relay requires OIDC (OpenID Connect) for authentication. In your OIDC provider, create a
@@ -117,4 +128,45 @@ OIDC_CLIENT_SECRET=your-client-secret
 	If needed, feel free to change other environment variables. See the <a href="/hosting/env"
 		>Environment Variables</a
 	> page for all available variables.
+</p>
+
+<h3 id="docker-compose">3. Start Docker Compose</h3>
+
+<p>
+	Once you have configured the environment variables, you can run the following command to start
+	the services:
+</p>
+
+<CodeBlock
+	code={`
+docker compose up -d
+`}
+/>
+
+<p>
+	This command will start the Hyvor Relay services in detached mode. You can check the logs using:
+</p>
+
+<CodeBlock
+	code={`
+docker compose logs -f app
+`}
+/>
+
+<p>
+	You should see the logs indicating that the application has run migrations, configured the
+	server and the IP addresses, and started the application (email workers, webhook workers, etc.).
+</p>
+
+<h2 id="setup">Setup</h2>
+
+<p>
+	Once the application is running, you should see the Hyvor Relay homepage at <strong
+		>http://your-server-ip</strong
+	>.
+</p>
+
+<p>
+	Next, head to the <a href="/hosting/setup">Setup</a> page to learn how to set up your Hyvor Relay
+	instance for best deliverability.
 </p>

@@ -10,10 +10,6 @@ framework:
   #esi: true
   #fragments: true
 
-when@dev:
-  framework:
-    trusted_proxies: '172.16.0.0/12'
-
 when@test:
   framework:
     test: true
