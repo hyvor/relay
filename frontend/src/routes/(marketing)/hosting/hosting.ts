@@ -6,6 +6,8 @@ import Deploy from './content/Deploy.svelte';
 import Monitoring from './content/Monitoring.svelte';
 import EasyDeploy from './content/easy/EasyDeploy.svelte';
 import Env from './content/Env.svelte';
+import Blacklists from './content/Blacklists.svelte';
+import Deliverability from './content/Deliverability.svelte';
 
 export const categories: Category[] = [
 	{
@@ -35,12 +37,7 @@ export const categories: Category[] = [
 				slug: 'monitoring',
 				name: 'Monitoring',
 				component: Monitoring
-			}
-		]
-	},
-	{
-		name: 'Other',
-		pages: [
+			},
 			{
 				slug: 'deploy-easy',
 				name: 'Easy Deploy',
@@ -50,6 +47,21 @@ export const categories: Category[] = [
 				slug: 'env',
 				name: 'Environment Variables',
 				component: Env,
+			},
+		]
+	},
+	{
+		name: 'Other',
+		pages: [
+			{
+				slug: 'deliverability',
+				name: 'Deliverability',
+				component: Deliverability,
+			},
+			{
+				slug: 'providers',
+				name: 'Email Providers',
+				component: Deliverability,
 			}
 			/* {
 				slug: 'learn',
@@ -57,7 +69,7 @@ export const categories: Category[] = [
 				component: Introduction,
 			} */
 		]
-	}
+	},
 ];
 
 export const pages = categories.reduce((acc, category) => acc.concat(category.pages), [] as Page[]);
