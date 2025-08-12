@@ -5,6 +5,7 @@ namespace App\Api\Sudo\Controller;
 use App\Api\Sudo\Object\DefaultDnsRecordObject;
 use App\Api\Sudo\Object\InstanceObject;
 use App\Service\App\Config;
+use App\Service\Blacklist\IpBlacklists;
 use App\Service\Instance\InstanceService;
 use App\Service\Management\GoState\GoStateDnsRecordsService;
 use Hyvor\Internal\InternalConfig;
@@ -31,7 +32,8 @@ class SudoController extends AbstractController
         return new JsonResponse([
             'config' => [
                 'app_version' => $this->config->getAppVersion(),
-                'instance' => $this->internalConfig->getInstance()
+                'instance' => $this->internalConfig->getInstance(),
+                'blacklists' => IpBlacklists::getBlacklists()
             ],
             'instance' => new InstanceObject($instance)
         ]);

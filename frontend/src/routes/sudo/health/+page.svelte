@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Button, Loader, toast } from '@hyvor/design/components';
+	import { Button, Loader, toast, IconMessage } from '@hyvor/design/components';
 	import { getHealthChecks, runHealthChecks } from '../sudoActions';
 	import type { HealthCheckResults } from '../sudoTypes';
 	import SingleBox from '../SingleBox.svelte';
@@ -34,7 +34,6 @@
 		runHealthChecks()
 			.then((results) => {
 				healthCheckResults = results;
-				toast.success('Health checks completed successfully');
 			})
 			.catch((error: any) => {
 				toast.error('Failed to run health checks: ' + error.message);
@@ -45,14 +44,17 @@
 	}
 
 	function formatCheckName(key: string): string {
-		return {
-			all_queues_have_at_least_one_ip: 'All queues have at least one IP',
-			all_active_ips_have_correct_ptr:
-				'All active IPs have correct PTR records (Forward and Reverse)',
-			instance_dkim_correct: 'Instance DKIM is correct',
-			all_ips_are_in_spf_record: 'All IPs are in SPF record',
-			all_servers_can_be_reached_via_private_network: 'All servers can be reached via private network'
-		}[key] || key;
+		return (
+			{
+				all_queues_have_at_least_one_ip: 'All queues have at least one IP',
+				all_active_ips_have_correct_ptr:
+					'All active IPs have correct PTR records (Forward and Reverse)',
+				instance_dkim_correct: 'Instance DKIM is correct',
+				all_ips_are_in_spf_record: 'All IPs are in SPF record',
+				all_servers_can_be_reached_via_private_network:
+					'All servers can be reached via private network'
+			}[key] || key
+		);
 	}
 
 	function getSortedHealthCheckEntries(results: HealthCheckResults['results']) {
@@ -91,9 +93,13 @@
 			</div>
 
 			<div class="checks">
-				{#each getSortedHealthCheckEntries(healthCheckResults.results) as [checkKey, result]}
-					<HealthCheckItem checkKey={checkKey as any} {result} />
-				{/each}
+				{#if Object.keys(healthCheckResults.results).length > 0}
+					{#each getSortedHealthCheckEntries(healthCheckResults.results) as [checkKey, result]}
+						<HealthCheckItem checkKey={checkKey as any} {result} />
+					{/each}
+				{:else}
+					<IconMessage empty message="Health checks have not run yet." padding={150} />
+				{/if}
 			</div>
 		</div>
 	{:else}
@@ -108,7 +114,6 @@
 <style>
 	.health-checks {
 		padding: 30px;
-		border-bottom: 1px solid var(--border);
 	}
 
 	.header {

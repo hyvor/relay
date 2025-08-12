@@ -7,6 +7,7 @@ export interface SudoInitResponse {
 export interface SudoConfig {
     app_version: string;
     instance: string;
+    blacklists: Blacklist[];
 }
 
 export interface Instance {
@@ -46,10 +47,18 @@ export interface Queue {
     name: string;
 }
 
+export interface Blacklist {
+    id: string;
+    name: string;
+    dns_lookup_domain: string;
+    removal_url: string | null;
+}
+
 export interface HealthCheckResult<T extends HealthCheckName = HealthCheckName> {
     passed: boolean;
     data: HealthCheckData[T];
     checked_at: string;
+    duration_ms: number;
 }
 
 export interface HealthCheckData {
@@ -73,7 +82,17 @@ export interface HealthCheckData {
     },
     all_servers_can_be_reached_via_private_network: {
         unreachable_servers: string[];
+    },
+    none_of_the_ips_are_on_known_blacklists: {
+        lists: Record<string, Record<string, BlacklistIpResult>>
     }
+}
+
+export interface BlacklistIpResult {
+    duration_ms: number;
+    status: 'ok' | 'blocked' | 'error';
+    resolved_ip?: string;
+    error?: string;
 }
 
 export type HealthCheckName = keyof HealthCheckData;

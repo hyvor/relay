@@ -3,6 +3,7 @@
 	import type { HealthCheckResult, HealthCheckName, HealthCheckData } from '../sudoTypes';
 	import dayjs from 'dayjs';
 	import relativeTime from 'dayjs/plugin/relativeTime';
+	import BlacklistDebug from './BlacklistDebug.svelte';
 
 	dayjs.extend(relativeTime);
 
@@ -19,8 +20,10 @@
 			all_active_ips_have_correct_ptr:
 				'All active IPs have correct PTR records (Forward and Reverse)',
 			instance_dkim_correct: 'Instance DKIM is correct',
-			all_ips_are_in_spf_record: 'All IPs are in SPF record',
-			all_servers_can_be_reached_via_private_network: 'All servers can be reached via private network'
+			all_ips_are_in_spf_record: 'All IPs are included in SPF record',
+			all_servers_can_be_reached_via_private_network:
+				'All servers can be reached via private network',
+			none_of_the_ips_are_on_known_blacklists: 'None of the IPs are on known blacklists'
 		}[key]!;
 	}
 
@@ -59,8 +62,30 @@
 		}
 
 		if (checkKey === 'all_servers_can_be_reached_via_private_network') {
-			const unreachableServers = data as HealthCheckData['all_servers_can_be_reached_via_private_network'];
+			const unreachableServers =
+				data as HealthCheckData['all_servers_can_be_reached_via_private_network'];
 			return `Unreachable servers: ${unreachableServers.unreachable_servers.join(', ')}`;
+		}
+
+		if (checkKey === 'none_of_the_ips_are_on_known_blacklists') {
+			const blacklistData =
+				data as HealthCheckData['none_of_the_ips_are_on_known_blacklists'];
+			const lists = blacklistData.lists;
+			const blacklistedIps = [];
+
+			for (const [listName, listData] of Object.entries(lists)) {
+				const blacklistedIpsOnList = [];
+				for (const [ip, entry] of Object.entries(listData)) {
+					if (entry.status === 'blocked') {
+						blacklistedIpsOnList.push(ip);
+					}
+				}
+				if (blacklistedIpsOnList.length > 0) {
+					blacklistedIps.push(`${listName}: ${blacklistedIpsOnList.join(', ')}`);
+				}
+			}
+
+			return `Blacklisted IPs: ${blacklistedIps.join(', ')}`;
 		}
 
 		return JSON.stringify(data);
@@ -72,13 +97,20 @@
 	<div class="content">
 		<div class="check-name">{formatCheckName(checkKey)}</div>
 		<div class="check-details">
-			<span class="checked-time">Checked {formatCheckedTime(result.checked_at)}</span>
+			<span class="checked-time">
+				Checked {formatCheckedTime(result.checked_at)} &bull;
+				{result.duration_ms}ms
+			</span>
 			{#if !result.passed && result.data}
 				<div class="failure-callout">
 					<Callout type="danger" size="small">
 						{renderFailureData(result.data)}
 					</Callout>
 				</div>
+			{/if}
+
+			{#if checkKey === 'none_of_the_ips_are_on_known_blacklists'}
+				<BlacklistDebug data={result.data as any} />
 			{/if}
 		</div>
 	</div>

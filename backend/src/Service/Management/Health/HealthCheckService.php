@@ -33,14 +33,19 @@ class HealthCheckService
         
         foreach ($this->healthChecks as $healthCheck) {
             $healthCheckType = $this->getHealthCheckName($healthCheck);
-            
+
+            $startTime = microtime(true);
             $passed = $healthCheck->check();
+            $endTime = microtime(true);
+            $durationMs = round(($endTime - $startTime) * 1000);
+
             $data = $healthCheck->getData();
             
             $results[$healthCheckType] = [
                 'passed' => $passed,
                 'data' => $data,
-                'checked_at' => $this->now()->format('c')
+                'checked_at' => $this->now()->format('c'),
+                'duration_ms' => $durationMs,
             ];
         }
         
