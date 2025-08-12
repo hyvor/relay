@@ -219,6 +219,8 @@
 <style>
 	.modal-content {
 		padding: 20px 0;
+        max-height: 70vh;
+        overflow-y: auto;
 	}
 
 	.scopes-header {
