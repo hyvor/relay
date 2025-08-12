@@ -62,7 +62,7 @@ class UpdateProjectTest extends WebTestCase
         );
 
         $this->assertSame(422, $response->getStatusCode());
-        $this->assertHasViolation('name', 'This value should not be blank.');
+        $this->assertHasViolation('name', 'This value is too short. It should have 1 character or more.');
     }
 
     public function test_update_project_with_long_name(): void

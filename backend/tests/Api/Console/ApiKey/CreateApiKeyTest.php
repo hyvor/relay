@@ -6,6 +6,7 @@ use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\ApiKeyController;
 use App\Api\Console\Input\CreateApiKeyInput;
 use App\Api\Console\Object\ApiKeyObject;
+use App\Entity\ApiKey;
 use App\Service\ApiKey\ApiKeyService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ApiKeyFactory;
@@ -40,6 +41,13 @@ class CreateApiKeyTest extends WebTestCase
         $this->assertArrayHasKey('key', $content);
         $this->assertNotNull($content['key']);
         $this->assertArrayHasKey('created_at', $content);
+
+        $apiKey = $this->em->getRepository(ApiKey::class)->findOneBy([
+            'id' => $content['id'],
+        ]);
+        $this->assertNotNull($apiKey);
+        $this->assertSame('Test name', $apiKey->getName());
+        $this->assertSame(['sends.read', 'sends.write', 'sends.send'], $apiKey->getScopes());
     }
 
     public function test_create_api_key_without_name(): void
@@ -99,7 +107,7 @@ class CreateApiKeyTest extends WebTestCase
     {
         $project = ProjectFactory::createOne();
 
-        $apiKeys = ApiKeyFactory::createMany(5, [
+        $apiKeys = ApiKeyFactory::createMany(10, [
             'project' => $project,
             'is_enabled' => true,
         ]);

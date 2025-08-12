@@ -1,6 +1,6 @@
 import sudoApi from './sudoApi';
 import { instanceStore, serversStore } from './sudoStore';
-import type { IpAddress, Queue, Server, SudoInitResponse, HealthCheckResults, Instance, DnsRecord, DnsRecordType, DebugIncomingEmail } from './sudoTypes';
+import type { IpAddress, Queue, Server, SudoInitResponse, HealthCheckResults, Instance, DnsRecord, DefaultDnsRecord, DnsRecordType, DebugIncomingEmail } from './sudoTypes';
 
 export function initSudo() {
 	return sudoApi.post<SudoInitResponse>({
@@ -48,7 +48,7 @@ export function getQueues() {
 	});
 }
 
-export function updateIpAddress(ipId: number, data: { queue_id?: number | null; is_active?: boolean }) {
+export function updateIpAddress(ipId: number, data: { queue_id?: number | null }) {
 	return sudoApi.patch<IpAddress>({
 		endpoint: `/ip-addresses/${ipId}`,
 		data
@@ -76,6 +76,12 @@ export function runHealthChecks() {
 export function getDnsRecords() {
 	return sudoApi.get<DnsRecord[]>({
 		endpoint: '/dns-records'
+	});
+}
+
+export function getDefaultDnsRecords() {
+	return sudoApi.get<DefaultDnsRecord[]>({
+		endpoint: '/default-dns'
 	});
 }
 

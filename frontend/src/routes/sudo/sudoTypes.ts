@@ -7,6 +7,7 @@ export interface SudoInitResponse {
 export interface SudoConfig {
     app_version: string;
     instance: string;
+    blacklists: Blacklist[];
 }
 
 export interface Instance {
@@ -36,8 +37,8 @@ export interface IpAddress {
     ip_address: string;
     ptr: string;
     queue: Queue | null;
-    is_active: boolean;
-    is_enabled: boolean;
+    is_ptr_forward_valid: boolean;
+    is_ptr_reverse_valid: boolean;
 }
 
 export interface Queue {
@@ -46,10 +47,18 @@ export interface Queue {
     name: string;
 }
 
+export interface Blacklist {
+    id: string;
+    name: string;
+    dns_lookup_domain: string;
+    removal_url: string | null;
+}
+
 export interface HealthCheckResult<T extends HealthCheckName = HealthCheckName> {
     passed: boolean;
     data: HealthCheckData[T];
     checked_at: string;
+    duration_ms: number;
 }
 
 export interface HealthCheckData {
@@ -73,7 +82,17 @@ export interface HealthCheckData {
     },
     all_servers_can_be_reached_via_private_network: {
         unreachable_servers: string[];
+    },
+    none_of_the_ips_are_on_known_blacklists: {
+        lists: Record<string, Record<string, BlacklistIpResult>>
     }
+}
+
+export interface BlacklistIpResult {
+    duration_ms: number;
+    status: 'ok' | 'blocked' | 'error';
+    resolved_ip?: string;
+    error?: string;
 }
 
 export type HealthCheckName = keyof HealthCheckData;
@@ -92,6 +111,14 @@ export interface DnsRecord {
     updated_at: number;
     type: DnsRecordType;
     subdomain: string;
+    content: string;
+    ttl: number;
+    priority: number;
+}
+
+export interface DefaultDnsRecord {
+    type: DnsRecordType;
+    host: string;
     content: string;
     ttl: number;
     priority: number;

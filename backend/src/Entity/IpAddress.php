@@ -32,19 +32,6 @@ class IpAddress
     #[ORM\JoinColumn()]
     private ?Queue $queue;
 
-    /**
-     * Indicates if the IP was found last time management:init command was run.
-     * This might be false if the IP was no longer available on the server
-     */
-    #[ORM\Column(type: 'boolean', options: ['default' => false])]
-    private bool $is_available = false;
-
-    /**
-     * This is used for manually enabling or disabling an IP address.
-     */
-    #[ORM\Column(type: 'boolean')]
-    private bool $is_enabled = true;
-
     #[ORM\Column(type: 'boolean')]
     private bool $is_ptr_forward_valid = true;
 
@@ -52,7 +39,8 @@ class IpAddress
     private bool $is_ptr_reverse_valid = true;
 
     public function __construct()
-    {}
+    {
+    }
 
     public function getCreatedAt(): \DateTimeImmutable
     {
@@ -120,28 +108,6 @@ class IpAddress
         return $this;
     }
 
-    public function getIsAvailable(): bool
-    {
-        return $this->is_available;
-    }
-
-    public function setIsAvailable(bool $isActive): static
-    {
-        $this->is_available = $isActive;
-        return $this;
-    }
-
-    public function getIsEnabled(): bool
-    {
-        return $this->is_enabled;
-    }
-
-    public function setIsEnabled(bool $isEnabled): static
-    {
-        $this->is_enabled = $isEnabled;
-        return $this;
-    }
-
     public function getIsPtrForwardValid(): bool
     {
         return $this->is_ptr_forward_valid;
@@ -163,5 +129,5 @@ class IpAddress
         $this->is_ptr_reverse_valid = $isPtrReverseValid;
         return $this;
     }
-    
+
 }

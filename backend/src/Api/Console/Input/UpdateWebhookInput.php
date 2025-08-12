@@ -6,13 +6,14 @@ use App\Entity\Type\WebhooksEventEnum;
 
 use App\Util\OptionalPropertyTrait;
 use Symfony\Component\Validator\Constraints as Assert;
+
 class UpdateWebhookInput
 {
     use OptionalPropertyTrait;
 
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
-    #[Assert\Url]
+    #[Assert\Url(requireTld: false)]
     public string $url;
 
     public string $description;

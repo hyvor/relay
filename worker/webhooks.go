@@ -16,23 +16,27 @@ type WebhookWorkersPool struct {
 	wg         sync.WaitGroup
 	cancelFunc context.CancelFunc
 	logger     *slog.Logger
+	metrics    *Metrics
 	workerFunc func(
 		ctx context.Context,
 		id int,
 		wg *sync.WaitGroup,
 		config *DBConfig,
 		logger *slog.Logger,
+		metrics *Metrics,
 	)
 }
 
 func NewWebhookWorkersPool(
 	ctx context.Context,
 	logger *slog.Logger,
+	metrics *Metrics,
 ) *WebhookWorkersPool {
 	pool := &WebhookWorkersPool{
 		ctx:        ctx,
-		logger:     logger,
+		logger:     logger.With("component", "webhook_workers_pool"),
 		workerFunc: webhookWorker,
+		metrics:    metrics,
 	}
 
 	go func() {
@@ -68,6 +72,7 @@ func (pool *WebhookWorkersPool) Set(workers int) {
 			&pool.wg,
 			LoadDBConfig(),
 			pool.logger,
+			pool.metrics,
 		)
 	}
 
@@ -93,6 +98,7 @@ func webhookWorker(
 	wg *sync.WaitGroup,
 	dbConfig *DBConfig,
 	logger *slog.Logger,
+	metrics *Metrics,
 ) {
 	defer wg.Done()
 	logger.Info("Webhook worker started", "id", id)
@@ -118,12 +124,11 @@ func webhookWorker(
 
 			if err != nil {
 				logger.Error(
-					"Webhook worker failed to create batch",
+					"Webhook worker failed to get new webhooks batch",
 					"worker_id", id,
 					"error", err,
 				)
 				time.Sleep(1 * time.Second)
-				batch.Rollback()
 				continue
 			}
 
@@ -183,11 +188,13 @@ func webhookWorker(
 						)
 					}
 
+					metrics.webhookDeliveriesTotal.WithLabelValues(result.MetricStatus()).Inc()
+
 					logger.Debug(
 						"Worker finalized webhook delivery",
 						"worker_id", id,
 						"webhook_delivery_id", delivery.Id,
-						"success", result.Success,
+						"status", result.MetricStatus(),
 						"response_status_code", result.ResponseStatusCode,
 						"response_body", result.ResponseBody,
 					)
@@ -208,6 +215,16 @@ type WebhookResult struct {
 	Success            bool
 	ResponseBody       string // upto 1024 bytes
 	ResponseStatusCode int
+	NewTryCount        int
+}
+
+func (wr WebhookResult) MetricStatus() string {
+	if wr.Success {
+		return "success"
+	} else if wr.NewTryCount >= WEBHOOKS_MAX_RETRIES {
+		return "failed"
+	}
+	return "deferred"
 }
 
 var httpClient = &http.Client{}
@@ -215,7 +232,8 @@ var httpClient = &http.Client{}
 func sendWebhook(delivery *WebhookDelivery) *WebhookResult {
 
 	result := &WebhookResult{
-		Success: false,
+		Success:     false,
+		NewTryCount: delivery.TryCount + 1,
 	}
 
 	resp, err := httpClient.Post(delivery.Url, "application/json", strings.NewReader(delivery.RequestBody))

@@ -24,6 +24,7 @@ const (
 
 func createDebugRecord(
 	pgpool *pgxpool.Pool,
+	logger *slog.Logger,
 	debugType DebugIncomingType,
 	status DebugIncomingStatus,
 	rawEmail []byte,
@@ -41,7 +42,7 @@ func createDebugRecord(
 	`, debugType, status, rawEmail, mailFrom, rcptTo, parsedData, errorMessage)
 
 	if err != nil {
-		slog.Error("Failed to create debug record", "error", err)
+		logger.Error("Failed to create debug record", "error", err)
 		return
 	}
 

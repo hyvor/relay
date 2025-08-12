@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -14,10 +14,15 @@ func StartHttpServer(
 	ctx context.Context,
 	serviceState *ServiceState,
 ) {
+
+	httpServerLogger := serviceState.Logger.With("component", "http_local_server")
+	httpServerLogger.Info("Starting local HTTP server on localhost:8085")
+
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/health", handleHealth)
-	mux.HandleFunc("/state", handleSetState(serviceState))
+	mux.HandleFunc("/ping", handlePing)
+	mux.HandleFunc("/ready", handleReady(serviceState)) // alias for /ping
+	mux.HandleFunc("/state", handleSetState(serviceState, httpServerLogger))
 	mux.HandleFunc("/debug/parse-bounce-fbl", handleParseBounceFBL())
 
 	var handler http.Handler = mux
@@ -27,11 +32,9 @@ func StartHttpServer(
 		Handler: handler,
 	}
 
-	serviceState.Logger.Info("Starting local HTTP server on localhost:8085")
-
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("HTTP server error: %v", err)
+			httpServerLogger.Error("HTTP server error: %v", err)
 		}
 	}()
 
@@ -42,22 +45,35 @@ func StartHttpServer(
 		defer shutdownCtxCancel()
 
 		if err := server.Shutdown(shutdownCtx); err != nil {
-			log.Fatalf("HTTP shutdown error: %v", err)
+			httpServerLogger.Error("HTTP shutdown error: %v", err)
 		}
 	}()
 
 }
 
-func handleHealth(w http.ResponseWriter, r *http.Request) {
+func handlePing(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	w.Write([]byte("ok"))
+}
+
+func handleReady(serviceState *ServiceState) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if serviceState.IsSet {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("ready"))
+		} else {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("not ready"))
+		}
+	}
 }
 
 func handleSetState(
 	serviceState *ServiceState,
+	httpServerLogger *slog.Logger,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Setting Go state...")
+		httpServerLogger.Info("Updating Go state from HTTP request")
 
 		var goState GoState
 		decoder := json.NewDecoder(r.Body)

@@ -3,6 +3,7 @@
 namespace App\Tests\Factory;
 
 use App\Entity\Domain;
+use App\Entity\Type\DomainStatus;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
 /**
@@ -26,10 +27,11 @@ final class DomainFactory extends PersistentProxyObjectFactory
      */
     protected function defaults(): array
     {
-
         return [
             'project' => ProjectFactory::createOne(),
             'domain' => self::faker()->unique()->domainName(),
+            'status' => DomainStatus::PENDING,
+            'status_changed_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'dkim_selector' => self::faker()->text(255),
             'dkim_public_key' => self::TEST_DKIM_PUBLIC_KEY,
             'dkim_private_key_encrypted' => self::TEST_DKIM_PRIVATE_KEY_ENCRYPTED,

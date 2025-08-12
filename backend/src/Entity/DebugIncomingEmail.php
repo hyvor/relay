@@ -138,11 +138,17 @@ class DebugIncomingEmail
         return $this;
     }
 
+    /**
+     * @return array<mixed>|null
+     */
     public function getParsedData(): ?array
     {
         return $this->parsed_data;
     }
 
+    /**
+     * @param array<mixed>|null $parsed_data
+     */
     public function setParsedData(?array $parsed_data): static
     {
         $this->parsed_data = $parsed_data;

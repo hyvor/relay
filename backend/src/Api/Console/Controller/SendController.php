@@ -10,6 +10,7 @@ use App\Api\Console\Input\SendEmail\UnableToDecodeAttachmentBase64Exception;
 use App\Api\Console\Object\SendObject;
 use App\Api\Console\Resolver\ProjectResolver;
 use App\Entity\Project;
+use App\Entity\Send;
 use App\Entity\Type\ProjectSendType;
 use App\Entity\Type\SendStatus;
 use App\Service\Domain\DomainService;
@@ -35,7 +36,8 @@ class SendController extends AbstractController
         private DomainService $domainService,
         private QueueService $queueService,
         private SuppressionService $suppressionService
-    ) {}
+    ) {
+    }
 
     #[Route("/sends", methods: "POST")]
     #[ScopeRequired(Scope::SENDS_SEND)]
@@ -60,9 +62,9 @@ class SendController extends AbstractController
             );
         }
 
-        if ($domain->getDkimVerified() === false) {
+        if ($domain->getStatus()->canSendEmails() !== true) {
             throw new BadRequestException(
-                "Domain $domainName is not verified"
+                "Domain $domainName is not allowed to send emails (status: {$domain->getStatus()->value})"
             );
         }
 
@@ -144,6 +146,14 @@ class SendController extends AbstractController
             ->map(fn($send) => new SendObject($send));
 
         return $this->json($sends);
+    }
+
+    #[Route("/sends/{id}", methods: "GET")]
+    #[ScopeRequired(Scope::SENDS_READ)]
+    public function getById(Send $send): JsonResponse
+    {
+        $attempts = $this->sendService->getSendAttemptsOfSend($send);
+        return $this->json(new SendObject($send, $attempts));
     }
 
     #[Route("/sends/uuid/{uuid}", requirements: ['uuid' => Requirement::UUID], methods: "GET")]

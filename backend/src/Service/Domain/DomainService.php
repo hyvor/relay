@@ -4,10 +4,10 @@ namespace App\Service\Domain;
 
 use App\Entity\Domain;
 use App\Entity\Project;
+use App\Entity\Type\DomainStatus;
 use App\Repository\DomainRepository;
 use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Service\Domain\Event\DomainDeletedEvent;
-use App\Service\Domain\Event\DomainVerifiedEvent;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Hyvor\Internal\Util\Crypt\Encryption;
@@ -25,8 +25,7 @@ class DomainService
         private Encryption $encryption,
         private DkimVerificationService $dkimVerificationService,
         private EventDispatcherInterface $eventDispatcher
-    )
-    {
+    ) {
     }
 
     public function getDomainById(int $domainId): ?Domain
@@ -42,10 +41,12 @@ class DomainService
     public function createDomain(Project $project, string $domainName): Domain
     {
         $domain = new Domain();
+        $domain->setCreatedAt($this->now());
+        $domain->setUpdatedAt($this->now());
         $domain->setProject($project);
         $domain->setDomain($domainName);
-        $domain->setCreatedAt(new \DateTimeImmutable());
-        $domain->setUpdatedAt(new \DateTimeImmutable());
+        $domain->setStatus(DomainStatus::PENDING);
+        $domain->setStatusChangedAt($this->now());
 
         $domain->setDkimSelector(Dkim::generateDkimSelector());
 
@@ -92,22 +93,6 @@ class DomainService
         /** @var Domain[] $results */
         $results = $qb->getQuery()->getResult();
         return new ArrayCollection($results);
-    }
-
-    public function verifyDkimAndUpdate(Domain $domain): void
-    {
-        $result = $this->dkimVerificationService->verify($domain);
-
-        $domain->setDkimVerified($result->verified);
-        $domain->setDkimCheckedAt($this->now());
-        $domain->setDkimErrorMessage($result->errorMessage);
-
-        $this->em->persist($domain);
-        $this->em->flush();
-
-        if ($result->verified) {
-            $this->eventDispatcher->dispatch(new DomainVerifiedEvent($domain, $result));
-        }
     }
 
     public function deleteDomain(Domain $domain): void

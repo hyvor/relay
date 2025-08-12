@@ -91,6 +91,9 @@ func (b *WebhooksBatch) Commit() error {
 }
 
 func (b *WebhooksBatch) Rollback() error {
+	if b.tx == nil {
+		return nil
+	}
 	if err := b.tx.Rollback(); err != nil {
 		return fmt.Errorf("failed to rollback transaction: %w", err)
 	}
@@ -100,7 +103,7 @@ func (b *WebhooksBatch) Rollback() error {
 func (b *WebhooksBatch) FinalizeWebhookByResult(delivery *WebhookDelivery, result *WebhookResult) error {
 
 	// 1 for the first, 2 for the second, etc.
-	currentTry := delivery.TryCount + 1
+	currentTry := result.NewTryCount
 
 	sendAfter := getRetryInterval(currentTry, result.Success)
 

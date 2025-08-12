@@ -74,16 +74,16 @@
 						Queued
 					</ActionListItem>
 					<ActionListItem
-						on:click={() => selectStatus('sent')}
-						selected={status === 'sent'}
+						on:click={() => selectStatus('accepted')}
+						selected={status === 'accepted'}
 					>
-						Sent
+						Accepted
 					</ActionListItem>
 					<ActionListItem
-						on:click={() => selectStatus('failed')}
-						selected={status === 'failed'}
+						on:click={() => selectStatus('bounced')}
+						selected={status === 'bounced'}
 					>
-						Failed
+						Bounced
 					</ActionListItem>
 				</ActionList>
 			</Selector>

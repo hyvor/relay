@@ -24,7 +24,7 @@ export const categories: Category[] = [
 	},
 
 	{
-		name: 'Developers',
+		name: 'API',
 		pages: [
 			{
 				slug: 'api-console',

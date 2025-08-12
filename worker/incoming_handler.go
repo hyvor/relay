@@ -17,13 +17,16 @@ type IncomingMail struct {
 }
 
 // call after the data is read
-func (m *IncomingMail) Handle(pgpool *pgxpool.Pool) {
+func (m *IncomingMail) Handle(pgpool *pgxpool.Pool, logger *slog.Logger, metrics *Metrics) {
 
 	isBounce, bounceUuid := checkBounceEmail(m.RcptTo, m.InstanceDomain)
 	isFbl := checkFbl(m.RcptTo, m.InstanceDomain)
 
 	if !isBounce && !isFbl {
-		slog.Info(
+
+		metrics.incomingEmailsTotal.WithLabelValues("unknown").Inc()
+
+		logger.Info(
 			"Received email that is not a bounce or FBL",
 			"MAIL", m.MailFrom,
 			"RCPT", m.RcptTo,
@@ -50,7 +53,7 @@ func (m *IncomingMail) Handle(pgpool *pgxpool.Pool) {
 		} else {
 
 			debugParsedData = bounceDsn
-			m.finalizeBounce(bounceDsn, bounceUuid, pgpool)
+			m.finalizeBounce(bounceDsn, bounceUuid, pgpool, logger)
 
 		}
 
@@ -66,13 +69,16 @@ func (m *IncomingMail) Handle(pgpool *pgxpool.Pool) {
 			debugErrorMessage = err.Error()
 		} else {
 			debugParsedData = arf
-			m.finalizeFbl(arf, pgpool)
+			m.finalizeFbl(arf, pgpool, logger)
 		}
 
 	}
 
+	metrics.incomingEmailsTotal.WithLabelValues(string(debugType)).Inc()
+
 	createDebugRecord(
 		pgpool,
+		logger,
 		debugType,
 		debugStatus,
 		m.Data,
@@ -88,12 +94,13 @@ func (m *IncomingMail) finalizeBounce(
 	bounceDsn *bounceparse.Dsn,
 	bounceUuid string,
 	pgpool *pgxpool.Pool,
+	logger *slog.Logger,
 ) {
 
 	// since each email generates a new UUID, we can safely
 	// assume that only one reciepient is present in the DSN
 	if len(bounceDsn.Recipients) == 0 {
-		slog.Error("Received bounce with no recipients", "UUID", bounceUuid)
+		logger.Error("Received bounce with no recipients", "UUID", bounceUuid)
 		return
 	}
 
@@ -102,7 +109,7 @@ func (m *IncomingMail) finalizeBounce(
 	// we are not interested in delayed or delivered actions
 	// most email clients do not even send delivered reports
 	if recipient.Action != "failed" {
-		slog.Info(
+		logger.Info(
 			"Received bounce with non-failed action",
 			"UUID", bounceUuid,
 			"ACTION", recipient.Action,
@@ -113,7 +120,7 @@ func (m *IncomingMail) finalizeBounce(
 	// We are only interested in bounces that have a status code that starts with 5
 	// (permanent failures)
 	if recipient.Status[0] != 5 {
-		slog.Info(
+		logger.Info(
 			"Received bounce with non-permanent status code",
 			"UUID", bounceUuid,
 			"STATUS", recipient.Status,
@@ -124,7 +131,7 @@ func (m *IncomingMail) finalizeBounce(
 	send, err := getSendByUuid(pgpool, bounceUuid)
 
 	if err != nil {
-		slog.Error("Failed to get send by UUID", "UUID", bounceUuid, "error", err)
+		logger.Error("Failed to get send by UUID", "UUID", bounceUuid, "error", err)
 		return
 	}
 
@@ -135,12 +142,13 @@ func (m *IncomingMail) finalizeBounce(
 func (m *IncomingMail) finalizeFbl(
 	arf *bounceparse.Arf,
 	pgpool *pgxpool.Pool,
+	logger *slog.Logger,
 ) {
 
 	parts := strings.Split(arf.MessageId, "@")
 
 	if len(parts) < 2 {
-		slog.Error("Received FBL with invalid Message-ID", "Message-ID", arf.MessageId)
+		logger.Error("Received FBL with invalid Message-ID", "Message-ID", arf.MessageId)
 		return
 	}
 
@@ -149,7 +157,7 @@ func (m *IncomingMail) finalizeFbl(
 	send, err := getSendByUuid(pgpool, uuid)
 
 	if err != nil {
-		slog.Error("Failed to get send by UUID", "UUID", uuid, "error", err)
+		logger.Error("Failed to get send by UUID", "UUID", uuid, "error", err)
 		return
 	}
 
@@ -209,11 +217,13 @@ func checkFbl(rcptTo string, instanceDomain string) bool {
 
 func incomingMailWorker(
 	ctx context.Context,
+	logger *slog.Logger,
+	metrics *Metrics,
 	mailChannel chan *IncomingMail,
 	pgpool *pgxpool.Pool,
 ) {
 
-	slog.Info("Starting incoming mail handler")
+	logger.Info("Starting incoming mail handler")
 
 	for {
 		select {
@@ -223,7 +233,7 @@ func incomingMailWorker(
 			if mail == nil {
 				continue
 			}
-			mail.Handle(pgpool)
+			mail.Handle(pgpool, logger, metrics)
 		}
 	}
 

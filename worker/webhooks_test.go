@@ -20,7 +20,7 @@ func TestNewWebhookWorkersPool(t *testing.T) {
 
 	var buf bytes.Buffer
 	logger := slog.New(slog.NewTextHandler(&buf, nil))
-	pool := NewWebhookWorkersPool(ctx, logger)
+	pool := NewWebhookWorkersPool(ctx, logger, &Metrics{})
 
 	assert.NotNil(t, pool)
 	assert.Equal(t, ctx, pool.ctx)
@@ -41,7 +41,7 @@ func TestWebhookWorkersPoolSet(t *testing.T) {
 
 	var called []int
 	var mu sync.Mutex
-	mockWorker := func(ctx context.Context, id int, wg *sync.WaitGroup, config *DBConfig, logger *slog.Logger) {
+	mockWorker := func(ctx context.Context, id int, wg *sync.WaitGroup, config *DBConfig, logger *slog.Logger, metrics *Metrics) {
 		defer wg.Done()
 		mu.Lock()
 		called = append(called, id)
@@ -110,7 +110,7 @@ func (suite *WebhookWorkerTestSuite) TestWhenNoWebhookDeliveriesFound() {
 
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go webhookWorker(ctx, 1, &wg, getTestDbConfig(), logger)
+	go webhookWorker(ctx, 1, &wg, getTestDbConfig(), logger, &Metrics{})
 	go func() {
 		defer wg.Done()
 		time.Sleep(50 * time.Millisecond)
@@ -144,7 +144,7 @@ func (suite *WebhookWorkerTestSuite) TestWebhookDeliverySent() {
 
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go webhookWorker(ctx, 1, &wg, getTestDbConfig(), logger)
+	go webhookWorker(ctx, 1, &wg, getTestDbConfig(), logger, &Metrics{})
 	go func() {
 		defer wg.Done()
 		time.Sleep(100 * time.Millisecond)
@@ -188,7 +188,7 @@ func (suite *WebhookWorkerTestSuite) TestWebhookDeliveryRequeuedOnFailure() {
 
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go webhookWorker(ctx, 1, &wg, getTestDbConfig(), logger)
+	go webhookWorker(ctx, 1, &wg, getTestDbConfig(), logger, &Metrics{})
 	go func() {
 		defer wg.Done()
 		time.Sleep(100 * time.Millisecond)
@@ -229,7 +229,7 @@ func (suite *WebhookWorkerTestSuite) TestWebhookDeliveryMarkedFailedAfterMaxRetr
 
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go webhookWorker(ctx, 1, &wg, getTestDbConfig(), logger)
+	go webhookWorker(ctx, 1, &wg, getTestDbConfig(), logger, &Metrics{})
 	go func() {
 		defer wg.Done()
 		time.Sleep(100 * time.Millisecond)

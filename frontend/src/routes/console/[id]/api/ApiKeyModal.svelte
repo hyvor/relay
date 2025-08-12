@@ -86,7 +86,7 @@
 			? updateApiKey(editingApiKey.id, {
 					name: name.trim(),
 					scopes: selectedScopes,
-					enabled: isEnabled
+					is_enabled: isEnabled
 				})
 			: createApiKey(name.trim(), selectedScopes);
 
@@ -219,6 +219,8 @@
 <style>
 	.modal-content {
 		padding: 20px 0;
+        max-height: 70vh;
+        overflow-y: auto;
 	}
 
 	.scopes-header {

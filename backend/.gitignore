@@ -8,6 +8,7 @@
 /var/
 /vendor/
 /packages/
+/src/Service/Tmp
 ###< symfony/framework-bundle ###
 
 ###> phpunit/phpunit ###
@@ -17,5 +18,3 @@
 
 ###> phpstan/phpstan ###
 phpstan.neon
-###< phpstan/phpstan ###
-/packages/

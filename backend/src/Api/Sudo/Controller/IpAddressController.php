@@ -22,8 +22,7 @@ class IpAddressController extends AbstractController
         private IpAddressService $ipAddressService,
         private InstanceService $instanceService,
         private QueueService $queueService
-    )
-    {
+    ) {
     }
 
     #[Route('/ip-addresses', methods: 'GET')]
@@ -31,7 +30,7 @@ class IpAddressController extends AbstractController
     {
         $ipAddresses = $this->ipAddressService->getAllIpAddresses();
         $instance = $this->instanceService->getInstance();
-        
+
         $ipAddressObjects = array_map(
             fn($ipAddress) => new IpAddressObject($ipAddress, $instance),
             $ipAddresses
@@ -50,9 +49,6 @@ class IpAddressController extends AbstractController
         }
 
         $updates = new UpdateIpAddressDto();
-        if ($input->hasProperty('is_active')) {
-            $updates->isActive = $input->is_active;
-        }
         if ($input->hasProperty('queue_id')) {
             if ($input->queue_id === null) {
                 $updates->queue = null;

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log/slog"
-	"os"
 	"time"
 )
 
@@ -23,6 +22,25 @@ type GoState struct {
 	ServersCount int    `json:"serversCount"`
 	Env          string `json:"env"`
 	Version      string `json:"version"`
+}
+
+func (g GoState) IpAddresses() []string {
+	ips := make([]string, len(g.Ips))
+	for i, ip := range g.Ips {
+		ips[i] = ip.Ip
+	}
+	return ips
+}
+
+func (g GoState) IpQueueMapString() string {
+	val := ""
+	for _, ip := range g.Ips {
+		if val != "" {
+			val += ","
+		}
+		val += ip.Ip + ":" + ip.QueueName
+	}
+	return val
 }
 
 type GoStateIp struct {
@@ -48,15 +66,14 @@ type ServiceState struct {
 	MetricsServer      *MetricsServer
 	EmailWorkersPool   *EmailWorkersPool
 	WebhookWorkersPool *WebhookWorkersPool
-	BounceServer       *BounceServer
+	IncomingMailServer *IncomingMailServer
 	DnsServer          *DnsServer
 
 	// whether the service is initialized for the first time
 	IsSet bool
 }
 
-func NewServiceState(ctx context.Context) *ServiceState {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+func NewServiceState(ctx context.Context, logger *slog.Logger) *ServiceState {
 	metricsServer := NewMetricsServer(ctx, logger)
 
 	return &ServiceState{
@@ -64,43 +81,35 @@ func NewServiceState(ctx context.Context) *ServiceState {
 		Logger:             logger,
 		MetricsServer:      metricsServer,
 		EmailWorkersPool:   NewEmailWorkersPool(ctx, logger, metricsServer.metrics),
-		WebhookWorkersPool: NewWebhookWorkersPool(ctx, logger),
-		BounceServer:       NewBounceServer(ctx, logger),
-		DnsServer:          NewDnsServer(ctx, logger),
+		WebhookWorkersPool: NewWebhookWorkersPool(ctx, logger, metricsServer.metrics),
+		IncomingMailServer: NewIncomingMailServer(ctx, logger, metricsServer.metrics),
+		DnsServer:          NewDnsServer(ctx, logger, metricsServer.metrics),
 	}
 }
 
 func (s *ServiceState) Set(goState GoState) {
 
-	s.EmailWorkersPool.Set(goState.Ips, goState.EmailWorkersPerIp, goState.InstanceDomain)
-	s.WebhookWorkersPool.Set(goState.WebhookWorkers)
-	s.BounceServer.Set(goState.InstanceDomain, goState.IncomingWorkers)
-
-	if goState.DnsIp != "" {
-		s.DnsServer.Set(
-			goState.DnsIp,
-			goState.DnsRecords,
-		)
-	}
-
-	s.MetricsServer.Set(goState)
-
-	s.Logger.Info("Updating state",
+	s.Logger.Info("Updating worker state",
 		"hostname", goState.Hostname,
 		"ip_count", len(goState.Ips),
-		"ips", goState.Ips,
-		"dns_records", goState.DnsRecords,
+		"ip_queues", goState.IpQueueMapString(),
+		"dns_records_count", len(goState.DnsRecords),
 		"email_workers_ip_per", goState.EmailWorkersPerIp,
+		"webhook_workers", goState.WebhookWorkers,
+		"incoming_workers", goState.IncomingWorkers,
+		"is_leader", goState.IsLeader,
+		"env", goState.Env,
+		"version", goState.Version,
 	)
 
-	for _, ip := range goState.Ips {
-		s.Logger.Info("IP info",
-			"ip", ip.Ip,
-			"ptr", ip.Ptr,
-			"queueId", ip.QueueId,
-			"queueName", ip.QueueName,
-		)
-	}
+	s.EmailWorkersPool.Set(goState.Ips, goState.EmailWorkersPerIp, goState.InstanceDomain)
+	s.WebhookWorkersPool.Set(goState.WebhookWorkers)
+	s.IncomingMailServer.Set(goState.InstanceDomain, goState.IncomingWorkers)
+	s.DnsServer.Set(goState.DnsIp, goState.DnsRecords)
+	s.MetricsServer.Set(goState)
+
+	s.IsSet = true
+
 }
 
 func (s *ServiceState) Initialize() {

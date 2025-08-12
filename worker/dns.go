@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
 	"strings"
 
@@ -11,26 +10,20 @@ import (
 )
 
 type DnsServer struct {
-	ctx    context.Context
-	logger *slog.Logger
+	ctx     context.Context
+	logger  *slog.Logger
+	metrics *Metrics
 
-	serverRunningIp string
-	server          *dns.Server
-
+	server     *dns.Server
 	dnsRecords []GoStateDnsRecord
-
-	// data
-	/* instanceDomain string
-	ipPtrsForward  map[string]string // maps domain names to IP addresses
-	mxIps          []string          // list of IPs for MX records (usually one IP per server)
-	dkimTxtValue   string */
 }
 
-func NewDnsServer(ctx context.Context, logger *slog.Logger) *DnsServer {
+func NewDnsServer(ctx context.Context, logger *slog.Logger, metrics *Metrics) *DnsServer {
 
 	return &DnsServer{
-		ctx:    ctx,
-		logger: logger,
+		ctx:     ctx,
+		logger:  logger.With("component", "dns_server"),
+		metrics: metrics,
 	}
 
 }
@@ -41,10 +34,6 @@ func (s *DnsServer) Set(
 ) {
 
 	s.dnsRecords = dnsRecords
-	/* s.instanceDomain = instanceDomain
-	s.ipPtrsForward = ipPtrsForward
-	s.mxIps = mxIps
-	s.dkimTxtValue = dkimTxtValue */
 
 	s.StopServer()
 	s.StartServer(dnsIp)
@@ -99,8 +88,15 @@ func (s *DnsServer) handleRequest(w dns.ResponseWriter, r *dns.Msg) {
 		name = strings.TrimSuffix(name, ".")
 
 		records := s.findDnsRecordsByTypeAndHost(dns.TypeToString[q.Qtype], name)
+		found := len(records) > 0
 
-		if len(records) == 0 {
+		status := "not_found"
+		if found {
+			status = "found"
+		}
+		s.metrics.dnsQueriesTotal.WithLabelValues(dns.TypeToString[q.Qtype], status).Inc()
+
+		if !found {
 			s.logger.Warn("No DNS records found for query", "name", name, "type", dns.TypeToString[q.Qtype])
 			continue
 		}
@@ -121,7 +117,7 @@ func (s *DnsServer) handleRequest(w dns.ResponseWriter, r *dns.Msg) {
 			case "TXT":
 				recordStr = fmt.Sprintf("%s %d IN TXT \"%s\"", name, record.TTL, record.Content)
 			default:
-				log.Printf("Unsupported record type: %s", record.Type)
+				s.logger.Warn("Unsupported record type: %s", record.Type)
 				continue
 			}
 

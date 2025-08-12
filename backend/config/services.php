@@ -4,10 +4,15 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use App\Api\Console\Resolver\EntityResolver;
 use App\Api\Console\Resolver\ProjectResolver;
-use App\Service\Management\Health\AllActiveIpsHaveCorrectPtrHealthCheck;
-use App\Service\Management\Health\AllQueuesHaveAtLeastOneIpHealthCheck;
+use App\Service\Dns\Resolve\DnsOverHttp;
+use App\Service\Dns\Resolve\DnsResolveInterface;
+use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
+    $containerConfigurator->parameters()
+        ->set('env(HOSTING)', 'self') // Default to self-hosted
+    ;
+
     $services = $containerConfigurator->services();
 
     // ================ DEFAULTS =================
@@ -37,4 +42,13 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             'controller.argument_value_resolver',
             ['name' => 'console_api_resource', 'priority' => 150]
         );
+
+    // ================ OTHER SERVICES =================
+    $services->alias(DnsResolveInterface::class, DnsOverHttp::class);
+
+    $services->set(PdoSessionHandler::class)
+        ->args([
+            env('DATABASE_URL'),
+            ['db_table' => 'oidc_sessions'],
+        ]);
 };

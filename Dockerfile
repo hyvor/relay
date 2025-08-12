@@ -21,11 +21,16 @@ RUN  bun install \
     && bun run build \
     && find . -maxdepth 1 -not -name build -not -name . -exec rm -rf {} \;
 
+FROM golang AS worker-dev
+WORKDIR /worker
+COPY worker/ /worker/
+RUN go mod download
+CMD [ "/worker/worker.dev.run" ]
+
 FROM golang AS worker
 WORKDIR /app/worker
 COPY worker/ /app/worker/
-RUN go mod download
-RUN go build -o /app/worker/worker .
+RUN go build -o ./worker .
 
 FROM frankenphp AS backend-base
 ENV APP_RUNTIME="Runtime\FrankenPhpSymfony\Runtime"

@@ -30,9 +30,14 @@ class AllIpsAreInSpfRecordHealthCheckTest extends KernelTestCase
 
         $this->dnsResolver = $this->createMock(Resolver::class);
 
+        /** @var InstanceService $instanceService */
+        $instanceService = $this->container->get(InstanceService::class);
+        /** @var IpAddressService $ipAddressService */
+        $ipAddressService = $this->container->get(IpAddressService::class);
+
         $this->healthCheck = new AllIpsAreInSpfRecordHealthCheck(
-            $this->container->get(InstanceService::class),
-            $this->container->get(IpAddressService::class),
+            $instanceService,
+            $ipAddressService,
             $this->dnsResolver
         );
     }
@@ -47,7 +52,9 @@ class AllIpsAreInSpfRecordHealthCheckTest extends KernelTestCase
         $ip_address2 = IpAddressFactory::createOne();
 
         $this->dnsResolver->method('getTXTRecords')
-            ->willReturn(['v=spf1 ip4:' . $ip_address1->getIpAddress() . ' ip4:' . $ip_address2->getIpAddress() . ' -all']);
+            ->willReturn(
+                ['v=spf1 ip4:' . $ip_address1->getIpAddress() . ' ip4:' . $ip_address2->getIpAddress() . ' -all']
+            );
 
         $result = $this->healthCheck->check();
 
@@ -113,7 +120,9 @@ class AllIpsAreInSpfRecordHealthCheckTest extends KernelTestCase
         $ip_address2 = IpAddressFactory::createOne();
 
         $this->dnsResolver->method('getTXTRecords')
-            ->willReturn(['v=spf1 ip4:' . $ip_address1->getIpAddress() . '/24 ip4:' . $ip_address2->getIpAddress() . ' -all']);
+            ->willReturn(
+                ['v=spf1 ip4:' . $ip_address1->getIpAddress() . '/24 ip4:' . $ip_address2->getIpAddress() . ' -all']
+            );
 
         $result = $this->healthCheck->check();
 

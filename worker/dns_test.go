@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"errors"
+	"log/slog"
 	"net"
 	"testing"
 
 	"github.com/miekg/dns"
+	"github.com/stretchr/testify/assert"
 )
 
 type fakeResponseWriter struct {
@@ -44,61 +47,102 @@ func getAnswer(dnsServer DnsServer, query string, dnsType uint16) ([]dns.RR, err
 
 func TestHandleDNSRequest(t *testing.T) {
 
-	// TODO
-	/* dnsServer := DnsServer{
-		instanceDomain: "relay.hyvor.com",
-		ipPtrsForward: map[string]string{
-			"smtp1.relay.hyvor.com": "1.1.1.1",
-			"smtp2.relay.hyvor.com": "2.2.2.2",
+	dnsServer := DnsServer{
+		ctx:    context.Background(),
+		logger: slog.Default(),
+		dnsRecords: []GoStateDnsRecord{
+			{
+				Type:    "A",
+				Host:    "smtp1.relay.hyvor.com",
+				Content: "1.1.1.1",
+				TTL:     3600,
+			},
+			{
+				Type:    "A",
+				Host:    "smtp1.relay.hyvor.com",
+				Content: "2.2.2.2",
+				TTL:     3600,
+			},
+			{
+				Type:    "AAAA",
+				Host:    "smtp1.relay.hyvor.com",
+				Content: "2001:db8::1",
+				TTL:     3600,
+			},
+			{
+				Type:    "CNAME",
+				Host:    "blog.relay.hyvor.com",
+				Content: "hyvorblogs.io",
+				TTL:     300,
+			},
+			{
+				Type:     "MX",
+				Host:     "relay.hyvor.com",
+				Content:  "mx.relay.hyvor.com",
+				TTL:      3600,
+				Priority: 10,
+			},
+			{
+				Type:     "MX",
+				Host:     "relay.hyvor.com",
+				Content:  "mx2.relay.hyvor.com",
+				TTL:      3600,
+				Priority: 20,
+			},
+			{
+				Type:    "TXT",
+				Host:    "relay.hyvor.com",
+				Content: "v=spf1 ip4:1.1.1.1 ip4:2.2.2.2 -all",
+			},
 		},
-		mxIps:        []string{"3.3.3.3", "4.4.4.4"},
-		dkimTxtValue: "v=DKIM1; k=rsa; p=MIIBIjANBgkgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQ...",
 	}
 
 	answer, err := getAnswer(dnsServer, "smtp1.relay.hyvor.com.", dns.TypeA)
 	assert.NoError(t, err)
-	aRecord, ok := answer[0].(*dns.A)
+	assert.Len(t, answer, 2)
+	aRecord1, ok := answer[0].(*dns.A)
 	assert.True(t, ok)
-	assert.Equal(t, "1.1.1.1", aRecord.A.String())
+	assert.Equal(t, "1.1.1.1", aRecord1.A.String())
+	aRecord2, ok := answer[1].(*dns.A)
+	assert.True(t, ok)
+	assert.Equal(t, "2.2.2.2", aRecord2.A.String())
 
-	answer2, err := getAnswer(dnsServer, "smtp1.relay.hyvor.com", dns.TypeA)
+	answerAAAA, err := getAnswer(dnsServer, "smtp1.relay.hyvor.com.", dns.TypeAAAA)
 	assert.NoError(t, err)
-	aRecord2, ok := answer2[0].(*dns.A)
+	assert.Len(t, answerAAAA, 1)
+	aaaaRecord, ok := answerAAAA[0].(*dns.AAAA)
 	assert.True(t, ok)
-	assert.Equal(t, "1.1.1.1", aRecord2.A.String())
+	assert.Equal(t, "2001:db8::1", aaaaRecord.AAAA.String())
 
-	answer3, err := getAnswer(dnsServer, "smtp2.relay.hyvor.com", dns.TypeA)
+	answerCNAME, err := getAnswer(dnsServer, "blog.relay.hyvor.com.", dns.TypeCNAME)
 	assert.NoError(t, err)
-	aRecord3, ok := answer3[0].(*dns.A)
+	assert.Len(t, answerCNAME, 1)
+	cnameRecord, ok := answerCNAME[0].(*dns.CNAME)
 	assert.True(t, ok)
-	assert.Equal(t, "2.2.2.2", aRecord3.A.String())
+	assert.Equal(t, "hyvorblogs.io.", cnameRecord.Target)
+	assert.Equal(t, uint32(300), cnameRecord.Hdr.Ttl)
 
-	mxAnswer, err := getAnswer(dnsServer, "relay.hyvor.com.", dns.TypeMX)
+	answerMX, err := getAnswer(dnsServer, "relay.hyvor.com.", dns.TypeMX)
 	assert.NoError(t, err)
-	mxRecord, ok := mxAnswer[0].(*dns.MX)
+	assert.Len(t, answerMX, 2)
+	mxRecord1, ok := answerMX[0].(*dns.MX)
 	assert.True(t, ok)
-	assert.Equal(t, "mx.relay.hyvor.com.", mxRecord.Mx)
-	assert.Equal(t, uint16(10), mxRecord.Preference)
+	assert.Equal(t, "mx.relay.hyvor.com.", mxRecord1.Mx)
+	assert.Equal(t, uint16(10), mxRecord1.Preference)
+	mxRecord2, ok := answerMX[1].(*dns.MX)
+	assert.True(t, ok)
+	assert.Equal(t, "mx2.relay.hyvor.com.", mxRecord2.Mx)
+	assert.Equal(t, uint16(20), mxRecord2.Preference)
 
-	mxAAnswer, err := getAnswer(dnsServer, "mx.relay.hyvor.com", dns.TypeA)
+	answerTXT, err := getAnswer(dnsServer, "relay.hyvor.com.", dns.TypeTXT)
 	assert.NoError(t, err)
-	mxARecord1, ok := mxAAnswer[0].(*dns.A)
-	assert.True(t, ok)
-	assert.Equal(t, "3.3.3.3", mxARecord1.A.String())
-	mxARecord2, ok := mxAAnswer[1].(*dns.A)
-	assert.True(t, ok)
-	assert.Equal(t, "4.4.4.4", mxARecord2.A.String())
-
-	txtAnswer, err := getAnswer(dnsServer, "relay.hyvor.com.", dns.TypeTXT)
-	assert.NoError(t, err)
-	txtRecord, ok := txtAnswer[0].(*dns.TXT)
+	assert.Len(t, answerTXT, 1)
+	txtRecord, ok := answerTXT[0].(*dns.TXT)
 	assert.True(t, ok)
 	assert.Equal(t, "v=spf1 ip4:1.1.1.1 ip4:2.2.2.2 -all", txtRecord.Txt[0])
 
-	dkimAnswer, err := getAnswer(dnsServer, "default._domainkey.relay.hyvor.com.", dns.TypeTXT)
-	assert.NoError(t, err)
-	dkimRecord, ok := dkimAnswer[0].(*dns.TXT)
-	assert.True(t, ok)
-	assert.Equal(t, "v=DKIM1; k=rsa; p=MIIBIjANBgkgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQ...", dkimRecord.Txt[0]) */
+	// Test for non-existing record
+	_, err = getAnswer(dnsServer, "nonexistent.relay.hyvor.com.", dns.TypeA)
+	assert.Error(t, err)
 
 }

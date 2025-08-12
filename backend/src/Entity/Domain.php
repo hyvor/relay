@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Type\DomainStatus;
 use App\Repository\DomainRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -27,6 +28,12 @@ class Domain
     #[ORM\Column(type: "string", length: 255)]
     private string $domain;
 
+    #[ORM\Column(type: "string", enumType: DomainStatus::class)]
+    private DomainStatus $status;
+
+    #[ORM\Column(type: "datetime_immutable")]
+    private \DateTimeImmutable $status_changed_at;
+
     #[ORM\Column(type: "string")]
     private string $dkim_selector;
 
@@ -36,9 +43,6 @@ class Domain
     #[ORM\Column(type: "text")]
     private string $dkim_private_key_encrypted;
 
-    #[ORM\Column(type: "boolean")]
-    private bool $dkim_verified = false;
-
     #[ORM\Column(type: "datetime_immutable", nullable: true)]
     private ?\DateTimeImmutable $dkim_checked_at = null;
 
@@ -46,7 +50,8 @@ class Domain
     private ?string $dkim_error_message = null;
 
     public function __construct()
-    {}
+    {
+    }
 
     public function getCreatedAt(): \DateTimeImmutable
     {
@@ -103,6 +108,28 @@ class Domain
         return $this;
     }
 
+    public function getStatus(): DomainStatus
+    {
+        return $this->status;
+    }
+
+    public function setStatus(DomainStatus $status): static
+    {
+        $this->status = $status;
+        return $this;
+    }
+
+    public function getStatusChangedAt(): \DateTimeImmutable
+    {
+        return $this->status_changed_at;
+    }
+
+    public function setStatusChangedAt(\DateTimeImmutable $statusChangedAt): static
+    {
+        $this->status_changed_at = $statusChangedAt;
+        return $this;
+    }
+
     public function getDkimSelector(): string
     {
         return $this->dkim_selector;
@@ -133,17 +160,6 @@ class Domain
     public function setDkimPrivateKeyEncrypted(string $dkimPrivateKey): static
     {
         $this->dkim_private_key_encrypted = $dkimPrivateKey;
-        return $this;
-    }
-
-    public function getDkimVerified(): bool
-    {
-        return $this->dkim_verified;
-    }
-
-    public function setDkimVerified(bool $dkimVerified): static
-    {
-        $this->dkim_verified = $dkimVerified;
         return $this;
     }
 

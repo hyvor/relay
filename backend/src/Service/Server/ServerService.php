@@ -2,8 +2,8 @@
 
 namespace App\Service\Server;
 
-use App\Config;
 use App\Entity\Server;
+use App\Service\App\Config;
 use App\Service\PrivateNetwork\Exception\PrivateNetworkCallException;
 use App\Service\PrivateNetwork\PrivateNetworkApi;
 use App\Service\Server\Dto\UpdateServerDto;
@@ -19,8 +19,7 @@ class ServerService
         private readonly EntityManagerInterface $em,
         private readonly Config $config,
         private PrivateNetworkApi $privateNetworkApi
-    )
-    {
+    ) {
     }
 
     /**
@@ -59,7 +58,6 @@ class ServerService
 
     public function createServerFromConfig(): Server
     {
-
         $server = new Server();
         $server
             ->setCreatedAt($this->now())
@@ -84,8 +82,7 @@ class ServerService
         Server $server,
         UpdateServerDto $updates,
         bool $updateStateCall = false,
-    ): void
-    {
+    ): void {
         if ($updates->lastPingAtSet) {
             $server->setLastPingAt($updates->lastPingAt);
         }
@@ -131,7 +128,6 @@ class ServerService
                 throw $e;
             }
         }
-
     }
 
 }

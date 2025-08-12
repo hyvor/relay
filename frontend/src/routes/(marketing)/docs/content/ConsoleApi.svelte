@@ -84,6 +84,40 @@ Authorization: Bearer <your_api_key>
 
 <p>Each endpoint requires specific scopes to be included in the API key.</p>
 
+<h2 id="rate-limit">Rate Limiting</h2>
+
+<p>The Console API has rate limits to prevent abuse and ensure fair usage.</p>
+
+<ul>
+	<li>
+		<strong>Default rate limit</strong>: 100 requests per minute (per API key)
+	</li>
+	<li>
+		<strong><a href="/docs/send-emails">Email sending</a> rate limit</strong>: 10 requests per
+		second (per project)
+	</li>
+</ul>
+
+<p>
+	If you exceed these limits, you will receive a
+	<code>429 Too Many Requests</code> response. The following standard headers are included in all API
+	responses to indicate the current rate limit status:
+</p>
+
+<ul>
+	<li>
+		<code>X-RateLimit-Limit</code>: The maximum number of requests allowed in the current time
+		window.
+	</li>
+	<li>
+		<code>X-RateLimit-Remaining</code>: The number of requests remaining in the current time
+		window.
+	</li>
+	<li>
+		<code>X-RateLimit-Reset</code>: How many seconds until the rate limit resets.
+	</li>
+</ul>
+
 <h2 id="endpoints">Endpoints</h2>
 
 <ul>
@@ -117,10 +151,13 @@ Authorization: Bearer <your_api_key>
 		<Scope>Idempotency Supported</Scope> - Send an email
 	</li>
 	<li>
-		<a href="#get-sends">GET /sends</a> - Get sent emails
+		<a href="#get-sends">GET /sends</a> - Get sends
 	</li>
 	<li>
-		<a href="#get-send">GET /sends/:id</a> - Get a specific sent email by ID
+		<a href="#get-send">GET /sends/:id</a> - Get a send by ID
+	</li>
+	<li>
+		<a href="#get-send-uuid">GET /sends/uuid/:uuid</a> - Get a send by UUID
 	</li>
 </ul>
 
@@ -139,6 +176,11 @@ Authorization: Bearer <your_api_key>
 
 <p>
 	<code>POST /sends</code> (scope: <strong>sends.send</strong>)
+</p>
+
+<p>
+	Visit the <a href="/docs/send-emails">Send Emails</a> page for a detailed guide on how to send emails
+	using this endpoint.
 </p>
 
 <CodeBlock
@@ -184,10 +226,24 @@ Authorization: Bearer <your_api_key>
 	language="ts"
 />
 
-<h4 id="get-send">Get Send</h4>
+<h4 id="get-send">Get Send by ID</h4>
 
 <p>
-	<code>GET /sends/uuid/:uuid</code>
+	<code>GET /sends/:id</code> (scope: <strong>sends.read</strong>)
+</p>
+
+<CodeBlock
+	code={`
+	type Request = {}
+	type Response = Send // includes attempts array
+`}
+	language="ts"
+/>
+
+<h4 id="get-send-uuid">Get Send by UUID</h4>
+
+<p>
+	<code>GET /sends/uuid/:uuid</code> (scope: <strong>sends.read</strong>)
 </p>
 
 <CodeBlock
@@ -210,10 +266,13 @@ Authorization: Bearer <your_api_key>
 		<a href="#create-domain">POST /domains</a> - Create a new domain for the project
 	</li>
 	<li>
-		<a href="#get-domain">GET /domains/:id</a> - Get a specific domain by ID
+		<a href="#verify-domain">POST /domains/verify</a> - Verify a domain
 	</li>
 	<li>
-		<a href="#delete-domain">DELETE /domains</a> - Delete a domain by ID or domain name.
+		<a href="#get-domain">GET /domains/:id</a> - Get a domain by ID or domain name
+	</li>
+	<li>
+		<a href="#delete-domain">DELETE /domains</a> - Delete a domain by ID or domain name
 	</li>
 </ul>
 
@@ -259,16 +318,46 @@ Authorization: Bearer <your_api_key>
 	language="ts"
 />
 
-<h4 id="get-domain">Get Domain</h4>
+<h4 id="verify-domain">Verify Domain</h4>
 
 <p>
-	<code>GET /domains/:id</code> (scope: <strong>domains.read</strong>)
+	<code>POST /domains/verify</code> (scope: <strong>domains.write</strong>)
 </p>
 
 <CodeBlock
 	code={`
-    type Request = {}
-    type Response = Domain
+type Request = {
+	// Either id or domain must be provided
+	id?: number,
+	domain?: string
+}
+type Response = Domain
+`}
+	language="ts"
+/>
+
+<h4 id="get-domain">Get Domain</h4>
+
+<p>
+	<code>GET /domains/by</code> (scope: <strong>domains.read</strong>)
+</p>
+
+<CodeBlock
+	code={`
+type Request = {
+	// Either id or domain must be provided
+	id?: number,
+	domain?: string
+}
+type Response = Domain
+`}
+	language="ts"
+/>
+
+<CodeBlock
+	code={`
+	type Request = {}
+	type Response = Domain
 `}
 	language="ts"
 />
@@ -344,6 +433,10 @@ Authorization: Bearer <your_api_key>
 	<code>POST /webhooks</code>
 </p>
 
+<p>
+	See <a href="/docs/webhooks#events">Webhooks</a> page for available events.
+</p>
+
 <CodeBlock
 	code={`
     type Request = {
@@ -397,7 +490,7 @@ Authorization: Bearer <your_api_key>
 <CodeBlock
 	code={`
     type Request = {
-        webhookId?: number // Optional. Filter by webhook ID
+        webhook_id?: number // Optional. Filter by webhook ID
     }
     type Response = WebhookDelivery[]
 `}
@@ -451,6 +544,8 @@ Authorization: Bearer <your_api_key>
 	<code>POST /api-keys</code> (scope: <strong>api_keys.write</strong>)
 </p>
 
+<p>Note: Maximum of 10 API keys are allowed per project.</p>
+
 <CodeBlock
 	code={`
     type Request = {
@@ -472,7 +567,7 @@ Authorization: Bearer <your_api_key>
 	code={`
     type Request = {
         name?: string,
-        enabled?: boolean,
+        is_enabled?: boolean,
         scopes?: string[]
     }
     type Response = ApiKey
@@ -643,17 +738,20 @@ Authorization: Bearer <your_api_key>
 	id: number;
 	created_at: number;
 	domain: string;
+	status: 'pending' | 'active' | 'warning' | 'suspended';
 	dkim_selector: string;
 	dkim_host: string;
-	dkim_txt_name: string;
 	dkim_public_key: string;
 	dkim_txt_value: string;
-	dkim_verified: boolean;
 	dkim_checked_at: number | null;
 	dkim_error_message: string | null;
         }
     `}
 />
+
+<p>
+	More about <a href="/docs/domains#status">Domain Status</a>.
+</p>
 
 <h3 id="webhook-object">Webhook Object</h3>
 
@@ -663,7 +761,7 @@ Authorization: Bearer <your_api_key>
         interface Webhook {
 	id: number;
 	url: string;
-	description: string;
+	description: string | null;
 	events: string[];
         }
     `}
@@ -676,11 +774,11 @@ Authorization: Bearer <your_api_key>
 	code={`
         interface WebhookDelivery {
 	id: number;
+	created_at: number;
 	url: string;
 	event: string;
 	status: 'pending' | 'delivered' | 'failed';
-	response: string;
-	created_at: number;
+	response: string | null;
         }
     `}
 />

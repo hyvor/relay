@@ -5,12 +5,15 @@ namespace App\Tests\Api\Console;
 use App\Api\Console\Authorization\AuthorizationListener;
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Authorization\ScopeRequired;
+use App\Entity\ApiKey;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use Hyvor\Internal\Auth\AuthFake;
 use Hyvor\Internal\Auth\AuthUser;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\BrowserKit\Cookie;
+use Symfony\Component\Clock\Clock;
+use Symfony\Component\Clock\MockClock;
 
 #[CoversClass(AuthorizationListener::class)]
 #[CoversClass(ScopeRequired::class)]
@@ -25,9 +28,9 @@ class AuthorizationTest extends WebTestCase
     public function test_api_key_authentication_nothing(): void
     {
         $this->client->request("GET", "/api/console/sends");
-        $this->assertResponseStatusCodeSame(403);
+        $this->assertResponseStatusCodeSame(401);
         $this->assertSame(
-            "Authorization method not supported. Use either Bearer token or a session.",
+            "Unauthorized",
             $this->getJson()["message"]
         );
     }
@@ -106,8 +109,8 @@ class AuthorizationTest extends WebTestCase
                 "HTTP_X_PROJECT_ID" => $project->getId(),
             ]
         );
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame("Invalid session.", $this->getJson()["message"]);
+        $this->assertResponseStatusCodeSame(401);
+        $this->assertSame("Unauthorized", $this->getJson()["message"]);
     }
 
     public function test_fails_when_xprojectid_header_is_not_set(): void
@@ -159,8 +162,9 @@ class AuthorizationTest extends WebTestCase
         );
     }
 
-    public function test_authorizes_via_api_key(): void
+    public function test_authorizes_via_api_key_and_updates_last_usage(): void
     {
+        Clock::set(new MockClock('2025-06-01 00:00:00'));
 
         $project = ProjectFactory::createOne();
         $this->consoleApi(
@@ -178,6 +182,13 @@ class AuthorizationTest extends WebTestCase
         );
         $this->assertSame($project->getId(), $projectFromAttr->getId());
 
+        $apiKey = $this->em->getRepository(ApiKey::class)->findOneBy(['project' => $project->_real()]);
+
+        $this->assertInstanceOf(ApiKey::class, $apiKey);
+        $this->assertSame(
+            '2025-06-01 00:00:00',
+            $apiKey->getLastAccessedAt()?->format('Y-m-d H:i:s')
+        );
     }
 
     public function test_authorizes_via_session(): void
@@ -223,6 +234,5 @@ class AuthorizationTest extends WebTestCase
         $json = $this->getJson();
         $this->assertArrayHasKey('projects', $json);
         $this->assertArrayHasKey('config', $json);
-
     }
 }

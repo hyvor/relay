@@ -3,6 +3,7 @@
 	import type { IpAddress } from '../sudoTypes';
 	import IconExclamationCircle from '@hyvor/icons/IconExclamationCircle';
 	import QueueSelectModal from '../queues/QueueSelectModal.svelte';
+	import IpPtrStatus from './IpPtrStatus.svelte';
 
 	interface Props {
 		ip: IpAddress;
@@ -58,12 +59,11 @@
 	<td>
 		<div class="ptr">{ip.ptr}</div>
 		<div class="ptr-tags">
-			<Tag size="small" color="green">Forward ok</Tag>
-			<Tag size="small" color="green">Reverse ok</Tag>
+			{#if ip.queue}
+				<IpPtrStatus status={ip.is_ptr_forward_valid} forward />
+				<IpPtrStatus status={ip.is_ptr_reverse_valid} />
+			{/if}
 		</div>
-	</td>
-	<td class="">
-		<Tag size="small" color="green">Enabled</Tag>
 	</td>
 </tr>
 

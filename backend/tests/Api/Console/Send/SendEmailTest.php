@@ -8,6 +8,7 @@ use App\Api\Console\Input\SendEmail\SendEmailInput;
 use App\Api\Console\Input\SendEmail\UnableToDecodeAttachmentBase64Exception;
 use App\Api\Console\Object\SendObject;
 use App\Entity\Send;
+use App\Entity\Type\DomainStatus;
 use App\Entity\Type\ProjectSendType;
 use App\Entity\Type\SendStatus;
 use App\Service\Send\EmailBuilder;
@@ -55,7 +56,6 @@ class SendEmailTest extends WebTestCase
             "You do not have the required scope 'sends.send' to access this resource.",
             $json['message']
         );
-
     }
 
     protected function getHtmlBodyTooLargeData(): mixed
@@ -83,7 +83,11 @@ class SendEmailTest extends WebTestCase
             "to" => "somebody@example.com",
             "body_text" => 'test',
             'attachments' => [
-                ['content' => str_repeat('a', 10 * 1024 * 1024 + 1), 'name' => 'large.txt', 'content_type' => 'text/plain'],
+                [
+                    'content' => str_repeat('a', 10 * 1024 * 1024 + 1),
+                    'name' => 'large.txt',
+                    'content_type' => 'text/plain'
+                ],
             ]
         ];
     }
@@ -361,7 +365,8 @@ class SendEmailTest extends WebTestCase
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
-            'dkim_verified' => true,
+            'status' => DomainStatus::ACTIVE,
+            'dkim_selector' => 'my-selector'
         ]);
 
         $fromAddress = "supun@hyvor.com";
@@ -385,6 +390,7 @@ class SendEmailTest extends WebTestCase
                 "body_html" => "<p>This is a test email.</p>",
                 "headers" => [
                     "X-Custom-Header" => "Custom Value",
+                    'Reply-To' => 'no-reply@hyvor.com', // bug #163
                 ],
             ],
             scopes: [Scope::SENDS_SEND]
@@ -423,6 +429,7 @@ class SendEmailTest extends WebTestCase
         $this->assertSame(
             [
                 "X-Custom-Header" => "Custom Value",
+                'Reply-To' => 'no-reply@hyvor.com'
             ],
             $send->getHeaders()
         );
@@ -434,7 +441,7 @@ class SendEmailTest extends WebTestCase
         $rawBody = $rawSplit[1];
 
         $fromHeader = $useArrayAddress ? "Supun <supun@hyvor.com>" : "supun@hyvor.com";
-        $toHeader =  $useArrayAddress ? "Somebody <somebody@example.com>" : "somebody@example.com";
+        $toHeader = $useArrayAddress ? "Somebody <somebody@example.com>" : "somebody@example.com";
         $this->assertStringContainsString("From: $fromHeader\r\n", $rawHeaders);
         $this->assertStringContainsString("To: $toHeader\r\n", $rawHeaders);
         $this->assertStringContainsString("Subject: Test Email\r\n", $rawHeaders);
@@ -456,6 +463,26 @@ class SendEmailTest extends WebTestCase
         $this->assertStringContainsString("\r\nContent-Transfer-Encoding: quoted-printable\r\n", $rawBody);
         $this->assertStringContainsString("This is a test email.", $rawBody);
         $this->assertStringContainsString("<p>This is a test email.</p>", $rawBody);
+
+        preg_match_all('/^DKIM-Signature:.*?(?:\r\n[ \t].*?)*(?=\r\n\S)/ms', $rawHeaders, $matches);
+
+        $first = $matches[0][0];
+        $first = str_replace("\r\n", "", $first);
+        $this->assertStringContainsString(
+            "h=From: To: Subject: X-Custom-Header: Reply-To: Message-ID: X-Mailer: MIME-Version: Date;",
+            $first
+        );
+        $this->assertStringContainsString("i=@hyvor.com", $first);
+        $this->assertStringContainsString("s=my-selector", $first);
+
+        $second = $matches[0][1];
+        $second = str_replace("\r\n", "", $second);
+        $this->assertStringContainsString(
+            "h=From: To: Subject: X-Custom-Header: Reply-To: Message-ID: X-Mailer: MIME-Version: Date;",
+            $second
+        );
+        $this->assertStringContainsString("i=@relay.hyvor.localhost", $second);
+        $this->assertStringContainsString("s=default", $second);
     }
 
     public function test_does_not_allow_unregistered_domain(): void
@@ -476,7 +503,6 @@ class SendEmailTest extends WebTestCase
             "Domain hyvor.com is not registered for this project",
             $json['message']
         );
-
     }
 
     public function test_does_not_allow_from_unverified_domain(): void
@@ -487,7 +513,6 @@ class SendEmailTest extends WebTestCase
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
-            'dkim_verified' => false,
         ]);
 
         $this->consoleApi($project, "POST", "/sends", data: [
@@ -500,10 +525,9 @@ class SendEmailTest extends WebTestCase
 
         $json = $this->getJson();
         $this->assertSame(
-            "Domain hyvor.com is not verified",
+            "Domain hyvor.com is not allowed to send emails (status: pending)",
             $json['message']
         );
-
     }
 
     public function test_does_not_allow_suppressed_emails(): void
@@ -514,7 +538,7 @@ class SendEmailTest extends WebTestCase
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
-            'dkim_verified' => true,
+            'status' => DomainStatus::ACTIVE,
         ]);
 
         SuppressionFactory::createOne([
@@ -535,19 +559,17 @@ class SendEmailTest extends WebTestCase
             "Email address test@example.com is suppressed",
             $json['message']
         );
-
     }
 
     public function test_with_attachments(): void
     {
-
         QueueFactory::createTransactional();
         $project = ProjectFactory::createOne();
 
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
-            'dkim_verified' => true,
+            'status' => DomainStatus::ACTIVE,
         ]);
 
         $this->consoleApi($project, "POST", "/sends", data: [
@@ -583,23 +605,27 @@ class SendEmailTest extends WebTestCase
         $this->assertStringContainsString("Content-Type: multipart/mixed; boundary=", $rawEmail);
         $this->assertStringContainsString("Content-Type: text/plain;", $rawEmail);
         $this->assertStringContainsString(base64_encode('This is a test file.'), $rawEmail);
-        $this->assertStringContainsString("Content-Disposition: attachment; name=test.txt; filename=test.txt", $rawEmail);
+        $this->assertStringContainsString(
+            "Content-Disposition: attachment; name=test.txt; filename=test.txt",
+            $rawEmail
+        );
         $this->assertStringContainsString("Content-Type: text/plain;", $rawEmail);
         $this->assertStringContainsString(base64_encode('This is another test file.'), $rawEmail);
-        $this->assertStringContainsString("Content-Disposition: attachment; name=test2.txt; filename=test2.txt", $rawEmail);
-
+        $this->assertStringContainsString(
+            "Content-Disposition: attachment; name=test2.txt; filename=test2.txt",
+            $rawEmail
+        );
     }
 
     public function test_fails_gracefully_when_cannot_decode_attachments(): void
     {
-
         QueueFactory::createTransactional();
         $project = ProjectFactory::createOne();
 
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
-            'dkim_verified' => true,
+            'status' => DomainStatus::ACTIVE,
         ]);
 
         $this->consoleApi($project, "POST", "/sends", data: [
@@ -621,7 +647,6 @@ class SendEmailTest extends WebTestCase
             "Base64 decoding of attachment failed: index 0",
             $json['message']
         );
-
     }
 
     public function test_email_max10mb(): void
@@ -642,7 +667,7 @@ class SendEmailTest extends WebTestCase
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
-            'dkim_verified' => true,
+            'status' => DomainStatus::ACTIVE,
         ]);
 
         $attachment = [
@@ -668,7 +693,6 @@ class SendEmailTest extends WebTestCase
             "Email size exceeds the maximum allowed size of 10MB.",
             $json['message']
         );
-
     }
 
     public function test_queues_on_the_correct_queue_based_on_project_send_type(): void
@@ -682,7 +706,7 @@ class SendEmailTest extends WebTestCase
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
-            'dkim_verified' => true,
+            'status' => DomainStatus::ACTIVE,
         ]);
 
         $this->consoleApi($project, "POST", "/sends", data: [
@@ -697,7 +721,6 @@ class SendEmailTest extends WebTestCase
         $this->assertCount(1, $send);
         $send = $send[0];
         $this->assertSame('distributional', $send->getQueue()->getName());
-
     }
 
 }

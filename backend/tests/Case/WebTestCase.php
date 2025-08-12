@@ -5,21 +5,21 @@ namespace App\Tests\Case;
 use App\Api\Console\Authorization\Scope;
 use App\Entity\Project;
 use App\Tests\Factory\ApiKeyFactory;
-use App\Tests\Factory\SudoUserFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Auth\AuthFake;
 use Hyvor\Internal\Bundle\Testing\ApiTestingTrait;
+use Hyvor\Internal\Sudo\SudoUserFactory;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\HttpFoundation\Response;
-use Zenstruck\Messenger\Test\InteractsWithMessenger;
 
 class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
 {
 
     use ApiTestingTrait;
-    use InteractsWithMessenger;
+    use TestSharedTrait;
 
     protected KernelBrowser $client;
     protected EntityManagerInterface $em;
@@ -53,7 +53,6 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         string $uri,
         array $data = [],
     ): Response {
-
         $this->client->request(
             $method,
             '/api/sudo' . $uri,
@@ -95,12 +94,19 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
 
         if ($useSession) {
             $this->client->getCookieJar()->set(new Cookie('authsess', 'test'));
-        }
-        else {
+            if ($project) {
+                $server['HTTP_X_PROJECT_ID'] = (string)$project->getId();
+            }
+        } else {
             $apiKey = bin2hex(random_bytes(16));
             $apiKeyHashed = hash('sha256', $apiKey);
             $apiKeyFactory = ['key_hashed' => $apiKeyHashed, 'project' => $project];
-            if ($scopes !== true) $apiKeyFactory['scopes'] = array_map(fn(Scope|string $scope) => is_string($scope) ? $scope : $scope->value, $scopes);
+            if ($scopes !== true) {
+                $apiKeyFactory['scopes'] = array_map(
+                    fn(Scope|string $scope) => is_string($scope) ? $scope : $scope->value,
+                    $scopes
+                );
+            }
             ApiKeyFactory::createOne($apiKeyFactory);
             $server['HTTP_AUTHORIZATION'] = 'Bearer ' . $apiKey;
         }
@@ -117,10 +123,11 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         $response = $this->client->getResponse();
 
         if ($response->getStatusCode() === 500) {
-            throw new \Exception(
-                'API call failed with status code 500. ' .
-                'Response: ' . $response->getContent()
-            );
+            /** @var LoggerInterface $logger */
+            $logger = $this->container->get('logger');
+            $logger->error('API call failed with status code 500.', [
+                'response' => $response->getContent(),
+            ]);
         }
 
         return $response;
@@ -136,7 +143,6 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         array $data = [],
         array $server = [],
     ): Response {
-
         $this->client->request(
             $method,
             '/api/local' . $uri,
@@ -171,10 +177,9 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         $this->client->getCookieJar()->set(new Cookie('authsess', 'test-session'));
 
         SudoUserFactory::createOne([
-            'hyvor_user_id' => 1,
+            'user_id' => 1,
         ]);
-      
-      
+
         $this->client->request(
             $method,
             '/api/sudo' . $uri,

@@ -2,11 +2,17 @@
 
 namespace App\Api\Console\Authorization;
 
+use App\Entity\ApiKey;
+use App\Entity\Project;
 use App\Service\ApiKey\ApiKeyService;
+use App\Service\ApiKey\Dto\UpdateApiKeyDto;
 use App\Service\Project\ProjectService;
-use Hyvor\Internal\Auth\Auth;
+use Hyvor\Internal\Bundle\Api\DataCarryingHttpException;
 use Hyvor\Internal\Auth\AuthInterface;
+use Hyvor\Internal\Auth\AuthUser;
+use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -15,22 +21,28 @@ use Symfony\Component\HttpKernel\KernelEvents;
 class AuthorizationListener
 {
 
+    use ClockAwareTrait;
+
     public const string RESOLVED_PROJECT_ATTRIBUTE_KEY = 'console_api_resolved_project';
+    public const string RESOLVED_API_KEY_ATTRIBUTE_KEY = 'console_api_resolved_api_key';
     public const string RESOLVED_USER_ATTRIBUTE_KEY = 'console_api_resolved_user';
 
     public function __construct(
         private ProjectService $projectService,
         private ApiKeyService $apiKeyService,
         private AuthInterface $auth,
-    )
-    {
+    ) {
     }
 
     public function __invoke(ControllerEvent $event): void
     {
         // only console API requests
-        if (!str_starts_with($event->getRequest()->getPathInfo(), '/api/console')) return;
-        if ($event->isMainRequest() === false) return;
+        if (!str_starts_with($event->getRequest()->getPathInfo(), '/api/console')) {
+            return;
+        }
+        if ($event->isMainRequest() === false) {
+            return;
+        }
 
         $request = $event->getRequest();
 
@@ -67,30 +79,41 @@ class AuthorizationListener
         $this->verifyScopes($scopes, $event);
 
         $project = $apiKeyModel->getProject();
+
+        $request->attributes->set(self::RESOLVED_API_KEY_ATTRIBUTE_KEY, $apiKeyModel);
         $request->attributes->set(self::RESOLVED_PROJECT_ATTRIBUTE_KEY, $project);
+
+        $apiKeyUpdates = new UpdateApiKeyDto();
+        $apiKeyUpdates->lastAccessedAt = $this->now();
+        $this->apiKeyService->updateApiKey($apiKeyModel, $apiKeyUpdates);
     }
 
     private function handleSession(ControllerEvent $event): void
     {
-
         $request = $event->getRequest();
         $projectId = $request->headers->get('x-project-id');
-        $sessionCookie = $request->cookies->get(Auth::HYVOR_SESSION_COOKIE_NAME);
         $isUserLevelEndpoint = count($event->getAttributes(UserLevelEndpoint::class)) > 0;
 
-        $user = $this->auth->check((string) $sessionCookie);
+        $user = $this->auth->check($request);
 
         if ($user === false) {
-            throw new AccessDeniedHttpException('Invalid session.');
+            throw new DataCarryingHttpException(
+                401,
+                [
+                    'login_url' => $this->auth->authUrl('login'),
+                    'signup_url' => $this->auth->authUrl('signup'),
+                ],
+                'Unauthorized'
+            );
         }
 
         // user-level endpoints do not have a project ID
         if ($isUserLevelEndpoint === false) {
-            if ($projectId === null)  {
+            if ($projectId === null) {
                 throw new AccessDeniedHttpException('X-Project-ID is required for this endpoint.');
             }
 
-            $project = $this->projectService->getProjectById((int) $projectId);
+            $project = $this->projectService->getProjectById((int)$projectId);
 
             if ($project === null) {
                 throw new AccessDeniedHttpException('Invalid project ID.');
@@ -105,7 +128,6 @@ class AuthorizationListener
         }
 
         $request->attributes->set(self::RESOLVED_USER_ATTRIBUTE_KEY, $user);
-
     }
 
     /**
@@ -128,7 +150,35 @@ class AuthorizationListener
                 "You do not have the required scope '$requiredScope' to access this resource."
             );
         }
+    }
 
+    public static function hasUser(Request $request): bool
+    {
+        return $request->attributes->has(self::RESOLVED_USER_ATTRIBUTE_KEY);
+    }
+
+    // only call after hasUser()
+    public static function getUser(Request $request): AuthUser
+    {
+        $user = $request->attributes->get(self::RESOLVED_USER_ATTRIBUTE_KEY);
+        assert($user instanceof AuthUser, 'User must be an instance of AuthUser');
+        return $user;
+    }
+
+    // make sure project is set before calling this
+    public static function getProject(Request $request): Project
+    {
+        $project = $request->attributes->get(self::RESOLVED_PROJECT_ATTRIBUTE_KEY);
+        assert($project instanceof Project);
+        return $project;
+    }
+
+    // make sure API key is set before calling this
+    public static function getApiKey(Request $request): ApiKey
+    {
+        $apiKey = $request->attributes->get(self::RESOLVED_API_KEY_ATTRIBUTE_KEY);
+        assert($apiKey instanceof ApiKey);
+        return $apiKey;
     }
 
 }

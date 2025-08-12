@@ -11,28 +11,27 @@ class AllQueuesHaveAtLeastOneIpHealthCheck extends HealthCheckAbstract
 
     public function __construct(
         private EntityManagerInterface $em
-    )
-    {
+    ) {
     }
 
     public function check(): bool
     {
-
         $rsm = new ResultSetMapping();
         $rsm->addScalarResult('name', 'name');
 
         /** @var array<array{name: string}> $queuesWithoutIp */
-        $queuesWithoutIp = $this->em->createNativeQuery(<<<SQL
+        $queuesWithoutIp = $this->em->createNativeQuery(
+            <<<SQL
         SELECT queues.name FROM queues
         WHERE (
             SELECT COUNT(ip_addresses.id) 
             FROM ip_addresses
-            WHERE 
-                ip_addresses.queue_id = queues.id AND
-                ip_addresses.is_enabled = true AND
-                ip_addresses.is_available = true
+            WHERE
+                ip_addresses.queue_id = queues.id
         ) = 0
-        SQL, $rsm)
+        SQL,
+            $rsm
+        )
             ->getArrayResult();
 
         if (count($queuesWithoutIp) === 0) {
@@ -44,7 +43,6 @@ class AllQueuesHaveAtLeastOneIpHealthCheck extends HealthCheckAbstract
         ]);
 
         return false;
-
     }
 
 }

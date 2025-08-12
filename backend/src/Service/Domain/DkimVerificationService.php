@@ -3,17 +3,22 @@
 namespace App\Service\Domain;
 
 use App\Entity\Domain;
+use App\Service\Dns\Resolve\DnsResolveInterface;
+use App\Service\Dns\Resolve\DnsResolvingFailedException;
+use App\Service\Dns\Resolve\DnsType;
+use App\Service\Domain\Exception\DkimVerificationFailedException;
 
 class DkimVerificationService
 {
 
     public function __construct(
-        /** @var callable(string, int): mixed */
-        private $dnsGetRecord = 'dns_get_record',
-    )
-    {
+        private DnsResolveInterface $dnsResolve,
+    ) {
     }
 
+    /**
+     * @throws DkimVerificationFailedException
+     */
     public function verify(Domain $domain): DkimVerificationResult
     {
         $startTime = new \DateTimeImmutable();
@@ -39,29 +44,31 @@ class DkimVerificationService
         return $result;
     }
 
+    /**
+     * @throws DkimVerificationFailedException
+     */
     private function verifyDkimRecord(
         string $dkimHost,
         string $publicKey,
-    ): true|string
-    {
-
-        /** @var false|array<array{txt?: string}> $records */
-        $records = call_user_func($this->dnsGetRecord, $dkimHost, DNS_TXT);
-
-        if ($records === false) {
-            return 'DNS query failed';
+    ): true|string {
+        try {
+            $result = $this->dnsResolve->resolve($dkimHost, DnsType::TXT);
+        } catch (DnsResolvingFailedException $e) {
+            throw new DkimVerificationFailedException('DNS Resolving failed: ' . $e->getMessage(), previous: $e);
         }
 
-        if (count($records) === 0) {
+        if (!$result->ok()) {
+            return 'DNS query failed with error: ' . $result->error();
+        }
+
+        if (count($result->answers) === 0) {
             return 'No TXT records found for DKIM host';
         }
 
-        foreach ($records as $record) {
-            if (
-                isset($record['txt']) &&
-                str_starts_with($record['txt'], 'v=DKIM1;')
-            ) {
-                $txtValue = $record['txt'];
+        foreach ($result->answers as $answer) {
+            $txtValue = $answer->getCleanedTxt();
+
+            if (str_starts_with($txtValue, 'v=DKIM1;')) {
                 $txtValueExpected = Dkim::dkimTxtValue($publicKey);
 
                 if ($txtValue === $txtValueExpected) {
@@ -73,7 +80,6 @@ class DkimVerificationService
         }
 
         return 'No valid DKIM record found';
-
     }
 
 }

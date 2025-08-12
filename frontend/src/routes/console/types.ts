@@ -1,7 +1,16 @@
 export interface AppConfig {
+    hosting: 'self' | 'cloud';
+
 	hyvor: {
 		instance: string;
 	};
+
+    user: {
+        id: number;
+        name: string;
+        email: string;
+        picture_url: string | null;
+    }
 
 	app: {
 		webhook: {
@@ -115,12 +124,11 @@ export type Domain = {
     id: number;
     created_at: number;
     domain: string;
+    status: 'pending' | 'active' | 'warning' | 'suspended';
     dkim_selector: string;
     dkim_host: string;
-    dkim_txt_name: string;
     dkim_public_key: string;
     dkim_txt_value: string;
-    dkim_verified: boolean;
     dkim_checked_at?: number;
     dkim_error_message?: string;
 }

@@ -147,9 +147,10 @@ type Attachment = {
 
 <p>
 	When retrying it is possible that your request was already accepted and queued by the API, but
-	the response was not received by your application due to a network issue. To prevent sending the
-	same email multiple times, you can use the <code>X-Idempotency-Key</code> header in your request.
-	This header should contain a unique idempotency key for each email you send.
+	somehow your application was not able to correctly handle the response (or the response was not
+	received due to a network issue). In such cases, you may end up sending the same email multiple
+	times. To prevent that, use the <code>X-Idempotency-Key</code> header in your request. This header
+	should contain a unique idempotency key for each email you send.
 </p>
 
 <p>Some idempotency key examples:</p>
@@ -182,7 +183,7 @@ type Attachment = {
 
 <h3 id="response-status-codes">Response Status Codes</h3>
 
-<Table columns="1fr 2fr 2fr">
+<Table columns="1fr 2fr 3fr">
 	<TableRow head>
 		<div>Code</div>
 		<div>Description</div>
@@ -190,13 +191,16 @@ type Attachment = {
 	</TableRow>
 	<TableRow>
 		<div>200</div>
-		<div>Email sent queued.</div>
+		<div>Email queued.</div>
 		<div>No action needed.</div>
 	</TableRow>
 	<TableRow>
 		<div>4xx</div>
 		<div>Client/request error.</div>
-		<div>Correct the request and retry with a new idempotency key.</div>
+		<div>
+			Correct the request and retry with a new idempotency key. Retrying without changing the
+			request will not have any effect.
+		</div>
 	</TableRow>
 	<TableRow>
 		<div>429</div>
@@ -237,8 +241,9 @@ type Attachment = {
 		can still change to <code>bounced</code> or <code>complained</code> later.
 	</li>
 	<li>
-		<strong>bounced</strong> - The recipient's email server has rejected the email with a permanent
-		error. The email will not be retried.
+		<strong>bounced</strong> - The recipient's email server has rejected the email. The email will
+		not be retried. If this was a hard bounce (5xx SMTP status code), the recipient's email will
+		be added to the suppression list, and no further emails will be sent to that address.
 	</li>
 	<li>
 		<strong>complained</strong> - The recipient has marked the email as spam or complained about
@@ -252,7 +257,15 @@ type Attachment = {
 
 <h2 id="rate-limit">Rate Limiting</h2>
 
-<p>TODO</p>
+<p>
+	The rate limit for the <code>POST /api/console/sends</code> endpoint is
+	<strong>10 requests per second</strong>
+	(per project).
+</p>
+
+<p>
+	Learn more about <a href="/docs/api-console#rate-limit">Console API Rate Limiting</a>.
+</p>
 
 <h2 id="limits">Other Limits</h2>
 
