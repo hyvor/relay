@@ -34,7 +34,7 @@
 		runHealthChecks()
 			.then((results) => {
 				healthCheckResults = results;
-				toast.success('Health checks completed successfully');
+				// toast.info('Health check completed, results updated.');
 			})
 			.catch((error: any) => {
 				toast.error('Failed to run health checks: ' + error.message);
@@ -45,14 +45,17 @@
 	}
 
 	function formatCheckName(key: string): string {
-		return {
-			all_queues_have_at_least_one_ip: 'All queues have at least one IP',
-			all_active_ips_have_correct_ptr:
-				'All active IPs have correct PTR records (Forward and Reverse)',
-			instance_dkim_correct: 'Instance DKIM is correct',
-			all_ips_are_in_spf_record: 'All IPs are in SPF record',
-			all_servers_can_be_reached_via_private_network: 'All servers can be reached via private network'
-		}[key] || key;
+		return (
+			{
+				all_queues_have_at_least_one_ip: 'All queues have at least one IP',
+				all_active_ips_have_correct_ptr:
+					'All active IPs have correct PTR records (Forward and Reverse)',
+				instance_dkim_correct: 'Instance DKIM is correct',
+				all_ips_are_in_spf_record: 'All IPs are in SPF record',
+				all_servers_can_be_reached_via_private_network:
+					'All servers can be reached via private network'
+			}[key] || key
+		);
 	}
 
 	function getSortedHealthCheckEntries(results: HealthCheckResults['results']) {

@@ -19,8 +19,10 @@
 			all_active_ips_have_correct_ptr:
 				'All active IPs have correct PTR records (Forward and Reverse)',
 			instance_dkim_correct: 'Instance DKIM is correct',
-			all_ips_are_in_spf_record: 'All IPs are in SPF record',
-			all_servers_can_be_reached_via_private_network: 'All servers can be reached via private network'
+			all_ips_are_in_spf_record: 'All IPs are included in SPF record',
+			all_servers_can_be_reached_via_private_network:
+				'All servers can be reached via private network',
+			none_of_the_ips_are_on_known_blacklists: 'None of the IPs are on known blacklists'
 		}[key]!;
 	}
 
@@ -59,7 +61,8 @@
 		}
 
 		if (checkKey === 'all_servers_can_be_reached_via_private_network') {
-			const unreachableServers = data as HealthCheckData['all_servers_can_be_reached_via_private_network'];
+			const unreachableServers =
+				data as HealthCheckData['all_servers_can_be_reached_via_private_network'];
 			return `Unreachable servers: ${unreachableServers.unreachable_servers.join(', ')}`;
 		}
 
