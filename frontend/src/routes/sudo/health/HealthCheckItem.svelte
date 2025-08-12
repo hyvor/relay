@@ -3,6 +3,7 @@
 	import type { HealthCheckResult, HealthCheckName, HealthCheckData } from '../sudoTypes';
 	import dayjs from 'dayjs';
 	import relativeTime from 'dayjs/plugin/relativeTime';
+	import BlacklistDebug from './BlacklistDebug.svelte';
 
 	dayjs.extend(relativeTime);
 
@@ -96,13 +97,20 @@
 	<div class="content">
 		<div class="check-name">{formatCheckName(checkKey)}</div>
 		<div class="check-details">
-			<span class="checked-time">Checked {formatCheckedTime(result.checked_at)}</span>
+			<span class="checked-time">
+				Checked {formatCheckedTime(result.checked_at)} &bull;
+				{result.duration_ms}ms
+			</span>
 			{#if !result.passed && result.data}
 				<div class="failure-callout">
 					<Callout type="danger" size="small">
 						{renderFailureData(result.data)}
 					</Callout>
 				</div>
+			{/if}
+
+			{#if checkKey === 'none_of_the_ips_are_on_known_blacklists'}
+				<BlacklistDebug data={result.data as any} />
 			{/if}
 		</div>
 	</div>

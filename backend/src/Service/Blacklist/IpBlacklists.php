@@ -19,7 +19,7 @@ class IpBlacklists
             new IpBlacklist(
                 'Spamcop',
                 'bl.spamcop.net',
-                'https://www.spamcop.net/bl.shtml?ip='
+                'https://www.spamcop.net/bl.shtml'
             ),
             new IpBlacklist(
                 'Mailspike',
