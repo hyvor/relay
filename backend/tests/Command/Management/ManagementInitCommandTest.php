@@ -7,6 +7,7 @@ use App\Entity\Instance;
 use App\Entity\IpAddress;
 use App\Entity\Queue;
 use App\Entity\Server;
+use App\Entity\Type\ProjectSendType;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
 use App\Service\Ip\ServerIp;
@@ -52,6 +53,12 @@ class ManagementInitCommandTest extends KernelTestCase
         assert($encryption instanceof Encryption);
         $privateKey = $encryption->decryptString($privateKeyEncrypted);
         $this->assertStringContainsString('---BEGIN PRIVATE KEY---', $privateKey);
+
+        // SYSTEM PROJECT
+        $systemProject = $instance->getSystemProject();
+        $this->assertSame('System', $systemProject->getName());
+        $this->assertSame(0, $systemProject->getUserId());
+        $this->assertSame(ProjectSendType::TRANSACTIONAL, $systemProject->getSendType());
 
         // QUEUES
         $queues = $this->em->getRepository(Queue::class)->findAll();

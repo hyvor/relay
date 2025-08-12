@@ -49,12 +49,18 @@ class ManagementService
 
     private function initializeInstance(): Instance
     {
+        // make sure only one process can initialize the instance at a time
+        $lock = $this->lockFactory->createLock('management_init_instance');
+        $lock->acquire(true);
+
         $instance = $this->instanceService->tryGetInstance();
 
         if ($instance === null) {
             $this->output->writeln('<info>Initiating the instance...</info>');
             $instance = $this->instanceService->createInstance();
         }
+
+        $lock->release();
 
         return $instance;
     }
@@ -93,16 +99,11 @@ class ManagementService
 
     private function initializeDefaultQueues(): void
     {
-        $hasDefaultQueues = $this->queueService->hasDefaultQueues();
-
-        if ($hasDefaultQueues) {
-            return;
-        }
-
         $lock = $this->lockFactory->createLock('management_init_default_queues');
+        $lock->acquire(true);
 
-        if (!$lock->acquire()) {
-            $this->output->writeln('<info>Default queues are already being created by another process.</info>');
+        $hasDefaultQueues = $this->queueService->hasDefaultQueues();
+        if ($hasDefaultQueues) {
             return;
         }
 

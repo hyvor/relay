@@ -30,6 +30,9 @@ class Instance
     #[ORM\Column(type: "text")]
     private string $dkim_private_key_encrypted;
 
+    #[ORM\OneToOne(targetEntity: Project::class)]
+    private Project $system_project;
+
     #[ORM\Column(type: "datetime_immutable", nullable: true)]
     private ?\DateTimeImmutable $last_health_check_at = null;
 
@@ -42,7 +45,9 @@ class Instance
     #[ORM\Column()]
     private ?string $private_network_cidr = null;
 
-    public function __construct() {}
+    public function __construct()
+    {
+    }
 
     public function getId(): int
     {
@@ -108,6 +113,17 @@ class Instance
         string $dkimPrivateKeyEncrypted
     ): static {
         $this->dkim_private_key_encrypted = $dkimPrivateKeyEncrypted;
+        return $this;
+    }
+
+    public function getSystemProject(): Project
+    {
+        return $this->system_project;
+    }
+
+    public function setSystemProject(Project $systemProject): static
+    {
+        $this->system_project = $systemProject;
         return $this;
     }
 

@@ -7,7 +7,6 @@ use App\Entity\Type\ProjectSendType;
 use App\Service\Project\Dto\UpdateProjectDto;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
-use Illuminate\Support\Arr;
 use Symfony\Component\Clock\ClockAwareTrait;
 
 class ProjectService
@@ -29,6 +28,7 @@ class ProjectService
         int $userId,
         string $name,
         ProjectSendType $sendType,
+        bool $flush = true
     ): Project {
         $project = new Project();
         $project
@@ -38,8 +38,10 @@ class ProjectService
             ->setUpdatedAt($this->now())
             ->setSendType($sendType);
 
-        $this->em->persist($project);
-        $this->em->flush();
+        if ($flush) {
+            $this->em->persist($project);
+            $this->em->flush();
+        }
 
         return $project;
     }

@@ -18,7 +18,8 @@ final class Version20250418134054 extends AbstractMigration
     {
         // to save instances
         // only one row will be addeed to this
-        $this->addSql(<<<SQL
+        $this->addSql(
+            <<<SQL
         CREATE TABLE instances (
             id serial PRIMARY KEY,
             created_at timestamptz NOT NULL,
@@ -26,11 +27,13 @@ final class Version20250418134054 extends AbstractMigration
             domain text NOT NULL,
             dkim_public_key text NOT NULL,
             dkim_private_key_encrypted text NOT NULL,
+            system_project_id bigint NOT NULL references projects(id) ON DELETE CASCADE,
             last_health_check_at timestamptz DEFAULT NULL,
             health_check_results jsonb DEFAULT NULL,
             private_network_cidr text DEFAULT NULL
         )
-        SQL);
+        SQL
+        );
     }
 
     public function down(Schema $schema): void
