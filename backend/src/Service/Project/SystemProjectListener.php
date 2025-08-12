@@ -26,11 +26,12 @@ class SystemProjectListener
     private function resetSystemProjectAccess(): void
     {
         $systemProject = $this->instanceService->getInstance()->getSystemProject();
-        //
+        dd($systemProject);
     }
 
     public function onSudoAdded(SudoAddedEvent $event): void
     {
+        $this->resetSystemProjectAccess();
     }
 
 }

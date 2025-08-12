@@ -32,6 +32,7 @@ final class InstanceFactory extends PersistentProxyObjectFactory
             'updated_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'dkim_public_key' => '',
             'dkim_private_key_encrypted' => '',
+            'system_project' => ProjectFactory::new()
         ];
     }
 
@@ -39,7 +40,7 @@ final class InstanceFactory extends PersistentProxyObjectFactory
     {
         return $this->with([
             'dkim_public_key' => DomainFactory::TEST_DKIM_PUBLIC_KEY,
-            'dkim_private_key_encrypted' =>  DomainFactory::TEST_DKIM_PRIVATE_KEY_ENCRYPTED,
+            'dkim_private_key_encrypted' => DomainFactory::TEST_DKIM_PRIVATE_KEY_ENCRYPTED,
         ]);
     }
 
