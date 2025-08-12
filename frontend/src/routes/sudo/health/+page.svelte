@@ -34,7 +34,6 @@
 		runHealthChecks()
 			.then((results) => {
 				healthCheckResults = results;
-				// toast.info('Health check completed, results updated.');
 			})
 			.catch((error: any) => {
 				toast.error('Failed to run health checks: ' + error.message);
