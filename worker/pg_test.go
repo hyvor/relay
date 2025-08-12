@@ -65,7 +65,7 @@ func (f *TestFactory) Project() (int, error) {
 
 	var projectId int
 	err := f.conn.QueryRow(`
-		INSERT INTO projects (created_at, updated_at, hyvor_user_id, name)
+		INSERT INTO projects (created_at, updated_at, user_id, name)
 		VALUES ($1, $2, $3, $4)
 		RETURNING id
 	`, now, now, randomUserId, randomName).Scan(&projectId)

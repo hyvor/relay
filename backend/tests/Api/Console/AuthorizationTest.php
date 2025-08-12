@@ -196,7 +196,7 @@ class AuthorizationTest extends WebTestCase
         AuthFake::enableForSymfony($this->container, ['id' => 1]);
 
         $project = ProjectFactory::createOne([
-            'hyvor_user_id' => 1
+            'user_id' => 1
         ]);
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
         $this->client->request(

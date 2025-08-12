@@ -21,11 +21,11 @@ class ConsoleInitTest extends WebTestCase
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
 
         $projects = ProjectFactory::createMany(5, [
-            'hyvor_user_id' => 1,
+            'user_id' => 1,
         ]);
 
         $otherProjects = ProjectFactory::createMany(2, [
-            'hyvor_user_id' => 2,
+            'user_id' => 2,
         ]);
 
 

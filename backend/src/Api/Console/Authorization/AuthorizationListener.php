@@ -119,7 +119,7 @@ class AuthorizationListener
                 throw new AccessDeniedHttpException('Invalid project ID.');
             }
 
-            if ($project->getHyvorUserId() !== $user->id) {
+            if ($project->getUserId() !== $user->id) {
                 // to-do: later user scopes are needed
                 throw new AccessDeniedHttpException('You do not have access to this project.');
             }

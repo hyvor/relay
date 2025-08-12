@@ -155,7 +155,7 @@ class IdempotencyTest extends WebTestCase
         $limiter->consume(60);
         $limiter->consume(60);
 
-        $project = ProjectFactory::createOne(['hyvor_user_id' => 1]);
+        $project = ProjectFactory::createOne(['user_id' => 1]);
 
         $idempotencyRecord = ApiIdempotencyRecordFactory::createOne([
             "project" => $project,
