@@ -24,4 +24,26 @@ enum Scope: string
     case SUPPRESSIONS_WRITE = 'suppressions.write';
 
     case ANALYTICS_READ = 'analytics.read';
+
+    /**
+     * @return string[]
+     */
+    public static function all(): array
+    {
+        return array_map(fn($scope) => $scope->value, Scope::cases());
+    }
+
+    /**
+     * @param Scope[] $except
+     * @return string[]
+     */
+    public static function allExcept(array $except): array
+    {
+        return array_values(
+            array_diff(
+                self::all(),
+                array_map(fn($scope) => $scope->value, $except)
+            )
+        );
+    }
 }

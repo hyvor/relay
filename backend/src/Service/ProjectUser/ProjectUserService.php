@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Service\ProjectUser;
+
+use App\Entity\Project;
+use App\Entity\ProjectUser;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Clock\ClockAwareTrait;
+
+class ProjectUserService
+{
+
+    use ClockAwareTrait;
+
+    public function __construct(
+        private EntityManagerInterface $em
+    ) {
+    }
+
+    /**
+     * @param string[] $scopes
+     */
+    public function createProjectUser(
+        Project $project,
+        int $userId,
+        array $scopes = []
+    ): ProjectUser {
+        $projectUser = new ProjectUser();
+        $projectUser->setCreatedAt($this->now());
+        $projectUser->setUpdatedAt($this->now());
+        $projectUser->setProject($project);
+        $projectUser->setUserId($userId);
+        $projectUser->setScopes($scopes);
+
+        $this->em->persist($projectUser);
+        $this->em->flush();
+
+        return $projectUser;
+    }
+
+    public function deleteAllProjectUsers(Project $project): void
+    {
+        $query = $this->em->createQuery(
+            'DELETE FROM App\Entity\ProjectUser pu WHERE pu.project = :project'
+        );
+        $query->setParameter('project', $project);
+        $query->execute();
+    }
+
+}
