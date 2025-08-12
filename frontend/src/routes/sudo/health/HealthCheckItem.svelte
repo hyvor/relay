@@ -66,6 +66,27 @@
 			return `Unreachable servers: ${unreachableServers.unreachable_servers.join(', ')}`;
 		}
 
+		if (checkKey === 'none_of_the_ips_are_on_known_blacklists') {
+			const blacklistData =
+				data as HealthCheckData['none_of_the_ips_are_on_known_blacklists'];
+			const lists = blacklistData.lists;
+			const blacklistedIps = [];
+
+			for (const [listName, listData] of Object.entries(lists)) {
+				const blacklistedIpsOnList = [];
+				for (const [ip, entry] of Object.entries(listData)) {
+					if (entry.status === 'blocked') {
+						blacklistedIpsOnList.push(ip);
+					}
+				}
+				if (blacklistedIpsOnList.length > 0) {
+					blacklistedIps.push(`${listName}: ${blacklistedIpsOnList.join(', ')}`);
+				}
+			}
+
+			return `Blacklisted IPs: ${blacklistedIps.join(', ')}`;
+		}
+
 		return JSON.stringify(data);
 	}
 </script>

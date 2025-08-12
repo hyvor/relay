@@ -75,7 +75,12 @@ export interface HealthCheckData {
         unreachable_servers: string[];
     },
     none_of_the_ips_are_on_known_blacklists: {
-        // 
+        lists: Record<string, Record<string, {
+            duration_ms: number;
+            status: 'ok' | 'blocked' | 'error';
+            resolved_ip?: string;
+            error?: string;
+        }>>
     }
 }
 

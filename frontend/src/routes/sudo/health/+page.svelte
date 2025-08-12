@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Button, Loader, toast } from '@hyvor/design/components';
+	import { Button, Loader, toast, IconMessage } from '@hyvor/design/components';
 	import { getHealthChecks, runHealthChecks } from '../sudoActions';
 	import type { HealthCheckResults } from '../sudoTypes';
 	import SingleBox from '../SingleBox.svelte';
@@ -93,9 +93,13 @@
 			</div>
 
 			<div class="checks">
-				{#each getSortedHealthCheckEntries(healthCheckResults.results) as [checkKey, result]}
-					<HealthCheckItem checkKey={checkKey as any} {result} />
-				{/each}
+				{#if Object.keys(healthCheckResults.results).length > 0}
+					{#each getSortedHealthCheckEntries(healthCheckResults.results) as [checkKey, result]}
+						<HealthCheckItem checkKey={checkKey as any} {result} />
+					{/each}
+				{:else}
+					<IconMessage empty message="Health checks have not run yet." padding={150} />
+				{/if}
 			</div>
 		</div>
 	{:else}
@@ -110,7 +114,6 @@
 <style>
 	.health-checks {
 		padding: 30px;
-		border-bottom: 1px solid var(--border);
 	}
 
 	.header {
