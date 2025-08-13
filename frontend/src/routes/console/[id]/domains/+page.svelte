@@ -17,6 +17,7 @@
 	import type { Domain } from '../../types';
 	import { getDomains, deleteDomain, verifyDomain } from '../../lib/actions/domainActions';
 	import { onMount } from 'svelte';
+	import { cant } from '../../lib/scope.svelte';
 
 	let domains: Domain[] = $state([]);
 	let loading = $state(true);
@@ -202,7 +203,11 @@
 			</div>
 		</div>
 
-		<Button variant="fill" on:click={() => (showCreateModal = true)}>
+		<Button
+			variant="fill"
+			on:click={() => (showCreateModal = true)}
+			disabled={cant('domains.write')}
+		>
 			<IconPlus size={16} />
 			Create Domain
 		</Button>
@@ -309,7 +314,6 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		padding: 30px;
 		overflow: auto;
 	}
 

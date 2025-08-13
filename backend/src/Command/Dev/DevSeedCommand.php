@@ -66,8 +66,11 @@ class DevSeedCommand extends Command
         ProjectUserFactory::createOne([
             'project' => $systemProject,
             'user_id' => 1,
-            //  'scopes' => Scope::all(),
-            'scopes' => ['project.read', 'sends.read'],
+            'scopes' => Scope::allExcept([
+                Scope::DOMAINS_WRITE,
+                Scope::API_KEYS_WRITE,
+                Scope::WEBHOOKS_WRITE
+            ]),
         ]);
 
         $transactionalQueue = QueueFactory::createTransactional();
@@ -100,7 +103,13 @@ class DevSeedCommand extends Command
         ProjectUserFactory::createOne([
             'project' => $project,
             'user_id' => 1,
-            'scopes' => Scope::all()
+            'scopes' => Scope::allExcept([
+                Scope::PROJECT_WRITE,
+                Scope::DOMAINS_WRITE,
+                Scope::API_KEYS_WRITE,
+                Scope::WEBHOOKS_WRITE,
+                Scope::SUPPRESSIONS_WRITE
+            ])
         ]);
 
         ApiKeyFactory::createOne([

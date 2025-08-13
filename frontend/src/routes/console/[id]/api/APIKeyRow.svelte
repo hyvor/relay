@@ -4,6 +4,7 @@
 	import IconPencil from '@hyvor/icons/IconPencil';
 	import RelativeTime from '../../@components/content/RelativeTime.svelte';
 	import type { ApiKey } from '../../types';
+	import { cant } from '../../lib/scope.svelte';
 
 	interface Props {
 		apiKey: ApiKey;
@@ -13,7 +14,7 @@
 
 	let { apiKey, onDelete, onEdit }: Props = $props();
 
-	function getDisplayScopes(scopes: string[]): { visible: string[], remaining: string[] } {
+	function getDisplayScopes(scopes: string[]): { visible: string[]; remaining: string[] } {
 		if (scopes.length <= 2) {
 			return { visible: scopes, remaining: [] };
 		}
@@ -24,7 +25,6 @@
 	}
 
 	const displayScopes = $derived(getDisplayScopes(apiKey.scopes));
-
 </script>
 
 <div class="api-key-item">
@@ -51,7 +51,6 @@
 						{/if}
 					{/if}
 				</div>
-	
 			</div>
 		</div>
 		<div class="api-key-meta">
@@ -65,18 +64,19 @@
 	</div>
 	<div class="api-key-actions">
 		<IconButton
-			variant="fill-light"
 			color="input"
 			size="small"
 			on:click={() => onEdit(apiKey)}
+			disabled={cant('api_keys.write')}
 		>
 			<IconPencil size={12} />
 		</IconButton>
 		<IconButton
 			variant="fill-light"
 			color="red"
-            size="small"
+			size="small"
 			on:click={() => onDelete(apiKey)}
+			disabled={cant('api_keys.write')}
 		>
 			<IconTrash size={12} />
 		</IconButton>
@@ -126,4 +126,4 @@
 		align-items: center;
 		gap: 12px;
 	}
-</style> 
+</style>

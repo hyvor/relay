@@ -180,7 +180,7 @@ class AuthorizationTest extends WebTestCase
             $project,
             'GET',
             '/sends',
-            scopes: [Scope::SENDS_WRITE]
+            scopes: [Scope::SENDS_SEND]
         );
         $this->assertResponseStatusCodeSame(403);
         $this->assertSame(

@@ -4,11 +4,13 @@ namespace App\Api\Console\Authorization;
 
 enum Scope: string
 {
+
+    // all users must have this scope (api keys may not)
     case PROJECT_READ = 'project.read';
+    // to update project settings
     case PROJECT_WRITE = 'project.write';
 
     case SENDS_READ = 'sends.read';
-    case SENDS_WRITE = 'sends.write';
     case SENDS_SEND = 'sends.send';
 
     case DOMAINS_READ = 'domains.read';
