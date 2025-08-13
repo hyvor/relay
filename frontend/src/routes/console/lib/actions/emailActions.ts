@@ -1,5 +1,5 @@
 import type { Email, SendStatus } from "../../types";
-import consoleApi from "../consoleApi";
+import consoleApi from "../consoleApi.svelte";
 
 export function getSends(
 	status: SendStatus | null,

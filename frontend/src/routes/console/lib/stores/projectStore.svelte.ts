@@ -2,7 +2,7 @@ import { writable } from "svelte/store";
 import type { ProjectUser, Email, Project } from "../../types";
 
 let projectUsers= $state<ProjectUser[]>([]);
-let currentProjectUser = $state<ProjectUser>();
+let currentProjectUser = $state<ProjectUser>({} as ProjectUser);
 const currentProject = $derived(currentProjectUser?.project as Project);
 export const currentProjectEditing = writable<Project>();
 export const emailStore = writable<Email[]>([]);
@@ -27,6 +27,10 @@ export function getCurrentProjectUser() {
 
 export function setCurrentProjectUser(projectUser: ProjectUser) {
 	currentProjectUser = projectUser;
+}
+
+export function getCurrentProject() {
+	return currentProject;
 }
 
 /* export function setProjectEditingStore(

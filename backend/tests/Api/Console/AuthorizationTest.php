@@ -8,6 +8,7 @@ use App\Api\Console\Authorization\ScopeRequired;
 use App\Entity\ApiKey;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
+use App\Tests\Factory\ProjectUserFactory;
 use Hyvor\Internal\Auth\AuthFake;
 use Hyvor\Internal\Auth\AuthUser;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -146,6 +147,32 @@ class AuthorizationTest extends WebTestCase
         );
     }
 
+    public function test_verifies_scopes_for_user(): void
+    {
+        AuthFake::enableForSymfony($this->container, ['id' => 1]);
+
+        $project = ProjectFactory::createOne();
+        ProjectUserFactory::createOne([
+            'project' => $project,
+            'user_id' => 1,
+            'scopes' => [Scope::PROJECT_READ->value],
+        ]);
+
+        $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
+        $this->client->request(
+            "GET",
+            "/api/console/sends",
+            server: [
+                "HTTP_X_PROJECT_ID" => $project->getId(),
+            ]
+        );
+        $this->assertResponseStatusCodeSame(403);
+        $this->assertSame(
+            "You do not have the required scope 'sends.read' to access this resource.",
+            $this->getJson()["message"]
+        );
+    }
+
     public function test_missing_scope_required_attribute(): void
     {
         $project = ProjectFactory::createOne();
@@ -195,8 +222,11 @@ class AuthorizationTest extends WebTestCase
     {
         AuthFake::enableForSymfony($this->container, ['id' => 1]);
 
-        $project = ProjectFactory::createOne([
-            'user_id' => 1
+        $project = ProjectFactory::createOne();
+        ProjectUserFactory::createOne([
+            'project' => $project,
+            'user_id' => 1,
+            'scopes' => [Scope::SENDS_READ->value],
         ]);
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
         $this->client->request(
@@ -232,7 +262,7 @@ class AuthorizationTest extends WebTestCase
         $this->assertResponseStatusCodeSame(200);
 
         $json = $this->getJson();
-        $this->assertArrayHasKey('projects', $json);
+        $this->assertArrayHasKey('project_users', $json);
         $this->assertArrayHasKey('config', $json);
     }
 }

@@ -7,6 +7,7 @@ use App\Entity\Project;
 use App\Service\ApiKey\ApiKeyService;
 use App\Service\ApiKey\Dto\UpdateApiKeyDto;
 use App\Service\Project\ProjectService;
+use App\Service\ProjectUser\ProjectUserService;
 use Hyvor\Internal\Bundle\Api\DataCarryingHttpException;
 use Hyvor\Internal\Auth\AuthInterface;
 use Hyvor\Internal\Auth\AuthUser;
@@ -29,6 +30,7 @@ class AuthorizationListener
 
     public function __construct(
         private ProjectService $projectService,
+        private ProjectUserService $projectUserService,
         private ApiKeyService $apiKeyService,
         private AuthInterface $auth,
     ) {
@@ -119,10 +121,13 @@ class AuthorizationListener
                 throw new AccessDeniedHttpException('Invalid project ID.');
             }
 
-            if ($project->getUserId() !== $user->id) {
-                // to-do: later user scopes are needed
+            $projectUser = $this->projectUserService->getProjectUser($project, $user->id);
+
+            if ($projectUser === null) {
                 throw new AccessDeniedHttpException('You do not have access to this project.');
             }
+
+            $this->verifyScopes($projectUser->getScopes(), $event);
 
             $request->attributes->set(self::RESOLVED_PROJECT_ATTRIBUTE_KEY, $project);
         }

@@ -31,7 +31,7 @@ export interface AppConfig {
 }
 
 
-type ProjectScope = 
+export type Scope = 
     'project.read' |
     'project.write' |
     'sends.read' |
@@ -48,7 +48,7 @@ type ProjectScope =
     'analytics.read';
 
 export interface ProjectUser {
-    scopes: ProjectScope[];
+    scopes: Scope[];
     project: Project;
 }
 

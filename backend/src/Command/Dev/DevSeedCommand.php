@@ -66,7 +66,8 @@ class DevSeedCommand extends Command
         ProjectUserFactory::createOne([
             'project' => $systemProject,
             'user_id' => 1,
-            'scopes' => Scope::all()
+            //  'scopes' => Scope::all(),
+            'scopes' => ['project.read', 'sends.read'],
         ]);
 
         $transactionalQueue = QueueFactory::createTransactional();

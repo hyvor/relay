@@ -11,7 +11,7 @@
 			<div class="title">Projects</div>
 		</div>
 		{#each projectUsers as pu}
-			<ProjectRow project={pu.project} />
+			<ProjectRow projectUser={pu} />
 		{/each}
 	</div>
 {/if}

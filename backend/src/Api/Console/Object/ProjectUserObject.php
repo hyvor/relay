@@ -21,9 +21,9 @@ class ProjectUserObject
 
         // use the following to test custom scopes
         // in the frontend
-        $this->scopes = [
-            Scope::PROJECT_READ->value,
-        ];
+//        $this->scopes = [
+//            Scope::PROJECT_READ->value,
+//        ];
     }
 
 }

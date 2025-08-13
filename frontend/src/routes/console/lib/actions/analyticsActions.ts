@@ -1,5 +1,5 @@
 import type { AnalyticsStats } from "../../types";
-import consoleApi from "../consoleApi";
+import consoleApi from "../consoleApi.svelte";
 
 
 export function getAnalyticsStats() {

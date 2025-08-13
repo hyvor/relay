@@ -11,7 +11,8 @@
 	import { selectingProject } from '../../lib/stores/consoleStore';
 	import IconSlashCircle from '@hyvor/icons/IconSlashCircle';
 	import IconDatabase from '@hyvor/icons/IconDatabase';
-	import { currentProject } from '../../lib/stores/projectStore.svelte';
+	import { getCurrentProject } from '../../lib/stores/projectStore.svelte';
+	import { cant } from '../../lib/scope.svelte';
 
 	let width: number;
 
@@ -20,7 +21,7 @@
 		selectingProject.set(true);
 	}
 
-	let project = currentProject;
+	let project = getCurrentProject();
 </script>
 
 <svelte:window bind:innerWidth={width} />
@@ -41,6 +42,7 @@
 		<NavLink
 			href={'/console/' + project.id.toString()}
 			active={page.url.pathname === `/console/${project.id}`}
+			disabled={cant('analytics.read')}
 		>
 			<NavItem>
 				<IconGraphUp slot="icon" />
@@ -51,6 +53,7 @@
 		<NavLink
 			href={'/console/' + project.id.toString() + '/sends'}
 			active={page.url.pathname.startsWith(`/console/${project.id}/sends`)}
+			disabled={cant('sends.read')}
 		>
 			<NavItem>
 				<IconEnvelope slot="icon" />
@@ -61,6 +64,7 @@
 		<NavLink
 			href={'/console/' + project.id.toString() + '/domains'}
 			active={page.url.pathname.startsWith(`/console/${project.id}/domains`)}
+			disabled={cant('domains.read')}
 		>
 			<NavItem>
 				<IconDatabase slot="icon" />
@@ -71,6 +75,7 @@
 		<NavLink
 			href={'/console/' + project.id.toString() + '/api'}
 			active={page.url.pathname.startsWith(`/console/${project.id}/api`)}
+			disabled={cant('api_keys.read')}
 		>
 			<NavItem>
 				<IconKey slot="icon" />
@@ -81,6 +86,7 @@
 		<NavLink
 			href={'/console/' + project.id.toString() + '/webhooks'}
 			active={page.url.pathname.startsWith(`/console/${project.id}/webhooks`)}
+			disabled={cant('webhooks.read')}
 		>
 			<NavItem>
 				<IconSend slot="icon" />
@@ -91,6 +97,7 @@
 		<NavLink
 			href={'/console/' + project.id.toString() + '/suppressions'}
 			active={page.url.pathname.startsWith(`/console/${project.id}/suppressions`)}
+			disabled={cant('suppressions.read')}
 		>
 			<NavItem>
 				<IconSlashCircle slot="icon" />
@@ -101,6 +108,7 @@
 		<NavLink
 			href={'/console/' + project.id.toString() + '/settings'}
 			active={page.url.pathname.startsWith(`/console/${project.id}/settings`)}
+			disabled={cant('project.read')}
 		>
 			<NavItem>
 				<IconGear slot="icon" />

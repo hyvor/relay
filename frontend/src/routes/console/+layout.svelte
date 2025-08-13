@@ -2,7 +2,7 @@
 	import { HyvorBar, Loader, toast } from '@hyvor/design/components';
 	import { onMount } from 'svelte';
 	import type { AppConfig, ProjectUser } from './types';
-	import consoleApi from './lib/consoleApi';
+	import consoleApi from './lib/consoleApi.svelte';
 	import { page } from '$app/stores';
 	import { getAppConfig, setAppConfig } from './lib/stores/consoleStore';
 	import { setCurrentProjectUser, setProjectUsers } from './lib/stores/projectStore.svelte';
