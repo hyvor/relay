@@ -17,7 +17,6 @@
 	let width: number;
 
 	function triggerProjectSelection() {
-		console.log('triggerProjectSelection');
 		selectingProject.set(true);
 	}
 

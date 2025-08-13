@@ -1,5 +1,4 @@
-import { get } from "svelte/store";
-import { projectStore } from "./stores/projectStore.svelte";
+import { getCurrentProject } from "./stores/projectStore.svelte";
 
 
 export function consoleUrl(path: string) {
@@ -12,7 +11,7 @@ export function consoleUrl(path: string) {
 
 
 export function consoleUrlProject(path: string) {
-    const projectId = get(projectStore).id;
+    const projectId = getCurrentProject().id;
     path = path.replace(/^\//, '');
     return consoleUrl(`${projectId}/${path}`)
 }

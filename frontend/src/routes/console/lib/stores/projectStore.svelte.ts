@@ -4,7 +4,7 @@ import type { ProjectUser, Email, Project } from "../../types";
 let projectUsers= $state<ProjectUser[]>([]);
 let currentProjectUser = $state<ProjectUser>({} as ProjectUser);
 const currentProject = $derived(currentProjectUser?.project as Project);
-export const currentProjectEditing = writable<Project>();
+let currentProjectEditing = $state<Project>({} as Project);
 export const emailStore = writable<Email[]>([]);
 
 export function getProjectUsers() {
@@ -27,10 +27,23 @@ export function getCurrentProjectUser() {
 
 export function setCurrentProjectUser(projectUser: ProjectUser) {
 	currentProjectUser = projectUser;
+	currentProjectEditing = projectUser.project;
 }
 
 export function getCurrentProject() {
 	return currentProject;
+}
+
+export function setCurrentProject(project: Project) {
+	currentProjectUser.project = project;
+}
+
+export function getCurrentProjectEditing() {
+	return currentProjectEditing;
+}
+
+export function setCurrentProjectEditing(project: Project) {
+	currentProjectEditing = project;
 }
 
 /* export function setProjectEditingStore(

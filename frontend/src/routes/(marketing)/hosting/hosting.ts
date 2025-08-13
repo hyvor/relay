@@ -6,7 +6,6 @@ import Deploy from './content/Deploy.svelte';
 import Monitoring from './content/Monitoring.svelte';
 import EasyDeploy from './content/easy/EasyDeploy.svelte';
 import Env from './content/Env.svelte';
-import Blacklists from './content/Blacklists.svelte';
 import Deliverability from './content/Deliverability.svelte';
 
 export const categories: Category[] = [

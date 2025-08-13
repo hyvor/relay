@@ -13,7 +13,7 @@
 	import type { Email } from '../../../types';
 	import SingleBox from '../../../@components/content/SingleBox.svelte';
 	import IconCaretLeft from '@hyvor/icons/IconCaretLeft';
-	import { consoleUrlProject } from '../../../lib/consoleUrl';
+	import { consoleUrlProject } from '../../../lib/consoleUrl.svelte';
 	import { page } from '$app/state';
 	import Overview from './Overview.svelte';
 
