@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { getProjectUsers } from './lib/stores/projectStore.svelte';
 	import { goto } from '$app/navigation';
-	import { consoleUrl } from './lib/consoleUrl.svelte';
+	import { consoleUrl } from './lib/consoleUrl';
 
 	onMount(() => {
 		const projectUsers = getProjectUsers();

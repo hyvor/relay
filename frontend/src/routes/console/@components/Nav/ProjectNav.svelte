@@ -14,13 +14,13 @@
 	import { getCurrentProject } from '../../lib/stores/projectStore.svelte';
 	import { cant } from '../../lib/scope.svelte';
 
-	let width: number;
+	let width: number = $state(0);
 
 	function triggerProjectSelection() {
 		selectingProject.set(true);
 	}
 
-	let project = getCurrentProject();
+	let project = $derived(getCurrentProject());
 </script>
 
 <svelte:window bind:innerWidth={width} />

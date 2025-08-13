@@ -2,7 +2,7 @@
 	import type { Email } from '../../types';
 	import SendStatus from './SendStatus.svelte';
 	import RelativeTime from '../../@components/content/RelativeTime.svelte';
-	import { consoleUrlProject } from '../../lib/consoleUrl.svelte';
+	import { consoleUrlProject } from '../../lib/consoleUrl';
 
 	interface Props {
 		email: Email;

@@ -11,8 +11,8 @@ export function getProjectUsers() {
 	return projectUsers;
 }
 
-export function setProjectUsers(projectUsers: ProjectUser[]) {
-    projectUsers = projectUsers;
+export function setProjectUsers(pu: ProjectUser[]) {
+    projectUsers = pu;
 }
 
 export function addProjectUser(projectUser: ProjectUser) {
