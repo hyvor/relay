@@ -3,9 +3,9 @@
 	import { onMount } from 'svelte';
 	import type { AppConfig, ProjectUser } from './types';
 	import consoleApi from './lib/consoleApi.svelte';
-	import { page } from '$app/stores';
 	import { getAppConfig, setAppConfig } from './lib/stores/consoleStore';
 	import { setCurrentProjectUser, setProjectUsers } from './lib/stores/projectStore.svelte';
+	import { page } from '$app/state';
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -30,14 +30,23 @@
 				setAppConfig(res.config);
 				setProjectUsers(res.project_users);
 
-				if (res.project_users.length > 0) {
-					setCurrentProjectUser(res.project_users[0]);
+				function getProjectId(): number | undefined {
+					const projectId = page.params.id;
+					return projectId ? Number(projectId) : res.project_users[0]?.project.id;
 				}
+
+				const projectId = getProjectId();
+				const userProject = res.project_users.find((pu) => pu.project.id === projectId);
+
+				if (userProject) {
+					setCurrentProjectUser(userProject);
+				}
+
 				isLoading = false;
 			})
 			.catch((err) => {
 				if (err.code === 401) {
-					const toPage = $page.url.searchParams.has('signup') ? 'signup' : 'login';
+					const toPage = page.url.searchParams.has('signup') ? 'signup' : 'login';
 					const url = new URL(err.data[toPage + '_url'], location.origin);
 					url.searchParams.set('redirect', location.href);
 					location.href = url.toString();

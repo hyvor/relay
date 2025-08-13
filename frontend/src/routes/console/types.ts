@@ -53,7 +53,7 @@ export interface ProjectUser {
 }
 
 export type Project = {
-    id: string;
+    id: number;
     name: string;
     created_at: string;
     send_type: ProjectSendType;
