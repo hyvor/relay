@@ -6,12 +6,14 @@ use App\Entity\Instance;
 use App\Entity\Type\ProjectSendType;
 use App\Repository\InstanceRepository;
 use App\Service\Domain\Dkim;
+use App\Service\Domain\DomainService;
 use App\Service\Instance\Dto\UpdateInstanceDto;
 use App\Service\Project\ProjectService;
 use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Util\Crypt\Encryption;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class InstanceService
 {
@@ -26,6 +28,8 @@ class InstanceService
         private readonly Encryption $encryption,
         private ProjectService $projectService,
         private LoggerInterface $logger,
+        private DomainService $domainService,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -56,7 +60,20 @@ class InstanceService
             'private' => $privateKey,
         ] = Dkim::generateDkimKeys();
 
-        $systemProject = $this->projectService->createProject(0, 'System', ProjectSendType::TRANSACTIONAL);
+        $systemProject = $this->projectService->createProject(
+            0,
+            'System',
+            ProjectSendType::TRANSACTIONAL,
+            flush: false
+        );
+        $systemProjectDomain = $this->domainService->createDomain(
+            $systemProject,
+            self::DEFAULT_DOMAIN,
+            dkimSelector: self::DEFAULT_DKIM_SELECTOR,
+            customDkimPublicKey: $publicKey,
+            customDkimPrivateKey: $privateKey,
+            flush: false
+        );
 
         $instance = new Instance();
         $instance
@@ -69,6 +86,7 @@ class InstanceService
 
         $this->em->persist($instance);
         $this->em->persist($systemProject);
+        $this->em->persist($systemProjectDomain);
         $this->em->flush();
 
         return $instance;
@@ -76,6 +94,8 @@ class InstanceService
 
     public function updateInstance(Instance $instance, UpdateInstanceDto $updates): void
     {
+        $oldInstance = clone $instance;
+
         if ($updates->domainSet) {
             $instance->setDomain($updates->domain);
         }
@@ -88,5 +108,7 @@ class InstanceService
 
         $this->em->persist($instance);
         $this->em->flush();
+
+        $this->eventDispatcher->dispatch(new Event\InstanceUpdatedEvent($oldInstance, $instance, $updates));
     }
 }

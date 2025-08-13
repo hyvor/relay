@@ -14,6 +14,7 @@
 	import Selector from '../../@components/content/Selector.svelte';
 	import type { Suppression, SuppressionReason } from '../../types';
 	import { getSuppressions, deleteSuppression } from '../../lib/actions/suppressionActions';
+	import { redirectIfCant } from '../../lib/scope.svelte';
 
 	let suppressions: Suppression[] = $state([]);
 	let loading = $state(true);
@@ -38,8 +39,7 @@
 				suppressions = suppressionList;
 			})
 			.catch((error) => {
-				console.error('Failed to load suppressions:', error);
-				toast.error('Failed to load suppressions');
+				toast.error('Failed to load suppressions: ' + error.message);
 			})
 			.finally(() => {
 				loading = false;
@@ -93,6 +93,8 @@
 			loadSuppressions();
 		}
 	};
+
+	onMount(() => redirectIfCant('suppressions.read'));
 </script>
 
 <SingleBox>
@@ -103,7 +105,10 @@
 					<ActionListItem on:click={() => selectReason(null)} selected={reason === null}>
 						All
 					</ActionListItem>
-					<ActionListItem on:click={() => selectReason('bounce')} selected={reason === 'bounce'}>
+					<ActionListItem
+						on:click={() => selectReason('bounce')}
+						selected={reason === 'bounce'}
+					>
 						Bounce
 					</ActionListItem>
 					<ActionListItem

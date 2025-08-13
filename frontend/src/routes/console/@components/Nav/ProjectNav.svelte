@@ -8,7 +8,7 @@
 	import NavItem from './NavItem.svelte';
 	import { page } from '$app/state';
 	import IconEnvelope from '@hyvor/icons/IconEnvelope';
-	import { selectingProject } from '../../lib/stores/consoleStore';
+	import { getAppConfig, selectingProject } from '../../lib/stores/consoleStore';
 	import IconSlashCircle from '@hyvor/icons/IconSlashCircle';
 	import IconDatabase from '@hyvor/icons/IconDatabase';
 	import { getCurrentProject } from '../../lib/stores/projectStore.svelte';
@@ -36,6 +36,12 @@
 		</div>
 		<IconChevronExpand />
 	</button>
+
+	{#if project.id === getAppConfig().app.system_project_id}
+		<div class="system-notice">
+			This is the read-only system project used for sending system emails.
+		</div>
+	{/if}
 
 	<div class="nav-links">
 		<NavLink
@@ -158,6 +164,14 @@
 		&.distributional {
 			background-color: var(--orange-light);
 		}
+	}
+
+	.system-notice {
+		padding: 10px 29px;
+		padding-top: 0;
+		margin-bottom: 10px;
+		font-size: 12px;
+		color: var(--text-light);
 	}
 
 	@media (max-width: 992px) {

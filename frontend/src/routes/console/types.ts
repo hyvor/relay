@@ -13,6 +13,7 @@ export interface AppConfig {
     }
 
 	app: {
+        system_project_id: number;
 		webhook: {
             'events': string[];
         },

@@ -19,7 +19,7 @@
 	import { getApiKeys, updateApiKey, deleteApiKey } from '../../lib/actions/apiKeyActions';
 	import { onMount } from 'svelte';
 	import { copyAndToast } from '../../lib/helpers/copy';
-	import { cant } from '../../lib/scope.svelte';
+	import { cant, redirectIfCant } from '../../lib/scope.svelte';
 
 	let apiKeys: ApiKey[] = $state([]);
 	let loading = $state(true);
@@ -39,8 +39,7 @@
 				apiKeys = keys;
 			})
 			.catch((error) => {
-				console.error('Failed to load API keys:', error);
-				toast.error('Failed to load API keys');
+				toast.error('Failed to load API keys: ' + error.message);
 			})
 			.finally(() => {
 				loading = false;
@@ -91,6 +90,8 @@
 			editingApiKey = null;
 		}
 	});
+
+	onMount(() => redirectIfCant('api_keys.read'));
 </script>
 
 <SingleBox>

@@ -3,6 +3,11 @@
 namespace App\Service\Project;
 
 use App\Api\Console\Authorization\Scope;
+use App\Entity\Domain;
+use App\Repository\DomainRepository;
+use App\Service\Domain\DomainService;
+use App\Service\Domain\Dto\UpdateDomainDto;
+use App\Service\Instance\Event\InstanceUpdatedEvent;
 use App\Service\Instance\InstanceService;
 use App\Service\ProjectUser\ProjectUserService;
 use Hyvor\Internal\Sudo\SudoUserService;
@@ -16,6 +21,7 @@ use Hyvor\Internal\Sudo\Event\SudoRemovedEvent;
  */
 #[AsEventListener(SudoAddedEvent::class, method: 'onSudoAdded')]
 #[AsEventListener(SudoRemovedEvent::class, method: 'onSudoRemoved')]
+#[AsEventListener(InstanceUpdatedEvent::class, method: 'onInstanceUpdated')]
 class SystemProjectListener
 {
 
@@ -23,6 +29,8 @@ class SystemProjectListener
         private SudoUserService $sudoUserService,
         private InstanceService $instanceService,
         private ProjectUserService $projectUserService,
+        private DomainRepository $domainRepository,
+        private DomainService $domainService,
     ) {
     }
 
@@ -58,6 +66,31 @@ class SystemProjectListener
     public function onSudoRemoved(SudoRemovedEvent $event): void
     {
         $this->resetSystemProjectAccess();
+    }
+
+    private function getSystemProjectDomain(): Domain
+    {
+        $systemProject = $this->instanceService->getInstance()->getSystemProject();
+        $domain = $this->domainRepository->findOneBy(['project' => $systemProject]);
+
+        if (!$domain) {
+            throw new \RuntimeException('System project does not have a domain. This should not happen.');
+        }
+
+        return $domain;
+    }
+
+    public function onInstanceUpdated(InstanceUpdatedEvent $event): void
+    {
+        if ($event->getUpdates()->domainSet) {
+            $systemProjectDomain = $this->getSystemProjectDomain();
+
+            $updates = new UpdateDomainDto();
+            $updates->domain = $event->getNewInstance()->getDomain();
+            $updates->status = $systemProjectDomain->getStatus();
+
+            $this->domainService->updateDomain($systemProjectDomain, $updates);
+        }
     }
 
 }

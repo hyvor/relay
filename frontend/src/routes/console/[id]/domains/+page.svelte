@@ -1,13 +1,5 @@
 <script lang="ts">
-	import {
-		Button,
-		TextInput,
-		toast,
-		IconButton,
-		Modal,
-		SplitControl,
-		Loader
-	} from '@hyvor/design/components';
+	import { Button, TextInput, toast, IconButton, Modal, Loader } from '@hyvor/design/components';
 	import IconPlus from '@hyvor/icons/IconPlus';
 	import IconX from '@hyvor/icons/IconX';
 	import SingleBox from '../../@components/content/SingleBox.svelte';
@@ -17,7 +9,7 @@
 	import type { Domain } from '../../types';
 	import { getDomains, deleteDomain, verifyDomain } from '../../lib/actions/domainActions';
 	import { onMount } from 'svelte';
-	import { cant } from '../../lib/scope.svelte';
+	import { cant, redirectIfCant } from '../../lib/scope.svelte';
 
 	let domains: Domain[] = $state([]);
 	let loading = $state(true);
@@ -70,8 +62,7 @@
 				offset = currentOffset + newDomains.length;
 			})
 			.catch((error) => {
-				console.error('Failed to load domains:', error);
-				toast.error('Failed to load domains');
+				toast.error('Failed to load domains: ' + error.message);
 			})
 			.finally(() => {
 				loading = false;
@@ -169,6 +160,10 @@
 		if (showDeleteModal && deleteInput) {
 			(deleteInput as HTMLInputElement).focus();
 		}
+	});
+
+	onMount(() => {
+		redirectIfCant('domains.read');
 	});
 </script>
 

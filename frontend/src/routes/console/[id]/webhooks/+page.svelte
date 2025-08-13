@@ -12,7 +12,7 @@
 		getWebhookDeliveries
 	} from '../../lib/actions/webhookActions';
 	import { onMount } from 'svelte';
-	import { cant } from '../../lib/scope.svelte';
+	import { cant, redirectIfCant } from '../../lib/scope.svelte';
 
 	let webhooks: Webhook[] = $state([]);
 	let deliveries: WebhookDelivery[] = $state([]);
@@ -39,8 +39,7 @@
 				webhooks = webhookList;
 			})
 			.catch((error) => {
-				console.error('Failed to load webhooks:', error);
-				toast.error('Failed to load webhooks');
+				toast.error('Failed to load webhooks: ' + error.message);
 			})
 			.finally(() => {
 				loading = false;
@@ -97,6 +96,8 @@
 				});
 		}
 	}
+
+	onMount(() => redirectIfCant('webhooks.read'));
 </script>
 
 <SingleBox>

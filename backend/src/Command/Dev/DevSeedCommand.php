@@ -3,7 +3,6 @@
 namespace App\Command\Dev;
 
 use App\Api\Console\Authorization\Scope;
-use App\Entity\ProjectUser;
 use App\Entity\Type\DomainStatus;
 use App\Service\Instance\InstanceService;
 use App\Entity\Type\SendStatus;
@@ -38,6 +37,7 @@ class DevSeedCommand extends Command
 
     public function __construct(
         private KernelInterface $kernel,
+        private InstanceService $instanceService
     ) {
         parent::__construct();
     }
@@ -57,20 +57,17 @@ class DevSeedCommand extends Command
             'name' => 'System'
         ]);
 
-        $instance = InstanceFactory::new()->withDefaultDkim()->create([
-            'domain' => InstanceService::DEFAULT_DOMAIN,
-            'private_network_cidr' => '0.0.0.0/0',
-            'system_project' => $systemProject,
-        ]);
+        $instance = $this->instanceService->createInstance();
 
         ProjectUserFactory::createOne([
-            'project' => $systemProject,
+            'project' => $instance->getSystemProject(),
             'user_id' => 1,
-            'scopes' => Scope::allExcept([
-                Scope::DOMAINS_WRITE,
-                Scope::API_KEYS_WRITE,
-                Scope::WEBHOOKS_WRITE
-            ]),
+            'scopes' => [
+                Scope::PROJECT_READ,
+                Scope::SENDS_READ,
+                Scope::DOMAINS_READ,
+                Scope::ANALYTICS_READ,
+            ],
         ]);
 
         $transactionalQueue = QueueFactory::createTransactional();
@@ -103,13 +100,7 @@ class DevSeedCommand extends Command
         ProjectUserFactory::createOne([
             'project' => $project,
             'user_id' => 1,
-            'scopes' => Scope::allExcept([
-                Scope::PROJECT_WRITE,
-                Scope::DOMAINS_WRITE,
-                Scope::API_KEYS_WRITE,
-                Scope::WEBHOOKS_WRITE,
-                Scope::SUPPRESSIONS_WRITE
-            ])
+            'scopes' => Scope::all()
         ]);
 
         ApiKeyFactory::createOne([

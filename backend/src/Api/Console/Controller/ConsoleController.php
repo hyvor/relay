@@ -9,7 +9,7 @@ use App\Api\Console\Object\ProjectObject;
 use App\Api\Console\Object\ProjectUserObject;
 use App\Entity\Project;
 use App\Service\App\Config;
-use App\Service\Project\ProjectService;
+use App\Service\Instance\InstanceService;
 use App\Service\ProjectUser\ProjectUserService;
 use App\Service\Send\Compliance;
 use Hyvor\Internal\InternalConfig;
@@ -28,7 +28,8 @@ class ConsoleController extends AbstractController
         private ProjectUserService $projectUserService,
         private InternalConfig $internalConfig,
         private Config $appConfig,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
+        private InstanceService $instanceService,
     ) {
     }
 
@@ -37,6 +38,7 @@ class ConsoleController extends AbstractController
     public function initConsole(Request $request): JsonResponse
     {
         $user = AuthorizationListener::getUser($request);
+        $instance = $this->instanceService->getInstance();
 
         $projectUsers = $this->projectUserService->getProjectsOfUser($user->id);
         $projectUsers = array_map(
@@ -64,6 +66,7 @@ class ConsoleController extends AbstractController
                     'picture_url' => $user->picture_url,
                 ],
                 'app' => [
+                    'system_project_id' => $instance->getSystemProject()->getId(),
                     'webhook' => [
                         'events' => array_map(fn($event) => $event->value, WebhooksEventEnum::cases()),
                     ],

@@ -3,9 +3,13 @@
 namespace App\Tests\Service\Project;
 
 use App\Entity\ProjectUser;
+use App\Service\Domain\DomainService;
+use App\Service\Instance\Dto\UpdateInstanceDto;
+use App\Service\Instance\Event\InstanceUpdatedEvent;
 use App\Service\Project\SystemProjectListener;
 use App\Service\ProjectUser\ProjectUserService;
 use App\Tests\Case\KernelTestCase;
+use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\InstanceFactory;
 use App\Tests\Factory\ProjectUserFactory;
 use Hyvor\Internal\Bundle\Entity\SudoUser;
@@ -19,6 +23,7 @@ use Hyvor\Internal\Sudo\Event\SudoRemovedEvent;
 #[CoversClass(SystemProjectListener::class)]
 #[CoversClass(ProjectUserService::class)]
 #[CoversClass(ProjectUser::class)]
+#[CoversClass(DomainService::class)]
 class SystemProjectListenerTest extends KernelTestCase
 {
 
@@ -69,6 +74,32 @@ class SystemProjectListenerTest extends KernelTestCase
             3,
             $this->em->getRepository(ProjectUser::class)->findAll()
         );
+    }
+
+    public function test_when_instance_domain_changed(): void
+    {
+        /** @var EventDispatcherInterface $eventDispatcher */
+        $eventDispatcher = $this->container->get(EventDispatcherInterface::class);
+
+        $instance = InstanceFactory::createOne(['domain' => 'old-domain.com']);
+        $project = $instance->getSystemProject();
+        $domain = DomainFactory::createOne(['project' => $project, 'domain' => 'old-domain.com']);
+
+        $newInstance = clone $instance->_real();
+        $newInstance->setDomain('new-domain.com');
+
+        $updates = new UpdateInstanceDto();
+        $updates->domain = 'new-domain.com';
+
+        $eventDispatcher->dispatch(
+            new InstanceUpdatedEvent(
+                $instance,
+                $newInstance,
+                $updates
+            )
+        );
+
+        $this->assertSame('new-domain.com', $domain->getDomain());
     }
 
 }
