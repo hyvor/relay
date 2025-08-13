@@ -45,6 +45,9 @@ class Instance
     #[ORM\Column()]
     private ?string $private_network_cidr = null;
 
+    #[ORM\Column(type: "boolean")]
+    private bool $sudo_initialized = false;
+
     public function __construct()
     {
     }
@@ -163,6 +166,17 @@ class Instance
     public function setPrivateNetworkCidr(?string $privateNetworkIpRange): static
     {
         $this->private_network_cidr = $privateNetworkIpRange;
+        return $this;
+    }
+
+    public function getSudoInitialized(): bool
+    {
+        return $this->sudo_initialized;
+    }
+
+    public function setSudoInitialized(bool $sudoInitialized): static
+    {
+        $this->sudo_initialized = $sudoInitialized;
         return $this;
     }
 
