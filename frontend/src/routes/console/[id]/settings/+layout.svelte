@@ -2,7 +2,7 @@
 	import { page } from '$app/state';
 	import { NavLink } from '@hyvor/design/components';
 	import IconCardText from '@hyvor/icons/IconCardText';
-	import { projectStore } from '../../lib/stores/projectStore';
+	import { projectStore } from '../../lib/stores/projectStore.svelte';
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -11,7 +11,6 @@
 	let { children }: Props = $props();
 
 	const prefix = `/console/${$projectStore.id}/settings`;
-
 </script>
 
 <div class="settings">

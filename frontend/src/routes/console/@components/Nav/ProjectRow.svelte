@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { Tag } from '@hyvor/design/components';
-	import { projectStore } from '../../lib/stores/projectStore';
+	import { projectStore } from '../../lib/stores/projectStore.svelte';
 	import type { Project } from '../../types';
 	import { selectingProject } from '../../lib/stores/consoleStore';
 	import { loadProject } from '../../lib/projectLoader';

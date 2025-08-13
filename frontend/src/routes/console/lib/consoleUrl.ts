@@ -1,5 +1,5 @@
 import { get } from "svelte/store";
-import { projectStore } from "./stores/projectStore";
+import { projectStore } from "./stores/projectStore.svelte";
 
 
 export function consoleUrl(path: string) {

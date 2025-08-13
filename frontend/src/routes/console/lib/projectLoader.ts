@@ -1,6 +1,6 @@
 import type { Project } from '../types';
 import consoleApi from './consoleApi';
-import { setProjectEditingStore, setProjectStore } from './stores/projectStore';
+import { setProjectEditingStore, setProjectUser } from './stores/projectStore.svelte';
 
 
 interface ProjectResponse {
@@ -23,7 +23,7 @@ export function loadProject(projectId: string) {
 				projectId: projectId
 			})
 			.then((res) => {
-				setProjectStore(res.project);
+				setProjectUser(res.project);
 				setProjectEditingStore(res.project);
 				
 				resolve(res);

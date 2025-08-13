@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { IconMessage, LoadButton, Loader } from '@hyvor/design/components';
 	import type { Email, SendStatus } from '../../types';
-	import { emailStore } from '../../lib/stores/projectStore';
+	import { emailStore } from '../../lib/stores/projectStore.svelte';
 	import { getSends } from '../../lib/actions/emailActions';
 	import EmailRow from './EmailRow.svelte';
 

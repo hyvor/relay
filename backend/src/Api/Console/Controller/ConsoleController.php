@@ -6,9 +6,11 @@ use App\Api\Console\Authorization\ScopeRequired;
 use App\Api\Console\Authorization\AuthorizationListener;
 use App\Api\Console\Authorization\UserLevelEndpoint;
 use App\Api\Console\Object\ProjectObject;
+use App\Api\Console\Object\ProjectUserObject;
 use App\Entity\Project;
 use App\Service\App\Config;
 use App\Service\Project\ProjectService;
+use App\Service\ProjectUser\ProjectUserService;
 use App\Service\Send\Compliance;
 use Hyvor\Internal\InternalConfig;
 use Psr\Log\LoggerInterface;
@@ -23,7 +25,7 @@ class ConsoleController extends AbstractController
 {
 
     public function __construct(
-        private ProjectService $projectService,
+        private ProjectUserService $projectUserService,
         private InternalConfig $internalConfig,
         private Config $appConfig,
         private LoggerInterface $logger
@@ -36,10 +38,10 @@ class ConsoleController extends AbstractController
     {
         $user = AuthorizationListener::getUser($request);
 
-        $projectUsers = $this->projectService->getUsersProject($user->id);
+        $projectUsers = $this->projectUserService->getProjectsOfUser($user->id);
         $projectUsers = array_map(
-            fn($project) => new ProjectObject($project),
-            $projectUsers->toArray()
+            fn($project) => new ProjectUserObject($project),
+            $projectUsers
         );
 
         $this->logger->info('Console initialized', [
@@ -49,7 +51,7 @@ class ConsoleController extends AbstractController
         ]);
 
         return new JsonResponse([
-            'projects' => $projectUsers,
+            'project_users' => $projectUsers,
             'config' => [
                 'hosting' => $this->appConfig->getHosting(),
                 'hyvor' => [

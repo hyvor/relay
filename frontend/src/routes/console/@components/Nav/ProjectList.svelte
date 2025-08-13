@@ -1,19 +1,17 @@
-<script lang="ts">
-	import { userProjectStore } from "../../lib/stores/userProjectStore";
-	import ProjectRow from "./ProjectRow.svelte";
+<script>
+	import { getProjectUsers } from '../../lib/stores/projectStore.svelte';
+	import ProjectRow from './ProjectRow.svelte';
 
-	const projects = $userProjectStore;
+	let projectUsers = getProjectUsers();
 </script>
 
-{#if projects.length}
+{#if projectUsers.length}
 	<div class="wrap">
 		<div class="title-wrap">
-			<div class="title">
-				Projects
-			</div>
+			<div class="title">Projects</div>
 		</div>
-		{#each projects as project}
-			<ProjectRow project={project} />
+		{#each projectUsers as pu}
+			<ProjectRow project={pu.project} />
 		{/each}
 	</div>
 {/if}
@@ -28,5 +26,4 @@
 	.title {
 		font-weight: 600;
 	}
-
 </style>

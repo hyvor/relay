@@ -30,6 +30,28 @@ export interface AppConfig {
 	};
 }
 
+
+type ProjectScope = 
+    'project.read' |
+    'project.write' |
+    'sends.read' |
+    'sends.write' |
+    'sends.send' |
+    'domains.read' |
+    'domains.write' |
+    'webhooks.read' |
+    'webhooks.write' |
+    'api_keys.read' |
+    'api_keys.write' |
+    'suppressions.read' |
+    'suppressions.write' |
+    'analytics.read';
+
+export interface ProjectUser {
+    scopes: ProjectScope[];
+    project: Project;
+}
+
 export type Project = {
     id: string;
     name: string;

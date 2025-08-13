@@ -18,6 +18,14 @@ class ProjectUserService
     }
 
     /**
+     * @return ProjectUser[]
+     */
+    public function getProjectsOfUser(int $userId): array
+    {
+        return $this->em->getRepository(ProjectUser::class)->findBy(['user_id' => $userId]);
+    }
+
+    /**
      * @param string[] $scopes
      */
     public function createProjectUser(

@@ -9,10 +9,9 @@
 	import { page } from '$app/state';
 	import IconEnvelope from '@hyvor/icons/IconEnvelope';
 	import { selectingProject } from '../../lib/stores/consoleStore';
-	import { projectStore } from '../../lib/stores/projectStore';
 	import IconSlashCircle from '@hyvor/icons/IconSlashCircle';
 	import IconDatabase from '@hyvor/icons/IconDatabase';
-	import ProjectSendTypeTag from './ProjectSendTypeTag.svelte';
+	import { currentProject } from '../../lib/stores/projectStore.svelte';
 
 	let width: number;
 
@@ -20,6 +19,8 @@
 		console.log('triggerProjectSelection');
 		selectingProject.set(true);
 	}
+
+	let project = currentProject;
 </script>
 
 <svelte:window bind:innerWidth={width} />
@@ -28,10 +29,8 @@
 	<button class="current" on:click={triggerProjectSelection}>
 		<div class="left">
 			<div class="name">
-				{$projectStore.name}
-				<span
-					class="dot"
-					class:distributional={$projectStore.send_type === 'distributional'}
+				{project.name}
+				<span class="dot" class:distributional={project.send_type === 'distributional'}
 				></span>
 			</div>
 		</div>
@@ -40,8 +39,8 @@
 
 	<div class="nav-links">
 		<NavLink
-			href={'/console/' + $projectStore.id.toString()}
-			active={page.url.pathname === `/console/${$projectStore.id}`}
+			href={'/console/' + project.id.toString()}
+			active={page.url.pathname === `/console/${project.id}`}
 		>
 			<NavItem>
 				<IconGraphUp slot="icon" />
@@ -50,8 +49,8 @@
 		</NavLink>
 
 		<NavLink
-			href={'/console/' + $projectStore.id.toString() + '/sends'}
-			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/sends`)}
+			href={'/console/' + project.id.toString() + '/sends'}
+			active={page.url.pathname.startsWith(`/console/${project.id}/sends`)}
 		>
 			<NavItem>
 				<IconEnvelope slot="icon" />
@@ -60,8 +59,8 @@
 		</NavLink>
 
 		<NavLink
-			href={'/console/' + $projectStore.id.toString() + '/domains'}
-			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/domains`)}
+			href={'/console/' + project.id.toString() + '/domains'}
+			active={page.url.pathname.startsWith(`/console/${project.id}/domains`)}
 		>
 			<NavItem>
 				<IconDatabase slot="icon" />
@@ -70,8 +69,8 @@
 		</NavLink>
 
 		<NavLink
-			href={'/console/' + $projectStore.id.toString() + '/api'}
-			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/api`)}
+			href={'/console/' + project.id.toString() + '/api'}
+			active={page.url.pathname.startsWith(`/console/${project.id}/api`)}
 		>
 			<NavItem>
 				<IconKey slot="icon" />
@@ -80,8 +79,8 @@
 		</NavLink>
 
 		<NavLink
-			href={'/console/' + $projectStore.id.toString() + '/webhooks'}
-			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/webhooks`)}
+			href={'/console/' + project.id.toString() + '/webhooks'}
+			active={page.url.pathname.startsWith(`/console/${project.id}/webhooks`)}
 		>
 			<NavItem>
 				<IconSend slot="icon" />
@@ -90,8 +89,8 @@
 		</NavLink>
 
 		<NavLink
-			href={'/console/' + $projectStore.id.toString() + '/suppressions'}
-			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/suppressions`)}
+			href={'/console/' + project.id.toString() + '/suppressions'}
+			active={page.url.pathname.startsWith(`/console/${project.id}/suppressions`)}
 		>
 			<NavItem>
 				<IconSlashCircle slot="icon" />
@@ -100,8 +99,8 @@
 		</NavLink>
 
 		<NavLink
-			href={'/console/' + $projectStore.id.toString() + '/settings'}
-			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/settings`)}
+			href={'/console/' + project.id.toString() + '/settings'}
+			active={page.url.pathname.startsWith(`/console/${project.id}/settings`)}
 		>
 			<NavItem>
 				<IconGear slot="icon" />

@@ -1,12 +1,11 @@
 <script lang="ts">
 	import { HyvorBar, Loader, toast } from '@hyvor/design/components';
 	import { onMount } from 'svelte';
-	import type { AppConfig, Project } from './types';
+	import type { AppConfig, ProjectUser } from './types';
 	import consoleApi from './lib/consoleApi';
-	import { userProjectStore } from './lib/stores/userProjectStore';
-	import { projectStore } from './lib/stores/projectStore';
 	import { page } from '$app/stores';
 	import { getAppConfig, setAppConfig } from './lib/stores/consoleStore';
+	import { setCurrentProjectUser, setProjectUsers } from './lib/stores/projectStore.svelte';
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -16,7 +15,7 @@
 
 	interface InitResponse {
 		config: AppConfig;
-		projects: Project[];
+		project_users: ProjectUser[];
 	}
 
 	let isLoading = $state(true);
@@ -29,9 +28,10 @@
 			})
 			.then((res) => {
 				setAppConfig(res.config);
-				userProjectStore.set(res.projects);
-				if (res.projects.length != 0) {
-					projectStore.set(res.projects[0]);
+				setProjectUsers(res.project_users);
+
+				if (res.project_users.length > 0) {
+					setCurrentProjectUser(res.project_users[0]);
 				}
 				isLoading = false;
 			})

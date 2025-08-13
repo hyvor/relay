@@ -4,13 +4,11 @@
 	import { get } from 'svelte/store';
 	import SettingsBody from '../../@components/content/SettingsBody.svelte';
 	import ProjectSaveDiscard from './ProjectSaveDiscard.svelte';
-	import { projectEditingStore } from '../../lib/stores/projectStore';
-
+	import { projectEditingStore } from '../../lib/stores/projectStore.svelte';
+	currentProjectEditing;
 	let deleting = false;
 
-	async function onDelete() {
-	}
-
+	async function onDelete() {}
 </script>
 
 <SettingsBody>

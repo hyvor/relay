@@ -2,7 +2,10 @@
 	import { toast } from '@hyvor/design/components';
 	import SaveDiscard from '../../@components/content/save/SaveDiscard.svelte';
 	import { updateProject } from '../../lib/actions/projectActions';
-	import { projectEditingStore, projectStore, setProjectStore } from '../../lib/stores/projectStore';
+	import {
+		currentProjectEditingctStore,
+		setProjectStore
+	} from '../../lib/stores/projectStore.svelte';
 	import type { Project } from '../../types';
 
 	interface Props {
@@ -11,9 +14,7 @@
 
 	let { onsave }: Props = $props();
 
-	let hasChanges = $derived(
-		$projectEditingStore.name !== $projectStore.name
-	);
+	let hasChanges = $derived($projectEditingStore.name !== $projectStore.name);
 
 	async function onSave() {
 		const updatedProject = await updateProject($projectEditingStore.name);

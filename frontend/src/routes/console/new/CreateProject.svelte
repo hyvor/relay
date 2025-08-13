@@ -11,9 +11,8 @@
 		toast
 	} from '@hyvor/design/components';
 	import IconCaretLeft from '@hyvor/icons/IconCaretLeft';
-	import { addUserProject, userProjectStore } from '../lib/stores/userProjectStore';
 	import { createProject } from '../lib/actions/projectActions';
-	import { selectingProject } from '../lib/stores/consoleStore';
+	import { addProjectUser, getProjectUsers } from '../lib/stores/projectStore.svelte';
 
 	let name = $state('');
 	let sendType: 'transactional' | 'distributional' = $state('transactional');
@@ -21,9 +20,10 @@
 	let nameError: string | null = $state(null);
 
 	let isCreating = $state(false);
+	let projectUsers = getProjectUsers();
 
 	function handleBack() {
-		if ($userProjectStore.length > 0) {
+		if (projectUsers.length > 0) {
 			goto('/console');
 		} else {
 			goto('/');
@@ -52,7 +52,7 @@
 		createProject(name, sendType)
 			.then((res) => {
 				toast.success('Project created successfully');
-				addUserProject(res);
+				addProjectUser(res);
 				goto('/console/' + res.id);
 			})
 			.catch((e) => {
