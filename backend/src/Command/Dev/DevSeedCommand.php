@@ -2,7 +2,7 @@
 
 namespace App\Command\Dev;
 
-use App\Entity\DebugIncomingEmail;
+use App\Api\Console\Authorization\Scope;
 use App\Entity\Type\DomainStatus;
 use App\Service\Instance\InstanceService;
 use App\Entity\Type\SendStatus;
@@ -13,6 +13,7 @@ use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\InstanceFactory;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ProjectFactory;
+use App\Tests\Factory\ProjectUserFactory;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\ServerFactory;
 use App\Tests\Factory\SendFactory;
@@ -36,6 +37,7 @@ class DevSeedCommand extends Command
 
     public function __construct(
         private KernelInterface $kernel,
+        private InstanceService $instanceService
     ) {
         parent::__construct();
     }
@@ -50,9 +52,22 @@ class DevSeedCommand extends Command
 
         SudoUserFactory::createOne(['user_id' => 1]);
 
-        InstanceFactory::new()->withDefaultDkim()->create([
-            'domain' => InstanceService::DEFAULT_DOMAIN,
-            'private_network_cidr' => '0.0.0.0/0'
+        $systemProject = ProjectFactory::createOne([
+            'user_id' => 1,
+            'name' => 'System'
+        ]);
+
+        $instance = $this->instanceService->createInstance();
+
+        ProjectUserFactory::createOne([
+            'project' => $instance->getSystemProject(),
+            'user_id' => 1,
+            'scopes' => [
+                Scope::PROJECT_READ,
+                Scope::SENDS_READ,
+                Scope::DOMAINS_READ,
+                Scope::ANALYTICS_READ,
+            ],
         ]);
 
         $transactionalQueue = QueueFactory::createTransactional();
@@ -80,7 +95,12 @@ class DevSeedCommand extends Command
 
         $project = ProjectFactory::createOne([
             'name' => 'Test Project',
-            'hyvor_user_id' => 1,
+            'user_id' => 1,
+        ]);
+        ProjectUserFactory::createOne([
+            'project' => $project,
+            'user_id' => 1,
+            'scopes' => Scope::all()
         ]);
 
         ApiKeyFactory::createOne([

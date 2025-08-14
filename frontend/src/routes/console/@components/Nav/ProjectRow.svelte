@@ -1,16 +1,21 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { Tag } from '@hyvor/design/components';
-	import { projectStore } from '../../lib/stores/projectStore';
-	import type { Project } from '../../types';
+	import type { Project, ProjectUser } from '../../types';
 	import { selectingProject } from '../../lib/stores/consoleStore';
 	import { loadProject } from '../../lib/projectLoader';
 	import ProjectSendTypeTag from './ProjectSendTypeTag.svelte';
+	import { setCurrentProjectUser } from '../../lib/stores/projectStore.svelte';
 
-	export let project: Project;
+	interface Props {
+		projectUser: ProjectUser;
+	}
+
+	let { projectUser }: Props = $props();
+	let project = $derived(projectUser.project);
 
 	function onClick() {
-		projectStore.set(project);
+		setCurrentProjectUser(projectUser);
 		goto(`/console/${project.id}`);
 		loadProject(String(project.id));
 		selectingProject.set(false);
@@ -20,8 +25,8 @@
 <div
 	class="wrap"
 	role="button"
-	on:click={onClick}
-	on:keyup={(e) => e.key === 'Enter' && onClick()}
+	onclick={onClick}
+	onkeyup={(e) => e.key === 'Enter' && onClick()}
 	tabindex="0"
 >
 	<div class="name-id">

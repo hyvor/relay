@@ -6,6 +6,7 @@
 	import RelativeTime from '../../@components/content/RelativeTime.svelte';
 	import DnsRecordModal from './DnsRecordModal.svelte';
 	import type { Domain } from '../../types';
+	import { cant } from '../../lib/scope.svelte';
 
 	interface Props {
 		domain: Domain;
@@ -45,14 +46,25 @@
 			DNS Record
 		</Button>
 		{#if !domain.dkim_verified}
-			<Button color="input" size="small" on:click={() => onVerify(domain)}>
+			<Button
+				color="input"
+				size="small"
+				on:click={() => onVerify(domain)}
+				disabled={cant('domains.write')}
+			>
 				{#snippet start()}
 					<IconArrowClockwise size={12} />
 				{/snippet}
 				Verify
 			</Button>
 		{/if}
-		<IconButton variant="fill-light" color="red" size="small" on:click={() => onDelete(domain)}>
+		<IconButton
+			variant="fill-light"
+			color="red"
+			size="small"
+			on:click={() => onDelete(domain)}
+			disabled={cant('domains.write')}
+		>
 			<IconTrash size={12} />
 		</IconButton>
 	</div>
@@ -69,6 +81,7 @@
 		border-radius: 8px;
 		background-color: var(--bg-light);
 		word-break: break-all;
+		padding: 15px 30px;
 	}
 
 	.domain-info {
@@ -79,7 +92,7 @@
 		display: flex;
 		align-items: center;
 		gap: 12px;
-		margin-bottom: 8px;
+		margin-bottom: 3px;
 	}
 
 	.domain-name {
@@ -98,7 +111,6 @@
 		gap: 16px;
 		font-size: 14px;
 		color: var(--text-light);
-		margin-bottom: 12px;
 	}
 
 	.domain-actions {

@@ -1,5 +1,4 @@
-import { get } from "svelte/store";
-import { projectStore } from "./stores/projectStore";
+import { getCurrentProjectUser } from "./stores/projectStore.svelte";
 
 export interface ConsoleApiOptions {
     endpoint: string,
@@ -41,11 +40,10 @@ function getConsoleApi() {
         const headers = {} as Record<string, string>;
 
         if (!userApi) {
-            const project = get(projectStore);
-            headers['X_Project_ID'] = project.id.toString();
+            headers['X-Project-ID'] = getCurrentProjectUser().project.id.toString();
         }
         else if (projectId) {
-            headers['X_Project_ID'] = projectId;
+            headers['X-Project-ID'] = projectId;
         }
 
         if (!(data instanceof FormData)) {

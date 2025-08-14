@@ -28,11 +28,11 @@
 		<div class="dns-record">
 			<SplitControl label="Host" caption="DNS record host">
 				<div class="record-value">
-					<div class="value-text">{domain.dkim_txt_name}</div>
+					<div class="value-text">{domain.dkim_host}</div>
 					<Button
 						size="x-small"
 						color="input"
-						on:click={() => copyAndToast(domain.dkim_txt_name)}
+						on:click={() => copyAndToast(domain.dkim_host)}
 					>
 						COPY
 					</Button>

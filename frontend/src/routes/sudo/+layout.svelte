@@ -49,7 +49,7 @@
 			<HyvorBar
 				product="core"
 				instance={$sudoConfigStore.instance}
-				config={{ name: 'Hyvor Relay' }}
+				config={{ name: 'Hyvor Relay', chat: false }}
 			/>
 
 			<div id="wrap">

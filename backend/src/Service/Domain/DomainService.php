@@ -6,6 +6,7 @@ use App\Entity\Domain;
 use App\Entity\Project;
 use App\Entity\Type\DomainStatus;
 use App\Repository\DomainRepository;
+use App\Service\Domain\Dto\UpdateDomainDto;
 use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Service\Domain\Event\DomainDeletedEvent;
 use Doctrine\ORM\EntityManagerInterface;
@@ -38,8 +39,14 @@ class DomainService
         return $this->domainRepository->findOneBy(['project' => $project, 'domain' => $domainName]);
     }
 
-    public function createDomain(Project $project, string $domainName): Domain
-    {
+    public function createDomain(
+        Project $project,
+        string $domainName,
+        ?string $dkimSelector = null,
+        ?string $customDkimPublicKey = null,
+        ?string $customDkimPrivateKey = null,
+        bool $flush = true,
+    ): Domain {
         $domain = new Domain();
         $domain->setCreatedAt($this->now());
         $domain->setUpdatedAt($this->now());
@@ -48,22 +55,46 @@ class DomainService
         $domain->setStatus(DomainStatus::PENDING);
         $domain->setStatusChangedAt($this->now());
 
-        $domain->setDkimSelector(Dkim::generateDkimSelector());
+        $dkimSelector = $dkimSelector ?? Dkim::generateDkimSelector();
+        $domain->setDkimSelector($dkimSelector);
 
-        [
-            'public' => $publicKey,
-            'private' => $privateKey,
-        ] = Dkim::generateDkimKeys();
+        if ($customDkimPublicKey) {
+            // both must be provided
+            assert(is_string($customDkimPrivateKey));
 
-        $domain->setDkimPublicKey($publicKey);
-        $domain->setDkimPrivateKeyEncrypted($this->encryption->encryptString($privateKey));
+            $domain->setDkimPublicKey($customDkimPublicKey);
+            $domain->setDkimPrivateKeyEncrypted($this->encryption->encryptString($customDkimPrivateKey));
+        } else {
+            [
+                'public' => $publicKey,
+                'private' => $privateKey,
+            ] = Dkim::generateDkimKeys();
+
+            $domain->setDkimPublicKey($publicKey);
+            $domain->setDkimPrivateKeyEncrypted($this->encryption->encryptString($privateKey));
+        }
+
+
+        if ($flush) {
+            $this->em->persist($domain);
+            $this->em->flush();
+
+            $this->eventDispatcher->dispatch(new DomainCreatedEvent($domain));
+        }
+
+        return $domain;
+    }
+
+    public function updateDomain(Domain $domain, UpdateDomainDto $updates): void
+    {
+        if ($updates->domainSet) {
+            $domain->setDomain($updates->domain);
+        }
+
+        $domain->setUpdatedAt($this->now());
 
         $this->em->persist($domain);
         $this->em->flush();
-
-        $this->eventDispatcher->dispatch(new DomainCreatedEvent($domain));
-
-        return $domain;
     }
 
     /**

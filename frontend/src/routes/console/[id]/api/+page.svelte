@@ -19,6 +19,7 @@
 	import { getApiKeys, updateApiKey, deleteApiKey } from '../../lib/actions/apiKeyActions';
 	import { onMount } from 'svelte';
 	import { copyAndToast } from '../../lib/helpers/copy';
+	import { cant, redirectIfCant } from '../../lib/scope.svelte';
 
 	let apiKeys: ApiKey[] = $state([]);
 	let loading = $state(true);
@@ -38,8 +39,7 @@
 				apiKeys = keys;
 			})
 			.catch((error) => {
-				console.error('Failed to load API keys:', error);
-				toast.error('Failed to load API keys');
+				toast.error('Failed to load API keys: ' + error.message);
 			})
 			.finally(() => {
 				loading = false;
@@ -90,11 +90,17 @@
 			editingApiKey = null;
 		}
 	});
+
+	onMount(() => redirectIfCant('api_keys.read'));
 </script>
 
 <SingleBox>
 	<div class="top">
-		<Button variant="fill" on:click={() => (showCreateModal = true)}>
+		<Button
+			variant="fill"
+			on:click={() => (showCreateModal = true)}
+			disabled={cant('api_keys.write')}
+		>
 			<IconPlus size={16} />
 			Create API Key
 		</Button>
@@ -116,8 +122,8 @@
 	</div>
 </SingleBox>
 
-<CreateApiKeyModal 
-	bind:show={showCreateModal} 
+<CreateApiKeyModal
+	bind:show={showCreateModal}
 	{editingApiKey}
 	onApiKeyCreated={handleApiKeyCreated}
 	onApiKeyUpdated={handleApiKeyUpdated}
@@ -138,8 +144,8 @@
 	>
 		<div class="modal-content">
 			<div class="warning-box">
-				<strong>Important:</strong> This is the only time you'll see this API key. Make sure to copy
-				it and store it securely.
+				<strong>Important:</strong> This is the only time you'll see this API key. Make sure
+				to copy it and store it securely.
 			</div>
 
 			<SplitControl label="API Key">
@@ -187,7 +193,7 @@
 		flex-direction: column;
 		overflow: auto;
 	}
-	
+
 	.loader-container {
 		display: flex;
 		justify-content: center;
