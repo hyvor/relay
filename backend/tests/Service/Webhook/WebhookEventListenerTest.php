@@ -47,7 +47,7 @@ class WebhookEventListenerTest extends KernelTestCase
         // not selected, other project
         $webhook4 = WebhookFactory::createOne(['events' => [WebhooksEventEnum::DOMAIN_CREATED]]);
 
-        $this->eventDispatcher->dispatch(new DomainCreatedEvent($domain));
+        $this->ed->dispatch(new DomainCreatedEvent($domain));
 
         $deliveries = $this->em->getRepository(WebhookDelivery::class)->findAll();
 
@@ -122,7 +122,7 @@ class WebhookEventListenerTest extends KernelTestCase
         $send = SendFactory::createOne(['project' => $project]);
         $attempt = SendAttemptFactory::createOne(['status' => $sendAttemptStatus, 'send' => $send]);
 
-        $this->eventDispatcher->dispatch(new SendAttemptCreatedEvent($attempt));
+        $this->ed->dispatch(new SendAttemptCreatedEvent($attempt));
 
         $this->assertWebhookDeliveryCreated(
             $project,
@@ -142,7 +142,7 @@ class WebhookEventListenerTest extends KernelTestCase
         $project = ProjectFactory::createOne();
         $webhook = $this->createWebhook($project, WebhooksEventEnum::DOMAIN_CREATED);
         $domain = DomainFactory::createOne(['project' => $project]);
-        $this->eventDispatcher->dispatch(new DomainCreatedEvent($domain));
+        $this->ed->dispatch(new DomainCreatedEvent($domain));
 
         $this->assertWebhookDeliveryCreated(
             $project,
