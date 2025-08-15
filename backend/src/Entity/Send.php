@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use App\Entity\Type\SendRecipientType;
 use App\Entity\Type\SendStatus;
 use App\Repository\SendRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -80,9 +79,6 @@ class Send
 
     #[ORM\Column(type: "text")]
     private string $raw;
-
-    #[ORM\Column(type: "text", nullable: true)]
-    private ?string $result = null;
 
     /**
      * @var Collection<int, SendRecipient>
@@ -319,17 +315,6 @@ class Send
     public function setRaw(string $raw): static
     {
         $this->raw = $raw;
-        return $this;
-    }
-
-    public function getResult(): ?string
-    {
-        return $this->result;
-    }
-
-    public function setResult(?string $result): static
-    {
-        $this->result = $result;
         return $this;
     }
 
