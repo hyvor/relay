@@ -26,6 +26,9 @@ class Send
     #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable $updated_at;
 
+    #[ORM\Column()]
+    private bool $queued = true;
+
     #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable $send_after;
 
@@ -127,6 +130,17 @@ class Send
         return $this;
     }
 
+    public function isQueued(): bool
+    {
+        return $this->queued;
+    }
+
+    public function setQueued(bool $queued): static
+    {
+        $this->queued = $queued;
+        return $this;
+    }
+
     public function getSendAfter(): \DateTimeImmutable
     {
         return $this->send_after;
@@ -135,39 +149,6 @@ class Send
     public function setSendAfter(\DateTimeImmutable $send_after): static
     {
         $this->send_after = $send_after;
-        return $this;
-    }
-
-    public function getSentAt(): ?\DateTimeImmutable
-    {
-        return $this->sent_at;
-    }
-
-    public function setSentAt(?\DateTimeImmutable $sent_at): static
-    {
-        $this->sent_at = $sent_at;
-        return $this;
-    }
-
-    public function getFailedAt(): ?\DateTimeImmutable
-    {
-        return $this->failed_at;
-    }
-
-    public function setFailedAt(?\DateTimeImmutable $failed_at): static
-    {
-        $this->failed_at = $failed_at;
-        return $this;
-    }
-
-    public function getStatus(): SendStatus
-    {
-        return $this->status;
-    }
-
-    public function setStatus(SendStatus $status): static
-    {
-        $this->status = $status;
         return $this;
     }
 
