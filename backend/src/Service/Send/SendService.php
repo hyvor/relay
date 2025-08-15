@@ -8,6 +8,7 @@ use App\Entity\Queue;
 use App\Entity\Send;
 use App\Entity\SendAttempt;
 use App\Entity\SendRecipient;
+use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
 use App\Entity\Type\SendStatus;
 use App\Repository\SendRepository;
@@ -157,6 +158,7 @@ class SendService
             foreach ($recipients as $recipient) {
                 $sendRecipient = new SendRecipient();
                 $sendRecipient->setSend($send);
+                $sendRecipient->setStatus(SendRecipientStatus::QUEUED);
                 $sendRecipient->setAddress($recipient->getAddress());
                 $sendRecipient->setName($recipient->getName());
                 $sendRecipient->setType($type);

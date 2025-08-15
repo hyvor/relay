@@ -29,15 +29,6 @@ class Send
     #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable $send_after;
 
-    #[ORM\Column(type: "datetime_immutable", nullable: true)]
-    private ?\DateTimeImmutable $sent_at = null;
-
-    #[ORM\Column(type: "datetime_immutable", nullable: true)]
-    private ?\DateTimeImmutable $failed_at = null;
-
-    #[ORM\Column(type: "string", enumType: SendStatus::class)]
-    private SendStatus $status;
-
     #[ORM\ManyToOne(targetEntity: Project::class)]
     #[ORM\JoinColumn]
     private Project $project;
