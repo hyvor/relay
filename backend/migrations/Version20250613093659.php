@@ -37,8 +37,6 @@ final class Version20250613093659 extends AbstractMigration
                 queue_name text NOT NULL, -- denormalized
                 from_address text NOT NULL,
                 from_name text,
-                to_address text NOT NULL,
-                to_name text,
                 subject text,
                 body_html text,
                 body_text text,
@@ -57,7 +55,24 @@ final class Version20250613093659 extends AbstractMigration
         $this->addSql("CREATE INDEX idx_sends_created_at ON sends (created_at)");
 
         // worker index
-        $this->addSql("CREATE INDEX idx_sends_status_queue_id_send_after ON sends (queue_id, send_after) WHERE status = 'queued'");
+        $this->addSql(
+            "CREATE INDEX idx_sends_status_queue_id_send_after ON sends (queue_id, send_after) WHERE status = 'queued'"
+        );
+
+        // recipients table
+        $this->addSql("CREATE TYPE send_recipients_type AS ENUM ('to', 'cc', 'bcc')");
+        $this->addSql(
+            <<<SQL
+            CREATE TABLE send_recipients (
+                id SERIAL PRIMARY KEY,
+                send_id BIGINT NOT NULL references sends(id) ON DELETE CASCADE,
+                address text NOT NULL,
+                name text NOT NULL, -- empty if not provided
+                type send_recipients_type NOT NULL,
+                UNIQUE (send_id, address, type)
+            )
+            SQL
+        );
     }
 
     public function down(Schema $schema): void

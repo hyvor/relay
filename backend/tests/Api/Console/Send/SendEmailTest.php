@@ -10,6 +10,7 @@ use App\Api\Console\Object\SendObject;
 use App\Entity\Send;
 use App\Entity\Type\DomainStatus;
 use App\Entity\Type\ProjectSendType;
+use App\Entity\Type\SendRecipientType;
 use App\Entity\Type\SendStatus;
 use App\Service\Send\EmailBuilder;
 use App\Service\Send\SendService;
@@ -416,14 +417,19 @@ class SendEmailTest extends WebTestCase
         $this->assertSame("<p>This is a test email.</p>", $send->getBodyHtml());
         $this->assertSame($messageId, $send->getMessageId());
         $this->assertSame($fromAddress, $send->getFromAddress());
-        $this->assertSame($toAddress, $send->getToAddress());
+
+        $recipients = $send->getRecipients();
+        $this->assertCount(1, $recipients);
+        $recipient = $recipients[0];
+        $this->assertSame($toAddress, $recipient->getAddress());
+        $this->assertSame(SendRecipientType::TO, $recipient->getType());
 
         if ($useArrayAddress) {
             $this->assertSame("Supun", $send->getFromName());
-            $this->assertSame("Somebody", $send->getToName());
+            $this->assertSame("Somebody", $recipient->getName());
         } else {
             $this->assertEmpty($send->getFromName());
-            $this->assertEmpty($send->getToName());
+            $this->assertEmpty($recipient->getName());
         }
 
         $this->assertSame(
@@ -442,6 +448,8 @@ class SendEmailTest extends WebTestCase
 
         $fromHeader = $useArrayAddress ? "Supun <supun@hyvor.com>" : "supun@hyvor.com";
         $toHeader = $useArrayAddress ? "Somebody <somebody@example.com>" : "somebody@example.com";
+        $this->assertStringNotContainsString('CC:', $rawHeaders);
+        $this->assertStringNotContainsString('BCC:', $rawHeaders);
         $this->assertStringContainsString("From: $fromHeader\r\n", $rawHeaders);
         $this->assertStringContainsString("To: $toHeader\r\n", $rawHeaders);
         $this->assertStringContainsString("Subject: Test Email\r\n", $rawHeaders);
