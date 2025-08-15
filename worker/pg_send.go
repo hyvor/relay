@@ -7,25 +7,30 @@ import (
 	"fmt"
 )
 
-type DbSend struct {
+type SendRow struct {
 	Id        int
 	Uuid      string
 	From      string
-	To        string
 	RawEmail  string
-	TryCount  int
 	QueueName string
 }
 
-type DbSendBatch struct {
+type RecipientRow struct {
+	Id       int
+	Type     string // "to", "cc", "bcc"
+	Address  string
+	TryCount int
+}
+
+type SendTransaction struct {
 	tx  *sql.Tx
 	ctx context.Context
 }
 
-func NewDbSendBatch(
+func NewSendTransaction(
 	ctx context.Context,
 	db *sql.DB,
-) (*DbSendBatch, error) {
+) (*SendTransaction, error) {
 
 	tx, err := db.BeginTx(ctx, nil)
 
@@ -33,90 +38,108 @@ func NewDbSendBatch(
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
-	return &DbSendBatch{
+	return &SendTransaction{
 		tx:  tx,
 		ctx: ctx,
 	}, nil
 }
 
-func (b *DbSendBatch) FetchSends(queueId int) ([]DbSend, error) {
+func (b *SendTransaction) FetchSends(queueId int) (*SendRow, []*RecipientRow, error) {
 
-	rows, err := b.tx.QueryContext(b.ctx, `
+	row := b.tx.QueryRowContext(b.ctx, `
 		WITH ids AS MATERIALIZED (
-			SELECT id, uuid, from_address, to_address, raw, try_count, queue_name
+			SELECT id, uuid, from_address, raw, queue_name
 			FROM sends
-			WHERE status = 'queued' AND queue_id = $1 AND send_after < NOW()
+			WHERE queued = true AND queue_id = $1 AND send_after < NOW()
 			FOR UPDATE SKIP LOCKED
-			LIMIT $2
+			LIMIT 1
 		)
 		UPDATE sends
-		SET status = 'processing', updated_at = NOW()
+		SET queued = false, updated_at = NOW()
 		WHERE id = ANY(SELECT id FROM ids)
-		RETURNING id, uuid, from_address, to_address, raw, try_count, queue_name
-    `, queueId, 10)
+		RETURNING id, uuid, from_address, raw, queue_name
+    `, queueId)
+
+	var send SendRow
+
+	if err := row.Scan(
+		&send.Id,
+		&send.Uuid,
+		&send.From,
+		&send.RawEmail,
+		&send.QueueName,
+	); err != nil {
+		return nil, nil, err
+	}
+
+	// Fetch recipients for the send
+	rows, err := b.tx.QueryContext(b.ctx, `
+		SELECT id, type, address, status, try_count
+		FROM send_recipients
+		WHERE send_id = $1
+	`, send.Id)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf("failed to fetch recipients for send ID %d: %w", send.Id, err)
 	}
 
-	sends := make([]DbSend, 0)
+	defer rows.Close()
 
+	var recipients []*RecipientRow
 	for rows.Next() {
-		var send DbSend
+		var recipient RecipientRow
+		var status string
 
 		if err := rows.Scan(
-			&send.Id,
-			&send.Uuid,
-			&send.From,
-			&send.To,
-			&send.RawEmail,
-			&send.TryCount,
-			&send.QueueName,
+			&recipient.Id,
+			&recipient.Type,
+			&recipient.Address,
+			&status,
+			&recipient.TryCount,
 		); err != nil {
-			return nil, err
+			return nil, nil, fmt.Errorf("failed to scan recipient: %w", err)
 		}
 
-		sends = append(sends, send)
+		if status == "queued" || status == "retrying" {
+			recipients = append(recipients, &recipient)
+		}
 	}
 
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-
-	return sends, nil
+	return &send, recipients, nil
 
 }
 
-func (b *DbSendBatch) FinalizeSendBySendResult(
-	send *DbSend,
+func (b *SendTransaction) RecordAttempt(
+	send *SendRow,
+	recipients []*RecipientRow,
 	sendResult *SendResult,
 ) (int, error) {
 
 	status := sendResult.ToStatus()
 
 	var err error
-	var sendAfterInterval string
+	// var sendAfterInterval string
 
-	if status == "deferred" {
-		sendAfterInterval = fmt.Sprintf("NOW() + INTERVAL '%s'", getSendAfterInterval(send.TryCount))
-	} else {
-		sendAfterInterval = "send_after"
-	}
+	// if status == "deferred" {
+	// 	sendAfterInterval = fmt.Sprintf("NOW() + INTERVAL '%s'", getSendAfterInterval(sendResult.NewTryCount))
+	// } else {
+	// 	sendAfterInterval = "send_after"
+	// }
 
 	// update send status
-	_, err = b.tx.ExecContext(b.ctx, `
-		UPDATE sends
-		SET
-			status = $1,
-			updated_at = NOW(),
-			try_count = try_count + 1,
-			send_after = `+sendAfterInterval+`
-		WHERE id = $2
-	`, status, send.Id)
+	// _, err = b.tx.ExecContext(b.ctx, `
+	// 	UPDATE sends
+	// 	SET
+	// 		status = $1,
+	// 		updated_at = NOW(),
+	// 		try_count = try_count + 1,
+	// 		send_after = `+sendAfterInterval+`
+	// 	WHERE id = $2
+	// `, status, send.Id)
 
-	if err != nil {
-		return 0, fmt.Errorf("failed to update send ID %d status to %s: %w", send.Id, status, err)
-	}
+	// if err != nil {
+	// 	return 0, fmt.Errorf("failed to update send ID %d status to %s: %w", send.Id, status, err)
+	// }
 
 	// create send attempt
 	var errorMessage sql.NullString
@@ -132,16 +155,15 @@ func (b *DbSendBatch) FinalizeSendBySendResult(
 		}
 	}
 
-	var sentMxHost sql.NullString
-	if sendResult.SentMxHost != "" {
-		sentMxHost = sql.NullString{
-			String: sendResult.SentMxHost,
+	var respondedMxHost sql.NullString
+	if sendResult.RespondedMxHost != "" {
+		respondedMxHost = sql.NullString{
+			String: sendResult.RespondedMxHost,
 			Valid:  true,
 		}
 	} else {
-		sentMxHost = sql.NullString{
-			String: "",
-			Valid:  false,
+		respondedMxHost = sql.NullString{
+			Valid: false,
 		}
 	}
 
@@ -158,7 +180,7 @@ func (b *DbSendBatch) FinalizeSendBySendResult(
 			status,
 			try_count,
 			resolved_mx_hosts,
-			accepted_mx_host,
+			responded_mx_host,
 			smtp_conversations,
 			error
 		)
@@ -179,9 +201,9 @@ func (b *DbSendBatch) FinalizeSendBySendResult(
 		send.Id,
 		sendResult.SentFromIpId,
 		status,
-		send.TryCount+1,
+		sendResult.NewTryCount,
 		resolvedMxHosts,
-		sentMxHost,
+		respondedMxHost,
 		smtpConversations,
 		errorMessage,
 	).Scan(&attemptId)
@@ -191,6 +213,23 @@ func (b *DbSendBatch) FinalizeSendBySendResult(
 	}
 
 	return attemptId, nil
+
+}
+
+func (stx *SendTransaction) FinalizeSend(send *SendRow) error {
+
+	// set queued to false
+	_, err := stx.tx.ExecContext(stx.ctx, `
+		UPDATE sends
+		SET queued = false, updated_at = NOW()
+		WHERE id = $1
+	`, send.Id)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 
 }
 
@@ -222,7 +261,7 @@ func getSendAfterInterval(tryCount int) string {
 	return "2 days"
 }
 
-func (b *DbSendBatch) RequeueSend(sendId int) error {
+func (b *SendTransaction) RequeueSend(sendId int) error {
 	// TODO: interval logic based on retry count
 	_, err := b.tx.ExecContext(b.ctx, `
 		UPDATE sends
@@ -237,14 +276,14 @@ func (b *DbSendBatch) RequeueSend(sendId int) error {
 	return nil
 }
 
-func (b *DbSendBatch) Commit() error {
+func (b *SendTransaction) Commit() error {
 	if err := b.tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 	return nil
 }
 
-func (b *DbSendBatch) Rollback() error {
+func (b *SendTransaction) Rollback() error {
 	if err := b.tx.Rollback(); err != nil {
 		return fmt.Errorf("failed to rollback transaction: %w", err)
 	}

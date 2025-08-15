@@ -131,7 +131,7 @@ class SendService
         $send->setCreatedAt($this->now());
         $send->setUpdatedAt($this->now());
         $send->setSendAfter($this->now());
-        $send->setStatus(SendStatus::QUEUED);
+        $send->setQueued(true);
         $send->setProject($project);
         $send->setDomain($domain);
         $send->setQueue($queue);

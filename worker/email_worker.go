@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"log/slog"
-	"os"
 	"sync"
 	"time"
 )
@@ -111,6 +112,11 @@ func emailWorker(
 ) {
 	defer wg.Done()
 
+	logger = logger.With(
+		"worker_id", id,
+		"ip", ip.Ip,
+	)
+
 	conn, err := NewRetryingDbConn(ctx, dbConfig, logger)
 	if err != nil {
 		return
@@ -128,56 +134,68 @@ func emailWorker(
 
 		default:
 
-			batch, err := NewDbSendBatch(ctx, conn)
+			sendTx, err := NewSendTransaction(ctx, conn)
 
 			if err != nil {
 				logger.Error(
-					"Email worker failed to get new send batch",
-					"worker_id", id,
+					"Email worker failed to create a new send transaction",
 					"error", err,
 				)
 				time.Sleep(1 * time.Second)
 				continue
 			}
 
-			sends, err := batch.FetchSends(ip.QueueId)
+			send, recipients, err := sendTx.FetchSends(ip.QueueId)
 
 			if err != nil {
+
+				if errors.Is(err, sql.ErrNoRows) {
+					time.Sleep(250 * time.Millisecond)
+					sendTx.Rollback()
+					continue
+				}
+
 				logger.Error(
-					"Worker failed to fetch sends",
-					"worker_id", id,
+					"Email worker failed to fetch a send",
 					"error", err,
 				)
 				time.Sleep(1 * time.Second)
-				batch.Rollback()
+				sendTx.Rollback()
 				continue
 			}
 
+			recipientsByDomain := getRecipientsGroupedByDomain(recipients)
 			var sendAttemptIds []int
 
-			for _, send := range sends {
+			for domain, rcpts := range recipientsByDomain {
+
 				logger.Info(
-					"Worker processing send",
-					"worker_id", id,
+					"Email worker processing send for domain",
 					"send_id", send.Id,
+					"domain", domain,
 				)
 
 				result := sendEmail(
-					&send,
+					send,
+					rcpts,
+					domain,
 					instanceDomain,
 					ip.Id,
 					ip.Ip,
 					ip.Ptr,
-					os.Stdout,
 				)
 
-				sendAttemptId, err := batch.FinalizeSendBySendResult(&send, result)
+				sendAttemptId, err := sendTx.RecordAttempt(
+					send,
+					rcpts,
+					result,
+				)
 
 				if err != nil {
 					logger.Info(
-						"Worker failed to finalize send",
-						"worker_id", id,
+						"Email worker failed to finalize send",
 						"send_id", send.Id,
+						"domain", domain,
 						"error", err,
 					)
 					continue
@@ -185,43 +203,70 @@ func emailWorker(
 
 				updateEmailMetricsFromSendResult(metrics, result)
 				sendAttemptIds = append(sendAttemptIds, sendAttemptId)
+
 			}
 
-			commitErr := batch.Commit()
+			if err := sendTx.FinalizeSend(send); err != nil {
+				logger.Error("Email worker failed to finalize send",
+					"send_id", send.Id,
+					"error", err,
+				)
+			}
+
+			commitErr := sendTx.Commit()
 
 			if commitErr != nil {
-				logger.Error(
-					"Worker failed to commit batch",
-					"worker_id", id,
+				logger.Error("Email worker failed to commit batch",
+					"send_id", send.Id,
 					"error", commitErr,
 				)
 			}
 
-			if len(sendAttemptIds) > 0 {
-				go func(sendAttemptIds []int) {
-					err := CallLocalApi(
-						ctx,
-						"POST",
-						"/send-attempts/done",
-						map[string]interface{}{
-							"send_attempt_ids": sendAttemptIds,
-						},
-						nil,
-					)
-					if err != nil {
-						logger.Error(
-							"Worker failed to notify send attempt done via local API",
-							"worker_id", id,
-							"send_attempt_ids", sendAttemptIds,
-							"error", err,
-						)
-					}
-				}(sendAttemptIds)
-			}
+			go notifySendAttemptsToSymfony(ctx, sendAttemptIds, logger)
 
-			time.Sleep(1 * time.Second)
-
+			time.Sleep(50 * time.Millisecond)
 		}
+	}
+}
+
+func getRecipientsGroupedByDomain(rcpts []*RecipientRow) map[string][]*RecipientRow {
+	recipientsByDomain := make(map[string][]*RecipientRow)
+
+	for _, rcpt := range rcpts {
+		domain := getDomainFromEmail(rcpt.Address)
+		if _, exists := recipientsByDomain[domain]; !exists {
+			recipientsByDomain[domain] = []*RecipientRow{}
+		}
+		recipientsByDomain[domain] = append(recipientsByDomain[domain], rcpt)
+	}
+
+	return recipientsByDomain
+}
+
+func notifySendAttemptsToSymfony(
+	ctx context.Context,
+	sendAttemptIds []int,
+	logger *slog.Logger,
+) {
+	if len(sendAttemptIds) == 0 {
+		return
+	}
+
+	err := CallLocalApi(
+		ctx,
+		"POST",
+		"/send-attempts/done",
+		map[string]interface{}{
+			"send_attempt_ids": sendAttemptIds,
+		},
+		nil,
+	)
+	if err != nil {
+		logger.Error(
+			"Email worker failed to notify send attempt done via local API",
+			"send_attempt_ids", sendAttemptIds,
+			"error", err,
+		)
 	}
 }
 

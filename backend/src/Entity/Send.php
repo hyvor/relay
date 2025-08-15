@@ -130,7 +130,7 @@ class Send
         return $this;
     }
 
-    public function isQueued(): bool
+    public function getQueued(): bool
     {
         return $this->queued;
     }

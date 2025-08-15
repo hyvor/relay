@@ -5,12 +5,10 @@ namespace App\Command\Dev;
 use App\Api\Console\Authorization\Scope;
 use App\Entity\Type\DomainStatus;
 use App\Service\Instance\InstanceService;
-use App\Entity\Type\SendStatus;
 use App\Tests\Factory\ApiKeyFactory;
 use App\Tests\Factory\DebugIncomingEmailFactory;
 use App\Tests\Factory\DnsRecordFactory;
 use App\Tests\Factory\DomainFactory;
-use App\Tests\Factory\InstanceFactory;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
@@ -118,21 +116,12 @@ class DevSeedCommand extends Command
         $sends_queued = SendFactory::createMany(2, [
             'project' => $project,
             'domain' => $domain,
-            'status' => SendStatus::QUEUED,
         ]);
 
         $sends_sent = SendFactory::createMany(5, [
             'project' => $project,
             'domain' => $domain,
-            'sent_at' => new \DateTimeImmutable(),
-            'status' => SendStatus::ACCEPTED,
-        ]);
-
-        $sent_failed = SendFactory::createMany(1, [
-            'project' => $project,
-            'domain' => $domain,
-            'failed_at' => new \DateTimeImmutable(),
-            'status' => SendStatus::BOUNCED,
+            'queued' => false,
         ]);
 
         SuppressionFactory::createMany(16, [

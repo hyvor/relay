@@ -427,7 +427,7 @@ class SendEmailTest extends WebTestCase
         $this->assertCount(1, $send);
 
         $send = $send[0];
-        $this->assertSame(SendStatus::QUEUED, $send->getStatus());
+        $this->assertSame(true, $send->getQueued());
         $this->assertSame("Test Email", $send->getSubject());
         $this->assertSame("This is a test email.", $send->getBodyText());
         $this->assertSame("<p>This is a test email.</p>", $send->getBodyHtml());
