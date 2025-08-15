@@ -5,6 +5,7 @@ namespace App\Tests\Api\Sudo\Server;
 use App\Api\Sudo\Controller\ServerController;
 use App\Api\Sudo\Object\ServerObject;
 use App\Entity\Server;
+use App\Entity\ServerTask;
 use App\Service\PrivateNetwork\PrivateNetworkApi;
 use App\Service\Server\ServerService;
 use App\Tests\Case\WebTestCase;
@@ -60,35 +61,9 @@ class UpdateServerTest extends WebTestCase
         $this->assertEquals(4, $response['email_workers']); // unchanged
         $this->assertEquals(1, $response['webhook_workers']); // unchanged
 
-        $this->assertSame('http://10.0.0.1/api/local/state/update', $mockResponse->getRequestUrl());
-        $this->assertSame('POST', $mockResponse->getRequestMethod());
-    }
-
-    public function test_rolls_back_if_state_update_api_call_fails(): void
-    {
-        $mockResponse = new MockResponse(info: ['error' => 'host unreachable']);
-        $this->container->set(HttpClientInterface::class, new MockHttpClient($mockResponse));
-
-        // Create test server
-        $server = ServerFactory::createOne([
-            'api_workers' => 4,
-            'email_workers' => 2,
-            'webhook_workers' => 1,
-            'private_ip' => '10.0.0.1'
-        ]);
-
-        $this->sudoApi('PATCH', '/servers/' . $server->getId(), [
-            'api_workers' => 10,
-            'email_workers' => 4,
-            'webhook_workers' => 2
-        ]);
-
-        $this->assertResponseStatusCodeSame(400);
-        $this->assertSame("Failed to call private network API: host unreachable, Content: No content", $this->getJson()['message']);
-
-        $servers = $this->em->getRepository(Server::class)->findAll();
-        $this->assertCount(1, $servers);
-        $this->assertSame(4, $servers[0]->getApiWorkers());
+        // Assert task has been created into DB
+        $taskServer = $this->em->getRepository(ServerTask::class)->findOneBy(['server' => $server->_real()])?->getServer();
+        $this->assertSame($server->getId(), $taskServer?->getId());
     }
 
     public function test_update_server_with_nonexistent_id(): void

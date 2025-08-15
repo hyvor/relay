@@ -3,7 +3,9 @@
 namespace App\Service\PrivateNetwork;
 
 use App\Entity\Server;
+use App\Entity\Type\ServerTaskType;
 use App\Service\PrivateNetwork\Exception\PrivateNetworkCallException;
+use App\Service\Server\ServerTaskService;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -11,7 +13,8 @@ class PrivateNetworkApi
 {
 
     public function __construct(
-        private HttpClientInterface $httpClient
+        private HttpClientInterface $httpClient,
+        private ServerTaskService $serverTaskService,
     )
     {
     }
@@ -58,12 +61,14 @@ class PrivateNetworkApi
 
     }
 
-    /**
-     * @throws PrivateNetworkCallException
-     */
     public function callUpdateServerStateApi(Server $server): void
     {
-        $this->callApiOfServer($server, 'POST', '/state/update');
+        //$this->callApiOfServer($server, 'POST', '/state/update');
+        $this->serverTaskService->createTask(
+            $server,
+            ServerTaskType::UPDATE_STATE,
+            []
+        );
     }
 
     /**
