@@ -10,14 +10,14 @@
 		CodeBlock
 	} from '@hyvor/design/components';
 	import { getEmailByUuid } from '../../../lib/actions/emailActions';
-	import type { Email } from '../../../types';
+	import type { Send } from '../../../types';
 	import SingleBox from '../../../@components/content/SingleBox.svelte';
 	import IconCaretLeft from '@hyvor/icons/IconCaretLeft';
 	import { consoleUrlProject } from '../../../lib/consoleUrl';
 	import { page } from '$app/state';
 	import Overview from './Overview.svelte';
 
-	let send: Email | null = $state(null);
+	let send: Send | null = $state(null);
 	let loading = $state(true);
 	let error: string | null = $state(null);
 	let activeTab: 'overview' | 'raw' = $state('overview');

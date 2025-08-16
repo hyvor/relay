@@ -64,20 +64,29 @@ export type ProjectSendType = 'transactional' | 'distributional';
 
 export type SendStatus = 'queued' | 'accepted' | 'bounced' | 'complained';
 
-export type Email = {
+export type Send = {
     id: number;
     uuid: string;
     created_at : number;
-    accepted_at?: number;
-    bounced_at?: number;
-    status: SendStatus;
     from_address: string;
-    to_address: string;
     subject?: string;
     body_html?: string;
     body_text?: string;
     raw: string;
+
+    recipients: SendRecipient[];
     attempts: SendAttempt[];
+}
+
+export interface SendRecipient {
+    id: number;
+    type: 'to' | 'cc' | 'bcc';
+    address: string;
+    name: string;
+    status: SendStatus;
+    accepted_at?: number | null;
+    bounced_at?: number | null;
+    failed_at?: number | null;
 }
 
 export interface SendAttempt {
