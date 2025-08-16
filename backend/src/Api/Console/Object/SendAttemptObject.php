@@ -32,7 +32,7 @@ class SendAttemptObject
         $this->status = $attempt->getStatus();
         $this->try_count = $attempt->getTryCount();
         $this->resolved_mx_hosts = $attempt->getResolvedMxHosts();
-        $this->accepted_mx_host = $attempt->getAcceptedMxHost();
+        $this->accepted_mx_host = $attempt->getRespondedMxHost();
         $this->smtp_conversations = $attempt->getSmtpConversations();
         $this->error = $attempt->getError();
     }

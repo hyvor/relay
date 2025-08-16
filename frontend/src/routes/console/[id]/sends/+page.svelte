@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { ActionList, ActionListItem, TextInput, IconButton } from '@hyvor/design/components';
 	import SingleBox from '../../@components/content/SingleBox.svelte';
-	import type { Email, SendStatus } from '../../types';
+	import type { Send, SendStatus } from '../../types';
 	import Selector from '../../@components/content/Selector.svelte';
 	import IconX from '@hyvor/icons/IconX';
-	import EmailList from './EmailList.svelte';
+	import SendsList from './SendsList.svelte';
 
 	let key = $state(1); // for re-rendering
 	let status: SendStatus | null = $state(null);
@@ -15,7 +15,7 @@
 	let showStatus = $state(false);
 	let showList = $state(false);
 
-	let currentEmail: Email | null = $state(null);
+	let currentEmail: Send | null = $state(null);
 
 	let fromSearchVal: string = $state('');
 	let fromSearch: string = $state('');
@@ -144,7 +144,7 @@
 		</div>
 	</div>
 
-	<EmailList
+	<SendsList
 		{status}
 		{key}
 		from_search={fromSearch === '' ? null : fromSearch}

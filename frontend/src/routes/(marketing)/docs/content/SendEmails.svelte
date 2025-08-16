@@ -55,8 +55,12 @@ interface SendRequest {
 	// the domain of the email address must be verified
 	from: Address;
 
-	// The email address of the recipient (required)
-	to: Address;
+	// the recipient's email address(es) (required)
+	to: Address | Address[];
+
+	// optional, CC and BCC recipients
+	cc?: Address | Address[];
+	bcc?: Address | Address[];
 
 	// The subject of the email
 	subject?: string;
@@ -100,6 +104,16 @@ type Attachment = {
 
 	// email address without a name
 	"to": "user@example.org",
+
+	// multiple recipients (direct email or mixed with names)
+	"cc": [
+		"cc1@example.org",
+		{
+			"name": "CC Recipient 2",
+			"email": "cc2@example.org"
+		}
+	],
+	"bcc": ["bcc1@example.org", "bcc2@example.org"],
 
 	"subject": "Welcome to HYVOR",
 	"body_html": "<h1>Welcome to HYVOR</h1><p>Thank you for signing up!</p>",
@@ -267,11 +281,16 @@ type Attachment = {
 	Learn more about <a href="/docs/api-console#rate-limit">Console API Rate Limiting</a>.
 </p>
 
-<h2 id="limits">Other Limits</h2>
+<h2 id="limits">General Limits</h2>
 
 <ul>
 	<li>
-		<strong>Total email size</strong> is limited to <strong>10MB</strong> <br /> (including headers,
+		<strong>Recipients</strong> are limited to <strong>20</strong>, including TO, CC, and BCC
+		recipients. In Cloud, each recipient is billed as a separate email (ex: if you send an email
+		to 3 recipients, you will be billed for 3 emails).
+	</li>
+	<li>
+		<strong>Total email size</strong> is limited to <strong>10MB</strong>. <br /> (including headers,
 		body, and attachments).
 	</li>
 	<li>

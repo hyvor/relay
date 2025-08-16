@@ -10,21 +10,36 @@ use App\Service\Send\SendLimits;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Validator\Constraints as Assert;
 
+/**
+ * @phpstan-import-type StringOrArrayAddress from EmailAddressFormat
+ */
 class SendEmailInput
 {
     /**
-     * @var string|array{email: string, name?: string}
+     * @var StringOrArrayAddress
      */
     #[Assert\NotBlank]
     #[EmailAddress]
     public string|array $from;
 
     /**
-     * @var string|array{email: string, name?: string}
+     * @var StringOrArrayAddress|StringOrArrayAddress[]
      */
     #[Assert\NotBlank]
-    #[EmailAddress]
+    #[EmailAddress(multiple: true)]
     public string|array $to;
+
+    /**
+     * @var StringOrArrayAddress|StringOrArrayAddress[]
+     */
+    #[EmailAddress(multiple: true)]
+    public string|array $cc = [];
+
+    /**
+     * @var StringOrArrayAddress|StringOrArrayAddress[]
+     */
+    #[EmailAddress(multiple: true)]
+    public string|array $bcc = [];
 
 
     #[Assert\Length(max: SendLimits::MAX_SUBJECT_LENGTH)]
@@ -63,7 +78,10 @@ class SendEmailInput
                 'content' => [
                     new Assert\NotBlank(),
                     new Assert\Type('string'),
-                    new Assert\Length(max: SendLimits::MAX_EMAIL_SIZE, maxMessage: 'Attachment content must not exceed 10MB.'),
+                    new Assert\Length(
+                        max: SendLimits::MAX_EMAIL_SIZE,
+                        maxMessage: 'Attachment content must not exceed 10MB.'
+                    ),
                 ],
                 'content_type' => new Assert\Optional(new Assert\Type('string')),
                 'name' => new Assert\Optional(new Assert\Type('string')),
@@ -79,9 +97,28 @@ class SendEmailInput
         return EmailAddressFormat::createAddressFromInput($this->from);
     }
 
-    public function getToAddress(): Address
+    /**
+     * @return Address[]
+     */
+    public function getToAddresses(): array
     {
-        return EmailAddressFormat::createAddressFromInput($this->to);
+        return EmailAddressFormat::createAddressesFromInput($this->to);
+    }
+
+    /**
+     * @return Address[]
+     */
+    public function getCcAddresses(): array
+    {
+        return EmailAddressFormat::createAddressesFromInput($this->cc);
+    }
+
+    /**
+     * @return Address[]
+     */
+    public function getBccAddresses(): array
+    {
+        return EmailAddressFormat::createAddressesFromInput($this->bcc);
     }
 
     /**

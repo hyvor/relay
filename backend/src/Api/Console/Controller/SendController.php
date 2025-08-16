@@ -48,9 +48,7 @@ class SendController extends AbstractController
     ): JsonResponse {
         $fromAddress = $sendEmailInput->getFromAddress();
 
-        $domainName = EmailAddressFormat::getDomainFromEmail(
-            $fromAddress->getAddress()
-        );
+        $domainName = EmailAddressFormat::getDomainFromEmail($fromAddress->getAddress());
         $domain = $this->domainService->getDomainByProjectAndName(
             $project,
             $domainName
@@ -68,11 +66,18 @@ class SendController extends AbstractController
             );
         }
 
-        if ($this->suppressionService->isSuppressed($project, $sendEmailInput->getToAddress()->getAddress())) {
+        $to = $sendEmailInput->getToAddresses();
+        $cc = $sendEmailInput->getCcAddresses();
+        $bcc = $sendEmailInput->getBccAddresses();
+
+        // TODO: recipient count validation
+
+        // TODO: suppressions check
+        /*if ($this->suppressionService->isSuppressed($project, $sendEmailInput->getToAddresses()->getAddress())) {
             throw new BadRequestException(
-                "Email address {$sendEmailInput->getToAddress()->getAddress()} is suppressed"
+                "Email address {$sendEmailInput->getToAddresses()->getAddress()} is suppressed"
             );
-        }
+        }*/
 
         $queue = $project->getSendType() === ProjectSendType::TRANSACTIONAL ?
             $this->queueService->getTransactionalQueue() :
@@ -93,7 +98,9 @@ class SendController extends AbstractController
                 $domain,
                 $queue,
                 $fromAddress,
-                $sendEmailInput->getToAddress(),
+                $to,
+                $cc,
+                $bcc,
                 $sendEmailInput->subject,
                 $sendEmailInput->body_html,
                 $sendEmailInput->body_text,

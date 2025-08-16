@@ -1,60 +1,64 @@
 <script lang="ts">
-	import type { Email } from '../../types';
+	import type { Send } from '../../types';
 	import SendStatus from './SendStatus.svelte';
 	import RelativeTime from '../../@components/content/RelativeTime.svelte';
 	import { consoleUrlProject } from '../../lib/consoleUrl';
 
 	interface Props {
-		email: Email;
+		send: Send;
 		refreshList: () => void;
 	}
 
-	let { email, refreshList }: Props = $props();
+	let { send, refreshList }: Props = $props();
 
-	const statusTimestamp = $derived(
-		email.status === 'accepted'
-			? email.accepted_at
-			: email.status === 'bounced'
-				? email.bounced_at
+	/* const statusTimestamp = $derived(
+		send.status === 'accepted'
+			? send.accepted_at
+			: send.status === 'bounced'
+				? send.bounced_at
 				: null
-	);
+	); */
 </script>
 
-<a class="email" href={consoleUrlProject(`sends/${email.uuid}`)}>
+<a class="email" href={consoleUrlProject(`sends/${send.uuid}`)}>
 	<div class="email-wrap">
 		<div class="email-details">
 			<div class="email-row">
 				<span class="email-label">From:</span>
-				<span class="email-address">{email.from_address}</span>
+				<span class="email-address">{send.from_address}</span>
 			</div>
 			<div class="email-row">
 				<span class="email-label">To:</span>
-				<span class="email-address">{email.to_address}</span>
+				<span class="email-address">
+					{#each send.recipients as recipient}
+						{recipient.address}
+					{/each}
+				</span>
 			</div>
 		</div>
 	</div>
 
 	<div class="subject-wrap">
 		<div class="subject-label">Subject:</div>
-		<div class="subject">{email.subject}</div>
+		<div class="subject">{send.subject}</div>
 	</div>
 
 	<div class="status-wrap">
 		<div class="status">
-			<SendStatus status={email.status} />
+			<!-- <SendStatus status={send.status} /> -->
 			<div class="timestamps">
 				<div class="timestamp">
 					<span class="timestamp-label">Created:</span>
-					<RelativeTime unix={email.created_at} />
+					<RelativeTime unix={send.created_at} />
 				</div>
-				{#if statusTimestamp}
+				<!-- {#if statusTimestamp}
 					<div class="timestamp">
 						<span class="timestamp-label">
-							{email.status === 'accepted' ? 'Accepted:' : 'Failed:'}
+							{send.status === 'accepted' ? 'Accepted:' : 'Failed:'}
 						</span>
 						<RelativeTime unix={statusTimestamp} />
 					</div>
-				{/if}
+				{/if} -->
 			</div>
 		</div>
 	</div>

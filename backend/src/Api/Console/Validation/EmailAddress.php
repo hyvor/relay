@@ -11,4 +11,9 @@ use Symfony\Component\Validator\Constraint;
 class EmailAddress extends Constraint
 {
     public string $message = 'The email address "{{ value }}" is not valid.';
+
+    public function __construct(public bool $multiple = false)
+    {
+        parent::__construct();
+    }
 }

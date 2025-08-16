@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { DetailCards, DetailCard } from '@hyvor/design/components';
-	import type { Email } from '../../../types';
+	import type { Send } from '../../../types';
 	import SendStatus from '../SendStatus.svelte';
 	import RelativeTime from '../../../@components/content/RelativeTime.svelte';
 	import AttemptRow from './AttemptRow.svelte';
 
-	let { send }: { send: Email } = $props();
+	let { send }: { send: Send } = $props();
 
 	function formatTimestamp(timestamp: number | undefined): string {
 		if (!timestamp) return 'N/A';

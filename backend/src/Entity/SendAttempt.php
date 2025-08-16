@@ -41,7 +41,7 @@ class SendAttempt
     private int $try_count = 0;
 
     #[ORM\Column(type: "string", nullable: true)]
-    private ?string $accepted_mx_host = null;
+    private ?string $responded_mx_host = null;
 
     /** @var array<string, array<string, mixed>> */
     #[ORM\Column(type: "json")]
@@ -50,7 +50,9 @@ class SendAttempt
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $error = null;
 
-    public function __construct() {}
+    public function __construct()
+    {
+    }
 
     public function getId(): int
     {
@@ -124,14 +126,14 @@ class SendAttempt
         return $this;
     }
 
-    public function getAcceptedMxHost(): ?string
+    public function getRespondedMxHost(): ?string
     {
-        return $this->accepted_mx_host;
+        return $this->responded_mx_host;
     }
 
-    public function setAcceptedMxHost(?string $accepted_mx_host): static
+    public function setRespondedMxHost(?string $responded_mx_host): static
     {
-        $this->accepted_mx_host = $accepted_mx_host;
+        $this->responded_mx_host = $responded_mx_host;
         return $this;
     }
 

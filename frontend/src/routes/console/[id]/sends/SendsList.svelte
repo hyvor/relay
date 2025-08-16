@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { IconMessage, LoadButton, Loader } from '@hyvor/design/components';
-	import type { Email, SendStatus } from '../../types';
+	import type { Send, SendStatus } from '../../types';
 	import { emailStore } from '../../lib/stores/projectStore.svelte';
 	import { getSends } from '../../lib/actions/emailActions';
-	import EmailRow from './EmailRow.svelte';
+	import SendRow from './SendRow.svelte';
 
 	interface Props {
 		status: SendStatus | null;
@@ -21,7 +21,7 @@
 
 	const EMAILS_PER_PAGE = 25;
 
-	let emails: Email[] = $state([]);
+	let emails: Send[] = $state([]);
 
 	function load(more = false) {
 		more ? (loadingMore = true) : (loading = true);
@@ -59,8 +59,12 @@
 	<IconMessage empty message="No emails found" />
 {:else}
 	<div class="list">
+		<div class="header">
+			<div class="from"></div>
+		</div>
+
 		{#each emails as email (email.id)}
-			<EmailRow {email} refreshList={() => (key += 1)} />
+			<SendRow send={email} refreshList={() => (key += 1)} />
 		{/each}
 		<LoadButton
 			text="Load More"

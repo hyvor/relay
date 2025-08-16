@@ -1,11 +1,11 @@
 import { writable } from "svelte/store";
-import type { ProjectUser, Email, Project } from "../../types";
+import type { ProjectUser, Send, Project } from "../../types";
 
 let projectUsers= $state<ProjectUser[]>([]);
 let currentProjectUser = $state<ProjectUser>({} as ProjectUser);
 const currentProject = $derived(currentProjectUser?.project as Project);
 let currentProjectEditing = $state<Project>({} as Project);
-export const emailStore = writable<Email[]>([]);
+export const emailStore = writable<Send[]>([]);
 
 export function getProjectUsers() {
 	return projectUsers;

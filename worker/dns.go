@@ -117,7 +117,7 @@ func (s *DnsServer) handleRequest(w dns.ResponseWriter, r *dns.Msg) {
 			case "TXT":
 				recordStr = fmt.Sprintf("%s %d IN TXT \"%s\"", name, record.TTL, record.Content)
 			default:
-				s.logger.Warn("Unsupported record type: %s", record.Type)
+				s.logger.Warn("Unsupported record type: " + record.Type)
 				continue
 			}
 

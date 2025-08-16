@@ -35,14 +35,7 @@ var ErrSmtpMxLookupFailed = errors.New("MX lookup failed")
 var lookupMxFunc = net.LookupMX
 var lookupHostFunc = net.LookupHost
 
-const TESTING_DOMAIN = "hyvor.local.testing"
-
-func getMxHostsFromEmail(email string) ([]string, error) {
-	domain := email[strings.Index(email, "@")+1:]
-
-	if domain == TESTING_DOMAIN {
-		return []string{"hyvor-service-mailpit"}, nil
-	}
+func getMxHostsFromDomain(domain string) ([]string, error) {
 
 	// If the domain is already cached and not expired, return the cached hosts
 	if entry, ok := mxCache.data[domain]; ok && entry.Expiry.After(time.Now()) {
