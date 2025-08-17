@@ -43,7 +43,6 @@ class ServerTaskHandler
         foreach ($tasks as $task) {
             if ($task->getType() == ServerTaskType::UPDATE_STATE)
                 $this->goHttpApi->updateState($this->goStateFactory->create());
-
             $this->serverTaskService->deleteTask($task);
         }
     }

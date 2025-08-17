@@ -63,7 +63,6 @@ class PrivateNetworkApi
 
     public function callUpdateServerStateApi(Server $server): void
     {
-        //$this->callApiOfServer($server, 'POST', '/state/update');
         $this->serverTaskService->createTask(
             $server,
             ServerTaskType::UPDATE_STATE,
