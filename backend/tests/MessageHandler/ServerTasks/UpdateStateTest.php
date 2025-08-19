@@ -3,6 +3,7 @@
 namespace App\Tests\MessageHandler\ServerTasks;
 
 use App\Entity\ServerTask;
+use App\Service\Idempotency\Message\ClearExpiredIdempotencyRecordsMessage;
 use App\Service\Management\Message\ServerTaskMessage;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\ServerTaskFactory;
@@ -18,7 +19,9 @@ class UpdateStateTest extends KernelTestCase
 
         $this->getMessageBus()->dispatch($message);
 
-        $this->transport('scheduler_server')->throwExceptions()->process();
+        $transport = $this->transport('scheduler_server');
+        $transport->send($message);
+        $transport->throwExceptions()->process();
 
         $serverTaskDb = $this->em->getRepository(ServerTask::class)->find($serverTaskId);
         $this->assertNull($serverTaskDb);
