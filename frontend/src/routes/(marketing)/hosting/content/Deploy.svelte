@@ -6,9 +6,9 @@
 
 <p>
 	This page covers a <strong>production-ready deployment</strong> that requires multiple servers.
-	If you want to deploy Hyvor Relay on for hobby or small projects (less than 25,000 emails/day),
+	If you want to deploy Hyvor Relay for hobby or small projects (less than 25,000 emails/day),
 	please refer to the
-	<a href="/hosting/deploy-easy">Easy Deploy</a> page which covers a single server deployment.
+	<a href="/hosting/deploy-easy">Easy Deploy</a> page, which covers a single server deployment.
 </p>
 
 <h2 id="infra">Infrastructure</h2>

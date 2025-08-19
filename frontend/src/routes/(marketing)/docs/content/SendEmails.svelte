@@ -44,7 +44,7 @@
 </p>
 
 <p id="email-request-object">
-	This is an <code>SendRequest</code> object, which is used to define the email you want to send.
+	This is a <code>SendRequest</code> object, which is used to define the email you want to send.
 </p>
 
 <TabbedCodeBlock tabs={['Types', 'JSON Example']}>
@@ -140,13 +140,13 @@ type Attachment = {
 
 <p>
 	If your setup sends emails synchronously (ex: within a web request), you can still implement
-	retrying with a smaller timeouts, such as 1s, 2s, and 5s.
+	retrying with smaller timeouts, such as 1s, 2s, and 5s.
 </p>
 
 <h3 id="idempotency">Idempotency</h3>
 
 <p>
-	When retrying it is possible that your request was already accepted and queued by the API, but
+	When retrying, it is possible that your request was already accepted and queued by the API, but
 	somehow your application was not able to correctly handle the response (or the response was not
 	received due to a network issue). In such cases, you may end up sending the same email multiple
 	times. To prevent that, use the <code>X-Idempotency-Key</code> header in your request. This header

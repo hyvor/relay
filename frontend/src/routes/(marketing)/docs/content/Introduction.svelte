@@ -6,7 +6,7 @@
 
 <p>
 	Hyvor Relay is an open-source, self-hostable email API for developers. This page will help you
-	setting up your account and a project, adding a domain, and sending your first email.
+	set up your account and a project, add a domain, and send your first email.
 </p>
 
 <h2 id="cloud-vs-self-hosted">Cloud vs Self-hosted</h2>
@@ -50,8 +50,8 @@
 
 <p id="transactional-vs-distributional">
 	Note that a project can only send either <strong>transactional</strong> or
-	<strong>distributional</strong> emails, not both. Each types of emails are sent from different IP
-	pools to maintain IP reputation separately.
+	<strong>distributional</strong> emails, not both. Each type of email is sent from a different IP
+	pool to maintain IP reputation separately.
 </p>
 
 <ul>

@@ -5,7 +5,7 @@
 <h1>Domains</h1>
 
 <p>
-	Hyvor Relay requires that all emails are authenticated using DKIM. Therefore, you need to first
+	Hyvor Relay requires that all emails be authenticated using DKIM. Therefore, you need to first
 	configure the domains of the email addresses you want to send emails from (FROM address). This
 	is a one-time setup for each domain in a project. Once you configure a domain, you can send
 	emails from any email address under that domain without any additional configuration.

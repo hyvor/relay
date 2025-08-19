@@ -44,7 +44,7 @@
 <h3 id="send-accepted">send.accepted</h3>
 
 <p>
-	<code>send.accepted</code> is triggered when an email is accepted by the recipient SMTP server.
+	<code>send.accepted</code> is triggered when an email is accepted by the recipient's SMTP server.
 	This can only be triggered once for a send. It indicates that the email has been successfully
 	delivered to the recipient's server, but it does not guarantee that the email has been delivered
 	to the recipient's inbox. <code>send.bounced</code> or <code>send.complained</code> can be triggered
@@ -87,7 +87,7 @@
 <h3 id="send-bounced">send.bounced</h3>
 
 <p>
-	<code>send.bounced</code> is triggered when an email is permanently rejected by the recipient SMTP
+	<code>send.bounced</code> is triggered when an email is permanently rejected by the recipient's SMTP
 	server. This can happen for various reasons, such as the recipient's email address not existing or
 	the recipient's server rejecting the email due to spam filters.
 </p>
