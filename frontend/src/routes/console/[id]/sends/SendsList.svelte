@@ -60,7 +60,10 @@
 {:else}
 	<div class="list">
 		<div class="header">
-			<div class="from"></div>
+			<div class="from">From</div>
+			<div class="recipients">Recipients</div>
+			<div class="subject">Subject</div>
+			<div class="status">Status</div>
 		</div>
 
 		{#each emails as email (email.id)}
@@ -80,5 +83,15 @@
 		flex: 1;
 		overflow: auto;
 		padding: 20px 30px;
+	}
+
+	.header {
+		display: grid;
+		grid-template-columns: 2fr 2fr 2fr 1fr;
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--text-light);
+		gap: 10px;
+		padding: 5px 25px 15px;
 	}
 </style>

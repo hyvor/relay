@@ -13,6 +13,7 @@ class SendObject
     public ?int $sent_at;
     public ?int $failed_at;
     public string $from_address;
+    public ?string $from_name;
     public string $to_address;
     public ?string $subject;
     public ?string $body_html;
@@ -38,6 +39,7 @@ class SendObject
         $this->uuid = $send->getUuid();
         $this->created_at = $send->getCreatedAt()->getTimestamp();
         $this->from_address = $send->getFromAddress();
+        $this->from_name = $send->getFromName();
         $this->subject = $send->getSubject();
         $this->body_html = $send->getBodyHtml();
         $this->body_text = $send->getBodyText();

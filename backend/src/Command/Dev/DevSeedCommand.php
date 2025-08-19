@@ -4,6 +4,7 @@ namespace App\Command\Dev;
 
 use App\Api\Console\Authorization\Scope;
 use App\Entity\Type\DomainStatus;
+use App\Entity\Type\SendRecipientType;
 use App\Service\Instance\InstanceService;
 use App\Tests\Factory\ApiKeyFactory;
 use App\Tests\Factory\DebugIncomingEmailFactory;
@@ -13,6 +14,7 @@ use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
 use App\Tests\Factory\QueueFactory;
+use App\Tests\Factory\SendRecipientFactory;
 use App\Tests\Factory\ServerFactory;
 use App\Tests\Factory\SendFactory;
 use App\Tests\Factory\SuppressionFactory;
@@ -113,16 +115,28 @@ class DevSeedCommand extends Command
         );
         DomainFactory::createMany(15, ['project' => $project]);
 
-        $sends_queued = SendFactory::createMany(2, [
+        $sendsQueued = SendFactory::createMany(2, [
             'project' => $project,
             'domain' => $domain,
+            'queued' => true,
         ]);
-
-        $sends_sent = SendFactory::createMany(5, [
+        $sendsSent = SendFactory::createMany(5, [
             'project' => $project,
             'domain' => $domain,
             'queued' => false,
         ]);
+
+        $allSends = array_merge($sendsQueued, $sendsSent);
+        foreach ($allSends as $send) {
+            $types = SendRecipientType::cases();
+            $typeKey = array_rand($types);
+            $type = $types[$typeKey];
+
+            SendRecipientFactory::createMany(rand(1,2), [
+                'send' => $send,
+                'type' => $type,
+            ]);
+        }
 
         SuppressionFactory::createMany(16, [
             'project' => $project,

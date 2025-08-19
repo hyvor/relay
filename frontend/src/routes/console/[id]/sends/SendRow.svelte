@@ -3,6 +3,7 @@
 	import SendStatus from './SendStatus.svelte';
 	import RelativeTime from '../../@components/content/RelativeTime.svelte';
 	import { consoleUrlProject } from '../../lib/consoleUrl';
+	import { Tag } from '@hyvor/design/components';
 
 	interface Props {
 		send: Send;
@@ -21,166 +22,86 @@
 </script>
 
 <a class="email" href={consoleUrlProject(`sends/${send.uuid}`)}>
-	<div class="email-wrap">
-		<div class="email-details">
-			<div class="email-row">
-				<span class="email-label">From:</span>
-				<span class="email-address">{send.from_address}</span>
-			</div>
-			<div class="email-row">
-				<span class="email-label">To:</span>
-				<span class="email-address">
-					{#each send.recipients as recipient}
-						{recipient.address}
-					{/each}
-				</span>
-			</div>
-		</div>
+	<div class="from">
+		<div class="from-email">{send.from_address}</div>
+		{#if send.from_name}
+			<div class="from-name">{send.from_name}</div>
+		{/if}
 	</div>
 
-	<div class="subject-wrap">
-		<div class="subject-label">Subject:</div>
-		<div class="subject">{send.subject}</div>
+	<div class="recipients">
+		{#each send.recipients as recipient}
+			<div class="recipient">
+				<div class="recipient-data">
+					<div class="recipient-email">
+						{recipient.address}
+					</div>
+					{#if recipient.name}
+						<div class="recipient-name">{recipient.name}</div>
+					{/if}
+				</div>
+				<div class="recipient-type">
+					<Tag size="x-small">
+						{recipient.type.toUpperCase()}
+					</Tag>
+				</div>
+			</div>
+		{/each}
 	</div>
+
+	<div class="subject">{send.subject}</div>
 
 	<div class="status-wrap">
-		<div class="status">
-			<!-- <SendStatus status={send.status} /> -->
-			<div class="timestamps">
-				<div class="timestamp">
-					<span class="timestamp-label">Created:</span>
-					<RelativeTime unix={send.created_at} />
-				</div>
-				<!-- {#if statusTimestamp}
-					<div class="timestamp">
-						<span class="timestamp-label">
-							{send.status === 'accepted' ? 'Accepted:' : 'Failed:'}
-						</span>
-						<RelativeTime unix={statusTimestamp} />
-					</div>
-				{/if} -->
-			</div>
+		<Tag color="green" size="small">Accepted</Tag>
+
+		<div class="time">
+			Sent <RelativeTime unix={send.created_at} />
 		</div>
 	</div>
 </a>
 
 <style>
 	.email {
+		display: grid;
+		grid-template-columns: 2fr 2fr 2fr 1fr;
 		padding: 15px 25px;
 		border-radius: var(--box-radius);
-		display: grid;
-		grid-template-columns: minmax(250px, 1fr) minmax(300px, 2fr) auto;
 		text-align: left;
 		width: 100%;
-		align-items: center;
-		gap: 20px;
+		gap: 15px;
+		word-break: break-all;
 	}
 	.email:hover {
 		background: var(--hover);
 	}
 
-	.email-wrap {
-		min-width: 250px;
-	}
-
-	.subject-wrap {
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		gap: 8px;
-	}
-
-	.subject-label {
-		font-size: 12px;
+	.from-name,
+	.recipient-name {
 		color: var(--text-light);
-		font-weight: 500;
+		font-size: 14px;
+		margin-top: 1px;
+	}
+
+	.recipients {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.recipient {
+		display: flex;
+	}
+
+	.recipient-data {
+		flex: 1;
 	}
 
 	.subject {
-		font-weight: 600;
-		color: var(--text);
-		font-size: 14px;
 	}
 
-	.email-details {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-	}
-
-	.email-row {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-	}
-
-	.email-label {
+	.time {
+		margin-top: 5px;
 		font-size: 12px;
 		color: var(--text-light);
-		font-weight: 500;
-	}
-
-	.email-address {
-		font-weight: 600;
-		color: var(--text);
-		font-size: 14px;
-	}
-
-	.status-wrap {
-		display: flex;
-		align-items: center;
-		justify-content: flex-end;
-	}
-
-	.status {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		gap: 4px;
-	}
-
-	.timestamps {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		gap: 2px;
-	}
-
-	.timestamp {
-		display: flex;
-		align-items: center;
-		gap: 4px;
-		font-size: 12px;
-		color: var(--text-light);
-	}
-
-	.timestamp-label {
-		font-weight: 500;
-	}
-
-	@media (max-width: 992px) {
-		.email {
-			display: flex;
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 10px;
-		}
-
-		.subject-wrap {
-			width: 100%;
-		}
-
-		.status-wrap {
-			width: 100%;
-			justify-content: flex-start;
-		}
-
-		.status {
-			align-items: flex-start;
-		}
-
-		.timestamps {
-			align-items: flex-start;
-		}
 	}
 </style>
