@@ -1,5 +1,5 @@
 import type { Project } from "../../types";
-import consoleApi from "../consoleApi";
+import consoleApi from "../consoleApi.svelte";
 
 export function createProject(name: string, sendType: 'transactional' | 'distributional') {
     return consoleApi.post<Project>({

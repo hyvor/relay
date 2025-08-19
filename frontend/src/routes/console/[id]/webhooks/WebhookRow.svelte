@@ -3,12 +3,13 @@
 	import IconPencil from '@hyvor/icons/IconPencil';
 	import IconTrash from '@hyvor/icons/IconTrash';
 	import type { Webhook } from '../../types';
+	import { cant } from '../../lib/scope.svelte';
 
 	export let webhook: Webhook;
 	export let onEdit: (webhook: Webhook) => void;
 	export let onDelete: (webhook: Webhook) => void;
 
-	function getDisplayEvents(events: string[]): { visible: string[], remaining: string[] } {
+	function getDisplayEvents(events: string[]): { visible: string[]; remaining: string[] } {
 		if (events.length <= 3) {
 			return { visible: events, remaining: [] };
 		}
@@ -34,7 +35,9 @@
 					{/each}
 					{#if displayEvents.remaining.length > 0}
 						<Tooltip text={displayEvents.remaining.join(', ')}>
-							<Tag variant="gray" size="small">+{displayEvents.remaining.length} more</Tag>
+							<Tag variant="gray" size="small"
+								>+{displayEvents.remaining.length} more</Tag
+							>
 						</Tooltip>
 					{/if}
 				{/if}
@@ -44,21 +47,23 @@
 			Description: <p class="webhook-description">{webhook.description}</p>
 		{/if}
 	</div>
-	
+
 	<div class="webhook-actions">
 		<IconButton
-            variant="fill-light"
-            color="input"
-            size="small"
+			variant="fill-light"
+			color="input"
+			size="small"
 			on:click={() => onEdit(webhook)}
+			disabled={cant('webhooks.write')}
 		>
 			<IconPencil size={12} />
 		</IconButton>
 		<IconButton
-            variant="fill-light"
-            color="red"
-            size="small"
+			variant="fill-light"
+			color="red"
+			size="small"
 			on:click={() => onDelete(webhook)}
+			disabled={cant('webhooks.write')}
 		>
 			<IconTrash size={12} />
 		</IconButton>
@@ -124,4 +129,4 @@
 			justify-content: flex-end;
 		}
 	}
-</style> 
+</style>

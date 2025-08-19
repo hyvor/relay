@@ -12,6 +12,7 @@
 		getWebhookDeliveries
 	} from '../../lib/actions/webhookActions';
 	import { onMount } from 'svelte';
+	import { cant, redirectIfCant } from '../../lib/scope.svelte';
 
 	let webhooks: Webhook[] = $state([]);
 	let deliveries: WebhookDelivery[] = $state([]);
@@ -38,8 +39,7 @@
 				webhooks = webhookList;
 			})
 			.catch((error) => {
-				console.error('Failed to load webhooks:', error);
-				toast.error('Failed to load webhooks');
+				toast.error('Failed to load webhooks: ' + error.message);
 			})
 			.finally(() => {
 				loading = false;
@@ -96,6 +96,8 @@
 				});
 		}
 	}
+
+	onMount(() => redirectIfCant('webhooks.read'));
 </script>
 
 <SingleBox>
@@ -107,7 +109,7 @@
 			</TabNav>
 		</div>
 		{#if activeTab === 'configure'}
-			<Button variant="fill" on:click={handleCreateWebhook}>
+			<Button variant="fill" on:click={handleCreateWebhook} disabled={cant('webhooks.write')}>
 				<IconPlus size={16} />
 				Create Webhook
 			</Button>

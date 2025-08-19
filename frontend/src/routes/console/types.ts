@@ -13,6 +13,7 @@ export interface AppConfig {
     }
 
 	app: {
+        system_project_id: number;
 		webhook: {
             'events': string[];
         },
@@ -30,8 +31,30 @@ export interface AppConfig {
 	};
 }
 
+
+export type Scope = 
+    'project.read' |
+    'project.write' |
+    'sends.read' |
+    'sends.write' |
+    'sends.send' |
+    'domains.read' |
+    'domains.write' |
+    'webhooks.read' |
+    'webhooks.write' |
+    'api_keys.read' |
+    'api_keys.write' |
+    'suppressions.read' |
+    'suppressions.write' |
+    'analytics.read';
+
+export interface ProjectUser {
+    scopes: Scope[];
+    project: Project;
+}
+
 export type Project = {
-    id: string;
+    id: number;
     name: string;
     created_at: string;
     send_type: ProjectSendType;

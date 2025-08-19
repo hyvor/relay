@@ -1,23 +1,20 @@
 <script lang="ts">
-	import { TextInput, SplitControl, Button, toast, confirm } from '@hyvor/design/components';
-	import { goto } from '$app/navigation';
-	import { get } from 'svelte/store';
+	import { TextInput, SplitControl } from '@hyvor/design/components';
 	import SettingsBody from '../../@components/content/SettingsBody.svelte';
 	import ProjectSaveDiscard from './ProjectSaveDiscard.svelte';
-	import { projectEditingStore } from '../../lib/stores/projectStore';
+	import { getCurrentProjectEditing } from '../../lib/stores/projectStore.svelte';
+	import ScopeMask from '../../@components/Scope/ScopeMask.svelte';
 
-	let deleting = false;
-
-	async function onDelete() {
-	}
-
+	let projectEditing = getCurrentProjectEditing();
 </script>
 
-<SettingsBody>
-	<SplitControl label="Project">
-		<TextInput block bind:value={$projectEditingStore.name} />
-	</SplitControl>
-</SettingsBody>
+<ScopeMask scope="project.write">
+	<SettingsBody>
+		<SplitControl label="Project">
+			<TextInput block bind:value={projectEditing.name} />
+		</SplitControl>
+	</SettingsBody>
+</ScopeMask>
 
 <div class="save-discard-wrapper">
 	<ProjectSaveDiscard />

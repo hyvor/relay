@@ -28,7 +28,7 @@ class RateLimitTest extends WebTestCase
 
     public function test_adds_rate_limit_for_session_auth(): void
     {
-        $project = ProjectFactory::createOne(['hyvor_user_id' => 1]);
+        $project = ProjectFactory::createOne(['user_id' => 1]);
 
         $this->consoleApi($project, "GET", "/sends", useSession: true);
 
@@ -40,7 +40,7 @@ class RateLimitTest extends WebTestCase
 
     public function test_429_on_rate_limited(): void
     {
-        $project = ProjectFactory::createOne(['hyvor_user_id' => 1]);
+        $project = ProjectFactory::createOne(['user_id' => 1]);
 
         $rateLimit = new RateLimit();
         /** @var RateLimiterProvider $rateLimiterProvider */

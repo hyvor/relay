@@ -1,5 +1,5 @@
 import type { Webhook, WebhookDelivery } from "../../types";
-import consoleApi from "../consoleApi";
+import consoleApi from "../consoleApi.svelte";
 
 export function getWebhooks() {
 	return consoleApi.get<Webhook[]>({

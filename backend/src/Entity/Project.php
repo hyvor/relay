@@ -16,7 +16,7 @@ class Project
     private int $id;
 
     #[ORM\Column(type: 'integer', nullable: false)]
-    private int $hyvor_user_id;
+    private int $user_id;
 
     #[ORM\Column(type: 'string', length: 255, nullable: false)]
     private string $name;
@@ -29,8 +29,10 @@ class Project
 
     #[ORM\Column(type: 'string', enumType: ProjectSendType::class)]
     private ProjectSendType $send_type;
+
     public function __construct()
-    {}
+    {
+    }
 
     public function getId(): int
     {
@@ -43,14 +45,14 @@ class Project
         return $this;
     }
 
-    public function getHyvorUserId(): int
+    public function getUserId(): int
     {
-        return $this->hyvor_user_id;
+        return $this->user_id;
     }
 
-    public function setHyvorUserId(int $hyvorUserId): static
+    public function setUserId(int $hyvorUserId): static
     {
-        $this->hyvor_user_id = $hyvorUserId;
+        $this->user_id = $hyvorUserId;
         return $this;
     }
 

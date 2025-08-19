@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { consoleUrl } from './lib/consoleUrl';
+	import { getProjectUsers } from './lib/stores/projectStore.svelte';
 	import { goto } from '$app/navigation';
-	import { userProjectStore } from './lib/stores/userProjectStore';
+	import { consoleUrl } from './lib/consoleUrl';
 
 	onMount(() => {
-		if ($userProjectStore.length > 0) {
-			goto(consoleUrl($userProjectStore[0]!.id.toString()), {
+		const projectUsers = getProjectUsers();
+
+		if (projectUsers.length > 0) {
+			goto(consoleUrl(projectUsers[0].project.id.toString()), {
 				replaceState: true
 			});
 		} else {

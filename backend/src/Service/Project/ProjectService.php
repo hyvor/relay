@@ -7,13 +7,13 @@ use App\Entity\Type\ProjectSendType;
 use App\Service\Project\Dto\UpdateProjectDto;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
-use Illuminate\Support\Arr;
 use Symfony\Component\Clock\ClockAwareTrait;
 
 class ProjectService
 {
 
     use ClockAwareTrait;
+
     public function __construct(
         private EntityManagerInterface $em
     ) {
@@ -28,18 +28,20 @@ class ProjectService
         int $userId,
         string $name,
         ProjectSendType $sendType,
+        bool $flush = true
     ): Project {
-
         $project = new Project();
         $project
-            ->setHyvorUserId($userId)
+            ->setUserId($userId)
             ->setName($name)
             ->setCreatedAt($this->now())
             ->setUpdatedAt($this->now())
             ->setSendType($sendType);
 
-        $this->em->persist($project);
-        $this->em->flush();
+        if ($flush) {
+            $this->em->persist($project);
+            $this->em->flush();
+        }
 
         return $project;
     }
@@ -49,7 +51,7 @@ class ProjectService
      */
     public function getUsersProject(int $userId): ArrayCollection
     {
-        $projects = $this->em->getRepository(Project::class)->findBy(['hyvor_user_id' => $userId]);
+        $projects = $this->em->getRepository(Project::class)->findBy(['user_id' => $userId]);
         return new ArrayCollection($projects);
     }
 

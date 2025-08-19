@@ -25,8 +25,6 @@
 
 <style>
 	.domains-list {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
+		padding: 15px 0;
 	}
-</style> 
+</style>

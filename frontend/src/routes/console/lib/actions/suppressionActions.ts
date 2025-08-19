@@ -1,5 +1,5 @@
 import type { Suppression, SuppressionReason } from "../../types";
-import consoleApi from "../consoleApi";
+import consoleApi from "../consoleApi.svelte";
 
 export function getSuppressions(email?: string | null, reason?: SuppressionReason | null) {
 	const data: Record<string, string> = {};

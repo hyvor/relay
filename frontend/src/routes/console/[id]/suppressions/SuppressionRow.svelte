@@ -3,6 +3,7 @@
 	import IconTrash from '@hyvor/icons/IconTrash';
 	import type { Suppression } from '../../types';
 	import RelativeTime from '../../@components/content/RelativeTime.svelte';
+	import { cant } from '../../lib/scope.svelte';
 
 	interface Props {
 		suppression: Suppression;
@@ -52,13 +53,14 @@
 			<RelativeTime unix={suppression.created_at} />
 		</div>
 	</div>
-	
+
 	<div class="suppression-actions">
 		<IconButton
 			variant="fill-light"
 			color="red"
 			size="small"
 			on:click={() => onDelete(suppression)}
+			disabled={cant('suppressions.write')}
 		>
 			<IconTrash size={12} />
 		</IconButton>
@@ -72,7 +74,7 @@
 		align-items: flex-start;
 		padding: 20px;
 		gap: 20px;
-        background: white;
+		background: white;
 	}
 
 	.suppression-info {
@@ -133,4 +135,4 @@
 			justify-content: flex-end;
 		}
 	}
-</style> 
+</style>

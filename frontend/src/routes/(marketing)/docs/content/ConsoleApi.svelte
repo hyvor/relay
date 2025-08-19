@@ -48,9 +48,6 @@ Authorization: Bearer <your_api_key>
 		<strong>sends.read</strong>
 	</li>
 	<li>
-		<strong>sends.write</strong>
-	</li>
-	<li>
 		<strong>sends.send</strong>
 	</li>
 	<li>

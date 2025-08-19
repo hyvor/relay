@@ -8,18 +8,19 @@
 	import NavItem from './NavItem.svelte';
 	import { page } from '$app/state';
 	import IconEnvelope from '@hyvor/icons/IconEnvelope';
-	import { selectingProject } from '../../lib/stores/consoleStore';
-	import { projectStore } from '../../lib/stores/projectStore';
+	import { getAppConfig, selectingProject } from '../../lib/stores/consoleStore';
 	import IconSlashCircle from '@hyvor/icons/IconSlashCircle';
 	import IconDatabase from '@hyvor/icons/IconDatabase';
-	import ProjectSendTypeTag from './ProjectSendTypeTag.svelte';
+	import { getCurrentProject } from '../../lib/stores/projectStore.svelte';
+	import { cant } from '../../lib/scope.svelte';
 
-	let width: number;
+	let width: number = $state(0);
 
 	function triggerProjectSelection() {
-		console.log('triggerProjectSelection');
 		selectingProject.set(true);
 	}
+
+	let project = $derived(getCurrentProject());
 </script>
 
 <svelte:window bind:innerWidth={width} />
@@ -28,20 +29,25 @@
 	<button class="current" on:click={triggerProjectSelection}>
 		<div class="left">
 			<div class="name">
-				{$projectStore.name}
-				<span
-					class="dot"
-					class:distributional={$projectStore.send_type === 'distributional'}
+				{project.name}
+				<span class="dot" class:distributional={project.send_type === 'distributional'}
 				></span>
 			</div>
 		</div>
 		<IconChevronExpand />
 	</button>
 
+	{#if project.id === getAppConfig().app.system_project_id}
+		<div class="system-notice">
+			This is the read-only system project used for sending system emails.
+		</div>
+	{/if}
+
 	<div class="nav-links">
 		<NavLink
-			href={'/console/' + $projectStore.id.toString()}
-			active={page.url.pathname === `/console/${$projectStore.id}`}
+			href={'/console/' + project.id.toString()}
+			active={page.url.pathname === `/console/${project.id}`}
+			disabled={cant('analytics.read')}
 		>
 			<NavItem>
 				<IconGraphUp slot="icon" />
@@ -50,8 +56,9 @@
 		</NavLink>
 
 		<NavLink
-			href={'/console/' + $projectStore.id.toString() + '/sends'}
-			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/sends`)}
+			href={'/console/' + project.id.toString() + '/sends'}
+			active={page.url.pathname.startsWith(`/console/${project.id}/sends`)}
+			disabled={cant('sends.read')}
 		>
 			<NavItem>
 				<IconEnvelope slot="icon" />
@@ -60,8 +67,9 @@
 		</NavLink>
 
 		<NavLink
-			href={'/console/' + $projectStore.id.toString() + '/domains'}
-			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/domains`)}
+			href={'/console/' + project.id.toString() + '/domains'}
+			active={page.url.pathname.startsWith(`/console/${project.id}/domains`)}
+			disabled={cant('domains.read')}
 		>
 			<NavItem>
 				<IconDatabase slot="icon" />
@@ -70,8 +78,9 @@
 		</NavLink>
 
 		<NavLink
-			href={'/console/' + $projectStore.id.toString() + '/api'}
-			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/api`)}
+			href={'/console/' + project.id.toString() + '/api'}
+			active={page.url.pathname.startsWith(`/console/${project.id}/api`)}
+			disabled={cant('api_keys.read')}
 		>
 			<NavItem>
 				<IconKey slot="icon" />
@@ -80,8 +89,9 @@
 		</NavLink>
 
 		<NavLink
-			href={'/console/' + $projectStore.id.toString() + '/webhooks'}
-			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/webhooks`)}
+			href={'/console/' + project.id.toString() + '/webhooks'}
+			active={page.url.pathname.startsWith(`/console/${project.id}/webhooks`)}
+			disabled={cant('webhooks.read')}
 		>
 			<NavItem>
 				<IconSend slot="icon" />
@@ -90,8 +100,9 @@
 		</NavLink>
 
 		<NavLink
-			href={'/console/' + $projectStore.id.toString() + '/suppressions'}
-			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/suppressions`)}
+			href={'/console/' + project.id.toString() + '/suppressions'}
+			active={page.url.pathname.startsWith(`/console/${project.id}/suppressions`)}
+			disabled={cant('suppressions.read')}
 		>
 			<NavItem>
 				<IconSlashCircle slot="icon" />
@@ -100,8 +111,9 @@
 		</NavLink>
 
 		<NavLink
-			href={'/console/' + $projectStore.id.toString() + '/settings'}
-			active={page.url.pathname.startsWith(`/console/${$projectStore.id}/settings`)}
+			href={'/console/' + project.id.toString() + '/settings'}
+			active={page.url.pathname.startsWith(`/console/${project.id}/settings`)}
+			disabled={cant('project.read')}
 		>
 			<NavItem>
 				<IconGear slot="icon" />
@@ -152,6 +164,14 @@
 		&.distributional {
 			background-color: var(--orange-light);
 		}
+	}
+
+	.system-notice {
+		padding: 10px 29px;
+		padding-top: 0;
+		margin-bottom: 10px;
+		font-size: 12px;
+		color: var(--text-light);
 	}
 
 	@media (max-width: 992px) {

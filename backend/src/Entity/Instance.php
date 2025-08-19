@@ -30,6 +30,9 @@ class Instance
     #[ORM\Column(type: "text")]
     private string $dkim_private_key_encrypted;
 
+    #[ORM\OneToOne(targetEntity: Project::class)]
+    private Project $system_project;
+
     #[ORM\Column(type: "datetime_immutable", nullable: true)]
     private ?\DateTimeImmutable $last_health_check_at = null;
 
@@ -42,7 +45,12 @@ class Instance
     #[ORM\Column()]
     private ?string $private_network_cidr = null;
 
-    public function __construct() {}
+    #[ORM\Column(type: "boolean")]
+    private bool $sudo_initialized = false;
+
+    public function __construct()
+    {
+    }
 
     public function getId(): int
     {
@@ -111,6 +119,17 @@ class Instance
         return $this;
     }
 
+    public function getSystemProject(): Project
+    {
+        return $this->system_project;
+    }
+
+    public function setSystemProject(Project $systemProject): static
+    {
+        $this->system_project = $systemProject;
+        return $this;
+    }
+
     public function getLastHealthCheckAt(): ?\DateTimeImmutable
     {
         return $this->last_health_check_at;
@@ -147,6 +166,17 @@ class Instance
     public function setPrivateNetworkCidr(?string $privateNetworkIpRange): static
     {
         $this->private_network_cidr = $privateNetworkIpRange;
+        return $this;
+    }
+
+    public function getSudoInitialized(): bool
+    {
+        return $this->sudo_initialized;
+    }
+
+    public function setSudoInitialized(bool $sudoInitialized): static
+    {
+        $this->sudo_initialized = $sudoInitialized;
         return $this;
     }
 

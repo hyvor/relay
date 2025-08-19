@@ -3,10 +3,13 @@
 namespace App\Tests\Command\Management;
 
 use App\Command\Management\ManagementInitCommand;
+use App\Entity\Domain;
 use App\Entity\Instance;
 use App\Entity\IpAddress;
 use App\Entity\Queue;
 use App\Entity\Server;
+use App\Entity\Type\ProjectSendType;
+use App\Service\Domain\DomainService;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
 use App\Service\Ip\ServerIp;
@@ -21,6 +24,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(ManagementInitCommand::class)]
 #[CoversClass(ManagementService::class)]
 #[CoversClass(ServerService::class)]
+#[CoversClass(DomainService::class)]
 #[CoversClass(InstanceService::class)]
 #[CoversClass(IpAddressService::class)]
 class ManagementInitCommandTest extends KernelTestCase
@@ -52,6 +56,23 @@ class ManagementInitCommandTest extends KernelTestCase
         assert($encryption instanceof Encryption);
         $privateKey = $encryption->decryptString($privateKeyEncrypted);
         $this->assertStringContainsString('---BEGIN PRIVATE KEY---', $privateKey);
+
+        // SYSTEM PROJECT
+        $systemProject = $instance->getSystemProject();
+        $this->assertSame('System', $systemProject->getName());
+        $this->assertSame(0, $systemProject->getUserId());
+        $this->assertSame(ProjectSendType::TRANSACTIONAL, $systemProject->getSendType());
+
+        // SYSTEM PROJECT DOMAIN
+        $domain = $this->em->getRepository(Domain::class)->findOneBy(['project' => $systemProject]);
+        $this->assertNotNull($domain);
+        $this->assertSame('relay.hyvor.localhost', $domain->getDomain());
+        $this->assertSame('default', $domain->getDkimSelector());
+        $this->assertSame($instance->getDkimPublicKey(), $domain->getDkimPublicKey());
+        $this->assertSame(
+            $encryption->decryptString($instance->getDkimPrivateKeyEncrypted()),
+            $encryption->decryptString($domain->getDkimPrivateKeyEncrypted())
+        );
 
         // QUEUES
         $queues = $this->em->getRepository(Queue::class)->findAll();

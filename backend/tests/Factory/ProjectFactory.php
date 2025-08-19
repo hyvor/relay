@@ -28,7 +28,7 @@ final class ProjectFactory extends PersistentProxyObjectFactory
     protected function defaults(): array
     {
         return [
-            'hyvor_user_id' => self::faker()->numberBetween(1, 10000),
+            'user_id' => self::faker()->numberBetween(1, 10000),
             'name' => self::faker()->words(2, true),
             'created_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'updated_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
