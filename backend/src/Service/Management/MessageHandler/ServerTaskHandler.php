@@ -40,7 +40,7 @@ class ServerTaskHandler
         }
 
         $tasks = $this->serverTaskService->getTaskForServer($server);
-
+        dd('here');
         foreach ($tasks as $task) {
             if ($task->getType() == ServerTaskType::UPDATE_STATE)
                 $this->goHttpApi->updateState($this->goStateFactory->create());
