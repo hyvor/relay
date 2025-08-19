@@ -29,6 +29,7 @@ class ServerTaskHandler
 
     public function __invoke(ServerTaskMessage $message): void
     {
+        dd('here');
         $server = $this->serverService->getServerByCurrentHostname();
 
         if ($server === null) {

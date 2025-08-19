@@ -14,11 +14,10 @@ class UpdateStateTest extends KernelTestCase
         $serverTask = ServerTaskFactory::createOne();
         $serverTaskId = $serverTask->getId();
 
+        $transport = $this->transport('scheduler_server');
         $message = new ServerTaskMessage();
-
-        $this->getMessageBus()->dispatch($message);
-
-        $this->transport('scheduler_server')->throwExceptions()->process();
+        $transport->send($message);
+        $transport->throwExceptions()->process();
 
         $serverTaskDb = $this->em->getRepository(ServerTask::class)->find($serverTaskId);
         $this->assertNull($serverTaskDb);
