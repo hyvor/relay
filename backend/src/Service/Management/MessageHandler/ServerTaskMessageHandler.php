@@ -14,7 +14,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
-class ServerTaskHandler
+class ServerTaskMessageHandler
 {
 
     public function __construct(
@@ -29,7 +29,6 @@ class ServerTaskHandler
 
     public function __invoke(ServerTaskMessage $message): void
     {
-        dd('here');
         $server = $this->serverService->getServerByCurrentHostname();
 
         if ($server === null) {
@@ -40,7 +39,7 @@ class ServerTaskHandler
         }
 
         $tasks = $this->serverTaskService->getTaskForServer($server);
-        dd('here');
+
         foreach ($tasks as $task) {
             if ($task->getType() == ServerTaskType::UPDATE_STATE)
                 $this->goHttpApi->updateState($this->goStateFactory->create());
