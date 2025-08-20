@@ -74,15 +74,27 @@ class WebhookEventListener
     }
 
     #[AsEventListener]
-    public function onDomainVerified(DomainStatusChangedEvent $event): void
+    public function onDomainStatusChange(DomainStatusChangedEvent $event): void
     {
-        //
+        $this->createWebhookDeliveries(
+            $event->domain->getProject(),
+            WebhooksEventEnum::DOMAIN_STATUS_CHANGED,
+            fn() => (object)[
+                'domain' => new DomainObject($event->domain),
+                'old_status' => $event->oldStatus,
+                'new_status' => $event->newStatus,
+                'dkim_result' => $event->result
+            ]
+        );
     }
 
     #[AsEventListener]
     public function onDomainDeleted(DomainDeletedEvent $event): void
     {
-        //
+        $this->createWebhookDeliveries(
+            $event->domain->getProject(),
+            WebhooksEventEnum::DOMAIN_DELETED,
+            fn() => (object)['domain' => new DomainObject($event->domain)]
+        );
     }
-
 }

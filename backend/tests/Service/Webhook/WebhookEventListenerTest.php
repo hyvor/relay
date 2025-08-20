@@ -3,11 +3,15 @@
 namespace App\Tests\Service\Webhook;
 
 use App\Entity\Project;
+use App\Entity\Type\DomainStatus;
 use App\Entity\Type\SendAttemptStatus;
 use App\Entity\Type\WebhooksEventEnum;
 use App\Entity\Webhook;
 use App\Entity\WebhookDelivery;
+use App\Service\Domain\DkimVerificationResult;
 use App\Service\Domain\Event\DomainCreatedEvent;
+use App\Service\Domain\Event\DomainDeletedEvent;
+use App\Service\Domain\Event\DomainStatusChangedEvent;
 use App\Service\Send\Event\SendAttemptCreatedEvent;
 use App\Service\Webhook\WebhookEventListener;
 use App\Service\Webhook\WebhookService;
@@ -140,8 +144,8 @@ class WebhookEventListenerTest extends KernelTestCase
     public function test_creates_delivery_for_domain_created_event(): void
     {
         $project = ProjectFactory::createOne();
-        $webhook = $this->createWebhook($project, WebhooksEventEnum::DOMAIN_CREATED);
         $domain = DomainFactory::createOne(['project' => $project]);
+        $this->createWebhook($project, WebhooksEventEnum::DOMAIN_CREATED);
         $this->ed->dispatch(new DomainCreatedEvent($domain));
 
         $this->assertWebhookDeliveryCreated(
@@ -154,4 +158,51 @@ class WebhookEventListenerTest extends KernelTestCase
         );
     }
 
+    public function test_creates_delivery_for_domain_status_changed_event(): void
+    {
+        $project = ProjectFactory::createOne();
+        $domain = DomainFactory::createOne(['project' => $project]);
+        $this->createWebhook($project, WebhooksEventEnum::DOMAIN_STATUS_CHANGED);
+
+        $result = new DkimVerificationResult();
+        $result->verified = true;
+        $result->checkedAt = new \DateTimeImmutable();
+
+        $this->ed->dispatch(new DomainStatusChangedEvent(
+            $domain,
+            DomainStatus::PENDING,
+            DomainStatus::ACTIVE,
+            $result
+        ));
+
+        $this->assertWebhookDeliveryCreated(
+            $project,
+            WebhooksEventEnum::DOMAIN_STATUS_CHANGED,
+            function (array $payload) use ($domain) {
+                $this->assertIsArray($payload['domain']);
+                $this->assertSame($domain->getId(), $payload['domain']['id']);
+                $this->assertSame(DomainStatus::PENDING->value, $payload['old_status']);
+                $this->assertSame(DomainStatus::ACTIVE->value, $payload['new_status']);
+                $this->assertIsArray($payload['dkim_result']);
+                $this->assertTrue($payload['dkim_result']['verified']);
+            }
+        );
+    }
+
+    public function test_creates_delivery_for_domain_deleted_event(): void
+    {
+        $project = ProjectFactory::createOne();
+        $domain = DomainFactory::createOne(['project' => $project]);
+        $this->createWebhook($project, WebhooksEventEnum::DOMAIN_DELETED);
+        $this->ed->dispatch(new DomainDeletedEvent($domain));
+
+        $this->assertWebhookDeliveryCreated(
+            $project,
+            WebhooksEventEnum::DOMAIN_DELETED,
+            function (array $payload) use ($domain) {
+                $this->assertIsArray($payload['domain']);
+                $this->assertSame($domain->getId(), $payload['domain']['id']);
+            }
+        );
+    }
 }
