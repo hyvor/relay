@@ -34,7 +34,7 @@ func StartHttpServer(
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			httpServerLogger.Error("HTTP server error: %v", err)
+			httpServerLogger.Error("HTTP server error" + err.Error())
 		}
 	}()
 
@@ -45,7 +45,7 @@ func StartHttpServer(
 		defer shutdownCtxCancel()
 
 		if err := server.Shutdown(shutdownCtx); err != nil {
-			httpServerLogger.Error("HTTP shutdown error: %v", err)
+			httpServerLogger.Error("HTTP shutdown error" + err.Error())
 		}
 	}()
 

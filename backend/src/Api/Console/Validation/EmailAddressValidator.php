@@ -16,7 +16,7 @@ class EmailAddressValidator extends ConstraintValidator
     {
     }
 
-    public function validate(mixed $value, Constraint $constraint)
+    public function validate(mixed $value, Constraint $constraint): void
     {
         if (!$constraint instanceof EmailAddress) {
             throw new UnexpectedTypeException($constraint, EmailAddress::class);
@@ -28,7 +28,7 @@ class EmailAddressValidator extends ConstraintValidator
 
         if (is_string($value)) {
             $this->validateEmail($value);
-        } elseif (is_array($value)) {
+        } elseif (is_array($value) && array_key_exists('email', $value)) {
             $email = $value['email'] ?? null;
             $this->validateEmail($email);
 
@@ -37,6 +37,19 @@ class EmailAddressValidator extends ConstraintValidator
                     ->setInvalidValue($value['name'])
                     ->addViolation();
             }
+        } elseif (is_array($value)) {
+            if ($constraint->multiple === false) {
+                $this->context->buildViolation('Multiple email addresses are not allowed.')
+                    ->setInvalidValue($value)
+                    ->addViolation();
+                return;
+            }
+
+            foreach ($value as $email) {
+                $c = clone $constraint;
+                $c->multiple = false; // Prevent nested arrays
+                $this->validate($email, $c);
+            }
         } else {
             throw new UnexpectedValueException($value, 'string|array');
         }
@@ -44,7 +57,6 @@ class EmailAddressValidator extends ConstraintValidator
 
     private function validateEmail(mixed $value): void
     {
-
         $violations = $this->validator->validate($value, [
             new Assert\NotBlank(),
             new Assert\Type(type: 'string'),
@@ -58,7 +70,6 @@ class EmailAddressValidator extends ConstraintValidator
                     ->addViolation();
             }
         }
-
     }
 
 

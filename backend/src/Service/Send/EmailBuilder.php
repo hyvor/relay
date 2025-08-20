@@ -25,6 +25,9 @@ class EmailBuilder
     }
 
     /**
+     * @param Address[] $to
+     * @param Address[] $cc
+     * @param Address[] $bcc
      * @param array<string, string> $customHeaders
      * @param array<SendingAttachment> $attachments
      * @return array{raw: string, uuid: string, messageId: string}
@@ -33,7 +36,9 @@ class EmailBuilder
     public function build(
         Domain $domain,
         Address $from,
-        Address $to,
+        array $to,
+        array $cc,
+        array $bcc,
         ?string $subject,
         ?string $bodyHtml,
         ?string $bodyText,
@@ -42,7 +47,9 @@ class EmailBuilder
     ): array {
         $email = new Email()
             ->from($from)
-            ->to($to);
+            ->to(...$to)
+            ->cc(...$cc)
+            ->bcc(...$bcc);
 
         if ($subject !== null) {
             $email->subject($subject);

@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { IconMessage, LoadButton, Loader } from '@hyvor/design/components';
-	import type { Email, SendStatus } from '../../types';
+	import type { Send, SendRecipientStatus } from '../../types';
 	import { emailStore } from '../../lib/stores/projectStore.svelte';
 	import { getSends } from '../../lib/actions/emailActions';
-	import EmailRow from './EmailRow.svelte';
+	import SendRow from './SendRow.svelte';
 
 	interface Props {
-		status: SendStatus | null;
+		status: SendRecipientStatus | null;
 		from_search?: string | null;
 		to_search?: string | null;
 		key: number; // just for forcing re-render
@@ -21,7 +21,7 @@
 
 	const EMAILS_PER_PAGE = 25;
 
-	let emails: Email[] = $state([]);
+	let emails: Send[] = $state([]);
 
 	function load(more = false) {
 		more ? (loadingMore = true) : (loading = true);
@@ -59,8 +59,15 @@
 	<IconMessage empty message="No emails found" />
 {:else}
 	<div class="list">
+		<div class="header">
+			<div class="from">From</div>
+			<div class="recipients">Recipients</div>
+			<div class="subject">Subject</div>
+			<div class="status">Status</div>
+		</div>
+
 		{#each emails as email (email.id)}
-			<EmailRow {email} refreshList={() => (key += 1)} />
+			<SendRow send={email} refreshList={() => (key += 1)} />
 		{/each}
 		<LoadButton
 			text="Load More"
@@ -75,6 +82,16 @@
 	.list {
 		flex: 1;
 		overflow: auto;
-		padding: 20px 30px;
+		padding: 20px 0px;
+	}
+
+	.header {
+		display: grid;
+		grid-template-columns: 2fr 2fr 2fr 1fr;
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--text-light);
+		gap: 10px;
+		padding: 5px 30px 15px;
 	}
 </style>
