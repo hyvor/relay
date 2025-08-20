@@ -175,9 +175,7 @@
 <h3 id="domain-created">domain.created</h3>
 
 <p>
-    This event is triggered when a new domain is created in your Hyvor Relay project. This can happen
-    when you add a new domain to your project.
-    The <code>Domain</code> object in the payload contains the details of the newly created domain.
+    This event is triggered when a new domain is created in your Hyvor Relay project.
 </p>
 
 <CodeBlock
@@ -197,8 +195,7 @@
 
 <h3 id="domain-deleted">domain.deleted</h3>
 <p>
-    This event is triggered when a domain is deleted from your Hyvor Relay project. The <code>Domain</code> object in
-    the payload contains the details of the deleted domain.
+    This event is triggered when a domain is deleted from your Hyvor Relay project.
 </p>
 
 <CodeBlock
