@@ -5,6 +5,8 @@
 	import RelativeTime from '../../../@components/content/RelativeTime.svelte';
 	import AttemptRow from './AttemptRow.svelte';
 	import RecipientStatus from '../RecipientStatus.svelte';
+	import { getSortedRecipients } from './recipients';
+	import byteFormatter from '$lib/byteFormatter';
 
 	let { send }: { send: Send } = $props();
 
@@ -21,20 +23,7 @@
 		});
 	}
 
-	// sort recipients by type and then by domain
-	const recipients = $derived.by(() => {
-		const r = [...send.recipients];
-		return r.sort((a, b) => {
-			const typeOrder = { to: 0, cc: 1, bcc: 2 };
-			if (typeOrder[a.type] !== typeOrder[b.type]) {
-				return typeOrder[a.type] - typeOrder[b.type];
-			}
-			const aDomain = a.address.split('@')[1] || '';
-			const bDomain = b.address.split('@')[1] || '';
-
-			return aDomain.localeCompare(bDomain);
-		});
-	});
+	const recipients = $derived(getSortedRecipients(send.recipients));
 </script>
 
 <div class="basics">
@@ -60,13 +49,20 @@
 									{recipient.type.toUpperCase()}
 								</Tag>
 							</div>
-							<div class="address">{recipient.address}</div>
+							<div class="address-name">
+								<div class="address">{recipient.address}</div>
+								{#if recipient.name}
+									<div class="name">{recipient.name}</div>
+								{/if}
+							</div>
 							<RecipientStatus status={recipient.status} />
 						</div>
 					{/each}
 				</div>
 			</DetailCard>
 		</div>
+
+		<DetailCard label="Size" content={byteFormatter(send.size_bytes)} />
 	</div>
 </div>
 
@@ -101,11 +97,19 @@
 	.recipient {
 		display: flex;
 		align-items: center;
-		gap: 5px;
+		gap: 10px;
 	}
 
-	.address {
+	.address-name {
 		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.name {
+		font-size: 12px;
+		color: var(--text-light);
 	}
 
 	.basics {

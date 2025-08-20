@@ -16,11 +16,12 @@
 	import { consoleUrlProject } from '../../../lib/consoleUrl';
 	import { page } from '$app/state';
 	import Overview from './Overview.svelte';
+	import Preview from './Preview.svelte';
 
 	let send: Send | null = $state(null);
 	let loading = $state(true);
 	let error: string | null = $state(null);
-	let activeTab: 'overview' | 'raw' = $state('overview');
+	let activeTab: 'overview' | 'preview' | 'raw' = $state('overview');
 
 	onMount(() => {
 		const emailUuid = page.params.uuid;
@@ -62,12 +63,17 @@
 				<div class="tabs">
 					<TabNav bind:active={activeTab}>
 						<TabNavItem name="overview">Overview</TabNavItem>
+						<TabNavItem name="preview">Preview</TabNavItem>
 						<TabNavItem name="raw">Raw</TabNavItem>
 					</TabNav>
 				</div>
 
 				{#if activeTab === 'overview'}
 					<Overview {send} />
+				{/if}
+
+				{#if activeTab === 'preview'}
+					<Preview {send} />
 				{/if}
 
 				{#if activeTab === 'raw'}
