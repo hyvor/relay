@@ -10,11 +10,8 @@ class SendObject
     public int $id;
     public string $uuid;
     public int $created_at;
-    public ?int $sent_at;
-    public ?int $failed_at;
     public string $from_address;
     public ?string $from_name;
-    public string $to_address;
     public ?string $subject;
     public ?string $body_html;
     public ?string $body_text;
@@ -37,7 +34,7 @@ class SendObject
     public function __construct(
         Send $send,
         array $attempts = [],
-        bool $raw = false
+        bool $content = false
     )
     {
         $this->id = $send->getId();
@@ -46,9 +43,10 @@ class SendObject
         $this->from_address = $send->getFromAddress();
         $this->from_name = $send->getFromName();
         $this->subject = $send->getSubject();
-        $this->body_html = $send->getBodyHtml();
-        $this->body_text = $send->getBodyText();
-        $this->raw = $raw ? $send->getRaw() : '';
+        $this->body_html = $content ? $send->getBodyHtml() : null;
+        $this->body_text = $content ? $send->getBodyText() : null;
+        $this->raw = $content ? $send->getRaw() : '';
+        $this->size_bytes = $send->getSizeBytes();
 
         $this->recipients = array_map(fn($recipient) => new SendRecipientObject($recipient), $send->getRecipients());
         $this->attempts = array_map(fn(SendAttempt $attempt) => new SendAttemptObject($attempt), $attempts);
