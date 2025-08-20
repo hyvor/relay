@@ -144,6 +144,7 @@ class SendService
         $send->setHeaders($customHeaders);
         $send->setMessageId($messageId);
         $send->setRaw($rawEmail);
+        $send->setSizeBytes(strlen($rawEmail));
 
         $this->em->persist($send);
 

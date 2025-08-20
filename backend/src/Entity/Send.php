@@ -74,6 +74,9 @@ class Send
     #[ORM\Column(type: "text")]
     private string $raw;
 
+    #[ORM\Column()]
+    private int $size_bytes;
+
     /**
      * @var Collection<int, SendRecipient>
      */
@@ -287,6 +290,17 @@ class Send
     public function setRaw(string $raw): static
     {
         $this->raw = $raw;
+        return $this;
+    }
+
+    public function getSizeBytes(): int
+    {
+        return $this->size_bytes;
+    }
+
+    public function setSizeBytes(int $size_bytes): static
+    {
+        $this->size_bytes = $size_bytes;
         return $this;
     }
 

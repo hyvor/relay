@@ -160,7 +160,7 @@ class SendController extends AbstractController
     public function getById(Send $send): JsonResponse
     {
         $attempts = $this->sendService->getSendAttemptsOfSend($send);
-        return $this->json(new SendObject($send, $attempts));
+        return $this->json(new SendObject($send, $attempts, raw: true));
     }
 
     #[Route("/sends/uuid/{uuid}", requirements: ['uuid' => Requirement::UUID], methods: "GET")]
@@ -181,7 +181,7 @@ class SendController extends AbstractController
 
         $attempts = $this->sendService->getSendAttemptsOfSend($send);
 
-        return $this->json(new SendObject($send, $attempts));
+        return $this->json(new SendObject($send, $attempts, raw: true));
     }
 
 }

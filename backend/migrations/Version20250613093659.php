@@ -36,7 +36,8 @@ final class Version20250613093659 extends AbstractMigration
                 body_text text,
                 headers jsonb,
                 message_id text NOT NULL UNIQUE,
-                raw text NOT NULL
+                raw text NOT NULL,
+                size_bytes INT NOT NULL
             )
             SQL
         );

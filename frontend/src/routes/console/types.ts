@@ -72,6 +72,7 @@ export type Send = {
     body_html: string | null;
     body_text: string | null;
     raw: string;
+    size_bytes: number;
 
     recipients: SendRecipient[];
     attempts: SendAttempt[];

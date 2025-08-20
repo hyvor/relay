@@ -19,6 +19,7 @@ class SendObject
     public ?string $body_html;
     public ?string $body_text;
     public string $raw;
+    public int $size_bytes;
 
     /**
      * @var SendRecipientObject[]
@@ -33,7 +34,11 @@ class SendObject
     /**
      * @param SendAttempt[] $attempts
      */
-    public function __construct(Send $send, array $attempts = [])
+    public function __construct(
+        Send $send,
+        array $attempts = [],
+        bool $raw = false
+    )
     {
         $this->id = $send->getId();
         $this->uuid = $send->getUuid();
@@ -43,7 +48,7 @@ class SendObject
         $this->subject = $send->getSubject();
         $this->body_html = $send->getBodyHtml();
         $this->body_text = $send->getBodyText();
-        $this->raw = $send->getRaw();
+        $this->raw = $raw ? $send->getRaw() : '';
 
         $this->recipients = array_map(fn($recipient) => new SendRecipientObject($recipient), $send->getRecipients());
         $this->attempts = array_map(fn(SendAttempt $attempt) => new SendAttemptObject($attempt), $attempts);

@@ -25,6 +25,7 @@
 	onMount(() => {
 		const emailUuid = page.params.uuid;
 
+		// get the send to fetch raw data and attempts
 		getEmailByUuid(emailUuid)
 			.then((result) => {
 				send = result;

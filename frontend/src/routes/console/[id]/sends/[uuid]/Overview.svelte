@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { DetailCards, DetailCard } from '@hyvor/design/components';
+	import { DetailCards, DetailCard, Tag } from '@hyvor/design/components';
 	import type { Send } from '../../../types';
 	import SendStatus from '../RecipientStatuses.svelte';
 	import RelativeTime from '../../../@components/content/RelativeTime.svelte';
 	import AttemptRow from './AttemptRow.svelte';
+	import RecipientStatus from '../RecipientStatus.svelte';
 
 	let { send }: { send: Send } = $props();
 
@@ -19,47 +20,58 @@
 			hour12: true
 		});
 	}
+
+	// sort recipients by type and then by domain
+	const recipients = $derived.by(() => {
+		const r = [...send.recipients];
+		return r.sort((a, b) => {
+			const typeOrder = { to: 0, cc: 1, bcc: 2 };
+			if (typeOrder[a.type] !== typeOrder[b.type]) {
+				return typeOrder[a.type] - typeOrder[b.type];
+			}
+			const aDomain = a.address.split('@')[1] || '';
+			const bDomain = b.address.split('@')[1] || '';
+
+			return aDomain.localeCompare(bDomain);
+		});
+	});
 </script>
 
 <div class="basics">
-	<DetailCards>
+	<div class="grid">
 		<DetailCard label="From" content={send.from_address} />
-
-		<DetailCard label="To" content={send.to_address} />
 
 		<DetailCard label="Subject" content={send.subject || 'No subject'} />
 
-		<DetailCard label="Status">
-			<SendStatus status={send.status} />
+		<DetailCard label="Date">
+			<div>
+				{formatTimestamp(send.created_at)}
+				<span class="relative-time">(<RelativeTime unix={send.created_at} />)</span>
+			</div>
 		</DetailCard>
 
-		<DetailCard label="Created">
-			<div>{formatTimestamp(send.created_at)}</div>
-			<div class="relative-time">(<RelativeTime unix={send.created_at} />)</div>
-		</DetailCard>
-
-		{#if send.accepted_at}
-			<DetailCard label="Sent">
-				<div>{formatTimestamp(send.accepted_at)}</div>
-				<div class="relative-time">(<RelativeTime unix={send.accepted_at} />)</div>
+		<div class="recipients-wrap">
+			<DetailCard label="Recipients">
+				<div class="recipients">
+					{#each recipients as recipient}
+						<div class="recipient">
+							<div class="type">
+								<Tag size="x-small">
+									{recipient.type.toUpperCase()}
+								</Tag>
+							</div>
+							<div class="address">{recipient.address}</div>
+							<RecipientStatus status={recipient.status} />
+						</div>
+					{/each}
+				</div>
 			</DetailCard>
-		{/if}
-
-		{#if send.bounced_at}
-			<DetailCard label="Failed">
-				<div>{formatTimestamp(send.bounced_at)}</div>
-				<div class="relative-time">(<RelativeTime unix={send.bounced_at} />)</div>
-			</DetailCard>
-		{/if}
-
-		<DetailCard label="UUID">
-			<div class="uuid">{send.uuid}</div>
-		</DetailCard>
-	</DetailCards>
+		</div>
+	</div>
 </div>
 
 <div class="attempts">
-	<div class="attempts-title">Attempts</div>
+	<div class="attempts-title">Delivery Attempts</div>
 
 	<div class="rows">
 		{#each send.attempts as attempt}
@@ -69,6 +81,33 @@
 </div>
 
 <style>
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+		gap: 15px;
+	}
+
+	.recipients-wrap {
+		grid-column: span 2;
+	}
+
+	.recipients {
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
+		word-break: break-all;
+	}
+
+	.recipient {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+	}
+
+	.address {
+		flex: 1;
+	}
+
 	.basics {
 		margin-bottom: 15px;
 		padding: 10px 25px 20px;

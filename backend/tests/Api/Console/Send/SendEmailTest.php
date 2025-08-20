@@ -11,7 +11,6 @@ use App\Entity\Send;
 use App\Entity\Type\DomainStatus;
 use App\Entity\Type\ProjectSendType;
 use App\Entity\Type\SendRecipientType;
-use App\Entity\Type\SendStatus;
 use App\Service\Send\EmailBuilder;
 use App\Service\Send\SendService;
 use App\Service\Suppression\SuppressionService;
@@ -433,6 +432,9 @@ class SendEmailTest extends WebTestCase
         $this->assertSame("<p>This is a test email.</p>", $send->getBodyHtml());
         $this->assertSame($messageId, $send->getMessageId());
         $this->assertSame($fromAddress, $send->getFromAddress());
+
+        $this->assertGreaterThan(1000, $send->getSizeBytes());
+        $this->assertLessThan(2500, $send->getSizeBytes());
 
         $recipients = $send->getRecipients();
         $this->assertCount(1, $recipients);
