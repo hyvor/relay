@@ -63,7 +63,6 @@
 			<div class="from">From</div>
 			<div class="recipients">Recipients</div>
 			<div class="subject">Subject</div>
-			<div class="status">Status</div>
 		</div>
 
 		{#each emails as email (email.id)}
@@ -87,7 +86,7 @@
 
 	.header {
 		display: grid;
-		grid-template-columns: 2fr 2fr 2fr 1fr;
+		grid-template-columns: 2fr 3fr 2fr;
 		font-size: 14px;
 		font-weight: 600;
 		color: var(--text-light);
