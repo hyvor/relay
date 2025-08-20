@@ -82,7 +82,11 @@ class WebhookEventListener
     #[AsEventListener]
     public function onDomainDeleted(DomainDeletedEvent $event): void
     {
-        //
+        $this->createWebhookDeliveries(
+            $event->domain->getProject(),
+            WebhooksEventEnum::DOMAIN_DELETED,
+            fn() => (object)['domain' => new DomainObject($event->domain)]
+        );
     }
 
 }
