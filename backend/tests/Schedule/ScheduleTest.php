@@ -22,7 +22,7 @@ class ScheduleTest extends TestCase
         $schedule = new ServerSchedule();
         $s = $schedule->getSchedule();
         $messages = $s->getRecurringMessages();
-        $this->assertCount(1, $messages);
+        $this->assertCount(2, $messages);
     }
 
 }

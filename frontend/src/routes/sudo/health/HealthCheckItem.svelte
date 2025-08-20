@@ -61,12 +61,6 @@
 			return `Invalid IPs: ${spfData.invalid_ips.join(', ')}`;
 		}
 
-		if (checkKey === 'all_servers_can_be_reached_via_private_network') {
-			const unreachableServers =
-				data as HealthCheckData['all_servers_can_be_reached_via_private_network'];
-			return `Unreachable servers: ${unreachableServers.unreachable_servers.join(', ')}`;
-		}
-
 		if (checkKey === 'none_of_the_ips_are_on_known_blacklists') {
 			const blacklistData =
 				data as HealthCheckData['none_of_the_ips_are_on_known_blacklists'];
