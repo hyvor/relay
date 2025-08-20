@@ -52,6 +52,7 @@ class DomainStatusService
                 new DomainStatusChangedEvent(
                     $domain,
                     $oldStatus,
+                    $newStatus,
                     $dkimResult
                 )
             );
