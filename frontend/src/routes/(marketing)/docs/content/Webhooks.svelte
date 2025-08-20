@@ -193,7 +193,32 @@
 
 <h3 id="domain-status-changed">domain.status.changed</h3>
 
+<p>
+    This event is triggered when the <a href="/docs/domains#status" >status of a domain changes</a>.
+</p>
+
+<CodeBlock
+    code={`
+{
+    domain: Domain;
+    old_status: 'pending' | 'active' | 'warning' | 'suspended';
+    new_status: 'pending' | 'active' | 'warning' | 'suspended';
+    dkim_result: {
+        verified: boolean;
+        checked_at: number;
+        error_message: string | null;
+    }
+}
+`}
+    language="ts"
+/>
+
+<p>
+    Objects: <a href="/docs/api-console#domain-object">Domain</a>
+</p>
+
 <h3 id="domain-deleted">domain.deleted</h3>
+
 <p>
     This event is triggered when a domain is deleted from your Hyvor Relay project.
 </p>
