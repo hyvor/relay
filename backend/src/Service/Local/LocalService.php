@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Service\Local;
+
+use App\Api\Local\Input\DsnInput;
+use App\Entity\Send;
+use App\Entity\Type\SuppressionReason;
+use App\Service\Send\SendService;
+use App\Service\Suppression\SuppressionService;
+use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+
+class LocalService
+{
+    public function __construct(
+        private SendService $sendService,
+        private SuppressionService $suppressionService,
+        private LoggerInterface $logger,
+    ) {
+    }
+
+    public function handleIncomingBounce(
+        string $bounceUuid,
+        DsnInput $dsnInput
+    ): void
+    {
+
+        $recipients = $dsnInput->Recipients;
+
+        if (count($recipients) === 0) {
+            $this->logger->error('Received bounce with no recipients', [
+                'UUID' => $bounceUuid
+            ]);
+            return;
+        }
+
+        foreach ($recipients as $recipient) {
+            // we are not interested in delayed or delivered actions
+            // most email clients do not even send delivered reports
+            if ($recipient->Action !== 'failed') {
+                $this->logger->info('Received bounce with non-failed action', [
+                    'UUID' => $bounceUuid,
+                    'Recipient' => $recipient->EmailAddress,
+                    'Action' => $recipient->Action,
+                ]);
+                return;
+            }
+
+            // We are only interested in bounces that have a status code that starts with 5
+            // (permanent failures)
+            if ($recipient->Status[0] !== '5') {
+                $this->logger->info('Received bounce with non-permanent status code', [
+                    'UUID' => $bounceUuid,
+                    'Recipient' => $recipient->EmailAddress,
+                    'Status' => $recipient->Status,
+                ]);
+                return;
+            }
+
+            $send = $this->sendService->getSendByUuid($bounceUuid);
+
+            if ($send === null) {
+                $this->logger->error('Failed to get send by UUID', [
+                    'UUID' => $bounceUuid,
+                    'Recipient' => $recipient->EmailAddress,
+                ]);
+                return;
+            }
+
+            $this->suppressionService->createSuppression(
+                $send->getProject(),
+                $recipient->EmailAddress,
+                SuppressionReason::BOUNCE,
+                $dsnInput->ReadableText
+            );
+        }
+    }
+}

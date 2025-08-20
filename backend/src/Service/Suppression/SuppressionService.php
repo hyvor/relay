@@ -6,14 +6,17 @@ use App\Entity\Project;
 use App\Entity\Suppression;
 use App\Entity\Type\SuppressionReason;
 use App\Repository\SuppressionRepository;
-use App\Service\Domain\Event\DomainDeletedEvent;
+use App\Service\Suppression\Event\SuppressionCreatedEvent;
 use App\Service\Suppression\Event\SuppressionDeletedEvent;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class SuppressionService
 {
+    use ClockAwareTrait;
+
     public function __construct(
         private SuppressionRepository $suppressionRepository,
         private EntityManagerInterface $em,
@@ -58,6 +61,30 @@ class SuppressionService
             'project' => $project,
             'email' => $email
         ]) !== null;
+    }
+
+    public function createSuppression(
+        Project $project,
+        string $email,
+        SuppressionReason $reason,
+        string $description
+    ): Suppression
+    {
+        $suppression = new Suppression();
+        $suppression->setCreatedAt($this->now());
+        $suppression->setUpdatedAt($this->now());
+        $suppression->setProject($project);
+        $suppression->setEmail($email);
+        $suppression->setReason($reason);
+        $suppression->setDescription($description);
+
+        $this->em->persist($suppression);
+        $this->em->flush();
+
+        $this->eventDispatcher->dispatch(new SuppressionCreatedEvent($suppression));
+
+        return $suppression;
+
     }
 
     public function deleteSuppression(Suppression $suppression): void
