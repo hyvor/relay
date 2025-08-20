@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { ActionList, ActionListItem, TextInput, IconButton } from '@hyvor/design/components';
 	import SingleBox from '../../@components/content/SingleBox.svelte';
-	import type { Send, SendStatus } from '../../types';
+	import type { Send, SendRecipientStatus } from '../../types';
 	import Selector from '../../@components/content/Selector.svelte';
 	import IconX from '@hyvor/icons/IconX';
 	import SendsList from './SendsList.svelte';
 
 	let key = $state(1); // for re-rendering
-	let status: SendStatus | null = $state(null);
+	let status: SendRecipientStatus | null = $state(null);
 	let statusKey = $derived.by(() =>
 		status ? status.charAt(0).toUpperCase() + status.slice(1) : 'All'
 	);
@@ -22,7 +22,7 @@
 	let toSearchVal: string = $state('');
 	let toSearch: string = $state('');
 
-	function selectStatus(s: SendStatus | null) {
+	function selectStatus(s: SendRecipientStatus | null) {
 		showStatus = false;
 		status = s;
 	}

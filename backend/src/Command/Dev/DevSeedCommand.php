@@ -4,6 +4,7 @@ namespace App\Command\Dev;
 
 use App\Api\Console\Authorization\Scope;
 use App\Entity\Type\DomainStatus;
+use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
 use App\Service\Instance\InstanceService;
 use App\Tests\Factory\ApiKeyFactory;
@@ -132,10 +133,14 @@ class DevSeedCommand extends Command
             $typeKey = array_rand($types);
             $type = $types[$typeKey];
 
-            SendRecipientFactory::createMany(rand(1,2), [
-                'send' => $send,
-                'type' => $type,
-            ]);
+            foreach (range(1, rand(1,2)) as $i) {
+                SendRecipientFactory::new()
+                    ->distribute('status', SendRecipientStatus::cases())
+                    ->create([
+                        'send' => $send,
+                        'type' => $type,
+                    ]);
+            }
         }
 
         SuppressionFactory::createMany(16, [

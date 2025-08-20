@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { Send } from '../../types';
-	import SendStatus from './SendStatus.svelte';
 	import RelativeTime from '../../@components/content/RelativeTime.svelte';
 	import { consoleUrlProject } from '../../lib/consoleUrl';
 	import { Tag } from '@hyvor/design/components';
+	import RecipientStatuses from './RecipientStatuses.svelte';
 
 	interface Props {
 		send: Send;
@@ -11,14 +11,6 @@
 	}
 
 	let { send, refreshList }: Props = $props();
-
-	/* const statusTimestamp = $derived(
-		send.status === 'accepted'
-			? send.accepted_at
-			: send.status === 'bounced'
-				? send.bounced_at
-				: null
-	); */
 </script>
 
 <a class="email" href={consoleUrlProject(`sends/${send.uuid}`)}>
@@ -32,19 +24,15 @@
 	<div class="recipients">
 		{#each send.recipients as recipient}
 			<div class="recipient">
-				<div class="recipient-data">
-					<div class="recipient-email">
-						{recipient.address}
-					</div>
-					{#if recipient.name}
-						<div class="recipient-name">{recipient.name}</div>
-					{/if}
-				</div>
-				<div class="recipient-type">
+				<div class="recipient-email">
+					{recipient.address}
 					<Tag size="x-small">
 						{recipient.type.toUpperCase()}
 					</Tag>
 				</div>
+				{#if recipient.name}
+					<div class="recipient-name">{recipient.name}</div>
+				{/if}
 			</div>
 		{/each}
 	</div>
@@ -52,7 +40,7 @@
 	<div class="subject">{send.subject}</div>
 
 	<div class="status-wrap">
-		<Tag color="green" size="small">Accepted</Tag>
+		<RecipientStatuses recipients={send.recipients} />
 
 		<div class="time">
 			Sent <RelativeTime unix={send.created_at} />
@@ -64,8 +52,7 @@
 	.email {
 		display: grid;
 		grid-template-columns: 2fr 2fr 2fr 1fr;
-		padding: 15px 25px;
-		border-radius: var(--box-radius);
+		padding: 15px 30px;
 		text-align: left;
 		width: 100%;
 		gap: 15px;
@@ -86,17 +73,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: 10px;
-	}
-
-	.recipient {
-		display: flex;
-	}
-
-	.recipient-data {
-		flex: 1;
-	}
-
-	.subject {
 	}
 
 	.time {

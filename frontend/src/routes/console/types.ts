@@ -62,8 +62,6 @@ export type Project = {
 
 export type ProjectSendType = 'transactional' | 'distributional';
 
-export type SendStatus = 'queued' | 'accepted' | 'bounced' | 'complained';
-
 export type Send = {
     id: number;
     uuid: string;
@@ -79,12 +77,14 @@ export type Send = {
     attempts: SendAttempt[];
 }
 
+export type SendRecipientStatus = 'queued' | 'accepted' | 'retrying' | 'bounced' | 'failed' | 'complained';
+
 export interface SendRecipient {
     id: number;
     type: 'to' | 'cc' | 'bcc';
     address: string;
     name: string;
-    status: SendStatus;
+    status: SendRecipientStatus;
     accepted_at?: number | null;
     bounced_at?: number | null;
     failed_at?: number | null;

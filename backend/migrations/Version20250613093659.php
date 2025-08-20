@@ -17,10 +17,6 @@ final class Version20250613093659 extends AbstractMigration
     public function up(Schema $schema): void
     {
         $this->addSql(
-            "CREATE TYPE sends_status AS ENUM ('queued', 'processing', 'accepted', 'bounced', 'complained')"
-        );
-
-        $this->addSql(
             <<<SQL
             CREATE TABLE sends (
                 id SERIAL PRIMARY KEY,
@@ -57,7 +53,7 @@ final class Version20250613093659 extends AbstractMigration
         // recipients table
         $this->addSql("CREATE TYPE send_recipients_type AS ENUM ('to', 'cc', 'bcc')");
         $this->addSql(
-            "CREATE TYPE send_recipients_status AS ENUM ('queued', 'accepted', 'retrying', 'failed', 'bounced')"
+            "CREATE TYPE send_recipients_status AS ENUM ('queued', 'accepted', 'retrying', 'failed', 'bounced', 'complained')"
         );
         $this->addSql(
             <<<SQL

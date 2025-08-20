@@ -21,6 +21,10 @@ enum SendRecipientStatus: string
     // the message will not be retried
     case BOUNCED = 'bounced';
 
+    // the recipient has complained about the message
+    // (marked as spam)
+    case COMPLAINED = 'complained';
+
     // tried our best to send the message, but failed
     // this happens after the exhaustion of retries
     case FAILED = 'failed';

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { DetailCards, DetailCard } from '@hyvor/design/components';
 	import type { Send } from '../../../types';
-	import SendStatus from '../SendStatus.svelte';
+	import SendStatus from '../RecipientStatuses.svelte';
 	import RelativeTime from '../../../@components/content/RelativeTime.svelte';
 	import AttemptRow from './AttemptRow.svelte';
 

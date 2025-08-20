@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { IconMessage, LoadButton, Loader } from '@hyvor/design/components';
-	import type { Send, SendStatus } from '../../types';
+	import type { Send, SendRecipientStatus } from '../../types';
 	import { emailStore } from '../../lib/stores/projectStore.svelte';
 	import { getSends } from '../../lib/actions/emailActions';
 	import SendRow from './SendRow.svelte';
 
 	interface Props {
-		status: SendStatus | null;
+		status: SendRecipientStatus | null;
 		from_search?: string | null;
 		to_search?: string | null;
 		key: number; // just for forcing re-render
@@ -82,7 +82,7 @@
 	.list {
 		flex: 1;
 		overflow: auto;
-		padding: 20px 30px;
+		padding: 20px 0px;
 	}
 
 	.header {
@@ -92,6 +92,6 @@
 		font-weight: 600;
 		color: var(--text-light);
 		gap: 10px;
-		padding: 5px 25px 15px;
+		padding: 5px 30px 15px;
 	}
 </style>
