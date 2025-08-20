@@ -101,6 +101,9 @@ type EmailWorker struct {
 	metrics        *Metrics
 	ip             GoStateIp
 	instanceDomain string
+
+	// mocks
+	ProcessSendFunc func(conn *sql.DB)
 }
 
 func NewEmailWorker(
@@ -113,7 +116,7 @@ func NewEmailWorker(
 	ip GoStateIp,
 	instanceDomain string,
 ) *EmailWorker {
-	return &EmailWorker{
+	worker := &EmailWorker{
 		ctx:            ctx,
 		id:             id,
 		wg:             wg,
@@ -123,6 +126,10 @@ func NewEmailWorker(
 		ip:             ip,
 		instanceDomain: instanceDomain,
 	}
+
+	worker.ProcessSendFunc = worker.ProcessSend
+
+	return worker
 }
 
 func (worker *EmailWorker) Start() {
@@ -146,7 +153,7 @@ func (worker *EmailWorker) Start() {
 			worker.logger.Info("Email worker stopped by context cancellation")
 			return
 		default:
-			worker.ProcessSend(conn)
+			worker.ProcessSendFunc(conn)
 		}
 
 	}

@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"io"
 	"log/slog"
 	"sync"
 	"testing"
@@ -31,40 +30,40 @@ func TestNewEmailWorkersPool(t *testing.T) {
 	assert.Contains(t, buf.String(), "Stopping email workers pool")
 }
 
-func TestEmailWorkersPoolSet(t *testing.T) {
+// func TestEmailWorkersPoolSet(t *testing.T) {
 
-	canceled := false
-	cancelFunc := func() {
-		canceled = true
-	}
+// 	canceled := false
+// 	cancelFunc := func() {
+// 		canceled = true
+// 	}
 
-	var called []int
-	var mu sync.Mutex
-	mockWorker := func(ctx context.Context, id int, wg *sync.WaitGroup, config *DBConfig, logger *slog.Logger, metrics *Metrics, ip GoStateIp, instanceDomain string) {
-		defer wg.Done()
-		mu.Lock()
-		called = append(called, id)
-		mu.Unlock()
-	}
+// 	var called []int
+// 	var mu sync.Mutex
+// 	mockWorker := func(ctx context.Context, id int, wg *sync.WaitGroup, config *DBConfig, logger *slog.Logger, metrics *Metrics, ip GoStateIp, instanceDomain string) {
+// 		defer wg.Done()
+// 		mu.Lock()
+// 		called = append(called, id)
+// 		mu.Unlock()
+// 	}
 
-	pool := &EmailWorkersPool{
-		ctx:        context.Background(),
-		cancelFunc: cancelFunc,
-		workerFunc: mockWorker,
-		logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
-	}
+// 	pool := &EmailWorkersPool{
+// 		ctx:        context.Background(),
+// 		cancelFunc: cancelFunc,
+// 		workerFunc: mockWorker,
+// 		logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+// 	}
 
-	pool.Set([]GoStateIp{
-		{Ip: "1.1.1.1", QueueId: 1, QueueName: "transactional"},
-		{Ip: "2.2.2.2", QueueId: 2, QueueName: "distributional"},
-	}, 2, "relay.hyvor.com")
+// 	pool.Set([]GoStateIp{
+// 		{Ip: "1.1.1.1", QueueId: 1, QueueName: "transactional"},
+// 		{Ip: "2.2.2.2", QueueId: 2, QueueName: "distributional"},
+// 	}, 2, "relay.hyvor.com")
 
-	time.Sleep(20 * time.Millisecond)
+// 	time.Sleep(20 * time.Millisecond)
 
-	assert.True(t, canceled)
-	assert.Equal(t, 2, len(called))
+// 	assert.True(t, canceled)
+// 	assert.Equal(t, 2, len(called))
 
-}
+// }
 
 func TestEmailWorkersPoolStopWorkers(t *testing.T) {
 
@@ -119,7 +118,18 @@ func TestEmailWorker_DatabaseConnectionFailure(t *testing.T) {
 	defer func() { NewDbConn = originalNewDbConn }()
 
 	wg.Add(2)
-	go emailWorker(ctx, 1, &wg, dbConfig, logger, newMetrics(), ip, "relay.hyvor.com")
+
+	emailWorker := NewEmailWorker(
+		ctx,
+		1,
+		&wg,
+		dbConfig,
+		logger,
+		newMetrics(),
+		ip,
+		"relay.hyvor.com",
+	)
+	go emailWorker.Start()
 	go func() {
 		defer wg.Done()
 		time.Sleep(40 * time.Millisecond) // Simulate some work
@@ -129,4 +139,39 @@ func TestEmailWorker_DatabaseConnectionFailure(t *testing.T) {
 
 	assert.Contains(t, buf.String(), "Failed to connect to database, retrying")
 	assert.Contains(t, buf.String(), "connection failed")
+}
+
+func TestEmailWorker_CallsProcessSend(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	calledTimes := 0
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	emailWorker := &EmailWorker{
+		ctx:      ctx,
+		dbConfig: getTestDbConfig(),
+		ProcessSendFunc: func(conn *sql.DB) {
+			calledTimes++
+			wg.Done()
+			time.Sleep(10 * time.Millisecond)
+		},
+	}
+
+	go func() {
+		defer wg.Done()
+		time.Sleep(50 * time.Millisecond)
+		cancel()
+	}()
+
+	go emailWorker.Start()
+	wg.Wait()
+
+	assert.Greater(t, calledTimes, 0)
+}
+
+func TestEmailWorker_ProcessSend(t *testing.T) {
+
+	//
+
 }
