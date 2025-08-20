@@ -6,14 +6,18 @@ use App\Entity\Project;
 use App\Entity\Suppression;
 use App\Entity\Type\SuppressionReason;
 use App\Repository\SuppressionRepository;
+use App\Service\Domain\Event\DomainDeletedEvent;
+use App\Service\Suppression\Event\SuppressionDeletedEvent;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class SuppressionService
 {
     public function __construct(
         private SuppressionRepository $suppressionRepository,
-        private EntityManagerInterface $em
+        private EntityManagerInterface $em,
+        private EventDispatcherInterface $eventDispatcher
     )
     {
     }
@@ -60,5 +64,7 @@ class SuppressionService
     {
         $this->em->remove($suppression);
         $this->em->flush();
+
+        $this->eventDispatcher->dispatch(new SuppressionDeletedEvent($suppression));
     }
 }
