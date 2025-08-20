@@ -6,6 +6,7 @@
 	import AttemptRow from './AttemptRow.svelte';
 	import RecipientStatus from '../RecipientStatus.svelte';
 	import { getSortedRecipients } from './recipients';
+	import byteFormatter from '$lib/byteFormatter';
 
 	let { send }: { send: Send } = $props();
 
@@ -60,6 +61,8 @@
 				</div>
 			</DetailCard>
 		</div>
+
+		<DetailCard label="Size" content={byteFormatter(send.size_bytes)} />
 	</div>
 </div>
 
