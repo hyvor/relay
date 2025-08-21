@@ -3,6 +3,7 @@
 namespace App\Api\Local\Controller;
 
 use App\Api\Local\Input\IncomingBounceInput;
+use App\Api\Local\Input\IncomingFblInput;
 use App\Api\Local\Input\SendAttemptDoneInput;
 use App\Entity\Type\DebugIncomingEmailStatus;
 use App\Entity\Type\DebugIncomingEmailType;
@@ -83,6 +84,30 @@ class LocalController extends AbstractController
             $input->mail_from,
             $input->rcpt_to,
             (array)$input->dsn,
+            $input->error
+        );
+
+        return new JsonResponse();
+    }
+
+    public function incomingFbl(
+        #[MapRequestPayload] IncomingFblInput $input
+    ): JsonResponse
+    {
+        if (!$input->arf) {
+            $debugIncomingEmailStatus = DebugIncomingEmailStatus::FAILED;
+        } else {
+            $this->incomingMailService->handleIncomingFbl($input->arf);
+            $debugIncomingEmailStatus = DebugIncomingEmailStatus::SUCCESS;
+        }
+
+        $this->debugIncomingEmailService->createDebugIncomingEmail(
+            DebugIncomingEmailType::FBL,
+            $debugIncomingEmailStatus,
+            $input->raw_email,
+            $input->mail_from,
+            $input->rcpt_to,
+            (array)$input->arf,
             $input->error
         );
 

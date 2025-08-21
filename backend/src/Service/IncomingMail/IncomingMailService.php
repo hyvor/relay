@@ -2,6 +2,7 @@
 
 namespace App\Service\IncomingMail;
 
+use App\Api\Local\Input\ArfInput;
 use App\Api\Local\Input\DsnInput;
 use App\Entity\Type\SuppressionReason;
 use App\Service\Send\SendService;
@@ -72,5 +73,10 @@ class IncomingMailService
                 $dsnInput->ReadableText
             );
         }
+    }
+
+    public function handleIncomingFbl(ArfInput $arfInput): void
+    {
+        // TODO
     }
 }
