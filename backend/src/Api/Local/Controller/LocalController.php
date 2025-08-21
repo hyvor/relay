@@ -4,6 +4,9 @@ namespace App\Api\Local\Controller;
 
 use App\Api\Local\Input\IncomingBounceInput;
 use App\Api\Local\Input\SendAttemptDoneInput;
+use App\Entity\Type\DebugIncomingEmailStatus;
+use App\Entity\Type\DebugIncomingEmailType;
+use App\Service\DebugIncomingEmail\DebugIncomingEmailService;
 use App\Service\IncomingMail\IncomingMailService;
 use App\Service\Send\SendService;
 use App\Service\Management\GoState\GoStateFactory;
@@ -23,6 +26,7 @@ class LocalController extends AbstractController
     public function __construct(
         private SendService         $sendService,
         private IncomingMailService $incomingMailService,
+        private DebugIncomingEmailService $debugIncomingEmailService,
     )
     {
     }
@@ -63,12 +67,24 @@ class LocalController extends AbstractController
         #[MapRequestPayload] IncomingBounceInput $input
     ): JsonResponse
     {
-        $dsn = $input->dsn;
-        if (!$dsn) {
-            // TODO: Handle error
+        if (!$input->dsn) {
+            $debugIncomingEmailStatus = DebugIncomingEmailStatus::FAILED;
         }
 
-        $this->incomingMailService->handleIncomingBounce($input->bounce_uuid, $dsn);
+        else {
+            $this->incomingMailService->handleIncomingBounce($input->bounce_uuid, $input->dsn);
+            $debugIncomingEmailStatus = DebugIncomingEmailStatus::SUCCESS;
+        }
+
+        $this->debugIncomingEmailService->createDebugIncomingEmail(
+            DebugIncomingEmailType::BOUNCE,
+            $debugIncomingEmailStatus,
+            $input->raw_email,
+            $input->mail_from,
+            $input->rcpt_to,
+            (array)$input->dsn,
+            $input->error
+        );
 
         return new JsonResponse();
     }

@@ -29,5 +29,12 @@ class IncomingBounceInput
         ]
     )]
     public ?string $error = null;
+
+    #[Assert\NotBlank]
+    public string $raw_email;
+    #[Assert\NotBlank]
+    public string $mail_from;
+    #[Assert\NotBlank]
+    public string $rcpt_to;
 }
 
