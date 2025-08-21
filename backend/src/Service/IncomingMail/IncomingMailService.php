@@ -77,6 +77,30 @@ class IncomingMailService
 
     public function handleIncomingFbl(ArfInput $arfInput): void
     {
-        // TODO
+        $parts = explode('@', $arfInput->MessageId);
+
+        if (count($parts) < 2) {
+            $this->logger->error('Received FBL with invalid Message-ID', [
+                'message-id' => $arfInput->MessageId
+            ]);
+            return;
+        }
+
+        $uuid = $parts[0];
+        $send = $this->sendService->getSendByUuid($uuid);
+
+        if ($send === null) {
+            $this->logger->error('Failed to get send by UUID', [
+                'uuid' => $uuid
+            ]);
+            return;
+        }
+
+        $this->suppressionService->createSuppression(
+            $send->getProject(),
+            $arfInput->OriginalMailFrom,    // This is wrong. How we can get all users?
+            SuppressionReason::FBL,
+            $arfInput->ReadableText
+        );
     }
 }

@@ -90,6 +90,7 @@ class LocalController extends AbstractController
         return new JsonResponse();
     }
 
+    #[Route('/incoming/fbl', methods: 'POST')]
     public function incomingFbl(
         #[MapRequestPayload] IncomingFblInput $input
     ): JsonResponse
