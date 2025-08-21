@@ -56,10 +56,9 @@ class ProjectUserController extends AbstractController
 
     #[Route('/project-users/{id}', methods: 'DELETE')]
     #[ScopeRequired(Scope::PROJECT_WRITE)]
-    public function deleteProjectUser(Project $project, ProjectUser $projectUser): JsonResponse
+    public function deleteProjectUser(ProjectUser $projectUser): JsonResponse
     {
         $this->projectUserService->deleteProjectUser($projectUser);
-
         return $this->json([]);
     }
 
