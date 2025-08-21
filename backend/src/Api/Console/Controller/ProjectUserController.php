@@ -8,6 +8,7 @@ use App\Api\Console\Input\ProjectUser\CreateProjectUserInput;
 use App\Api\Console\Object\ProjectUserObject;
 use App\Api\Console\Object\ProjectUserSearchObject;
 use App\Entity\Project;
+use App\Entity\ProjectUser;
 use App\Service\ProjectUser\ProjectUserService;
 use Hyvor\Internal\Auth\AuthInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -51,5 +52,22 @@ class ProjectUserController extends AbstractController
         $projectUser = $this->projectUserService->createProjectUser($project, $authUser->id, $input->scopes);
 
         return $this->json(new ProjectUserObject(($projectUser), $authUser));
+    }
+
+    #[Route('/project-users/{id}', methods: 'DELETE')]
+    #[ScopeRequired(Scope::PROJECT_WRITE)]
+    public function deleteProjectUser(Project $project, ProjectUser $projectUser): JsonResponse
+    {
+        $this->projectUserService->deleteProjectUser($projectUser);
+
+        return $this->json([]);
+    }
+
+    #[Route('/project-users', methods: 'DELETE')]
+    #[ScopeRequired(Scope::PROJECT_WRITE)]
+    public function deleteAllProjectUsers(Project $project): JsonResponse
+    {
+        $this->projectUserService->deleteAllProjectUsers($project);
+        return $this->json([]);
     }
 }

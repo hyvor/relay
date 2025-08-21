@@ -8,10 +8,8 @@ use App\Entity\ProjectUser;
 use App\Service\ProjectUser\ProjectUserService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
-use App\Tests\Factory\ProjectUserFactory;
 use Hyvor\Internal\Auth\AuthFake;
 use PHPUnit\Framework\Attributes\CoversClass;
-use Hyvor\Internal\Auth\AuthUser;
 
 #[CoversClass(ProjectUserController::class)]
 #[CoversClass(ProjectUserService::class)]

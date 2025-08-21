@@ -61,4 +61,9 @@ class ProjectUserService
         $query->execute();
     }
 
+    public function deleteProjectUser(ProjectUser $projectUser): void
+    {
+        $this->em->remove($projectUser);
+        $this->em->flush();
+    }
 }
