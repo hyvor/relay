@@ -4,20 +4,23 @@ namespace App\Api\Console\Object;
 
 use App\Api\Console\Authorization\Scope;
 use App\Entity\ProjectUser;
+use Hyvor\Internal\Auth\AuthUser;
 
 class ProjectUserObject
 {
 
+    public int $id;
     /**
      * @var string[]
      */
     public array $scopes;
-    public ProjectObject $project;
+    public ProjectUserMiniObject $user;
 
-    public function __construct(ProjectUser $pu)
+    public function __construct(ProjectUser $pu, AuthUser $authUser)
     {
+        $this->id = $pu->getId();
         $this->scopes = $pu->getScopes();
-        $this->project = new ProjectObject($pu->getProject());
+        $this->user = new ProjectUserMiniObject($authUser);
 
         // use the following to test custom scopes
         // in the frontend
