@@ -70,8 +70,10 @@ class CreateProjectUserTest extends WebTestCase
 
         $json = $this->getJson();
         $this->assertArrayHasKey('id', $json);
+        $this->assertArrayHasKey('created_at', $json);
         $this->assertArrayHasKey('scopes', $json);
         $this->assertArrayHasKey('user', $json);
+        $this->assertArrayHasKey('oidc_sub', $json);
 
         $projectUserDb = $this->em->getRepository(ProjectUser::class)->find($json['id']);
         $this->assertInstanceOf(ProjectUser::class, $projectUserDb);

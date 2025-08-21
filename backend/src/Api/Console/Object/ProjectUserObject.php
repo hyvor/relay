@@ -10,23 +10,22 @@ class ProjectUserObject
 {
 
     public int $id;
+    public int $created_at;
     /**
      * @var string[]
      */
     public array $scopes;
     public ProjectUserMiniObject $user;
+    public ?string $oidc_sub;
+
 
     public function __construct(ProjectUser $pu, AuthUser $authUser)
     {
         $this->id = $pu->getId();
+        $this->created_at = $pu->getCreatedAt()->getTimestamp();
         $this->scopes = $pu->getScopes();
         $this->user = new ProjectUserMiniObject($authUser);
-
-        // use the following to test custom scopes
-        // in the frontend
-//        $this->scopes = [
-//            Scope::PROJECT_READ->value,
-//        ];
+        $this->oidc_sub = $authUser->oidc_sub;
     }
 
 }
