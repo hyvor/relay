@@ -1,17 +1,14 @@
 <?php
 
-namespace App\Service\Local;
+namespace App\Service\IncomingMail;
 
 use App\Api\Local\Input\DsnInput;
-use App\Entity\Send;
 use App\Entity\Type\SuppressionReason;
 use App\Service\Send\SendService;
 use App\Service\Suppression\SuppressionService;
-use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
 
-class LocalService
+class IncomingMailService
 {
     public function __construct(
         private SendService $sendService,
