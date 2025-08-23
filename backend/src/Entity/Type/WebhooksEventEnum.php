@@ -16,6 +16,6 @@ enum WebhooksEventEnum: string
 
     // Created by API
     case DOMAIN_CREATED = 'domain.created';
-    case DOMAIN_VERIFIED = 'domain.verified';
+    case DOMAIN_STATUS_CHANGED = 'domain.status.changed';
     case DOMAIN_DELETED = 'domain.deleted';
 }

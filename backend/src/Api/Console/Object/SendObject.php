@@ -4,22 +4,24 @@ namespace App\Api\Console\Object;
 
 use App\Entity\Send;
 use App\Entity\SendAttempt;
-use App\Entity\Type\SendStatus;
 
 class SendObject
 {
     public int $id;
     public string $uuid;
     public int $created_at;
-    public ?int $sent_at;
-    public ?int $failed_at;
-    public SendStatus $status;
     public string $from_address;
-    public string $to_address;
+    public ?string $from_name;
     public ?string $subject;
     public ?string $body_html;
     public ?string $body_text;
     public string $raw;
+    public int $size_bytes;
+
+    /**
+     * @var SendRecipientObject[]
+     */
+    public array $recipients = [];
 
     /**
      * @var SendAttemptObject[]
@@ -29,20 +31,24 @@ class SendObject
     /**
      * @param SendAttempt[] $attempts
      */
-    public function __construct(Send $send, array $attempts = [])
+    public function __construct(
+        Send $send,
+        array $attempts = [],
+        bool $content = false
+    )
     {
         $this->id = $send->getId();
         $this->uuid = $send->getUuid();
         $this->created_at = $send->getCreatedAt()->getTimestamp();
-        $this->sent_at = $send->getSentAt()?->getTimestamp();
-        $this->failed_at = $send->getFailedAt()?->getTimestamp();
-        $this->status = $send->getStatus();
         $this->from_address = $send->getFromAddress();
-        $this->to_address = $send->getToAddress();
+        $this->from_name = $send->getFromName();
         $this->subject = $send->getSubject();
-        $this->body_html = $send->getBodyHtml();
-        $this->body_text = $send->getBodyText();
-        $this->raw = $send->getRaw();
+        $this->body_html = $content ? $send->getBodyHtml() : null;
+        $this->body_text = $content ? $send->getBodyText() : null;
+        $this->raw = $content ? $send->getRaw() : '';
+        $this->size_bytes = $send->getSizeBytes();
+
+        $this->recipients = array_map(fn($recipient) => new SendRecipientObject($recipient), $send->getRecipients());
         $this->attempts = array_map(fn(SendAttempt $attempt) => new SendAttemptObject($attempt), $attempts);
     }
 }

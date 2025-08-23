@@ -19,7 +19,7 @@ class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
     protected Container $container;
     protected Application $application;
     protected EntityManagerInterface $em;
-    protected EventDispatcherInterface $eventDispatcher;
+    protected EventDispatcherInterface $ed;
 
     protected function setUp(): void
     {
@@ -37,7 +37,7 @@ class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
 
         /** @var EventDispatcherInterface $eventDispatcher */
         $eventDispatcher = $this->container->get(EventDispatcherInterface::class);
-        $this->eventDispatcher = $eventDispatcher;
+        $this->ed = $eventDispatcher;
         // $this->container->set(LoggerInterface::class, $this->createMock(LoggerInterface::class));
     }
 

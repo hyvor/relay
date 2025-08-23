@@ -36,10 +36,10 @@
 	</li>
 	<br />
 	<li>
-		<a href="#domain-verified">domain.created</a>
+		<a href="#domain-created">domain.created</a>
 	</li>
 	<li>
-		<a href="#domain-verified">domain.status.changed</a>
+		<a href="#domain-status-changed">domain.status.changed</a>
 	</li>
 	<li>
 		<a href="#domain-deleted">domain.deleted</a>
@@ -172,60 +172,124 @@
 	language="ts"
 />
 
-<h3 id="domain-verified">domain.verified</h3>
+<h3 id="domain-created">domain.created</h3>
 
 <p>
-	This event is triggered when a domain is successfully verified. This means that the domain has
-	been configured correctly, and you can start sending emails from this domain. <code
-		>dkim_verified</code
-	>
-	is set to <code>true</code> in the <code>Domain</code> object.
+    This event is triggered when a new domain is created in your Hyvor Relay project.
 </p>
 
 <CodeBlock
-	code={`
+    code={`
 {
-	domain: Domain;
+    domain: Domain;
 }
 `}
-	language="ts"
+    language="ts"
 />
 
 <p>
-	Objects: <a href="/docs/api-console#domain-object">Domain</a>
+    Objects: <a href="/docs/api-console#domain-object">Domain</a>
 </p>
 
-<h3 id="domain-warned">domain.warned</h3>
+<h3 id="domain-status-changed">domain.status.changed</h3>
 
 <p>
-	This event is triggered when a domain is put on warning status. This can happen if the DKIM TXT
-	record is removed or changed or if the domain is flagged for spam or other issues. You must
-	resolve this issue within 24 hours, or the domain will be <a href="#domain-unverified"
-		>marked as unverified</a
-	>.
+    This event is triggered when the <a href="/docs/domains#status" >status of a domain changes</a>.
 </p>
 
 <CodeBlock
-	code={`
+    code={`
 {
-	domain: Domain;
+    domain: Domain;
+    old_status: 'pending' | 'active' | 'warning' | 'suspended';
+    new_status: 'pending' | 'active' | 'warning' | 'suspended';
+    dkim_result: {
+        verified: boolean;
+        checked_at: number;
+        error_message: string | null;
+    }
 }
 `}
-	language="ts"
+    language="ts"
 />
 
 <p>
-	Objects: <a href="/docs/api-console#domain-object">Domain</a>
+    Objects: <a href="/docs/api-console#domain-object">Domain</a>
 </p>
 
-<h3 id="domain-unverified">domain.unverified</h3>
+<h3 id="domain-deleted">domain.deleted</h3>
 
 <p>
-	This event is triggered when a domain is marked as unverified. This can happen if the DKIM TXT
-	record is removed or changed, or if the domain is flagged for spam or other issues and not
-	resolved within 24 hours. You will not be able to send emails from this domain until the domain
-	is fully verified.
+    This event is triggered when a domain is deleted from your Hyvor Relay project.
 </p>
+
+<CodeBlock
+    code={`
+{
+    domain: Domain;
+}
+`}
+    language="ts"
+/>
+
+<p>
+    Objects: <a href="/docs/api-console#domain-object">Domain</a>
+</p>
+
+<!--<h3 id="domain-verified">domain.verified</h3>-->
+
+<!--<p>-->
+<!--	This event is triggered when a domain is successfully verified. This means that the domain has-->
+<!--	been configured correctly, and you can start sending emails from this domain. <code-->
+<!--		>dkim_verified</code-->
+<!--	>-->
+<!--	is set to <code>true</code> in the <code>Domain</code> object.-->
+<!--</p>-->
+
+<!--<CodeBlock-->
+<!--	code={`-->
+<!--{-->
+<!--	domain: Domain;-->
+<!--}-->
+<!--`}-->
+<!--	language="ts"-->
+<!--/>-->
+
+<!--<p>-->
+<!--	Objects: <a href="/docs/api-console#domain-object">Domain</a>-->
+<!--</p>-->
+
+<!--<h3 id="domain-warned">domain.warned</h3>-->
+
+<!--<p>-->
+<!--	This event is triggered when a domain is put on warning status. This can happen if the DKIM TXT-->
+<!--	record is removed or changed or if the domain is flagged for spam or other issues. You must-->
+<!--	resolve this issue within 24 hours, or the domain will be <a href="#domain-unverified"-->
+<!--		>marked as unverified</a-->
+<!--	>.-->
+<!--</p>-->
+
+<!--<CodeBlock-->
+<!--	code={`-->
+<!--{-->
+<!--	domain: Domain;-->
+<!--}-->
+<!--`}-->
+<!--	language="ts"-->
+<!--/>-->
+
+<!--<p>-->
+<!--	Objects: <a href="/docs/api-console#domain-object">Domain</a>-->
+<!--</p>-->
+
+<!--<h3 id="domain-unverified">domain.unverified</h3>-->
+
+<!--<p>-->
+<!--	This event is triggered when a domain is marked as unverified. This can happen if the DKIM TXT-->
+<!--	record is removed or changed, or if the domain is flagged for spam or other issues and not-->
+<!--	resolved within 24 hours. You will not be able to send emails from this domain until the domain-->
+<!--	is fully verified.-->
+<!--</p>-->
 
 <h2 id="retrying">Retrying</h2>
 

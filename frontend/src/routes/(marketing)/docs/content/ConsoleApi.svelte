@@ -182,23 +182,26 @@ Authorization: Bearer <your_api_key>
 
 <CodeBlock
 	code={`
-    type Request = {
-        from: string | { email: string, name?: string },
-        to: string | { email: string, name?: string },
-        subject?: string,
-        body_html?: string,
-        body_text?: string,
-        headers?: Record<string, string>,
-        attachments?: Array<{
-            content: string, // base64 encoded
-            name?: string,
-            content_type?: string
-        }>
-    }
-    type Response = {
-        id: number,
-        message_id: string
-    }
+type Address = string | { email: string, name?: string };
+type Request = {
+	from: Address,
+	to: Address | Address[],
+	cc?: Address | Address[],
+	bcc?: Address | Address[],
+	subject?: string,
+	body_html?: string,
+	body_text?: string,
+	headers?: Record<string, string>,
+	attachments?: Array<{
+		content: string, // base64 encoded
+		name?: string,
+		content_type?: string
+	}>
+}
+type Response = {
+	id: number,
+	message_id: string
+}
 `}
 	language="ts"
 />

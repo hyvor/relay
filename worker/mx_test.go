@@ -32,7 +32,7 @@ func TestErrorOnLookupBothMxAndHostLookupsFail(t *testing.T) {
 		return nil, errors.New("lookup failed")
 	}
 
-	_, err := getMxHostsFromEmail("test@hyvor.com")
+	_, err := getMxHostsFromDomain("hyvor.com")
 
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, ErrSmtpMxLookupFailed))
@@ -49,7 +49,7 @@ func TestReturnsCurrentHostOnMxLookupFailure(t *testing.T) {
 		return []string{"1.1.1.1"}, nil
 	}
 
-	hosts, err := getMxHostsFromEmail("test@hyvor.com")
+	hosts, err := getMxHostsFromDomain("hyvor.com")
 
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"hyvor.com"}, hosts)
@@ -67,7 +67,7 @@ func TestCurrentDomainOnNoMxHosts(t *testing.T) {
 		return []string{"1.1.1.1"}, nil
 	}
 
-	hosts, err := getMxHostsFromEmail("test@hyvor.com")
+	hosts, err := getMxHostsFromDomain("hyvor.com")
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"hyvor.com"}, hosts)
 }
@@ -83,7 +83,7 @@ func TestValidMxLookupAndCache(t *testing.T) {
 		}, nil
 	}
 
-	hosts, err := getMxHostsFromEmail("test@hyvor.com")
+	hosts, err := getMxHostsFromDomain("hyvor.com")
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(hosts))
 
@@ -107,7 +107,7 @@ func TestGetHostsFromCache(t *testing.T) {
 		Expiry: time.Now().Add(5 * time.Minute),
 	}
 
-	hosts, err := getMxHostsFromEmail("test@hyvor.com")
+	hosts, err := getMxHostsFromDomain("hyvor.com")
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"mx1.hyvor.com", "mx2.hyvor.com"}, hosts)
 
