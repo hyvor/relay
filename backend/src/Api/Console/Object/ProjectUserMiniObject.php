@@ -6,6 +6,7 @@ use Hyvor\Internal\Auth\AuthUser;
 
 class ProjectUserMiniObject
 {
+    public int $id;
     public string $name;
     public string $email;
     public ?string $username;
@@ -14,6 +15,7 @@ class ProjectUserMiniObject
     public function __construct(
         AuthUser $hyvorUser
     ) {
+        $this->id = $hyvorUser->id;
         $this->name = $hyvorUser->name;
         $this->email = $hyvorUser->email;
         $this->username = $hyvorUser->username;

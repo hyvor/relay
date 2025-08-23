@@ -49,8 +49,18 @@ export type Scope =
     'analytics.read';
 
 export interface ProjectUser {
+    id: number;
+	created_at: number;
     scopes: Scope[];
     project: Project;
+	user: {
+		id: number;
+		name: string;
+		email: string;
+		username: string | null;
+		picture_url: string | null;
+	};
+	oidc_sub: string | null;
 }
 
 export type Project = {
@@ -161,4 +171,12 @@ export interface AnalyticsStats {
     sends_30d: number;
     bounce_rate_30d: number;
     complaint_rate_30d: number;
+}
+
+export interface ProjectUserSearchResult {
+	id: number;
+	email: string;
+	name: string;
+	picture_url: string | null;
+	oidc_sub: string | null;
 }

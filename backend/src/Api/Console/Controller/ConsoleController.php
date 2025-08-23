@@ -42,7 +42,7 @@ class ConsoleController extends AbstractController
 
         $projectUsers = $this->projectUserService->getProjectsOfUser($user->id);
         $projectUsers = array_map(
-            fn($project) => new ProjectUserObject($project),
+            fn($project) => new ProjectUserObject($project, $user),
             $projectUsers
         );
 

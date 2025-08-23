@@ -39,6 +39,23 @@ class ProjectUserController extends AbstractController
         return $this->json($foundUsers);
     }
 
+    #[Route('/project-users', methods: 'GET')]
+    #[ScopeRequired(Scope::PROJECT_READ)]
+    public function getProjectUsers(Project $project): JsonResponse
+    {
+        $projectUsers = $this->projectUserService->getProjectUsers($project);
+        $result = [];
+        
+        foreach ($projectUsers as $projectUser) {
+            $authUser = $this->auth->fromId($projectUser->getUserId());
+            if ($authUser !== null) {
+                $result[] = new ProjectUserObject($projectUser, $authUser);
+            }
+        }
+        
+        return $this->json($result);
+    }
+
     #[Route('/project-users', methods: 'POST')]
     #[ScopeRequired(Scope::PROJECT_WRITE)]
     public function addProjectUser(

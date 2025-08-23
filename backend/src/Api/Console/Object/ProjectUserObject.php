@@ -17,6 +17,7 @@ class ProjectUserObject
     public array $scopes;
     public ProjectUserMiniObject $user;
     public ?string $oidc_sub;
+    public ProjectObject $project;
 
 
     public function __construct(ProjectUser $pu, AuthUser $authUser)
@@ -26,6 +27,7 @@ class ProjectUserObject
         $this->scopes = $pu->getScopes();
         $this->user = new ProjectUserMiniObject($authUser);
         $this->oidc_sub = $authUser->oidc_sub;
+        $this->project = new ProjectObject($pu->getProject());
     }
 
 }
