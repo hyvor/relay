@@ -8,6 +8,7 @@ use App\Entity\Queue;
 use App\Entity\Send;
 use App\Entity\SendAttempt;
 use App\Entity\SendRecipient;
+use App\Entity\Type\SendAttemptStatus;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
 use App\Entity\Type\SendStatus;
@@ -38,9 +39,10 @@ class SendService
      */
     public function getSends(
         Project $project,
-        ?SendStatus $status,
+        ?SendAttemptStatus $status,
         ?string $fromSearch,
         ?string $toSearch,
+        ?string $subjectSearch,
         int $limit,
         int $offset
     ): ArrayCollection {
@@ -65,8 +67,14 @@ class SendService
         }
 
         if ($toSearch !== null) {
-            $qb->andWhere('s.to_address LIKE :toSearch')
+            $qb->join('s.recipients', 'r')
+                ->andWhere('r.address LIKE :toSearch')
                 ->setParameter('toSearch', '%' . $toSearch . '%');
+        }
+
+        if ($subjectSearch !== null) {
+            $qb->andWhere('s.subject LIKE :subjectSearch')
+                ->setParameter('subjectSearch', '%' . $subjectSearch . '%');
         }
 
         // dd($qb->getQuery()->getSQL());
