@@ -5,13 +5,14 @@ namespace App\Tests\Api\Console\Send;
 use App\Api\Console\Controller\SendController;
 use App\Api\Console\Object\SendObject;
 use App\Entity\Send;
-use App\Entity\Type\SendStatus;
+use App\Entity\Type\SendRecipientStatus;
 use App\Service\Send\SendService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\SendFactory;
+use App\Tests\Factory\SendRecipientFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 
@@ -93,10 +94,10 @@ class GetSendsTest extends WebTestCase
         $this->assertCount(5, $json);
     }
 
-    #[TestWith([SendStatus::QUEUED, SendStatus::ACCEPTED])]
-    #[TestWith([SendStatus::ACCEPTED, SendStatus::BOUNCED])]
-    #[TestWith([SendStatus::BOUNCED, SendStatus::QUEUED])]
-    public function test_list_sends_with_status_search(SendStatus $status, SendStatus $otherStatus): void
+    #[TestWith([SendRecipientStatus::QUEUED, SendRecipientStatus::ACCEPTED])]
+    #[TestWith([SendRecipientStatus::ACCEPTED, SendRecipientStatus::BOUNCED])]
+    #[TestWith([SendRecipientStatus::BOUNCED, SendRecipientStatus::QUEUED])]
+    public function test_list_sends_with_status_search(SendRecipientStatus $status, SendRecipientStatus $otherStatus): void
     {
         $project = ProjectFactory::createOne();
 
@@ -104,17 +105,25 @@ class GetSendsTest extends WebTestCase
 
         $queue = QueueFactory::createOne();
 
-        $sends = SendFactory::createMany(10, [
+        $send = SendFactory::createOne([
             'project' => $project,
             'domain' => $domain,
             'queue' => $queue,
+        ]);
+
+        $sendRecipients = SendRecipientFactory::createOne([
+            'send' => $send,
             'status' => $status,
         ]);
 
-        $sendsOtherStatus = SendFactory::createMany(10, [
+        $sendOtherStatus = SendFactory::createOne( [
             'project' => $project,
             'domain' => $domain,
             'queue' => $queue,
+        ]);
+
+        $sendRecipientsOtherStatus = SendRecipientFactory::createOne([
+            'send' => $sendOtherStatus,
             'status' => $otherStatus,
         ]);
 
@@ -127,9 +136,9 @@ class GetSendsTest extends WebTestCase
         $this->assertSame(200, $response->getStatusCode());
         /** @var array<int, array<string, mixed>> $json */
         $json = $this->getJson();
-        $this->assertCount(10, $json);
+        $this->assertCount(1, $json);
 
-        $send = $json[4];
+        $send = $json[0];
         $this->assertArrayHasKey('id', $send);
 
         $repository = $this->em->getRepository(Send::class);
@@ -185,18 +194,26 @@ class GetSendsTest extends WebTestCase
 
         $queue = QueueFactory::createOne();
 
-        $sends = SendFactory::createMany(10, [
+        $send = SendFactory::createOne([
             'project' => $project,
             'domain' => $domain,
             'queue' => $queue,
-            'toAddress' => 'thibault@hyvor.com',
         ]);
 
-        $sendsOther = SendFactory::createMany(10, [
+        SendRecipientFactory::createOne( [
+            'send' => $send,
+            'address' => 'thibault@hyvor.com'
+        ]);
+
+        $sendOther = SendFactory::createOne([
             'project' => $project,
             'domain' => $domain,
             'queue' => $queue,
-            'toAddress' => 'supun@hyvor.com'
+        ]);
+
+        SendRecipientFactory::createOne([
+            'send' => $send,
+            'address' => 'supun@hyvor.com'
         ]);
 
         $response = $this->consoleApi(
@@ -208,12 +225,12 @@ class GetSendsTest extends WebTestCase
         $this->assertSame(200, $response->getStatusCode());
         /** @var array<int, array<string, mixed>> $json */
         $json = $this->getJson();
-        $this->assertCount(10, $json);
-        $send = $json[4];
-        $this->assertArrayHasKey('id', $send);
+        $this->assertCount(1, $json);
+        $sendResponse = $json[0];
+        $this->assertArrayHasKey('id', $sendResponse);
         $repository = $this->em->getRepository(Send::class);
-        $sendDb = $repository->find($send['id']);
+        $sendDb = $repository->find($sendResponse['id']);
         $this->assertInstanceOf(Send::class, $sendDb);
-        $this->assertSame($sends[4]->getToAddress(), $sendDb->getToAddress());
+        $this->assertSame($send->getRecipients()[0]->getAddress(), $sendDb->getRecipients()[0]->getAddress());
     }
 }

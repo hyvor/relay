@@ -3,7 +3,7 @@
 namespace App\Tests\Factory;
 
 use App\Entity\Send;
-use App\Entity\Type\SendStatus;
+use App\Entity\Type\SendRecipientStatus;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
 /**
