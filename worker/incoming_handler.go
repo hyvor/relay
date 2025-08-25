@@ -34,7 +34,6 @@ func (m *IncomingMail) Handle(ctx context.Context, pgpool *pgxpool.Pool, logger 
 		return
 	}
 
-	var endpoint string
 	var payload map[string]interface{}
 	var debugType DebugIncomingType
 	var debugStatus DebugIncomingStatus
@@ -43,7 +42,6 @@ func (m *IncomingMail) Handle(ctx context.Context, pgpool *pgxpool.Pool, logger 
 
 	if isBounce {
 
-		endpoint = "/incoming/bounce"
 		debugType = DebugIncomingTypeBounce
 
 		bounceDsn, err := bounceparse.ParseDsn(m.Data)
@@ -65,7 +63,6 @@ func (m *IncomingMail) Handle(ctx context.Context, pgpool *pgxpool.Pool, logger 
 
 	} else if isFbl {
 
-		endpoint = "/incoming/fbl"
 		arf, err := bounceparse.ParseArf(m.Data)
 
 		debugType = DebugIncomingTypeFbl
@@ -91,7 +88,7 @@ func (m *IncomingMail) Handle(ctx context.Context, pgpool *pgxpool.Pool, logger 
 	payload["mail_from"] = m.MailFrom
 	payload["rcpt_to"] = m.RcptTo
 
-	CallLocalApi(ctx, "POST", endpoint, payload, nil)
+	CallLocalApi(ctx, "POST", "/incoming", payload, nil)
 
 	// createDebugRecord(
 	// 	pgpool,
