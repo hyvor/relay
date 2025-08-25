@@ -71,7 +71,7 @@ class LocalController extends AbstractController
         $isBounce = $input->type === IncomingType::BOUNCE;
         $debugIncomingEmailStatus = $input->error ? DebugIncomingEmailStatus::FAILED : DebugIncomingEmailStatus::SUCCESS;
 
-        $this->debugIncomingEmailService->createDebugIncomingEmail(
+        $debugIncomingEmail = $this->debugIncomingEmailService->createDebugIncomingEmail(
             $isBounce ? DebugIncomingEmailType::BOUNCE : DebugIncomingEmailType::COMPLAINT,
             $debugIncomingEmailStatus,
             $input->raw_email,
@@ -83,9 +83,9 @@ class LocalController extends AbstractController
 
         if (!$input->error) {
             if ($isBounce) {
-                $this->incomingMailService->handleIncomingBounce($input->bounce_uuid, $input->dsn);
+                $this->incomingMailService->handleIncomingBounce($input->bounce_uuid, $input->dsn, $debugIncomingEmail);
             } else {
-                $this->incomingMailService->handleIncomingComplaint($input->arf);
+                $this->incomingMailService->handleIncomingComplaint($input->arf, $debugIncomingEmail);
             }
         }
 

@@ -4,8 +4,12 @@ namespace App\Service\IncomingMail;
 
 use App\Api\Local\Input\ArfInput;
 use App\Api\Local\Input\DsnInput;
+use App\Entity\DebugIncomingEmail;
+use App\Entity\Type\SendFeedbackType;
 use App\Entity\Type\SuppressionReason;
 use App\Service\Send\SendService;
+use App\Service\SendFeedback\SendFeedbackService;
+use App\Service\SendRecipient\SendRecipientService;
 use App\Service\Suppression\SuppressionService;
 use Psr\Log\LoggerInterface;
 
@@ -14,13 +18,16 @@ class IncomingMailService
     public function __construct(
         private SendService $sendService,
         private SuppressionService $suppressionService,
+        private SendRecipientService $sendRecipientService,
+        private SendFeedbackService $sendFeedbackService,
         private LoggerInterface $logger,
     ) {
     }
 
     public function handleIncomingBounce(
         string $bounceUuid,
-        DsnInput $dsnInput
+        DsnInput $dsnInput,
+        DebugIncomingEmail $debugIncomingEmail,
     ): void
     {
 
@@ -66,16 +73,34 @@ class IncomingMailService
                 return;
             }
 
+            $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($recipient->EmailAddress);
+            if ($sendRecipient === null) {
+                $this->logger->error('Failed to get send recipient by email', [
+                    'uuid' => $bounceUuid,
+                    'recipient' => $recipient->EmailAddress,
+                ]);
+                return;
+            }
+
             $this->suppressionService->createSuppression(
                 $send->getProject(),
                 $recipient->EmailAddress,
                 SuppressionReason::BOUNCE,
                 $dsnInput->ReadableText
             );
+
+            $this->sendFeedbackService->createSendFeedback(
+                SendFeedbackType::BOUNCE,
+                $sendRecipient,
+                $debugIncomingEmail
+            );
         }
     }
 
-    public function handleIncomingComplaint(ArfInput $arfInput): void
+    public function handleIncomingComplaint(
+        ArfInput $arfInput,
+        DebugIncomingEmail $debugIncomingEmail,
+    ): void
     {
         $parts = explode('@', $arfInput->MessageId);
 
@@ -96,11 +121,26 @@ class IncomingMailService
             return;
         }
 
+        $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($arfInput->OriginalRcptTo);
+        if ($sendRecipient === null) {
+            $this->logger->error('Failed to get send recipient by email', [
+                'uuid' => $uuid,
+                'recipient' => $arfInput->OriginalRcptTo,
+            ]);
+            return;
+        }
+
         $this->suppressionService->createSuppression(
             $send->getProject(),
             $arfInput->OriginalRcptTo,
             SuppressionReason::COMPLAINT,
             $arfInput->ReadableText
+        );
+
+        $this->sendFeedbackService->createSendFeedback(
+            SendFeedbackType::BOUNCE,
+            $sendRecipient,
+            $debugIncomingEmail
         );
     }
 }
