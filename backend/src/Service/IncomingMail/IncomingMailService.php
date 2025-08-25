@@ -99,7 +99,7 @@ class IncomingMailService
         $this->suppressionService->createSuppression(
             $send->getProject(),
             $arfInput->OriginalRcptTo,
-            SuppressionReason::FBL,
+            SuppressionReason::COMPLAINT,
             $arfInput->ReadableText
         );
     }

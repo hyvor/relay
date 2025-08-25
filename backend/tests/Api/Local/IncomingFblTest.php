@@ -52,7 +52,7 @@ class IncomingFblTest extends WebTestCase
 
         $suppression = $this->em->getRepository(Suppression::class)->findOneBy([
             'project' => $project->_real(),
-            'reason' => SuppressionReason::FBL
+            'reason' => SuppressionReason::COMPLAINT
         ]);
 
         $this->assertNotNull($suppression);
@@ -60,7 +60,7 @@ class IncomingFblTest extends WebTestCase
         $this->assertEquals('This is a test ARF', $suppression->getDescription());
 
         $debugIncomingEmail = $this->em->getRepository(DebugIncomingEmail::class)->findOneBy([
-            'type' => DebugIncomingEmailType::FBL,
+            'type' => DebugIncomingEmailType::COMPLAINT,
             'status' => DebugIncomingEmailStatus::SUCCESS,
             'mail_from' => 'mail.from@example.com',
             'rcpt_to' => 'rcpt.to@example.com'
@@ -85,7 +85,7 @@ class IncomingFblTest extends WebTestCase
         );
         $this->assertResponseStatusCodeSame(200, $response);
         $debugIncomingEmail = $this->em->getRepository(DebugIncomingEmail::class)->findOneBy([
-            'type' => DebugIncomingEmailType::FBL,
+            'type' => DebugIncomingEmailType::COMPLAINT,
             'status' => DebugIncomingEmailStatus::FAILED,
             'mail_from' => 'from@example.com',
             'rcpt_to' => 'to@example.com',
@@ -95,7 +95,7 @@ class IncomingFblTest extends WebTestCase
         $this->assertSame('ARF missing', $debugIncomingEmail->getErrorMessage());
         $suppression = $this->em->getRepository(Suppression::class)->findOneBy([
             'project' => $project->_real(),
-            'reason' => SuppressionReason::FBL
+            'reason' => SuppressionReason::COMPLAINT
         ]);
         $this->assertNull($suppression);
     }
@@ -123,7 +123,7 @@ class IncomingFblTest extends WebTestCase
         );
         $this->assertResponseStatusCodeSame(200, $response);
         $debugIncomingEmail = $this->em->getRepository(DebugIncomingEmail::class)->findOneBy([
-            'type' => DebugIncomingEmailType::FBL,
+            'type' => DebugIncomingEmailType::COMPLAINT,
             'status' => DebugIncomingEmailStatus::SUCCESS,
             'mail_from' => 'from@example.com',
             'rcpt_to' => 'to@example.com',
@@ -131,7 +131,7 @@ class IncomingFblTest extends WebTestCase
         $this->assertNotNull($debugIncomingEmail);
         $suppression = $this->em->getRepository(Suppression::class)->findOneBy([
             'project' => $project->_real(),
-            'reason' => SuppressionReason::FBL
+            'reason' => SuppressionReason::COMPLAINT
         ]);
         $this->assertNull($suppression);
     }
@@ -158,7 +158,7 @@ class IncomingFblTest extends WebTestCase
         );
         $this->assertResponseStatusCodeSame(200, $response);
         $debugIncomingEmail = $this->em->getRepository(DebugIncomingEmail::class)->findOneBy([
-            'type' => DebugIncomingEmailType::FBL,
+            'type' => DebugIncomingEmailType::COMPLAINT,
             'status' => DebugIncomingEmailStatus::SUCCESS,
             'mail_from' => 'from@example.com',
             'rcpt_to' => 'to@example.com',
@@ -166,7 +166,7 @@ class IncomingFblTest extends WebTestCase
         $this->assertNotNull($debugIncomingEmail);
         $suppression = $this->em->getRepository(Suppression::class)->findOneBy([
             'project' => $project->_real(),
-            'reason' => SuppressionReason::FBL
+            'reason' => SuppressionReason::COMPLAINT
         ]);
         $this->assertNull($suppression);
     }

@@ -103,17 +103,7 @@ class LocalController extends AbstractController
         }
 
         $this->debugIncomingEmailService->createDebugIncomingEmail(
-            DebugIncomingEmailType::FBL,
-            $debugIncomingEmailStatus,
-            $input->raw_email,
-            $input->mail_from,
-            $input->rcpt_to,
-            (array)$input->arf,
-            $input->error
-        );
-
-        $this->debugIncomingEmailService->createDebugIncomingEmail(
-            DebugIncomingEmailType::FBL,
+            DebugIncomingEmailType::COMPLAINT,
             $debugIncomingEmailStatus,
             $input->raw_email,
             $input->mail_from,
