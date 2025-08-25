@@ -51,11 +51,17 @@ final class Version20250613093659 extends AbstractMigration
             "CREATE INDEX idx_sends_worker ON sends (queue_id, send_after) WHERE queued = true"
         );
 
+        // subject index
+        $this->addSql(
+            "CREATE INDEX idx_subject_lower ON sends (LOWER(subject) text_pattern_ops);"
+        );
+
         // recipients table
         $this->addSql("CREATE TYPE send_recipients_type AS ENUM ('to', 'cc', 'bcc')");
         $this->addSql(
             "CREATE TYPE send_recipients_status AS ENUM ('queued', 'accepted', 'retrying', 'failed', 'bounced', 'complained')"
         );
+
         $this->addSql(
             <<<SQL
             CREATE TABLE send_recipients (

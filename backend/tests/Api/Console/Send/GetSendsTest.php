@@ -5,6 +5,7 @@ namespace App\Tests\Api\Console\Send;
 use App\Api\Console\Controller\SendController;
 use App\Api\Console\Object\SendObject;
 use App\Entity\Send;
+use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendStatus;
 use App\Service\Send\SendService;
 use App\Tests\Case\WebTestCase;
@@ -93,10 +94,10 @@ class GetSendsTest extends WebTestCase
         $this->assertCount(5, $json);
     }
 
-    #[TestWith([SendStatus::QUEUED, SendStatus::ACCEPTED])]
-    #[TestWith([SendStatus::ACCEPTED, SendStatus::BOUNCED])]
-    #[TestWith([SendStatus::BOUNCED, SendStatus::QUEUED])]
-    public function test_list_sends_with_status_search(SendStatus $status, SendStatus $otherStatus): void
+    #[TestWith([SendRecipientStatus::QUEUED, SendRecipientStatus::ACCEPTED])]
+    #[TestWith([SendRecipientStatus::ACCEPTED, SendRecipientStatus::BOUNCED])]
+    #[TestWith([SendRecipientStatus::BOUNCED, SendRecipientStatus::QUEUED])]
+    public function test_list_sends_with_status_search(SendRecipientStatus $status, SendRecipientStatus $otherStatus): void
     {
         $project = ProjectFactory::createOne();
 
@@ -108,14 +109,12 @@ class GetSendsTest extends WebTestCase
             'project' => $project,
             'domain' => $domain,
             'queue' => $queue,
-            'status' => $status,
         ]);
 
         $sendsOtherStatus = SendFactory::createMany(10, [
             'project' => $project,
             'domain' => $domain,
             'queue' => $queue,
-            'status' => $otherStatus,
         ]);
 
         $response = $this->consoleApi(
