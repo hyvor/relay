@@ -2,8 +2,6 @@
 
 namespace App\Api\Local\Controller;
 
-use App\Api\Local\Input\IncomingBounceInput;
-use App\Api\Local\Input\IncomingFblInput;
 use App\Api\Local\Input\IncomingInput;
 use App\Api\Local\Input\IncomingType;
 use App\Api\Local\Input\SendAttemptDoneInput;
@@ -73,14 +71,6 @@ class LocalController extends AbstractController
         $isBounce = $input->type === IncomingType::BOUNCE;
         $debugIncomingEmailStatus = $input->error ? DebugIncomingEmailStatus::FAILED : DebugIncomingEmailStatus::SUCCESS;
 
-        if (!$input->error) {
-            if ($isBounce) {
-                $this->incomingMailService->handleIncomingBounce($input->bounce_uuid, $input->dsn);
-            } else {
-                $this->incomingMailService->handleIncomingFbl($input->arf);
-            }
-        }
-
         $this->debugIncomingEmailService->createDebugIncomingEmail(
             $isBounce ? DebugIncomingEmailType::BOUNCE : DebugIncomingEmailType::COMPLAINT,
             $debugIncomingEmailStatus,
@@ -90,6 +80,14 @@ class LocalController extends AbstractController
             $isBounce ? (array)$input->dsn : (array)$input->arf,
             $input->error
         );
+
+        if (!$input->error) {
+            if ($isBounce) {
+                $this->incomingMailService->handleIncomingBounce($input->bounce_uuid, $input->dsn);
+            } else {
+                $this->incomingMailService->handleIncomingComplaint($input->arf);
+            }
+        }
 
         return new JsonResponse();
     }

@@ -75,12 +75,12 @@ class IncomingMailService
         }
     }
 
-    public function handleIncomingFbl(ArfInput $arfInput): void
+    public function handleIncomingComplaint(ArfInput $arfInput): void
     {
         $parts = explode('@', $arfInput->MessageId);
 
         if (count($parts) < 2) {
-            $this->logger->error('Received FBL with invalid Message-ID', [
+            $this->logger->error('Received complaint with invalid Message-ID', [
                 'message-id' => $arfInput->MessageId
             ]);
             return;

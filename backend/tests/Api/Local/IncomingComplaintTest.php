@@ -4,7 +4,7 @@ namespace App\Tests\Api\Local;
 
 use App\Api\Local\Controller\LocalController;
 use App\Api\Local\Input\ArfInput;
-use App\Api\Local\Input\IncomingFblInput;
+use App\Api\Local\Input\IncomingInput;
 use App\Entity\DebugIncomingEmail;
 use App\Entity\Suppression;
 use App\Entity\Type\DebugIncomingEmailStatus;
@@ -18,12 +18,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(LocalController::class)]
 #[CoversClass(IncomingMailService::class)]
-#[CoversClass(IncomingFblInput::class)]
+#[CoversClass(IncomingInput::class)]
 #[CoversClass(ArfInput::class)]
 #[CoversClass(DebugIncomingEmail::class)]
-class IncomingFblTest extends WebTestCase
+class IncomingComplaintTest extends WebTestCase
 {
-    public function test_incoming_fbl(): void
+    public function test_incoming_complaint(): void
     {
         $project = ProjectFactory::createOne();
         $send = SendFactory::createOne([
@@ -71,7 +71,7 @@ class IncomingFblTest extends WebTestCase
         $this->assertNull($debugIncomingEmail->getErrorMessage());
     }
 
-    public function test_incoming_fbl_arf_missing_error_provided(): void
+    public function test_incoming_complaint_arf_missing_error_provided(): void
     {
         $project = ProjectFactory::createOne();
         $response = $this->localApi(
@@ -102,7 +102,7 @@ class IncomingFblTest extends WebTestCase
         $this->assertNull($suppression);
     }
 
-    public function test_incoming_fbl_invalid_message_id(): void
+    public function test_incoming_complaint_invalid_message_id(): void
     {
         $project = ProjectFactory::createOne();
         $send = SendFactory::createOne(['project' => $project]);
@@ -139,7 +139,7 @@ class IncomingFblTest extends WebTestCase
         $this->assertNull($suppression);
     }
 
-    public function test_incoming_fbl_send_not_found(): void
+    public function test_incoming_complaint_send_not_found(): void
     {
         $project = ProjectFactory::createOne();
         $response = $this->localApi(

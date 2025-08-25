@@ -5,7 +5,7 @@ namespace App\Tests\Api\Local;
 use App\Api\Local\Controller\LocalController;
 use App\Api\Local\Input\DsnInput;
 use App\Api\Local\Input\DsnRecipientsInput;
-use App\Api\Local\Input\IncomingBounceInput;
+use App\Api\Local\Input\IncomingInput;
 use App\Entity\DebugIncomingEmail;
 use App\Entity\Suppression;
 use App\Entity\Type\DebugIncomingEmailStatus;
@@ -20,7 +20,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(LocalController::class)]
 #[CoversClass(IncomingMailService::class)]
-#[CoversClass(IncomingBounceInput::class)]
+#[CoversClass(IncomingInput::class)]
 #[CoversClass(DsnInput::class)]
 #[CoversClass(DsnRecipientsInput::class)]
 #[CoversClass(DebugIncomingEmailService::class)]
