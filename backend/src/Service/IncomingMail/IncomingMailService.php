@@ -28,7 +28,7 @@ class IncomingMailService
 
         if (count($recipients) === 0) {
             $this->logger->error('Received bounce with no recipients', [
-                'UUID' => $bounceUuid
+                'uuid' => $bounceUuid
             ]);
             return;
         }
@@ -38,9 +38,9 @@ class IncomingMailService
             // most email clients do not even send delivered reports
             if ($recipient->Action !== 'failed') {
                 $this->logger->info('Received bounce with non-failed action', [
-                    'UUID' => $bounceUuid,
-                    'Recipient' => $recipient->EmailAddress,
-                    'Action' => $recipient->Action,
+                    'uuid' => $bounceUuid,
+                    'recipient' => $recipient->EmailAddress,
+                    'action' => $recipient->Action,
                 ]);
                 return;
             }
@@ -49,9 +49,9 @@ class IncomingMailService
             // (permanent failures)
             if ($recipient->Status[0] !== '5') {
                 $this->logger->info('Received bounce with non-permanent status code', [
-                    'UUID' => $bounceUuid,
-                    'Recipient' => $recipient->EmailAddress,
-                    'Status' => $recipient->Status,
+                    'uuid' => $bounceUuid,
+                    'recipient' => $recipient->EmailAddress,
+                    'status' => $recipient->Status,
                 ]);
                 return;
             }
@@ -60,8 +60,8 @@ class IncomingMailService
 
             if ($send === null) {
                 $this->logger->error('Failed to get send by UUID', [
-                    'UUID' => $bounceUuid,
-                    'Recipient' => $recipient->EmailAddress,
+                    'uuid' => $bounceUuid,
+                    'recipient' => $recipient->EmailAddress,
                 ]);
                 return;
             }
