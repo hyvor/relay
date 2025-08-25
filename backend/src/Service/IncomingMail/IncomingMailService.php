@@ -98,7 +98,7 @@ class IncomingMailService
 
         $this->suppressionService->createSuppression(
             $send->getProject(),
-            $arfInput->OriginalMailFrom,    // This is wrong. How we can get all users?
+            $arfInput->OriginalRcptTo,
             SuppressionReason::FBL,
             $arfInput->ReadableText
         );

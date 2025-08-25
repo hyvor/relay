@@ -18,7 +18,7 @@ final class Version20250626162153 extends AbstractMigration
     {
         $this->addSql(
             <<<SQL
-            CREATE TYPE reason_enum AS ENUM ('bounce', 'complaint');
+            CREATE TYPE reason_enum AS ENUM ('bounce', 'fbl', 'complaint');
         SQL
         );
 
