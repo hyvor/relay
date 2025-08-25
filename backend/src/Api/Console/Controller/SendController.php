@@ -12,7 +12,7 @@ use App\Api\Console\Resolver\ProjectResolver;
 use App\Entity\Project;
 use App\Entity\Send;
 use App\Entity\Type\ProjectSendType;
-use App\Entity\Type\SendAttemptStatus;
+use App\Entity\Type\SendRecipientStatus;
 use App\Service\Domain\DomainService;
 use App\Service\Send\EmailAddressFormat;
 use App\Service\Send\Exception\EmailTooLargeException;
@@ -128,7 +128,7 @@ class SendController extends AbstractController
 
         $status = null;
         if ($request->query->has("status")) {
-            $status = SendAttemptStatus::tryFrom($request->query->getString("status"));
+            $status = SendRecipientStatus::tryFrom($request->query->getString("status"));
         }
 
         $fromSearch = null;

@@ -8,10 +8,8 @@ use App\Entity\Queue;
 use App\Entity\Send;
 use App\Entity\SendAttempt;
 use App\Entity\SendRecipient;
-use App\Entity\Type\SendAttemptStatus;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
-use App\Entity\Type\SendStatus;
 use App\Repository\SendRepository;
 use App\Service\Send\Dto\SendingAttachment;
 use App\Service\Send\Dto\SendUpdateDto;
@@ -39,7 +37,7 @@ class SendService
      */
     public function getSends(
         Project $project,
-        ?SendAttemptStatus $status,
+        ?SendRecipientStatus $status,
         ?string $fromSearch,
         ?string $toSearch,
         ?string $subjectSearch,
@@ -57,7 +55,8 @@ class SendService
             ->orderBy('s.created_at', 'DESC');
 
         if ($status !== null) {
-            $qb->andWhere('s.status = :status')
+            $qb->join('s.recipients', 'r')
+                ->andWhere('r.status = :status')
                 ->setParameter('status', $status->value);
         }
 
@@ -77,7 +76,7 @@ class SendService
                 ->setParameter('subjectSearch', strtolower($subjectSearch) . '%');
         }
 
-        // dd($qb->getQuery()->getSQL());
+        //dd($qb->getQuery()->getSQL());
         /** @var Send[] $results */
         $results = $qb->getQuery()->getResult();
 

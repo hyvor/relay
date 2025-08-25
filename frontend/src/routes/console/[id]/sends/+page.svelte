@@ -127,7 +127,7 @@
 
 				<TextInput
 					bind:value={toSearchVal}
-					placeholder="To address"
+					placeholder="Recipient address"
 					style="width:200px"
 					on:keydown={toSearchActions.onKeydown}
 					on:blur={toSearchActions.onBlur}
