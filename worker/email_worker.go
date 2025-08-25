@@ -101,6 +101,17 @@ type EmailWorker struct {
 	metrics        *Metrics
 	ip             GoStateIp
 	instanceDomain string
+
+	// mocks
+	ProcessSendFunc         func(conn *sql.DB) error
+	AttemptSendToDomainFunc func(
+		domainWg *sync.WaitGroup,
+		domainQueryMutex *sync.Mutex,
+		send *SendRow,
+		domain string,
+		recipients []*RecipientRow,
+		sendTx *SendTransaction,
+	)
 }
 
 func NewEmailWorker(
@@ -113,7 +124,7 @@ func NewEmailWorker(
 	ip GoStateIp,
 	instanceDomain string,
 ) *EmailWorker {
-	return &EmailWorker{
+	worker := &EmailWorker{
 		ctx:            ctx,
 		id:             id,
 		wg:             wg,
@@ -123,6 +134,11 @@ func NewEmailWorker(
 		ip:             ip,
 		instanceDomain: instanceDomain,
 	}
+
+	worker.ProcessSendFunc = worker.processSend
+	worker.AttemptSendToDomainFunc = worker.attemptSendToDomain
+
+	return worker
 }
 
 func (worker *EmailWorker) Start() {
@@ -146,7 +162,7 @@ func (worker *EmailWorker) Start() {
 			worker.logger.Info("Email worker stopped by context cancellation")
 			return
 		default:
-			worker.ProcessSend(conn)
+			worker.ProcessSendFunc(conn)
 		}
 
 	}
@@ -156,7 +172,7 @@ func (worker *EmailWorker) Start() {
 // This tries to handle one send within a transaction.
 // The select statement uses FOR UPDATE SKIP LOCKED,
 // which skips locked rows in other queries until the current transaction is committed or rolled back.
-func (worker *EmailWorker) ProcessSend(conn *sql.DB) {
+func (worker *EmailWorker) processSend(conn *sql.DB) error {
 
 	sendTx, err := NewSendTransaction(worker.ctx, conn)
 
@@ -166,17 +182,21 @@ func (worker *EmailWorker) ProcessSend(conn *sql.DB) {
 			"error", err,
 		)
 		time.Sleep(1 * time.Second)
-		return
+		return err
 	}
 
-	send, recipients, err := sendTx.FetchSends(worker.ip.QueueId)
+	send, recipients, err := sendTx.FetchSend(worker.ip.QueueId)
 
 	if err != nil {
 
 		if errors.Is(err, sql.ErrNoRows) {
+			worker.logger.Debug(
+				"Email worker found no sends to process. Retrying in 1 second",
+				"queue_id", worker.ip.QueueId,
+			)
 			time.Sleep(1 * time.Second)
 			sendTx.Rollback()
-			return
+			return err
 		}
 
 		worker.logger.Error(
@@ -185,7 +205,7 @@ func (worker *EmailWorker) ProcessSend(conn *sql.DB) {
 		)
 		time.Sleep(1 * time.Second)
 		sendTx.Rollback()
-		return
+		return err
 	}
 
 	recipientsByDomain := getRecipientsGroupedByDomain(recipients)
@@ -198,7 +218,7 @@ func (worker *EmailWorker) ProcessSend(conn *sql.DB) {
 	domainQueryMutex := &sync.Mutex{}
 
 	for domain, rcpts := range recipientsByDomain {
-		go worker.AttemptSendToDomain(
+		go worker.AttemptSendToDomainFunc(
 			&domainWg,
 			domainQueryMutex,
 			send,
@@ -213,7 +233,7 @@ func (worker *EmailWorker) ProcessSend(conn *sql.DB) {
 	if err := sendTx.FinalizeSend(send); err != nil {
 		worker.logger.Error("Email worker failed to finalize send: "+err.Error(), "send_id", send.Id)
 		sendTx.Rollback()
-		return
+		return err
 	}
 
 	commitErr := sendTx.Commit()
@@ -221,25 +241,25 @@ func (worker *EmailWorker) ProcessSend(conn *sql.DB) {
 	if commitErr != nil {
 		worker.logger.Error("Email worker failed to commit batch: "+commitErr.Error(), "send_id", send.Id)
 		sendTx.Rollback()
-		return
+		return commitErr
 	}
 
 	go notifySendAttemptsToSymfony(worker.ctx, sendAttemptIds, worker.logger)
 
 	time.Sleep(50 * time.Millisecond)
 
-	//
+	return nil
 
 }
 
-func (worker *EmailWorker) AttemptSendToDomain(
+func (worker *EmailWorker) attemptSendToDomain(
 	domainWg *sync.WaitGroup,
 	domainQueryMutex *sync.Mutex,
 	send *SendRow,
 	domain string,
 	recipients []*RecipientRow,
 	sendTx *SendTransaction,
-) (int, error) {
+) {
 
 	defer domainWg.Done()
 
@@ -263,7 +283,7 @@ func (worker *EmailWorker) AttemptSendToDomain(
 	// get the lock before calling the DB
 	domainQueryMutex.Lock()
 	defer domainQueryMutex.Unlock()
-	sendAttemptId, err := sendTx.RecordAttempt(
+	_, err := sendTx.RecordAttempt(
 		send,
 		recipients,
 		result,
@@ -276,12 +296,13 @@ func (worker *EmailWorker) AttemptSendToDomain(
 			"domain", domain,
 			"error", err,
 		)
-		return 0, err
+		// TODO: add error
+		return // 0, err
 	}
 
 	updateEmailMetricsFromSendResult(worker.metrics, result)
 
-	return sendAttemptId, nil
+	// TODO: send attempt id
 
 }
 

@@ -44,7 +44,7 @@ func NewSendTransaction(
 	}, nil
 }
 
-func (b *SendTransaction) FetchSends(queueId int) (*SendRow, []*RecipientRow, error) {
+func (b *SendTransaction) FetchSend(queueId int) (*SendRow, []*RecipientRow, error) {
 
 	row := b.tx.QueryRowContext(b.ctx, `
 		WITH ids AS MATERIALIZED (
