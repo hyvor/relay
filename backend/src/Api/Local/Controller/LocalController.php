@@ -4,6 +4,8 @@ namespace App\Api\Local\Controller;
 
 use App\Api\Local\Input\IncomingBounceInput;
 use App\Api\Local\Input\IncomingFblInput;
+use App\Api\Local\Input\IncomingInput;
+use App\Api\Local\Input\IncomingType;
 use App\Api\Local\Input\SendAttemptDoneInput;
 use App\Entity\Type\DebugIncomingEmailStatus;
 use App\Entity\Type\DebugIncomingEmailType;
@@ -63,52 +65,29 @@ class LocalController extends AbstractController
         return new JsonResponse([]);
     }
 
-    #[Route('/incoming/bounce', methods: 'POST')]
-    public function incomingBounce(
-        #[MapRequestPayload] IncomingBounceInput $input
+    #[Route('/incoming', methods: 'POST')]
+    public function incoming(
+        #[MapRequestPayload] IncomingInput $input
     ): JsonResponse
     {
-        if (!$input->dsn) {
-            $debugIncomingEmailStatus = DebugIncomingEmailStatus::FAILED;
-        }
+        $isBounce = $input->type === IncomingType::BOUNCE;
+        $debugIncomingEmailStatus = $input->error ? DebugIncomingEmailStatus::FAILED : DebugIncomingEmailStatus::SUCCESS;
 
-        else {
-            $this->incomingMailService->handleIncomingBounce($input->bounce_uuid, $input->dsn);
-            $debugIncomingEmailStatus = DebugIncomingEmailStatus::SUCCESS;
+        if (!$input->error) {
+            if ($isBounce) {
+                $this->incomingMailService->handleIncomingBounce($input->bounce_uuid, $input->dsn);
+            } else {
+                $this->incomingMailService->handleIncomingFbl($input->arf);
+            }
         }
 
         $this->debugIncomingEmailService->createDebugIncomingEmail(
-            DebugIncomingEmailType::BOUNCE,
+            $isBounce ? DebugIncomingEmailType::BOUNCE : DebugIncomingEmailType::COMPLAINT,
             $debugIncomingEmailStatus,
             $input->raw_email,
             $input->mail_from,
             $input->rcpt_to,
-            (array)$input->dsn,
-            $input->error
-        );
-
-        return new JsonResponse();
-    }
-
-    #[Route('/incoming/fbl', methods: 'POST')]
-    public function incomingFbl(
-        #[MapRequestPayload] IncomingFblInput $input
-    ): JsonResponse
-    {
-        if (!$input->arf) {
-            $debugIncomingEmailStatus = DebugIncomingEmailStatus::FAILED;
-        } else {
-            $this->incomingMailService->handleIncomingFbl($input->arf);
-            $debugIncomingEmailStatus = DebugIncomingEmailStatus::SUCCESS;
-        }
-
-        $this->debugIncomingEmailService->createDebugIncomingEmail(
-            DebugIncomingEmailType::COMPLAINT,
-            $debugIncomingEmailStatus,
-            $input->raw_email,
-            $input->mail_from,
-            $input->rcpt_to,
-            (array)$input->arf,
+            $isBounce ? (array)$input->dsn : (array)$input->arf,
             $input->error
         );
 

@@ -35,8 +35,9 @@ class IncomingBounceTest extends WebTestCase
 
         $response = $this->localApi(
             'POST',
-            '/incoming/bounce',
+            '/incoming',
             [
+                'type' => 'bounce',
                 'dsn' => [
                     'ReadableText' => 'This is a test DSN',
                     'Recipients' => [
@@ -92,8 +93,9 @@ class IncomingBounceTest extends WebTestCase
 
         $response = $this->localApi(
             'POST',
-            '/incoming/bounce',
+            '/incoming',
             [
+                'type' => 'bounce',
                 'bounce_uuid' => $send->getUuid(),
                 'raw_email' => 'raw',
                 'mail_from' => 'from@example.com',
@@ -124,8 +126,9 @@ class IncomingBounceTest extends WebTestCase
         $send = SendFactory::createOne(['project' => $project]);
         $response = $this->localApi(
             'POST',
-            '/incoming/bounce',
+            '/incoming',
             [
+                'type' => 'bounce',
                 'dsn' => [
                     'ReadableText' => 'No recipients',
                     'Recipients' => []
@@ -157,8 +160,9 @@ class IncomingBounceTest extends WebTestCase
         $send = SendFactory::createOne(['project' => $project]);
         $response = $this->localApi(
             'POST',
-            '/incoming/bounce',
+            '/incoming',
             [
+                'type' => 'bounce',
                 'dsn' => [
                     'ReadableText' => 'Non failed',
                     'Recipients' => [
@@ -196,8 +200,9 @@ class IncomingBounceTest extends WebTestCase
         $send = SendFactory::createOne(['project' => $project]);
         $response = $this->localApi(
             'POST',
-            '/incoming/bounce',
+            '/incoming',
             [
+                'type' => 'bounce',
                 'dsn' => [
                     'ReadableText' => 'Non permanent',
                     'Recipients' => [
@@ -234,8 +239,9 @@ class IncomingBounceTest extends WebTestCase
         $project = ProjectFactory::createOne();
         $response = $this->localApi(
             'POST',
-            '/incoming/bounce',
+            '/incoming',
             [
+                'type' => 'bounce',
                 'dsn' => [
                     'ReadableText' => 'Send not found',
                     'Recipients' => [

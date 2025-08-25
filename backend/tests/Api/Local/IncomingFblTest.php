@@ -32,8 +32,9 @@ class IncomingFblTest extends WebTestCase
 
         $response = $this->localApi(
             'POST',
-            '/incoming/fbl',
+            '/incoming',
             [
+                'type' => 'complaint',
                 'arf' => [
                     'ReadableText' => 'This is a test ARF',
                     'FeedbackType' => 'abuse',
@@ -75,8 +76,9 @@ class IncomingFblTest extends WebTestCase
         $project = ProjectFactory::createOne();
         $response = $this->localApi(
             'POST',
-            '/incoming/fbl',
+            '/incoming',
             [
+                'type' => 'complaint',
                 'error' => 'ARF missing',
                 'raw_email' => 'raw',
                 'mail_from' => 'from@example.com',
@@ -106,8 +108,9 @@ class IncomingFblTest extends WebTestCase
         $send = SendFactory::createOne(['project' => $project]);
         $response = $this->localApi(
             'POST',
-            '/incoming/fbl',
+            '/incoming',
             [
+                'type' => 'complaint',
                 'arf' => [
                     'ReadableText' => 'Invalid MessageId',
                     'FeedbackType' => 'abuse',
@@ -141,8 +144,9 @@ class IncomingFblTest extends WebTestCase
         $project = ProjectFactory::createOne();
         $response = $this->localApi(
             'POST',
-            '/incoming/fbl',
+            '/incoming',
             [
+                'type' => 'complaint',
                 'arf' => [
                     'ReadableText' => 'Send not found',
                     'FeedbackType' => 'abuse',
