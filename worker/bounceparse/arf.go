@@ -17,6 +17,7 @@ type Arf struct {
 	FeedbackType     string // The type of feedback (e.g., abuse, spam, etc.)
 	UserAgent        string // The user agent of the sender
 	OriginalMailFrom string // The original MAIL FROM (Return-Path) address, this can be empty since the RFC does not require it
+	OriginalRcptTo   string // The original RCPT TO address, this can also be empty
 	MessageId        string // The Message-ID of the original message
 }
 
@@ -69,6 +70,7 @@ func ParseArf(input []byte) (*Arf, error) {
 	arf.FeedbackType = part2.Header.Get("Feedback-Type")
 	arf.UserAgent = part2.Header.Get("User-Agent")
 	arf.OriginalMailFrom = part2.Header.Get("Original-Mail-From")
+	arf.OriginalRcptTo = part2.Header.Get("Original-Rcpt-To")
 	arf.MessageId = part2.Header.Get("Message-ID")
 
 	// Part3 is the original message (message/rfc822 or message/rfc822-headers)

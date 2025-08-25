@@ -2,8 +2,13 @@
 
 namespace App\Api\Local\Controller;
 
-use App\Api\Local\AllowPrivateNetwork;
+use App\Api\Local\Input\IncomingInput;
+use App\Api\Local\Input\IncomingType;
 use App\Api\Local\Input\SendAttemptDoneInput;
+use App\Entity\Type\DebugIncomingEmailStatus;
+use App\Entity\Type\DebugIncomingEmailType;
+use App\Service\DebugIncomingEmail\DebugIncomingEmailService;
+use App\Service\IncomingMail\IncomingMailService;
 use App\Service\Send\SendService;
 use App\Service\Management\GoState\GoStateFactory;
 use App\Service\Management\GoState\ServerNotFoundException;
@@ -20,7 +25,9 @@ class LocalController extends AbstractController
     use ClockAwareTrait;
 
     public function __construct(
-        private SendService $sendService
+        private SendService         $sendService,
+        private IncomingMailService $incomingMailService,
+        private DebugIncomingEmailService $debugIncomingEmailService,
     )
     {
     }
@@ -54,5 +61,34 @@ class LocalController extends AbstractController
         }
 
         return new JsonResponse([]);
+    }
+
+    #[Route('/incoming', methods: 'POST')]
+    public function incoming(
+        #[MapRequestPayload] IncomingInput $input
+    ): JsonResponse
+    {
+        $isBounce = $input->type === IncomingType::BOUNCE;
+        $debugIncomingEmailStatus = $input->error ? DebugIncomingEmailStatus::FAILED : DebugIncomingEmailStatus::SUCCESS;
+
+        $debugIncomingEmail = $this->debugIncomingEmailService->createDebugIncomingEmail(
+            $isBounce ? DebugIncomingEmailType::BOUNCE : DebugIncomingEmailType::COMPLAINT,
+            $debugIncomingEmailStatus,
+            $input->raw_email,
+            $input->mail_from,
+            $input->rcpt_to,
+            $isBounce ? (array)$input->dsn : (array)$input->arf,
+            $input->error
+        );
+
+        if (!$input->error) {
+            if ($isBounce) {
+                $this->incomingMailService->handleIncomingBounce($input->bounce_uuid, $input->dsn, $debugIncomingEmail);
+            } else {
+                $this->incomingMailService->handleIncomingComplaint($input->arf, $debugIncomingEmail);
+            }
+        }
+
+        return new JsonResponse();
     }
 }
