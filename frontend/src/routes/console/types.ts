@@ -1,9 +1,9 @@
 export interface AppConfig {
     hosting: 'self' | 'cloud';
 
-	hyvor: {
-		instance: string;
-	};
+    hyvor: {
+        instance: string;
+    };
 
     user: {
         id: number;
@@ -12,9 +12,9 @@ export interface AppConfig {
         picture_url: string | null;
     }
 
-	app: {
+    app: {
         system_project_id: number;
-		webhook: {
+        webhook: {
             'events': string[];
         },
         api_keys: {
@@ -28,11 +28,11 @@ export interface AppConfig {
                 complaint_rate_error: number;
             }
         }
-	};
+    };
 }
 
 
-export type Scope = 
+export type Scope =
     'project.read' |
     'project.write' |
     'sends.read' |
@@ -66,22 +66,33 @@ export type Project = {
 
 export type ProjectSendType = 'transactional' | 'distributional';
 
-export type SendStatus = 'queued' | 'accepted' | 'bounced' | 'complained';
-
-export type Email = {
+export type Send = {
     id: number;
     uuid: string;
-    created_at : number;
-    accepted_at?: number;
-    bounced_at?: number;
-    status: SendStatus;
+    created_at: number;
     from_address: string;
-    to_address: string;
-    subject?: string;
-    body_html?: string;
-    body_text?: string;
+    from_name: string | null;
+    subject: string | null;
+    body_html: string | null;
+    body_text: string | null;
     raw: string;
+    size_bytes: number;
+
+    recipients: SendRecipient[];
     attempts: SendAttempt[];
+}
+
+export type SendRecipientStatus = 'queued' | 'accepted' | 'retrying' | 'bounced' | 'failed' | 'complained';
+
+export interface SendRecipient {
+    id: number;
+    type: 'to' | 'cc' | 'bcc';
+    address: string;
+    name: string;
+    status: SendRecipientStatus;
+    accepted_at?: number | null;
+    bounced_at?: number | null;
+    failed_at?: number | null;
 }
 
 export interface SendAttempt {

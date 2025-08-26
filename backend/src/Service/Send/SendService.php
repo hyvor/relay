@@ -7,7 +7,9 @@ use App\Entity\Project;
 use App\Entity\Queue;
 use App\Entity\Send;
 use App\Entity\SendAttempt;
-use App\Entity\Type\SendStatus;
+use App\Entity\SendRecipient;
+use App\Entity\Type\SendRecipientStatus;
+use App\Entity\Type\SendRecipientType;
 use App\Repository\SendRepository;
 use App\Service\Send\Dto\SendingAttachment;
 use App\Service\Send\Dto\SendUpdateDto;
@@ -17,7 +19,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Mime\Address;
-use Symfony\Component\Uid\Uuid;
 
 class SendService
 {
@@ -28,8 +29,7 @@ class SendService
         private EmailBuilder $emailBuilder,
         private SendRepository $sendRepository,
         private EventDispatcherInterface $eventDispatcher
-    )
-    {
+    ) {
     }
 
     /**
@@ -37,9 +37,10 @@ class SendService
      */
     public function getSends(
         Project $project,
-        ?SendStatus $status,
+        ?SendRecipientStatus $status,
         ?string $fromSearch,
         ?string $toSearch,
+        ?string $subjectSearch,
         int $limit,
         int $offset
     ): ArrayCollection {
@@ -54,7 +55,8 @@ class SendService
             ->orderBy('s.created_at', 'DESC');
 
         if ($status !== null) {
-            $qb->andWhere('s.status = :status')
+            $qb->join('s.recipients', 'r')
+                ->andWhere('r.status = :status')
                 ->setParameter('status', $status->value);
         }
 
@@ -64,11 +66,17 @@ class SendService
         }
 
         if ($toSearch !== null) {
-            $qb->andWhere('s.to_address LIKE :toSearch')
+            $qb->join('s.recipients', 'r')
+                ->andWhere('r.address LIKE :toSearch')
                 ->setParameter('toSearch', '%' . $toSearch . '%');
         }
 
-        // dd($qb->getQuery()->getSQL());
+        if ($subjectSearch !== null) {
+            $qb->andWhere('LOWER(s.subject) LIKE LOWER(:subjectSearch)')
+                ->setParameter('subjectSearch', '%' . strtolower($subjectSearch) . '%');
+        }
+
+        //dd($qb->getQuery()->getSQL());
         /** @var Send[] $results */
         $results = $qb->getQuery()->getResult();
 
@@ -87,6 +95,9 @@ class SendService
     }
 
     /**
+     * @param Address[] $to
+     * @param Address[] $cc
+     * @param Address[] $bcc
      * @param array<string, string> $customHeaders
      * @param array<SendingAttachment> $attachments
      * @throws EmailTooLargeException
@@ -96,15 +107,15 @@ class SendService
         Domain $domain,
         Queue $queue,
         Address $from,
-        Address $to,
+        array $to,
+        array $cc,
+        array $bcc,
         ?string $subject,
         ?string $bodyHtml,
         ?string $bodyText,
         array $customHeaders,
         array $attachments,
-    ): Send
-    {
-
+    ): Send {
         [
             'raw' => $rawEmail,
             'uuid' => $uuid,
@@ -113,6 +124,8 @@ class SendService
             $domain,
             $from,
             $to,
+            $cc,
+            $bcc,
             $subject,
             $bodyHtml,
             $bodyText,
@@ -120,48 +133,56 @@ class SendService
             $attachments
         );
 
-        $this->em->beginTransaction();
+        $send = new Send();
+        $send->setUuid($uuid);
+        $send->setCreatedAt($this->now());
+        $send->setUpdatedAt($this->now());
+        $send->setSendAfter($this->now());
+        $send->setQueued(true);
+        $send->setProject($project);
+        $send->setDomain($domain);
+        $send->setQueue($queue);
+        $send->setQueueName($queue->getName());
+        $send->setFromAddress($from->getAddress());
+        $send->setFromName($from->getName());
+        $send->setSubject($subject);
+        $send->setBodyHtml($bodyHtml);
+        $send->setBodyText($bodyText);
+        $send->setHeaders($customHeaders);
+        $send->setMessageId($messageId);
+        $send->setRaw($rawEmail);
+        $send->setSizeBytes(strlen($rawEmail));
 
-        try {
+        $this->em->persist($send);
 
-            $send = new Send();
-            $send->setUuid($uuid);
-            $send->setCreatedAt($this->now());
-            $send->setUpdatedAt($this->now());
-            $send->setSendAfter($this->now());
-            $send->setStatus(SendStatus::QUEUED);
-            $send->setProject($project);
-            $send->setDomain($domain);
-            $send->setQueue($queue);
-            $send->setQueueName($queue->getName());
-            $send->setFromAddress($from->getAddress());
-            $send->setFromName($from->getName());
-            $send->setToAddress($to->getAddress());
-            $send->setToName($to->getName());
-            $send->setSubject($subject);
-            $send->setBodyHtml($bodyHtml);
-            $send->setBodyText($bodyText);
-            $send->setHeaders($customHeaders);
-            $send->setMessageId($messageId);
-            $send->setRaw($rawEmail);
-            $this->em->persist($send);
-            $this->em->flush();
+        foreach (
+            [
+                [SendRecipientType::TO, $to],
+                [SendRecipientType::CC, $cc],
+                [SendRecipientType::BCC, $bcc],
+            ]
+            as [$type, $recipients]
+        ) {
+            foreach ($recipients as $recipient) {
+                $sendRecipient = new SendRecipient();
+                $sendRecipient->setSend($send);
+                $sendRecipient->setStatus(SendRecipientStatus::QUEUED);
+                $sendRecipient->setAddress($recipient->getAddress());
+                $sendRecipient->setName($recipient->getName());
+                $sendRecipient->setType($type);
 
-            $this->em->commit();
-            return $send;
-
-        } catch (\Throwable $e) {
-
-            $this->em->rollback();
-            throw $e;
-
+                $send->addRecipient($sendRecipient);
+                $this->em->persist($sendRecipient);
+            }
         }
 
+        $this->em->flush();
+
+        return $send;
     }
 
     public function updateSend(Send $send, SendUpdateDto $update): Send
     {
-
         if ($update->statusSet) {
             $send->setStatus($update->status);
         }
@@ -184,7 +205,6 @@ class SendService
         $this->em->flush();
 
         return $send;
-
     }
 
     /**

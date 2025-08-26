@@ -52,13 +52,14 @@ class DomainStatusService
                 new DomainStatusChangedEvent(
                     $domain,
                     $oldStatus,
+                    $newStatus,
                     $dkimResult
                 )
             );
         }
 
+        $this->em->persist($domain);
         if ($flush) {
-            $this->em->persist($domain);
             $this->em->flush();
         }
     }

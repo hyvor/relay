@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { ActionList, ActionListItem, TextInput, IconButton } from '@hyvor/design/components';
 	import SingleBox from '../../@components/content/SingleBox.svelte';
-	import type { Email, SendStatus } from '../../types';
+	import type { Send, SendRecipientStatus } from '../../types';
 	import Selector from '../../@components/content/Selector.svelte';
 	import IconX from '@hyvor/icons/IconX';
-	import EmailList from './EmailList.svelte';
+	import SendsList from './SendsList.svelte';
 
 	let key = $state(1); // for re-rendering
-	let status: SendStatus | null = $state(null);
+	let status: SendRecipientStatus | null = $state(null);
 	let statusKey = $derived.by(() =>
 		status ? status.charAt(0).toUpperCase() + status.slice(1) : 'All'
 	);
@@ -15,25 +15,29 @@
 	let showStatus = $state(false);
 	let showList = $state(false);
 
-	let currentEmail: Email | null = $state(null);
+	let currentEmail: Send | null = $state(null);
 
 	let fromSearchVal: string = $state('');
 	let fromSearch: string = $state('');
 	let toSearchVal: string = $state('');
 	let toSearch: string = $state('');
+	let subjectSearchVal: string = $state('');
+	let subjectSearch: string = $state('');
 
-	function selectStatus(s: SendStatus | null) {
+	function selectStatus(s: SendRecipientStatus | null) {
 		showStatus = false;
 		status = s;
 	}
 
-	const createSearchActions = (type: 'from' | 'to') => ({
+	const createSearchActions = (type: 'from' | 'to' | 'subject') => ({
 		onKeydown: (e: KeyboardEvent) => {
 			if (e.key === 'Enter') {
 				if (type === 'from') {
 					fromSearch = fromSearchVal.trim();
-				} else {
+				} else if (type === 'to') {
 					toSearch = toSearchVal.trim();
+				} else {
+					subjectSearch = subjectSearchVal.trim();
 				}
 			}
 		},
@@ -42,21 +46,27 @@
 				fromSearch = fromSearchVal.trim();
 			} else if (type === 'to' && toSearch !== toSearchVal) {
 				toSearch = toSearchVal.trim();
+			} else if (type === 'subject' && subjectSearch !== subjectSearchVal) {
+				subjectSearch = subjectSearchVal.trim();
 			}
 		},
 		onClear: () => {
 			if (type === 'from') {
 				fromSearchVal = '';
 				fromSearch = '';
-			} else {
+			} else if (type === 'to') {
 				toSearchVal = '';
 				toSearch = '';
+			} else {
+				subjectSearchVal = '';
+				subjectSearch = '';
 			}
 		}
 	});
 
 	const fromSearchActions = createSearchActions('from');
 	const toSearchActions = createSearchActions('to');
+	const subjectSearchActions = createSearchActions('subject');
 </script>
 
 <SingleBox>
@@ -117,7 +127,7 @@
 
 				<TextInput
 					bind:value={toSearchVal}
-					placeholder="To address"
+					placeholder="Recipient address"
 					style="width:200px"
 					on:keydown={toSearchActions.onKeydown}
 					on:blur={toSearchActions.onBlur}
@@ -140,15 +150,42 @@
 				{#if toSearch !== toSearchVal}
 					<span class="press-enter"> ⏎ </span>
 				{/if}
+
+				<TextInput
+					bind:value={subjectSearchVal}
+					placeholder="Subject"
+					style="width:200px"
+					on:keydown={subjectSearchActions.onKeydown}
+					on:blur={subjectSearchActions.onBlur}
+					size="small"
+				>
+					{#snippet end()}
+						{#if subjectSearchVal.trim() !== ''}
+							<IconButton
+								variant="invisible"
+								color="gray"
+								size={16}
+								on:click={subjectSearchActions.onClear}
+							>
+								<IconX size={12} />
+							</IconButton>
+						{/if}
+					{/snippet}
+				</TextInput>
+
+				{#if subjectSearch !== subjectSearchVal}
+					<span class="press-enter"> ⏎ </span>
+				{/if}
 			</div>
 		</div>
 	</div>
 
-	<EmailList
+	<SendsList
 		{status}
 		{key}
 		from_search={fromSearch === '' ? null : fromSearch}
 		to_search={toSearch === '' ? null : toSearch}
+		subject_search={subjectSearch === '' ? null : subjectSearch}
 	/>
 </SingleBox>
 

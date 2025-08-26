@@ -12,7 +12,7 @@ use App\Api\Console\Resolver\ProjectResolver;
 use App\Entity\Project;
 use App\Entity\Send;
 use App\Entity\Type\ProjectSendType;
-use App\Entity\Type\SendStatus;
+use App\Entity\Type\SendRecipientStatus;
 use App\Service\Domain\DomainService;
 use App\Service\Send\EmailAddressFormat;
 use App\Service\Send\Exception\EmailTooLargeException;
@@ -48,9 +48,7 @@ class SendController extends AbstractController
     ): JsonResponse {
         $fromAddress = $sendEmailInput->getFromAddress();
 
-        $domainName = EmailAddressFormat::getDomainFromEmail(
-            $fromAddress->getAddress()
-        );
+        $domainName = EmailAddressFormat::getDomainFromEmail($fromAddress->getAddress());
         $domain = $this->domainService->getDomainByProjectAndName(
             $project,
             $domainName
@@ -68,11 +66,18 @@ class SendController extends AbstractController
             );
         }
 
-        if ($this->suppressionService->isSuppressed($project, $sendEmailInput->getToAddress()->getAddress())) {
+        $to = $sendEmailInput->getToAddresses();
+        $cc = $sendEmailInput->getCcAddresses();
+        $bcc = $sendEmailInput->getBccAddresses();
+
+        // TODO: recipient count validation
+
+        // TODO: suppressions check
+        /*if ($this->suppressionService->isSuppressed($project, $sendEmailInput->getToAddresses()->getAddress())) {
             throw new BadRequestException(
-                "Email address {$sendEmailInput->getToAddress()->getAddress()} is suppressed"
+                "Email address {$sendEmailInput->getToAddresses()->getAddress()} is suppressed"
             );
-        }
+        }*/
 
         $queue = $project->getSendType() === ProjectSendType::TRANSACTIONAL ?
             $this->queueService->getTransactionalQueue() :
@@ -93,7 +98,9 @@ class SendController extends AbstractController
                 $domain,
                 $queue,
                 $fromAddress,
-                $sendEmailInput->getToAddress(),
+                $to,
+                $cc,
+                $bcc,
                 $sendEmailInput->subject,
                 $sendEmailInput->body_html,
                 $sendEmailInput->body_text,
@@ -121,7 +128,7 @@ class SendController extends AbstractController
 
         $status = null;
         if ($request->query->has("status")) {
-            $status = SendStatus::tryFrom($request->query->getString("status"));
+            $status = SendRecipientStatus::tryFrom($request->query->getString("status"));
         }
 
         $fromSearch = null;
@@ -134,12 +141,18 @@ class SendController extends AbstractController
             $toSearch = $request->query->getString("to_search");
         }
 
+        $subjectSearch = null;
+        if ($request->query->has("subject_search")) {
+            $subjectSearch = $request->query->getString("subject_search");
+        }
+
         $sends = $this->sendService
             ->getSends(
                 $project,
                 $status,
                 $fromSearch,
                 $toSearch,
+                $subjectSearch,
                 $limit,
                 $offset
             )
@@ -153,7 +166,7 @@ class SendController extends AbstractController
     public function getById(Send $send): JsonResponse
     {
         $attempts = $this->sendService->getSendAttemptsOfSend($send);
-        return $this->json(new SendObject($send, $attempts));
+        return $this->json(new SendObject($send, $attempts, content: true));
     }
 
     #[Route("/sends/uuid/{uuid}", requirements: ['uuid' => Requirement::UUID], methods: "GET")]
@@ -174,7 +187,7 @@ class SendController extends AbstractController
 
         $attempts = $this->sendService->getSendAttemptsOfSend($send);
 
-        return $this->json(new SendObject($send, $attempts));
+        return $this->json(new SendObject($send, $attempts, content: true));
     }
 
 }

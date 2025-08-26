@@ -4,6 +4,7 @@ namespace App\Tests\Case;
 
 use App\Service\App\Config;
 use Monolog\Handler\TestHandler;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Zenstruck\Foundry\Test\Factories;
 use Zenstruck\Messenger\Test\InteractsWithMessenger;
 
@@ -27,6 +28,13 @@ trait TestSharedTrait
         $logger = $this->container->get('monolog.handler.test');
         $this->assertInstanceOf(TestHandler::class, $logger);
         return $logger;
+    }
+
+    protected function getMessageBus(): MessageBusInterface
+    {
+        /** @var MessageBusInterface $bus */
+        $bus = $this->container->get('messenger.default_bus');
+        return $bus;
     }
 
 }

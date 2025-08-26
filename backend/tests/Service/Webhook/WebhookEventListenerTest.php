@@ -3,12 +3,18 @@
 namespace App\Tests\Service\Webhook;
 
 use App\Entity\Project;
+use App\Entity\Type\DomainStatus;
 use App\Entity\Type\SendAttemptStatus;
 use App\Entity\Type\WebhooksEventEnum;
 use App\Entity\Webhook;
 use App\Entity\WebhookDelivery;
+use App\Service\Domain\DkimVerificationResult;
 use App\Service\Domain\Event\DomainCreatedEvent;
+use App\Service\Domain\Event\DomainDeletedEvent;
+use App\Service\Domain\Event\DomainStatusChangedEvent;
 use App\Service\Send\Event\SendAttemptCreatedEvent;
+use App\Service\Suppression\Event\SuppressionCreatedEvent;
+use App\Service\Suppression\Event\SuppressionDeletedEvent;
 use App\Service\Webhook\WebhookEventListener;
 use App\Service\Webhook\WebhookService;
 use App\Tests\Case\KernelTestCase;
@@ -16,6 +22,7 @@ use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\SendAttemptFactory;
 use App\Tests\Factory\SendFactory;
+use App\Tests\Factory\SuppressionFactory;
 use App\Tests\Factory\WebhookFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -47,7 +54,7 @@ class WebhookEventListenerTest extends KernelTestCase
         // not selected, other project
         $webhook4 = WebhookFactory::createOne(['events' => [WebhooksEventEnum::DOMAIN_CREATED]]);
 
-        $this->eventDispatcher->dispatch(new DomainCreatedEvent($domain));
+        $this->ed->dispatch(new DomainCreatedEvent($domain));
 
         $deliveries = $this->em->getRepository(WebhookDelivery::class)->findAll();
 
@@ -122,7 +129,7 @@ class WebhookEventListenerTest extends KernelTestCase
         $send = SendFactory::createOne(['project' => $project]);
         $attempt = SendAttemptFactory::createOne(['status' => $sendAttemptStatus, 'send' => $send]);
 
-        $this->eventDispatcher->dispatch(new SendAttemptCreatedEvent($attempt));
+        $this->ed->dispatch(new SendAttemptCreatedEvent($attempt));
 
         $this->assertWebhookDeliveryCreated(
             $project,
@@ -140,9 +147,9 @@ class WebhookEventListenerTest extends KernelTestCase
     public function test_creates_delivery_for_domain_created_event(): void
     {
         $project = ProjectFactory::createOne();
-        $webhook = $this->createWebhook($project, WebhooksEventEnum::DOMAIN_CREATED);
         $domain = DomainFactory::createOne(['project' => $project]);
-        $this->eventDispatcher->dispatch(new DomainCreatedEvent($domain));
+        $this->createWebhook($project, WebhooksEventEnum::DOMAIN_CREATED);
+        $this->ed->dispatch(new DomainCreatedEvent($domain));
 
         $this->assertWebhookDeliveryCreated(
             $project,
@@ -154,4 +161,85 @@ class WebhookEventListenerTest extends KernelTestCase
         );
     }
 
+    public function test_creates_delivery_for_domain_status_changed_event(): void
+    {
+        $project = ProjectFactory::createOne();
+        $domain = DomainFactory::createOne(['project' => $project]);
+        $this->createWebhook($project, WebhooksEventEnum::DOMAIN_STATUS_CHANGED);
+
+        $result = new DkimVerificationResult();
+        $result->verified = true;
+        $result->checkedAt = new \DateTimeImmutable();
+
+        $this->ed->dispatch(new DomainStatusChangedEvent(
+            $domain,
+            DomainStatus::PENDING,
+            DomainStatus::ACTIVE,
+            $result
+        ));
+
+        $this->assertWebhookDeliveryCreated(
+            $project,
+            WebhooksEventEnum::DOMAIN_STATUS_CHANGED,
+            function (array $payload) use ($domain) {
+                $this->assertIsArray($payload['domain']);
+                $this->assertSame($domain->getId(), $payload['domain']['id']);
+                $this->assertSame(DomainStatus::PENDING->value, $payload['old_status']);
+                $this->assertSame(DomainStatus::ACTIVE->value, $payload['new_status']);
+                $this->assertIsArray($payload['dkim_result']);
+                $this->assertTrue($payload['dkim_result']['verified']);
+            }
+        );
+    }
+
+    public function test_creates_delivery_for_domain_deleted_event(): void
+    {
+        $project = ProjectFactory::createOne();
+        $domain = DomainFactory::createOne(['project' => $project]);
+        $this->createWebhook($project, WebhooksEventEnum::DOMAIN_DELETED);
+        $this->ed->dispatch(new DomainDeletedEvent($domain));
+
+        $this->assertWebhookDeliveryCreated(
+            $project,
+            WebhooksEventEnum::DOMAIN_DELETED,
+            function (array $payload) use ($domain) {
+                $this->assertIsArray($payload['domain']);
+                $this->assertSame($domain->getId(), $payload['domain']['id']);
+            }
+        );
+    }
+
+    public function test_creates_delivery_for_suppression_created_event(): void
+    {
+        $project = ProjectFactory::createOne();
+        $suppression = SuppressionFactory::createOne(['project' => $project]);
+        $this->createWebhook($project, WebhooksEventEnum::SUPPRESSION_CREATED);
+        $this->ed->dispatch(new SuppressionCreatedEvent($suppression));
+
+        $this->assertWebhookDeliveryCreated(
+            $project,
+            WebhooksEventEnum::SUPPRESSION_CREATED,
+            function (array $payload) use ($suppression) {
+                $this->assertIsArray($payload['suppression']);
+                $this->assertSame($suppression->getId(), $payload['suppression']['id']);
+            }
+        );
+    }
+
+    public function test_creates_delivery_for_suppression_deleted_event(): void
+    {
+        $project = ProjectFactory::createOne();
+        $suppression = SuppressionFactory::createOne(['project' => $project]);
+        $this->createWebhook($project, WebhooksEventEnum::SUPPRESSION_DELETED);
+        $this->ed->dispatch(new SuppressionDeletedEvent($suppression));
+
+        $this->assertWebhookDeliveryCreated(
+            $project,
+            WebhooksEventEnum::SUPPRESSION_DELETED,
+            function (array $payload) use ($suppression) {
+                $this->assertIsArray($payload['suppression']);
+                $this->assertSame($suppression->getId(), $payload['suppression']['id']);
+            }
+        );
+    }
 }

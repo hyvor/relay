@@ -16,7 +16,6 @@ final class Version20250613150000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        
         $this->addSql("CREATE TYPE send_attempt_status AS ENUM ('accepted', 'deferred', 'bounced')");
 
         $this->addSql(
@@ -30,7 +29,7 @@ final class Version20250613150000 extends AbstractMigration
                 status send_attempt_status NOT NULL,
                 try_count INT NOT NULL DEFAULT 0,
                 resolved_mx_hosts jsonb NOT NULL,
-                accepted_mx_host text,
+                responded_mx_host text,
                 smtp_conversations jsonb NOT NULL,
                 error text
             )

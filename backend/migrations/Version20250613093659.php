@@ -17,36 +17,27 @@ final class Version20250613093659 extends AbstractMigration
     public function up(Schema $schema): void
     {
         $this->addSql(
-            "CREATE TYPE sends_status AS ENUM ('queued', 'processing', 'accepted', 'bounced', 'complained')"
-        );
-
-        $this->addSql(
             <<<SQL
             CREATE TABLE sends (
                 id SERIAL PRIMARY KEY,
                 uuid UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
                 created_at TIMESTAMPTZ NOT NULL,
                 updated_at TIMESTAMPTZ NOT NULL,
+                queued BOOLEAN NOT NULL DEFAULT true,
                 send_after TIMESTAMPTZ NOT NULL,
-                sent_at TIMESTAMPTZ,
-                failed_at TIMESTAMPTZ,
-                status sends_status NOT NULL,
                 project_id BIGINT NOT NULL references projects(id) ON DELETE CASCADE,
                 domain_id BIGINT NOT NULL references domains(id) ON DELETE CASCADE,
                 queue_id BIGINT NOT NULL references queues(id),
                 queue_name text NOT NULL, -- denormalized
                 from_address text NOT NULL,
                 from_name text,
-                to_address text NOT NULL,
-                to_name text,
                 subject text,
                 body_html text,
                 body_text text,
                 headers jsonb,
-                message_id text NOT NULL,
+                message_id text NOT NULL UNIQUE,
                 raw text NOT NULL,
-                result jsonb,
-                try_count INT NOT NULL DEFAULT 0
+                size_bytes INT NOT NULL
             )
             SQL
         );
@@ -54,10 +45,36 @@ final class Version20250613093659 extends AbstractMigration
         $this->addSql("CREATE INDEX idx_sends_project_id ON sends (project_id)");
         $this->addSql("CREATE INDEX idx_sends_domain_id ON sends (domain_id)");
         $this->addSql("CREATE INDEX idx_sends_queue_id ON sends (queue_id)");
-        $this->addSql("CREATE INDEX idx_sends_created_at ON sends (created_at)");
 
         // worker index
-        $this->addSql("CREATE INDEX idx_sends_status_queue_id_send_after ON sends (queue_id, send_after) WHERE status = 'queued'");
+        $this->addSql(
+            "CREATE INDEX idx_sends_worker ON sends (queue_id, send_after) WHERE queued = true"
+        );
+
+        // recipients table
+        $this->addSql("CREATE TYPE send_recipients_type AS ENUM ('to', 'cc', 'bcc')");
+        $this->addSql(
+            "CREATE TYPE send_recipients_status AS ENUM ('queued', 'accepted', 'retrying', 'failed', 'bounced', 'complained')"
+        );
+
+        $this->addSql(
+            <<<SQL
+            CREATE TABLE send_recipients (
+                id SERIAL PRIMARY KEY,
+                send_id BIGINT NOT NULL references sends(id) ON DELETE CASCADE,
+                type send_recipients_type NOT NULL,
+                address text NOT NULL,
+                name text NOT NULL, -- empty if not provided
+                status send_recipients_status NOT NULL DEFAULT 'queued',
+                accepted_at TIMESTAMPTZ,
+                bounced_at TIMESTAMPTZ,
+                failed_at TIMESTAMPTZ,
+                try_count INT NOT NULL DEFAULT 0,
+                UNIQUE (send_id, address, type)
+            )
+            SQL
+        );
+        $this->addSql("CREATE INDEX idx_send_recipients_send_id ON send_recipients (send_id)");
     }
 
     public function down(Schema $schema): void

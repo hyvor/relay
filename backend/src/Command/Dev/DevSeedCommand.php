@@ -4,17 +4,18 @@ namespace App\Command\Dev;
 
 use App\Api\Console\Authorization\Scope;
 use App\Entity\Type\DomainStatus;
+use App\Entity\Type\SendRecipientStatus;
+use App\Entity\Type\SendRecipientType;
 use App\Service\Instance\InstanceService;
-use App\Entity\Type\SendStatus;
 use App\Tests\Factory\ApiKeyFactory;
 use App\Tests\Factory\DebugIncomingEmailFactory;
 use App\Tests\Factory\DnsRecordFactory;
 use App\Tests\Factory\DomainFactory;
-use App\Tests\Factory\InstanceFactory;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
 use App\Tests\Factory\QueueFactory;
+use App\Tests\Factory\SendRecipientFactory;
 use App\Tests\Factory\ServerFactory;
 use App\Tests\Factory\SendFactory;
 use App\Tests\Factory\SuppressionFactory;
@@ -115,25 +116,32 @@ class DevSeedCommand extends Command
         );
         DomainFactory::createMany(15, ['project' => $project]);
 
-        $sends_queued = SendFactory::createMany(2, [
+        $sendsQueued = SendFactory::createMany(2, [
             'project' => $project,
             'domain' => $domain,
-            'status' => SendStatus::QUEUED,
+            'queued' => true,
+        ]);
+        $sendsSent = SendFactory::createMany(5, [
+            'project' => $project,
+            'domain' => $domain,
+            'queued' => false,
         ]);
 
-        $sends_sent = SendFactory::createMany(5, [
-            'project' => $project,
-            'domain' => $domain,
-            'sent_at' => new \DateTimeImmutable(),
-            'status' => SendStatus::ACCEPTED,
-        ]);
+        $allSends = array_merge($sendsQueued, $sendsSent);
+        foreach ($allSends as $send) {
+            $types = SendRecipientType::cases();
+            $typeKey = array_rand($types);
+            $type = $types[$typeKey];
 
-        $sent_failed = SendFactory::createMany(1, [
-            'project' => $project,
-            'domain' => $domain,
-            'failed_at' => new \DateTimeImmutable(),
-            'status' => SendStatus::BOUNCED,
-        ]);
+            foreach (range(1, rand(1,2)) as $i) {
+                SendRecipientFactory::new()
+                    ->distribute('status', SendRecipientStatus::cases())
+                    ->create([
+                        'send' => $send,
+                        'type' => $type,
+                    ]);
+            }
+        }
 
         SuppressionFactory::createMany(16, [
             'project' => $project,

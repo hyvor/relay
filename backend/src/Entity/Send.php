@@ -2,8 +2,9 @@
 
 namespace App\Entity;
 
-use App\Entity\Type\SendStatus;
 use App\Repository\SendRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SendRepository::class)]
@@ -24,17 +25,11 @@ class Send
     #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable $updated_at;
 
+    #[ORM\Column()]
+    private bool $queued = true;
+
     #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable $send_after;
-
-    #[ORM\Column(type: "datetime_immutable", nullable: true)]
-    private ?\DateTimeImmutable $sent_at = null;
-
-    #[ORM\Column(type: "datetime_immutable", nullable: true)]
-    private ?\DateTimeImmutable $failed_at = null;
-
-    #[ORM\Column(type: "string", enumType: SendStatus::class)]
-    private SendStatus $status;
 
     #[ORM\ManyToOne(targetEntity: Project::class)]
     #[ORM\JoinColumn]
@@ -57,12 +52,6 @@ class Send
     #[ORM\Column(type: "string", nullable: true)]
     private ?string $from_name = null;
 
-    #[ORM\Column(type: "text")]
-    private string $to_address;
-
-    #[ORM\Column(type: "string", nullable: true)]
-    private ?string $to_name = null;
-
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $subject = null;
 
@@ -84,11 +73,19 @@ class Send
     #[ORM\Column(type: "text")]
     private string $raw;
 
-    #[ORM\Column(type: "text", nullable: true)]
-    private ?string $result = null;
+    #[ORM\Column()]
+    private int $size_bytes;
+
+    /**
+     * @var Collection<int, SendRecipient>
+     */
+    #[ORM\OneToMany(targetEntity: SendRecipient::class, mappedBy: 'send')]
+    private Collection $recipients;
+
 
     public function __construct()
     {
+        $this->recipients = new ArrayCollection();
     }
 
     public function getId(): int
@@ -135,6 +132,17 @@ class Send
         return $this;
     }
 
+    public function getQueued(): bool
+    {
+        return $this->queued;
+    }
+
+    public function setQueued(bool $queued): static
+    {
+        $this->queued = $queued;
+        return $this;
+    }
+
     public function getSendAfter(): \DateTimeImmutable
     {
         return $this->send_after;
@@ -143,39 +151,6 @@ class Send
     public function setSendAfter(\DateTimeImmutable $send_after): static
     {
         $this->send_after = $send_after;
-        return $this;
-    }
-
-    public function getSentAt(): ?\DateTimeImmutable
-    {
-        return $this->sent_at;
-    }
-
-    public function setSentAt(?\DateTimeImmutable $sent_at): static
-    {
-        $this->sent_at = $sent_at;
-        return $this;
-    }
-
-    public function getFailedAt(): ?\DateTimeImmutable
-    {
-        return $this->failed_at;
-    }
-
-    public function setFailedAt(?\DateTimeImmutable $failed_at): static
-    {
-        $this->failed_at = $failed_at;
-        return $this;
-    }
-
-    public function getStatus(): SendStatus
-    {
-        return $this->status;
-    }
-
-    public function setStatus(SendStatus $status): static
-    {
-        $this->status = $status;
         return $this;
     }
 
@@ -242,28 +217,6 @@ class Send
     public function setFromName(?string $from_name): static
     {
         $this->from_name = $from_name;
-        return $this;
-    }
-
-    public function getToAddress(): string
-    {
-        return $this->to_address;
-    }
-
-    public function setToAddress(string $to_address): static
-    {
-        $this->to_address = $to_address;
-        return $this;
-    }
-
-    public function getToName(): ?string
-    {
-        return $this->to_name;
-    }
-
-    public function setToName(?string $to_name): static
-    {
-        $this->to_name = $to_name;
         return $this;
     }
 
@@ -339,14 +292,30 @@ class Send
         return $this;
     }
 
-    public function getResult(): ?string
+    public function getSizeBytes(): int
     {
-        return $this->result;
+        return $this->size_bytes;
     }
 
-    public function setResult(?string $result): static
+    public function setSizeBytes(int $size_bytes): static
     {
-        $this->result = $result;
+        $this->size_bytes = $size_bytes;
+        return $this;
+    }
+
+    /**
+     * @return SendRecipient[]
+     */
+    public function getRecipients(): array
+    {
+        /** @var SendRecipient[] $recipients */
+        $recipients = $this->recipients->toArray();
+        return $recipients;
+    }
+
+    public function addRecipient(SendRecipient $recipient): static
+    {
+        $this->recipients[] = $recipient;
         return $this;
     }
 

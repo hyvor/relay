@@ -32,13 +32,19 @@ class CreateProjectTest extends WebTestCase
         $this->assertResponseStatusCodeSame(200);
 
         $json = $this->getJson();
-        $this->assertArrayHasKey('id', $json);
-        $this->assertArrayHasKey('created_at', $json);
-        $this->assertArrayHasKey('name', $json);
+        $this->assertArrayHasKey('project', $json);
+        $this->assertArrayHasKey('scopes', $json);
+        $project = $json['project'];
+        $scopes = $json['scopes'];
 
-        $project = $this->em->getRepository(Project::class)->find($json['id']);
-        $this->assertNotNull($project);
-        $this->assertSame('Valid Project Name', $project->getName());
-        $this->assertSame(ProjectSendType::TRANSACTIONAL, $project->getSendType());
+        $this->assertArrayHasKey('id', $project);
+        $this->assertArrayHasKey('created_at', $project);
+        $this->assertArrayHasKey('name', $project);
+        $this->assertSame(13, count($scopes));
+
+        $projectDb = $this->em->getRepository(Project::class)->find($project['id']);
+        $this->assertNotNull($projectDb);
+        $this->assertSame('Valid Project Name', $projectDb->getName());
+        $this->assertSame(ProjectSendType::TRANSACTIONAL, $projectDb->getSendType());
     }
 }

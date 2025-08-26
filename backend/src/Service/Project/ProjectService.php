@@ -2,9 +2,12 @@
 
 namespace App\Service\Project;
 
+use App\Api\Console\Authorization\Scope;
 use App\Entity\Project;
+use App\Entity\ProjectUser;
 use App\Entity\Type\ProjectSendType;
 use App\Service\Project\Dto\UpdateProjectDto;
+use App\Service\ProjectUser\ProjectUserService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -15,7 +18,8 @@ class ProjectService
     use ClockAwareTrait;
 
     public function __construct(
-        private EntityManagerInterface $em
+        private EntityManagerInterface $em,
+        private ProjectUserService $projectUserService,
     ) {
     }
 
@@ -24,12 +28,19 @@ class ProjectService
         return $this->em->getRepository(Project::class)->find($id);
     }
 
+    /**
+     * @return array{
+     *     project: Project,
+     *     projectUser: ProjectUser|null
+     * }
+     */
     public function createProject(
         int $userId,
         string $name,
         ProjectSendType $sendType,
+        bool $createProjectUser = true,
         bool $flush = true
-    ): Project {
+    ): array {
         $project = new Project();
         $project
             ->setUserId($userId)
@@ -38,12 +49,25 @@ class ProjectService
             ->setUpdatedAt($this->now())
             ->setSendType($sendType);
 
+        $this->em->persist($project);
+
+        if ($createProjectUser) {
+            $projectUser = $this->projectUserService->createProjectUser(
+                $project,
+                $userId,
+                Scope::all(),
+                flush: false
+            );
+        }
+
         if ($flush) {
-            $this->em->persist($project);
             $this->em->flush();
         }
 
-        return $project;
+        return [
+            'project' => $project,
+            'projectUser' => $createProjectUser ? $projectUser : null,
+        ];
     }
 
     /**

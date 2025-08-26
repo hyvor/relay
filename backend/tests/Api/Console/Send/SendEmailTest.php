@@ -10,7 +10,7 @@ use App\Api\Console\Object\SendObject;
 use App\Entity\Send;
 use App\Entity\Type\DomainStatus;
 use App\Entity\Type\ProjectSendType;
-use App\Entity\Type\SendStatus;
+use App\Entity\Type\SendRecipientType;
 use App\Service\Send\EmailBuilder;
 use App\Service\Send\SendService;
 use App\Service\Suppression\SuppressionService;
@@ -160,6 +160,22 @@ class SendEmailTest extends WebTestCase
                 "to" => [
                     'email' => 'invalid email',
                     'name' => 'Invalid Name',
+                ],
+                "body_text" => "test",
+            ],
+            "to",
+            "This value is not a valid email address.",
+        ])
+    ]
+    #[ // to invalid email - array or array
+        TestWith([
+            [
+                "from" => "supun@hyvor.com",
+                "to" => [
+                    [
+                        'email' => 'invalid email',
+                        'name' => 'Invalid Name',
+                    ]
                 ],
                 "body_text" => "test",
             ],
@@ -410,20 +426,28 @@ class SendEmailTest extends WebTestCase
         $this->assertCount(1, $send);
 
         $send = $send[0];
-        $this->assertSame(SendStatus::QUEUED, $send->getStatus());
+        $this->assertSame(true, $send->getQueued());
         $this->assertSame("Test Email", $send->getSubject());
         $this->assertSame("This is a test email.", $send->getBodyText());
         $this->assertSame("<p>This is a test email.</p>", $send->getBodyHtml());
         $this->assertSame($messageId, $send->getMessageId());
         $this->assertSame($fromAddress, $send->getFromAddress());
-        $this->assertSame($toAddress, $send->getToAddress());
+
+        $this->assertGreaterThan(1000, $send->getSizeBytes());
+        $this->assertLessThan(2500, $send->getSizeBytes());
+
+        $recipients = $send->getRecipients();
+        $this->assertCount(1, $recipients);
+        $recipient = $recipients[0];
+        $this->assertSame($toAddress, $recipient->getAddress());
+        $this->assertSame(SendRecipientType::TO, $recipient->getType());
 
         if ($useArrayAddress) {
             $this->assertSame("Supun", $send->getFromName());
-            $this->assertSame("Somebody", $send->getToName());
+            $this->assertSame("Somebody", $recipient->getName());
         } else {
             $this->assertEmpty($send->getFromName());
-            $this->assertEmpty($send->getToName());
+            $this->assertEmpty($recipient->getName());
         }
 
         $this->assertSame(
@@ -442,6 +466,8 @@ class SendEmailTest extends WebTestCase
 
         $fromHeader = $useArrayAddress ? "Supun <supun@hyvor.com>" : "supun@hyvor.com";
         $toHeader = $useArrayAddress ? "Somebody <somebody@example.com>" : "somebody@example.com";
+        $this->assertStringNotContainsString('CC:', $rawHeaders);
+        $this->assertStringNotContainsString('BCC:', $rawHeaders);
         $this->assertStringContainsString("From: $fromHeader\r\n", $rawHeaders);
         $this->assertStringContainsString("To: $toHeader\r\n", $rawHeaders);
         $this->assertStringContainsString("Subject: Test Email\r\n", $rawHeaders);
@@ -483,6 +509,72 @@ class SendEmailTest extends WebTestCase
         );
         $this->assertStringContainsString("i=@relay.hyvor.localhost", $second);
         $this->assertStringContainsString("s=default", $second);
+    }
+
+    public function test_with_multiple_recipients(): void
+    {
+        QueueFactory::createTransactional();
+        $project = ProjectFactory::createOne();
+
+        DomainFactory::createOne([
+            "project" => $project,
+            "domain" => "hyvor.com",
+            'status' => DomainStatus::ACTIVE,
+        ]);
+
+        $this->consoleApi(
+            $project,
+            "POST",
+            "/sends",
+            data: [
+                "from" => 'support@hyvor.com',
+                "to" => [
+                    'alex@example.org',
+                    ['email' => 'naomi@example.org', 'name' => 'Naomi'],
+                ],
+                'cc' => ['tim@example.org'],
+                'bcc' => [
+                    ['email' => 'jean@example.org'],
+                    ['email' => 'john@example.org', 'name' => 'John Doe'],
+                ],
+                "subject" => "Test Email",
+                "body_text" => "This is a test email.",
+            ],
+            scopes: [Scope::SENDS_SEND]
+        );
+
+        $this->assertResponseStatusCodeSame(200);
+
+        $json = $this->getJson();
+        $sendId = $json['id'];
+
+        $send = $this->em->getRepository(Send::class)->findBy(['id' => $sendId]);
+        $this->assertCount(1, $send);
+
+        $send = $send[0];
+        $recipients = $send->getRecipients();
+
+        $this->assertCount(5, $recipients);
+
+        $this->assertSame('alex@example.org', $recipients[0]->getAddress());
+        $this->assertSame('', $recipients[0]->getName());
+        $this->assertSame(SendRecipientType::TO, $recipients[0]->getType());
+
+        $this->assertSame('naomi@example.org', $recipients[1]->getAddress());
+        $this->assertSame('Naomi', $recipients[1]->getName());
+        $this->assertSame(SendRecipientType::TO, $recipients[1]->getType());
+
+        $this->assertSame('tim@example.org', $recipients[2]->getAddress());
+        $this->assertSame('', $recipients[2]->getName());
+        $this->assertSame(SendRecipientType::CC, $recipients[2]->getType());
+
+        $this->assertSame('jean@example.org', $recipients[3]->getAddress());
+        $this->assertSame('', $recipients[3]->getName());
+        $this->assertSame(SendRecipientType::BCC, $recipients[3]->getType());
+
+        $this->assertSame('john@example.org', $recipients[4]->getAddress());
+        $this->assertSame('John Doe', $recipients[4]->getName());
+        $this->assertSame(SendRecipientType::BCC, $recipients[4]->getType());
     }
 
     public function test_does_not_allow_unregistered_domain(): void

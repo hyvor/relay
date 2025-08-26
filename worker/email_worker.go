@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"log/slog"
-	"os"
 	"sync"
 	"time"
 )
@@ -15,16 +16,6 @@ type EmailWorkersPool struct {
 	cancelFunc context.CancelFunc
 	logger     *slog.Logger
 	metrics    *Metrics
-	workerFunc func(
-		ctx context.Context,
-		id int,
-		wg *sync.WaitGroup,
-		config *DBConfig,
-		logger *slog.Logger,
-		metrics *Metrics,
-		ip GoStateIp,
-		instanceDomain string,
-	)
 }
 
 func NewEmailWorkersPool(
@@ -33,10 +24,9 @@ func NewEmailWorkersPool(
 	metrics *Metrics,
 ) *EmailWorkersPool {
 	pool := &EmailWorkersPool{
-		ctx:        ctx,
-		logger:     logger.With("component", "email_workers_pool"),
-		metrics:    metrics,
-		workerFunc: emailWorker,
+		ctx:     ctx,
+		logger:  logger.With("component", "email_workers_pool"),
+		metrics: metrics,
 	}
 
 	go func() {
@@ -70,17 +60,20 @@ func (pool *EmailWorkersPool) Set(
 	)
 
 	for i, ip := range ips {
-		pool.wg.Add(1)
-		go pool.workerFunc(
-			ctx,
-			i,
-			&pool.wg,
-			LoadDBConfig(),
-			pool.logger,
-			pool.metrics,
-			ip,
-			instanceDomain,
-		)
+		for j := range workersPerIp {
+			pool.wg.Add(1)
+			worker := NewEmailWorker(
+				ctx,
+				i+j,
+				&pool.wg,
+				LoadDBConfig(),
+				pool.logger,
+				pool.metrics,
+				ip,
+				instanceDomain,
+			)
+			go worker.Start()
+		}
 	}
 
 }
@@ -99,7 +92,29 @@ func (pool *EmailWorkersPool) StopWorkers() {
 
 }
 
-func emailWorker(
+type EmailWorker struct {
+	ctx            context.Context
+	id             int
+	wg             *sync.WaitGroup
+	dbConfig       *DBConfig
+	logger         *slog.Logger
+	metrics        *Metrics
+	ip             GoStateIp
+	instanceDomain string
+
+	// mocks
+	ProcessSendFunc         func(conn *sql.DB) error
+	AttemptSendToDomainFunc func(
+		domainWg *sync.WaitGroup,
+		domainQueryMutex *sync.Mutex,
+		send *SendRow,
+		domain string,
+		recipients []*RecipientRow,
+		sendTx *SendTransaction,
+	)
+}
+
+func NewEmailWorker(
 	ctx context.Context,
 	id int,
 	wg *sync.WaitGroup,
@@ -108,120 +123,227 @@ func emailWorker(
 	metrics *Metrics,
 	ip GoStateIp,
 	instanceDomain string,
-) {
-	defer wg.Done()
+) *EmailWorker {
+	worker := &EmailWorker{
+		ctx:            ctx,
+		id:             id,
+		wg:             wg,
+		dbConfig:       dbConfig,
+		logger:         logger.With("worker_id", id, "ip", ip.Ip),
+		metrics:        metrics,
+		ip:             ip,
+		instanceDomain: instanceDomain,
+	}
 
-	conn, err := NewRetryingDbConn(ctx, dbConfig, logger)
+	worker.ProcessSendFunc = worker.processSend
+	worker.AttemptSendToDomainFunc = worker.attemptSendToDomain
+
+	return worker
+}
+
+func (worker *EmailWorker) Start() {
+
+	defer worker.wg.Done()
+
+	conn, err := NewRetryingDbConn(
+		worker.ctx,
+		worker.dbConfig,
+		worker.logger,
+	)
 	if err != nil {
 		return
 	}
 	defer conn.Close()
 
 	for {
+
 		select {
-		case <-ctx.Done():
-			logger.Info(
-				"Email worker stopped by context cancellation",
-				"id", id,
-			)
+		case <-worker.ctx.Done():
+			worker.logger.Info("Email worker stopped by context cancellation")
 			return
-
 		default:
-
-			batch, err := NewDbSendBatch(ctx, conn)
-
-			if err != nil {
-				logger.Error(
-					"Email worker failed to get new send batch",
-					"worker_id", id,
-					"error", err,
-				)
-				time.Sleep(1 * time.Second)
-				continue
-			}
-
-			sends, err := batch.FetchSends(ip.QueueId)
-
-			if err != nil {
-				logger.Error(
-					"Worker failed to fetch sends",
-					"worker_id", id,
-					"error", err,
-				)
-				time.Sleep(1 * time.Second)
-				batch.Rollback()
-				continue
-			}
-
-			var sendAttemptIds []int
-
-			for _, send := range sends {
-				logger.Info(
-					"Worker processing send",
-					"worker_id", id,
-					"send_id", send.Id,
-				)
-
-				result := sendEmail(
-					&send,
-					instanceDomain,
-					ip.Id,
-					ip.Ip,
-					ip.Ptr,
-					os.Stdout,
-				)
-
-				sendAttemptId, err := batch.FinalizeSendBySendResult(&send, result)
-
-				if err != nil {
-					logger.Info(
-						"Worker failed to finalize send",
-						"worker_id", id,
-						"send_id", send.Id,
-						"error", err,
-					)
-					continue
-				}
-
-				updateEmailMetricsFromSendResult(metrics, result)
-				sendAttemptIds = append(sendAttemptIds, sendAttemptId)
-			}
-
-			commitErr := batch.Commit()
-
-			if commitErr != nil {
-				logger.Error(
-					"Worker failed to commit batch",
-					"worker_id", id,
-					"error", commitErr,
-				)
-			}
-
-			if len(sendAttemptIds) > 0 {
-				go func(sendAttemptIds []int) {
-					err := CallLocalApi(
-						ctx,
-						"POST",
-						"/send-attempts/done",
-						map[string]interface{}{
-							"send_attempt_ids": sendAttemptIds,
-						},
-						nil,
-					)
-					if err != nil {
-						logger.Error(
-							"Worker failed to notify send attempt done via local API",
-							"worker_id", id,
-							"send_attempt_ids", sendAttemptIds,
-							"error", err,
-						)
-					}
-				}(sendAttemptIds)
-			}
-
-			time.Sleep(1 * time.Second)
-
+			worker.ProcessSendFunc(conn)
 		}
+
+	}
+
+}
+
+// This tries to handle one send within a transaction.
+// The select statement uses FOR UPDATE SKIP LOCKED,
+// which skips locked rows in other queries until the current transaction is committed or rolled back.
+func (worker *EmailWorker) processSend(conn *sql.DB) error {
+
+	sendTx, err := NewSendTransaction(worker.ctx, conn)
+
+	if err != nil {
+		worker.logger.Error(
+			"Email worker failed to create a new send transaction",
+			"error", err,
+		)
+		time.Sleep(1 * time.Second)
+		return err
+	}
+
+	send, recipients, err := sendTx.FetchSend(worker.ip.QueueId)
+
+	if err != nil {
+
+		if errors.Is(err, sql.ErrNoRows) {
+			worker.logger.Debug(
+				"Email worker found no sends to process. Retrying in 1 second",
+				"queue_id", worker.ip.QueueId,
+			)
+			time.Sleep(1 * time.Second)
+			sendTx.Rollback()
+			return err
+		}
+
+		worker.logger.Error(
+			"Email worker failed to fetch a send",
+			"error", err,
+		)
+		time.Sleep(1 * time.Second)
+		sendTx.Rollback()
+		return err
+	}
+
+	recipientsByDomain := getRecipientsGroupedByDomain(recipients)
+
+	var sendAttemptIds []int // TODO: this
+
+	domainsCount := len(recipientsByDomain)
+	domainWg := sync.WaitGroup{}
+	domainWg.Add(domainsCount)
+	domainQueryMutex := &sync.Mutex{}
+
+	for domain, rcpts := range recipientsByDomain {
+		go worker.AttemptSendToDomainFunc(
+			&domainWg,
+			domainQueryMutex,
+			send,
+			domain,
+			rcpts,
+			sendTx,
+		)
+	}
+
+	domainWg.Wait()
+
+	if err := sendTx.FinalizeSend(send); err != nil {
+		worker.logger.Error("Email worker failed to finalize send: "+err.Error(), "send_id", send.Id)
+		sendTx.Rollback()
+		return err
+	}
+
+	commitErr := sendTx.Commit()
+
+	if commitErr != nil {
+		worker.logger.Error("Email worker failed to commit batch: "+commitErr.Error(), "send_id", send.Id)
+		sendTx.Rollback()
+		return commitErr
+	}
+
+	go notifySendAttemptsToSymfony(worker.ctx, sendAttemptIds, worker.logger)
+
+	time.Sleep(50 * time.Millisecond)
+
+	return nil
+
+}
+
+func (worker *EmailWorker) attemptSendToDomain(
+	domainWg *sync.WaitGroup,
+	domainQueryMutex *sync.Mutex,
+	send *SendRow,
+	domain string,
+	recipients []*RecipientRow,
+	sendTx *SendTransaction,
+) {
+
+	defer domainWg.Done()
+
+	worker.logger.Info(
+		"Email worker processing send for domain",
+		"send_id", send.Id,
+		"domain", domain,
+		"recipients", len(recipients),
+	)
+
+	result := sendEmail(
+		send,
+		recipients,
+		domain,
+		worker.instanceDomain,
+		worker.ip.Id,
+		worker.ip.Ip,
+		worker.ip.Ptr,
+	)
+
+	// get the lock before calling the DB
+	domainQueryMutex.Lock()
+	defer domainQueryMutex.Unlock()
+	_, err := sendTx.RecordAttempt(
+		send,
+		recipients,
+		result,
+	)
+
+	if err != nil {
+		worker.logger.Error(
+			"Email worker failed to record send attempt",
+			"send_id", send.Id,
+			"domain", domain,
+			"error", err,
+		)
+		// TODO: add error
+		return // 0, err
+	}
+
+	updateEmailMetricsFromSendResult(worker.metrics, result)
+
+	// TODO: send attempt id
+
+}
+
+func getRecipientsGroupedByDomain(rcpts []*RecipientRow) map[string][]*RecipientRow {
+	recipientsByDomain := make(map[string][]*RecipientRow)
+
+	for _, rcpt := range rcpts {
+		domain := getDomainFromEmail(rcpt.Address)
+		if _, exists := recipientsByDomain[domain]; !exists {
+			recipientsByDomain[domain] = []*RecipientRow{}
+		}
+		recipientsByDomain[domain] = append(recipientsByDomain[domain], rcpt)
+	}
+
+	return recipientsByDomain
+}
+
+func notifySendAttemptsToSymfony(
+	ctx context.Context,
+	sendAttemptIds []int,
+	logger *slog.Logger,
+) {
+	if len(sendAttemptIds) == 0 {
+		return
+	}
+
+	err := CallLocalApi(
+		ctx,
+		"POST",
+		"/send-attempts/done",
+		map[string]interface{}{
+			"send_attempt_ids": sendAttemptIds,
+		},
+		nil,
+	)
+	if err != nil {
+		logger.Error(
+			"Email worker failed to notify send attempt done via local API",
+			"send_attempt_ids", sendAttemptIds,
+			"error", err,
+		)
 	}
 }
 
