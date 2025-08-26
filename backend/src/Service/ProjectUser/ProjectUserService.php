@@ -25,6 +25,14 @@ class ProjectUserService
         return $this->em->getRepository(ProjectUser::class)->findBy(['user_id' => $userId]);
     }
 
+    /**
+     * @return ProjectUser[]
+     */
+    public function getProjectUsers(Project $project): array
+    {
+        return $this->em->getRepository(ProjectUser::class)->findBy(['project' => $project]);
+    }
+
     public function getProjectUser(Project $project, int $userId): ?ProjectUser
     {
         return $this->em->getRepository(ProjectUser::class)
@@ -63,6 +71,13 @@ class ProjectUserService
         );
         $query->setParameter('project', $project);
         $query->execute();
+
+        $this->em->clear();
     }
 
+    public function deleteProjectUser(ProjectUser $projectUser): void
+    {
+        $this->em->remove($projectUser);
+        $this->em->flush();
+    }
 }
