@@ -4,11 +4,12 @@ namespace App\Tests\Api\Console\Suppression;
 
 use App\Api\Console\Controller\SuppressionController;
 use App\Entity\Suppression;
-use App\Repository\SuppressionRepository;
+use App\Service\Suppression\Event\SuppressionDeletedEvent;
 use App\Service\Suppression\SuppressionService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\SuppressionFactory;
+use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(SuppressionController::class)]
@@ -17,6 +18,7 @@ class DeleteSuppressionTest extends WebTestCase
 {
     public function test_delete_suppression(): void
     {
+        $eventDispatcher = TestEventDispatcher::enable($this->container);
         $project = ProjectFactory::createOne();
 
         $suppression = SuppressionFactory::createOne([
@@ -34,6 +36,8 @@ class DeleteSuppressionTest extends WebTestCase
         $this->assertSame(200, $response->getStatusCode());
 
         $suppressionDb = $this->em->getRepository(Suppression::class)->find($suppressionId);
-        $this->assertNull($suppressionDb, );
+        $this->assertNull($suppressionDb);
+        $eventDispatcher->assertDispatched(SuppressionDeletedEvent::class);
+
     }
 }
