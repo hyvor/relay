@@ -2,16 +2,16 @@
 	import { TextInput, SplitControl, Loader, IconMessage } from '@hyvor/design/components';
 	import IconSearch from '@hyvor/icons/IconSearch';
 	import UserCard from './UserCard.svelte';
-	import type { ProjectUserSearchResult, ProjectUser } from '../../../types';
+	import type { ProjectUserMiniObject, ProjectUser } from '../../../types';
 
 	interface Props {
 		searchEmail: string;
-		searchResults: ProjectUserSearchResult[];
+		searchResults: ProjectUserMiniObject[];
 		isSearching: boolean;
 		hasSearched: boolean;
 		projectUsers: ProjectUser[];
 		onSearchEnter: () => void;
-		onInviteUser: (user: ProjectUserSearchResult) => void;
+		onInviteUser: (user: ProjectUserMiniObject) => void;
 	}
 
 	let {

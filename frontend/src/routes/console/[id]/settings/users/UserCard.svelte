@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { Button } from '@hyvor/design/components';
 	import IconPlus from '@hyvor/icons/IconPlus';
-	import type { ProjectUserSearchResult } from '../../../types';
+	import type { ProjectUserMiniObject } from '../../../types';
 
 	interface Props {
-		user: ProjectUserSearchResult;
+		user: ProjectUserMiniObject;
 		isAlreadyAdded: boolean;
 		onInvite: () => void;
 	}

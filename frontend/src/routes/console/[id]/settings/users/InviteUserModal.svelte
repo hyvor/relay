@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { Modal, Checkbox, SplitControl } from '@hyvor/design/components';
-	import type { ProjectUserSearchResult, Scope } from '../../../types';
+	import type { ProjectUserMiniObject, Scope } from '../../../types';
 
 	interface Props {
 		show: boolean;
-		selectedUser: ProjectUserSearchResult | null;
+		selectedUser: ProjectUserMiniObject | null;
 		selectedScopes: string[];
 		isInviting: boolean;
 		availableScopes: Scope[];
@@ -57,7 +57,7 @@
 				column
 			>
 				<div class="scopes-list">
-					{#each availableScopes as scope}
+					{#each availableScopes as scope (scope)}
 						<label class="scope-item">
 							<Checkbox
 								bind:group={selectedScopes}
@@ -76,6 +76,8 @@
 <style>
 	.modal-content {
 		padding: 20px 0;
+        max-height: 70vh;
+        overflow-y: auto;
 	}
 
 	.invited-user {

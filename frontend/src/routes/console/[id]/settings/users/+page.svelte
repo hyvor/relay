@@ -8,10 +8,10 @@
 	import consoleApi from '../../../lib/consoleApi.svelte';
 	import { getAppConfig } from '../../../lib/stores/consoleStore';
 	import { onMount } from 'svelte';
-	import type { ProjectUserSearchResult, ProjectUser, Scope } from '../../../types';
+	import type { ProjectUserMiniObject, ProjectUser, Scope } from '../../../types';
 
 	let searchEmail = $state('');
-	let searchResults = $state<ProjectUserSearchResult[]>([]);
+	let searchResults = $state<ProjectUserMiniObject[]>([]);
 	let isSearching = $state(false);
 	let hasSearched = $state(false);
 
@@ -19,7 +19,7 @@
 	let isLoadingUsers = $state(true);
 
 	let showInviteModal = $state(false);
-	let selectedUser = $state<ProjectUserSearchResult | null>(null);
+	let selectedUser = $state<ProjectUserMiniObject | null>(null);
 	let selectedScopes = $state<string[]>(['project.read']);
 	let isInviting = $state(false);
 
@@ -68,7 +68,7 @@
 		try {
 			isSearching = true;
 			hasSearched = true;
-			const results = await consoleApi.get<ProjectUserSearchResult[]>({
+			const results = await consoleApi.get<ProjectUserMiniObject[]>({
 				endpoint: 'search-users',
 				data: { email: searchEmail.trim() }
 			});
@@ -90,7 +90,7 @@
 		}
 	}
 
-	function openInviteModal(user: ProjectUserSearchResult) {
+	function openInviteModal(user: ProjectUserMiniObject) {
 		selectedUser = user;
 		selectedScopes = ['project.read'];
 		showInviteModal = true;
