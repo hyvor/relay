@@ -37,7 +37,8 @@ class ProjectUserService
     public function createProjectUser(
         Project $project,
         int $userId,
-        array $scopes = []
+        array $scopes = [],
+        bool $flush = true
     ): ProjectUser {
         $projectUser = new ProjectUser();
         $projectUser->setCreatedAt($this->now());
@@ -47,7 +48,10 @@ class ProjectUserService
         $projectUser->setScopes($scopes);
 
         $this->em->persist($projectUser);
-        $this->em->flush();
+
+        if ($flush) {
+            $this->em->flush();
+        }
 
         return $projectUser;
     }
