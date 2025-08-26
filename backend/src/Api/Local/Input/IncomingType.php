@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Entity\Type;
+namespace App\Api\Local\Input;
 
-enum DebugIncomingEmailType: string
+enum IncomingType: string
 {
     case BOUNCE = 'bounce';
     case COMPLAINT = 'complaint';

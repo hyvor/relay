@@ -2,8 +2,9 @@
 
 namespace App\Entity\Type;
 
-enum DebugIncomingEmailType: string
+enum SendFeedbackType: string
 {
     case BOUNCE = 'bounce';
     case COMPLAINT = 'complaint';
 }
+
