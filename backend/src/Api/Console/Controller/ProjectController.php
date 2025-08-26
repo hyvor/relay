@@ -9,6 +9,7 @@ use App\Api\Console\Authorization\UserLevelEndpoint;
 use App\Api\Console\Input\CreateProjectInput;
 use App\Api\Console\Input\UpdateProjectInput;
 use App\Api\Console\Object\ProjectObject;
+use App\Api\Console\Object\ProjectUserObject;
 use App\Entity\Project;
 use App\Service\Project\Dto\UpdateProjectDto;
 use App\Service\Project\ProjectService;
@@ -33,13 +34,13 @@ class ProjectController extends AbstractController
     {
         $user = AuthorizationListener::getUser($request);
 
-        $project = $this->projectService->createProject(
+        $newProject = $this->projectService->createProject(
             $user->id,
             $input->name,
             $input->send_type
         );
 
-        return $this->json(new ProjectObject($project));
+        return $this->json(new ProjectUserObject($newProject['projectUser']));
     }
 
     #[Route('/project', methods: 'GET')]

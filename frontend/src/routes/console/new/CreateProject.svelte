@@ -53,7 +53,7 @@
 			.then((res) => {
 				toast.success('Project created successfully');
 				addProjectUser(res);
-				goto('/console/' + res.id);
+				goto('/console/' + res.project.id);
 			})
 			.catch((e) => {
 				toast.error(e.message);
