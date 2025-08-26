@@ -24,7 +24,7 @@ func TestCreateMetricsServer(t *testing.T) {
 func TestMetricsHttpServerNotLeader(t *testing.T) {
 
 	ctx := context.Background()
-	logger := slog.Default()
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
 	metricsServer := NewMetricsServer(ctx, logger)
 	metricsServer.Set(GoState{

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"io"
 	"log/slog"
 	"net"
 	"testing"
@@ -49,7 +50,7 @@ func TestHandleDNSRequest(t *testing.T) {
 
 	dnsServer := DnsServer{
 		ctx:    context.Background(),
-		logger: slog.Default(),
+		logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 		dnsRecords: []GoStateDnsRecord{
 			{
 				Type:    "A",
@@ -95,6 +96,7 @@ func TestHandleDNSRequest(t *testing.T) {
 				Content: "v=spf1 ip4:1.1.1.1 ip4:2.2.2.2 -all",
 			},
 		},
+		metrics: newMetrics(),
 	}
 
 	answer, err := getAnswer(dnsServer, "smtp1.relay.hyvor.com.", dns.TypeA)

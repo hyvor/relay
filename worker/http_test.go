@@ -19,7 +19,7 @@ func TestPingAndReady(t *testing.T) {
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	serviceState := &ServiceState{
-		Logger: slog.Default(),
+		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
 	StartHttpServer(context, serviceState)
 
@@ -80,7 +80,7 @@ func TestDebugParseBounce(t *testing.T) {
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	serviceState := &ServiceState{
-		Logger: slog.Default(),
+		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
 	StartHttpServer(context, serviceState)
 

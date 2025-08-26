@@ -207,12 +207,13 @@ func (server *MetricsServer) Set(goState GoState) {
 
 			handler := promhttp.HandlerFor(server.registry, promhttp.HandlerOpts{})
 
-			http.Handle("/", handler)
-			http.Handle("/metrics", handler)
+			mux := http.NewServeMux()
+			mux.Handle("/", handler)
+			mux.Handle("/metrics", handler)
 
 			server.logger.Info("Starting metrics server on :9667")
 
-			if err := http.ListenAndServe(":9667", nil); err != nil {
+			if err := http.ListenAndServe(":9667", mux); err != nil {
 				server.logger.Error("Failed to start metrics server", "error", err)
 			}
 
