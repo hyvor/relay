@@ -18,6 +18,17 @@
 			recipients_count: send.recipients.length
 		});
 
+		// add attempts
+		for (const attempt of send.attempts) {
+			events.push({
+				timestamp: attempt.created_at,
+				type: 'attempt',
+				attempt
+			});
+		}
+
+		events.sort((a, b) => b.timestamp - a.timestamp);
+
 		return events;
 	}
 

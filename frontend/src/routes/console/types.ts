@@ -95,6 +95,7 @@ export interface SendAttempt {
     created_at: number;
     status: 'accepted' | 'deferred' | 'bounced';
     try_count: number;
+    domain: string;
     resolved_mx_hosts: string[];
     accepted_mx_host: string | null;
     smtp_conversations: Record<string, SmtpConversation>;
