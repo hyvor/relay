@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use App\Entity\Type\SendStatus;
 use App\Repository\SendRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;

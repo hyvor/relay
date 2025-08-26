@@ -56,6 +56,7 @@ final class Version20250613093659 extends AbstractMigration
         $this->addSql(
             "CREATE TYPE send_recipients_status AS ENUM ('queued', 'accepted', 'retrying', 'failed', 'bounced', 'complained')"
         );
+
         $this->addSql(
             <<<SQL
             CREATE TABLE send_recipients (
