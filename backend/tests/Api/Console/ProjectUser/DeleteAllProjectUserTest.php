@@ -36,7 +36,6 @@ class DeleteAllProjectUserTest extends WebTestCase
             'user_id' => 2,
             'scopes' => ['project.write'],
         ]);
-
         $otherProjectUser = ProjectUserFactory::createOne([
             'project' => $otherProject,
             'user_id' => 3,
@@ -59,7 +58,6 @@ class DeleteAllProjectUserTest extends WebTestCase
 
         $this->assertNull($this->em->getRepository(ProjectUser::class)->find($projectUser1->getId()));
         $this->assertNull($this->em->getRepository(ProjectUser::class)->find($projectUser2->getId()));
-
         $this->assertInstanceOf(ProjectUser::class, $this->em->getRepository(ProjectUser::class)->find($otherProjectUser->getId()));
     }
 
@@ -68,7 +66,7 @@ class DeleteAllProjectUserTest extends WebTestCase
         $project = ProjectFactory::createOne();
 
         // Ensure no project users exist for this project
-        $existingUsers = $this->em->getRepository(ProjectUser::class)->findBy(['project' => $project]);
+        $existingUsers = $this->em->getRepository(ProjectUser::class)->findBy(['project' => $project->_real()]);
         $this->assertCount(0, $existingUsers);
 
         $this->consoleApi(

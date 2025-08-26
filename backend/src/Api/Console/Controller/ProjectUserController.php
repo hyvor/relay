@@ -5,8 +5,8 @@ namespace App\Api\Console\Controller;
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Authorization\ScopeRequired;
 use App\Api\Console\Input\ProjectUser\CreateProjectUserInput;
+use App\Api\Console\Object\ProjectUserMiniObject;
 use App\Api\Console\Object\ProjectUserObject;
-use App\Api\Console\Object\ProjectUserSearchObject;
 use App\Entity\Project;
 use App\Entity\ProjectUser;
 use App\Service\ProjectUser\ProjectUserService;
@@ -32,11 +32,14 @@ class ProjectUserController extends AbstractController
     {
         $emailSearch = $request->query->getString('email', '');
         $authUsers = $this->auth->fromEmail($emailSearch);
-        $foundUsers = [];
-        foreach ($authUsers as $authUser) {
-            $foundUsers[] = new ProjectUserSearchObject($authUser);
-        }
-        return $this->json($foundUsers);
+
+        return $this->json(array_map(
+            fn($authUser) => new ProjectUserMiniObject(
+                $authUser,
+                true
+            ),
+            $authUsers
+        ));
     }
 
     #[Route('/project-users', methods: 'GET')]
@@ -44,16 +47,21 @@ class ProjectUserController extends AbstractController
     public function getProjectUsers(Project $project): JsonResponse
     {
         $projectUsers = $this->projectUserService->getProjectUsers($project);
-        $result = [];
-        
+
+        $projectUsersById = [];
         foreach ($projectUsers as $projectUser) {
-            $authUser = $this->auth->fromId($projectUser->getUserId());
-            if ($authUser !== null) {
-                $result[] = new ProjectUserObject($projectUser, $authUser);
-            }
+            $projectUsersById[$projectUser->getUserId()] = $projectUser;
         }
-        
-        return $this->json($result);
+
+        $authUsers = $this->auth->fromIds(array_keys($projectUsersById));
+
+        return $this->json(array_map(
+            fn($authUser) => new ProjectUserObject(
+                $projectUsersById[$authUser->id],
+                $authUser
+            ),
+            array_values($authUsers)
+        ));
     }
 
     #[Route('/project-users', methods: 'POST')]
@@ -68,7 +76,7 @@ class ProjectUserController extends AbstractController
         }
         $projectUser = $this->projectUserService->createProjectUser($project, $authUser->id, $input->scopes);
 
-        return $this->json(new ProjectUserObject(($projectUser), $authUser));
+        return $this->json(new ProjectUserObject($projectUser, $authUser));
     }
 
     #[Route('/project-users/{id}', methods: 'DELETE')]

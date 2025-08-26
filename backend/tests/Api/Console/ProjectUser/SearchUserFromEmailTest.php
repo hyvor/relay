@@ -3,7 +3,7 @@
 namespace App\Tests\Api\Console\ProjectUser;
 
 use App\Api\Console\Controller\ProjectUserController;
-use App\Api\Console\Object\ProjectUserSearchObject;
+use App\Api\Console\Object\ProjectUserMiniObject;
 use App\Service\ProjectUser\ProjectUserService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
@@ -12,7 +12,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ProjectUserController::class)]
 #[CoversClass(ProjectUserService::class)]
-#[CoversClass(ProjectUserSearchObject::class)]
+#[CoversClass(ProjectUserMiniObject::class)]
 class SearchUserFromEmailTest extends WebTestCase
 {
     public function test_search_user_from_email(): void
