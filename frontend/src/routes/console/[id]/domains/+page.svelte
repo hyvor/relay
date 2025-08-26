@@ -144,7 +144,7 @@
 		verifyDomain(domain.id, domain.domain)
 			.then((updatedDomain) => {
 				domains = domains.map((d) => (d.id === updatedDomain.id ? updatedDomain : d));
-				if (updatedDomain.dkim_verified) {
+				if (updatedDomain.status === 'active') {
 					toast.success('Domain verified', { id: toastId });
 				} else {
 					toast.error('Domain verification failed', { id: toastId });

@@ -37,11 +37,11 @@
 		<div class="domain-meta">
             <div class="timestamp">
                 <span>Created <RelativeTime unix={domain.created_at} /></span>
-                {#if domain.status === 'pending' || domain.status === 'warning' && domain.dkim_checked_at}
+                {#if (domain.status === 'pending' || domain.status === 'warning') && domain.dkim_checked_at}
                     <span>Last Checked: <RelativeTime unix={domain.dkim_checked_at} /></span>
                 {/if}
             </div>
-			{#if domain.status === 'pending' || domain.status === 'warning' && domain.dkim_error_message}
+			{#if (domain.status === 'pending' || domain.status === 'warning') && domain.dkim_error_message}
             <div class="error-message">
 				<span>Error: {domain.dkim_error_message}</span>
             </div>
