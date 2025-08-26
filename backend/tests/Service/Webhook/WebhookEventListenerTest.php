@@ -225,6 +225,7 @@ class WebhookEventListenerTest extends KernelTestCase
             }
         );
     }
+
     public function test_creates_delivery_for_suppression_deleted_event(): void
     {
         $project = ProjectFactory::createOne();
