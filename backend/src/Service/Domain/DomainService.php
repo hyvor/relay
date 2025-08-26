@@ -9,11 +9,13 @@ use App\Repository\DomainRepository;
 use App\Service\Domain\Dto\UpdateDomainDto;
 use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Service\Domain\Event\DomainDeletedEvent;
+use App\Service\Domain\Exception\DomainDeletionFailedException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Hyvor\Internal\Util\Crypt\Encryption;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class DomainService
 {
@@ -126,8 +128,15 @@ class DomainService
         return new ArrayCollection($results);
     }
 
+    /**
+     * @throws DomainDeletionFailedException
+     */
     public function deleteDomain(Domain $domain): void
     {
+        if ($domain->getStatus() === DomainStatus::SUSPENDED) {
+            throw new DomainDeletionFailedException('Suspended domains can not be deleted.');
+        }
+
         $this->em->remove($domain);
         $this->em->flush();
 
