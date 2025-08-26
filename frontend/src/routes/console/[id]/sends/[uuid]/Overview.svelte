@@ -7,6 +7,7 @@
 	import RecipientStatus from '../RecipientStatus.svelte';
 	import { getSortedRecipients } from './recipients';
 	import byteFormatter from '$lib/byteFormatter';
+	import Events from './Events/Events.svelte';
 
 	let { send }: { send: Send } = $props();
 
@@ -66,18 +67,8 @@
 	</div>
 </div>
 
-<div class="attempts">
-	<div class="attempts-title">Delivery Attempts</div>
-
-	{#if send.attempts.length}
-		<div class="rows">
-			{#each send.attempts as attempt}
-				<AttemptRow {attempt} />
-			{/each}
-		</div>
-	{:else}
-		<IconMessage empty message="No delivery attempts" padding={60} />
-	{/if}
+<div class="events">
+	<Events {send} />
 </div>
 
 <style>
@@ -124,20 +115,5 @@
 		font-size: 12px;
 		color: var(--text-light);
 		margin-top: 4px;
-	}
-	.attempts {
-		border-top: 1px solid var(--border);
-		padding: 20px 25px;
-	}
-	.attempts-title {
-		font-size: 18px;
-		font-weight: bold;
-		margin-bottom: 20px;
-		padding-left: 10px;
-	}
-	.rows {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
 	}
 </style>

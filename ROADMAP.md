@@ -1,9 +1,8 @@
 Features to implement:
 
-- [ ] Dedicated IPs for users
-- [ ] CC, BCC support
 - [ ] Incoming email routing
 - [ ] Send via SMTP
+- [ ] Dedicated IPs for users
 - [ ] Custom DKIM selector
 
 Features we will not implement:

@@ -15,6 +15,7 @@ use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
 use App\Tests\Factory\QueueFactory;
+use App\Tests\Factory\SendAttemptFactory;
 use App\Tests\Factory\SendRecipientFactory;
 use App\Tests\Factory\ServerFactory;
 use App\Tests\Factory\SendFactory;
@@ -134,13 +135,18 @@ class DevSeedCommand extends Command
             $type = $types[$typeKey];
 
             foreach (range(1, rand(1,2)) as $i) {
-                SendRecipientFactory::new()
+                $recipient = SendRecipientFactory::new()
                     ->distribute('status', SendRecipientStatus::cases())
                     ->create([
                         'send' => $send,
                         'type' => $type,
                     ]);
             }
+
+            SendAttemptFactory::new()
+                ->distribute('status', SendRecipientStatus::cases())
+                ->create(['send' => $send]);
+
         }
 
         SuppressionFactory::createMany(16, [
