@@ -73,7 +73,7 @@ class SendService
 
         if ($subjectSearch !== null) {
             $qb->andWhere('LOWER(s.subject) LIKE LOWER(:subjectSearch)')
-                ->setParameter('subjectSearch', strtolower($subjectSearch) . '%');
+                ->setParameter('subjectSearch', '%' . strtolower($subjectSearch) . '%');
         }
 
         //dd($qb->getQuery()->getSQL());
