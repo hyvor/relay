@@ -13,6 +13,7 @@ use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Service\Domain\Event\DomainDeletedEvent;
 use App\Service\Domain\Event\DomainStatusChangedEvent;
 use App\Service\Send\Event\SendAttemptCreatedEvent;
+use App\Service\Suppression\Event\SuppressionCreatedEvent;
 use App\Service\Suppression\Event\SuppressionDeletedEvent;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 
@@ -97,6 +98,16 @@ class WebhookEventListener
             $event->domain->getProject(),
             WebhooksEventEnum::DOMAIN_DELETED,
             fn() => (object)['domain' => new DomainObject($event->domain)]
+        );
+    }
+
+    #[AsEventListener]
+    public function onSuppressionCreate(SuppressionCreatedEvent $event): void
+    {
+        $this->createWebhookDeliveries(
+            $event->suppression->getProject(),
+            WebhooksEventEnum::SUPPRESSION_CREATED,
+            fn() => (object)['suppression' => new SuppressionObject($event->suppression)]
         );
     }
 

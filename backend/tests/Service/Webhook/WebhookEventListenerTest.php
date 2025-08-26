@@ -13,6 +13,7 @@ use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Service\Domain\Event\DomainDeletedEvent;
 use App\Service\Domain\Event\DomainStatusChangedEvent;
 use App\Service\Send\Event\SendAttemptCreatedEvent;
+use App\Service\Suppression\Event\SuppressionCreatedEvent;
 use App\Service\Suppression\Event\SuppressionDeletedEvent;
 use App\Service\Webhook\WebhookEventListener;
 use App\Service\Webhook\WebhookService;
@@ -208,6 +209,22 @@ class WebhookEventListenerTest extends KernelTestCase
         );
     }
 
+    public function test_creates_delivery_for_suppression_created_event(): void
+    {
+        $project = ProjectFactory::createOne();
+        $suppression = SuppressionFactory::createOne(['project' => $project]);
+        $this->createWebhook($project, WebhooksEventEnum::SUPPRESSION_CREATED);
+        $this->ed->dispatch(new SuppressionCreatedEvent($suppression));
+
+        $this->assertWebhookDeliveryCreated(
+            $project,
+            WebhooksEventEnum::SUPPRESSION_CREATED,
+            function (array $payload) use ($suppression) {
+                $this->assertIsArray($payload['suppression']);
+                $this->assertSame($suppression->getId(), $payload['suppression']['id']);
+            }
+        );
+    }
     public function test_creates_delivery_for_suppression_deleted_event(): void
     {
         $project = ProjectFactory::createOne();
