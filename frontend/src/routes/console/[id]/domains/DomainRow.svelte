@@ -23,18 +23,28 @@
 		<div class="domain-header">
 			<span class="domain-name">{domain.domain}</span>
 			<div class="domain-badges">
-				<Tag size="small" color={domain.dkim_verified ? 'green' : 'orange'}>
-					{domain.dkim_verified ? 'DKIM Verified' : 'DKIM Not Verified'}
+				<Tag size="small" color={
+				    domain.status === 'active'
+				    ? 'green'
+				    : domain.status === 'suspended'
+				        ? 'red'
+				        : 'orange'
+				}>
+					{domain.status}
 				</Tag>
 			</div>
 		</div>
 		<div class="domain-meta">
-			<span>Created <RelativeTime unix={domain.created_at} /></span>
-			{#if !domain.dkim_verified && domain.dkim_checked_at}
-				<span>Last Check: <RelativeTime unix={domain.dkim_checked_at} /></span>
-			{/if}
-			{#if !domain.dkim_verified && domain.dkim_error_message}
+            <div class="timestamp">
+                <span>Created <RelativeTime unix={domain.created_at} /></span>
+                {#if domain.status === 'pending' || domain.status === 'warning' && domain.dkim_checked_at}
+                    <span>Last Checked: <RelativeTime unix={domain.dkim_checked_at} /></span>
+                {/if}
+            </div>
+			{#if domain.status === 'pending' || domain.status === 'warning' && domain.dkim_error_message}
+            <div class="error-message">
 				<span>Error: {domain.dkim_error_message}</span>
+            </div>
 			{/if}
 		</div>
 	</div>
@@ -45,7 +55,7 @@
 			{/snippet}
 			DNS Record
 		</Button>
-		{#if !domain.dkim_verified}
+		{#if domain.status === 'pending' || domain.status === 'warning'}
 			<Button
 				color="input"
 				size="small"
@@ -63,7 +73,7 @@
 			color="red"
 			size="small"
 			on:click={() => onDelete(domain)}
-			disabled={cant('domains.write')}
+			disabled={cant('domains.write') || domain.status === 'suspended'}
 		>
 			<IconTrash size={12} />
 		</IconButton>
@@ -77,7 +87,6 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-start;
-		padding: 4px;
 		border-radius: 8px;
 		background-color: var(--bg-light);
 		word-break: break-all;
@@ -104,13 +113,17 @@
 		display: flex;
 		gap: 8px;
 		align-items: center;
+        text-transform: capitalize;
 	}
 
 	.domain-meta {
-		display: flex;
-		gap: 16px;
 		font-size: 14px;
 		color: var(--text-light);
+
+        .timestamp {
+            display: flex;
+            gap: 16px;
+        }
 	}
 
 	.domain-actions {
