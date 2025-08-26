@@ -215,8 +215,8 @@
 
 <style>
 	.user-management {
-		max-width: 800px;
-	}
+        padding: 20px 30px;
+    }
 
 	.section {
 		margin-bottom: 40px;

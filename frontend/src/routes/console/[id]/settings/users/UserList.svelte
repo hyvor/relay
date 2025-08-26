@@ -65,7 +65,7 @@
 					</div>
 				</div>
 				<div class="user-scopes">
-					{#each displayScopes.visible as scope}
+					{#each displayScopes.visible as scope (scope)}
 						<span class="scope-tag">{scope}</span>
 					{/each}
 					{#if displayScopes.remaining.length > 0}
@@ -75,24 +75,16 @@
 					{/if}
 				</div>
 				<div class="user-actions">
-					{#if !isCurrentUser(projectUser)}
 						<IconButton
 							size="small"
 							color="red"
+                            variant="fill-light"
 							on:click={() => onDeleteUser(projectUser)}
+                            disabled={isCurrentUser(projectUser)}
 							title="Remove user from project"
 						>
-							<IconTrash size={16} />
+							<IconTrash size={14} />
 						</IconButton>
-					{:else}
-						<IconButton
-							size="small"
-							disabled
-							title="You cannot remove yourself from the project"
-						>
-							<IconTrash size={16} />
-						</IconButton>
-					{/if}
 				</div>
 			</div>
 		{/each}
