@@ -46,6 +46,7 @@ class DomainService
         ?string $customDkimPublicKey = null,
         ?string $customDkimPrivateKey = null,
         bool $flush = true,
+        bool $dispatch = true
     ): Domain {
         $domain = new Domain();
         $domain->setCreatedAt($this->now());
@@ -74,11 +75,13 @@ class DomainService
             $domain->setDkimPrivateKeyEncrypted($this->encryption->encryptString($privateKey));
         }
 
+        $this->em->persist($domain);
 
         if ($flush) {
-            $this->em->persist($domain);
             $this->em->flush();
+        }
 
+        if ($dispatch) {
             $this->eventDispatcher->dispatch(new DomainCreatedEvent($domain));
         }
 

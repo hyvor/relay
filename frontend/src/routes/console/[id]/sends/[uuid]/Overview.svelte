@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { DetailCards, DetailCard, Tag } from '@hyvor/design/components';
+	import { DetailCards, DetailCard, Tag, IconMessage } from '@hyvor/design/components';
 	import type { Send } from '../../../types';
 	import SendStatus from '../RecipientStatuses.svelte';
 	import RelativeTime from '../../../@components/content/RelativeTime.svelte';
@@ -69,11 +69,15 @@
 <div class="attempts">
 	<div class="attempts-title">Delivery Attempts</div>
 
-	<div class="rows">
-		{#each send.attempts as attempt}
-			<AttemptRow {attempt} />
-		{/each}
-	</div>
+	{#if send.attempts.length}
+		<div class="rows">
+			{#each send.attempts as attempt}
+				<AttemptRow {attempt} />
+			{/each}
+		</div>
+	{:else}
+		<IconMessage empty message="No delivery attempts" padding={60} />
+	{/if}
 </div>
 
 <style>

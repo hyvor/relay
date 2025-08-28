@@ -5,6 +5,7 @@ namespace App\Service\Webhook;
 use App\Api\Console\Object\DomainObject;
 use App\Api\Console\Object\SendAttemptObject;
 use App\Api\Console\Object\SendObject;
+use App\Api\Console\Object\SuppressionObject;
 use App\Entity\Project;
 use App\Entity\Type\SendAttemptStatus;
 use App\Entity\Type\WebhooksEventEnum;
@@ -12,6 +13,8 @@ use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Service\Domain\Event\DomainDeletedEvent;
 use App\Service\Domain\Event\DomainStatusChangedEvent;
 use App\Service\Send\Event\SendAttemptCreatedEvent;
+use App\Service\Suppression\Event\SuppressionCreatedEvent;
+use App\Service\Suppression\Event\SuppressionDeletedEvent;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 
 class WebhookEventListener
@@ -89,12 +92,32 @@ class WebhookEventListener
     }
 
     #[AsEventListener]
-    public function onDomainDeleted(DomainDeletedEvent $event): void
+    public function onDomainDelete(DomainDeletedEvent $event): void
     {
         $this->createWebhookDeliveries(
             $event->domain->getProject(),
             WebhooksEventEnum::DOMAIN_DELETED,
             fn() => (object)['domain' => new DomainObject($event->domain)]
+        );
+    }
+
+    #[AsEventListener]
+    public function onSuppressionCreate(SuppressionCreatedEvent $event): void
+    {
+        $this->createWebhookDeliveries(
+            $event->suppression->getProject(),
+            WebhooksEventEnum::SUPPRESSION_CREATED,
+            fn() => (object)['suppression' => new SuppressionObject($event->suppression)]
+        );
+    }
+
+    #[AsEventListener]
+    public function onSuppressionDelete(SuppressionDeletedEvent $event): void
+    {
+        $this->createWebhookDeliveries(
+            $event->suppression->getProject(),
+            WebhooksEventEnum::SUPPRESSION_DELETED,
+            fn() => (object)['suppression' => new SuppressionObject($event->suppression)]
         );
     }
 }

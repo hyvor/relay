@@ -6,6 +6,7 @@ use App\Api\Console\Authorization\AuthorizationListener;
 use App\Entity\ApiKey;
 use App\Entity\Domain;
 use App\Entity\Project;
+use App\Entity\ProjectUser;
 use App\Entity\Send;
 use App\Entity\Suppression;
 use App\Entity\Webhook;
@@ -26,6 +27,7 @@ class EntityResolver implements ValueResolverInterface
         'api-keys' => ApiKey::class,
         'webhooks' => Webhook::class,
         'suppressions' => Suppression::class,
+        'project-users' => ProjectUser::class,
     ];
 
     public function __construct(

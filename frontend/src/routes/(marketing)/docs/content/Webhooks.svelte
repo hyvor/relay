@@ -236,6 +236,46 @@
     Objects: <a href="/docs/api-console#domain-object">Domain</a>
 </p>
 
+<h3 id="suppression-created">suppression.created</h3>
+
+<p>
+    This event is triggered when a suppression is created for an outgoing email. This could either
+    be due to a <code>hard-bounce</code> or a <code>complaint</code>.
+</p>
+
+<CodeBlock
+    code={`
+{
+    suppression: Suppression;
+}
+`}
+    language="ts"
+/>
+
+<p>
+    Objects: <a href="/docs/api-console#suppression-object">Suppression</a>
+</p>
+
+
+<h3 id="suppression-deleted">suppression.deleted</h3>
+
+<p>
+    This event is triggered when a suppression is deleted from your Hyvor Relay project.
+</p>
+
+<CodeBlock
+    code={`
+{
+    suppression: Suppression;
+}
+`}
+    language="ts"
+/>
+
+<p>
+    Objects: <a href="/docs/api-console#suppression-object">Suppression</a>
+</p>
+
 <!--<h3 id="domain-verified">domain.verified</h3>-->
 
 <!--<p>-->

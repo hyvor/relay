@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"log/slog"
 	"testing"
 
@@ -83,7 +84,7 @@ This is a test email message.
 		InstanceDomain: "relay.com",
 	}
 
-	m.Handle(pgpool, &slog.Logger{}, &Metrics{})
+	m.Handle(pgpool, slog.New(slog.NewTextHandler(io.Discard, nil)), newMetrics())
 
 	// get debug incoming mail (table debug_incoming_emails)
 	var debugType DebugIncomingType = DebugIncomingTypeBounce

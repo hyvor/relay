@@ -17,7 +17,7 @@ type IncomingMail struct {
 }
 
 // call after the data is read
-func (m *IncomingMail) Handle(pgpool *pgxpool.Pool, logger *slog.Logger, metrics *Metrics) {
+func (m *IncomingMail) Handle(ctx context.Context, pgpool *pgxpool.Pool, logger *slog.Logger, metrics *Metrics) {
 
 	isBounce, bounceUuid := checkBounceEmail(m.RcptTo, m.InstanceDomain)
 	isFbl := checkFbl(m.RcptTo, m.InstanceDomain)
@@ -34,6 +34,7 @@ func (m *IncomingMail) Handle(pgpool *pgxpool.Pool, logger *slog.Logger, metrics
 		return
 	}
 
+	var payload map[string]interface{}
 	var debugType DebugIncomingType
 	var debugStatus DebugIncomingStatus
 	var debugErrorMessage string
@@ -53,8 +54,11 @@ func (m *IncomingMail) Handle(pgpool *pgxpool.Pool, logger *slog.Logger, metrics
 		} else {
 
 			debugParsedData = bounceDsn
-			m.finalizeBounce(bounceDsn, bounceUuid, pgpool, logger)
-
+			// m.finalizeBounce(bounceDsn, bounceUuid, pgpool, logger)
+			payload = map[string]interface{}{
+				"dsn": bounceDsn,
+				"bounce_uuid": bounceUuid,
+			}
 		}
 
 	} else if isFbl {
@@ -69,24 +73,34 @@ func (m *IncomingMail) Handle(pgpool *pgxpool.Pool, logger *slog.Logger, metrics
 			debugErrorMessage = err.Error()
 		} else {
 			debugParsedData = arf
-			m.finalizeFbl(arf, pgpool, logger)
+			// m.finalizeFbl(arf, pgpool, logger)
+			payload = map[string]interface{}{
+				"arf": arf,
+			}
 		}
 
 	}
 
 	metrics.incomingEmailsTotal.WithLabelValues(string(debugType)).Inc()
 
-	createDebugRecord(
-		pgpool,
-		logger,
-		debugType,
-		debugStatus,
-		m.Data,
-		m.MailFrom,
-		m.RcptTo,
-		debugParsedData,
-		debugErrorMessage,
-	)
+	payload["error"] = debugErrorMessage
+	payload["raw_email"] = m.Data
+	payload["mail_from"] = m.MailFrom
+	payload["rcpt_to"] = m.RcptTo
+
+	CallLocalApi(ctx, "POST", "/incoming", payload, nil)
+
+	// createDebugRecord(
+	// 	pgpool,
+	// 	logger,
+	// 	debugType,
+	// 	debugStatus,
+	// 	m.Data,
+	// 	m.MailFrom,
+	// 	m.RcptTo,
+	// 	debugParsedData,
+	// 	debugErrorMessage,
+	// )
 
 }
 
@@ -233,7 +247,7 @@ func incomingMailWorker(
 			if mail == nil {
 				continue
 			}
-			mail.Handle(pgpool, logger, metrics)
+			mail.Handle(ctx, pgpool, logger, metrics)
 		}
 	}
 

@@ -65,8 +65,8 @@ func (f *TestFactory) Project() (int, error) {
 
 	var projectId int
 	err := f.conn.QueryRow(`
-		INSERT INTO projects (created_at, updated_at, user_id, name)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO projects (created_at, updated_at, user_id, name, send_type)
+		VALUES ($1, $2, $3, $4, 'transactional')
 		RETURNING id
 	`, now, now, randomUserId, randomName).Scan(&projectId)
 
@@ -119,11 +119,20 @@ type FactorySend struct {
 	ProjectId   int
 	DomainId    int
 	QueueId     int
+	Queued      bool
+	SendAfter   time.Time
 	FromAddress string
 	ToAddress   string
 	Subject     string
 	BodyHtml    string
 	BodyText    string
+}
+
+type FactorySendRecipient struct {
+	Type    string // "to", "cc", "bcc"
+	Status  string // "queued", "accepted", "retrying", "bounced", "complained", "failed"
+	Address string
+	Name    string
 }
 
 func (m *TestFactory) Send(send *FactorySend) (*FactorySend, error) {
@@ -151,23 +160,41 @@ func (m *TestFactory) Send(send *FactorySend) (*FactorySend, error) {
 	err = m.conn.QueryRow(`
 		INSERT INTO sends (
 			created_at, updated_at, send_after, project_id, domain_id, queue_id,
-			queue_name, from_address, to_address, subject, body_html, body_text,
-			headers, message_id, raw, status, try_count
+			queue_name, from_address, subject, body_html, body_text,
+			headers, message_id, raw,
+			size_bytes, queued
 		) VALUES (
 			$1, $2, $3, $4, $5, $6,
-			$7, $8, $9, $10, $11, $12,
-			$13, $14, $15, $16, $17
+			$7, $8, $9, $10, $11,
+			$12, $13, $14,
+			0, $15
 		) RETURNING id, uuid
-	`, now, now, now, projectId, send.DomainId, queueId,
-		"test-queue", send.FromAddress, send.ToAddress, send.Subject,
+	`, now, now, send.SendAfter, projectId, send.DomainId, queueId,
+		"test-queue", send.FromAddress, send.Subject,
 		send.BodyHtml, send.BodyText, nil, "test-message-id", "raw-email-content",
-		"queued", 0).Scan(&send.Id, &send.Uuid)
+		send.Queued,
+	).Scan(&send.Id, &send.Uuid)
 
 	if err != nil {
 		return nil, err
 	}
 
 	return send, nil
+
+}
+
+func (f *TestFactory) SendRecipient(send *FactorySend, recipients *FactorySendRecipient) error {
+
+	_, err := f.conn.Exec(`
+		INSERT INTO send_recipients (
+			send_id, type, status, address, name
+		) VALUES (
+			$1, $2, $3, $4, $5
+		)
+	`, send.Id, recipients.Type, recipients.Status,
+		recipients.Address, recipients.Name)
+
+	return err
 
 }
 

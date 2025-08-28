@@ -5,6 +5,7 @@ export function getSends(
 	status: SendStatus | null,
 	from_search : string | null,
     to_search : string | null,
+	subject_search : string | null,
 	limit: number,
 	offset: number
 ) {
@@ -14,6 +15,7 @@ export function getSends(
 			status,
 			from_search,
             to_search,
+			subject_search,
 			limit,
 			offset
 		}

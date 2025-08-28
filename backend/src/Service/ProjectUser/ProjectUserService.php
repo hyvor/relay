@@ -25,6 +25,14 @@ class ProjectUserService
         return $this->em->getRepository(ProjectUser::class)->findBy(['user_id' => $userId]);
     }
 
+    /**
+     * @return ProjectUser[]
+     */
+    public function getProjectUsers(Project $project): array
+    {
+        return $this->em->getRepository(ProjectUser::class)->findBy(['project' => $project]);
+    }
+
     public function getProjectUser(Project $project, int $userId): ?ProjectUser
     {
         return $this->em->getRepository(ProjectUser::class)
@@ -37,7 +45,8 @@ class ProjectUserService
     public function createProjectUser(
         Project $project,
         int $userId,
-        array $scopes = []
+        array $scopes = [],
+        bool $flush = true
     ): ProjectUser {
         $projectUser = new ProjectUser();
         $projectUser->setCreatedAt($this->now());
@@ -47,7 +56,10 @@ class ProjectUserService
         $projectUser->setScopes($scopes);
 
         $this->em->persist($projectUser);
-        $this->em->flush();
+
+        if ($flush) {
+            $this->em->flush();
+        }
 
         return $projectUser;
     }
@@ -59,6 +71,13 @@ class ProjectUserService
         );
         $query->setParameter('project', $project);
         $query->execute();
+
+        $this->em->clear();
     }
 
+    public function deleteProjectUser(ProjectUser $projectUser): void
+    {
+        $this->em->remove($projectUser);
+        $this->em->flush();
+    }
 }

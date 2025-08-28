@@ -16,7 +16,7 @@ final class Version20250729173434 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql("CREATE TYPE debug_incoming_emails_type AS ENUM ('bounce', 'fbl')");
+        $this->addSql("CREATE TYPE debug_incoming_emails_type AS ENUM ('bounce', 'complaint')");
         $this->addSql("CREATE TYPE debug_incoming_emails_status AS ENUM ('success', 'failed')");
 
         $this->addSql(<<<SQL

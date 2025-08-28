@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { NavLink } from '@hyvor/design/components';
 	import IconCardText from '@hyvor/icons/IconCardText';
+	import IconPeople from '@hyvor/icons/IconPeople';
 	import { getCurrentProject } from '../../lib/stores/projectStore.svelte';
 
 	interface Props {
@@ -21,6 +22,13 @@
 				<IconCardText />
 			{/snippet}
 			Project
+		</NavLink>
+
+		<NavLink href={`${prefix}/users`} active={page.url.pathname === `${prefix}/users`}>
+			{#snippet start()}
+				<IconPeople />
+			{/snippet}
+			Users
 		</NavLink>
 
 		<div class="section-div"></div>
