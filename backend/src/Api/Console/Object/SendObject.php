@@ -4,6 +4,7 @@ namespace App\Api\Console\Object;
 
 use App\Entity\Send;
 use App\Entity\SendAttempt;
+use App\Entity\SendFeedback;
 
 class SendObject
 {
@@ -29,11 +30,18 @@ class SendObject
     public array $attempts = [];
 
     /**
+     * @var SendFeedbackObject[]
+     */
+    public array $feedback = [];
+
+    /**
      * @param SendAttempt[] $attempts
+     * @param SendFeedback[] $feedback
      */
     public function __construct(
         Send $send,
         array $attempts = [],
+        array $feedback = [],
         bool $content = false
     )
     {
@@ -50,5 +58,6 @@ class SendObject
 
         $this->recipients = array_map(fn($recipient) => new SendRecipientObject($recipient), $send->getRecipients());
         $this->attempts = array_map(fn(SendAttempt $attempt) => new SendAttemptObject($attempt), $attempts);
+        $this->feedback = array_map(fn(SendFeedback $fb) => new SendFeedbackObject($fb), $feedback);
     }
 }

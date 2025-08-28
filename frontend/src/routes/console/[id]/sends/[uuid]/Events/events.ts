@@ -1,4 +1,4 @@
-import type { SendAttempt } from "../../../../types";
+import type { SendAttempt, SendFeedback } from "../../../../types";
 
 
 export type Event = {
@@ -6,4 +6,5 @@ export type Event = {
     type: 'queued' | 'attempt' | 'feedback';
     recipients_count?: number; // for queued
     attempt?: SendAttempt;
+    feedback?: SendFeedback;
 };

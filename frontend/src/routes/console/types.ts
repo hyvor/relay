@@ -76,6 +76,7 @@ export type Send = {
 
     recipients: SendRecipient[];
     attempts: SendAttempt[];
+    feedback: SendFeedback[];
 }
 
 export type SendRecipientStatus = 'queued' | 'accepted' | 'retrying' | 'bounced' | 'failed' | 'complained';
@@ -100,6 +101,14 @@ export interface SendAttempt {
     accepted_mx_host: string | null;
     smtp_conversations: Record<string, SmtpConversation>;
     error: string | null;
+}
+
+export interface SendFeedback {
+    id: number;
+    created_at: number;
+    type: 'bounce' | 'complaint';
+    recipient_id: number;
+    debug_incoming_email_id: number;
 }
 
 export interface SmtpConversation {

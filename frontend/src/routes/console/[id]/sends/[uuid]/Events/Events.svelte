@@ -27,6 +27,15 @@
 			});
 		}
 
+		// add feedback
+		for (const feedback of send.feedback) {
+			events.push({
+				timestamp: feedback.created_at,
+				type: 'feedback',
+				feedback
+			});
+		}
+
 		events.sort((a, b) => b.timestamp - a.timestamp);
 
 		return events;
@@ -41,7 +50,7 @@
 	{#if events.length}
 		<div class="rows">
 			{#each events as event}
-				<EventComponent {event} />
+				<EventComponent {event} {send} />
 			{/each}
 		</div>
 	{/if}

@@ -1,16 +1,31 @@
 <script lang="ts">
 	import dayjs from 'dayjs';
 	import type { Event } from './events';
-	import type { SendAttempt } from '../../../../types';
+	import type { Send, SendAttempt, SendFeedback } from '../../../../types';
 	import IconHourglass from '@hyvor/icons/IconHourglass';
 	import IconSend from '@hyvor/icons/IconSend';
 	import IconChat from '@hyvor/icons/IconChat';
 
 	interface Props {
 		event: Event;
+		send: Send;
 	}
 
-	let { event }: Props = $props();
+	let { event, send }: Props = $props();
+
+	function getRecipientsOfDomain(domain: string): string[] {
+		const recipients = send.recipients
+			.filter((r) => {
+				const emailDomain = r.address.split('@')[1];
+				return emailDomain === domain;
+			})
+			.map((r) => r.address);
+		return recipients;
+	}
+
+	function getRecipientsOfDomainJoined(domain: string): string {
+		return getRecipientsOfDomain(domain).join(', ');
+	}
 
 	let { message, description, color } = $derived.by(() => {
 		switch (event.type) {
@@ -23,30 +38,45 @@
 			case 'attempt':
 				return getAttemptMessage(event.attempt!);
 			case 'feedback':
-				return {
-					message: 'Feedback received',
-					description: null,
-					color: 'var(--red)'
-				};
+				return getFeedbackMessage(event.feedback!);
 		}
 
 		function getAttemptMessage(attempt: SendAttempt) {
 			if (attempt.status === 'accepted') {
 				return {
-					message: `Accepted by ${attempt.domain}`,
+					message: `Accepted: ${getRecipientsOfDomainJoined(attempt.domain)}`,
 					description: null,
 					color: 'var(--green)'
 				};
 			} else if (attempt.status === 'deferred') {
 				return {
-					message: `Deferred by ${attempt.domain}, retrying later.`,
+					message: `Deferred (retrying later): ${getRecipientsOfDomainJoined(attempt.domain)}`,
 					description: attempt.error,
 					color: 'var(--orange)'
 				};
 			} else {
 				return {
-					message: `Bounced by ${attempt.domain}`,
+					message: `Bounced: ${getRecipientsOfDomainJoined(attempt.domain)}`,
 					description: attempt.error,
+					color: 'var(--red)'
+				};
+			}
+		}
+
+		function getFeedbackMessage(feedback: SendFeedback) {
+			const recipient = send.recipients.find((r) => r.id === feedback.recipient_id);
+			const recipientEmail = recipient ? recipient.address : 'unknown recipient';
+
+			if (feedback.type === 'bounce') {
+				return {
+					message: `Bounced: <strong>${recipientEmail}</strong>`,
+					description: null,
+					color: 'var(--red)'
+				};
+			} else {
+				return {
+					message: `Marked as spam: <strong>${recipientEmail}</strong>`,
+					description: null,
 					color: 'var(--red)'
 				};
 			}
@@ -66,7 +96,7 @@
 	</div>
 
 	<div class="message-wrap">
-		<div class="message">{message}</div>
+		<div class="message">{@html message}</div>
 		<div class="description">
 			{description}
 		</div>
