@@ -1,6 +1,6 @@
 
 test:
-	go test ./...
+	go test ./... -coverprofile=coverage.out
 
 coverage:
 	@echo "Running tests, generating coverage report...\n"

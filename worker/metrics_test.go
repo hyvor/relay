@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"io"
-	"log/slog"
 	"net/http"
 	"testing"
 	"time"
@@ -13,8 +12,9 @@ import (
 
 func TestCreateMetricsServer(t *testing.T) {
 
-	ctx := context.Background()
-	logger := slog.Default()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	logger := slogDiscard()
 
 	metricsServer := NewMetricsServer(ctx, logger)
 	assert.NotNil(t, metricsServer)
@@ -23,8 +23,11 @@ func TestCreateMetricsServer(t *testing.T) {
 
 func TestMetricsHttpServerNotLeader(t *testing.T) {
 
-	ctx := context.Background()
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	logger := slogDiscard()
 
 	metricsServer := NewMetricsServer(ctx, logger)
 	metricsServer.Set(GoState{
@@ -55,10 +58,13 @@ func TestMetricsHttpServerNotLeader(t *testing.T) {
 
 func TestMetricsHttpServerLeader(t *testing.T) {
 
+	t.Parallel()
+
 	loadEnvFiles()
 
-	ctx := context.Background()
-	logger := slog.Default()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	logger := slogDiscard()
 
 	metricsServer := NewMetricsServer(ctx, logger)
 	metricsServer.Set(GoState{

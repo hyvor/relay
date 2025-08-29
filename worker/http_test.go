@@ -84,7 +84,7 @@ func TestDebugParseBounce(t *testing.T) {
 	}
 	StartHttpServer(context, serviceState)
 
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(1200 * time.Millisecond)
 
 	raw := []byte(`To: <bounce@relay.hyvor.com>
 Content-Type: multipart/report; report-type=delivery-status;
@@ -128,7 +128,7 @@ func TestDebugParseFbl(t *testing.T) {
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	serviceState := &ServiceState{
-		Logger: slog.Default(),
+		Logger: slogDiscard(),
 	}
 	StartHttpServer(context, serviceState)
 

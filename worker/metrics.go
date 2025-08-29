@@ -171,7 +171,7 @@ func (server *MetricsServer) Set(goState GoState) {
 	server.registry.Unregister(server.metrics.dnsQueriesTotal)
 
 	// register global metrics if the current server is the leader
-	if goState.IsLeader {
+	if server.isLeader {
 		server.registry.MustRegister(
 			server.metrics.relayInfo,
 			server.metrics.emailQueueSize,
@@ -232,16 +232,16 @@ func (server *MetricsServer) Set(goState GoState) {
 // stops and restarts the global metrics updater
 func (server *MetricsServer) StartGlobalMetricsUpdater() {
 
+	if !server.isLeader {
+		return
+	}
+
 	if server.cancelGlobalMetricsUpdater != nil {
 		server.cancelGlobalMetricsUpdater()
 	}
 
 	ctx, cancel := context.WithCancel(server.ctx)
 	server.cancelGlobalMetricsUpdater = cancel
-
-	if !server.isLeader {
-		return
-	}
 
 	go func() {
 		for {
