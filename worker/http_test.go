@@ -16,6 +16,8 @@ import (
 
 func TestPingAndReady(t *testing.T) {
 
+	localHttpPort = ":43000"
+
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	serviceState := &ServiceState{
@@ -25,14 +27,14 @@ func TestPingAndReady(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	resp, err := http.Get("http://localhost:8085/ping")
+	resp, err := http.Get("http://localhost" + localHttpPort + "/ping")
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	body, _ := io.ReadAll(resp.Body)
 	assert.Equal(t, "ok", string(body))
 
-	resp, err = http.Get("http://localhost:8085/ready")
+	resp, err = http.Get("http://localhost" + localHttpPort + "/ready")
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 	assert.Equal(t, 503, resp.StatusCode)
@@ -40,7 +42,7 @@ func TestPingAndReady(t *testing.T) {
 	assert.Equal(t, "not ready", string(body))
 
 	serviceState.IsSet = true
-	resp, err = http.Get("http://localhost:8085/ready")
+	resp, err = http.Get("http://localhost" + localHttpPort + "/ready")
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -53,6 +55,8 @@ func TestPingAndReady(t *testing.T) {
 
 func TestSetState(t *testing.T) {
 
+	localHttpPort = ":43005"
+
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -64,7 +68,7 @@ func TestSetState(t *testing.T) {
 
 	jsonData := `{"is_set": true}`
 
-	resp, err := http.Post("http://localhost:8085/state", "application/json", strings.NewReader(jsonData))
+	resp, err := http.Post("http://localhost:43005/state", "application/json", strings.NewReader(jsonData))
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)

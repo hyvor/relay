@@ -11,6 +11,8 @@ import (
 	"os"
 )
 
+// calls Symfony local API
+
 var ErrUnexpectedStatusCode = errors.New("unexpected status code")
 
 func localApiUrl(endpoint string) string {
