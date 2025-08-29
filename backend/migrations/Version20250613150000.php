@@ -28,6 +28,7 @@ final class Version20250613150000 extends AbstractMigration
                 ip_address_id BIGINT NOT NULL references ip_addresses(id) ON DELETE CASCADE,
                 status send_attempt_status NOT NULL,
                 try_count INT NOT NULL DEFAULT 0,
+                domain text NOT NULL,
                 resolved_mx_hosts jsonb NOT NULL,
                 responded_mx_host text,
                 smtp_conversations jsonb NOT NULL,

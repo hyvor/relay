@@ -26,7 +26,7 @@ class SendFeedback
 
     #[ORM\ManyToOne(targetEntity: SendRecipient::class)]
     #[ORM\JoinColumn]
-    private SendRecipient $sendRecipient;
+    private SendRecipient $send_recipient;
 
     #[ORM\OneToOne(targetEntity: DebugIncomingEmail::class)]
     #[ORM\JoinColumn]
@@ -78,12 +78,12 @@ class SendFeedback
 
     public function getSendRecipient(): SendRecipient
     {
-        return $this->sendRecipient;
+        return $this->send_recipient;
     }
 
-    public function setSendRecipient(SendRecipient $sendRecipient): static
+    public function setSendRecipient(SendRecipient $send_recipient): static
     {
-        $this->sendRecipient = $sendRecipient;
+        $this->send_recipient = $send_recipient;
         return $this;
     }
 

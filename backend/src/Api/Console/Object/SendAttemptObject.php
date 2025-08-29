@@ -13,6 +13,8 @@ class SendAttemptObject
     public SendAttemptStatus $status;
     public int $try_count;
 
+    public string $domain;
+
     /**
      * @var string[]
      */
@@ -31,6 +33,7 @@ class SendAttemptObject
         $this->created_at = $attempt->getCreatedAt()->getTimestamp();
         $this->status = $attempt->getStatus();
         $this->try_count = $attempt->getTryCount();
+        $this->domain = $attempt->getDomain();
         $this->resolved_mx_hosts = $attempt->getResolvedMxHosts();
         $this->accepted_mx_host = $attempt->getRespondedMxHost();
         $this->smtp_conversations = $attempt->getSmtpConversations();

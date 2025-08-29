@@ -5,7 +5,6 @@ namespace App\Entity;
 use App\Entity\Type\SendAttemptStatus;
 use App\Repository\SendAttemptRepository;
 use Doctrine\ORM\Mapping as ORM;
-use App\Entity\Type\SendStatus;
 
 #[ORM\Entity(repositoryClass: SendAttemptRepository::class)]
 #[ORM\Table(name: "send_attempts")]
@@ -39,6 +38,9 @@ class SendAttempt
 
     #[ORM\Column(type: "integer", options: ["default" => 0])]
     private int $try_count = 0;
+
+    #[ORM\Column()]
+    private string $domain;
 
     #[ORM\Column(type: "string", nullable: true)]
     private ?string $responded_mx_host = null;
@@ -156,6 +158,17 @@ class SendAttempt
     public function setTryCount(int $try_count): static
     {
         $this->try_count = $try_count;
+        return $this;
+    }
+
+    public function getDomain(): string
+    {
+        return $this->domain;
+    }
+
+    public function setDomain(string $domain): static
+    {
+        $this->domain = $domain;
         return $this;
     }
 
