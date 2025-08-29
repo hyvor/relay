@@ -15,12 +15,12 @@
 	let isLoading = $state(true);
 
 	onMount(() => {
-		const projectId = page.params.id;
+		const projectId = page.params.id ?? '';
 		loadProject(projectId)
 			.then(() => {
 				isLoading = false;
 			})
-			.catch((e) => {
+			.catch(() => {
 				toast.error('Unable to load Project');
 			});
 	});

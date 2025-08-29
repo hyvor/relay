@@ -13,6 +13,7 @@ use App\Entity\Type\DomainStatus;
 use App\Service\Domain\DomainService;
 use App\Service\Domain\DomainStatusService;
 use App\Service\Domain\Exception\DkimVerificationFailedException;
+use App\Service\Domain\Exception\DomainDeletionFailedException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -110,8 +111,12 @@ class DomainController extends AbstractController
     ): JsonResponse {
         $domain = $input->validateAndGetDomain($project, $this->domainService);
 
-        $this->domainService->deleteDomain($domain);
-        return new JsonResponse([]);
-    }
+        try {
+            $this->domainService->deleteDomain($domain);
+        } catch (DomainDeletionFailedException $e) {
+            throw new BadRequestHttpException('Domain deletion failed: ' . $e->getMessage(), previous: $e);
+        }
 
+        return new JsonResponse();
+    }
 }

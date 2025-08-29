@@ -26,7 +26,7 @@
 <svelte:window bind:innerWidth={width} />
 
 <div class="wrap hds-box">
-	<button class="current" on:click={triggerProjectSelection}>
+	<button class="current" onclick={triggerProjectSelection}>
 		<div class="left">
 			<div class="name">
 				{project.name}
