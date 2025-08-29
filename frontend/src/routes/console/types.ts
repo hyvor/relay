@@ -49,8 +49,12 @@ export type Scope =
     'analytics.read';
 
 export interface ProjectUser {
+    id: number;
+	created_at: number;
     scopes: Scope[];
     project: Project;
+	user: ProjectUserMiniObject;
+	oidc_sub: string | null;
 }
 
 export type Project = {
@@ -177,9 +181,17 @@ export type Domain = {
     dkim_error_message?: string;
 }
 
-
 export interface AnalyticsStats {
     sends_30d: number;
     bounce_rate_30d: number;
     complaint_rate_30d: number;
+}
+
+export interface ProjectUserMiniObject {
+	id: number;
+	name: string;
+	email: string;
+	username: string | null;
+	picture_url: string | null;
+	oidc_sub: string | null;
 }

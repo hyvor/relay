@@ -60,19 +60,21 @@ class InstanceService
             'private' => $privateKey,
         ] = Dkim::generateDkimKeys();
 
-        $systemProject = $this->projectService->createProject(
+        $newProject = $this->projectService->createProject(
             0,
             'System',
             ProjectSendType::TRANSACTIONAL,
             flush: false
         );
+        $systemProject = $newProject['project'];
         $systemProjectDomain = $this->domainService->createDomain(
             $systemProject,
             self::DEFAULT_DOMAIN,
             dkimSelector: self::DEFAULT_DKIM_SELECTOR,
             customDkimPublicKey: $publicKey,
             customDkimPrivateKey: $privateKey,
-            flush: false
+            flush: false,
+            dispatch: false
         );
 
         $instance = new Instance();
@@ -98,10 +100,6 @@ class InstanceService
 
         if ($updates->domainSet) {
             $instance->setDomain($updates->domain);
-        }
-
-        if ($updates->privateNetworkCidrSet) {
-            $instance->setPrivateNetworkCidr($updates->privateNetworkCidr);
         }
 
         $instance->setUpdatedAt($this->now());
