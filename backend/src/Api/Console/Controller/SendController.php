@@ -18,6 +18,7 @@ use App\Service\Send\EmailAddressFormat;
 use App\Service\Send\Exception\EmailTooLargeException;
 use App\Service\Send\SendService;
 use App\Service\Queue\QueueService;
+use App\Service\SendFeedback\SendFeedbackService;
 use App\Service\Suppression\SuppressionService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
@@ -33,6 +34,7 @@ class SendController extends AbstractController
 {
     public function __construct(
         private SendService $sendService,
+        private SendFeedbackService $sendFeedbackService,
         private DomainService $domainService,
         private QueueService $queueService,
         private SuppressionService $suppressionService
@@ -166,7 +168,14 @@ class SendController extends AbstractController
     public function getById(Send $send): JsonResponse
     {
         $attempts = $this->sendService->getSendAttemptsOfSend($send);
-        return $this->json(new SendObject($send, $attempts, content: true));
+        $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
+
+        return $this->json(new SendObject(
+            $send,
+            attempts: $attempts,
+            feedback: $feedback,
+            content: true
+        ));
     }
 
     #[Route("/sends/uuid/{uuid}", requirements: ['uuid' => Requirement::UUID], methods: "GET")]
@@ -186,8 +195,14 @@ class SendController extends AbstractController
         }
 
         $attempts = $this->sendService->getSendAttemptsOfSend($send);
+        $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
 
-        return $this->json(new SendObject($send, $attempts, content: true));
+        return $this->json(new SendObject(
+            $send,
+            attempts: $attempts,
+            feedback: $feedback,
+            content: true
+        ));
     }
 
 }

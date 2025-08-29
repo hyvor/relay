@@ -4,6 +4,8 @@ namespace App\Command\Dev;
 
 use App\Api\Console\Authorization\Scope;
 use App\Entity\Type\DomainStatus;
+use App\Entity\Type\SendAttemptStatus;
+use App\Entity\Type\SendFeedbackType;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
 use App\Service\Instance\InstanceService;
@@ -15,6 +17,8 @@ use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
 use App\Tests\Factory\QueueFactory;
+use App\Tests\Factory\SendAttemptFactory;
+use App\Tests\Factory\SendFeedbackFactory;
 use App\Tests\Factory\SendRecipientFactory;
 use App\Tests\Factory\ServerFactory;
 use App\Tests\Factory\SendFactory;
@@ -134,13 +138,23 @@ class DevSeedCommand extends Command
             $type = $types[$typeKey];
 
             foreach (range(1, rand(1,2)) as $i) {
-                SendRecipientFactory::new()
+                $recipient = SendRecipientFactory::new()
                     ->distribute('status', SendRecipientStatus::cases())
                     ->create([
                         'send' => $send,
                         'type' => $type,
                     ]);
+
+                SendFeedbackFactory::createOne([
+                    'sendRecipient' => $recipient[0],
+                    'type' => SendFeedbackType::cases()[array_rand(SendFeedbackType::cases())],
+                ]);
             }
+
+            SendAttemptFactory::new()
+                ->distribute('status', SendAttemptStatus::cases())
+                ->create(['send' => $send]);
+
         }
 
         SuppressionFactory::createMany(16, [

@@ -54,7 +54,7 @@
 						{#snippet start()}
 							<IconCaretLeft size={12} />
 						{/snippet}
-						All Emails
+						All Sends
 					</Button>
 				</div>
 			</div>

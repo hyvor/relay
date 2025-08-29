@@ -3,6 +3,7 @@
 namespace App\Service\SendFeedback;
 
 use App\Entity\DebugIncomingEmail;
+use App\Entity\Send;
 use App\Entity\SendFeedback;
 use App\Entity\SendRecipient;
 use App\Entity\Type\SendFeedbackType;
@@ -15,6 +16,21 @@ class SendFeedbackService
     public function __construct(
         private EntityManagerInterface $em,
     ) {
+    }
+
+    /**
+     * @return SendFeedback[]
+     */
+    public function getFeedbackOfSend(Send $send): array
+    {
+        $qb = $this->em->createQueryBuilder();
+        $qb->select('sf')
+            ->from(SendFeedback::class, 'sf')
+            ->join('sf.send_recipient', 'sr')
+            ->where('sr.send = :send')
+            ->setParameter('send', $send);
+
+        return $qb->getQuery()->getResult();
     }
 
     public function createSendFeedback(
