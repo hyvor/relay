@@ -151,6 +151,8 @@ func newMetrics() *Metrics {
 	}
 }
 
+var metricsPort = ":9667"
+
 func (server *MetricsServer) Set(goState GoState) {
 
 	server.isLeader = goState.IsLeader
@@ -211,9 +213,9 @@ func (server *MetricsServer) Set(goState GoState) {
 			mux.Handle("/", handler)
 			mux.Handle("/metrics", handler)
 
-			server.logger.Info("Starting metrics server on :9667")
+			server.logger.Info("Starting metrics server on " + metricsPort)
 
-			if err := http.ListenAndServe(":9667", mux); err != nil {
+			if err := http.ListenAndServe(metricsPort, mux); err != nil {
 				server.logger.Error("Failed to start metrics server", "error", err)
 			}
 

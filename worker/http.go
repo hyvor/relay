@@ -5,9 +5,12 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/hyvor/relay/worker/bounceparse"
 )
+
+var localHttpPort = ":8085"
 
 func StartHttpServer(
 	ctx context.Context,
@@ -27,7 +30,7 @@ func StartHttpServer(
 	var handler http.Handler = mux
 
 	server := &http.Server{
-		Addr:    ":8085",
+		Addr:    localHttpPort,
 		Handler: handler,
 	}
 
@@ -40,10 +43,10 @@ func StartHttpServer(
 	go func() {
 		<-ctx.Done()
 
-		// shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), 5*time.Second)
-		// defer shutdownCtxCancel()
+		shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownCtxCancel()
 
-		if err := server.Shutdown(ctx); err != nil {
+		if err := server.Shutdown(shutdownCtx); err != nil {
 			httpServerLogger.Error("HTTP shutdown error" + err.Error())
 		}
 	}()

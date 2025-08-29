@@ -23,7 +23,7 @@ func TestCreateMetricsServer(t *testing.T) {
 
 func TestMetricsHttpServerNotLeader(t *testing.T) {
 
-	t.Parallel()
+	metricsPort = ":61000"
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -41,7 +41,7 @@ func TestMetricsHttpServerNotLeader(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond) // Wait for the HTTP server to start
 
-	resp, err := http.Get("http://localhost:9667/metrics")
+	resp, err := http.Get("http://localhost:61000/metrics")
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 
@@ -58,7 +58,7 @@ func TestMetricsHttpServerNotLeader(t *testing.T) {
 
 func TestMetricsHttpServerLeader(t *testing.T) {
 
-	t.Parallel()
+	metricsPort = ":61001"
 
 	loadEnvFiles()
 
@@ -78,7 +78,7 @@ func TestMetricsHttpServerLeader(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	resp, err := http.Get("http://localhost:9667/metrics")
+	resp, err := http.Get("http://localhost:61001/metrics")
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 

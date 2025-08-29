@@ -52,6 +52,7 @@ func TestPingAndReady(t *testing.T) {
 // ========== /state ==========
 
 func TestSetState(t *testing.T) {
+
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -77,6 +78,9 @@ func TestSetState(t *testing.T) {
 // ========== /debug/parse-bounce-fbl ==========
 
 func TestDebugParseBounce(t *testing.T) {
+
+	localHttpPort = ":43001"
+
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	serviceState := &ServiceState{
@@ -113,7 +117,7 @@ Content-Type: message/rfc822
 	rawBase64 := base64.StdEncoding.EncodeToString(raw)
 	jsonData := `{"raw": "` + rawBase64 + `","type": "bounce"}`
 
-	resp, err := http.Post("http://localhost:8085/debug/parse-bounce-fbl", "application/json", strings.NewReader(jsonData))
+	resp, err := http.Post("http://localhost"+localHttpPort+"/debug/parse-bounce-fbl", "application/json", strings.NewReader(jsonData))
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -125,6 +129,9 @@ Content-Type: message/rfc822
 }
 
 func TestDebugParseFbl(t *testing.T) {
+
+	localHttpPort = ":43002"
+
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	serviceState := &ServiceState{
@@ -139,7 +146,7 @@ func TestDebugParseFbl(t *testing.T) {
 	rawBase64 := base64.StdEncoding.EncodeToString(content)
 	jsonData := `{"raw": "` + rawBase64 + `","type": "fbl"}`
 
-	resp, err := http.Post("http://localhost:8085/debug/parse-bounce-fbl", "application/json", strings.NewReader(jsonData))
+	resp, err := http.Post("http://localhost"+localHttpPort+"/debug/parse-bounce-fbl", "application/json", strings.NewReader(jsonData))
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
