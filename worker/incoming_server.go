@@ -11,7 +11,6 @@ import (
 
 	"github.com/emersion/go-sasl"
 	smtp "github.com/emersion/go-smtp"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Inconming server is a simple SMTP server that handles incoming emails to the instance domain emails.
@@ -113,7 +112,6 @@ type IncomingMailServer struct {
 
 	smtpServer *smtp.Server
 	cancelFunc context.CancelFunc
-	pgpool     *pgxpool.Pool
 }
 
 func NewIncomingMailServer(ctx context.Context, logger *slog.Logger, metrics *Metrics) *IncomingMailServer {
@@ -165,14 +163,6 @@ func (server *IncomingMailServer) Start(ctx context.Context, instanceDomain stri
 	// channel
 	mailChannel := make(chan *IncomingMail)
 
-	// pgppool
-	pgpool, err := createNewRetryingPgPool(ctx, LoadDBConfig(), 1, int32(numWorkers))
-	if err != nil {
-		server.logger.Error("Failed to create pgpool", "error", err)
-		return
-	}
-	server.pgpool = pgpool
-
 	// worker context
 	workerCtx, cancel := context.WithCancel(ctx)
 	server.cancelFunc = cancel
@@ -187,10 +177,10 @@ func (server *IncomingMailServer) Start(ctx context.Context, instanceDomain stri
 	for i := 0; i < numWorkers; i++ {
 		go incomingMailWorker(
 			workerCtx,
+			i,
 			server.logger,
 			server.metrics,
 			mailChannel,
-			pgpool,
 		)
 	}
 

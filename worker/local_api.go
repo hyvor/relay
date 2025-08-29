@@ -26,7 +26,7 @@ func localApiUrl(endpoint string) string {
 	return baseUrl + "/api/local" + endpoint
 }
 
-func CallLocalApi(
+func handleCallLocalApi(
 	ctx context.Context,
 	method string,
 	endpoint string,
@@ -86,3 +86,5 @@ func CallLocalApi(
 	return nil
 
 }
+
+var CallLocalApi = handleCallLocalApi
