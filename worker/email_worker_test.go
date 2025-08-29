@@ -251,6 +251,7 @@ func TestEmailWorker_AttemptsToSendToGroupByDomain(t *testing.T) {
 		AttemptSendToDomainFunc: func(
 			domainWg *sync.WaitGroup,
 			domainQueryMutex *sync.Mutex,
+			attemptCh chan<- AttemptData,
 			send *SendRow,
 			domain string,
 			recipients []*RecipientRow,
@@ -279,5 +280,77 @@ func TestEmailWorker_AttemptsToSendToGroupByDomain(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, 1, len(gmailRecipients))
 	assert.Equal(t, "nadil@gmail.com", gmailRecipients[0].Address)
+
+}
+
+func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
+
+	truncateTestDb()
+
+	factory, err := NewTestFactory()
+	assert.NoError(t, err)
+
+	send, err := factory.Send(&FactorySend{
+		Queued:    true,
+		SendAfter: time.Now().Add(-10 * time.Hour),
+	})
+	assert.NoError(t, err)
+
+	err = factory.SendRecipient(send, &FactorySendRecipient{
+		Address: "supun@hyvor.com",
+		Type:    "to",
+		Status:  "queued",
+	})
+	assert.NoError(t, err)
+
+	wg := &sync.WaitGroup{}
+	mx := &sync.Mutex{}
+	attemptCh := make(chan AttemptData, 1)
+	sendRow := &SendRow{
+		Id:   send.Id,
+		Uuid: send.Uuid,
+		From: send.FromAddress,
+	}
+	domain := "hyvor.com"
+	recipients := []*RecipientRow{
+		{
+			Id:       1,
+			Type:     "to",
+			Address:  "supun@hyvor.com",
+			TryCount: 0,
+		},
+	}
+	sendTx, err := NewSendTransaction(context.Background(), factory.conn)
+	assert.NoError(t, err)
+
+	worker := &EmailWorker{
+		ctx:    context.Background(),
+		logger: slogDiscard(),
+		ip: GoStateIp{
+			QueueId: send.QueueId,
+		},
+	}
+
+	sendEmail = func(
+		send *SendRow,
+		recipients []*RecipientRow,
+		rcptDomain string,
+		instanceDomain string,
+		ipId int,
+		ip string,
+		ptr string,
+	) *SendResult {
+		return &SendResult{}
+	}
+
+	worker.attemptSendToDomain(
+		wg,
+		mx,
+		attemptCh,
+		sendRow,
+		domain,
+		recipients,
+		sendTx,
+	)
 
 }
