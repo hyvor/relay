@@ -107,6 +107,7 @@ type EmailWorker struct {
 	AttemptSendToDomainFunc func(
 		domainWg *sync.WaitGroup,
 		domainQueryMutex *sync.Mutex,
+		attemptCh chan<- AttemptData,
 		send *SendRow,
 		domain string,
 		recipients []*RecipientRow,
@@ -169,6 +170,11 @@ func (worker *EmailWorker) Start() {
 
 }
 
+type AttemptData struct {
+	SendAttemptId int
+	Error         error
+}
+
 // This tries to handle one send within a transaction.
 // The select statement uses FOR UPDATE SKIP LOCKED,
 // which skips locked rows in other queries until the current transaction is committed or rolled back.
@@ -210,7 +216,8 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 
 	recipientsByDomain := getRecipientsGroupedByDomain(recipients)
 
-	var sendAttemptIds []int // TODO: this
+	var sendAttemptIds []int
+	attemptCh := make(chan AttemptData, len(recipients))
 
 	domainsCount := len(recipientsByDomain)
 	domainWg := sync.WaitGroup{}
@@ -221,6 +228,7 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 		go worker.AttemptSendToDomainFunc(
 			&domainWg,
 			domainQueryMutex,
+			attemptCh,
 			send,
 			domain,
 			rcpts,
@@ -228,7 +236,19 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 		)
 	}
 
-	domainWg.Wait()
+	go func() {
+		domainWg.Wait()
+		close(attemptCh)
+	}()
+
+	for attempt := range attemptCh {
+		if attempt.Error != nil {
+			sendTx.Rollback()
+			return attempt.Error
+		} else {
+			sendAttemptIds = append(sendAttemptIds, attempt.SendAttemptId)
+		}
+	}
 
 	if err := sendTx.FinalizeSend(send); err != nil {
 		worker.logger.Error("Email worker failed to finalize send: "+err.Error(), "send_id", send.Id)
@@ -255,6 +275,7 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 func (worker *EmailWorker) attemptSendToDomain(
 	domainWg *sync.WaitGroup,
 	domainQueryMutex *sync.Mutex,
+	attemptCh chan<- AttemptData,
 	send *SendRow,
 	domain string,
 	recipients []*RecipientRow,
@@ -283,7 +304,7 @@ func (worker *EmailWorker) attemptSendToDomain(
 	// get the lock before calling the DB
 	domainQueryMutex.Lock()
 	defer domainQueryMutex.Unlock()
-	_, err := sendTx.RecordAttempt(
+	sendAttemptId, err := sendTx.RecordAttempt(
 		send,
 		recipients,
 		result,
@@ -296,13 +317,21 @@ func (worker *EmailWorker) attemptSendToDomain(
 			"domain", domain,
 			"error", err,
 		)
-		// TODO: add error
-		return // 0, err
+
+		attemptCh <- AttemptData{
+			SendAttemptId: 0,
+			Error:         err,
+		}
+
+		return
 	}
 
 	updateEmailMetricsFromSendResult(worker.metrics, result)
 
-	// TODO: send attempt id
+	attemptCh <- AttemptData{
+		SendAttemptId: sendAttemptId,
+		Error:         nil,
+	}
 
 }
 

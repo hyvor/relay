@@ -1,0 +1,8 @@
+MIME-Version: 1.0
+Content-Type: multipart/report; report-type=feedback-report;
+     boundary="myinnocentboundary"
+
+--myinnocentboundary
+Content-Type: application/json;
+
+--myinnocentboundary

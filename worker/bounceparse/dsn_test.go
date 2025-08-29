@@ -7,6 +7,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestDsnJsonMarshal(t *testing.T) {
+	status := DsnStatus{5, 1, 1}
+
+	jsonData, err := status.MarshalJSON()
+	assert.Nil(t, err)
+
+	assert.Equal(t, `"5.1.1"`, string(jsonData))
+}
+
 func TestDsnSimple(t *testing.T) {
 
 	content, err := os.ReadFile("./testdata/dsn_simple.txt")
@@ -59,5 +68,34 @@ func TestDsnMultiRecipients(t *testing.T) {
 	assert.Equal(t, "wsnell@sdcc13.ucsd.edu", thirdRecipient.EmailAddress)
 	assert.Equal(t, DsnStatus([3]int{5, 1, 1}), thirdRecipient.Status)
 	assert.Equal(t, "failed", thirdRecipient.Action)
+
+}
+
+func TestDsnErrOnInvalidContentType(t *testing.T) {
+
+	content, err := os.ReadFile("./testdata/dsn_invalid_content_type.txt")
+	assert.Nil(t, err)
+
+	_, err = ParseDsn(content)
+	assert.Equal(t, ErrNotDsnReport, err)
+
+}
+
+func TestDsnErrOnPart2ContentType(t *testing.T) {
+
+	content, err := os.ReadFile("./testdata/dsn_part2_invalid_content_type.txt")
+	assert.Nil(t, err)
+
+	_, err = ParseDsn(content)
+	assert.Equal(t, ErrInvalidMimeType, err)
+}
+
+func TestGetRecipientEmailAd(t *testing.T) {
+
+	email1 := getDsnRecipientEmailAddress("rfc822; supun@hyvor.com ")
+	assert.Equal(t, "supun@hyvor.com", email1)
+
+	email2 := getDsnRecipientEmailAddress(" supun@hyvor.com ")
+	assert.Equal(t, "supun@hyvor.com", email2)
 
 }

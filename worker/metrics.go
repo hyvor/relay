@@ -151,6 +151,8 @@ func newMetrics() *Metrics {
 	}
 }
 
+var metricsPort = ":9667"
+
 func (server *MetricsServer) Set(goState GoState) {
 
 	server.isLeader = goState.IsLeader
@@ -171,7 +173,7 @@ func (server *MetricsServer) Set(goState GoState) {
 	server.registry.Unregister(server.metrics.dnsQueriesTotal)
 
 	// register global metrics if the current server is the leader
-	if goState.IsLeader {
+	if server.isLeader {
 		server.registry.MustRegister(
 			server.metrics.relayInfo,
 			server.metrics.emailQueueSize,
@@ -211,9 +213,9 @@ func (server *MetricsServer) Set(goState GoState) {
 			mux.Handle("/", handler)
 			mux.Handle("/metrics", handler)
 
-			server.logger.Info("Starting metrics server on :9667")
+			server.logger.Info("Starting metrics server on " + metricsPort)
 
-			if err := http.ListenAndServe(":9667", mux); err != nil {
+			if err := http.ListenAndServe(metricsPort, mux); err != nil {
 				server.logger.Error("Failed to start metrics server", "error", err)
 			}
 
@@ -232,16 +234,16 @@ func (server *MetricsServer) Set(goState GoState) {
 // stops and restarts the global metrics updater
 func (server *MetricsServer) StartGlobalMetricsUpdater() {
 
+	if !server.isLeader {
+		return
+	}
+
 	if server.cancelGlobalMetricsUpdater != nil {
 		server.cancelGlobalMetricsUpdater()
 	}
 
 	ctx, cancel := context.WithCancel(server.ctx)
 	server.cancelGlobalMetricsUpdater = cancel
-
-	if !server.isLeader {
-		return
-	}
 
 	go func() {
 		for {
@@ -290,12 +292,11 @@ func (server *MetricsServer) updateGlobalMetrics() {
 
 	// email queue size
 	rows, err := conn.Query(`
-		SELECT count(sends.id), queues.name
+		SELECT count(sends.id), queue_name
 		FROM sends
-		INNER JOIN queues ON sends.queue_id = queues.id
-		WHERE sends.status = 'queued'
-		AND sends.send_after < NOW()
-		GROUP BY queues.name
+		WHERE queued = true
+		AND send_after < NOW()
+		GROUP BY queue_name
 	`)
 
 	if err != nil {

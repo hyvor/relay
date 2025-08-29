@@ -175,7 +175,9 @@ func (r *SendResult) ToStatus() string {
 	return "failed"
 }
 
-func sendEmail(
+var sendEmail = sendEmailHandler
+
+func sendEmailHandler(
 	send *SendRow,
 	recipients []*RecipientRow,
 	rcptDomain string,
