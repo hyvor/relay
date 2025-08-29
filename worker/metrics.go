@@ -292,12 +292,11 @@ func (server *MetricsServer) updateGlobalMetrics() {
 
 	// email queue size
 	rows, err := conn.Query(`
-		SELECT count(sends.id), queues.name
+		SELECT count(sends.id), queue_name
 		FROM sends
-		INNER JOIN queues ON sends.queue_id = queues.id
-		WHERE sends.status = 'queued'
-		AND sends.send_after < NOW()
-		GROUP BY queues.name
+		WHERE queued = true
+		AND send_after < NOW()
+		GROUP BY queue_name
 	`)
 
 	if err != nil {
