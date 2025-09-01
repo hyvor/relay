@@ -28,7 +28,9 @@ class SendRecipientService
         return $this->entityManager->getRepository(SendRecipient::class)
             ->createQueryBuilder('r')
             ->where('r.address LIKE :domain')
+            ->andWhere('r.send = :send')
             ->setParameter('domain', '%@' . $sendAttempt->getDomain())
+            ->setParameter('send', $sendAttempt->getSend())
             ->getQuery()
             ->getResult();
     }

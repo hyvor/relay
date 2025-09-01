@@ -144,6 +144,10 @@ class WebhookEventListenerTest extends KernelTestCase
             'address' => 'ishini@example.com'
         ]);
         SendRecipientFactory::createMany(2, ['send' => $send]);
+        SendRecipientFactory::createOne([
+            'send' => SendFactory::createOne(['project' => $project]),
+            'address' => 'nadil@example.com'
+        ]);
         $attempt = SendAttemptFactory::createOne([
             'status' => $sendAttemptStatus,
             'send' => $send,
