@@ -2,6 +2,8 @@
 
 namespace App\Tests\Service\Webhook;
 
+use App\Api\Console\Object\BounceObject;
+use App\Api\Console\Object\ComplaintObject;
 use App\Entity\Project;
 use App\Entity\Type\DomainStatus;
 use App\Entity\Type\SendAttemptStatus;
@@ -50,7 +52,7 @@ class WebhookEventListenerTest extends KernelTestCase
         );
         // selected, one of multiple
         $webhook2 = WebhookFactory::createOne(
-            ['project' => $project, 'events' => [WebhooksEventEnum::DOMAIN_CREATED, WebhooksEventEnum::DOMAIN_VERIFIED]]
+            ['project' => $project, 'events' => [WebhooksEventEnum::DOMAIN_CREATED, WebhooksEventEnum::DOMAIN_STATUS_CHANGED]]
         );
         // not selected, other events
         $webhook3 = WebhookFactory::createOne(['project' => $project, 'events' => [WebhooksEventEnum::DOMAIN_DELETED]]);
@@ -179,7 +181,8 @@ class WebhookEventListenerTest extends KernelTestCase
         $send = SendFactory::createOne(['project' => $project]);
         $sendRecipient = SendRecipientFactory::createOne(['send' => $send]);
         $this->createWebhook($project, WebhooksEventEnum::SEND_RECIPIENT_BOUNCED);
-        $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient));
+        $bounce = new BounceObject('Test bounce', '5.1.1');
+        $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient, $bounce));
 
         $this->assertWebhookDeliveryCreated(
             $project,
@@ -190,6 +193,10 @@ class WebhookEventListenerTest extends KernelTestCase
 
                 $this->assertIsArray($payload['recipient']);
                 $this->assertSame($sendRecipient->getId(), $payload['recipient']['id']);
+
+                $this->assertIsArray($payload['bounce']);
+                $this->assertSame('Test bounce', $payload['bounce']['text']);
+                $this->assertSame('5.1.1', $payload['bounce']['status']);
             }
         );
     }
@@ -199,7 +206,8 @@ class WebhookEventListenerTest extends KernelTestCase
         $send = SendFactory::createOne(['project' => $project]);
         $sendRecipient = SendRecipientFactory::createOne(['send' => $send]);
         $this->createWebhook($project, WebhooksEventEnum::SEND_RECIPIENT_COMPLAINED);
-        $this->ed->dispatch(new IncomingComplaintEvent($send, $sendRecipient));
+        $complaint = new ComplaintObject('Test complaint', 'spam');
+        $this->ed->dispatch(new IncomingComplaintEvent($send, $sendRecipient, $complaint));
 
         $this->assertWebhookDeliveryCreated(
             $project,
@@ -210,6 +218,10 @@ class WebhookEventListenerTest extends KernelTestCase
 
                 $this->assertIsArray($payload['recipient']);
                 $this->assertSame($sendRecipient->getId(), $payload['recipient']['id']);
+
+                $this->assertIsArray($payload['complaint']);
+                $this->assertSame('Test complaint', $payload['complaint']['text']);
+                $this->assertSame('spam', $payload['complaint']['feedback_type']);
             }
         );
     }

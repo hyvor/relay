@@ -31,7 +31,7 @@ class WebhookEventListener
     }
 
     /**
-     * @param callable(): object $objectFactory
+     * @param callable(): (object|object[]) $objectFactory
      */
     private function createWebhookDeliveries(
         Project $project,
@@ -39,13 +39,20 @@ class WebhookEventListener
         callable $objectFactory
     ): void {
         $webhooks = $this->webhookService->getWebhooksForEvent($project, $eventType);
+        $objects = $objectFactory();
+
+        if (!is_array($objects)) {
+            $objects = [$objects];
+        }
 
         foreach ($webhooks as $webhook) {
-            $this->webhookService->createWebhookDelivery(
-                $webhook,
-                $eventType,
-                $objectFactory()
-            );
+            foreach ($objects as $object) {
+                $this->webhookService->createWebhookDelivery(
+                    $webhook,
+                    $eventType,
+                    $object
+                );
+            }
         }
     }
 
@@ -61,19 +68,20 @@ class WebhookEventListener
 
         $send = $attempt->getSend();
         $project = $send->getProject();
-        $recipients = $this->sendRecipientService->getSendRecipientsBySendAttempt($attempt);
 
-        foreach ($recipients as $recipient) {
-            $this->createWebhookDeliveries(
-                $project,
-                $event,
-                fn() => (object)[
+        $this->createWebhookDeliveries(
+            $project,
+            $event,
+            function () use ($send, $attempt) {
+                $recipients = $this->sendRecipientService->getSendRecipientsBySendAttempt($attempt);
+                return array_map(fn($recipient) => (object)[
                     'send' => new SendObject($send),
                     'recipient' => new SendRecipientObject($recipient),
                     'attempt' => new SendAttemptObject($attempt),
-                ]
-            );
-        }
+                ], $recipients);
+
+            }
+        );
     }
 
     #[AsEventListener]
