@@ -31,6 +31,10 @@ final class Version20250726103642 extends AbstractMigration
             priority INT DEFAULT 0 NOT NULL
         );
         SQL);
+
+        $this->addSql(
+            "CREATE INDEX idx_dns_records_subdomain_type ON dns_records (subdomain, type)"
+        );
     }
 
     public function down(Schema $schema): void

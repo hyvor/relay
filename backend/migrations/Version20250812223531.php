@@ -30,6 +30,10 @@ final class Version20250812223531 extends AbstractMigration
         );
         SQL
         );
+
+        $this->addSql(
+            "CREATE INDEX idx_project_users_project_id_user_id ON project_users (project_id, user_id)"
+        );
     }
 
     public function down(Schema $schema): void
