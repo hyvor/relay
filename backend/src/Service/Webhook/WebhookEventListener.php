@@ -86,8 +86,8 @@ class WebhookEventListener
             WebhooksEventEnum::SEND_RECIPIENT_BOUNCED,
             fn() => (object)[
                 'send' => new SendObject($send),
-                'recipient' => new SendRecipientObject($event->sendRecipient)
-                // TODO: What else?
+                'recipient' => new SendRecipientObject($event->sendRecipient),
+                'bounce' => $event->bounce,
             ]
         );
     }
@@ -102,8 +102,8 @@ class WebhookEventListener
             WebhooksEventEnum::SEND_RECIPIENT_COMPLAINED,
             fn() => (object)[
                 'send' => new SendObject($send),
-                'recipient' => new SendRecipientObject($event->sendRecipient)
-                // TODO: What else?
+                'recipient' => new SendRecipientObject($event->sendRecipient),
+                'complaint' => $event->complaint,
             ]
         );
     }

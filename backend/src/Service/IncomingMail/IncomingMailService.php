@@ -2,6 +2,8 @@
 
 namespace App\Service\IncomingMail;
 
+use App\Api\Console\Object\BounceObject;
+use App\Api\Console\Object\ComplaintObject;
 use App\Api\Local\Input\ArfInput;
 use App\Api\Local\Input\DsnInput;
 use App\Entity\DebugIncomingEmail;
@@ -99,7 +101,8 @@ class IncomingMailService
                 $debugIncomingEmail
             );
 
-            $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient));
+            $bounceObject = new BounceObject($dsnInput->ReadableText, $recipient->Status);
+            $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient, $bounceObject));
         }
     }
 
@@ -149,6 +152,7 @@ class IncomingMailService
             $debugIncomingEmail
         );
 
-        $this->ed->dispatch(new IncomingComplaintEvent($send, $sendRecipient));
+        $complaintObject = new ComplaintObject($arfInput->ReadableText, $arfInput->FeedbackType);
+        $this->ed->dispatch(new IncomingComplaintEvent($send, $sendRecipient, $complaintObject));
     }
 }

@@ -155,6 +155,7 @@
 	Objects: <a href="/docs/api-console#send-object">Send</a>,
 	<a href="/docs/api-console#send-recipient-object">SendRecipient</a>,
 	<a href="/docs/api-console#send-attempt-object">SendAttempt</a>
+    <a href="/docs/api-console#bounce-object">Bounce</a>
 </p>
 
 <h3 id="send-recipient-complained">send.recipient.complained</h3>
@@ -178,6 +179,12 @@
 `}
 	language="ts"
 />
+
+<p>
+    Objects: <a href="/docs/api-console#send-object">Send</a>,
+    <a href="/docs/api-console#send-recipient-object">SendRecipient</a>,
+    <a href="/docs/api-console#complaint-object">Complaint</a>
+</p>
 
 <h3 id="domain-created">domain.created</h3>
 

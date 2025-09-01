@@ -747,6 +747,30 @@ type Response = Domain
     `}
 />
 
+<h3 id="bounce-object">Bounce Object</h3>
+
+<CodeBlock
+    language="ts"
+    code={`
+        interface Bounce {
+    text: string;
+    status: string;
+        }
+    `}
+/>
+
+<h3 id="complaint-object">Complaint Object</h3>
+
+<CodeBlock
+    language="ts"
+    code={`
+        interface Complaint {
+    text: string;
+    feedback_type: string;
+        }
+    `}
+/>
+
 <h3 id="domain-object">Domain Object</h3>
 
 <CodeBlock
