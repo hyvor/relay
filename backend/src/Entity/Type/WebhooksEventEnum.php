@@ -5,10 +5,10 @@ namespace App\Entity\Type;
 enum WebhooksEventEnum: string
 {
 
-    case SEND_ACCEPTED = 'send.accepted';
-    case SEND_DEFERRED = 'send.deferred';
-    case SEND_BOUNCED = 'send.bounced';
-    case SEND_COMPLAINED = 'send.complained';
+    case SEND_RECIPIENT_ACCEPTED = 'send.recipient.accepted';
+    case SEND_RECIPIENT_DEFERRED = 'send.recipient.deferred';
+    case SEND_RECIPIENT_BOUNCED = 'send.recipient.bounced';
+    case SEND_RECIPIENT_COMPLAINED = 'send.recipient.complained';
 
     // Created by Workers
     case SUPPRESSION_CREATED = 'suppression.created';

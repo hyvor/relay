@@ -23,16 +23,16 @@
 
 <ul>
 	<li>
-		<a href="#send-accepted">send.accepted</a>
+		<a href="#send-recipient-accepted">send.recipient.accepted</a>
 	</li>
 	<li>
-		<a href="#send-deferred">send.deferred</a>
+		<a href="#send-recipient-deferred">send.recipient.deferred</a>
 	</li>
 	<li>
-		<a href="#send-bounced">send.bounced</a>
+		<a href="#send-recipient-bounced">send.recipient.bounced</a>
 	</li>
 	<li>
-		<a href="#send-complained">send.complained</a>
+		<a href="#send-recipient-complained">send.recipient.complained</a>
 	</li>
 	<br />
 	<li>
@@ -53,13 +53,13 @@
 	</li>
 </ul>
 
-<h3 id="send-accepted">send.accepted</h3>
+<h3 id="send-recipient-accepted">send.recipient.accepted</h3>
 
 <p>
-	<code>send.accepted</code> is triggered when an email is accepted by the recipient SMTP server.
+	<code>send.recipient.accepted</code> is triggered when an email is accepted by the recipient SMTP server.
 	This can only be triggered once for a send. It indicates that the email has been successfully
 	delivered to the recipient's server, but it does not guarantee that the email has been delivered
-	to the recipient's inbox. <code>send.bounced</code> or <code>send.complained</code> can be triggered
+	to the recipient's inbox. <code>send.recipient.bounced</code> or <code>send.recipient.complained</code> can be triggered
 	later if the email is not delivered to the recipient's inbox (ex: when the mailbox is full, or if
 	the email provider's spam detector detects the mail as spam) or if the recipient marks it as spam.
 </p>
@@ -68,6 +68,7 @@
 	code={`
 {
 	send: Send;
+	recipient: SendRecipient;
 	attempt: SendAttempt;
 }
 `}
@@ -76,25 +77,27 @@
 
 <p>
 	Objects: <a href="/docs/api-console#send-object">Send</a>,
+	<a href="/docs/api-console#send-recipient-object">SendRecipient</a>,
 	<a href="/docs/api-console#send-attempt-object">SendAttempt</a>
 </p>
 
-<h3 id="send-deferred">send.deferred</h3>
+<h3 id="send-recipient-deferred">send.recipient.deferred</h3>
 
 <p>
-	<code>send.deferred</code> is triggered when an email is temporarily deferred by the recipient
+	<code>send.recipient.deferred</code> is triggered when an email is temporarily deferred by the recipient
 	SMTP server. This can happen for various reasons, such as the recipient's server being busy or
 	because of
 	<a href="https://en.wikipedia.org/wiki/Greylisting_(email)">greylisting</a>. Hyvor Relay will
 	retry sending the email a few more times before giving up. You can expect a
-	<code>send.accepted</code> or
-	<code>send.bounced</code> event later.
+	<code>send.recipient.accepted</code> or
+	<code>send.recipient.bounced</code> event later.
 </p>
 
 <CodeBlock
 	code={`
 {
 	send: Send;
+	recipient: SendRecipient;
 	attempt: SendAttempt;
 }
 `}
@@ -103,13 +106,14 @@
 
 <p>
 	Objects: <a href="/docs/api-console#send-object">Send</a>,
+	<a href="/docs/api-console#send-recipient-object">SendRecipient</a>,
 	<a href="/docs/api-console#send-attempt-object">SendAttempt</a>
 </p>
 
-<h3 id="send-bounced">send.bounced</h3>
+<h3 id="send-recipient-bounced">send.recipient.bounced</h3>
 
 <p>
-	<code>send.bounced</code> is triggered when an email is permanently rejected by the recipient SMTP
+	<code>send.recipient.bounced</code> is triggered when an email is permanently rejected by the recipient SMTP
 	server. This can happen for various reasons, such as the recipient's email address not existing or
 	the recipient's server rejecting the email due to spam filters.
 </p>
@@ -118,13 +122,13 @@
 	<li>
 		<strong> Synchronous Bounces: </strong> In some cases, bounces are detected immediately in
 		the SMTP conversation when sending the email. In such cases, the
-		<code>send.bounced</code> event is triggered immediately.
+		<code>send.recipient.bounced</code> event is triggered immediately.
 	</li>
 	<li>
 		<strong> Asynchronous Bounces: </strong> In other cases, the bounce is detected later, such
 		as when the recipient's server sends a bounce notification (Delivery Status Notification,
-		DSN) after some time. In such cases, a <code>send.accepted</code> event is triggered first,
-		followed by the <code>send.bounced</code> event when the bounce is detected.
+		DSN) after some time. In such cases, a <code>send.recipient.accepted</code> event is triggered first,
+		followed by the <code>send.recipient.bounced</code> event when the bounce is detected.
 	</li>
 </ul>
 
@@ -139,6 +143,7 @@
 	code={`
 {
 	send: Send;
+	recipient: SendRecipient;
 	attempt: SendAttempt | null;
 	bounce: Bounce;
 }
@@ -148,15 +153,16 @@
 
 <p>
 	Objects: <a href="/docs/api-console#send-object">Send</a>,
+	<a href="/docs/api-console#send-recipient-object">SendRecipient</a>,
 	<a href="/docs/api-console#send-attempt-object">SendAttempt</a>
 </p>
 
-<h3 id="send-complained">send.complained</h3>
+<h3 id="send-recipient-complained">send.recipient.complained</h3>
 
 <p>
 	When a recipient marks an email as spam, the email provider sends a complaint, called a Feedback
 	Loop (FBL), to Hyvor Relay. Hyvor Relay is configured to receive FBLs from major email
-	providers.bind: We process these complaints and trigger the <code>send.complained</code> event. This
+	providers.bind: We process these complaints and trigger the <code>send.recipient.complained</code> event. This
 	event indicates that the recipient has marked the email as spam or junk. When this event is triggered,
 	the email address is automatically added to your project's suppression list, similar to when a hard
 	bounce occurs.
@@ -166,6 +172,7 @@
 	code={`
 {
 	send: Send;
+	recipient: SendRecipient;
 	complaint: Complaint;
 }
 `}

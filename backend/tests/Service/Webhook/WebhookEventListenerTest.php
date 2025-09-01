@@ -12,6 +12,8 @@ use App\Service\Domain\DkimVerificationResult;
 use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Service\Domain\Event\DomainDeletedEvent;
 use App\Service\Domain\Event\DomainStatusChangedEvent;
+use App\Service\IncomingMail\Event\IncomingBounceEvent;
+use App\Service\IncomingMail\Event\IncomingComplaintEvent;
 use App\Service\Send\Event\SendAttemptCreatedEvent;
 use App\Service\Suppression\Event\SuppressionCreatedEvent;
 use App\Service\Suppression\Event\SuppressionDeletedEvent;
@@ -22,6 +24,7 @@ use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\SendAttemptFactory;
 use App\Tests\Factory\SendFactory;
+use App\Tests\Factory\SendRecipientFactory;
 use App\Tests\Factory\SuppressionFactory;
 use App\Tests\Factory\WebhookFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -90,11 +93,12 @@ class WebhookEventListenerTest extends KernelTestCase
     private function assertWebhookDeliveryCreated(
         Project $project,
         WebhooksEventEnum $webhookEvent,
-        ?callable $payloadValidator = null
+        ?callable $payloadValidator = null,
+        ?int $count = 1
     ): void {
         $deliveries = $this->em->getRepository(WebhookDelivery::class)->findAll();
 
-        $this->assertCount(1, $deliveries);
+        $this->assertCount($count, $deliveries);
 
         $delivery = $deliveries[0];
         $this->assertInstanceOf(WebhookDelivery::class, $delivery);
@@ -116,9 +120,9 @@ class WebhookEventListenerTest extends KernelTestCase
         }
     }
 
-    #[TestWith([SendAttemptStatus::ACCEPTED, WebhooksEventEnum::SEND_ACCEPTED])]
-    #[TestWith([SendAttemptStatus::DEFERRED, WebhooksEventEnum::SEND_DEFERRED])]
-    #[TestWith([SendAttemptStatus::BOUNCED, WebhooksEventEnum::SEND_BOUNCED])]
+    #[TestWith([SendAttemptStatus::ACCEPTED, WebhooksEventEnum::SEND_RECIPIENT_ACCEPTED])]
+    #[TestWith([SendAttemptStatus::DEFERRED, WebhooksEventEnum::SEND_RECIPIENT_DEFERRED])]
+    #[TestWith([SendAttemptStatus::BOUNCED, WebhooksEventEnum::SEND_RECIPIENT_BOUNCED])]
     public function test_creates_delivery_for_sent_attempt(
         SendAttemptStatus $sendAttemptStatus,
         WebhooksEventEnum $webhookEvent
@@ -127,22 +131,85 @@ class WebhookEventListenerTest extends KernelTestCase
         $this->createWebhook($project, $webhookEvent);
 
         $send = SendFactory::createOne(['project' => $project]);
-        $attempt = SendAttemptFactory::createOne(['status' => $sendAttemptStatus, 'send' => $send]);
+        $recipient = SendRecipientFactory::createOne([
+            'send' => $send,
+            'address' => 'nadil@example.com'
+        ]);
+        SendRecipientFactory::createOne([
+            'send' => $send,
+            'address' => 'supun@example.com'
+        ]);
+        SendRecipientFactory::createOne([
+            'send' => $send,
+            'address' => 'ishini@example.com'
+        ]);
+        SendRecipientFactory::createMany(2, ['send' => $send]);
+        $attempt = SendAttemptFactory::createOne([
+            'status' => $sendAttemptStatus,
+            'send' => $send,
+            'domain' => 'example.com',
+        ]);
 
         $this->ed->dispatch(new SendAttemptCreatedEvent($attempt));
 
         $this->assertWebhookDeliveryCreated(
             $project,
             $webhookEvent,
-            function (array $payload) use ($send, $attempt) {
+            function (array $payload) use ($send, $recipient, $attempt) {
                 $this->assertIsArray($payload['send']);
                 $this->assertSame($send->getId(), $payload['send']['id']);
 
+                $this->assertIsArray($payload['recipient']);
+                $this->assertSame($recipient->getId(), $payload['recipient']['id']);
+
                 $this->assertIsArray($payload['attempt']);
                 $this->assertSame($attempt->getId(), $payload['attempt']['id']);
+            },
+            3
+        );
+    }
+
+    public function test_creates_delivery_for_send_recipient_bounced_event(): void
+    {
+        $project = ProjectFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project]);
+        $sendRecipient = SendRecipientFactory::createOne(['send' => $send]);
+        $this->createWebhook($project, WebhooksEventEnum::SEND_RECIPIENT_BOUNCED);
+        $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient));
+
+        $this->assertWebhookDeliveryCreated(
+            $project,
+            WebhooksEventEnum::SEND_RECIPIENT_BOUNCED,
+            function (array $payload) use ($send, $sendRecipient) {
+                $this->assertIsArray($payload['send']);
+                $this->assertSame($send->getId(), $payload['send']['id']);
+
+                $this->assertIsArray($payload['recipient']);
+                $this->assertSame($sendRecipient->getId(), $payload['recipient']['id']);
             }
         );
     }
+    public function test_creates_delivery_for_send_recipient_complained_event(): void
+    {
+        $project = ProjectFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project]);
+        $sendRecipient = SendRecipientFactory::createOne(['send' => $send]);
+        $this->createWebhook($project, WebhooksEventEnum::SEND_RECIPIENT_COMPLAINED);
+        $this->ed->dispatch(new IncomingComplaintEvent($send, $sendRecipient));
+
+        $this->assertWebhookDeliveryCreated(
+            $project,
+            WebhooksEventEnum::SEND_RECIPIENT_COMPLAINED,
+            function (array $payload) use ($send, $sendRecipient) {
+                $this->assertIsArray($payload['send']);
+                $this->assertSame($send->getId(), $payload['send']['id']);
+
+                $this->assertIsArray($payload['recipient']);
+                $this->assertSame($sendRecipient->getId(), $payload['recipient']['id']);
+            }
+        );
+    }
+
 
     public function test_creates_delivery_for_domain_created_event(): void
     {
