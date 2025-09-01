@@ -343,6 +343,7 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 		return &SendResult{}
 	}
 
+	wg.Add(1)
 	worker.attemptSendToDomain(
 		wg,
 		mx,

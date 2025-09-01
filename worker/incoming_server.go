@@ -158,6 +158,8 @@ func (server *IncomingMailServer) Shutdown() {
 
 }
 
+var smtpServerPort = ":25"
+
 func (server *IncomingMailServer) Start(ctx context.Context, instanceDomain string, numWorkers int) {
 
 	// channel
@@ -186,8 +188,8 @@ func (server *IncomingMailServer) Start(ctx context.Context, instanceDomain stri
 
 	smtpServer := smtp.NewServer(be)
 
-	smtpServer.Addr = "0.0.0.0:25"
-	smtpServer.Domain = "localhost"
+	smtpServer.Addr = "0.0.0.0" + smtpServerPort
+	smtpServer.Domain = instanceDomain
 	smtpServer.WriteTimeout = 10 * time.Second
 	smtpServer.ReadTimeout = 10 * time.Second
 	smtpServer.MaxMessageBytes = 1024 * 1024
