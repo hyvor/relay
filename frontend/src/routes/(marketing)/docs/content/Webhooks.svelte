@@ -57,7 +57,7 @@
 
 <p>
 	<code>send.recipient.accepted</code> is triggered when an email is accepted by the recipient SMTP server.
-	This can only be triggered once for a send. It indicates that the email has been successfully
+	This can be triggered once for a recipient of a send. It indicates that the email has been successfully
 	delivered to the recipient's server, but it does not guarantee that the email has been delivered
 	to the recipient's inbox. <code>send.recipient.bounced</code> or <code>send.recipient.complained</code> can be triggered
 	later if the email is not delivered to the recipient's inbox (ex: when the mailbox is full, or if
@@ -86,10 +86,8 @@
 <p>
 	<code>send.recipient.deferred</code> is triggered when an email is temporarily deferred by the recipient
 	SMTP server. This can happen for various reasons, such as the recipient's server being busy or
-	because of
-	<a href="https://en.wikipedia.org/wiki/Greylisting_(email)">greylisting</a>. Hyvor Relay will
-	retry sending the email a few more times before giving up. You can expect a
-	<code>send.recipient.accepted</code> or
+	because of <a href="https://en.wikipedia.org/wiki/Greylisting_(email)">greylisting</a>. Hyvor Relay will
+	retry sending the email a few more times before giving up. You can expect a <code>send.recipient.accepted</code> or
 	<code>send.recipient.bounced</code> event later.
 </p>
 
@@ -120,9 +118,9 @@
 
 <ul>
 	<li>
-		<strong> Synchronous Bounces: </strong> In some cases, bounces are detected immediately in
-		the SMTP conversation when sending the email. In such cases, the
-		<code>send.recipient.bounced</code> event is triggered immediately.
+		<strong> Synchronous Bounces: </strong> In some cases, bounces are detected immediately in the SMTP
+        conversation when sending the email. In such cases, the <code>send.recipient.bounced</code> event is
+        triggered immediately.
 	</li>
 	<li>
 		<strong> Asynchronous Bounces: </strong> In other cases, the bounce is detected later, such
