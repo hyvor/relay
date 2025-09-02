@@ -318,6 +318,7 @@ func (worker *EmailWorker) attemptSendToDomain(
 	// get the lock before calling the DB
 	domainQueryMutex.Lock()
 	defer domainQueryMutex.Unlock()
+
 	sendAttemptId, err := sendTx.RecordAttempt(
 		send,
 		recipients,

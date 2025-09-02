@@ -124,6 +124,7 @@ type SendResult struct {
 	// always set
 	SentFromIpId int
 	SentFromIp   string
+	Domain       string
 	QueueName    string
 	Duration     time.Duration // set when the function ends
 
@@ -172,6 +173,7 @@ func sendEmailHandler(
 	result := &SendResult{
 		SentFromIpId: ipId,
 		SentFromIp:   ip,
+		Domain:       rcptDomain,
 		QueueName:    send.QueueName,
 
 		ResolvedMxHosts:   make([]string, 0),

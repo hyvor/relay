@@ -117,30 +117,6 @@ func (b *SendTransaction) RecordAttempt(
 
 	status := sendResult.ToStatus()
 
-	var err error
-	// var sendAfterInterval string
-
-	// if status == "deferred" {
-	// 	sendAfterInterval = fmt.Sprintf("NOW() + INTERVAL '%s'", getSendAfterInterval(sendResult.NewTryCount))
-	// } else {
-	// 	sendAfterInterval = "send_after"
-	// }
-
-	// update send status
-	// _, err = b.tx.ExecContext(b.ctx, `
-	// 	UPDATE sends
-	// 	SET
-	// 		status = $1,
-	// 		updated_at = NOW(),
-	// 		try_count = try_count + 1,
-	// 		send_after = `+sendAfterInterval+`
-	// 	WHERE id = $2
-	// `, status, send.Id)
-
-	// if err != nil {
-	// 	return 0, fmt.Errorf("failed to update send ID %d status to %s: %w", send.Id, status, err)
-	// }
-
 	// create send attempt
 	var errorMessage sql.NullString
 	if sendResult.Error != nil {
@@ -171,7 +147,7 @@ func (b *SendTransaction) RecordAttempt(
 	smtpConversations, _ := json.Marshal(sendResult.SmtpConversations)
 
 	var attemptId int
-	err = b.tx.QueryRowContext(b.ctx, `
+	err := b.tx.QueryRowContext(b.ctx, `
 		INSERT INTO send_attempts (
 			created_at,
 			updated_at,
@@ -179,6 +155,7 @@ func (b *SendTransaction) RecordAttempt(
 			ip_address_id,
 			status,
 			try_count,
+			domain,
 			resolved_mx_hosts,
 			responded_mx_host,
 			smtp_conversations,
@@ -194,7 +171,8 @@ func (b *SendTransaction) RecordAttempt(
 			$5,
 			$6,
 			$7,
-			$8
+			$8,
+			$9
 		)
 		RETURNING id
 	`,
@@ -202,6 +180,7 @@ func (b *SendTransaction) RecordAttempt(
 		sendResult.SentFromIpId,
 		status,
 		sendResult.NewTryCount,
+		sendResult.Domain,
 		resolvedMxHosts,
 		respondedMxHost,
 		smtpConversations,

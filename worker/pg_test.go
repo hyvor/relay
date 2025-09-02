@@ -232,6 +232,82 @@ func (m *TestFactory) Send(send *FactorySend) (*FactorySend, error) {
 
 }
 
+func (f *TestFactory) GetSendById(id int) (*FactorySend, error) {
+
+	var send FactorySend
+	row := f.conn.QueryRow(`
+		SELECT 
+			id, uuid, project_id, domain_id, queue_id, queued, send_after,
+			from_address, subject, body_html, body_text
+		FROM sends WHERE id = $1
+	`, id)
+
+	err := row.Scan(
+		&send.Id,
+		&send.Uuid,
+		&send.ProjectId,
+		&send.DomainId,
+		&send.QueueId,
+		&send.Queued,
+		&send.SendAfter,
+		&send.FromAddress,
+		&send.Subject,
+		&send.BodyHtml,
+		&send.BodyText,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &send, nil
+
+}
+
+type FactorySendAttempt struct {
+	Id                int
+	SendId            int
+	IpAddressId       int
+	Status            string
+	TryCount          int
+	Domain            string
+	ResolvedMx        string
+	RespondedMx       sql.NullString
+	SmtpConversations string
+	Error             sql.NullString
+}
+
+func (f *TestFactory) GetSendAttemptById(id int) (*FactorySendAttempt, error) {
+
+	var attempt FactorySendAttempt
+	row := f.conn.QueryRow(`
+		SELECT 
+			id, send_id, ip_address_id, status, try_count, domain,
+			resolved_mx_hosts, responded_mx_host, smtp_conversations, error
+		FROM send_attempts WHERE id = $1
+	`, id)
+
+	err := row.Scan(
+		&attempt.Id,
+		&attempt.SendId,
+		&attempt.IpAddressId,
+		&attempt.Status,
+		&attempt.TryCount,
+		&attempt.Domain,
+		&attempt.ResolvedMx,
+		&attempt.RespondedMx,
+		&attempt.SmtpConversations,
+		&attempt.Error,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &attempt, nil
+
+}
+
 func (f *TestFactory) SendRecipient(send *FactorySend, recipients *FactorySendRecipient) error {
 
 	_, err := f.conn.Exec(`

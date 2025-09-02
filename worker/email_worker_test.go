@@ -388,7 +388,11 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 		ptr string,
 	) *SendResult {
 		return &SendResult{
-			SentFromIpId: ipId,
+			SentFromIpId:    ipId,
+			NewTryCount:     1,
+			Domain:          "hyvor.com",
+			ResolvedMxHosts: []string{"mx1.hyvor.com", "mx2.hyvor.com"},
+			Code:            SendResultAccepted,
 		}
 	}
 
@@ -417,5 +421,16 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 	assert.NotZero(t, data.SendAttemptId)
 	assert.NoError(t, data.Error)
 
-	sendTx.Rollback()
+	// updatedSend, err := factory.GetSendById(send.Id)
+	// assert.NoError(t, err)
+	// assert.False(t, updatedSend.Queued)
+	sendTx.Commit()
+
+	updatedSendAttempt, err := factory.GetSendAttemptById(data.SendAttemptId)
+	assert.NoError(t, err)
+	assert.Equal(t, "accepted", updatedSendAttempt.Status)
+	assert.Equal(t, "hyvor.com", updatedSendAttempt.Domain)
+	assert.Equal(t, 1, updatedSendAttempt.TryCount)
+	assert.Equal(t, `["mx1.hyvor.com", "mx2.hyvor.com"]`, updatedSendAttempt.ResolvedMx)
+
 }
