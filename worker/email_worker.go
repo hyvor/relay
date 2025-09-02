@@ -171,6 +171,7 @@ func (worker *EmailWorker) Start() {
 }
 
 type AttemptData struct {
+	result        *SendResult
 	SendAttemptId int
 	Error         error
 }
@@ -241,6 +242,8 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 		close(attemptCh)
 	}()
 
+	requeingTryCount := 0
+
 	for attempt := range attemptCh {
 		if attempt.Error != nil {
 			sendTx.Rollback()
@@ -248,9 +251,19 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 		} else {
 			sendAttemptIds = append(sendAttemptIds, attempt.SendAttemptId)
 		}
+
+		if attempt.result.Code == SendResultDeferred {
+			requeingTryCount = attempt.result.NewTryCount
+		}
 	}
 
-	if err := sendTx.FinalizeSend(send); err != nil {
+	if requeingTryCount > 0 {
+		err = sendTx.RequeueSend(send.Id, requeingTryCount)
+	} else {
+		err = sendTx.MarkSendAsDone(send.Id)
+	}
+
+	if err != nil {
 		worker.logger.Error("Email worker failed to finalize send: "+err.Error(), "send_id", send.Id)
 		sendTx.Rollback()
 		return err
@@ -319,6 +332,7 @@ func (worker *EmailWorker) attemptSendToDomain(
 		)
 
 		attemptCh <- AttemptData{
+			result:        nil,
 			SendAttemptId: 0,
 			Error:         err,
 		}
@@ -329,6 +343,7 @@ func (worker *EmailWorker) attemptSendToDomain(
 	updateEmailMetricsFromSendResult(worker.metrics, result)
 
 	attemptCh <- AttemptData{
+		result:        result,
 		SendAttemptId: sendAttemptId,
 		Error:         nil,
 	}

@@ -4,7 +4,7 @@ test:
 
 coverage:
 	@echo "Running tests, generating coverage report...\n"
-	go test ./... -coverprofile=coverage.out
+	go test ./... -coverprofile=coverage.out -v
 	go tool cover -html=coverage.out -o=coverage.html
 	@echo "\nCoverage report generated at coverage.html"
 

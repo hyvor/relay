@@ -155,21 +155,16 @@ func TestEmailWorker_CallsProcessSend(t *testing.T) {
 		dbConfig: getTestDbConfig(),
 		ProcessSendFunc: func(conn *sql.DB) error {
 			calledTimes++
-			time.Sleep(10 * time.Millisecond)
+			cancel()
 			return nil
 		},
-		logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+		logger: slogDiscard(),
 	}
-
-	go func() {
-		time.Sleep(50 * time.Millisecond)
-		cancel()
-	}()
 
 	go emailWorker.Start()
 	workerWg.Wait()
 
-	assert.Greater(t, calledTimes, 0)
+	assert.Equal(t, 1, calledTimes)
 }
 
 func TestEmailWorker_ProcessSend_RollsbackWhenNoRowsFound(t *testing.T) {
@@ -286,6 +281,8 @@ func TestEmailWorker_AttemptsToSendToGroupByDomain(t *testing.T) {
 
 }
 
+// attemptSendToDomain
+
 func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 
 	truncateTestDb()
@@ -309,6 +306,8 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 	wg := &sync.WaitGroup{}
 	mx := &sync.Mutex{}
 	attemptCh := make(chan AttemptData, 1)
+	defer close(attemptCh)
+
 	sendRow := &SendRow{
 		Id:   send.Id,
 		Uuid: send.Uuid,
@@ -326,12 +325,17 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 	sendTx, err := NewSendTransaction(context.Background(), factory.conn)
 	assert.NoError(t, err)
 
+	ipAddressId, err := factory.IpAddress()
+	assert.NoError(t, err)
+
 	worker := &EmailWorker{
 		ctx:    context.Background(),
 		logger: slogDiscard(),
 		ip: GoStateIp{
+			Id:      ipAddressId,
 			QueueId: send.QueueId,
 		},
+		metrics: newMetrics(),
 	}
 
 	sendEmail = func(
@@ -343,8 +347,17 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 		ip string,
 		ptr string,
 	) *SendResult {
-		return &SendResult{}
+		return &SendResult{
+			SentFromIpId: ipId,
+		}
 	}
+
+	chData := make([]AttemptData, 0)
+	go func() {
+		for data := range attemptCh {
+			chData = append(chData, data)
+		}
+	}()
 
 	wg.Add(1)
 	worker.attemptSendToDomain(
@@ -356,5 +369,12 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 		recipients,
 		sendTx,
 	)
+	wg.Wait()
+	time.Sleep(20 * time.Millisecond)
+
+	assert.Equal(t, 1, len(chData))
+	data := chData[0]
+	assert.NotZero(t, data.SendAttemptId)
+	assert.NoError(t, data.Error)
 
 }

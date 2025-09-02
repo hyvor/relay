@@ -216,14 +216,31 @@ func (b *SendTransaction) RecordAttempt(
 
 }
 
-func (stx *SendTransaction) FinalizeSend(send *SendRow) error {
+func (b *SendTransaction) RequeueSend(sendId int, tryCount int) error {
+	_, err := b.tx.ExecContext(b.ctx, `
+		UPDATE sends
+		SET 
+			queued = true, 
+			send_after = NOW() + INTERVAL '`+getSendAfterInterval(tryCount)+`',
+			updated_at = NOW()
+		WHERE id = $1
+	`, sendId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (stx *SendTransaction) MarkSendAsDone(sendId int) error {
 
 	// set queued to false
 	_, err := stx.tx.ExecContext(stx.ctx, `
 		UPDATE sends
 		SET queued = false, updated_at = NOW()
 		WHERE id = $1
-	`, send.Id)
+	`, sendId)
 
 	if err != nil {
 		return err
@@ -231,21 +248,6 @@ func (stx *SendTransaction) FinalizeSend(send *SendRow) error {
 
 	return nil
 
-}
-
-func (b *SendTransaction) RequeueSend(sendId int) error {
-	// TODO: interval logic based on retry count
-	_, err := b.tx.ExecContext(b.ctx, `
-		UPDATE sends
-		SET status = 'queued', send_after = NOW() + INTERVAL '15 minutes'
-		WHERE id = $1
-	`, sendId)
-
-	if err != nil {
-		return fmt.Errorf("failed to requeue send ID %d: %w", sendId, err)
-	}
-
-	return nil
 }
 
 func (b *SendTransaction) Commit() error {

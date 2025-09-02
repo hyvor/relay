@@ -58,6 +58,49 @@ func NewTestFactory() (*TestFactory, error) {
 	return &TestFactory{conn: conn}, nil
 }
 
+func (f *TestFactory) Server() (int, error) {
+
+	now := time.Now()
+	hostname := fmt.Sprintf("Test Server %d", rand.Intn(1000000))
+
+	var serverId int
+	err := f.conn.QueryRow(`
+		INSERT INTO servers (created_at, updated_at, hostname)
+		VALUES ($1, $2, $3)
+		RETURNING id
+	`, now, now, hostname).Scan(&serverId)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return serverId, nil
+
+}
+
+func (f *TestFactory) IpAddress() (int, error) {
+
+	serverId, err := f.Server()
+
+	if err != nil {
+		return 0, err
+	}
+
+	var ipId int
+	err = f.conn.QueryRow(`
+		INSERT INTO ip_addresses (server_id, ip_address, created_at, updated_at)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id
+	`, serverId, "192.168.1.1", time.Now(), time.Now()).Scan(&ipId)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return ipId, nil
+
+}
+
 func (f *TestFactory) Project() (int, error) {
 	now := time.Now()
 	randomUserId := rand.Intn(1000000) + 1
