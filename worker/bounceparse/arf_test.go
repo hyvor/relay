@@ -23,3 +23,35 @@ func TestParseArf(t *testing.T) {
 	assert.Contains(t, arf.ReadableText, "This is an email abuse report for an email message received from IP")
 
 }
+
+func TestReturnsErrOnInvalidContentType(t *testing.T) {
+	content, err := os.ReadFile("./testdata/arf_invalid_content_type.txt")
+	assert.Nil(t, err)
+
+	_, err = ParseArf(content)
+	assert.Equal(t, ErrNotArfReport, err)
+}
+
+func TestReturnsErrOnPart1InvalidMimeType(t *testing.T) {
+	content, err := os.ReadFile("./testdata/arf_invalid_part1.txt")
+	assert.Nil(t, err)
+
+	_, err = ParseArf(content)
+	assert.Equal(t, ErrInvalidMimeType, err)
+}
+
+func TestReturnsErrOnPart2InvalidMimeType(t *testing.T) {
+	content, err := os.ReadFile("./testdata/arf_invalid_part2.txt")
+	assert.Nil(t, err)
+
+	_, err = ParseArf(content)
+	assert.Equal(t, ErrInvalidMimeType, err)
+}
+
+func TestReturnsErrOnPart3InvalidMimeType(t *testing.T) {
+	content, err := os.ReadFile("./testdata/arf_invalid_part3.txt")
+	assert.Nil(t, err)
+
+	_, err = ParseArf(content)
+	assert.Equal(t, ErrInvalidMimeType, err)
+}

@@ -31,40 +31,41 @@ func TestNewEmailWorkersPool(t *testing.T) {
 	assert.Contains(t, buf.String(), "Stopping email workers pool")
 }
 
-// func TestEmailWorkersPoolSet(t *testing.T) {
+func TestEmailWorkersPoolSet(t *testing.T) {
 
-// 	canceled := false
-// 	cancelFunc := func() {
-// 		canceled = true
-// 	}
+	ctx, cancel := context.WithCancel(context.Background())
 
-// 	var called []int
-// 	var mu sync.Mutex
-// 	mockWorker := func(ctx context.Context, id int, wg *sync.WaitGroup, config *DBConfig, logger *slog.Logger, metrics *Metrics, ip GoStateIp, instanceDomain string) {
-// 		defer wg.Done()
-// 		mu.Lock()
-// 		called = append(called, id)
-// 		mu.Unlock()
-// 	}
+	numWorkersCreated := 0
 
-// 	pool := &EmailWorkersPool{
-// 		ctx:        context.Background(),
-// 		cancelFunc: cancelFunc,
-// 		workerFunc: mockWorker,
-// 		logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
-// 	}
+	NewEmailWorker = func(
+		ctx context.Context,
+		id int,
+		wg *sync.WaitGroup,
+		dbConfig *DBConfig,
+		logger *slog.Logger,
+		metrics *Metrics,
+		ip GoStateIp,
+		instanceDomain string,
+	) *EmailWorker {
+		numWorkersCreated++
 
-// 	pool.Set([]GoStateIp{
-// 		{Ip: "1.1.1.1", QueueId: 1, QueueName: "transactional"},
-// 		{Ip: "2.2.2.2", QueueId: 2, QueueName: "distributional"},
-// 	}, 2, "relay.hyvor.com")
+		return newEmailWorker(ctx, id, wg, dbConfig, logger, metrics, ip, instanceDomain)
+	}
 
-// 	time.Sleep(20 * time.Millisecond)
+	pool := &EmailWorkersPool{
+		ctx:        ctx,
+		cancelFunc: cancel,
+		logger:     slogDiscard(),
+	}
 
-// 	assert.True(t, canceled)
-// 	assert.Equal(t, 2, len(called))
+	pool.Set([]GoStateIp{
+		{Ip: "1.1.1.1", QueueId: 1, QueueName: "transactional"},
+		{Ip: "2.2.2.2", QueueId: 2, QueueName: "distributional"},
+	}, 2, "relay.hyvor.com")
 
-// }
+	assert.Equal(t, 4, numWorkersCreated)
+
+}
 
 func TestEmailWorkersPoolStopWorkers(t *testing.T) {
 
@@ -155,21 +156,16 @@ func TestEmailWorker_CallsProcessSend(t *testing.T) {
 		dbConfig: getTestDbConfig(),
 		ProcessSendFunc: func(conn *sql.DB) error {
 			calledTimes++
-			time.Sleep(10 * time.Millisecond)
+			cancel()
 			return nil
 		},
-		logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+		logger: slogDiscard(),
 	}
-
-	go func() {
-		time.Sleep(50 * time.Millisecond)
-		cancel()
-	}()
 
 	go emailWorker.Start()
 	workerWg.Wait()
 
-	assert.Greater(t, calledTimes, 0)
+	assert.Equal(t, 1, calledTimes)
 }
 
 func TestEmailWorker_ProcessSend_RollsbackWhenNoRowsFound(t *testing.T) {
@@ -206,7 +202,7 @@ func TestEmailWorker_ProcessSend_RollsbackWhenNoRowsFound(t *testing.T) {
 
 }
 
-func TestEmailWorker_AttemptsToSendToGroupByDomain(t *testing.T) {
+func TestEmailWorker_ProcessSend(t *testing.T) {
 
 	truncateTestDb()
 
@@ -241,6 +237,7 @@ func TestEmailWorker_AttemptsToSendToGroupByDomain(t *testing.T) {
 	assert.NoError(t, err)
 
 	calledDomains := make(map[string][]*RecipientRow)
+	calledDomainsMutex := &sync.Mutex{}
 
 	worker := &EmailWorker{
 		ctx:    context.Background(),
@@ -251,14 +248,47 @@ func TestEmailWorker_AttemptsToSendToGroupByDomain(t *testing.T) {
 		AttemptSendToDomainFunc: func(
 			domainWg *sync.WaitGroup,
 			domainQueryMutex *sync.Mutex,
+			attemptCh chan<- AttemptData,
 			send *SendRow,
 			domain string,
 			recipients []*RecipientRow,
 			sendTx *SendTransaction,
 		) {
 			defer domainWg.Done()
+			calledDomainsMutex.Lock()
+			defer calledDomainsMutex.Unlock()
 			calledDomains[domain] = recipients
+
+			if domain == "hyvor.com" {
+				attemptCh <- AttemptData{
+					SendAttemptId: 1,
+					Error:         nil,
+					result: &SendResult{
+						Code: SendResultAccepted,
+					},
+				}
+			} else if domain == "gmail.com" {
+				attemptCh <- AttemptData{
+					SendAttemptId: 2,
+					Error:         nil,
+					result: &SendResult{
+						Code: SendResultAccepted,
+					},
+				}
+			}
 		},
+	}
+
+	var localApiMethod string
+	var localApiEndpoint string
+	var localApiBody interface{}
+
+	CallLocalApi = func(ctx context.Context, method, endpoint string, body, responseJsonObject interface{}) error {
+		localApiMethod = method
+		localApiEndpoint = endpoint
+		localApiBody = body
+
+		return nil
 	}
 
 	conn, err := createNewTestDbConn()
@@ -279,5 +309,191 @@ func TestEmailWorker_AttemptsToSendToGroupByDomain(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, 1, len(gmailRecipients))
 	assert.Equal(t, "nadil@gmail.com", gmailRecipients[0].Address)
+
+	assert.Equal(t, "POST", localApiMethod)
+	assert.Equal(t, "/send-attempts/done", localApiEndpoint)
+	bodyMap, ok := localApiBody.(map[string]interface{})
+	assert.True(t, ok)
+	sendAttemptIds, ok := bodyMap["send_attempt_ids"].([]int)
+	assert.True(t, ok)
+	assert.Equal(t, 2, len(sendAttemptIds))
+	assert.Contains(t, sendAttemptIds, 1)
+	assert.Contains(t, sendAttemptIds, 2)
+
+	updatedSend, err := factory.GetSendById(send.Id)
+	assert.NoError(t, err)
+	assert.False(t, updatedSend.Queued)
+
+}
+
+func TestEmailWorker_ProcessSend_Requeuing(t *testing.T) {
+
+	truncateTestDb()
+
+	factory, err := NewTestFactory()
+	assert.NoError(t, err)
+
+	send, err := factory.Send(&FactorySend{
+		Queued:    true,
+		SendAfter: time.Now().Add(-10 * time.Hour),
+	})
+	assert.NoError(t, err)
+
+	err = factory.SendRecipient(send, &FactorySendRecipient{
+		Address: "supun@hyvor.com",
+		Type:    "to",
+		Status:  "queued",
+	})
+	assert.NoError(t, err)
+
+	worker := &EmailWorker{
+		ctx:    context.Background(),
+		logger: slogDiscard(),
+		ip: GoStateIp{
+			QueueId: send.QueueId,
+		},
+		AttemptSendToDomainFunc: func(
+			domainWg *sync.WaitGroup,
+			domainQueryMutex *sync.Mutex,
+			attemptCh chan<- AttemptData,
+			send *SendRow,
+			domain string,
+			recipients []*RecipientRow,
+			sendTx *SendTransaction,
+		) {
+			defer domainWg.Done()
+
+			attemptCh <- AttemptData{
+				SendAttemptId: 1,
+				result: &SendResult{
+					Code:        SendResultDeferred,
+					NewTryCount: 1,
+				},
+			}
+
+		},
+	}
+
+	conn, err := createNewTestDbConn()
+	assert.NoError(t, err)
+
+	err = worker.processSend(conn)
+	assert.NoError(t, err)
+
+	updatedSend, err := factory.GetSendById(send.Id)
+	assert.NoError(t, err)
+	assert.True(t, updatedSend.Queued)
+	assert.True(t, updatedSend.SendAfter.After(time.Now()))
+
+}
+
+// attemptSendToDomain
+
+func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
+
+	truncateTestDb()
+
+	factory, err := NewTestFactory()
+	assert.NoError(t, err)
+
+	send, err := factory.Send(&FactorySend{
+		Queued:    true,
+		SendAfter: time.Now().Add(-10 * time.Hour),
+	})
+	assert.NoError(t, err)
+
+	err = factory.SendRecipient(send, &FactorySendRecipient{
+		Address: "supun@hyvor.com",
+		Type:    "to",
+		Status:  "queued",
+	})
+	assert.NoError(t, err)
+
+	wg := &sync.WaitGroup{}
+	mx := &sync.Mutex{}
+	attemptCh := make(chan AttemptData, 1)
+	defer close(attemptCh)
+
+	sendRow := &SendRow{
+		Id:   send.Id,
+		Uuid: send.Uuid,
+		From: send.FromAddress,
+	}
+	domain := "hyvor.com"
+	recipients := []*RecipientRow{
+		{
+			Id:       1,
+			Type:     "to",
+			Address:  "supun@hyvor.com",
+			TryCount: 0,
+		},
+	}
+	sendTx, err := NewSendTransaction(context.Background(), factory.conn)
+	assert.NoError(t, err)
+
+	ipAddressId, err := factory.IpAddress()
+	assert.NoError(t, err)
+
+	worker := &EmailWorker{
+		ctx:    context.Background(),
+		logger: slogDiscard(),
+		ip: GoStateIp{
+			Id:      ipAddressId,
+			QueueId: send.QueueId,
+		},
+		metrics: newMetrics(),
+	}
+
+	sendEmail = func(
+		send *SendRow,
+		recipients []*RecipientRow,
+		rcptDomain string,
+		instanceDomain string,
+		ipId int,
+		ip string,
+		ptr string,
+	) *SendResult {
+		return &SendResult{
+			SentFromIpId:    ipId,
+			NewTryCount:     1,
+			Domain:          "hyvor.com",
+			ResolvedMxHosts: []string{"mx1.hyvor.com", "mx2.hyvor.com"},
+			Code:            SendResultAccepted,
+		}
+	}
+
+	chData := make([]AttemptData, 0)
+	go func() {
+		for data := range attemptCh {
+			chData = append(chData, data)
+		}
+	}()
+
+	wg.Add(1)
+	worker.attemptSendToDomain(
+		wg,
+		mx,
+		attemptCh,
+		sendRow,
+		domain,
+		recipients,
+		sendTx,
+	)
+	wg.Wait()
+	time.Sleep(20 * time.Millisecond)
+
+	assert.Equal(t, 1, len(chData))
+	data := chData[0]
+	assert.NotZero(t, data.SendAttemptId)
+	assert.NoError(t, data.Error)
+
+	sendTx.Commit()
+
+	updatedSendAttempt, err := factory.GetSendAttemptById(data.SendAttemptId)
+	assert.NoError(t, err)
+	assert.Equal(t, "accepted", updatedSendAttempt.Status)
+	assert.Equal(t, "hyvor.com", updatedSendAttempt.Domain)
+	assert.Equal(t, 1, updatedSendAttempt.TryCount)
+	assert.Equal(t, `["mx1.hyvor.com", "mx2.hyvor.com"]`, updatedSendAttempt.ResolvedMx)
 
 }

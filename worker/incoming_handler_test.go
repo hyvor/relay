@@ -2,43 +2,12 @@ package main
 
 import (
 	"context"
-	"io"
-	"log/slog"
 	"testing"
 
-	"github.com/joho/godotenv"
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/assert"
 )
 
-type IncomingMailSuite struct {
-	suite.Suite
-}
-
-func (suite *IncomingMailSuite) SetupTest() {
-	godotenv.Load()
-	err := truncateTestDb()
-	suite.NoError(err, "Failed to truncate test database")
-}
-
-func TestIncomingMailSuite(t *testing.T) {
-	suite.Run(t, new(IncomingMailSuite))
-}
-
-func (suite *IncomingMailSuite) TestIncomingMail_HandleBounce() {
-
-	pgpool, err := createNewPgPool(context.Background(), getTestDbConfig(), 1, 1)
-	if err != nil {
-		suite.T().Fatal("Failed to create pgpool:", err)
-	}
-	defer pgpool.Close()
-
-	factory, err := NewTestFactory()
-	suite.NoError(err)
-
-	factorySend, err := factory.Send(&FactorySend{
-		ToAddress: "supun@hyvor.com",
-	})
-	suite.NoError(err)
+func TestIncomingMail_HandleBounce(t *testing.T) {
 
 	m := &IncomingMail{
 		Data: []byte(`From: MAILER-DAEMON@example.com
@@ -80,45 +49,111 @@ This is a test email message.
 --dsn-boundary--
 `),
 		MailFrom:       "sender@example.org",
-		RcptTo:         "bounce+" + factorySend.Uuid + "@relay.com",
+		RcptTo:         "bounce+uuid@relay.com",
 		InstanceDomain: "relay.com",
 	}
 
-	m.Handle(pgpool, slog.New(slog.NewTextHandler(io.Discard, nil)), newMetrics())
+	var calledMethod string
+	var calledEndpoint string
+	var calledBody interface{}
 
-	// get debug incoming mail (table debug_incoming_emails)
-	var debugType DebugIncomingType = DebugIncomingTypeBounce
-	var debugStatus DebugIncomingStatus = DebugIncomingStatusSuccess
-	var debugErrorMessage string
-	var debugParsedData interface{}
-	err = pgpool.QueryRow(context.Background(), `
-		SELECT type, status, error_message, parsed_data
-		FROM debug_incoming_emails
-		LIMIT 1
-	`).Scan(&debugType, &debugStatus, &debugErrorMessage, &debugParsedData)
-
-	suite.NoError(err, "Failed to query debug incoming emails")
-
-	suite.Equal(DebugIncomingTypeBounce, debugType)
-	suite.Equal(DebugIncomingStatusSuccess, debugStatus)
-	suite.Empty(debugErrorMessage)
-	suite.NotNil(debugParsedData)
-
-	var suppression struct {
-		ProjectId   int
-		Email       string
-		Description string
+	CallLocalApi = func(
+		ctx context.Context,
+		method,
+		endpoint string,
+		body,
+		responseJsonObject interface{},
+	) error {
+		calledMethod = method
+		calledEndpoint = endpoint
+		calledBody = body
+		return nil
 	}
 
-	err = pgpool.QueryRow(context.Background(), `
-		SELECT project_id, email, description
-		FROM suppressions
-		LIMIT 1
-	`).Scan(&suppression.ProjectId, &suppression.Email, &suppression.Description)
-	suite.NoError(err, "Failed to query suppressions")
+	m.Handle(
+		context.Background(),
+		slogDiscard(),
+		newMetrics(),
+	)
 
-	suite.Equal(factorySend.ProjectId, suppression.ProjectId)
-	suite.Equal("supun@hyvor.com", suppression.Email)
-	suite.Equal("Recipient address rejected: User unknown", suppression.Description)
+	assert.Equal(t, "POST", calledMethod)
+	assert.Equal(t, "/incoming", calledEndpoint)
+
+	bodyMap, ok := calledBody.(map[string]interface{})
+	assert.True(t, ok)
+
+	assert.Equal(t, IncomingMailTypeBounce, bodyMap["type"])
+	assert.Equal(t, "uuid", bodyMap["bounce_uuid"])
+	assert.Contains(t, bodyMap, "dsn")
+	assert.Equal(t, "sender@example.org", bodyMap["mail_from"])
+	assert.Equal(t, "bounce+uuid@relay.com", bodyMap["rcpt_to"])
+	assert.Equal(t, m.Data, bodyMap["raw_email"])
+
+}
+
+func TestIncomingMail_HandleFbl(t *testing.T) {
+
+	m := &IncomingMail{
+		Data: []byte(`MIME-Version: 1.0
+Content-Type: multipart/report; report-type=feedback-report;
+     boundary="myinnocentboundary"
+
+--myinnocentboundary
+Content-Type: text/plain; charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+
+This is an email abuse report for an email message.
+
+--myinnocentboundary
+Content-Type: message/feedback-report
+
+Feedback-Type: abuse
+
+--myinnocentboundary
+Content-Type: message/rfc822
+
+Return-Path: <return@hyvor.com>
+
+--myinnocentboundary--
+`),
+		MailFrom:       "sender@example.org",
+		RcptTo:         "fbl@relay.com",
+		InstanceDomain: "relay.com",
+	}
+
+	var calledMethod string
+	var calledEndpoint string
+	var calledBody interface{}
+
+	CallLocalApi = func(
+		ctx context.Context,
+		method,
+		endpoint string,
+		body,
+		responseJsonObject interface{},
+	) error {
+		calledMethod = method
+		calledEndpoint = endpoint
+		calledBody = body
+		return nil
+	}
+
+	m.Handle(
+		context.Background(),
+		slogDiscard(),
+		newMetrics(),
+	)
+
+	assert.Equal(t, "POST", calledMethod)
+	assert.Equal(t, "/incoming", calledEndpoint)
+
+	bodyMap, ok := calledBody.(map[string]interface{})
+	assert.True(t, ok)
+
+	assert.Equal(t, IncomingMailTypeFbl, bodyMap["type"])
+	assert.Contains(t, bodyMap, "arf")
+	assert.Equal(t, "sender@example.org", bodyMap["mail_from"])
+	assert.Equal(t, "fbl@relay.com", bodyMap["rcpt_to"])
+	assert.Equal(t, m.Data, bodyMap["raw_email"])
 
 }

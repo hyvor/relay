@@ -117,30 +117,6 @@ func (b *SendTransaction) RecordAttempt(
 
 	status := sendResult.ToStatus()
 
-	var err error
-	// var sendAfterInterval string
-
-	// if status == "deferred" {
-	// 	sendAfterInterval = fmt.Sprintf("NOW() + INTERVAL '%s'", getSendAfterInterval(sendResult.NewTryCount))
-	// } else {
-	// 	sendAfterInterval = "send_after"
-	// }
-
-	// update send status
-	// _, err = b.tx.ExecContext(b.ctx, `
-	// 	UPDATE sends
-	// 	SET
-	// 		status = $1,
-	// 		updated_at = NOW(),
-	// 		try_count = try_count + 1,
-	// 		send_after = `+sendAfterInterval+`
-	// 	WHERE id = $2
-	// `, status, send.Id)
-
-	// if err != nil {
-	// 	return 0, fmt.Errorf("failed to update send ID %d status to %s: %w", send.Id, status, err)
-	// }
-
 	// create send attempt
 	var errorMessage sql.NullString
 	if sendResult.Error != nil {
@@ -171,7 +147,7 @@ func (b *SendTransaction) RecordAttempt(
 	smtpConversations, _ := json.Marshal(sendResult.SmtpConversations)
 
 	var attemptId int
-	err = b.tx.QueryRowContext(b.ctx, `
+	err := b.tx.QueryRowContext(b.ctx, `
 		INSERT INTO send_attempts (
 			created_at,
 			updated_at,
@@ -179,6 +155,7 @@ func (b *SendTransaction) RecordAttempt(
 			ip_address_id,
 			status,
 			try_count,
+			domain,
 			resolved_mx_hosts,
 			responded_mx_host,
 			smtp_conversations,
@@ -194,7 +171,8 @@ func (b *SendTransaction) RecordAttempt(
 			$5,
 			$6,
 			$7,
-			$8
+			$8,
+			$9
 		)
 		RETURNING id
 	`,
@@ -202,6 +180,7 @@ func (b *SendTransaction) RecordAttempt(
 		sendResult.SentFromIpId,
 		status,
 		sendResult.NewTryCount,
+		sendResult.Domain,
 		resolvedMxHosts,
 		respondedMxHost,
 		smtpConversations,
@@ -216,14 +195,31 @@ func (b *SendTransaction) RecordAttempt(
 
 }
 
-func (stx *SendTransaction) FinalizeSend(send *SendRow) error {
+func (b *SendTransaction) RequeueSend(sendId int, tryCount int) error {
+	_, err := b.tx.ExecContext(b.ctx, `
+		UPDATE sends
+		SET 
+			queued = true, 
+			send_after = NOW() + INTERVAL '`+getSendAfterInterval(tryCount)+`',
+			updated_at = NOW()
+		WHERE id = $1
+	`, sendId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (stx *SendTransaction) MarkSendAsDone(sendId int) error {
 
 	// set queued to false
 	_, err := stx.tx.ExecContext(stx.ctx, `
 		UPDATE sends
 		SET queued = false, updated_at = NOW()
 		WHERE id = $1
-	`, send.Id)
+	`, sendId)
 
 	if err != nil {
 		return err
@@ -231,49 +227,6 @@ func (stx *SendTransaction) FinalizeSend(send *SendRow) error {
 
 	return nil
 
-}
-
-// tryCount is the number of attempts BEFORE this attempt
-func getSendAfterInterval(tryCount int) string {
-
-	if tryCount == 0 {
-		return "15 minutes"
-	}
-	if tryCount == 1 {
-		return "1 hour"
-	}
-	if tryCount == 2 {
-		return "2 hours"
-	}
-	if tryCount == 3 {
-		return "4 hours"
-	}
-	if tryCount == 4 {
-		return "8 hours"
-	}
-	if tryCount == 5 {
-		return "16 hours"
-	}
-	if tryCount == 6 {
-		return "1 day"
-	}
-
-	return "2 days"
-}
-
-func (b *SendTransaction) RequeueSend(sendId int) error {
-	// TODO: interval logic based on retry count
-	_, err := b.tx.ExecContext(b.ctx, `
-		UPDATE sends
-		SET status = 'queued', send_after = NOW() + INTERVAL '15 minutes'
-		WHERE id = $1
-	`, sendId)
-
-	if err != nil {
-		return fmt.Errorf("failed to requeue send ID %d: %w", sendId, err)
-	}
-
-	return nil
 }
 
 func (b *SendTransaction) Commit() error {

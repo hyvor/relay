@@ -107,6 +107,7 @@ type EmailWorker struct {
 	AttemptSendToDomainFunc func(
 		domainWg *sync.WaitGroup,
 		domainQueryMutex *sync.Mutex,
+		attemptCh chan<- AttemptData,
 		send *SendRow,
 		domain string,
 		recipients []*RecipientRow,
@@ -114,7 +115,9 @@ type EmailWorker struct {
 	)
 }
 
-func NewEmailWorker(
+var NewEmailWorker = newEmailWorker
+
+func newEmailWorker(
 	ctx context.Context,
 	id int,
 	wg *sync.WaitGroup,
@@ -169,6 +172,12 @@ func (worker *EmailWorker) Start() {
 
 }
 
+type AttemptData struct {
+	result        *SendResult
+	SendAttemptId int
+	Error         error
+}
+
 // This tries to handle one send within a transaction.
 // The select statement uses FOR UPDATE SKIP LOCKED,
 // which skips locked rows in other queries until the current transaction is committed or rolled back.
@@ -210,7 +219,8 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 
 	recipientsByDomain := getRecipientsGroupedByDomain(recipients)
 
-	var sendAttemptIds []int // TODO: this
+	var sendAttemptIds []int
+	attemptCh := make(chan AttemptData, len(recipients))
 
 	domainsCount := len(recipientsByDomain)
 	domainWg := sync.WaitGroup{}
@@ -221,6 +231,7 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 		go worker.AttemptSendToDomainFunc(
 			&domainWg,
 			domainQueryMutex,
+			attemptCh,
 			send,
 			domain,
 			rcpts,
@@ -228,9 +239,34 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 		)
 	}
 
-	domainWg.Wait()
+	go func() {
+		domainWg.Wait()
+		close(attemptCh)
+	}()
 
-	if err := sendTx.FinalizeSend(send); err != nil {
+	// 0 means not requeued the send again
+	// otherwise it is set to the new try count for requeuing
+	requeingTryCount := 0
+
+	for attempt := range attemptCh {
+		if attempt.Error != nil {
+			sendTx.Rollback()
+			return attempt.Error
+		} else {
+			sendAttemptIds = append(sendAttemptIds, attempt.SendAttemptId)
+			if attempt.result.Code == SendResultDeferred {
+				requeingTryCount = attempt.result.NewTryCount
+			}
+		}
+	}
+
+	if requeingTryCount > 0 {
+		err = sendTx.RequeueSend(send.Id, requeingTryCount)
+	} else {
+		err = sendTx.MarkSendAsDone(send.Id)
+	}
+
+	if err != nil {
 		worker.logger.Error("Email worker failed to finalize send: "+err.Error(), "send_id", send.Id)
 		sendTx.Rollback()
 		return err
@@ -255,6 +291,7 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 func (worker *EmailWorker) attemptSendToDomain(
 	domainWg *sync.WaitGroup,
 	domainQueryMutex *sync.Mutex,
+	attemptCh chan<- AttemptData,
 	send *SendRow,
 	domain string,
 	recipients []*RecipientRow,
@@ -283,7 +320,8 @@ func (worker *EmailWorker) attemptSendToDomain(
 	// get the lock before calling the DB
 	domainQueryMutex.Lock()
 	defer domainQueryMutex.Unlock()
-	_, err := sendTx.RecordAttempt(
+
+	sendAttemptId, err := sendTx.RecordAttempt(
 		send,
 		recipients,
 		result,
@@ -296,13 +334,23 @@ func (worker *EmailWorker) attemptSendToDomain(
 			"domain", domain,
 			"error", err,
 		)
-		// TODO: add error
-		return // 0, err
+
+		attemptCh <- AttemptData{
+			result:        nil,
+			SendAttemptId: 0,
+			Error:         err,
+		}
+
+		return
 	}
 
 	updateEmailMetricsFromSendResult(worker.metrics, result)
 
-	// TODO: send attempt id
+	attemptCh <- AttemptData{
+		result:        result,
+		SendAttemptId: sendAttemptId,
+		Error:         nil,
+	}
 
 }
 

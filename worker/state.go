@@ -115,10 +115,17 @@ func (s *ServiceState) Set(goState GoState) {
 func (s *ServiceState) Initialize() {
 
 	go func() {
+		tries := 0
+
 		for {
 			err := s.doInitialize()
 			if err != nil {
-				s.Logger.Error("Failed to initialize service state, retrying in 2 seconds: " + err.Error())
+				logFunc := s.Logger.Info
+				if tries > 3 {
+					logFunc = s.Logger.Error
+				}
+
+				logFunc("Initializing Go service state did not succeed, retrying in 2 seconds: " + err.Error())
 
 				select {
 				case <-s.ctx.Done():
@@ -128,6 +135,8 @@ func (s *ServiceState) Initialize() {
 			} else {
 				return
 			}
+
+			tries++
 		}
 	}()
 
