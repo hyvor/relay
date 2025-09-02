@@ -115,7 +115,9 @@ type EmailWorker struct {
 	)
 }
 
-func NewEmailWorker(
+var NewEmailWorker = newEmailWorker
+
+func newEmailWorker(
 	ctx context.Context,
 	id int,
 	wg *sync.WaitGroup,

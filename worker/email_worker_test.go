@@ -31,40 +31,41 @@ func TestNewEmailWorkersPool(t *testing.T) {
 	assert.Contains(t, buf.String(), "Stopping email workers pool")
 }
 
-// func TestEmailWorkersPoolSet(t *testing.T) {
+func TestEmailWorkersPoolSet(t *testing.T) {
 
-// 	canceled := false
-// 	cancelFunc := func() {
-// 		canceled = true
-// 	}
+	ctx, cancel := context.WithCancel(context.Background())
 
-// 	var called []int
-// 	var mu sync.Mutex
-// 	mockWorker := func(ctx context.Context, id int, wg *sync.WaitGroup, config *DBConfig, logger *slog.Logger, metrics *Metrics, ip GoStateIp, instanceDomain string) {
-// 		defer wg.Done()
-// 		mu.Lock()
-// 		called = append(called, id)
-// 		mu.Unlock()
-// 	}
+	numWorkersCreated := 0
 
-// 	pool := &EmailWorkersPool{
-// 		ctx:        context.Background(),
-// 		cancelFunc: cancelFunc,
-// 		workerFunc: mockWorker,
-// 		logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
-// 	}
+	NewEmailWorker = func(
+		ctx context.Context,
+		id int,
+		wg *sync.WaitGroup,
+		dbConfig *DBConfig,
+		logger *slog.Logger,
+		metrics *Metrics,
+		ip GoStateIp,
+		instanceDomain string,
+	) *EmailWorker {
+		numWorkersCreated++
 
-// 	pool.Set([]GoStateIp{
-// 		{Ip: "1.1.1.1", QueueId: 1, QueueName: "transactional"},
-// 		{Ip: "2.2.2.2", QueueId: 2, QueueName: "distributional"},
-// 	}, 2, "relay.hyvor.com")
+		return newEmailWorker(ctx, id, wg, dbConfig, logger, metrics, ip, instanceDomain)
+	}
 
-// 	time.Sleep(20 * time.Millisecond)
+	pool := &EmailWorkersPool{
+		ctx:        ctx,
+		cancelFunc: cancel,
+		logger:     slogDiscard(),
+	}
 
-// 	assert.True(t, canceled)
-// 	assert.Equal(t, 2, len(called))
+	pool.Set([]GoStateIp{
+		{Ip: "1.1.1.1", QueueId: 1, QueueName: "transactional"},
+		{Ip: "2.2.2.2", QueueId: 2, QueueName: "distributional"},
+	}, 2, "relay.hyvor.com")
 
-// }
+	assert.Equal(t, 4, numWorkersCreated)
+
+}
 
 func TestEmailWorkersPoolStopWorkers(t *testing.T) {
 
@@ -201,7 +202,7 @@ func TestEmailWorker_ProcessSend_RollsbackWhenNoRowsFound(t *testing.T) {
 
 }
 
-func TestEmailWorker_AttemptsToSendToGroupByDomain(t *testing.T) {
+func TestEmailWorker_ProcessSend(t *testing.T) {
 
 	truncateTestDb()
 
@@ -319,6 +320,71 @@ func TestEmailWorker_AttemptsToSendToGroupByDomain(t *testing.T) {
 	assert.Contains(t, sendAttemptIds, 1)
 	assert.Contains(t, sendAttemptIds, 2)
 
+	updatedSend, err := factory.GetSendById(send.Id)
+	assert.NoError(t, err)
+	assert.False(t, updatedSend.Queued)
+
+}
+
+func TestEmailWorker_ProcessSend_Requeuing(t *testing.T) {
+
+	truncateTestDb()
+
+	factory, err := NewTestFactory()
+	assert.NoError(t, err)
+
+	send, err := factory.Send(&FactorySend{
+		Queued:    true,
+		SendAfter: time.Now().Add(-10 * time.Hour),
+	})
+	assert.NoError(t, err)
+
+	err = factory.SendRecipient(send, &FactorySendRecipient{
+		Address: "supun@hyvor.com",
+		Type:    "to",
+		Status:  "queued",
+	})
+	assert.NoError(t, err)
+
+	worker := &EmailWorker{
+		ctx:    context.Background(),
+		logger: slogDiscard(),
+		ip: GoStateIp{
+			QueueId: send.QueueId,
+		},
+		AttemptSendToDomainFunc: func(
+			domainWg *sync.WaitGroup,
+			domainQueryMutex *sync.Mutex,
+			attemptCh chan<- AttemptData,
+			send *SendRow,
+			domain string,
+			recipients []*RecipientRow,
+			sendTx *SendTransaction,
+		) {
+			defer domainWg.Done()
+
+			attemptCh <- AttemptData{
+				SendAttemptId: 1,
+				result: &SendResult{
+					Code:        SendResultDeferred,
+					NewTryCount: 1,
+				},
+			}
+
+		},
+	}
+
+	conn, err := createNewTestDbConn()
+	assert.NoError(t, err)
+
+	err = worker.processSend(conn)
+	assert.NoError(t, err)
+
+	updatedSend, err := factory.GetSendById(send.Id)
+	assert.NoError(t, err)
+	assert.True(t, updatedSend.Queued)
+	assert.True(t, updatedSend.SendAfter.After(time.Now()))
+
 }
 
 // attemptSendToDomain
@@ -421,9 +487,6 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 	assert.NotZero(t, data.SendAttemptId)
 	assert.NoError(t, data.Error)
 
-	// updatedSend, err := factory.GetSendById(send.Id)
-	// assert.NoError(t, err)
-	// assert.False(t, updatedSend.Queued)
 	sendTx.Commit()
 
 	updatedSendAttempt, err := factory.GetSendAttemptById(data.SendAttemptId)
