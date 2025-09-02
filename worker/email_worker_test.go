@@ -257,7 +257,37 @@ func TestEmailWorker_AttemptsToSendToGroupByDomain(t *testing.T) {
 			calledDomainsMutex.Lock()
 			defer calledDomainsMutex.Unlock()
 			calledDomains[domain] = recipients
+
+			if domain == "hyvor.com" {
+				attemptCh <- AttemptData{
+					SendAttemptId: 1,
+					Error:         nil,
+					result: &SendResult{
+						Code: SendResultAccepted,
+					},
+				}
+			} else if domain == "gmail.com" {
+				attemptCh <- AttemptData{
+					SendAttemptId: 2,
+					Error:         nil,
+					result: &SendResult{
+						Code: SendResultAccepted,
+					},
+				}
+			}
 		},
+	}
+
+	var localApiMethod string
+	var localApiEndpoint string
+	var localApiBody interface{}
+
+	CallLocalApi = func(ctx context.Context, method, endpoint string, body, responseJsonObject interface{}) error {
+		localApiMethod = method
+		localApiEndpoint = endpoint
+		localApiBody = body
+
+		return nil
 	}
 
 	conn, err := createNewTestDbConn()
@@ -278,6 +308,16 @@ func TestEmailWorker_AttemptsToSendToGroupByDomain(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, 1, len(gmailRecipients))
 	assert.Equal(t, "nadil@gmail.com", gmailRecipients[0].Address)
+
+	assert.Equal(t, "POST", localApiMethod)
+	assert.Equal(t, "/send-attempts/done", localApiEndpoint)
+	bodyMap, ok := localApiBody.(map[string]interface{})
+	assert.True(t, ok)
+	sendAttemptIds, ok := bodyMap["send_attempt_ids"].([]int)
+	assert.True(t, ok)
+	assert.Equal(t, 2, len(sendAttemptIds))
+	assert.Contains(t, sendAttemptIds, 1)
+	assert.Contains(t, sendAttemptIds, 2)
 
 }
 
@@ -377,4 +417,5 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 	assert.NotZero(t, data.SendAttemptId)
 	assert.NoError(t, data.Error)
 
+	sendTx.Rollback()
 }

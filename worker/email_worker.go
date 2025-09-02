@@ -242,6 +242,8 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 		close(attemptCh)
 	}()
 
+	// 0 means not requeued the send again
+	// otherwise it is set to the new try count for requeuing
 	requeingTryCount := 0
 
 	for attempt := range attemptCh {
@@ -250,10 +252,9 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 			return attempt.Error
 		} else {
 			sendAttemptIds = append(sendAttemptIds, attempt.SendAttemptId)
-		}
-
-		if attempt.result.Code == SendResultDeferred {
-			requeingTryCount = attempt.result.NewTryCount
+			if attempt.result.Code == SendResultDeferred {
+				requeingTryCount = attempt.result.NewTryCount
+			}
 		}
 	}
 

@@ -206,6 +206,7 @@ func (suite *WebhookWorkerTestSuite) TestWebhookDeliveryRequeuedOnFailure() {
 }
 
 func (suite *WebhookWorkerTestSuite) TestWebhookDeliveryMarkedFailedAfterMaxRetries() {
+
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		suite.Equal(req.URL.String(), "/webhook")
 		rw.WriteHeader(422)
@@ -214,6 +215,7 @@ func (suite *WebhookWorkerTestSuite) TestWebhookDeliveryMarkedFailedAfterMaxRetr
 	defer server.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	var buf bytes.Buffer
 	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{
@@ -225,14 +227,14 @@ func (suite *WebhookWorkerTestSuite) TestWebhookDeliveryMarkedFailedAfterMaxRetr
 
 	// Set try_count to 6 (WEBHOOKS_MAX_RETRIES - 1)
 	deliveryId, err := factory.WebhookDelivery(server.URL+"/webhook", `{"key": "value"}`, 6)
-	suite.NoError(err, "Failed to create webhook delivery")
+	suite.NoError(err)
 
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go webhookWorker(ctx, 1, &wg, getTestDbConfig(), logger, newMetrics())
 	go func() {
 		defer wg.Done()
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 		cancel()
 	}()
 	wg.Wait()

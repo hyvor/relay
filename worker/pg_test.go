@@ -30,10 +30,16 @@ func truncateTestDb() error {
 	defer conn.Close()
 
 	_, err = conn.Exec(`
+		DELETE FROM servers;
+		DELETE FROM ip_addresses;
 		DELETE FROM projects;
+		DELETE FROM domains;
+		DELETE FROM queues;
+		DELETE FROM sends;
+		DELETE FROM send_recipients;
 		DELETE FROM webhooks;
 		DELETE FROM webhook_deliveries;
-		DELETE FROM sends;
+		DELETE FROM send_attempts;
 		DELETE FROM suppressions;
 		DELETE FROM debug_incoming_emails;
 	`)
