@@ -15,12 +15,13 @@ func TestIncomingServer(t *testing.T) {
 	defer cancel()
 
 	server := &IncomingMailServer{
+		ctx:     ctx,
 		logger:  slogDiscard(),
 		metrics: newMetrics(),
 	}
 
 	smtpServerPort = ":25251"
-	go server.Start(ctx, "example.com", 2)
+	go server.Start("example.com", 2)
 
 	time.Sleep(100 * time.Millisecond)
 

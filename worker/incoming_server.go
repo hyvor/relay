@@ -128,7 +128,7 @@ func (server *IncomingMailServer) Set(instanceDomain string, numWorkers int) {
 	server.Shutdown()
 
 	go func() {
-		server.Start(server.ctx, instanceDomain, numWorkers)
+		server.Start(instanceDomain, numWorkers)
 	}()
 
 	go func() {
@@ -160,13 +160,13 @@ func (server *IncomingMailServer) Shutdown() {
 
 var smtpServerPort = ":25"
 
-func (server *IncomingMailServer) Start(ctx context.Context, instanceDomain string, numWorkers int) {
+func (server *IncomingMailServer) Start(instanceDomain string, numWorkers int) {
 
 	// channel
 	mailChannel := make(chan *IncomingMail)
 
 	// worker context
-	workerCtx, cancel := context.WithCancel(ctx)
+	workerCtx, cancel := context.WithCancel(server.ctx)
 	server.cancelFunc = cancel
 	defer cancel()
 

@@ -242,7 +242,7 @@ func sendEmailHandler(
 
 				if tryCount >= MAX_SEND_TRIES {
 					result.Code = SendResultFailed
-					result.Error = errors.New("Maximum send attempts reached")
+					result.Error = errors.New("maximum send attempts reached")
 					return result
 				} else {
 					result.Code = SendResultDeferred
@@ -276,6 +276,8 @@ func sendEmailHandler(
 	return result
 }
 
+var netResolveTCPAddr = net.ResolveTCPAddr
+
 var createSmtpClient = func(host string, localIp string) (*smtp.Client, error) {
 
 	// TODO: comment from ResolveTCPAddr
@@ -284,7 +286,7 @@ var createSmtpClient = func(host string, localIp string) (*smtp.Client, error) {
 	// IP addresses."
 	// So, we might need to resolve A records manually first.
 
-	remoteAddr, err := net.ResolveTCPAddr("tcp", host+":25")
+	remoteAddr, err := netResolveTCPAddr("tcp", host+":25")
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve remote address %s: %w", host, err)
 	}
@@ -315,7 +317,6 @@ var createSmtpClient = func(host string, localIp string) (*smtp.Client, error) {
 	return client, nil
 }
 
-// returns: conversation, error (network), error (smtp code)
 func sendEmailToHost(
 	send *SendRow,
 	recipients []*RecipientRow,

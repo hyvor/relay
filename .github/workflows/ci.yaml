@@ -41,7 +41,7 @@ jobs:
             ./vendor/bin/phpstan analyse --memory-limit=1G --ansi"
 
   php-tests:
-    name: "PHP & Go Tests"
+    name: "PHP Tests"
     runs-on: ubuntu-latest
 
     steps:
