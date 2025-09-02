@@ -35,28 +35,6 @@ func (d LatencyDuration) MarshalJSON() ([]byte, error) {
 	return json.Marshal(str)
 }
 
-type SmtpLatency struct {
-	start time.Time
-	last  time.Time
-	Steps map[SmtpStepName]LatencyDuration // ns durations
-	Total LatencyDuration
-}
-
-func (s *SmtpLatency) RecordStep(step SmtpStepName) {
-	stepTime := time.Since(s.start)
-	s.Steps[step] = LatencyDuration(stepTime)
-	s.last = time.Now()
-	s.Total += LatencyDuration(stepTime)
-}
-
-func NewSmtpLatency() *SmtpLatency {
-	return &SmtpLatency{
-		start: time.Now(),
-		last:  time.Now(),
-		Steps: make(map[SmtpStepName]LatencyDuration),
-	}
-}
-
 type SmtpStep struct {
 	Name      SmtpStepName
 	Duration  LatencyDuration

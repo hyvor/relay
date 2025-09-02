@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"strings"
 	"testing"
 	"time"
 
@@ -370,5 +371,21 @@ func TestSendEmailFailedSmtpStatus(t *testing.T) {
 
 	assert.NoError(t, convo.Error)
 	assert.Equal(t, 451, convo.SmtpErrorStatus)
+
+}
+
+func TestSend_JsonMarsh(t *testing.T) {
+
+	ld := LatencyDuration(150 * time.Millisecond)
+	data, err := ld.MarshalJSON()
+	assert.NoError(t, err)
+	assert.Equal(t, `"150ms"`, string(data))
+
+	convo := &SmtpConversation{
+		Error: errors.New("some error"),
+	}
+	data, err = convo.MarshalJSON()
+	assert.NoError(t, err)
+	assert.True(t, strings.Contains(string(data), `"Error":"some error"`))
 
 }
