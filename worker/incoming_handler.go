@@ -8,11 +8,11 @@ import (
 	"github.com/hyvor/relay/worker/bounceparse"
 )
 
-type DebugIncomingType string
+type IncomingMailType string
 
 const (
-	DebugIncomingTypeBounce DebugIncomingType = "bounce"
-	DebugIncomingTypeFbl    DebugIncomingType = "fbl"
+	IncomingMailTypeBounce IncomingMailType = "bounce"
+	IncomingMailTypeFbl    IncomingMailType = "fbl"
 )
 
 type IncomingMail struct {
@@ -40,10 +40,10 @@ func (m *IncomingMail) Handle(ctx context.Context, logger *slog.Logger, metrics 
 	}
 
 	payload := make(map[string]interface{})
-	var debugType DebugIncomingType
+	var debugType IncomingMailType
 
 	if isBounce {
-		debugType = DebugIncomingTypeBounce
+		debugType = IncomingMailTypeBounce
 		bounceDsn, err := bounceparse.ParseDsn(m.Data)
 
 		if err != nil {
@@ -53,7 +53,7 @@ func (m *IncomingMail) Handle(ctx context.Context, logger *slog.Logger, metrics 
 			payload["bounce_uuid"] = bounceUuid
 		}
 	} else if isFbl {
-		debugType = DebugIncomingTypeFbl
+		debugType = IncomingMailTypeFbl
 		arf, err := bounceparse.ParseArf(m.Data)
 
 		if err != nil {
@@ -112,11 +112,11 @@ func checkFbl(rcptTo string, instanceDomain string) bool {
 		return false
 	}
 
-	if !strings.HasPrefix(rcptTo[:at], "fbl") {
+	if rcptTo[:at] != "fbl" {
 		return false
 	}
 
-	if !strings.HasSuffix(rcptTo[at:], instanceDomain) {
+	if rcptTo[at:] != "@"+instanceDomain {
 		return false
 	}
 
