@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, IconButton, Tag } from '@hyvor/design/components';
+	import { Button, IconButton } from '@hyvor/design/components';
 	import IconTrash from '@hyvor/icons/IconTrash';
 	import IconArrowClockwise from '@hyvor/icons/IconArrowClockwise';
 	import IconEye from '@hyvor/icons/IconEye';
@@ -7,6 +7,7 @@
 	import DnsRecordModal from './DnsRecordModal.svelte';
 	import type { Domain } from '../../types';
 	import { cant } from '../../lib/scope.svelte';
+    import DomainStatusTag from "./DomainStatusTag.svelte";
 
 	interface Props {
 		domain: Domain;
@@ -23,15 +24,7 @@
 		<div class="domain-header">
 			<span class="domain-name">{domain.domain}</span>
 			<div class="domain-badges">
-				<Tag size="small" color={
-				    domain.status === 'active'
-				    ? 'green'
-				    : domain.status === 'suspended'
-				        ? 'red'
-				        : 'orange'
-				}>
-					{domain.status}
-				</Tag>
+                <DomainStatusTag status={domain.status} />
 			</div>
 		</div>
 		<div class="domain-meta">
