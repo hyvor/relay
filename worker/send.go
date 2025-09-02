@@ -81,6 +81,7 @@ type SmtpConversation struct {
 	Steps []*SmtpStep
 }
 
+// converts the Error field to a string for JSON marshalling
 func (s SmtpConversation) MarshalJSON() ([]byte, error) {
 	type SmtpConversationAlias SmtpConversation
 	aux := struct {
@@ -269,10 +270,17 @@ func sendEmailHandler(
 		}
 	}
 
-	// TODO: implement retrying here for network errors
+	// if we reach here, all hosts have failed due to non-smtp errors (e.g. network errors)
 
-	result.Code = SendResultFailed
-	result.Error = lastError
+	if tryCount == 0 {
+		// give it one more try later (15mins) if this was the first try
+		result.Code = SendResultDeferred
+		result.NewTryCount = tryCount + 1
+	} else {
+		result.Code = SendResultFailed
+		result.Error = lastError
+	}
+
 	return result
 }
 
@@ -317,7 +325,9 @@ var createSmtpClient = func(host string, localIp string) (*smtp.Client, error) {
 	return client, nil
 }
 
-func sendEmailToHost(
+var sendEmailToHost = sendEmailToHostHandler
+
+func sendEmailToHostHandler(
 	send *SendRow,
 	recipients []*RecipientRow,
 	host string,

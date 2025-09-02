@@ -18,7 +18,7 @@ func TestSendEmailToHost(t *testing.T) {
 	defer cancel()
 
 	incomingServer := NewIncomingMailServer(ctx, slogDiscard(), newMetrics())
-	go incomingServer.Start("hyvorrelay.io", 2)
+	incomingServer.Start("hyvorrelay.io", 2)
 	time.Sleep(10 * time.Millisecond)
 
 	send := &SendRow{
