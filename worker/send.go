@@ -13,7 +13,7 @@ import (
 
 var ErrSendEmailFailed = errors.New("failed to send email")
 
-const MAX_SEND_TRIES = 8
+const MAX_SEND_TRIES = 7
 
 type SmtpStepName string
 
@@ -198,6 +198,7 @@ func sendEmailHandler(
 
 		ResolvedMxHosts:   make([]string, 0),
 		SmtpConversations: make(map[string]*SmtpConversation),
+		NewTryCount:       tryCount + 1,
 	}
 
 	defer func() {
@@ -241,13 +242,12 @@ func sendEmailHandler(
 				// 4xx errors are transient, requeue the email if we haven't reached the max tries
 				result.RespondedMxHost = host
 
-				if tryCount >= MAX_SEND_TRIES {
+				if result.NewTryCount >= MAX_SEND_TRIES {
 					result.Code = SendResultFailed
 					result.Error = errors.New("maximum send attempts reached")
 					return result
 				} else {
 					result.Code = SendResultDeferred
-					result.NewTryCount = tryCount + 1
 					return result
 				}
 
@@ -271,11 +271,9 @@ func sendEmailHandler(
 	}
 
 	// if we reach here, all hosts have failed due to non-smtp errors (e.g. network errors)
-
-	if tryCount == 0 {
+	if result.NewTryCount == 1 {
 		// give it one more try later (15mins) if this was the first try
 		result.Code = SendResultDeferred
-		result.NewTryCount = tryCount + 1
 	} else {
 		result.Code = SendResultFailed
 		result.Error = lastError

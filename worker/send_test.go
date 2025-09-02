@@ -2,12 +2,258 @@ package main
 
 import (
 	"context"
+	"errors"
 	"net"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestSendEmail_Accepted(t *testing.T) {
+
+	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+		return &SmtpConversation{
+			Error:           nil,
+			SmtpErrorStatus: 0,
+			Steps:           []*SmtpStep{},
+		}
+	}
+
+	mxCache.data["hyvor.com"] = mxCacheEntry{
+		Hosts:  []string{"mx.hyvor.com"},
+		Expiry: time.Now().Add(1 * time.Hour),
+	}
+	defer func() {
+		delete(mxCache.data, "hyvor.com")
+	}()
+
+	result := sendEmailHandler(
+		&SendRow{},
+		[]*RecipientRow{
+			{},
+		},
+		"hyvor.com",
+		"relay.com",
+		1,
+		"1.1.1.1",
+		"smtp.relay.com",
+	)
+
+	assert.Equal(t, SendResultAccepted, result.Code)
+	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
+
+}
+
+func TestSendEmail_500SmtpError(t *testing.T) {
+
+	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+		return &SmtpConversation{
+			Error:           nil,
+			SmtpErrorStatus: 500,
+			Steps:           []*SmtpStep{},
+		}
+	}
+
+	mxCache.data["hyvor.com"] = mxCacheEntry{
+		Hosts:  []string{"mx.hyvor.com"},
+		Expiry: time.Now().Add(1 * time.Hour),
+	}
+	defer func() {
+		delete(mxCache.data, "hyvor.com")
+	}()
+
+	result := sendEmailHandler(
+		&SendRow{},
+		[]*RecipientRow{
+			{},
+		},
+		"hyvor.com",
+		"relay.com",
+		1,
+		"1.1.1.1",
+		"smtp.relay.com",
+	)
+
+	assert.Equal(t, SendResultBounced, result.Code)
+	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
+
+}
+
+func TestSendEmail_4xxSmtpError(t *testing.T) {
+
+	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+		return &SmtpConversation{
+			Error:           nil,
+			SmtpErrorStatus: 451,
+			Steps:           []*SmtpStep{},
+		}
+	}
+
+	mxCache.data["hyvor.com"] = mxCacheEntry{
+		Hosts:  []string{"mx.hyvor.com"},
+		Expiry: time.Now().Add(1 * time.Hour),
+	}
+	defer func() {
+		delete(mxCache.data, "hyvor.com")
+	}()
+
+	result := sendEmailHandler(
+		&SendRow{},
+		[]*RecipientRow{
+			{},
+		},
+		"hyvor.com",
+		"relay.com",
+		1,
+		"1.1.1.1",
+		"smtp.relay.com",
+	)
+
+	assert.Equal(t, SendResultDeferred, result.Code)
+	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
+	assert.Equal(t, 1, result.NewTryCount)
+
+}
+
+func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
+
+	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+		return &SmtpConversation{
+			Error:           nil,
+			SmtpErrorStatus: 451,
+			Steps:           []*SmtpStep{},
+		}
+	}
+
+	mxCache.data["hyvor.com"] = mxCacheEntry{
+		Hosts:  []string{"mx.hyvor.com"},
+		Expiry: time.Now().Add(1 * time.Hour),
+	}
+	defer func() {
+		delete(mxCache.data, "hyvor.com")
+	}()
+
+	result := sendEmailHandler(
+		&SendRow{},
+		[]*RecipientRow{
+			{TryCount: 6},
+		},
+		"hyvor.com",
+		"relay.com",
+		5,
+		"1.1.1.1",
+		"smtp.relay.com",
+	)
+
+	assert.Equal(t, SendResultFailed, result.Code)
+	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
+	assert.Equal(t, 7, result.NewTryCount)
+
+}
+
+func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
+
+	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+		return &SmtpConversation{
+			Error:           context.DeadlineExceeded,
+			SmtpErrorStatus: 0,
+			Steps:           []*SmtpStep{},
+		}
+	}
+
+	mxCache.data["hyvor.com"] = mxCacheEntry{
+		Hosts:  []string{"mx.hyvor.com"},
+		Expiry: time.Now().Add(1 * time.Hour),
+	}
+	defer func() {
+		delete(mxCache.data, "hyvor.com")
+	}()
+
+	result := sendEmailHandler(
+		&SendRow{},
+		[]*RecipientRow{
+			{TryCount: 0},
+		},
+		"hyvor.com",
+		"relay.com",
+		0,
+		"1.1.1.1",
+		"smtp.relay.com",
+	)
+
+	assert.Equal(t, SendResultDeferred, result.Code)
+	assert.Equal(t, "", result.RespondedMxHost)
+	assert.Equal(t, 1, result.NewTryCount)
+
+}
+
+func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
+
+	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+		return &SmtpConversation{
+			Error:           context.DeadlineExceeded,
+			SmtpErrorStatus: 0,
+			Steps:           []*SmtpStep{},
+		}
+	}
+
+	mxCache.data["hyvor.com"] = mxCacheEntry{
+		Hosts:  []string{"mx.hyvor.com"},
+		Expiry: time.Now().Add(1 * time.Hour),
+	}
+	defer func() {
+		delete(mxCache.data, "hyvor.com")
+	}()
+
+	result := sendEmailHandler(
+		&SendRow{},
+		[]*RecipientRow{
+			{TryCount: 1},
+		},
+		"hyvor.com",
+		"relay.com",
+		0,
+		"1.1.1.1",
+		"smtp.relay.com",
+	)
+
+	assert.Equal(t, SendResultFailed, result.Code)
+	assert.Equal(t, "", result.RespondedMxHost)
+	assert.Equal(t, 2, result.NewTryCount)
+	assert.Equal(t, context.DeadlineExceeded, result.Error)
+
+}
+
+func TestSendEmail_MxFailed(t *testing.T) {
+
+	customHostError := errors.New("custom host error")
+
+	lookupMxFunc = func(domain string) ([]*net.MX, error) {
+		return nil, errors.New("some")
+	}
+	lookupHostFunc = func(domain string) ([]string, error) {
+		return nil, customHostError
+	}
+
+	result := sendEmailHandler(
+		&SendRow{},
+		[]*RecipientRow{
+			{TryCount: 1},
+		},
+		"hyvor.com",
+		"relay.com",
+		0,
+		"1.1.1.1",
+		"smtp.relay.com",
+	)
+
+	assert.Equal(t, SendResultFailed, result.Code)
+	assert.Equal(t, "", result.RespondedMxHost)
+	assert.Equal(t, 2, result.NewTryCount)
+	assert.Equal(t, "MX lookup failed: custom host error", result.Error.Error())
+
+}
 
 func TestSendEmailToHost(t *testing.T) {
 
@@ -18,8 +264,8 @@ func TestSendEmailToHost(t *testing.T) {
 	defer cancel()
 
 	incomingServer := NewIncomingMailServer(ctx, slogDiscard(), newMetrics())
-	incomingServer.Start("hyvorrelay.io", 2)
-	time.Sleep(10 * time.Millisecond)
+	go incomingServer.Start("hyvorrelay.io", 2)
+	time.Sleep(100 * time.Millisecond)
 
 	send := &SendRow{
 		Id:        1,
@@ -67,7 +313,7 @@ func TestSendEmailFailedSmtpStatus(t *testing.T) {
 
 	incomingServer := NewIncomingMailServer(ctx, slogDiscard(), newMetrics())
 	go incomingServer.Start("hyvorrelay.io", 2)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
 	send := &SendRow{
 		Id:        1,
@@ -99,6 +345,7 @@ func TestSendEmailFailedSmtpStatus(t *testing.T) {
 		"smtp.relay.com",
 	)
 
+	assert.NoError(t, convo.Error)
 	assert.Equal(t, 451, convo.SmtpErrorStatus)
 
 }

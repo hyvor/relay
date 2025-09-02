@@ -236,6 +236,8 @@ func (stx *SendTransaction) FinalizeSend(send *SendRow) error {
 // tryCount is the number of attempts BEFORE this attempt
 func getSendAfterInterval(tryCount int) string {
 
+	// TODO: CHANGE THIS
+
 	if tryCount == 0 {
 		return "15 minutes"
 	}
