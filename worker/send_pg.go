@@ -233,36 +233,6 @@ func (stx *SendTransaction) FinalizeSend(send *SendRow) error {
 
 }
 
-// tryCount is the number of attempts BEFORE this attempt
-func getSendAfterInterval(tryCount int) string {
-
-	// TODO: CHANGE THIS
-
-	if tryCount == 0 {
-		return "15 minutes"
-	}
-	if tryCount == 1 {
-		return "1 hour"
-	}
-	if tryCount == 2 {
-		return "2 hours"
-	}
-	if tryCount == 3 {
-		return "4 hours"
-	}
-	if tryCount == 4 {
-		return "8 hours"
-	}
-	if tryCount == 5 {
-		return "16 hours"
-	}
-	if tryCount == 6 {
-		return "1 day"
-	}
-
-	return "2 days"
-}
-
 func (b *SendTransaction) RequeueSend(sendId int) error {
 	// TODO: interval logic based on retry count
 	_, err := b.tx.ExecContext(b.ctx, `

@@ -445,3 +445,28 @@ func getReturnPath(
 ) string {
 	return fmt.Sprintf("bounce+%s@%s", send.Uuid, instanceDomain)
 }
+
+// tryCount is
+func getSendAfterInterval(currentAttempt int) string {
+
+	if currentAttempt == 1 {
+		return "15 minutes"
+	}
+	if currentAttempt == 2 {
+		return "1 hour"
+	}
+	if currentAttempt == 3 {
+		return "2 hours"
+	}
+	if currentAttempt == 4 {
+		return "4 hours"
+	}
+	if currentAttempt == 5 {
+		return "8 hours"
+	}
+	if currentAttempt == 6 {
+		return "16 hours"
+	}
+
+	return "1 day"
+}

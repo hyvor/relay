@@ -389,3 +389,23 @@ func TestSend_JsonMarsh(t *testing.T) {
 	assert.True(t, strings.Contains(string(data), `"Error":"some error"`))
 
 }
+
+func TestSendAfterInterval(t *testing.T) {
+
+	// coupling for safety
+	intervals := map[int]string{
+		1: "15 minutes",
+		2: "1 hour",
+		3: "2 hours",
+		4: "4 hours",
+		5: "8 hours",
+		6: "16 hours",
+	}
+
+	for i := 1; i <= 6; i++ {
+		assert.Equal(t, intervals[i], getSendAfterInterval(i))
+	}
+
+	assert.Equal(t, "1 day", getSendAfterInterval(10))
+
+}
