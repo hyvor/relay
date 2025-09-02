@@ -12,6 +12,7 @@ import (
 
 func TestSendEmail_Accepted(t *testing.T) {
 
+	originalSendEmailToHost := sendEmailToHost
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
 			Error:           nil,
@@ -24,7 +25,9 @@ func TestSendEmail_Accepted(t *testing.T) {
 		Hosts:  []string{"mx.hyvor.com"},
 		Expiry: time.Now().Add(1 * time.Hour),
 	}
+
 	defer func() {
+		sendEmailToHost = originalSendEmailToHost
 		delete(mxCache.data, "hyvor.com")
 	}()
 
@@ -47,6 +50,7 @@ func TestSendEmail_Accepted(t *testing.T) {
 
 func TestSendEmail_500SmtpError(t *testing.T) {
 
+	originalSendEmailToHost := sendEmailToHost
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
 			Error:           nil,
@@ -59,7 +63,9 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 		Hosts:  []string{"mx.hyvor.com"},
 		Expiry: time.Now().Add(1 * time.Hour),
 	}
+
 	defer func() {
+		sendEmailToHost = originalSendEmailToHost
 		delete(mxCache.data, "hyvor.com")
 	}()
 
@@ -82,6 +88,7 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 
 func TestSendEmail_4xxSmtpError(t *testing.T) {
 
+	originalSendEmailToHost := sendEmailToHost
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
 			Error:           nil,
@@ -94,7 +101,9 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 		Hosts:  []string{"mx.hyvor.com"},
 		Expiry: time.Now().Add(1 * time.Hour),
 	}
+
 	defer func() {
+		sendEmailToHost = originalSendEmailToHost
 		delete(mxCache.data, "hyvor.com")
 	}()
 
@@ -118,6 +127,7 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 
 func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 
+	originalSendEmailToHost := sendEmailToHost
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
 			Error:           nil,
@@ -131,6 +141,7 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 		Expiry: time.Now().Add(1 * time.Hour),
 	}
 	defer func() {
+		sendEmailToHost = originalSendEmailToHost
 		delete(mxCache.data, "hyvor.com")
 	}()
 
@@ -154,6 +165,7 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 
 func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 
+	originalSendEmailToHost := sendEmailToHost
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
 			Error:           context.DeadlineExceeded,
@@ -167,6 +179,7 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 		Expiry: time.Now().Add(1 * time.Hour),
 	}
 	defer func() {
+		sendEmailToHost = originalSendEmailToHost
 		delete(mxCache.data, "hyvor.com")
 	}()
 
@@ -190,6 +203,7 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 
 func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 
+	originalSendEmailToHost := sendEmailToHost
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
 			Error:           context.DeadlineExceeded,
@@ -203,6 +217,7 @@ func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 		Expiry: time.Now().Add(1 * time.Hour),
 	}
 	defer func() {
+		sendEmailToHost = originalSendEmailToHost
 		delete(mxCache.data, "hyvor.com")
 	}()
 
@@ -227,6 +242,9 @@ func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 
 func TestSendEmail_MxFailed(t *testing.T) {
 
+	originalLookupMxFunc := lookupMxFunc
+	originalLookupHostFunc := lookupHostFunc
+
 	customHostError := errors.New("custom host error")
 
 	lookupMxFunc = func(domain string) ([]*net.MX, error) {
@@ -235,6 +253,11 @@ func TestSendEmail_MxFailed(t *testing.T) {
 	lookupHostFunc = func(domain string) ([]string, error) {
 		return nil, customHostError
 	}
+
+	defer func() {
+		lookupMxFunc = originalLookupMxFunc
+		lookupHostFunc = originalLookupHostFunc
+	}()
 
 	result := sendEmailHandler(
 		&SendRow{},

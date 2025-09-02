@@ -241,6 +241,7 @@ func TestEmailWorker_AttemptsToSendToGroupByDomain(t *testing.T) {
 	assert.NoError(t, err)
 
 	calledDomains := make(map[string][]*RecipientRow)
+	calledDomainsMutex := &sync.Mutex{}
 
 	worker := &EmailWorker{
 		ctx:    context.Background(),
@@ -258,6 +259,8 @@ func TestEmailWorker_AttemptsToSendToGroupByDomain(t *testing.T) {
 			sendTx *SendTransaction,
 		) {
 			defer domainWg.Done()
+			calledDomainsMutex.Lock()
+			defer calledDomainsMutex.Unlock()
 			calledDomains[domain] = recipients
 		},
 	}
