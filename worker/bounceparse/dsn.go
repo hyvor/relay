@@ -70,7 +70,7 @@ func ParseDsn(input []byte) (*Dsn, error) {
 	}
 	dsn.ReadableText = string(part1Data)
 
-	// Part2 is the machine-readable report (message/feedback-report)
+	// Part2 is the machine-readable report (message/delivery-status)
 	part2, err := readNextPartBodyAsMessage(multipartReader, []string{"message/delivery-status"})
 	if err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func ParseDsn(input []byte) (*Dsn, error) {
 }
 
 // https://datatracker.ietf.org/doc/html/rfc3464#section-2.3.1
-// Original-Recipient: rfc822;me@example.com
+// Final-Recipient: rfc822;me@example.com
 // Removes the "rfc822;" prefix if it exists
 func getDsnRecipientEmailAddress(header string) string {
 

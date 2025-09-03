@@ -105,7 +105,7 @@ func (b *WebhooksBatch) FinalizeWebhookByResult(delivery *WebhookDelivery, resul
 	// 1 for the first, 2 for the second, etc.
 	currentTry := result.NewTryCount
 
-	sendAfter := getRetryInterval(currentTry, result.Success)
+	sendAfter := getWebhookRetryInterval(currentTry, result.Success)
 
 	_, err := b.tx.ExecContext(b.ctx, `
 		UPDATE webhook_deliveries
@@ -139,7 +139,7 @@ func (b *WebhooksBatch) FinalizeWebhookByResult(delivery *WebhookDelivery, resul
 	return nil
 }
 
-func getRetryInterval(currentTry int, currentSuccess bool) string {
+func getWebhookRetryInterval(currentTry int, currentSuccess bool) string {
 	if currentSuccess || currentTry >= WEBHOOKS_MAX_RETRIES {
 		return "send_after"
 	} else {

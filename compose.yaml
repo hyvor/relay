@@ -65,7 +65,7 @@ services:
       GO_SYMFONY_URL: http://hyvor-relay-backend
     networks:
       - hyvor-network
-    # command: "sleep infinity"
+    command: "sleep infinity"
     ports:
       - "10025:25"
       - "5353:53/udp"

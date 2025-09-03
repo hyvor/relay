@@ -1,0 +1,25 @@
+Content-Type: multipart/report; report-type=delivery-status;
+    boundary="innocentboundary"
+
+--innocentboundary
+
+Bad delivery
+
+--innocentboundary
+Content-Type: message/badstatus
+
+Reporting-MTA: dns; cs.utk.edu
+
+Original-Recipient: rfc822;louisl@larry.slip.umd.edu
+Final-Recipient: rfc822;louisl@larry.slip.umd.edu
+Action: failed
+Status: 4.0.0
+Diagnostic-Code: smtp; 426 connection timed out
+Last-Attempt-Date: Thu, 7 Jul 1994 17:15:49 -0400
+
+--innocentboundary
+Content-Type: message/rfc822
+
+[original message goes here]
+
+--innocentboundary--

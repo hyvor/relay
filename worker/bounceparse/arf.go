@@ -111,5 +111,5 @@ func validatePartMimeType(part *multipart.Part, expectedMediaTypes []string) err
 			return nil
 		}
 	}
-	return ErrNotArfReport
+	return ErrInvalidMimeType
 }

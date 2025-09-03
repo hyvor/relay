@@ -13,7 +13,7 @@ import (
 
 var ErrSendEmailFailed = errors.New("failed to send email")
 
-const MAX_SEND_TRIES = 8
+const MAX_SEND_TRIES = 7
 
 type SmtpStepName string
 
@@ -33,28 +33,6 @@ type LatencyDuration time.Duration
 func (d LatencyDuration) MarshalJSON() ([]byte, error) {
 	str := fmt.Sprintf("%dms", time.Duration(d).Milliseconds())
 	return json.Marshal(str)
-}
-
-type SmtpLatency struct {
-	start time.Time
-	last  time.Time
-	Steps map[SmtpStepName]LatencyDuration // ns durations
-	Total LatencyDuration
-}
-
-func (s *SmtpLatency) RecordStep(step SmtpStepName) {
-	stepTime := time.Since(s.start)
-	s.Steps[step] = LatencyDuration(stepTime)
-	s.last = time.Now()
-	s.Total += LatencyDuration(stepTime)
-}
-
-func NewSmtpLatency() *SmtpLatency {
-	return &SmtpLatency{
-		start: time.Now(),
-		last:  time.Now(),
-		Steps: make(map[SmtpStepName]LatencyDuration),
-	}
 }
 
 type SmtpStep struct {
@@ -81,6 +59,7 @@ type SmtpConversation struct {
 	Steps []*SmtpStep
 }
 
+// converts the Error field to a string for JSON marshalling
 func (s SmtpConversation) MarshalJSON() ([]byte, error) {
 	type SmtpConversationAlias SmtpConversation
 	aux := struct {
@@ -145,6 +124,7 @@ type SendResult struct {
 	// always set
 	SentFromIpId int
 	SentFromIp   string
+	Domain       string
 	QueueName    string
 	Duration     time.Duration // set when the function ends
 
@@ -175,7 +155,9 @@ func (r *SendResult) ToStatus() string {
 	return "failed"
 }
 
-func sendEmail(
+var sendEmail = sendEmailHandler
+
+func sendEmailHandler(
 	send *SendRow,
 	recipients []*RecipientRow,
 	rcptDomain string,
@@ -191,10 +173,12 @@ func sendEmail(
 	result := &SendResult{
 		SentFromIpId: ipId,
 		SentFromIp:   ip,
+		Domain:       rcptDomain,
 		QueueName:    send.QueueName,
 
 		ResolvedMxHosts:   make([]string, 0),
 		SmtpConversations: make(map[string]*SmtpConversation),
+		NewTryCount:       tryCount + 1,
 	}
 
 	defer func() {
@@ -238,13 +222,12 @@ func sendEmail(
 				// 4xx errors are transient, requeue the email if we haven't reached the max tries
 				result.RespondedMxHost = host
 
-				if tryCount >= MAX_SEND_TRIES {
+				if result.NewTryCount >= MAX_SEND_TRIES {
 					result.Code = SendResultFailed
-					result.Error = errors.New("Maximum send attempts reached")
+					result.Error = errors.New("maximum send attempts reached")
 					return result
 				} else {
 					result.Code = SendResultDeferred
-					result.NewTryCount = tryCount + 1
 					return result
 				}
 
@@ -267,12 +250,19 @@ func sendEmail(
 		}
 	}
 
-	// TODO: implement retrying here for network errors
+	// if we reach here, all hosts have failed due to non-smtp errors (e.g. network errors)
+	if result.NewTryCount == 1 {
+		// give it one more try later (15mins) if this was the first try
+		result.Code = SendResultDeferred
+	} else {
+		result.Code = SendResultFailed
+		result.Error = lastError
+	}
 
-	result.Code = SendResultFailed
-	result.Error = lastError
 	return result
 }
+
+var netResolveTCPAddr = net.ResolveTCPAddr
 
 var createSmtpClient = func(host string, localIp string) (*smtp.Client, error) {
 
@@ -282,7 +272,7 @@ var createSmtpClient = func(host string, localIp string) (*smtp.Client, error) {
 	// IP addresses."
 	// So, we might need to resolve A records manually first.
 
-	remoteAddr, err := net.ResolveTCPAddr("tcp", host+":25")
+	remoteAddr, err := netResolveTCPAddr("tcp", host+":25")
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve remote address %s: %w", host, err)
 	}
@@ -313,8 +303,9 @@ var createSmtpClient = func(host string, localIp string) (*smtp.Client, error) {
 	return client, nil
 }
 
-// returns: conversation, error (network), error (smtp code)
-func sendEmailToHost(
+var sendEmailToHost = sendEmailToHostHandler
+
+func sendEmailToHostHandler(
 	send *SendRow,
 	recipients []*RecipientRow,
 	host string,
@@ -455,4 +446,29 @@ func getReturnPath(
 	instanceDomain string,
 ) string {
 	return fmt.Sprintf("bounce+%s@%s", send.Uuid, instanceDomain)
+}
+
+// tryCount is
+func getSendAfterInterval(currentAttempt int) string {
+
+	if currentAttempt == 1 {
+		return "15 minutes"
+	}
+	if currentAttempt == 2 {
+		return "1 hour"
+	}
+	if currentAttempt == 3 {
+		return "2 hours"
+	}
+	if currentAttempt == 4 {
+		return "4 hours"
+	}
+	if currentAttempt == 5 {
+		return "8 hours"
+	}
+	if currentAttempt == 6 {
+		return "16 hours"
+	}
+
+	return "1 day"
 }

@@ -10,6 +10,8 @@ import (
 	"github.com/hyvor/relay/worker/bounceparse"
 )
 
+var localHttpPort = ":8085"
+
 func StartHttpServer(
 	ctx context.Context,
 	serviceState *ServiceState,
@@ -28,7 +30,7 @@ func StartHttpServer(
 	var handler http.Handler = mux
 
 	server := &http.Server{
-		Addr:    ":8085",
+		Addr:    localHttpPort,
 		Handler: handler,
 	}
 
