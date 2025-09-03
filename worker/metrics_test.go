@@ -86,3 +86,29 @@ func TestMetricsHttpServerLeader(t *testing.T) {
 	assert.Contains(t, string(body), "relay_info{env=\"test\",instance_domain=\"relay.hyvor.com\",version=\"1.0.0\"} 1")
 
 }
+
+func TestIsIpApproved(t *testing.T) {
+	tests := []struct {
+		remoteAddr   string
+		expected     bool
+	}{
+		{"127.0.0.1:1234", true},
+		{"[::1]:5678", true},
+		{"192.168.1.5:8080", true},
+		{"10.1.2.3:9999", true},
+		{"172.16.5.5:8080", true},
+		{"100.64.0.1:8080", true}, // CGNAT
+		{"8.8.8.8:1234", false},   // public IP
+		{"8.8.8.8:1234", false},  // public IP,
+	}
+
+	for _, tt := range tests {
+		req := &http.Request{
+			RemoteAddr: tt.remoteAddr,
+		}
+		got := isPrivateIp(req)
+		if got != tt.expected {
+			t.Errorf("isPrivateIp(%s) = %v; expected %v", tt.remoteAddr, got, tt.expected)
+		}
+	}
+}

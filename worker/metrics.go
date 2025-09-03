@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"log/slog"
+	"net"
 	"net/http"
 	"time"
 
@@ -240,6 +241,11 @@ func (server *MetricsServer) metricsHandler() http.HandlerFunc {
 		var buf bytes.Buffer
 		var metricsResp SymfonyMetricsResponse
 
+		if (!isPrivateIp(r)) {
+			http.Error(w, "Forbidden: IP not allowed", http.StatusForbidden)
+			return
+		}
+
 		mfs, _ := server.registry.Gather()
 		enc := expfmt.NewEncoder(&buf, expfmt.NewFormat(expfmt.TypeTextPlain))
 		for _, mf := range mfs {
@@ -256,6 +262,46 @@ func (server *MetricsServer) metricsHandler() http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		w.Write(buf.Bytes())
 	}
+}
+
+func isPrivateIp(r *http.Request) bool {
+	privateRanges := []string{
+		"10.0.0.0/8",
+		"172.16.0.0/12",
+		"192.168.0.0/16",
+		"100.64.0.0/10", // CGNAT
+	}
+
+	if r == nil {
+		return false
+	}
+
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		ip = r.RemoteAddr
+	}
+
+	if ip == "" {
+		return false
+	}
+
+	if ip == "127.0.0.1" || ip == "::1" {
+		return true
+	}
+
+	parsedIP := net.ParseIP(ip)
+	if parsedIP == nil {
+		return false
+	}
+
+	for _, cidr := range privateRanges {
+		_, subnet, _ := net.ParseCIDR(cidr)
+		if subnet.Contains(parsedIP) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // stops and restarts the global metrics updater
