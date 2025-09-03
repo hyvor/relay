@@ -16,7 +16,7 @@ class PrometheusFactory
 
     public function createRegistry(): CollectorRegistry
     {
-        if ($this->config->getEnv() === 'test') {
+        if ($this->config->getEnv() !== 'prod') {
             return new CollectorRegistry(new InMemory());
         }
 
