@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Api\Console;
+namespace App\Tests\Api;
 
 use App\Api\Console\Metrics\MetricsListener;
 use App\Tests\Case\WebTestCase;
@@ -49,5 +49,21 @@ class MetricsTest extends WebTestCase
 
         $this->assertSame('1', $sample->getValue());
         $this->assertSame(['GET', '/api/console/init', '200'], $sample->getLabelValues());
+    }
+
+    public function test_scrape_metrics(): void
+    {
+        $response = $this->localApi(
+            'GET',
+            '/metrics'
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+
+        $content = json_decode($response->getContent(), true);
+        $this->assertIsArray($content);
+        $this->assertNotEmpty($content);
+        $this->assertArrayHasKey('metrics', $content);
+        $this->assertStringContainsString('# HELP php_info Information about the PHP environment.', $content['metrics']);
     }
 }
