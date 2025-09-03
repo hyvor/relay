@@ -36,10 +36,6 @@ class MetricsListener
     {
         $request = $event->getRequest();
 
-        if (!str_starts_with($request->getPathInfo(), '/api/console')) {
-            return;
-        }
-
         if ($event->isMainRequest() === false) {
             return;
         }
