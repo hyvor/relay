@@ -36,8 +36,7 @@ FROM frankenphp AS backend-base
 ENV APP_RUNTIME="Runtime\FrankenPhpSymfony\Runtime"
 WORKDIR /app/backend
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
-RUN install-php-extensions zip intl pdo_pgsql opcache apcu amqp \
-    && echo "apc.enable_cli=1" >> /usr/local/etc/php/conf.d/docker-php-ext-apcu.ini     # Enable APCu for CLI for Metrics tests
+RUN install-php-extensions zip intl pdo_pgsql opcache apcu amqp
 RUN apt update  && apt install -y supervisor
 
 FROM backend-base AS backend-dev
