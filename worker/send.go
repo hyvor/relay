@@ -250,13 +250,14 @@ func sendEmailHandler(
 		}
 	}
 
+	result.Error = lastError
+
 	// if we reach here, all hosts have failed due to non-smtp errors (e.g. network errors)
 	if result.NewTryCount == 1 {
 		// give it one more try later (15mins) if this was the first try
 		result.Code = SendResultDeferred
 	} else {
 		result.Code = SendResultFailed
-		result.Error = lastError
 	}
 
 	return result

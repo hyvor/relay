@@ -50,11 +50,11 @@ export type Scope =
 
 export interface ProjectUser {
     id: number;
-	created_at: number;
+    created_at: number;
     scopes: Scope[];
     project: Project;
-	user: ProjectUserMiniObject;
-	oidc_sub: string | null;
+    user: ProjectUserMiniObject;
+    oidc_sub: string | null;
 }
 
 export type Project = {
@@ -102,7 +102,7 @@ export interface SendAttempt {
     try_count: number;
     domain: string;
     resolved_mx_hosts: string[];
-    accepted_mx_host: string | null;
+    responded_mx_host: string | null;
     smtp_conversations: Record<string, SmtpConversation>;
     error: string | null;
 }
@@ -188,10 +188,10 @@ export interface AnalyticsStats {
 }
 
 export interface ProjectUserMiniObject {
-	id: number;
-	name: string;
-	email: string;
-	username: string | null;
-	picture_url: string | null;
-	oidc_sub: string | null;
+    id: number;
+    name: string;
+    email: string;
+    username: string | null;
+    picture_url: string | null;
+    oidc_sub: string | null;
 }

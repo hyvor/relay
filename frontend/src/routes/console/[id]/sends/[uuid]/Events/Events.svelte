@@ -36,7 +36,12 @@
 			});
 		}
 
-		events.sort((a, b) => b.timestamp - a.timestamp);
+		events.sort((a, b) => {
+			if (a.type === 'queued') return 1;
+			if (b.type === 'queued') return -1;
+
+			return b.timestamp - a.timestamp;
+		});
 
 		return events;
 	}
