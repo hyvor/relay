@@ -1,13 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/common/expfmt"
 )
 
 type MetricsServer struct {
@@ -39,6 +40,10 @@ type Metrics struct {
 	webhookDeliveriesTotal       *prometheus.CounterVec
 	incomingEmailsTotal          *prometheus.CounterVec
 	dnsQueriesTotal              *prometheus.CounterVec
+}
+
+type SymfonyMetricsResponse struct {
+    Metrics string `json:"metrics"`
 }
 
 func NewMetricsServer(ctx context.Context, logger *slog.Logger) *MetricsServer {
@@ -207,9 +212,8 @@ func (server *MetricsServer) Set(goState GoState) {
 
 		go func() {
 
-			handler := promhttp.HandlerFor(server.registry, promhttp.HandlerOpts{})
-
 			mux := http.NewServeMux()
+			handler := server.metricsHandler()
 			mux.Handle("/", handler)
 			mux.Handle("/metrics", handler)
 
@@ -229,6 +233,29 @@ func (server *MetricsServer) Set(goState GoState) {
 
 	server.StartGlobalMetricsUpdater()
 
+}
+
+func (server *MetricsServer) metricsHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var buf bytes.Buffer
+		var metricsResp SymfonyMetricsResponse
+
+		mfs, _ := server.registry.Gather()
+		enc := expfmt.NewEncoder(&buf, expfmt.NewFormat(expfmt.TypeTextPlain))
+		for _, mf := range mfs {
+			enc.Encode(mf)
+		}
+
+		err := CallLocalApi(server.ctx, "GET", "/metrics", nil, &metricsResp)
+		if err != nil {
+			server.logger.Error("failed to fetch Symfony metrics", "error", err)
+		} else {
+			buf.WriteString(metricsResp.Metrics)
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write(buf.Bytes())
+	}
 }
 
 // stops and restarts the global metrics updater
