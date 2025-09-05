@@ -17,6 +17,7 @@ class SendRecipientObject
     public ?int $accepted_at = null;
     public ?int $bounced_at = null;
     public ?int $failed_at = null;
+    public int $try_count;
 
     public function __construct(SendRecipient $recipient)
     {
@@ -28,6 +29,7 @@ class SendRecipientObject
         $this->accepted_at = $recipient->getAcceptedAt()?->getTimestamp();
         $this->bounced_at = $recipient->getBouncedAt()?->getTimestamp();
         $this->failed_at = $recipient->getFailedAt()?->getTimestamp();
+        $this->try_count = $recipient->getTryCount();
     }
 
 }

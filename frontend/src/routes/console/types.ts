@@ -98,7 +98,7 @@ export interface SendRecipient {
 
 export interface SendAttempt {
     created_at: number;
-    status: 'accepted' | 'deferred' | 'bounced';
+    status: 'accepted' | 'deferred' | 'bounced' | 'failed';
     try_count: number;
     domain: string;
     resolved_mx_hosts: string[];
