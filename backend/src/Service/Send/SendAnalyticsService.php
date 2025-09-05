@@ -22,13 +22,15 @@ class SendAnalyticsService
     public function getLast30dCounts(Project $project): array
     {
         $qb = $this->em->createQuery(<<<DQL
-        SELECT COUNT(s.id) AS total,
-               SUM(CASE WHEN s.status = 'bounced' THEN 1 ELSE 0 END) AS bounced,
-               SUM(CASE WHEN s.status = 'complained' THEN 1 ELSE 0 END) AS complained
-        FROM App\Entity\Send s
-        WHERE 
-            s.project = :project AND
-            s.created_at >= :date
+            SELECT 
+                COUNT(sr.id) AS total,
+                SUM(CASE WHEN sr.status = 'bounced' THEN 1 ELSE 0 END) AS bounced,
+                SUM(CASE WHEN sr.status = 'complained' THEN 1 ELSE 0 END) AS complained
+            FROM App\Entity\Send s
+            JOIN s.recipients sr
+            WHERE 
+                s.project = :project AND
+                s.created_at >= :date
         DQL);
 
         $qb->setParameter('project', $project);
@@ -59,12 +61,13 @@ class SendAnalyticsService
 
         $qb = $this->em->createNativeQuery(<<<SQL
         SELECT DATE(s.created_at) AS date,
-            COUNT(s.id) AS total,
-            SUM(CASE WHEN s.status = 'bounced' THEN 1 ELSE 0 END) AS bounced,
-            SUM(CASE WHEN s.status = 'complained' THEN 1 ELSE 0 END) AS complained,
-            SUM(CASE WHEN s.status = 'accepted' THEN 1 ELSE 0 END) AS accepted,
-            SUM(CASE WHEN s.status = 'queued' THEN 1 ELSE 0 END) AS queued
+            COUNT(sr.id) AS total,
+            SUM(CASE WHEN sr.status = 'bounced' THEN 1 ELSE 0 END) AS bounced,
+            SUM(CASE WHEN sr.status = 'complained' THEN 1 ELSE 0 END) AS complained,
+            SUM(CASE WHEN sr.status = 'accepted' THEN 1 ELSE 0 END) AS accepted,
+            SUM(CASE WHEN sr.status = 'queued' THEN 1 ELSE 0 END) AS queued
         FROM sends s
+        JOIN send_recipients sr ON sr.send_id = s.id
         WHERE 
             s.project_id = :projectId AND
             s.created_at >= :date
