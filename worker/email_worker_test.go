@@ -215,21 +215,21 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	err = factory.SendRecipient(send, &FactorySendRecipient{
+	_, err = factory.SendRecipient(send, &FactorySendRecipient{
 		Address: "supun@hyvor.com",
 		Type:    "to",
 		Status:  "queued",
 	})
 	assert.NoError(t, err)
 
-	err = factory.SendRecipient(send, &FactorySendRecipient{
+	_, err = factory.SendRecipient(send, &FactorySendRecipient{
 		Address: "ishini@hyvor.com",
 		Type:    "to",
 		Status:  "queued",
 	})
 	assert.NoError(t, err)
 
-	err = factory.SendRecipient(send, &FactorySendRecipient{
+	_, err = factory.SendRecipient(send, &FactorySendRecipient{
 		Address: "nadil@gmail.com",
 		Type:    "cc",
 		Status:  "queued",
@@ -339,7 +339,7 @@ func TestEmailWorker_ProcessSend_Requeuing(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	err = factory.SendRecipient(send, &FactorySendRecipient{
+	_, err = factory.SendRecipient(send, &FactorySendRecipient{
 		Address: "supun@hyvor.com",
 		Type:    "to",
 		Status:  "queued",
@@ -402,7 +402,7 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	err = factory.SendRecipient(send, &FactorySendRecipient{
+	recipientId, err := factory.SendRecipient(send, &FactorySendRecipient{
 		Address: "supun@hyvor.com",
 		Type:    "to",
 		Status:  "queued",
@@ -422,7 +422,7 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 	domain := "hyvor.com"
 	recipients := []*RecipientRow{
 		{
-			Id:       1,
+			Id:       recipientId,
 			Type:     "to",
 			Address:  "supun@hyvor.com",
 			TryCount: 0,
@@ -495,5 +495,10 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 	assert.Equal(t, "hyvor.com", updatedSendAttempt.Domain)
 	assert.Equal(t, 1, updatedSendAttempt.TryCount)
 	assert.Equal(t, `["mx1.hyvor.com", "mx2.hyvor.com"]`, updatedSendAttempt.ResolvedMx)
+
+	updatedRecipient, err := factory.GetSendRecipientById(recipientId)
+	assert.NoError(t, err)
+	assert.Equal(t, "accepted", updatedRecipient.Status)
+	assert.Equal(t, 1, updatedRecipient.TryCount)
 
 }

@@ -178,10 +178,12 @@ type FactorySend struct {
 }
 
 type FactorySendRecipient struct {
-	Type    string // "to", "cc", "bcc"
-	Status  string // "queued", "accepted", "retrying", "bounced", "complained", "failed"
-	Address string
-	Name    string
+	Id       int
+	Type     string // "to", "cc", "bcc"
+	Status   string // "queued", "accepted", "retrying", "bounced", "complained", "failed"
+	Address  string
+	Name     string
+	TryCount int
 }
 
 func (m *TestFactory) Send(send *FactorySend) (*FactorySend, error) {
@@ -308,18 +310,49 @@ func (f *TestFactory) GetSendAttemptById(id int) (*FactorySendAttempt, error) {
 
 }
 
-func (f *TestFactory) SendRecipient(send *FactorySend, recipients *FactorySendRecipient) error {
+func (f *TestFactory) SendRecipient(send *FactorySend, recipients *FactorySendRecipient) (int, error) {
 
-	_, err := f.conn.Exec(`
+	var recipientId int
+	err := f.conn.QueryRow(`
 		INSERT INTO send_recipients (
-			send_id, type, status, address, name
+			send_id, type, status, address, name, try_count
 		) VALUES (
-			$1, $2, $3, $4, $5
-		)
+			$1, $2, $3, $4, $5, $6
+		) RETURNING id
 	`, send.Id, recipients.Type, recipients.Status,
-		recipients.Address, recipients.Name)
+		recipients.Address, recipients.Name, recipients.TryCount).Scan(&recipientId)
 
-	return err
+	if err != nil {
+		return 0, err
+	}
+
+	return recipientId, nil
+
+}
+
+func (f *TestFactory) GetSendRecipientById(id int) (*FactorySendRecipient, error) {
+
+	var recipient FactorySendRecipient
+	row := f.conn.QueryRow(`
+		SELECT 
+			id, type, status, address, name, try_count
+		FROM send_recipients WHERE id = $1
+	`, id)
+
+	err := row.Scan(
+		&recipient.Id,
+		&recipient.Type,
+		&recipient.Status,
+		&recipient.Address,
+		&recipient.Name,
+		&recipient.TryCount,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &recipient, nil
 
 }
 

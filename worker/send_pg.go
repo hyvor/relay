@@ -191,6 +191,22 @@ func (b *SendTransaction) RecordAttempt(
 		return 0, fmt.Errorf("failed to insert send attempt for send ID %d: %w", send.Id, err)
 	}
 
+	for _, recipient := range recipients {
+
+		_, err = b.tx.ExecContext(b.ctx, `
+			UPDATE send_recipients
+			SET 
+				status = $1,
+				try_count = $2
+			WHERE id = $3
+		`, status, sendResult.NewTryCount, recipient.Id)
+
+		if err != nil {
+			return 0, fmt.Errorf("failed to update recipient ID %d status: %w", recipient.Id, err)
+		}
+
+	}
+
 	return attemptId, nil
 
 }

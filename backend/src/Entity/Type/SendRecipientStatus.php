@@ -14,7 +14,7 @@ enum SendRecipientStatus: string
     // the SMTP server has rejected the message with a 4xx code
     // or a network error occurred
     // the message will be retried later
-    case RETRYING = 'retrying';
+    case DEFERRED = 'deferred';
 
     // the message was rejected by the SMTP server with a 5xx code
     // the recipient will be added to the suppression list
