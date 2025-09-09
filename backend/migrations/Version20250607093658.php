@@ -38,6 +38,8 @@ final class Version20250607093658 extends AbstractMigration
         )
         SQL
         );
+
+        $this->addSql("CREATE INDEX idx_domains_project_id ON domains(project_id)");
     }
 
     public function down(Schema $schema): void

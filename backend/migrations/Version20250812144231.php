@@ -35,9 +35,7 @@ final class Version20250812144231 extends AbstractMigration
         SQL
         );
 
-        $this->addSql(
-            "CREATE INDEX idx_server_tasks_server_id ON server_tasks (server_id)"
-        );
+        $this->addSql("CREATE INDEX idx_server_tasks_server_id ON server_tasks (server_id)");
     }
 
     public function down(Schema $schema): void

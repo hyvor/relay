@@ -29,9 +29,7 @@ final class Version20250825180500 extends AbstractMigration
             )
         SQL);
 
-        $this->addSql(
-            "CREATE INDEX idx_send_feedback_send_recipient_id ON send_feedback (send_recipient_id)"
-        );
+        $this->addSql("CREATE INDEX idx_send_feedback_send_recipient_id ON send_feedback (send_recipient_id)");
     }
 
     public function down(Schema $schema): void
