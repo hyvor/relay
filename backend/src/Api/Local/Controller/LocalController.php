@@ -103,7 +103,9 @@ class LocalController extends AbstractController
             [
             "metrics" => $renderer->render($this->metricsListener->getSamples())
             ],
-            headers: ['Content-Type', RenderTextFormat::MIME_TYPE]
+            headers: [
+                'Content-Type' => RenderTextFormat::MIME_TYPE
+            ]
         );
     }
 }

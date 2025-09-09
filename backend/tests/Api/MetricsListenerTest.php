@@ -7,10 +7,19 @@ use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Prometheus\MetricFamilySamples;
+use Prometheus\Storage\Adapter;
+use Prometheus\Storage\InMemory;
 
 #[CoversClass(MetricsListener::class)]
-class MetricsTest extends WebTestCase
+class MetricsListenerTest extends WebTestCase
 {
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->container->set(Adapter::class, new InMemory());
+    }
+
     /**
      * @param array<MetricFamilySamples> $metrics
      */
@@ -36,7 +45,7 @@ class MetricsTest extends WebTestCase
         $this->consoleApi(
             $project,
             'GET',
-            '/init',
+            '/sends/120',
             useSession: true
         );
 
@@ -48,7 +57,7 @@ class MetricsTest extends WebTestCase
         $sample = $total->getSamples()[0];
 
         $this->assertSame('1', $sample->getValue());
-        $this->assertSame(['GET', '/api/console/init', '200'], $sample->getLabelValues());
+        $this->assertSame(['GET', '/api/console/sends/{id}', '403'], $sample->getLabelValues());
     }
 
     public function test_scrape_metrics(): void

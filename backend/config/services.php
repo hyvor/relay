@@ -6,6 +6,9 @@ use App\Api\Console\Resolver\EntityResolver;
 use App\Api\Console\Resolver\ProjectResolver;
 use App\Service\Dns\Resolve\DnsOverHttp;
 use App\Service\Dns\Resolve\DnsResolveInterface;
+use Prometheus\Storage\Adapter;
+use Prometheus\Storage\APC;
+use Prometheus\Storage\APCng;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
@@ -51,4 +54,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             env('DATABASE_URL'),
             ['db_table' => 'oidc_sessions'],
         ]);
+
+    // metrics
+    $services->set(APCng::class);
+    $services->alias(Adapter::class, APCng::class);
 };
