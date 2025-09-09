@@ -37,6 +37,8 @@ final class Version20250626162153 extends AbstractMigration
             );
          SQL
         );
+
+        $this->addSql("CREATE INDEX idx_suppressions_project_id ON suppressions (project_id);");
     }
 
     public function down(Schema $schema): void

@@ -31,6 +31,8 @@ final class Version20250619104621 extends AbstractMigration
             );
          SQL
         );
+
+        $this->addSql("CREATE INDEX idx_api_keys_project_id ON api_keys (project_id)");
     }
 
     public function down(Schema $schema): void

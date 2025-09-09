@@ -17,7 +17,7 @@ final class Version20250418134054 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // to save instances
-        // only one row will be addeed to this
+        // only one row will be added to this
         $this->addSql(
             <<<SQL
         CREATE TABLE instances (

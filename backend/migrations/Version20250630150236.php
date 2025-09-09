@@ -35,6 +35,8 @@ final class Version20250630150236 extends AbstractMigration
             );
             SQL
         );
+
+        $this->addSql('CREATE INDEX idx_api_idempotency_records_project_id ON api_idempotency_records (project_id);');
     }
 
     public function down(Schema $schema): void

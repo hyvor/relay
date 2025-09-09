@@ -37,9 +37,7 @@ final class Version20250613150000 extends AbstractMigration
             SQL
         );
 
-        $this->addSql(
-            "CREATE INDEX idx_send_attempts_send_id ON send_attempts (send_id)"
-        );
+        $this->addSql("CREATE INDEX idx_send_attempts_send_id ON send_attempts (send_id)");
     }
 
     public function down(Schema $schema): void
