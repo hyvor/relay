@@ -32,10 +32,6 @@
 		<div class="hostname">
 			{server.hostname}
 
-			<Tag size="small">
-				Private IP: {server.private_ip ? server.private_ip : '~'}
-			</Tag>
-
 			{#if server.last_ping_at}
 				{#if !server.is_alive}
 					<Tooltip text="This server has not sent a heartbeat in the last 3 minutes.">

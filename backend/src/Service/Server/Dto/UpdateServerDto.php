@@ -48,7 +48,6 @@ class UpdateServerDto
     }
 
     private(set) bool $lastPingAtSet = false;
-    private(set) bool $privateIpSet = false;
     private(set) bool $apiWorkersSet = false;
     private(set) bool $emailWorkersSet = false;
     private(set) bool $webhookWorkersSet = false;
