@@ -40,7 +40,7 @@ class ProjectController extends AbstractController
             $input->send_type
         );
 
-        return $this->json(new ProjectUserObject($newProject['projectUser']));
+        return $this->json(new ProjectUserObject($newProject['projectUser'], $user));
     }
 
     #[Route('/project', methods: 'GET')]
