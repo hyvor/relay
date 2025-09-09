@@ -1,13 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"log/slog"
+	"net"
 	"net/http"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/common/expfmt"
 )
 
 type MetricsServer struct {
@@ -39,6 +41,10 @@ type Metrics struct {
 	webhookDeliveriesTotal       *prometheus.CounterVec
 	incomingEmailsTotal          *prometheus.CounterVec
 	dnsQueriesTotal              *prometheus.CounterVec
+}
+
+type SymfonyMetricsResponse struct {
+    Metrics string `json:"metrics"`
 }
 
 func NewMetricsServer(ctx context.Context, logger *slog.Logger) *MetricsServer {
@@ -207,9 +213,8 @@ func (server *MetricsServer) Set(goState GoState) {
 
 		go func() {
 
-			handler := promhttp.HandlerFor(server.registry, promhttp.HandlerOpts{})
-
 			mux := http.NewServeMux()
+			handler := server.metricsHandler()
 			mux.Handle("/", handler)
 			mux.Handle("/metrics", handler)
 
@@ -229,6 +234,74 @@ func (server *MetricsServer) Set(goState GoState) {
 
 	server.StartGlobalMetricsUpdater()
 
+}
+
+func (server *MetricsServer) metricsHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var buf bytes.Buffer
+		var metricsResp SymfonyMetricsResponse
+
+		if (!isPrivateIp(r)) {
+			http.Error(w, "Forbidden: IP not allowed", http.StatusForbidden)
+			return
+		}
+
+		mfs, _ := server.registry.Gather()
+		enc := expfmt.NewEncoder(&buf, expfmt.NewFormat(expfmt.TypeTextPlain))
+		for _, mf := range mfs {
+			enc.Encode(mf)
+		}
+
+		err := CallLocalApi(server.ctx, "GET", "/metrics", nil, &metricsResp)
+		if err != nil {
+			server.logger.Error("failed to fetch Symfony metrics", "error", err)
+		} else {
+			buf.WriteString(metricsResp.Metrics)
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write(buf.Bytes())
+	}
+}
+
+func isPrivateIp(r *http.Request) bool {
+	privateRanges := []string{
+		"10.0.0.0/8",
+		"172.16.0.0/12",
+		"192.168.0.0/16",
+		"100.64.0.0/10", // CGNAT
+	}
+
+	if r == nil {
+		return false
+	}
+
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		ip = r.RemoteAddr
+	}
+
+	if ip == "" {
+		return false
+	}
+
+	if ip == "127.0.0.1" || ip == "::1" {
+		return true
+	}
+
+	parsedIP := net.ParseIP(ip)
+	if parsedIP == nil {
+		return false
+	}
+
+	for _, cidr := range privateRanges {
+		_, subnet, _ := net.ParseCIDR(cidr)
+		if subnet.Contains(parsedIP) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // stops and restarts the global metrics updater

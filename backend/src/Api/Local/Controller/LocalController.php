@@ -2,6 +2,7 @@
 
 namespace App\Api\Local\Controller;
 
+use App\Api\Console\Metrics\MetricsListener;
 use App\Api\Local\Input\IncomingInput;
 use App\Api\Local\Input\IncomingType;
 use App\Api\Local\Input\SendAttemptDoneInput;
@@ -12,6 +13,7 @@ use App\Service\IncomingMail\IncomingMailService;
 use App\Service\Send\SendService;
 use App\Service\Management\GoState\GoStateFactory;
 use App\Service\Management\GoState\ServerNotFoundException;
+use Prometheus\RenderTextFormat;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -28,6 +30,7 @@ class LocalController extends AbstractController
         private SendService         $sendService,
         private IncomingMailService $incomingMailService,
         private DebugIncomingEmailService $debugIncomingEmailService,
+        private MetricsListener     $metricsListener,
     )
     {
     }
@@ -90,5 +93,19 @@ class LocalController extends AbstractController
         }
 
         return new JsonResponse();
+    }
+
+    #[Route('/metrics', methods: 'GET')]
+    public function exportPrometheusMetrics(): JsonResponse
+    {
+        $renderer = new RenderTextFormat();
+        return new JsonResponse(
+            [
+            "metrics" => $renderer->render($this->metricsListener->getSamples())
+            ],
+            headers: [
+                'Content-Type' => RenderTextFormat::MIME_TYPE
+            ]
+        );
     }
 }
