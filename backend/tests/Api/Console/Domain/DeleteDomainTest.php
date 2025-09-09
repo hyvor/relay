@@ -6,6 +6,7 @@ use App\Api\Console\Controller\DomainController;
 use App\Api\Console\Input\Domain\DomainIdOrDomainInput;
 use App\Api\Console\Object\DomainObject;
 use App\Entity\Domain;
+use App\Entity\Type\DomainStatus;
 use App\Service\Domain\DomainService;
 use App\Service\Domain\Event\DomainDeletedEvent;
 use App\Tests\Case\WebTestCase;
@@ -100,7 +101,9 @@ class DeleteDomainTest extends WebTestCase
             $project,
             'DELETE',
             '/domains',
-            ['id' => $domain->getId()]
+            [
+                'id' => $domain->getId()
+            ]
         );
 
         $this->assertResponseStatusCodeSame(400);
@@ -108,4 +111,34 @@ class DeleteDomainTest extends WebTestCase
         $this->assertSame('Domain does not belong to the project', $json['message']);
     }
 
+    public function test_when_domain_is_suspended(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $domain = DomainFactory::createOne(
+            [
+                'project' => $project,
+                'domain' => 'example.com',
+                'status' => DomainStatus::SUSPENDED
+            ]
+        );
+
+        $domainId = $domain->getId();
+
+        $this->consoleApi(
+            $project,
+            'DELETE',
+            '/domains',
+            [
+                'domain' => 'example.com'
+            ]
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+        $json = $this->getJson();
+        $this->assertSame('Domain deletion failed: Suspended domains can not be deleted.', $json['message']);
+
+        $domainDb = $this->em->getRepository(Domain::class)->find($domainId);
+        $this->assertNotNull($domainDb);
+    }
 }
