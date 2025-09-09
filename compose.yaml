@@ -63,7 +63,7 @@ services:
       - ./worker/:/worker/
     environment:
       GO_SYMFONY_URL: http://hyvor-relay-backend
-      OUTGOING_SMTP_PORT: ":587"
+      # OUTGOING_SMTP_PORT: ":587"
     networks:
       - hyvor-network
     ports:
