@@ -58,6 +58,8 @@
 
 Visit [hyvor/dev](https://github.com/hyvor/dev) to set up the HYVOR development environment. Then, run `./run relay` to start Hyvor Relay at `https://relay.hyvor.localhost`.
 
+Directory structure:
+
 - `/backend`: Symfony API backend
 - `/frontend`: SvelteKit frontend
 - `/worker`: Go services (single binary)
@@ -71,5 +73,7 @@ TODO -->
 ## License
 
 Hyvor Relay is licensed under the [AGPL-3.0 License](https://github.com/hyvor/relay/blob/main/LICENSE). AGPLv3 requires you to share the source code of your modifications if you run the software on a server and allow others to use it. For other use cases where you cannot use AGPLv3, contact HYVOR for an [Enterprise License](https://hyvor.com/enterprise).
+
+![HYVOR Banner](https://github.com/hyvor/relay/tree/main/meta/assets/hyvor-banner.svg)
 
 Copyright © HYVOR. HYVOR name and logo are trademarks of HYVOR.
