@@ -276,6 +276,9 @@ func getOutgoingPort() string {
 	return port
 }
 
+const smtpClientConnectionTimeout = 8 * time.Second
+const smtpClientKeepAlive = 8 * time.Second
+
 var createSmtpClient = func(host string, localIp string) (*smtp.Client, error) {
 
 	// TODO: comment from ResolveTCPAddr
@@ -296,8 +299,8 @@ var createSmtpClient = func(host string, localIp string) (*smtp.Client, error) {
 
 	dialer := &net.Dialer{
 		LocalAddr: localAddr,
-		Timeout:   30 * time.Second,
-		KeepAlive: 30 * time.Second,
+		Timeout:   smtpClientConnectionTimeout,
+		KeepAlive: smtpClientKeepAlive,
 	}
 
 	conn, err := dialer.Dial("tcp", remoteAddr.String())

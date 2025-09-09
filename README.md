@@ -43,7 +43,7 @@
 
 ## Screenshots
 
-The sudo dashboard for admin users:
+The sudo dashboard for admins:
 
 ![Sudo Dashboard](/meta/assets/screenshot-sudo.png)
 

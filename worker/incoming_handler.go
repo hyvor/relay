@@ -132,7 +132,7 @@ func incomingMailWorker(
 	mailChannel chan *IncomingMail,
 ) {
 
-	logger.Info("Starting incoming mail handler", "worker", i)
+	logger.Debug("Starting incoming mail handler", "worker", i)
 
 	for {
 		select {
