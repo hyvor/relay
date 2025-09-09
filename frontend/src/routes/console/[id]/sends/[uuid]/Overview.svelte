@@ -3,11 +3,12 @@
 	import type { Send } from '../../../types';
 	import SendStatus from '../RecipientStatuses.svelte';
 	import RelativeTime from '../../../@components/content/RelativeTime.svelte';
-	import AttemptRow from './AttemptRow.svelte';
+	import AttemptRow from './Attempts/AttemptRow.svelte';
 	import RecipientStatus from '../RecipientStatus.svelte';
 	import { getSortedRecipients } from './recipients';
 	import byteFormatter from '$lib/byteFormatter';
 	import Events from './Events/Events.svelte';
+	import Attempts from './Attempts/Attempts.svelte';
 
 	let { send }: { send: Send } = $props();
 
@@ -69,6 +70,10 @@
 
 <div class="events">
 	<Events {send} />
+</div>
+
+<div class="attempts">
+	<Attempts {send} />
 </div>
 
 <style>

@@ -19,8 +19,8 @@
 				return { color: 'red', text: 'Complained' };
 			case 'queued':
 				return { color: 'default', text: 'Queued' };
-			case 'retrying':
-				return { color: 'orange', text: 'Retrying' };
+			case 'deferred':
+				return { color: 'orange', text: 'Deferred' };
 			case 'failed':
 				return { color: 'red', text: 'Failed' };
 		}

@@ -719,7 +719,7 @@ type Response = Domain
         interface SendAttempt {
 	id: number;
 	created_at: number;
-	status: 'accepted' | 'deferred' | 'bounced';
+	status: 'accepted' | 'deferred' | 'bounced' | 'failed';
 	try_count: number;
 	resolved_mx_hosts: string[];
 	accepted_mx_host: string | null;

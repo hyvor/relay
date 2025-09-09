@@ -19,7 +19,7 @@ class SendAttemptObject
      * @var string[]
      */
     public array $resolved_mx_hosts;
-    public ?string $accepted_mx_host = null;
+    public ?string $responded_mx_host = null;
 
     /**
      * @var array<string, mixed>
@@ -35,7 +35,7 @@ class SendAttemptObject
         $this->try_count = $attempt->getTryCount();
         $this->domain = $attempt->getDomain();
         $this->resolved_mx_hosts = $attempt->getResolvedMxHosts();
-        $this->accepted_mx_host = $attempt->getRespondedMxHost();
+        $this->responded_mx_host = $attempt->getRespondedMxHost();
         $this->smtp_conversations = $attempt->getSmtpConversations();
         $this->error = $attempt->getError();
     }

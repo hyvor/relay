@@ -1,9 +1,9 @@
 <script lang="ts">
 	import dayjs from 'dayjs';
-	import type { SendAttempt } from '../../../types';
+	import type { SendAttempt } from '../../../../types';
 	import { Tag } from '@hyvor/design/components';
 	import SmtpConversation from './SmtpConversation.svelte';
-	import MxHost from './MxHost.svelte';
+	import MxHost from '../MxHost.svelte';
 
 	interface Props {
 		attempt: SendAttempt;
@@ -12,8 +12,8 @@
 	let { attempt }: Props = $props();
 
 	function getDefaultHost() {
-		if (attempt.accepted_mx_host) {
-			return attempt.accepted_mx_host;
+		if (attempt.responded_mx_host) {
+			return attempt.responded_mx_host;
 		}
 
 		return attempt.resolved_mx_hosts[0] || null;
@@ -31,14 +31,14 @@
 			{#if attempt.status === 'accepted'}
 				<Tag color="green">Accepted</Tag>
 			{:else if attempt.status === 'deferred'}
-				<Tag color="orange">Deferrer</Tag>
+				<Tag color="orange">Deferred</Tag>
 			{:else if attempt.status === 'bounced'}
 				<Tag color="red">Bounced</Tag>
 			{/if}
 		</div>
 		<div class="message">
 			{#if attempt.status === 'accepted'}
-				Message accepted by {attempt.accepted_mx_host}
+				Message accepted by {attempt.responded_mx_host}
 			{:else if attempt.status === 'bounced'}
 				<span class="error">
 					{attempt.error || 'No error message'}
@@ -70,7 +70,7 @@
 		{/if}
 
 		<div class="conversation">
-			{#if selectedConversation}
+			{#if selectedConversation && selectedConversation.Steps.length}
 				<SmtpConversation conversation={selectedConversation} />
 			{:else}
 				<div class="no-convo">No SMTP conversation available for this host.</div>

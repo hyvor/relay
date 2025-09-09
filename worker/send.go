@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os"
 	"time"
 
 	smtp "github.com/hyvor/relay/worker/smtp"
@@ -250,19 +251,30 @@ func sendEmailHandler(
 		}
 	}
 
+	result.Error = lastError
+
 	// if we reach here, all hosts have failed due to non-smtp errors (e.g. network errors)
 	if result.NewTryCount == 1 {
 		// give it one more try later (15mins) if this was the first try
 		result.Code = SendResultDeferred
 	} else {
 		result.Code = SendResultFailed
-		result.Error = lastError
 	}
 
 	return result
 }
 
 var netResolveTCPAddr = net.ResolveTCPAddr
+
+const defaultSmtpPort = ":25"
+
+func getOutgoingPort() string {
+	port := os.Getenv("OUTGOING_SMTP_PORT")
+	if port == "" {
+		return defaultSmtpPort
+	}
+	return port
+}
 
 var createSmtpClient = func(host string, localIp string) (*smtp.Client, error) {
 
@@ -272,7 +284,7 @@ var createSmtpClient = func(host string, localIp string) (*smtp.Client, error) {
 	// IP addresses."
 	// So, we might need to resolve A records manually first.
 
-	remoteAddr, err := netResolveTCPAddr("tcp", host+":25")
+	remoteAddr, err := netResolveTCPAddr("tcp", host+getOutgoingPort())
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve remote address %s: %w", host, err)
 	}

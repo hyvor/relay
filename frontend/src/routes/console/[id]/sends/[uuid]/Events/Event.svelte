@@ -44,22 +44,42 @@
 		function getAttemptMessage(attempt: SendAttempt) {
 			if (attempt.status === 'accepted') {
 				return {
-					message: `Accepted: ${getRecipientsOfDomainJoined(attempt.domain)}`,
+					message: `Accepted: <strong>${getRecipientsOfDomainJoined(attempt.domain)}</strong>`,
 					description: null,
 					color: 'var(--green)'
 				};
 			} else if (attempt.status === 'deferred') {
 				return {
-					message: `Deferred (retrying later): ${getRecipientsOfDomainJoined(attempt.domain)}`,
-					description: attempt.error,
+					message: `Deferred (retrying later): <strong>${getRecipientsOfDomainJoined(attempt.domain)}</strong>`,
+					description: getAttemptDescription(),
 					color: 'var(--orange)'
 				};
 			} else {
 				return {
-					message: `Bounced: ${getRecipientsOfDomainJoined(attempt.domain)}`,
-					description: attempt.error,
+					message: `Bounced: <strong>${getRecipientsOfDomainJoined(attempt.domain)}</strong>`,
+					description: getAttemptDescription(),
 					color: 'var(--red)'
 				};
+			}
+
+			function getAttemptDescription(): string | null {
+				if (attempt.error) {
+					return attempt.error;
+				}
+
+				if (!attempt.responded_mx_host) {
+					return null;
+				}
+
+				const smtpConvo = attempt.smtp_conversations[attempt.responded_mx_host];
+
+				if (!smtpConvo) {
+					return null;
+				}
+
+				const lastStep = smtpConvo.Steps[smtpConvo.Steps.length - 1];
+
+				return `${lastStep.ReplyCode} ${lastStep.ReplyText}`;
 			}
 		}
 
