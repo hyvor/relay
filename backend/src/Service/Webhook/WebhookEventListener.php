@@ -5,6 +5,7 @@ namespace App\Service\Webhook;
 use App\Api\Console\Object\DomainObject;
 use App\Api\Console\Object\SendAttemptObject;
 use App\Api\Console\Object\SendObject;
+use App\Api\Console\Object\SendRecipientObject;
 use App\Api\Console\Object\SuppressionObject;
 use App\Entity\Project;
 use App\Entity\Type\SendAttemptStatus;
@@ -12,7 +13,10 @@ use App\Entity\Type\WebhooksEventEnum;
 use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Service\Domain\Event\DomainDeletedEvent;
 use App\Service\Domain\Event\DomainStatusChangedEvent;
+use App\Service\IncomingMail\Event\IncomingBounceEvent;
+use App\Service\IncomingMail\Event\IncomingComplaintEvent;
 use App\Service\Send\Event\SendAttemptCreatedEvent;
+use App\Service\SendRecipient\SendRecipientService;
 use App\Service\Suppression\Event\SuppressionCreatedEvent;
 use App\Service\Suppression\Event\SuppressionDeletedEvent;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
@@ -22,11 +26,12 @@ class WebhookEventListener
 
     public function __construct(
         private WebhookService $webhookService,
+        private SendRecipientService $sendRecipientService
     ) {
     }
 
     /**
-     * @param callable(): object $objectFactory
+     * @param callable(): (object|object[]) $objectFactory
      */
     private function createWebhookDeliveries(
         Project $project,
@@ -34,34 +39,79 @@ class WebhookEventListener
         callable $objectFactory
     ): void {
         $webhooks = $this->webhookService->getWebhooksForEvent($project, $eventType);
+        $objects = $objectFactory();
+
+        if (!is_array($objects)) {
+            $objects = [$objects];
+        }
 
         foreach ($webhooks as $webhook) {
-            $this->webhookService->createWebhookDelivery(
-                $webhook,
-                $eventType,
-                $objectFactory()
-            );
+            foreach ($objects as $object) {
+                $this->webhookService->createWebhookDelivery(
+                    $webhook,
+                    $eventType,
+                    $object
+                );
+            }
         }
     }
 
     #[AsEventListener]
-    public function onSendAttemptCreated(SendAttemptCreatedEvent $sendAttempt): void
+    public function onSendAttemptCreated(SendAttemptCreatedEvent $event): void
     {
-        $attempt = $sendAttempt->sendAttempt;
+        $attempt = $event->sendAttempt;
         $event = match ($attempt->getStatus()) {
-            SendAttemptStatus::ACCEPTED => WebhooksEventEnum::SEND_ACCEPTED,
-            SendAttemptStatus::DEFERRED => WebhooksEventEnum::SEND_DEFERRED,
-            SendAttemptStatus::BOUNCED => WebhooksEventEnum::SEND_BOUNCED,
+            SendAttemptStatus::ACCEPTED => WebhooksEventEnum::SEND_RECIPIENT_ACCEPTED,
+            SendAttemptStatus::DEFERRED => WebhooksEventEnum::SEND_RECIPIENT_DEFERRED,
+            SendAttemptStatus::BOUNCED => WebhooksEventEnum::SEND_RECIPIENT_BOUNCED,
         };
 
         $send = $attempt->getSend();
+        $project = $send->getProject();
+
+        $this->createWebhookDeliveries(
+            $project,
+            $event,
+            function () use ($send, $attempt) {
+                $recipients = $this->sendRecipientService->getSendRecipientsBySendAttempt($attempt);
+                return array_map(fn($recipient) => (object)[
+                    'send' => new SendObject($send),
+                    'recipient' => new SendRecipientObject($recipient),
+                    'attempt' => new SendAttemptObject($attempt),
+                ], $recipients);
+
+            }
+        );
+    }
+
+    #[AsEventListener]
+    public function onIncomingBounce(IncomingBounceEvent $event): void
+    {
+        $send = $event->send;
 
         $this->createWebhookDeliveries(
             $send->getProject(),
-            $event,
+            WebhooksEventEnum::SEND_RECIPIENT_BOUNCED,
             fn() => (object)[
                 'send' => new SendObject($send),
-                'attempt' => new SendAttemptObject($attempt)
+                'recipient' => new SendRecipientObject($event->sendRecipient),
+                'bounce' => $event->bounce,
+            ]
+        );
+    }
+
+    #[AsEventListener]
+    public function onIncomingComplaint(IncomingComplaintEvent $event): void
+    {
+        $send = $event->send;
+
+        $this->createWebhookDeliveries(
+            $send->getProject(),
+            WebhooksEventEnum::SEND_RECIPIENT_COMPLAINED,
+            fn() => (object)[
+                'send' => new SendObject($send),
+                'recipient' => new SendRecipientObject($event->sendRecipient),
+                'complaint' => $event->complaint,
             ]
         );
     }

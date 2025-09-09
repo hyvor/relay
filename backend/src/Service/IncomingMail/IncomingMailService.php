@@ -2,16 +2,21 @@
 
 namespace App\Service\IncomingMail;
 
+use App\Api\Console\Object\BounceObject;
+use App\Api\Console\Object\ComplaintObject;
 use App\Api\Local\Input\ArfInput;
 use App\Api\Local\Input\DsnInput;
 use App\Entity\DebugIncomingEmail;
 use App\Entity\Type\SendFeedbackType;
 use App\Entity\Type\SuppressionReason;
+use App\Service\IncomingMail\Event\IncomingBounceEvent;
+use App\Service\IncomingMail\Event\IncomingComplaintEvent;
 use App\Service\Send\SendService;
 use App\Service\SendFeedback\SendFeedbackService;
 use App\Service\SendRecipient\SendRecipientService;
 use App\Service\Suppression\SuppressionService;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class IncomingMailService
 {
@@ -21,6 +26,7 @@ class IncomingMailService
         private SendRecipientService $sendRecipientService,
         private SendFeedbackService $sendFeedbackService,
         private LoggerInterface $logger,
+        private EventDispatcherInterface $ed
     ) {
     }
 
@@ -94,6 +100,9 @@ class IncomingMailService
                 $sendRecipient,
                 $debugIncomingEmail
             );
+
+            $bounceObject = new BounceObject($dsnInput->ReadableText, $recipient->Status);
+            $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient, $bounceObject));
         }
     }
 
@@ -138,9 +147,12 @@ class IncomingMailService
         );
 
         $this->sendFeedbackService->createSendFeedback(
-            SendFeedbackType::BOUNCE,
+            SendFeedbackType::COMPLAINT,
             $sendRecipient,
             $debugIncomingEmail
         );
+
+        $complaintObject = new ComplaintObject($arfInput->ReadableText, $arfInput->FeedbackType);
+        $this->ed->dispatch(new IncomingComplaintEvent($send, $sendRecipient, $complaintObject));
     }
 }

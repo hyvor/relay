@@ -711,6 +711,24 @@ type Response = Domain
     `}
 />
 
+<h3 id="send-recipient-object">SendRecipient Object</h3>
+
+<CodeBlock
+	language="ts"
+	code={`
+        interface SendRecipient {
+	id: number;
+	type: 'to' | 'cc' | 'bcc';
+	address: string;
+	name: string;
+	status: 'queued' | 'accepted' | 'retrying' | 'bounced' | 'complained' | 'failed';
+	accepted_at: number | null;
+	bounced_at: number | null;
+	failed_at: number | null;
+        }
+    `}
+/>
+
 <h3 id="send-attempt-object">SendAttempt Object</h3>
 
 <CodeBlock
@@ -725,6 +743,30 @@ type Response = Domain
 	accepted_mx_host: string | null;
 	smtp_conversations: Record<string, any>;
 	error: string | null;
+        }
+    `}
+/>
+
+<h3 id="bounce-object">Bounce Object</h3>
+
+<CodeBlock
+    language="ts"
+    code={`
+        interface Bounce {
+    text: string;
+    status: string;
+        }
+    `}
+/>
+
+<h3 id="complaint-object">Complaint Object</h3>
+
+<CodeBlock
+    language="ts"
+    code={`
+        interface Complaint {
+    text: string;
+    feedback_type: string;
         }
     `}
 />
