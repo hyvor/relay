@@ -7,6 +7,8 @@ import Monitoring from './content/Monitoring.svelte';
 import EasyDeploy from './content/easy/EasyDeploy.svelte';
 import Env from './content/Env.svelte';
 import Deliverability from './content/Deliverability.svelte';
+import Dns from './content/Dns.svelte';
+import Scaling from './content/Scaling.svelte';
 
 export const categories: Category[] = [
 	{
@@ -15,27 +17,12 @@ export const categories: Category[] = [
 			{
 				slug: '',
 				name: 'Introduction',
-                component: Introduction
+				component: Introduction
 			},
 			{
 				slug: 'deploy',
-				name: 'Deploy',
-                component: Deploy
-			},
-			{
-				slug: 'setup',
-				name: 'Setup',
-                component: Setup
-			},
-			{
-				slug: 'scaling',
-				name: 'Scaling',
-                component: Introduction
-			},
-			{
-				slug: 'monitoring',
-				name: 'Monitoring',
-				component: Monitoring
+				name: 'Prod Deploy',
+				component: Deploy
 			},
 			{
 				slug: 'deploy-easy',
@@ -43,14 +30,34 @@ export const categories: Category[] = [
 				component: EasyDeploy,
 			},
 			{
-				slug: 'env',
-				name: 'Environment Variables',
-				component: Env,
+				slug: 'setup',
+				name: 'Setup',
+				component: Setup
 			},
 		]
 	},
 	{
-		name: 'Other',
+		name: 'Advanced',
+		pages: [
+			{
+				slug: 'monitoring',
+				name: 'Monitoring',
+				component: Monitoring
+			},
+			{
+				slug: 'scaling',
+				name: 'Scaling & HA',
+				component: Scaling
+			},
+			{
+				slug: 'dns',
+				name: 'DNS',
+				component: Dns,
+			},
+		]
+	},
+	{
+		name: 'Misc',
 		pages: [
 			{
 				slug: 'deliverability',
@@ -61,12 +68,12 @@ export const categories: Category[] = [
 				slug: 'providers',
 				name: 'Email Providers',
 				component: Deliverability,
-			}
-			/* {
-				slug: 'learn',
-				name: 'Learn Sending Emails',
-				component: Introduction,
-			} */
+			},
+			{
+				slug: 'env',
+				name: 'Environment Variables',
+				component: Env,
+			},
 		]
 	},
 ];

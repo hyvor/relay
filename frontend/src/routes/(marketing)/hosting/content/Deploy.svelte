@@ -2,7 +2,7 @@
 	import { Table, TableRow } from '@hyvor/design/components';
 </script>
 
-<h1>Deploy</h1>
+<h1>Prod Deploy</h1>
 
 <p>
 	This page covers a <strong>production-ready deployment</strong> that requires multiple servers.
