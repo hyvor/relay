@@ -52,7 +52,7 @@
 					show = false;
 				})
 				.catch((error) => {
-					toast.error('Failed to update DNS record:', error);
+					toast.error('Failed to update DNS record: ' + error.message);
 				})
 				.finally(() => {
 					loading = false;
@@ -73,7 +73,7 @@
 					show = false;
 				})
 				.catch((error) => {
-					toast.error('Failed to create DNS record:');
+					toast.error('Failed to create DNS record: ' + error.message);
 				})
 				.finally(() => {
 					loading = false;
