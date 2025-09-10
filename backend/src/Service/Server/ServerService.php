@@ -3,9 +3,9 @@
 namespace App\Service\Server;
 
 use App\Entity\Server;
+use App\Entity\Type\ServerTaskType;
 use App\Service\App\Config;
 use App\Service\PrivateNetwork\Exception\PrivateNetworkCallException;
-use App\Service\PrivateNetwork\PrivateNetworkApi;
 use App\Service\Server\Dto\UpdateServerDto;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -18,7 +18,7 @@ class ServerService
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly Config $config,
-        private PrivateNetworkApi $privateNetworkApi
+        private readonly ServerTaskService $serverTaskService,
     ) {
     }
 
@@ -27,7 +27,7 @@ class ServerService
      */
     public function getServers(): array
     {
-        return $this->em->getRepository(Server::class)->findBy([], orderBy: ['id' => 'ASC']);
+        return $readthis->em->getRepository(Server::class)->findBy([], orderBy: ['id' => 'ASC']);
     }
 
     public function getServersCount(): int
@@ -109,7 +109,11 @@ class ServerService
 
         if ($updateStateCall) {
             try {
-                $this->privateNetworkApi->callUpdateServerStateApi($server);
+                $this->serverTaskService->createTask(
+                    $server,
+                    ServerTaskType::UPDATE_STATE,
+                    []
+                );
             } catch (PrivateNetworkCallException $e) {
                 /**
                  * We cannot use a transaction here to rollback automatically
