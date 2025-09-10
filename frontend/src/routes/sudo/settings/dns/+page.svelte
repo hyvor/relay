@@ -22,7 +22,7 @@
 				);
 			})
 			.catch((error) => {
-				toast.error('Failed to fetch DNS records:', error);
+				toast.error('Failed to fetch DNS records: ' + error.message);
 			})
 			.finally(() => {
 				loading = false;

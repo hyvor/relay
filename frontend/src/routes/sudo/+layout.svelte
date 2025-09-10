@@ -30,7 +30,7 @@
 				loading = false;
 			})
 			.catch((err) => {
-				toast.error('Failed to initialize sudo:', err);
+				toast.error('Failed to initialize sudo: ' +  err.message);
 			});
 	});
 </script>
