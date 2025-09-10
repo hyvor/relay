@@ -2,7 +2,6 @@
 
 namespace App\Tests\Api\Local;
 
-use App\Api\Local\AllowPrivateNetwork;
 use App\Api\Local\LocalAuthorizationListener;
 use App\Service\Instance\InstanceService;
 use App\Tests\Case\KernelTestCase;
@@ -83,32 +82,6 @@ class LocalAuthorizationListenerTest extends KernelTestCase
         $listener($event);
     }
 
-    public function test_allows_private_network_with_attribute(): void
-    {
-
-        $this->expectNotToPerformAssertions();
-//        $this->expectException(AccessDeniedHttpException::class);
-//        $this->expectExceptionMessage('Only requests from localhost or private network are allowed.');
-
-        $listener = $this->getListener('prod');
-        $request = Request::create('/api/local/some-endpoint');
-        $request->server->set('REMOTE_ADDR', '10.0.0.0');
-        $event = new ControllerEvent(
-            $this->getKernel(),
-            function () {},
-            $request,
-            HttpKernelInterface::MAIN_REQUEST
-        );
-        $event->setController(
-            fn () => null,
-            [
-                AllowPrivateNetwork::class => [new AllowPrivateNetwork()]
-            ]
-        );
-
-        $listener($event);
-
-    }
 
     public function test_does_not_allow_outside_of_private_network(): void
     {
@@ -131,9 +104,6 @@ class LocalAuthorizationListenerTest extends KernelTestCase
         );
         $event->setController(
             fn () => null,
-            [
-                AllowPrivateNetwork::class => [new AllowPrivateNetwork()]
-            ]
         );
 
         $listener($event);

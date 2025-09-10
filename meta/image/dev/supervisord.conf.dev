@@ -3,7 +3,7 @@ nodaemon=true
 pidfile=/run/supervisor.pid
 
 [program:frankenphp]
-command=frankenphp run --config /etc/caddy/Caddyfile --watch
+command=php bin/console frankenphp:run
 stdout_logfile=/dev/stdout
 stderr_logfile=/dev/stderr
 stdout_logfile_maxbytes=0

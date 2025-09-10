@@ -1,5 +1,8 @@
 {
-	frankenphp
+	frankenphp {
+        worker "/app/backend/public/index.php" {$WORKERS:0}
+    }
+    metrics
 }
 
 :80 {

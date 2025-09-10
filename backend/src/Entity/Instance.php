@@ -42,9 +42,6 @@ class Instance
     #[ORM\Column(type: "json")]
     private array $health_check_results = [];
 
-    #[ORM\Column()]
-    private ?string $private_network_cidr = null;
-
     #[ORM\Column(type: "boolean")]
     private bool $sudo_initialized = false;
 
@@ -155,17 +152,6 @@ class Instance
     public function setHealthCheckResults(array $healthCheckResults): static
     {
         $this->health_check_results = $healthCheckResults;
-        return $this;
-    }
-
-    public function getPrivateNetworkCidr(): string
-    {
-        return $this->private_network_cidr ?? ServerIp::DEFAULT_PRIVATE_IP_RANGE;
-    }
-
-    public function setPrivateNetworkCidr(?string $privateNetworkIpRange): static
-    {
-        $this->private_network_cidr = $privateNetworkIpRange;
         return $this;
     }
 

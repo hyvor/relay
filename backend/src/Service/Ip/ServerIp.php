@@ -2,13 +2,8 @@
 
 namespace App\Service\Ip;
 
-use Symfony\Component\HttpFoundation\IpUtils;
-
 class ServerIp
 {
-
-    public const DEFAULT_PRIVATE_IP_RANGE = "10.0.0.0/8";
-
     /**
      * @param callable $netGetInterfacesFunction
      */
@@ -34,22 +29,6 @@ class ServerIp
         }
 
         return $publicIps;
-    }
-
-    /**
-     * Gets a private IP address in the 10.0.0.0/8 range
-     */
-    public function getPrivateIp(string $range = self::DEFAULT_PRIVATE_IP_RANGE): ?string
-    {
-        $allIps = $this->getAllIpAddresses();
-
-        foreach ($allIps as $ip) {
-            if (IpUtils::checkIp4($ip, $range)) {
-                return $ip;
-            }
-        }
-
-        return null;
     }
 
     /**

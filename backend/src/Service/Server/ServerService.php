@@ -3,9 +3,8 @@
 namespace App\Service\Server;
 
 use App\Entity\Server;
+use App\Entity\Type\ServerTaskType;
 use App\Service\App\Config;
-use App\Service\PrivateNetwork\Exception\PrivateNetworkCallException;
-use App\Service\PrivateNetwork\PrivateNetworkApi;
 use App\Service\Server\Dto\UpdateServerDto;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -18,7 +17,7 @@ class ServerService
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly Config $config,
-        private PrivateNetworkApi $privateNetworkApi
+        private readonly ServerTaskService $serverTaskService,
     ) {
     }
 
@@ -75,9 +74,6 @@ class ServerService
         return $server;
     }
 
-    /**
-     * @throws PrivateNetworkCallException
-     */
     public function updateServer(
         Server $server,
         UpdateServerDto $updates,
@@ -86,9 +82,6 @@ class ServerService
         if ($updates->lastPingAtSet) {
             $server->setLastPingAt($updates->lastPingAt);
         }
-
-        $oldServer = clone $server;
-
         if ($updates->apiWorkersSet) {
             $server->setApiWorkers($updates->apiWorkers);
         }
@@ -108,22 +101,13 @@ class ServerService
         $this->em->flush();
 
         if ($updateStateCall) {
-            try {
-                $this->privateNetworkApi->callUpdateServerStateApi($server);
-            } catch (PrivateNetworkCallException $e) {
-                /**
-                 * We cannot use a transaction here to rollback automatically
-                 * because the external API call depends on the new state of the server,
-                 * which they do not see if th
-                 */
-
-                $server->setApiWorkers($oldServer->getApiWorkers());
-                $server->setEmailWorkers($oldServer->getEmailWorkers());
-                $server->setWebhookWorkers($oldServer->getWebhookWorkers());
-
-                $this->em->flush();
-                throw $e;
-            }
+            $this->serverTaskService->createTask(
+                $server,
+                ServerTaskType::UPDATE_STATE,
+                [
+                    'api_workers_updated' => $updates->apiWorkersSet
+                ]
+            );
         }
     }
 

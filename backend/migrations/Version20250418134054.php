@@ -30,7 +30,6 @@ final class Version20250418134054 extends AbstractMigration
             system_project_id bigint NOT NULL references projects(id) ON DELETE CASCADE,
             last_health_check_at timestamptz DEFAULT NULL,
             health_check_results jsonb DEFAULT NULL,
-            private_network_cidr text DEFAULT NULL,
             sudo_initialized boolean DEFAULT false
         )
         SQL

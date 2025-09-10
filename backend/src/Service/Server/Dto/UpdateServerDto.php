@@ -12,13 +12,6 @@ class UpdateServerDto
         }
     }
 
-    public ?string $privateIp {
-        set {
-            $this->privateIpSet = true;
-            $this->privateIp = $value;
-        }
-    }
-
     public int $apiWorkers {
         set {
             $this->apiWorkersSet = true;

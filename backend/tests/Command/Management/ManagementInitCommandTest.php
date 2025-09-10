@@ -33,7 +33,6 @@ class ManagementInitCommandTest extends KernelTestCase
     public function test_creates_instance_server_and_adds_ips(): void
     {
         $serverIpMock = $this->createMock(ServerIp::class);
-        $serverIpMock->method('getPrivateIp')->willReturn('10.0.0.1');
         $serverIpMock->method('getPublicV4IpAddresses')->willReturn([
             '8.8.8.8',
             '9.9.9.9'
@@ -85,7 +84,6 @@ class ManagementInitCommandTest extends KernelTestCase
         $this->assertCount(1, $servers);
         $server = $servers[0];
         $this->assertSame('hyvor-relay', $server->getHostname());
-        $this->assertSame('10.0.0.1', $server->getPrivateIp());
 
         $ips = $this->em->getRepository(IpAddress::class)->findBy(['server' => $server]);
         $this->assertCount(2, $ips);
@@ -99,8 +97,7 @@ class ManagementInitCommandTest extends KernelTestCase
     public function test_deletes_ip_addresses(): void
     {
         $server = ServerFactory::createOne([
-            'hostname' => 'hyvor-relay',
-            'private_ip' => "10.0.0.1"
+            'hostname' => 'hyvor-relay'
         ]);
 
         $ip1 = IpAddressFactory::createOne([
@@ -121,7 +118,6 @@ class ManagementInitCommandTest extends KernelTestCase
         $ip3Id = $ip3->getId();
 
         $serverIpMock = $this->createMock(ServerIp::class);
-        $serverIpMock->method('getPrivateIp')->willReturn('10.0.0.2');
         $serverIpMock->method('getPublicV4IpAddresses')->willReturn([
             '8.8.8.8',
             '9.9.9.9'
@@ -131,8 +127,6 @@ class ManagementInitCommandTest extends KernelTestCase
         $command = $this->commandTester('management:init');
         $command->execute([]);
         $command->assertCommandIsSuccessful();
-
-        $this->assertSame('10.0.0.2', $server->getPrivateIp());
 
         $updatedIp1 = $this->em->getRepository(IpAddress::class)->find($ip1->getId());
         $this->assertNotNull($updatedIp1);

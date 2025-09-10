@@ -4,22 +4,18 @@ namespace App\Tests\Api\Sudo\Server;
 
 use App\Api\Sudo\Controller\ServerController;
 use App\Api\Sudo\Object\ServerObject;
-use App\Entity\Server;
 use App\Entity\ServerTask;
-use App\Service\PrivateNetwork\PrivateNetworkApi;
 use App\Service\Server\ServerService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ServerFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
-use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[CoversClass(ServerController::class)]
 #[CoversClass(ServerService::class)]
 #[CoversClass(ServerObject::class)]
-#[CoversClass(PrivateNetworkApi::class)]
 class UpdateServerTest extends WebTestCase
 {
 
@@ -35,7 +31,6 @@ class UpdateServerTest extends WebTestCase
             'api_workers' => 5,
             'email_workers' => 3,
             'webhook_workers' => 2,
-            'private_ip' => '10.0.0.1'
         ]);
 
         // Make request to update api workers
