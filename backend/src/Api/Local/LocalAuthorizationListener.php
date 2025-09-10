@@ -18,8 +18,6 @@ class LocalAuthorizationListener
     public function __construct(
         #[Autowire('%kernel.environment%')]
         private string $env,
-
-        private InstanceService $instanceService,
     )
     {
     }
@@ -31,34 +29,22 @@ class LocalAuthorizationListener
         if ($this->env === 'dev') return;
 
         $ip = $event->getRequest()->getClientIp();
-        $allowPrivateNetwork = count($event->getAttributes(AllowPrivateNetwork::class)) > 0;
 
-        if ($this->isIpAllowed($ip, $allowPrivateNetwork) === false) {
-            $privateNetworkMsg = $allowPrivateNetwork ?
-                " or private network" :
-                "";
+        if ($this->isIpAllowed($ip) === false) {
             throw new AccessDeniedHttpException(
-                "Only requests from localhost$privateNetworkMsg are allowed. Current IP is: $ip"
+                "Only requests from localhost are allowed. Current IP is: $ip"
             );
         }
     }
 
-    private function isIpAllowed(?string $ip, bool $allowPrivateNetwork): bool
+    private function isIpAllowed(?string $ip): bool
     {
 
         if ($ip === null) return false;
         if ($ip === '127.0.0.1') return true;
         if ($ip === '::1') return true; // IPv6 localhost
 
-        if ($allowPrivateNetwork) {
-            $privateNetworkCidr = $this->instanceService->tryGetInstance()?->getPrivateNetworkCidr() ?? ServerIp::DEFAULT_PRIVATE_IP_RANGE;
-            if (IpUtils::checkIp4($ip, $privateNetworkCidr)) {
-                return true;
-            }
-        }
-
         return false;
-
     }
 
 }

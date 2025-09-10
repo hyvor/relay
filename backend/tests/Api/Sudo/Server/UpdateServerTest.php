@@ -31,7 +31,6 @@ class UpdateServerTest extends WebTestCase
             'api_workers' => 5,
             'email_workers' => 3,
             'webhook_workers' => 2,
-            'private_ip' => '10.0.0.1'
         ]);
 
         // Make request to update api workers
