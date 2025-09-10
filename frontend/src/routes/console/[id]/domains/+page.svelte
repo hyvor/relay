@@ -141,7 +141,7 @@
 
 	function handleVerifyDomain(domain: Domain) {
 		const toastId = toast.loading('Loading...');
-		verifyDomain(domain.id, domain.domain)
+		verifyDomain(domain.domain)
 			.then((updatedDomain) => {
 				domains = domains.map((d) => (d.id === updatedDomain.id ? updatedDomain : d));
 				if (updatedDomain.status === 'active') {
