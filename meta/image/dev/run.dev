@@ -3,5 +3,8 @@
 # install dependencies
 composer install
 
+# Initiate the state of the current server
+bin/console management:init
+
 # Run supervisor
 /usr/bin/supervisord
