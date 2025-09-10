@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\PrivateNetwork\Exception;
+namespace App\Service\Go\Exception;
 
 class GoHttpCallException extends \Exception
 {

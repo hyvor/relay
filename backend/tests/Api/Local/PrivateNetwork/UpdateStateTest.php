@@ -2,8 +2,7 @@
 
 namespace App\Tests\Api\Local\PrivateNetwork;
 
-use App\Api\Local\Controller\PrivateNetworkController;
-use App\Service\PrivateNetwork\GoHttpApi;
+use App\Service\Go\GoHttpApi;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ServerFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -11,7 +10,6 @@ use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-#[CoversClass(PrivateNetworkController::class)]
 #[CoversClass(GoHttpApi::class)]
 class UpdateStateTest extends WebTestCase
 {

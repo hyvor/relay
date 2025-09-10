@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Service\PrivateNetwork;
+namespace App\Service\Go;
 
 use App\Entity\Type\DebugIncomingEmailType;
 use App\Service\App\Config;
 use App\Service\Management\GoState\GoState;
-use App\Service\PrivateNetwork\Exception\GoHttpCallException;
+use App\Service\Go\Exception\GoHttpCallException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;

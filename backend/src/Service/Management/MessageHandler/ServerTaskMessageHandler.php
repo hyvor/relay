@@ -6,7 +6,7 @@ use App\Entity\Type\ServerTaskType;
 use App\Service\Management\GoState\GoStateFactory;
 use App\Service\Management\Message\PingMessage;
 use App\Service\Management\Message\ServerTaskMessage;
-use App\Service\PrivateNetwork\GoHttpApi;
+use App\Service\Go\GoHttpApi;
 use App\Service\Server\Dto\UpdateServerDto;
 use App\Service\Server\ServerService;
 use App\Service\Server\ServerTaskService;
