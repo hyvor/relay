@@ -7,7 +7,7 @@
 <p>
 	Hyvor Relay comes with a DNS server that handles DNS queries for the <a
 		href="/hosting/setup#instance-domain">instance domain</a
-	> and its subdomains.
+	> and its subdomains. On each Hyvor Relay server, the DNS server listens on port 53 for UDP connections.
 </p>
 
 <ul>
