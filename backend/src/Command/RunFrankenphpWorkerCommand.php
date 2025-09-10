@@ -48,6 +48,7 @@ class RunFrankenphpWorkerCommand extends Command
 
         $output->writeln('<info>Starting FrankenPHP with WORKERS=' . $currentServer->getApiWorkers() . '</info>');
 
+        $process->setTimeout(null);
         $process->run(function ($type, $buffer): void {
             if ($type === Process::OUT) {
                 echo $buffer;

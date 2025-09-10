@@ -83,9 +83,8 @@ class ServerService
             $server->setLastPingAt($updates->lastPingAt);
         }
 
-        $oldServer = clone $server;
-
-        if ($updates->apiWorkersSet) {
+        $apiWorkersUpdated = $updates->apiWorkersSet;
+        if ($apiWorkersUpdated) {
             $server->setApiWorkers($updates->apiWorkers);
         }
         if ($updates->emailWorkersSet) {
@@ -107,7 +106,9 @@ class ServerService
             $this->serverTaskService->createTask(
                 $server,
                 ServerTaskType::UPDATE_STATE,
-                []
+                $apiWorkersUpdated ? [
+                    'api_workers_updated' => true
+                ] : []
             );
         }
     }
