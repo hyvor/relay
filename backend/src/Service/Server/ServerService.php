@@ -82,9 +82,7 @@ class ServerService
         if ($updates->lastPingAtSet) {
             $server->setLastPingAt($updates->lastPingAt);
         }
-
-        $apiWorkersUpdated = $updates->apiWorkersSet;
-        if ($apiWorkersUpdated) {
+        if ($updates->apiWorkersSet) {
             $server->setApiWorkers($updates->apiWorkers);
         }
         if ($updates->emailWorkersSet) {
@@ -106,9 +104,9 @@ class ServerService
             $this->serverTaskService->createTask(
                 $server,
                 ServerTaskType::UPDATE_STATE,
-                $apiWorkersUpdated ? [
-                    'api_workers_updated' => true
-                ] : []
+                [
+                    'api_workers_updated' => $updates->apiWorkersSet
+                ]
             );
         }
     }

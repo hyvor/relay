@@ -8,9 +8,13 @@ use App\Entity\Type\ServerTaskType;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Illuminate\Support\Arr;
+use Symfony\Component\Clock\ClockAwareTrait;
 
 class ServerTaskService
 {
+
+    use ClockAwareTrait;
+
     public function __construct(
         private EntityManagerInterface $em,
     )
@@ -26,8 +30,8 @@ class ServerTaskService
         $task->setServer($server)
             ->setType($serverTaskType)
             ->setPayload($payload)
-            ->setUpdatedAt(new \DateTimeImmutable())
-            ->setCreatedAt(new \DateTimeImmutable());
+            ->setUpdatedAt($this->now())
+            ->setCreatedAt($this->now());
 
         $this->em->persist($task);
         $this->em->flush();

@@ -13,7 +13,7 @@ use Symfony\Component\Process\Process;
  * @codeCoverageIgnore
  */
 #[AsCommand(
-    name: 'app:run:frankenphp-worker',
+    name: 'frankenphp:run',
     description: 'Runs the FrankenPHP worker processes.'
 )]
 class RunFrankenphpWorkerCommand extends Command
