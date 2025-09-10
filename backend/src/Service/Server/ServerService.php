@@ -27,7 +27,7 @@ class ServerService
      */
     public function getServers(): array
     {
-        return $readthis->em->getRepository(Server::class)->findBy([], orderBy: ['id' => 'ASC']);
+        return $this->em->getRepository(Server::class)->findBy([], orderBy: ['id' => 'ASC']);
     }
 
     public function getServersCount(): int
