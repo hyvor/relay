@@ -81,22 +81,40 @@ class DevSeedCommand extends Command
         DnsRecordFactory::new()->a()->create();
         DnsRecordFactory::new()->mx()->create();
 
-        $server = ServerFactory::createOne([
-            'hostname' => 'hyvor-relay',
-            'api_workers' => 2,
-            'email_workers' => 2,
-            'webhook_workers' => 1,
-            'incoming_workers' => 1,
-            'private_ip' => '127.0.0.1',
-        ]);
-        IpAddressFactory::createOne([
-            'server' => $server,
-            'ip_address' => '0.0.0.0',
-            'queue' => $transactionalQueue,
-        ]);
-        IpAddressFactory::createOne(
-            ['server' => $server, 'queue' => $distributionalQueue]
-        );
+        $servers = ['orion', 'athena'];
+
+        foreach ($servers as $serverHostname) {
+
+            $server = ServerFactory::createOne([
+                'hostname' => 'hyvor-relay-' . $serverHostname,
+                'api_workers' => 2,
+                'email_workers' => 2,
+                'webhook_workers' => 1,
+                'incoming_workers' => 1,
+                'last_ping_at' => new \DateTimeImmutable(),
+            ]);
+
+            $ipData = [
+                'server' => $server,
+                'queue' => $transactionalQueue,
+                'is_ptr_forward_valid' => true,
+                'is_ptr_reverse_valid' => true,
+            ];
+
+            if ($serverHostname === 'orion') {
+                $ipData['ip_address'] = '0.0.0.0';
+            }
+
+            IpAddressFactory::createOne($ipData);
+            IpAddressFactory::createOne([
+                'server' => $server,
+                'queue' => $distributionalQueue,
+                'is_ptr_forward_valid' => true,
+                'is_ptr_reverse_valid' => true,
+            ]);
+
+        }
+
 
         $project = ProjectFactory::createOne([
             'name' => 'Test Project',

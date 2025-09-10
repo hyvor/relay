@@ -18,7 +18,7 @@ func StartHttpServer(
 ) {
 
 	httpServerLogger := serviceState.Logger.With("component", "http_local_server")
-	httpServerLogger.Info("Starting local HTTP server on localhost:8085")
+	httpServerLogger.Info("Starting local HTTP server at localhost:8085")
 
 	mux := http.NewServeMux()
 

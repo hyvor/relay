@@ -86,9 +86,6 @@ class ServerService
         if ($updates->lastPingAtSet) {
             $server->setLastPingAt($updates->lastPingAt);
         }
-        if ($updates->privateIpSet) {
-            $server->setPrivateIp($updates->privateIp);
-        }
 
         $oldServer = clone $server;
 

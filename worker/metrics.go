@@ -44,7 +44,7 @@ type Metrics struct {
 }
 
 type SymfonyMetricsResponse struct {
-    Metrics string `json:"metrics"`
+	Metrics string `json:"metrics"`
 }
 
 func NewMetricsServer(ctx context.Context, logger *slog.Logger) *MetricsServer {
@@ -218,7 +218,7 @@ func (server *MetricsServer) Set(goState GoState) {
 			mux.Handle("/", handler)
 			mux.Handle("/metrics", handler)
 
-			server.logger.Info("Starting metrics server on " + metricsPort)
+			server.logger.Info("Starting metrics server at " + metricsPort)
 
 			if err := http.ListenAndServe(metricsPort, mux); err != nil {
 				server.logger.Error("Failed to start metrics server", "error", err)
@@ -228,7 +228,7 @@ func (server *MetricsServer) Set(goState GoState) {
 
 		go func() {
 			<-server.ctx.Done()
-			server.logger.Info("Shutting down metrics server")
+			server.logger.Info("Metrics server stopping")
 		}()
 	}
 
@@ -241,7 +241,7 @@ func (server *MetricsServer) metricsHandler() http.HandlerFunc {
 		var buf bytes.Buffer
 		var metricsResp SymfonyMetricsResponse
 
-		if (!isPrivateIp(r)) {
+		if !isPrivateIp(r) {
 			http.Error(w, "Forbidden: IP not allowed", http.StatusForbidden)
 			return
 		}
@@ -334,7 +334,7 @@ func (server *MetricsServer) StartGlobalMetricsUpdater() {
 
 func (server *MetricsServer) updateGlobalMetrics() {
 
-	server.logger.Info("Starting to update global metrics")
+	server.logger.Debug("Starting to update global metrics")
 
 	conn, err := NewDbConn(LoadDBConfig())
 

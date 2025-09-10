@@ -1,45 +1,93 @@
 <script>
-	import { Table, TableRow } from '@hyvor/design/components';
+	import { Callout, Table, TableRow } from '@hyvor/design/components';
 	import { DocsImage } from '@hyvor/design/marketing';
 </script>
 
 <h1>Setup</h1>
 
 <p>
-	Once Hyvor Relay is installed and you have access to Sudo, you can set up your email delivery
-	configuration. This guide will help you configure your email delivery settings to ensure your
-	emails are accepted by the recipient's mail servers and land in the inbox.
+	Once Hyvor Relay is installed, visit <code>http://{'<server-ip>'}/sudo</code> to access Sudo, the
+	administration panel of Hyvor Relay. For fresh installations, the first user who logs in with OIDC
+	credentials becomes a sudo user.
 </p>
 
-<p>Checklist:</p>
+<p>Let's configure your instance for best email deliverability:</p>
 
 <ul style="list-style-type: none;">
 	<li>
-		<a href="#domain">(1) Primary Domain </a>
+		<a href="#domains">(1) Domains </a>
+		<ul style="list-style-type: none;margin-top: 8px;margin-bottom: 8px;">
+			<li>
+				<a href="#web-domain">(1.1) Web Domain</a>
+			</li>
+			<li>
+				<a href="#instance-domain">(1.2) Instance Domain</a>
+			</li>
+		</ul>
 	</li>
 	<li>
-		<a href="#ptr-dns">(2) PTR & DNS Records</a>
+		<a href="#ptr-dns">(2) PTR Records</a>
 	</li>
 	<li>
 		<a href="#return-path">(3) Return-Path & SPF</a>
 	</li>
 </ul>
 
-<h2 id="domain">(1) Primary Domain</h2>
+<h2 id="domain">(1) Domains</h2>
+
+<p>You need two domains for your Hyvor Relay installation:</p>
+
+<h3 id="web-domain">(1.1) Web Domain</h3>
 
 <p>
-	First, visit Sudo of your Hyvor Relay installation (<code>http://{'<server-ip>'}/sudo</code>). On
-	the left sidebar, edit the primary domain.
+	While optional, we recommend pointing a domain to one of your server's IP addresses using an
+	<code>A</code> record. For example, you can use <strong>relay.yourdomain.com</strong>. This
+	domain will be used for public access via HTTP to the Console, Sudo, and API.
+</p>
+
+<Callout type="info">
+	{#snippet icon()}
+		💡
+	{/snippet}
+	On Hyvor Relay Cloud, the web domain is <strong>relay.hyvor.com</strong>.
+</Callout>
+
+<h3 id="instance-domain">(1.2) Instance Domain</h3>
+
+<p>
+	Then, most importanly, you need an "instance domain". This domain and its subdomains are used
+	for the
+	<code>EHLO</code> domain in SMTP and PTR records, and it is crucial for email deliverability.
+</p>
+
+<p>You can either:</p>
+
+<ul>
+	<li>
+		Use a subdomain (ex: <strong>relay-instance.yourdomain.com</strong>) of your main domain.
+		This must be different from the web domain.
+	</li>
+	<li>
+		Or, you can use a completely different domain (ex: <strong>yourdomain-relay.com</strong>).
+		If you allow third-party users to send emails using your Hyvor Relay installation, this is
+		preferable to avoid any email reputation issues with your main domain.
+	</li>
+</ul>
+
+<Callout type="info">
+	{#snippet icon()}
+		💡
+	{/snippet}
+	On Hyvor Relay Cloud, the instance domain is <strong>hyvor-relay.com</strong>.
+</Callout>
+
+<p>
+	To set up the instance domain, visit Sudo of your Hyvor Relay installation (<code
+		>http://{'<web-domain>'}/sudo</code
+	>). On the left sidebar, edit the instance domain.
 </p>
 
 <DocsImage src="/img/docs/setup-domain.png" alt="Primary Domain in Hyvor Relay Sudo" width={350} />
-
-<p>
-	You can use any domain you own, but we recommend using a subdomain of your main domain (e.g.,
-	<code>relay.</code> or <code> hyvor-relay. </code>). The primary usage of this domain is to use
-	for <a href="#ptr-dns">PTR records for IP addresses</a>. Note that sending emails is not
-	restricted to this domain.
-</p>
 
 <p>
 	Then, optionally, you can point that domain to your Hyvor Relay server's IP address using an <code
@@ -69,9 +117,9 @@
 </p>
 
 <p>
-	To set up a PTR record, check the documentation of your IP address provider (cloud provider). Set
-	the domain name to the one provided by Hyvor Relay for your IP address. Note that this domain is a
-	subdomain of your <a href="#domain">Primary Domain</a>.
+	To set up a PTR record, check the documentation of your IP address provider (cloud provider).
+	Set the domain name to the one provided by Hyvor Relay for your IP address. Note that this
+	domain is a subdomain of your <a href="#domain">Primary Domain</a>.
 </p>
 
 <p>Ex:</p>
@@ -135,9 +183,9 @@
 
 <p>
 	SPF (Sender Policy Framework) is a DNS record that specifies which mail servers are allowed to
-	send emails on behalf of a domain. The <code>MAIL FROM</code> (Return-Path) domain is used for the
-	verification, not the <code>From</code> address domain of the email. Therefore, you need to only set
-	up for your primary domain.
+	send emails on behalf of a domain. The <code>MAIL FROM</code> (Return-Path) domain is used for
+	the verification, not the <code>From</code> address domain of the email. Therefore, you need to only
+	set up for your primary domain.
 </p>
 
 <p>Example SPF record:</p>
@@ -163,8 +211,8 @@
 		<code>v=spf1 ip4:1.1.1.1 ip4:2.2.2.2 -all</code>
 
 		<p>
-			If you have many IP addresses, this can be tedious. You can copy the full value of the SPF
-			record from the Sudo &rarr; Health section.
+			If you have many IP addresses, this can be tedious. You can copy the full value of the
+			SPF record from the Sudo &rarr; Health section.
 		</p>
 	</li>
 	<li>
@@ -172,8 +220,8 @@
 		<code>v=spf1 ip4:1.1.1.0/24 -all</code>
 
 		<p>
-			If all your IP addresses are in a range, you can use CIDR notation to specify the range. Make
-			sure you control all the IP addresses in that range to avoid spoofing.
+			If all your IP addresses are in a range, you can use CIDR notation to specify the range.
+			Make sure you control all the IP addresses in that range to avoid spoofing.
 		</p>
 	</li>
 </ul>
@@ -189,9 +237,9 @@
 		domain.
 	</li>
 	<li>
-		<code>-all</code>: Indicates that all other IP addresses are not allowed to send emails for this
-		domain. This is a strict policy. You can use <code>~all</code> (with tilde) for a soft policy, which
-		allows other IPs but marks them as suspicious.
+		<code>-all</code>: Indicates that all other IP addresses are not allowed to send emails for
+		this domain. This is a strict policy. You can use <code>~all</code> (with tilde) for a soft policy,
+		which allows other IPs but marks them as suspicious.
 	</li>
 </ul>
 
@@ -205,10 +253,10 @@
 </p>
 
 <p>
-	First, in sudo enable "Incoming" setting for at least one of your IP addresses. This will start a
-	process that listens to port 25 of the IP address and accepts incoming emails. In production
-	systems, we recommend enabling <strong>one IP per server</strong> and having at least two servers for
-	redundancy.
+	First, in sudo enable "Incoming" setting for at least one of your IP addresses. This will start
+	a process that listens to port 25 of the IP address and accepts incoming emails. In production
+	systems, we recommend enabling <strong>one IP per server</strong> and having at least two servers
+	for redundancy.
 </p>
 
 <DocsImage src="/img/docs/setup-incoming.png" alt="Incoming Setting in Hyvor Relay Sudo" />

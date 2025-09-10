@@ -123,8 +123,6 @@ func NewIncomingMailServer(ctx context.Context, logger *slog.Logger, metrics *Me
 }
 
 func (server *IncomingMailServer) Set(instanceDomain string, numWorkers int) {
-	server.logger.Info("Bounce server initializing...")
-
 	server.Shutdown()
 
 	go func() {
@@ -198,8 +196,8 @@ func (server *IncomingMailServer) Start(instanceDomain string, numWorkers int) {
 
 	server.smtpServer = smtpServer
 
-	server.logger.Info("Starting Bounce server at", "addr", smtpServer.Addr)
+	server.logger.Info("Starting incoming mail server at " + smtpServer.Addr)
 	if err := smtpServer.ListenAndServe(); err != nil {
-		server.logger.Error("Failed to start Bounce server", "error", err)
+		server.logger.Error("Failed to start incoming mail server", "error", err)
 	}
 }
