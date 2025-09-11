@@ -56,6 +56,11 @@ scrape_configs:
 	language="yaml"
 />
 
+<p>
+	The following metrics are available from each Relay server. Metrics marked as "global" are only
+	exposed from the Leader server.
+</p>
+
 <MetricsTable />
 
 <h2 id="grafana">Grafana</h2>

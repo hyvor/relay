@@ -2,6 +2,8 @@
 
 namespace App\Service\Ip;
 
+use Symfony\Component\HttpFoundation\IpUtils;
+
 class ServerIp
 {
     /**
@@ -9,8 +11,8 @@ class ServerIp
      */
     public function __construct(
         private $netGetInterfacesFunction = 'net_get_interfaces',
-    )
-    {}
+    ) {
+    }
 
     /**
      * Gets all IP addresses of the server.
@@ -23,12 +25,29 @@ class ServerIp
         $publicIps = [];
 
         foreach ($allIps as $ip) {
-            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+            if ($this->isPublicIpv4($ip)) {
                 $publicIps[] = $ip;
             }
         }
 
         return $publicIps;
+    }
+
+    private function isPublicIpv4(string $ip): bool
+    {
+        // must be IPV4
+        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            return false;
+        }
+
+        $privateRanges = IpUtils::PRIVATE_SUBNETS;
+        $privateRanges[] = '100.64.0.0/10'; // CGNAT
+
+        if (IpUtils::checkIp($ip, $privateRanges)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
