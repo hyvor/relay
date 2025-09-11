@@ -39,8 +39,12 @@ class WebhookEventListener
         callable $objectFactory
     ): void {
         $webhooks = $this->webhookService->getWebhooksForEvent($project, $eventType);
-        $objects = $objectFactory();
 
+//        if (count($webhooks) === 0) {
+//            return;
+//        }
+
+        $objects = $objectFactory();
         if (!is_array($objects)) {
             $objects = [$objects];
         }

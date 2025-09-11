@@ -2,7 +2,7 @@
 
 namespace App\Service\Management\MessageHandler;
 
-use App\Command\RunFrankenphpWorkerCommand;
+use App\Command\FrankenphpRunCommand;
 use App\Entity\ServerTask;
 use App\Entity\Type\ServerTaskType;
 use App\Service\Management\GoState\GoStateFactory;

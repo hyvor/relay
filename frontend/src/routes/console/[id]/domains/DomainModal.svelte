@@ -99,6 +99,12 @@
 				block
 				disabled={loading}
 				bind:input={input!}
+				on:keydown={(e) => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						handleSubmit();
+					}
+				}}
 			/>
 		</SplitControl>
 	</div>
