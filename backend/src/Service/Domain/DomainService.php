@@ -140,9 +140,11 @@ class DomainService
             throw new DomainDeletionFailedException('Suspended domains can not be deleted.');
         }
 
+        $domainClone = clone $domain;
+
         $this->em->remove($domain);
         $this->em->flush();
 
-        $this->eventDispatcher->dispatch(new DomainDeletedEvent($domain));
+        $this->eventDispatcher->dispatch(new DomainDeletedEvent($domainClone));
     }
 }

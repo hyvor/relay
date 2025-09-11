@@ -6,6 +6,7 @@ use App\Service\Server\ServerService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 
@@ -16,13 +17,23 @@ use Symfony\Component\Process\Process;
     name: 'frankenphp:run',
     description: 'Runs the FrankenPHP worker processes.'
 )]
-class RunFrankenphpWorkerCommand extends Command
+class FrankenphpRunCommand extends Command
 {
     public function __construct(
         private ServerService $serverService,
     )
     {
         parent::__construct();
+    }
+
+    protected function configure()
+    {
+        $this->addOption(
+            'watch',
+            null,
+            InputOption::VALUE_NONE,
+            'Enable watch mode for automatic reloads on code changes.'
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -34,13 +45,19 @@ class RunFrankenphpWorkerCommand extends Command
             return Command::FAILURE;
         }
 
+        $cmd = [
+            'frankenphp',
+            'run',
+            '--config',
+            '/etc/caddy/Caddyfile',
+        ];
+
+        if ($input->getOption('watch')) {
+            $cmd[] = '--watch';
+        }
+
         $process = new Process(
-            [
-                'frankenphp',
-                'run',
-                '--config',
-                '/etc/caddy/Caddyfile',
-            ],
+            $cmd,
             env: [
                 'WORKERS' => $currentServer->getApiWorkers(),
             ]

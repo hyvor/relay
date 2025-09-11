@@ -3,7 +3,7 @@ nodaemon=true
 pidfile=/run/supervisor.pid
 
 [program:frankenphp]
-command=php bin/console frankenphp:run
+command=php bin/console frankenphp:run --watch
 stdout_logfile=/dev/stdout
 stderr_logfile=/dev/stderr
 stdout_logfile_maxbytes=0

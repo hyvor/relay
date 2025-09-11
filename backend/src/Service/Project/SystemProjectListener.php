@@ -37,9 +37,10 @@ class SystemProjectListener
     private function resetSystemProjectAccess(): void
     {
         $systemProject = $this->instanceService->getInstance()->getSystemProject();
-
         $this->projectUserService->deleteAllProjectUsers($systemProject);
 
+        // get system project again to avoid delete-related bugs in em
+        $systemProject = $this->instanceService->getInstance()->getSystemProject();
         $allSudo = $this->sudoUserService->getAll();
         $scopes = [
             Scope::PROJECT_READ,

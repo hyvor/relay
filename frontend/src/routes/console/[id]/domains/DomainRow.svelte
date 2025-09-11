@@ -7,7 +7,7 @@
 	import DnsRecordModal from './DnsRecordModal.svelte';
 	import type { Domain } from '../../types';
 	import { cant } from '../../lib/scope.svelte';
-    import DomainStatusTag from "./DomainStatusTag.svelte";
+	import DomainStatusTag from './DomainStatusTag.svelte';
 
 	interface Props {
 		domain: Domain;
@@ -24,20 +24,20 @@
 		<div class="domain-header">
 			<span class="domain-name">{domain.domain}</span>
 			<div class="domain-badges">
-                <DomainStatusTag status={domain.status} />
+				<DomainStatusTag status={domain.status} />
 			</div>
 		</div>
 		<div class="domain-meta">
-            <div class="timestamp">
-                <span>Created <RelativeTime unix={domain.created_at} /></span>
-                {#if (domain.status === 'pending' || domain.status === 'warning') && domain.dkim_checked_at}
-                    <span>Last Checked: <RelativeTime unix={domain.dkim_checked_at} /></span>
-                {/if}
-            </div>
+			<div class="timestamp">
+				<span>Created <RelativeTime unix={domain.created_at} /></span>
+				{#if (domain.status === 'pending' || domain.status === 'warning') && domain.dkim_checked_at}
+					<span>Last Checked: <RelativeTime unix={domain.dkim_checked_at} /></span>
+				{/if}
+			</div>
 			{#if (domain.status === 'pending' || domain.status === 'warning') && domain.dkim_error_message}
-            <div class="error-message">
-				<span>Error: {domain.dkim_error_message}</span>
-            </div>
+				<div class="error-message">
+					<span>Error: {domain.dkim_error_message}</span>
+				</div>
 			{/if}
 		</div>
 	</div>
@@ -106,17 +106,17 @@
 		display: flex;
 		gap: 8px;
 		align-items: center;
-        text-transform: capitalize;
+		text-transform: capitalize;
 	}
 
 	.domain-meta {
 		font-size: 14px;
 		color: var(--text-light);
+	}
 
-        .timestamp {
-            display: flex;
-            gap: 16px;
-        }
+	.timestamp {
+		display: flex;
+		gap: 10px;
 	}
 
 	.domain-actions {

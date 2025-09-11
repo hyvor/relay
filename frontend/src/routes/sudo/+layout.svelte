@@ -30,7 +30,7 @@
 				loading = false;
 			})
 			.catch((err) => {
-				toast.error('Failed to initialize sudo: ' +  err.message);
+				toast.error('Failed to initialize sudo: ' + err.message);
 			});
 	});
 </script>
@@ -48,8 +48,14 @@
 		<main>
 			<HyvorBar
 				product="core"
+				logo="/img/logo.svg"
 				instance={$sudoConfigStore.instance}
+				cloud={$sudoConfigStore.hosting === 'cloud'}
 				config={{ name: 'Hyvor Relay', chat: false }}
+				authOverride={{
+					user: $sudoConfigStore.user,
+					logoutUrl: '/api/oidc/logout'
+				}}
 			/>
 
 			<div id="wrap">

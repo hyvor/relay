@@ -71,8 +71,6 @@ class ProjectUserService
         );
         $query->setParameter('project', $project);
         $query->execute();
-
-        $this->em->clear();
     }
 
     public function deleteProjectUser(ProjectUser $projectUser): void
