@@ -1,7 +1,5 @@
 {
-	frankenphp {
-        worker "/app/backend/public/index.php" {$WORKERS:0}
-    }
+	frankenphp
     metrics
 }
 
