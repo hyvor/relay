@@ -52,7 +52,7 @@
                     "showLineNumbers": false,
                     "showMiniMap": false
                 },
-                "content": "<p style=\"font-size:16px\">\n<img \n src=\"https://hyvor.com/api/public/logo/core.svg\"\n width=\"25\"\n /> Hyvor Relay\n </p>\n\n <hr />\n\n<h2>${info_instance_domain}</h2>\n\nenv: <strong>${info_env}</strong> <br />\nversion: <strong>${info_env}</strong>",
+                "content": "<p style=\"font-size:16px\">\n<img \n src=\"https://hyvor.com/api/public/logo/core.svg\"\n width=\"25\"\n /> Hyvor Relay\n </p>\n\n <hr />\n\n<h3>${info_instance_domain}</h3>\n\nenv: <strong>${info_env}</strong> <br />\nversion: <strong>${info_env}</strong>",
                 "mode": "html"
             },
             "pluginVersion": "12.1.1",
@@ -1759,7 +1759,7 @@
                     "refId": "A"
                 }
             ],
-            "title": "Deferred Webhooks",
+            "title": "NX DNS Queries",
             "type": "stat"
         },
         {
@@ -2702,5 +2702,5 @@
     "timezone": "browser",
     "title": "Hyvor Relay",
     "uid": "025503e0-b09c-4b3f-8c64-ad02cdeaa316",
-    "version": 5
+    "version": 6
 }
