@@ -19,7 +19,6 @@ use App\Service\Send\Exception\EmailTooLargeException;
 use App\Service\Send\SendService;
 use App\Service\Queue\QueueService;
 use App\Service\SendFeedback\SendFeedbackService;
-use App\Service\Suppression\SuppressionService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -37,7 +36,6 @@ class SendController extends AbstractController
         private SendFeedbackService $sendFeedbackService,
         private DomainService $domainService,
         private QueueService $queueService,
-        private SuppressionService $suppressionService
     ) {
     }
 

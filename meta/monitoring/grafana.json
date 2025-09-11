@@ -129,7 +129,7 @@
                 "type": "prometheus",
                 "uid": "PBFA97CFB590B2093"
             },
-            "description": "Total number of email workers",
+            "description": "Total number of API workers",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -159,6 +159,71 @@
                 "y": 1
             },
             "id": 4,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.1.1",
+            "targets": [
+                {
+                    "editorMode": "code",
+                    "expr": "workers_api_total{job=\"$job\", instance=~\"$instance\"}",
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "API Workers",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "description": "Total number of email workers",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 6,
+                "x": 18,
+                "y": 1
+            },
+            "id": 41,
             "options": {
                 "colorMode": "value",
                 "graphMode": "area",
@@ -220,8 +285,8 @@
             "gridPos": {
                 "h": 5,
                 "w": 6,
-                "x": 18,
-                "y": 1
+                "x": 0,
+                "y": 6
             },
             "id": 6,
             "options": {
@@ -255,12 +320,77 @@
             "type": "stat"
         },
         {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "description": "Total number of incoming mail workers",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 6,
+                "x": 6,
+                "y": 6
+            },
+            "id": 42,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.1.1",
+            "targets": [
+                {
+                    "editorMode": "code",
+                    "expr": "workers_incoming_mail_total{job=\"$job\", instance=~\"$instance\"}",
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Incoming Mail Workers",
+            "type": "stat"
+        },
+        {
             "collapsed": false,
             "gridPos": {
                 "h": 1,
                 "w": 24,
                 "x": 0,
-                "y": 6
+                "y": 11
             },
             "id": 8,
             "panels": [],
@@ -300,7 +430,7 @@
                 "h": 4,
                 "w": 6,
                 "x": 0,
-                "y": 7
+                "y": 12
             },
             "id": 12,
             "options": {
@@ -362,7 +492,7 @@
                 "h": 4,
                 "w": 6,
                 "x": 6,
-                "y": 7
+                "y": 12
             },
             "id": 14,
             "options": {
@@ -429,7 +559,7 @@
                 "h": 4,
                 "w": 6,
                 "x": 12,
-                "y": 7
+                "y": 12
             },
             "id": 15,
             "options": {
@@ -492,7 +622,7 @@
                 "h": 4,
                 "w": 6,
                 "x": 18,
-                "y": 7
+                "y": 12
             },
             "id": 13,
             "options": {
@@ -586,7 +716,7 @@
                 "h": 8,
                 "w": 12,
                 "x": 0,
-                "y": 11
+                "y": 16
             },
             "id": 10,
             "options": {
@@ -698,7 +828,7 @@
                 "h": 8,
                 "w": 12,
                 "x": 12,
-                "y": 11
+                "y": 16
             },
             "id": 11,
             "options": {
@@ -733,7 +863,7 @@
                 "h": 1,
                 "w": 24,
                 "x": 0,
-                "y": 19
+                "y": 24
             },
             "id": 5,
             "panels": [],
@@ -802,7 +932,7 @@
                 "h": 8,
                 "w": 12,
                 "x": 0,
-                "y": 20
+                "y": 25
             },
             "id": 1,
             "options": {
@@ -913,7 +1043,7 @@
                 "h": 8,
                 "w": 12,
                 "x": 12,
-                "y": 20
+                "y": 25
             },
             "id": 3,
             "options": {
@@ -948,7 +1078,7 @@
                 "h": 1,
                 "w": 24,
                 "x": 0,
-                "y": 28
+                "y": 33
             },
             "id": 17,
             "panels": [],
@@ -1047,7 +1177,7 @@
                 "h": 8,
                 "w": 12,
                 "x": 0,
-                "y": 29
+                "y": 34
             },
             "id": 16,
             "options": {
@@ -1109,7 +1239,7 @@
                 "h": 4,
                 "w": 6,
                 "x": 12,
-                "y": 29
+                "y": 34
             },
             "id": 18,
             "options": {
@@ -1171,7 +1301,7 @@
                 "h": 4,
                 "w": 6,
                 "x": 18,
-                "y": 29
+                "y": 34
             },
             "id": 19,
             "options": {
@@ -1238,7 +1368,7 @@
                 "h": 4,
                 "w": 6,
                 "x": 12,
-                "y": 33
+                "y": 38
             },
             "id": 20,
             "options": {
@@ -1301,7 +1431,7 @@
                 "h": 4,
                 "w": 6,
                 "x": 18,
-                "y": 33
+                "y": 38
             },
             "id": 21,
             "options": {
@@ -1340,7 +1470,7 @@
                 "h": 1,
                 "w": 24,
                 "x": 0,
-                "y": 37
+                "y": 42
             },
             "id": 22,
             "panels": [],
@@ -1408,7 +1538,7 @@
                 "h": 8,
                 "w": 12,
                 "x": 0,
-                "y": 38
+                "y": 43
             },
             "id": 23,
             "options": {
@@ -1470,7 +1600,7 @@
                 "h": 4,
                 "w": 6,
                 "x": 12,
-                "y": 38
+                "y": 43
             },
             "id": 24,
             "options": {
@@ -1532,7 +1662,7 @@
                 "h": 4,
                 "w": 6,
                 "x": 18,
-                "y": 38
+                "y": 43
             },
             "id": 25,
             "options": {
@@ -1599,7 +1729,7 @@
                 "h": 4,
                 "w": 6,
                 "x": 12,
-                "y": 42
+                "y": 47
             },
             "id": 26,
             "options": {
@@ -1638,7 +1768,7 @@
                 "h": 1,
                 "w": 24,
                 "x": 0,
-                "y": 46
+                "y": 51
             },
             "id": 27,
             "panels": [],
@@ -1706,7 +1836,7 @@
                 "h": 8,
                 "w": 12,
                 "x": 0,
-                "y": 47
+                "y": 52
             },
             "id": 28,
             "options": {
@@ -1768,7 +1898,7 @@
                 "h": 4,
                 "w": 6,
                 "x": 12,
-                "y": 47
+                "y": 52
             },
             "id": 29,
             "options": {
@@ -1830,7 +1960,7 @@
                 "h": 4,
                 "w": 6,
                 "x": 18,
-                "y": 47
+                "y": 52
             },
             "id": 30,
             "options": {
@@ -1893,7 +2023,7 @@
                 "h": 4,
                 "w": 6,
                 "x": 12,
-                "y": 51
+                "y": 56
             },
             "id": 31,
             "options": {
@@ -1956,7 +2086,7 @@
                 "h": 4,
                 "w": 6,
                 "x": 18,
-                "y": 51
+                "y": 56
             },
             "id": 32,
             "options": {
@@ -1995,7 +2125,7 @@
                 "h": 1,
                 "w": 24,
                 "x": 0,
-                "y": 55
+                "y": 60
             },
             "id": 39,
             "panels": [],
@@ -2030,7 +2160,7 @@
                 "h": 7,
                 "w": 9,
                 "x": 0,
-                "y": 56
+                "y": 61
             },
             "id": 40,
             "options": {
@@ -2054,7 +2184,7 @@
             "targets": [
                 {
                     "editorMode": "code",
-                    "expr": "sum(http_requests_total{job=\"$job\", instance=~\"$instance\"})",
+                    "expr": "sum(app_api_http_requests_total{job=\"$job\", instance=~\"$instance\"})",
                     "legendFormat": "__auto",
                     "range": true,
                     "refId": "A"
@@ -2124,7 +2254,7 @@
                 "h": 16,
                 "w": 8,
                 "x": 9,
-                "y": 56
+                "y": 61
             },
             "id": 34,
             "options": {
@@ -2153,7 +2283,7 @@
                     "disableTextWrap": false,
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "sort_desc(floor(sum by(endpoint) (increase(http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__range]))))",
+                    "expr": "sort_desc(floor(sum by(endpoint) (increase(app_api_http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__range]))))",
                     "format": "table",
                     "fullMetaSearch": false,
                     "includeNullMetadata": true,
@@ -2244,7 +2374,7 @@
                 "h": 11,
                 "w": 7,
                 "x": 17,
-                "y": 56
+                "y": 61
             },
             "id": 35,
             "options": {
@@ -2272,7 +2402,7 @@
                 {
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "sort_desc(sum(max_over_time(http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__range])- min_over_time(http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__range])) by (status))",
+                    "expr": "sort_desc(sum(max_over_time(app_api_http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__range])- min_over_time(app_api_http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__range])) by (status))",
                     "format": "table",
                     "instant": true,
                     "interval": "",
@@ -2365,7 +2495,7 @@
                 "h": 9,
                 "w": 9,
                 "x": 0,
-                "y": 63
+                "y": 68
             },
             "id": 36,
             "options": {
@@ -2390,7 +2520,7 @@
                     },
                     "disableTextWrap": false,
                     "editorMode": "code",
-                    "expr": "sum(rate(http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__rate_interval]))",
+                    "expr": "sum(rate(app_api_http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__rate_interval]))",
                     "fullMetaSearch": false,
                     "includeNullMetadata": true,
                     "legendFormat": "Requests",
@@ -2448,7 +2578,7 @@
                 "h": 5,
                 "w": 7,
                 "x": 17,
-                "y": 67
+                "y": 72
             },
             "id": 37,
             "options": {
@@ -2528,8 +2658,8 @@
             },
             {
                 "current": {
-                    "text": "relay.hyvor.localhost",
-                    "value": "relay.hyvor.localhost"
+                    "text": "relay-instance.hyvorstaging.com",
+                    "value": "relay-instance.hyvorstaging.com"
                 },
                 "definition": "label_values(relay_info{job=\"$job\"},instance_domain)",
                 "hide": 2,
@@ -2546,8 +2676,8 @@
             },
             {
                 "current": {
-                    "text": "dev",
-                    "value": "dev"
+                    "text": "staging",
+                    "value": "staging"
                 },
                 "definition": "label_values(relay_info{job=\"$job\"},env)",
                 "hide": 2,
@@ -2572,5 +2702,5 @@
     "timezone": "browser",
     "title": "Hyvor Relay",
     "uid": "025503e0-b09c-4b3f-8c64-ad02cdeaa316",
-    "version": 3
+    "version": 2
 }
