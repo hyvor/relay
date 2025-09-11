@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { Tag } from '@hyvor/design/components';
-	import IconExclamationTriangle from '@hyvor/icons/IconExclamationTriangle';
 	import type { Queue } from '../sudoTypes';
 	import { ipAddressesStore } from '../sudoStore';
+	import IconExclamationCircle from '@hyvor/icons/IconExclamationCircle';
 
 	interface Props {
 		queue: Queue;
@@ -10,9 +10,7 @@
 
 	let { queue }: Props = $props();
 
-	const ipCount = $derived(
-		$ipAddressesStore.filter(ip => ip.queue?.id === queue.id).length
-	);
+	const ipCount = $derived($ipAddressesStore.filter((ip) => ip.queue?.id === queue.id).length);
 </script>
 
 <div class="queue">
@@ -23,11 +21,14 @@
 		{queue.name}
 	</div>
 	<div class="ip-count">
-		<Tag size="small" color={ipCount > 0 ? 'green' : 'default'}>
+		<Tag size="small" color={ipCount > 0 ? 'green' : 'orange'}>
 			{ipCount} IP{ipCount !== 1 ? 's' : ''}
-			{#if ipCount === 0}
-				<IconExclamationTriangle size={12} />
-			{/if}
+
+			{#snippet end()}
+				{#if ipCount === 0}
+					<IconExclamationCircle size={12} />
+				{/if}
+			{/snippet}
 		</Tag>
 	</div>
 </div>

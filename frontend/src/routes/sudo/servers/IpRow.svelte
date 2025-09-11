@@ -67,12 +67,14 @@
 	</td>
 </tr>
 
-<QueueSelectModal
-	bind:show={showQueueModal}
-	{ip}
-	onClose={handleModalClose}
-	onUpdate={handleIpUpdate}
-/>
+{#if showQueueModal}
+	<QueueSelectModal
+		bind:show={showQueueModal}
+		{ip}
+		onClose={handleModalClose}
+		onUpdate={handleIpUpdate}
+	/>
+{/if}
 
 <style>
 	.id {
