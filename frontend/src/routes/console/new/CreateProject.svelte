@@ -12,7 +12,11 @@
 	} from '@hyvor/design/components';
 	import IconCaretLeft from '@hyvor/icons/IconCaretLeft';
 	import { createProject } from '../lib/actions/projectActions';
-	import { addProjectUser, getProjectUsers } from '../lib/stores/projectStore.svelte';
+	import {
+		addProjectUser,
+		getProjectUsers,
+		setCurrentProjectUser
+	} from '../lib/stores/projectStore.svelte';
 
 	let name = $state('');
 	let sendType: 'transactional' | 'distributional' = $state('transactional');
@@ -53,6 +57,7 @@
 			.then((res) => {
 				toast.success('Project created successfully');
 				addProjectUser(res);
+				setCurrentProjectUser(res);
 				goto('/console/' + res.project.id);
 			})
 			.catch((e) => {
