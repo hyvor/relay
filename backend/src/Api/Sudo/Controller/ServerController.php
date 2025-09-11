@@ -61,7 +61,7 @@ class ServerController extends AbstractController
             $updates->incomingWorkers = $input->incoming_workers;
         }
 
-        $this->serverService->updateServer($server, $updates, updateStateCall: true);
+        $this->serverService->updateServer($server, $updates, createUpdateStateTask: true);
 
         return $this->json(new ServerObject($server));
     }
