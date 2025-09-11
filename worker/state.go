@@ -90,6 +90,7 @@ func NewServiceState(ctx context.Context, logger *slog.Logger) *ServiceState {
 func (s *ServiceState) Set(goState GoState) {
 
 	s.Logger.Info("Updating worker state",
+		"instance_domain", goState.InstanceDomain,
 		"hostname", goState.Hostname,
 		"ip_count", len(goState.Ips),
 		"ip_queues", goState.IpQueueMapString(),
