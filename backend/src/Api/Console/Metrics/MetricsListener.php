@@ -14,7 +14,6 @@ use Symfony\Component\Routing\RouterInterface;
 #[AsEventListener(event: KernelEvents::TERMINATE)]
 class MetricsListener
 {
-    private const string NAMESPACE = 'app_api';
     private CollectorRegistry $registry;
     private Counter $requestsTotal;
 
@@ -25,7 +24,7 @@ class MetricsListener
     {
         $this->registry = $this->prometheusFactory->createRegistry();
         $this->requestsTotal = $this->registry->getOrRegisterCounter(
-            self::NAMESPACE,
+            '',
             'http_requests_total',
             'Total number of HTTP requests',
             ['method', 'endpoint', 'status']
