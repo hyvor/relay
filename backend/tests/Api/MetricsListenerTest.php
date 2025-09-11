@@ -7,8 +7,6 @@ use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Prometheus\MetricFamilySamples;
-use Prometheus\Storage\Adapter;
-use Prometheus\Storage\InMemory;
 
 #[CoversClass(MetricsListener::class)]
 class MetricsListenerTest extends WebTestCase
@@ -17,7 +15,6 @@ class MetricsListenerTest extends WebTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->container->set(Adapter::class, new InMemory());
     }
 
     /**
@@ -50,7 +47,7 @@ class MetricsListenerTest extends WebTestCase
         );
 
         $metrics = $listener->getSamples();
-        $total = $this->findMetric($metrics,'app_api_http_requests_total');
+        $total = $this->findMetric($metrics, 'http_requests_total');
 
         $this->assertNotNull($total, 'Expected metric not found');
 
@@ -73,6 +70,9 @@ class MetricsListenerTest extends WebTestCase
         $this->assertIsArray($content);
         $this->assertNotEmpty($content);
         $this->assertArrayHasKey('metrics', $content);
-        $this->assertStringContainsString('# HELP php_info Information about the PHP environment.', $content['metrics']);
+        $this->assertStringContainsString(
+            '# HELP php_info Information about the PHP environment.',
+            $content['metrics']
+        );
     }
 }
