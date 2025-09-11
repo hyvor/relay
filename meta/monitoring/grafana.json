@@ -2184,7 +2184,7 @@
             "targets": [
                 {
                     "editorMode": "code",
-                    "expr": "sum(app_api_http_requests_total{job=\"$job\", instance=~\"$instance\"})",
+                    "expr": "sum(http_requests_total{job=\"$job\", instance=~\"$instance\"})",
                     "legendFormat": "__auto",
                     "range": true,
                     "refId": "A"
@@ -2283,7 +2283,7 @@
                     "disableTextWrap": false,
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "sort_desc(floor(sum by(endpoint) (increase(app_api_http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__range]))))",
+                    "expr": "sort_desc(floor(sum by(endpoint) (increase(http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__range]))))",
                     "format": "table",
                     "fullMetaSearch": false,
                     "includeNullMetadata": true,
@@ -2402,7 +2402,7 @@
                 {
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "sort_desc(sum(max_over_time(app_api_http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__range])- min_over_time(app_api_http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__range])) by (status))",
+                    "expr": "sort_desc(sum(max_over_time(http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__range])- min_over_time(http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__range])) by (status))",
                     "format": "table",
                     "instant": true,
                     "interval": "",
@@ -2520,7 +2520,7 @@
                     },
                     "disableTextWrap": false,
                     "editorMode": "code",
-                    "expr": "sum(rate(app_api_http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__rate_interval]))",
+                    "expr": "sum(rate(http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__rate_interval]))",
                     "fullMetaSearch": false,
                     "includeNullMetadata": true,
                     "legendFormat": "Requests",
@@ -2602,7 +2602,7 @@
             "targets": [
                 {
                     "editorMode": "code",
-                    "expr": "floor(sum(increase(app_api_http_requests_total{job=\"$job\",instance=~\"$instance\",status=\"500\"}[$__range])))",
+                    "expr": "floor(sum(increase(http_requests_total{job=\"$job\",instance=~\"$instance\",status=\"500\"}[$__range])))",
                     "legendFormat": "Count",
                     "range": true,
                     "refId": "A"
@@ -2658,8 +2658,8 @@
             },
             {
                 "current": {
-                    "text": "relay-instance.hyvorstaging.com",
-                    "value": "relay-instance.hyvorstaging.com"
+                    "text": "relay.hyvor.localhost",
+                    "value": "relay.hyvor.localhost"
                 },
                 "definition": "label_values(relay_info{job=\"$job\"},instance_domain)",
                 "hide": 2,
@@ -2676,8 +2676,8 @@
             },
             {
                 "current": {
-                    "text": "staging",
-                    "value": "staging"
+                    "text": "dev",
+                    "value": "dev"
                 },
                 "definition": "label_values(relay_info{job=\"$job\"},env)",
                 "hide": 2,
@@ -2695,12 +2695,12 @@
         ]
     },
     "time": {
-        "from": "now-5m",
+        "from": "now-1h",
         "to": "now"
     },
     "timepicker": {},
     "timezone": "browser",
     "title": "Hyvor Relay",
     "uid": "025503e0-b09c-4b3f-8c64-ad02cdeaa316",
-    "version": 2
+    "version": 5
 }
