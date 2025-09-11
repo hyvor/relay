@@ -3,11 +3,13 @@
 namespace App\Service\ServerTask;
 
 use App\Service\Instance\Event\InstanceUpdatedEvent;
+use App\Service\Ip\Event\IpAddressUpdatedEvent;
 use App\Service\Server\Event\ServerUpdatedEvent;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 
 #[AsEventListener(InstanceUpdatedEvent::class, 'onInstanceUpdated')]
 #[AsEventListener(ServerUpdatedEvent::class, 'onServerUpdated')]
+#[AsEventListener(IpAddressUpdatedEvent::class, 'onIpAddressUpdated')]
 class UpdateStateTaskListener
 {
 
@@ -34,6 +36,14 @@ class UpdateStateTaskListener
             $event->getServer(),
             apiWorkersUpdated: $event->getUpdates()->apiWorkersSet,
         );
+    }
+
+    public function onIpAddressUpdated(IpAddressUpdatedEvent $event): void
+    {
+        if ($event->getUpdates()->queueSet) {
+            $server = $event->getIpAddress()->getServer();
+            $this->serverTaskService->createUpdateStateTask($server);
+        }
     }
 
 }
