@@ -64,6 +64,8 @@ func NewMetricsServer(ctx context.Context, logger *slog.Logger) *MetricsServer {
 
 }
 
+// NOTE: Make sure to update docs in MetricsTable.svelte when updating metrics
+
 func newMetrics() *Metrics {
 	return &Metrics{
 		// Global metrics

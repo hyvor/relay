@@ -1,5 +1,6 @@
 <script>
-	import { CodeBlock } from '@hyvor/design/components';
+	import { Button, CodeBlock, Table, TableRow } from '@hyvor/design/components';
+	import MetricsTable from './MetricsTable.svelte';
 </script>
 
 <h1>Monitoring</h1>
@@ -55,6 +56,8 @@ scrape_configs:
 	language="yaml"
 />
 
+<MetricsTable />
+
 <h2 id="grafana">Grafana</h2>
 
 <p>
@@ -64,8 +67,6 @@ scrape_configs:
 		target="_blank">grafana.json</a
 	> and import it into your Grafana instance.
 </p>
-
-<!-- <p>TODO: add screenshot</p> -->
 
 <h2 id="alertmanager">Alertmanager</h2>
 
