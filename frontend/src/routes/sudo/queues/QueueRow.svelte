@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Tag } from '@hyvor/design/components';
-	import IconExclamationTriangle from '@hyvor/icons/IconExclamationTriangle';
 	import type { Queue } from '../sudoTypes';
 	import { ipAddressesStore } from '../sudoStore';
 	import IconExclamationCircle from '@hyvor/icons/IconExclamationCircle';

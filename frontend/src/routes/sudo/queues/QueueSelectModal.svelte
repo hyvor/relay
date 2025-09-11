@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { Modal, TextInput, Button } from '@hyvor/design/components';
 	import { queuesStore, ipAddressesStore } from '../sudoStore';
-	import { updateIpAddress } from '../sudoActions';
+	import { getQueues, updateIpAddress } from '../sudoActions';
 	import type { Queue, IpAddress } from '../sudoTypes';
 	import { toast } from '@hyvor/design/components';
 	import QueueRow from './QueueRow.svelte';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		show: boolean;
@@ -16,12 +17,12 @@
 	let { show = $bindable(), ip, onClose, onUpdate }: Props = $props();
 
 	let searchQuery = $state('');
-	let loading = $state(false);
+
+	let loading = $state(true);
+	let updating = $state(false);
 
 	const filteredQueues = $derived(
-		$queuesStore.filter(queue => 
-			queue.name.toLowerCase().includes(searchQuery.toLowerCase())
-		)
+		$queuesStore.filter((queue) => queue.name.toLowerCase().includes(searchQuery.toLowerCase()))
 	);
 
 	function handleClose() {
@@ -30,32 +31,34 @@
 		onClose();
 	}
 
-	async function updateQueue(queueId: number | null, successMessage: string, errorMessage: string) {
+	async function updateQueue(
+		queueId: number | null,
+		successMessage: string,
+		errorMessage: string
+	) {
 		if (!ip) return;
-		
-		loading = true;
+
+		updating = true;
 		try {
 			const updatedIp = await updateIpAddress(ip.id, { queue_id: queueId });
-			
-			ipAddressesStore.update(ips => 
-				ips.map(existingIp => 
-					existingIp.id === ip.id ? updatedIp : existingIp
-				)
+
+			ipAddressesStore.update((ips) =>
+				ips.map((existingIp) => (existingIp.id === ip.id ? updatedIp : existingIp))
 			);
-			
+
 			onUpdate(updatedIp);
 			toast.success(successMessage);
 			handleClose();
 		} catch (error: any) {
 			toast.error(errorMessage + error.message);
 		} finally {
-			loading = false;
+			updating = false;
 		}
 	}
 
 	async function handleQueueSelect(queue: Queue) {
 		await updateQueue(
-			queue.id, 
+			queue.id,
 			`Queue "${queue.name}" assigned to IP ${ip?.ip_address}`,
 			'Failed to assign queue: '
 		);
@@ -68,6 +71,19 @@
 			'Failed to unassign queue: '
 		);
 	}
+
+	onMount(() => {
+		getQueues()
+			.then((queuesResponse) => {
+				queuesStore.set(queuesResponse);
+			})
+			.catch((err) => {
+				toast.error('Failed to load queues: ' + err.message);
+			})
+			.finally(() => {
+				loading = false;
+			});
+	});
 </script>
 
 <Modal
@@ -81,41 +97,37 @@
 		confirm: false
 	}}
 	on:cancel={handleClose}
-	{loading}
+	loading={updating || loading}
 >
 	<div class="modal-content">
+		{#if ip?.queue}
+			<div class="current-queue">
+				<div class="current-queue-name">
+					<span class="queue-tag">Current Queue:</span>
+					{ip.queue.name}
+				</div>
+				<Button
+					size="small"
+					color="red"
+					variant="outline"
+					on:click={handleQueueUnassign}
+					disabled={updating}
+				>
+					Unassign
+				</Button>
+			</div>
+		{/if}
+
 		<div class="search-section">
 			<TextInput
 				bind:value={searchQuery}
 				placeholder="Search queues..."
 				block
-				disabled={loading}
+				disabled={updating}
 			/>
 		</div>
 
-		{#if ip?.queue}
-			<div class="current-queue">
-				<div class="section-title">Current Queue</div>
-				<div class="queue-item current">
-					<QueueRow queue={ip.queue} />
-					<Button
-						size="small"
-						color="red"
-						variant="outline"
-						on:click={handleQueueUnassign}
-						disabled={loading}
-					>
-						Unassign
-					</Button>
-				</div>
-			</div>
-		{/if}
-
 		<div class="available-queues">
-			<div class="section-title">
-				{ip?.queue ? 'Available Queues' : 'Select a Queue'}
-			</div>
-			
 			{#if filteredQueues.length === 0}
 				<div class="no-results">
 					{searchQuery ? 'No queues found matching your search.' : 'No queues available.'}
@@ -123,17 +135,13 @@
 			{:else}
 				<div class="queue-list">
 					{#each filteredQueues as queue}
-						<div class="queue-item" class:disabled={loading}>
+						<button
+							class="queue-item"
+							class:disabled={updating || ip?.queue?.id === queue.id}
+							onclick={() => handleQueueSelect(queue)}
+						>
 							<QueueRow {queue} />
-							<Button
-								size="small"
-								color="input"
-								on:click={() => handleQueueSelect(queue)}
-								disabled={loading || (ip?.queue?.id === queue.id)}
-							>
-								{ip?.queue?.id === queue.id ? 'Current' : 'Select'}
-							</Button>
-						</div>
+						</button>
 					{/each}
 				</div>
 			{/if}
@@ -151,35 +159,32 @@
 	}
 
 	.current-queue {
+		display: flex;
+		align-items: center;
 		margin-bottom: 20px;
 		padding-bottom: 20px;
 		border-bottom: 1px solid var(--border);
 	}
-
-	.section-title {
+	.current-queue-name {
+		flex: 1;
 		font-weight: 600;
-		margin-bottom: 15px;
-		color: var(--text);
+	}
+	.queue-tag {
+		font-weight: normal;
+		color: var(--text-light);
+		font-size: 14px;
 	}
 
 	.queue-item {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 8px 0;
+		text-align: left;
+		padding: 2px 0;
 		border-radius: 8px;
 		transition: background-color 0.2s;
+		width: 100%;
 	}
 
 	.queue-item:hover:not(.disabled) {
-		background-color: var(--background-light);
-	}
-
-	.queue-item.current {
-		background-color: var(--green-50);
-		padding: 12px 16px;
-		border-radius: 8px;
-		border: 1px solid var(--green-200);
+		background-color: var(--hover);
 	}
 
 	.queue-item.disabled {
