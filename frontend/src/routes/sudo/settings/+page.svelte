@@ -2,18 +2,20 @@
 	import { Caption, SplitControl, Textarea, TextInput } from '@hyvor/design/components';
 	import { instanceStore } from '../sudoStore';
 	import InstanceDomain from './instance/InstanceDomain.svelte';
-
 </script>
 
 <div class="settings">
 	<InstanceDomain />
 	<SplitControl label="Instance DKIM">
 		{#snippet caption()}
-			<Caption
-				>All emails are signed with the instance DKIM keys in addition to the DKIM keys of
-				the FROM domain. <br />Add the following TXT record to your DNS settings. If you use
-				DNS automation, this is automatically handled.</Caption
-			>
+			<Caption>
+				All emails are signed with the instance DKIM keys in addition to the DKIM keys of
+				the FROM domain. This is <a
+					href="/hosting/dns#default-records"
+					class="hds-link"
+					target="_blank">automatically handled</a
+				> by the in-built DNS server.
+			</Caption>
 		{/snippet}
 
 		{#snippet nested()}
