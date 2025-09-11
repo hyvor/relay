@@ -11,6 +11,7 @@ type GoState struct {
 	InstanceDomain    string      `json:"instanceDomain"`
 	Hostname          string      `json:"hostname"`
 	Ips               []GoStateIp `json:"ips"`
+	ApiWorkers        int         `json:"apiWorkers"` // only for metrics
 	EmailWorkersPerIp int         `json:"emailWorkersPerIp"`
 	WebhookWorkers    int         `json:"webhookWorkers"`
 	IncomingWorkers   int         `json:"incomingWorkers"`

@@ -57,6 +57,7 @@ class GoStateFactory
             instanceDomain: $instance->getDomain(),
             hostname: $server->getHostname(),
             ips: $ips,
+            apiWorkers: $server->getApiWorkers(),
             emailWorkersPerIp: $server->getEmailWorkers(),
             webhookWorkers: $server->getWebhookWorkers(),
             incomingWorkers: $server->getIncomingWorkers(),

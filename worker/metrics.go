@@ -36,8 +36,10 @@ type Metrics struct {
 	// Server (worker) metrics ====
 	emailSendAttemptsTotal       *prometheus.CounterVec
 	emailDeliveryDurationSeconds *prometheus.HistogramVec
+	workersApiTotal              prometheus.Gauge
 	workersEmailTotal            prometheus.Gauge
 	workersWebhookTotal          prometheus.Gauge
+	workersIncomingTotal         prometheus.Gauge
 	webhookDeliveriesTotal       *prometheus.CounterVec
 	incomingEmailsTotal          *prometheus.CounterVec
 	dnsQueriesTotal              *prometheus.CounterVec
@@ -118,6 +120,12 @@ func newMetrics() *Metrics {
 			},
 			[]string{"queue_name", "ip"},
 		),
+		workersApiTotal: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Name: "workers_api_total",
+				Help: "Total number of API workers",
+			},
+		),
 		workersEmailTotal: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Name: "workers_email_total",
@@ -128,6 +136,12 @@ func newMetrics() *Metrics {
 			prometheus.GaugeOpts{
 				Name: "workers_webhook_total",
 				Help: "Total number of webhook workers",
+			},
+		),
+		workersIncomingTotal: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Name: "workers_incoming_mail_total",
+				Help: "Total number of incoming mail workers",
 			},
 		),
 		webhookDeliveriesTotal: prometheus.NewCounterVec(
@@ -172,8 +186,10 @@ func (server *MetricsServer) Set(goState GoState) {
 	server.registry.Unregister(server.metrics.serversTotal)
 	server.registry.Unregister(server.metrics.emailSendAttemptsTotal)
 	server.registry.Unregister(server.metrics.emailDeliveryDurationSeconds)
+	server.registry.Unregister(server.metrics.workersApiTotal)
 	server.registry.Unregister(server.metrics.workersEmailTotal)
 	server.registry.Unregister(server.metrics.workersWebhookTotal)
+	server.registry.Unregister(server.metrics.workersIncomingTotal)
 	server.registry.Unregister(server.metrics.webhookDeliveriesTotal)
 	server.registry.Unregister(server.metrics.incomingEmailsTotal)
 	server.registry.Unregister(server.metrics.dnsQueriesTotal)
@@ -192,8 +208,10 @@ func (server *MetricsServer) Set(goState GoState) {
 	// register all server metrics
 	server.registry.MustRegister(server.metrics.emailSendAttemptsTotal)
 	server.registry.MustRegister(server.metrics.emailDeliveryDurationSeconds)
+	server.registry.MustRegister(server.metrics.workersApiTotal)
 	server.registry.MustRegister(server.metrics.workersEmailTotal)
 	server.registry.MustRegister(server.metrics.workersWebhookTotal)
+	server.registry.MustRegister(server.metrics.workersIncomingTotal)
 	server.registry.MustRegister(server.metrics.webhookDeliveriesTotal)
 	server.registry.MustRegister(server.metrics.incomingEmailsTotal)
 	server.registry.MustRegister(server.metrics.dnsQueriesTotal)
@@ -204,8 +222,10 @@ func (server *MetricsServer) Set(goState GoState) {
 		goState.Env,
 		goState.InstanceDomain,
 	).Set(1)
+	server.metrics.workersApiTotal.Set(float64(goState.ApiWorkers))
 	server.metrics.workersEmailTotal.Set(float64(len(goState.Ips) * goState.EmailWorkersPerIp))
 	server.metrics.workersWebhookTotal.Set(float64(goState.WebhookWorkers))
+	server.metrics.workersIncomingTotal.Set(float64(goState.IncomingWorkers))
 	server.metrics.serversTotal.Set(float64(goState.ServersCount))
 
 	if !server.serverStarted {
