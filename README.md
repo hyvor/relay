@@ -27,7 +27,7 @@
 - **Self-Hosted**: Docker compose or swarm-based deployment.
 - **Health Checks**: Multiple health checks to ensure best performance and deliverability.
 - **Email API**: Send emails using a simple API.
-- **Logs & SMTP Conversations**: View logs and SMTP conversations of sent emails up to 30 days.
+- **Logs & SMTP Conversations**: View send logs and SMTP conversations of sent emails up to 30 days.
 - **Multi-Tenancy**: Support for multiple tenants with scoped access (useful for organizations and agencies).
 - **Project Management**: Support for multiple isolated projects within a tenant.
 - **Queues**: Two main queues to isolate transactional and distributional emails and IP reputation.
@@ -46,6 +46,10 @@
 The sudo dashboard for admins:
 
 ![Sudo Dashboard](/meta/assets/screenshot-sudo.png)
+
+The console for users (viewing send logs and SMTP conversations):
+
+![User Console](/meta/assets/screenshot-console.png)
 
 ## Architecture
 
