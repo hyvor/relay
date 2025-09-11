@@ -3,13 +3,17 @@
 namespace App\Service\Ip\Dto;
 
 use App\Entity\Queue;
-use App\Util\OptionalPropertyTrait;
 
 class UpdateIpAddressDto
 {
 
-    use OptionalPropertyTrait;
+    public ?Queue $queue {
+        set {
+            $this->queueSet = true;
+            $this->queue = $value;
+        }
+    }
 
-    public ?Queue $queue;
+    private(set) bool $queueSet = false;
 
 }

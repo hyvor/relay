@@ -3,11 +3,12 @@
 namespace App\Service\Server;
 
 use App\Entity\Server;
-use App\Entity\Type\ServerTaskType;
 use App\Service\App\Config;
 use App\Service\Server\Dto\UpdateServerDto;
+use App\Service\Server\Event\ServerUpdatedEvent;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ServerService
 {
@@ -16,8 +17,8 @@ class ServerService
 
     public function __construct(
         private readonly EntityManagerInterface $em,
+        private readonly EventDispatcherInterface $ed,
         private readonly Config $config,
-        private readonly ServerTaskService $serverTaskService,
     ) {
     }
 
@@ -77,8 +78,10 @@ class ServerService
     public function updateServer(
         Server $server,
         UpdateServerDto $updates,
-        bool $updateStateCall = false,
+        bool $createUpdateStateTask = false,
     ): void {
+        $serverOld = clone $server;
+
         if ($updates->lastPingAtSet) {
             $server->setLastPingAt($updates->lastPingAt);
         }
@@ -100,15 +103,8 @@ class ServerService
         $this->em->persist($server);
         $this->em->flush();
 
-        if ($updateStateCall) {
-            $this->serverTaskService->createTask(
-                $server,
-                ServerTaskType::UPDATE_STATE,
-                [
-                    'api_workers_updated' => $updates->apiWorkersSet
-                ]
-            );
-        }
+        $event = new ServerUpdatedEvent($serverOld, $server, $updates, $createUpdateStateTask);
+        $this->ed->dispatch($event);
     }
 
 }

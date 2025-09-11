@@ -2,14 +2,13 @@
 
 namespace App\Service\Management\MessageHandler;
 
-use App\Command\FrankenphpRunCommand;
 use App\Entity\ServerTask;
 use App\Entity\Type\ServerTaskType;
+use App\Service\Go\GoHttpApi;
 use App\Service\Management\GoState\GoStateFactory;
 use App\Service\Management\Message\ServerTaskMessage;
-use App\Service\Go\GoHttpApi;
 use App\Service\Server\ServerService;
-use App\Service\Server\ServerTaskService;
+use App\Service\ServerTask\ServerTaskService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Process\Process;
@@ -24,8 +23,7 @@ class ServerTaskMessageHandler
         private LoggerInterface $logger,
         private GoHttpApi $goHttpApi,
         private GoStateFactory $goStateFactory,
-    )
-    {
+    ) {
     }
 
     public function __invoke(ServerTaskMessage $message): void
@@ -42,8 +40,9 @@ class ServerTaskMessageHandler
         $tasks = $this->serverTaskService->getTaskForServer($server);
 
         foreach ($tasks as $task) {
-            if ($task->getType() == ServerTaskType::UPDATE_STATE)
+            if ($task->getType() == ServerTaskType::UPDATE_STATE) {
                 $this->handleUpdateStateTask($task);
+            }
             $this->serverTaskService->deleteTask($task);
         }
     }

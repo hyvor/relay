@@ -15,7 +15,7 @@ use App\Service\Domain\Event\DomainDeletedEvent;
 use App\Service\Domain\Event\DomainStatusChangedEvent;
 use App\Service\IncomingMail\Event\IncomingBounceEvent;
 use App\Service\IncomingMail\Event\IncomingComplaintEvent;
-use App\Service\Send\Event\SendAttemptCreatedEvent;
+use App\Service\SendAttempt\Event\SendAttemptCreatedEvent;
 use App\Service\SendRecipient\SendRecipientService;
 use App\Service\Suppression\Event\SuppressionCreatedEvent;
 use App\Service\Suppression\Event\SuppressionDeletedEvent;
@@ -83,7 +83,6 @@ class WebhookEventListener
                     'recipient' => new SendRecipientObject($recipient),
                     'attempt' => new SendAttemptObject($attempt),
                 ], $recipients);
-
             }
         );
     }

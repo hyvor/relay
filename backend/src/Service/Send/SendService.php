@@ -12,7 +12,6 @@ use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
 use App\Repository\SendRepository;
 use App\Service\Send\Dto\SendingAttachment;
-use App\Service\Send\Dto\SendUpdateDto;
 use App\Service\Send\Exception\EmailTooLargeException;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -76,7 +75,6 @@ class SendService
                 ->setParameter('subjectSearch', '%' . strtolower($subjectSearch) . '%');
         }
 
-        //dd($qb->getQuery()->getSQL());
         /** @var Send[] $results */
         $results = $qb->getQuery()->getResult();
 
@@ -179,51 +177,6 @@ class SendService
         $this->em->flush();
 
         return $send;
-    }
-
-    public function updateSend(Send $send, SendUpdateDto $update): Send
-    {
-        if ($update->statusSet) {
-            $send->setStatus($update->status);
-        }
-
-        if ($update->sentAtSet) {
-            $send->setSentAt($update->sentAt);
-        }
-
-        if ($update->failedAtSet) {
-            $send->setFailedAt($update->failedAt);
-        }
-
-        if ($update->resultSet) {
-            $send->setResult($update->result);
-        }
-
-        $send->setUpdatedAt($this->now());
-
-        $this->em->persist($send);
-        $this->em->flush();
-
-        return $send;
-    }
-
-    /**
-     * @return SendAttempt[]
-     */
-    public function getSendAttemptsOfSend(Send $send): array
-    {
-        return $this->em->getRepository(SendAttempt::class)->findBy(['send' => $send], ['id' => 'DESC']);
-    }
-
-    public function getSendAttemptById(int $id): ?SendAttempt
-    {
-        return $this->em->getRepository(SendAttempt::class)->find($id);
-    }
-
-    public function dispatchSendAttemptCreatedEvent(SendAttempt $sendAttempt): void
-    {
-        $event = new Event\SendAttemptCreatedEvent($sendAttempt);
-        $this->eventDispatcher->dispatch($event);
     }
 
 }

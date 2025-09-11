@@ -13,6 +13,7 @@ use App\Service\IncomingMail\IncomingMailService;
 use App\Service\Send\SendService;
 use App\Service\Management\GoState\GoStateFactory;
 use App\Service\Management\GoState\ServerNotFoundException;
+use App\Service\SendAttempt\SendAttemptService;
 use Prometheus\RenderTextFormat;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -28,6 +29,7 @@ class LocalController extends AbstractController
 
     public function __construct(
         private SendService         $sendService,
+        private SendAttemptService $sendAttemptService,
         private IncomingMailService $incomingMailService,
         private DebugIncomingEmailService $debugIncomingEmailService,
         private MetricsListener     $metricsListener,
@@ -54,13 +56,13 @@ class LocalController extends AbstractController
     {
 
         foreach ($input->send_attempt_ids as $id) {
-            $sendAttempt = $this->sendService->getSendAttemptById($id);
+            $sendAttempt = $this->sendAttemptService->getSendAttemptById($id);
 
             if ($sendAttempt === null) {
                 continue;
             }
 
-            $this->sendService->dispatchSendAttemptCreatedEvent($sendAttempt);
+            $this->sendAttemptService->handleAfterSendAttempt($sendAttempt);
         }
 
         return new JsonResponse([]);

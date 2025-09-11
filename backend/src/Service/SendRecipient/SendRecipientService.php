@@ -25,13 +25,15 @@ class SendRecipientService
      */
     public function getSendRecipientsBySendAttempt(SendAttempt $sendAttempt): array
     {
-        return $this->entityManager->getRepository(SendRecipient::class)
+        $results = $this->entityManager->getRepository(SendRecipient::class)
             ->createQueryBuilder('r')
-            ->where('r.address LIKE :domain')
-            ->andWhere('r.send = :send')
-            ->setParameter('domain', '%@' . $sendAttempt->getDomain())
+            ->where('r.send = :send')
+            ->andWhere('r.address LIKE :domain')
             ->setParameter('send', $sendAttempt->getSend())
+            ->setParameter('domain', '%@' . $sendAttempt->getDomain())
             ->getQuery()
             ->getResult();
+
+        return $results;
     }
 }

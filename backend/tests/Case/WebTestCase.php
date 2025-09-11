@@ -9,6 +9,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Auth\AuthFake;
 use Hyvor\Internal\Bundle\Testing\ApiTestingTrait;
 use Hyvor\Internal\Sudo\SudoUserFactory;
+use Prometheus\Storage\Adapter;
+use Prometheus\Storage\InMemory;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\BrowserKit\Cookie;
@@ -38,6 +40,9 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         /** @var EntityManagerInterface $em */
         $em = $this->container->get(EntityManagerInterface::class);
         $this->em = $em;
+
+        // metrics in memory
+        $this->container->set(Adapter::class, new InMemory());
     }
 
     protected function shouldEnableAuthFake(): bool

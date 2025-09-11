@@ -18,6 +18,7 @@ use App\Service\Send\EmailAddressFormat;
 use App\Service\Send\Exception\EmailTooLargeException;
 use App\Service\Send\SendService;
 use App\Service\Queue\QueueService;
+use App\Service\SendAttempt\SendAttemptService;
 use App\Service\SendFeedback\SendFeedbackService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
@@ -33,6 +34,7 @@ class SendController extends AbstractController
 {
     public function __construct(
         private SendService $sendService,
+        private SendAttemptService $sendAttemptService,
         private SendFeedbackService $sendFeedbackService,
         private DomainService $domainService,
         private QueueService $queueService,
@@ -165,7 +167,7 @@ class SendController extends AbstractController
     #[ScopeRequired(Scope::SENDS_READ)]
     public function getById(Send $send): JsonResponse
     {
-        $attempts = $this->sendService->getSendAttemptsOfSend($send);
+        $attempts = $this->sendAttemptService->getSendAttemptsOfSend($send);
         $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
 
         return $this->json(new SendObject(
@@ -192,7 +194,7 @@ class SendController extends AbstractController
             );
         }
 
-        $attempts = $this->sendService->getSendAttemptsOfSend($send);
+        $attempts = $this->sendAttemptService->getSendAttemptsOfSend($send);
         $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
 
         return $this->json(new SendObject(
