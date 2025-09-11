@@ -1,5 +1,6 @@
 <script>
-	import { CodeBlock } from '@hyvor/design/components';
+	import { Button, CodeBlock, Table, TableRow } from '@hyvor/design/components';
+	import MetricsTable from './MetricsTable.svelte';
 </script>
 
 <h1>Monitoring</h1>
@@ -17,7 +18,7 @@
 		<a href="#alertmanager">Alertmanager</a>
 	</li>
 	<li>
-		<a href="#loki">Loki</a>
+		<a href="#logs">Logs</a>
 	</li>
 </ul>
 
@@ -55,6 +56,8 @@ scrape_configs:
 	language="yaml"
 />
 
+<MetricsTable />
+
 <h2 id="grafana">Grafana</h2>
 
 <p>
@@ -64,8 +67,6 @@ scrape_configs:
 		target="_blank">grafana.json</a
 	> and import it into your Grafana instance.
 </p>
-
-<!-- <p>TODO: add screenshot</p> -->
 
 <h2 id="alertmanager">Alertmanager</h2>
 
@@ -82,22 +83,54 @@ scrape_configs:
 	> file. You can customize it to suit your needs.
 </p>
 
-<h2 id="loki">Loki</h2>
+<h2 id="logs">Logs</h2>
 
 <p>
-	Log aggregation is an important part of monitoring. This documentation shows how to set up
-	<a href="https://grafana.com/oss/loki/" target="_blank">Loki</a> for log aggregation.
+	By default, Hyvor Relay container writes logs to stdout/stderr. In Docker, you can view the logs
+	using the following command:
 </p>
 
-<p>
-	Side note: If you already have a log aggregation system in place, such as ELK stack, feel free
-	to use that. These are the two log files that you should monitor: : <code
-		>/var/log/relay/api.log</code
-	>
-	and
-	<code>/var/log/relay/worker.log</code>. Both files are in JSON format.
-</p>
+<CodeBlock code="docker logs -f relay" />
 
 <p>
-	<!--  -->
+	You can forward these logs to your log aggregation system using a Docker plugin or another log
+	collector.
+</p>
+
+<h3 id="loki">Loki</h3>
+
+<p>
+	Here is an example Docker Compose configuration for forwarding logs to Loki. First, install the
+	Loki Docker plugin:
+</p>
+
+<CodeBlock
+	code={`
+arch=$(uname -m)
+docker plugin install grafana/loki-docker-driver:3.3.2-$\{arch\} --alias loki --grant-all-permissions
+`}
+/>
+
+<p>
+	Then, update your <code>compose.yaml</code> to include the logging configuration:
+</p>
+
+<CodeBlock
+	code={`
+app:
+  logging:
+	driver: loki
+	options:
+	  loki-url: "https://mylokiurl.com/loki/api/v1/push"
+	  loki-retries: "2"
+	  loki-max-backoff: "800ms"
+	  loki-timeout: "1s"
+	  keep-file: "true"
+	  mode: non-blocking
+`}
+	language="yaml"
+/>
+
+<p>
+	Make sure to replace the <code>loki-url</code> and restart your Docker containers.
 </p>

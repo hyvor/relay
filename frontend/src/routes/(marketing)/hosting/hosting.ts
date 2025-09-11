@@ -3,7 +3,7 @@ import type { Component } from 'svelte';
 import Introduction from './content/Introduction.svelte';
 import Setup from './content/Setup.svelte';
 import Deploy from './content/Deploy.svelte';
-import Monitoring from './content/Monitoring.svelte';
+import Monitoring from './content/monitoring/Monitoring.svelte';
 import EasyDeploy from './content/easy/EasyDeploy.svelte';
 import Env from './content/Env.svelte';
 import Deliverability from './content/Deliverability.svelte';
