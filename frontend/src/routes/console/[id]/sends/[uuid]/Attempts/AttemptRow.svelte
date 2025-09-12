@@ -67,12 +67,12 @@
 			{/each}
 		</div>
 
-		{#if selectedConversation?.Error}
-			<div class="convo-error">Error: - {selectedConversation.Error}</div>
+		{#if selectedConversation?.network_error}
+			<div class="convo-error">Error: - {selectedConversation.network_error}</div>
 		{/if}
 
 		<div class="conversation">
-			{#if selectedConversation && selectedConversation.Steps.length}
+			{#if selectedConversation && selectedConversation.steps.length}
 				<SmtpConversation conversation={selectedConversation} />
 			{:else}
 				<div class="no-convo">No SMTP conversation available for this host.</div>

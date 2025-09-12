@@ -117,18 +117,21 @@ export interface SendFeedback {
 }
 
 export interface SmtpConversation {
-    StartTime: string;
-    Error: string; // empty if no error
-    SmtpErrorStatus: number;
-    Steps: SmtpStep[];
+    start_time: string;
+    network_error: string; // empty if no error
+    smtp_error: {
+        code: number;
+        message: string;
+    } | null;
+    steps: SmtpStep[];
 }
 
 export interface SmtpStep {
-    Name: 'dial' | 'helo' | 'mail' | 'rcpt' | 'data' | 'data_close' | 'quit';
-    Duration: string;
-    Command: string;
-    ReplyCode: number
-    ReplyText: string;
+    name: 'dial' | 'helo' | 'mail' | 'rcpt' | 'data' | 'data_close' | 'quit';
+    duration: string;
+    command: string;
+    reply_code: number
+    reply_text: string;
 }
 
 export type ApiKey = {

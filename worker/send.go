@@ -32,28 +32,29 @@ const (
 type LatencyDuration time.Duration
 
 func (d LatencyDuration) MarshalJSON() ([]byte, error) {
-	str := fmt.Sprintf("%dms", time.Duration(d).Milliseconds())
-	return json.Marshal(str)
+	return json.Marshal(time.Duration(d).Milliseconds())
 }
 
 type SmtpStep struct {
-	Name      SmtpStepName
-	Duration  LatencyDuration
-	Command   string
-	ReplyCode int
-	ReplyText string
+	Name      SmtpStepName    `json:"name"`
+	Duration  LatencyDuration `json:"duration_ms"`
+	Command   string          `json:"command"`
+	ReplyCode int             `json:"reply_code"`
+	ReplyText string          `json:"reply_text"`
 }
 
 type SmtpConversation struct {
-	StartTime time.Time
+	StartTime    time.Time     `json:"start_time"`
+	lastStepTime time.Time     `json:"-"`
+	Duration     time.Duration `json:"duration_ms"`
 
 	// network/transport error
 	// nil if the message was sent successfully (regardless of SMTP status)
-	NetworkError error
+	NetworkError error `json:"network_error"`
 
-	SmtpError *SmtpError
+	SmtpError *SmtpError `json:"smtp_error"`
 
-	Steps []*SmtpStep
+	Steps []*SmtpStep `json:"steps"`
 }
 
 type SmtpError struct {
@@ -61,8 +62,8 @@ type SmtpError struct {
 	// > 0 = SMTP error code
 	// can be set in the middle of the conversation
 	// e.g. non-250 on EHLO
-	Code    int
-	Message string
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
 
 // converts the Error field to a string for JSON marshalling
@@ -70,13 +71,13 @@ func (s SmtpConversation) MarshalJSON() ([]byte, error) {
 	type SmtpConversationAlias SmtpConversation
 	aux := struct {
 		*SmtpConversationAlias
-		Error string
+		NetworkError string `json:"network_error"`
 	}{
 		SmtpConversationAlias: (*SmtpConversationAlias)(&s),
 	}
 
 	if s.NetworkError != nil {
-		aux.Error = s.NetworkError.Error()
+		aux.NetworkError = s.NetworkError.Error()
 	}
 
 	return json.Marshal(aux)
@@ -85,6 +86,7 @@ func (s SmtpConversation) MarshalJSON() ([]byte, error) {
 func NewSmtpConversation() *SmtpConversation {
 	return &SmtpConversation{
 		StartTime:    time.Now(),
+		lastStepTime: time.Now(),
 		NetworkError: nil,
 		SmtpError:    nil,
 		Steps:        make([]*SmtpStep, 0),
@@ -100,13 +102,15 @@ func (c *SmtpConversation) AddStep(
 
 	step := &SmtpStep{
 		Name:      name,
-		Duration:  LatencyDuration(time.Since(c.StartTime)),
+		Duration:  LatencyDuration(time.Since(c.lastStepTime)),
 		Command:   command,
 		ReplyCode: replyCode,
 		ReplyText: replyText,
 	}
 
 	c.Steps = append(c.Steps, step)
+	c.lastStepTime = time.Now()
+	c.Duration = time.Since(c.StartTime)
 
 }
 

@@ -15,7 +15,7 @@
 	let status: 'responded' | 'failed' | 'not_attempted' = $derived.by(() => {
 		if (conversation === null) {
 			return 'not_attempted';
-		} else if (conversation.Error || conversation.SmtpErrorStatus) {
+		} else if (conversation.network_error || conversation.smtp_error) {
 			return 'failed';
 		} else {
 			return 'responded';

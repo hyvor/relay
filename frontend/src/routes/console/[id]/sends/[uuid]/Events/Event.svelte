@@ -80,9 +80,9 @@
 					return null;
 				}
 
-				const lastStep = smtpConvo.Steps[smtpConvo.Steps.length - 1];
+				const lastStep = smtpConvo.steps[smtpConvo.steps.length - 1];
 
-				return `${lastStep.ReplyCode} ${lastStep.ReplyText}`;
+				return `${lastStep.reply_code} ${lastStep.reply_text}`;
 			}
 		}
 

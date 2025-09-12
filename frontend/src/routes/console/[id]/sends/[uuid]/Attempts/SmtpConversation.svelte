@@ -16,18 +16,18 @@
 </script>
 
 <div class="code">
-	{#each conversation.Steps as step}
-		{#if step.Name !== 'dial'}
+	{#each conversation.steps as step}
+		{#if step.name !== 'dial'}
 			<div class="step">
 				<div class="client">
-					{#if step.Name === 'data_close'}
+					{#if step.name === 'data_close'}
 						{`<DATACLOSE>`}
 					{:else}
-						{step.Command}
+						{step.command}
 					{/if}
 				</div>
-				<div class="server {codeClass(step.ReplyCode)}">
-					{`${step.ReplyCode} ${step.ReplyText}`}
+				<div class="server {codeClass(step.reply_code)}">
+					{`${step.reply_code} ${step.reply_text}`}
 				</div>
 			</div>
 		{/if}
