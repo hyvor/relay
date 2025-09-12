@@ -18,6 +18,16 @@
 			recipients_count: send.recipients.length
 		});
 
+		// add suppression failures
+		const suppressed = send.recipients.filter((r) => r.is_suppressed === true);
+		if (suppressed.length > 0) {
+			events.push({
+				timestamp: send.created_at,
+				type: 'suppressed',
+				suppressed_recipients: suppressed.map((r) => r.address)
+			});
+		}
+
 		// add attempts
 		for (const attempt of send.attempts) {
 			events.push({

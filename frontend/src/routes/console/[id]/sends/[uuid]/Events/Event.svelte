@@ -5,6 +5,7 @@
 	import IconHourglass from '@hyvor/icons/IconHourglass';
 	import IconSend from '@hyvor/icons/IconSend';
 	import IconChat from '@hyvor/icons/IconChat';
+	import IconSlashCircle from '@hyvor/icons/IconSlashCircle';
 
 	interface Props {
 		event: Event;
@@ -34,6 +35,12 @@
 					message: `Queued for sending to ${event.recipients_count} recipient(s)`,
 					description: null,
 					color: 'var(--gray)'
+				};
+			case 'suppressed':
+				return {
+					message: `Suppressed: <strong>${event.suppressed_recipients?.join(', ')}</strong>`,
+					description: 'Failed due to suppression',
+					color: 'var(--red)'
 				};
 			case 'attempt':
 				return getAttemptMessage(event.attempt!);
@@ -108,6 +115,8 @@
 	<div class="icon">
 		{#if event.type === 'queued'}
 			<IconHourglass />
+		{:else if event.type === 'suppressed'}
+			<IconSlashCircle />
 		{:else if event.type === 'attempt'}
 			<IconSend />
 		{:else if event.type === 'feedback'}

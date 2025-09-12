@@ -136,7 +136,6 @@ class SendService
         $send->setCreatedAt($this->now());
         $send->setUpdatedAt($this->now());
         $send->setSendAfter($this->now());
-        $send->setQueued(true);
         $send->setProject($project);
         $send->setDomain($domain);
         $send->setQueue($queue);
@@ -153,7 +152,7 @@ class SendService
 
         $this->em->persist($send);
 
-        $this->recipientFactory->create(
+        $shouldQueue = $this->recipientFactory->create(
             $send,
             [
                 [SendRecipientType::TO, $to],
@@ -161,6 +160,7 @@ class SendService
                 [SendRecipientType::BCC, $bcc],
             ],
         );
+        $send->setQueued($shouldQueue);
 
         $this->em->flush();
 

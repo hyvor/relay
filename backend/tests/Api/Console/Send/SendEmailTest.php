@@ -661,6 +661,7 @@ class SendEmailTest extends WebTestCase
         $this->assertSame(SendRecipientType::TO, $recipient->getType());
         $this->assertSame(SendRecipientStatus::FAILED, $recipient->getStatus());
         $this->assertTrue($recipient->getIsSuppressed());
+        $this->assertFalse($send->getQueued());
     }
 
     public function test_with_attachments(): void

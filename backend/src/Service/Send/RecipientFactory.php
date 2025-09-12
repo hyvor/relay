@@ -21,13 +21,16 @@ class RecipientFactory
 
     /**
      * @param array<array{0: SendRecipientType, 1: Address[]}> $recipients
+     * @return bool whether to queue
      */
-    public function create(Send $send, array $recipients): void
+    public function create(Send $send, array $recipients): bool
     {
         $suppressedEmails = $this->suppressionService->getSuppressed(
             $send->getProject(),
             $this->getEmailAddresses($recipients)
         );
+
+        $shouldQueue = false;
 
         foreach ($recipients as [$type, $addresses]) {
             foreach ($addresses as $address) {
@@ -47,8 +50,14 @@ class RecipientFactory
 
                 $send->addRecipient($sendRecipient);
                 $this->em->persist($sendRecipient);
+
+                if (!$isSuppressed) {
+                    $shouldQueue = true;
+                }
             }
         }
+
+        return $shouldQueue;
     }
 
     /**
