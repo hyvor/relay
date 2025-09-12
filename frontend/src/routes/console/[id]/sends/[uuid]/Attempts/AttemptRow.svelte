@@ -34,6 +34,8 @@
 				<Tag color="orange">Deferred</Tag>
 			{:else if attempt.status === 'bounced'}
 				<Tag color="red">Bounced</Tag>
+			{:else if attempt.status === 'failed'}
+				<Tag color="red">Failed</Tag>
 			{/if}
 		</div>
 		<div class="message">
@@ -112,9 +114,8 @@
 
 	.no-convo {
 		color: var(--text-light);
-		padding: 45px;
-		text-align: center;
-		font-size: 14px;
+		padding: 10px;
+		font-size: 12px;
 	}
 
 	.convo-error {
