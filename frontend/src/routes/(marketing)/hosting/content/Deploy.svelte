@@ -132,3 +132,23 @@
 	We recommend using a Linux distribution like Ubuntu or Debian for the app servers. Our Cloud
 	runs on Ubuntu 24.04 LTS. Each server should have <strong>Docker</strong> installed.
 </p> -->
+
+<!-- 
+
+Compose file
+
+services:
+  relay:
+    image: hyvor/relay:latest
+    deploy:
+      mode: global
+    networks:
+      - hostnet
+    labels:
+      app: relay
+
+networks:
+  hostnet:
+    name: "host"
+    external: true
+-->

@@ -9,6 +9,7 @@ import Env from './content/Env.svelte';
 import Deliverability from './content/Deliverability.svelte';
 import Dns from './content/Dns.svelte';
 import Scaling from './content/Scaling.svelte';
+import EmailProviders from './content/EmailProviders.svelte';
 
 export const categories: Category[] = [
 	{
@@ -67,7 +68,7 @@ export const categories: Category[] = [
 			{
 				slug: 'providers',
 				name: 'Email Providers',
-				component: Deliverability,
+				component: EmailProviders,
 			},
 			{
 				slug: 'env',
