@@ -46,7 +46,7 @@
 			</div>
 		</div>
 		{#if suppression.description}
-			<p class="suppression-description">{suppression.description}</p>
+			<div class="suppression-description">{suppression.description}</div>
 		{/if}
 		<div class="suppression-meta">
 			<span class="created-label">Added:</span>
@@ -71,10 +71,12 @@
 	.suppression-row {
 		display: flex;
 		justify-content: space-between;
-		align-items: flex-start;
-		padding: 20px;
-		gap: 20px;
-		background: white;
+		align-items: center;
+		padding: 15px 30px;
+		gap: 10px;
+	}
+	.suppression-row:hover {
+		background-color: var(--hover);
 	}
 
 	.suppression-info {
@@ -85,8 +87,8 @@
 	.suppression-header {
 		display: flex;
 		align-items: center;
-		gap: 12px;
-		margin-bottom: 8px;
+		gap: 6px;
+		margin-bottom: 4px;
 	}
 
 	.email {
@@ -101,7 +103,7 @@
 	}
 
 	.suppression-description {
-		margin: 0 0 8px 0;
+		margin-bottom: 4px;
 		font-size: 14px;
 		color: var(--text-light);
 		line-height: 1.4;

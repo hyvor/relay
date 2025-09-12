@@ -77,6 +77,8 @@ export type Send = {
     body_text: string | null;
     raw: string;
     size_bytes: number;
+    queued: boolean;
+    send_after: number;
 
     recipients: SendRecipient[];
     attempts: SendAttempt[];
@@ -91,9 +93,7 @@ export interface SendRecipient {
     address: string;
     name: string;
     status: SendRecipientStatus;
-    accepted_at?: number | null;
-    bounced_at?: number | null;
-    failed_at?: number | null;
+    is_suppressed: boolean;
 }
 
 export interface SendAttempt {
@@ -104,6 +104,8 @@ export interface SendAttempt {
     resolved_mx_hosts: string[];
     responded_mx_host: string | null;
     smtp_conversations: Record<string, SmtpConversation>;
+    recipient_ids: number[];
+    duration_ms: number;
     error: string | null;
 }
 
@@ -116,18 +118,21 @@ export interface SendFeedback {
 }
 
 export interface SmtpConversation {
-    StartTime: string;
-    Error: string; // empty if no error
-    SmtpErrorStatus: number;
-    Steps: SmtpStep[];
+    start_time: string;
+    network_error: string; // empty if no error
+    smtp_error: {
+        code: number;
+        message: string;
+    } | null;
+    steps: SmtpStep[];
 }
 
 export interface SmtpStep {
-    Name: 'dial' | 'helo' | 'mail' | 'rcpt' | 'data' | 'data_close' | 'quit';
-    Duration: string;
-    Command: string;
-    ReplyCode: number
-    ReplyText: string;
+    name: 'dial' | 'helo' | 'mail' | 'rcpt' | 'data' | 'data_close' | 'quit';
+    duration: string;
+    command: string;
+    reply_code: number
+    reply_text: string;
 }
 
 export type ApiKey = {

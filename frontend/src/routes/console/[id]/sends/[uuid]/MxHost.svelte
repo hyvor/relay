@@ -12,19 +12,19 @@
 
 	let { host, selected, index, conversation, onselect }: Props = $props();
 
-	let status: 'accepted' | 'failed' | 'not_attempted' = $derived.by(() => {
+	let status: 'responded' | 'failed' | 'not_attempted' = $derived.by(() => {
 		if (conversation === null) {
 			return 'not_attempted';
-		} else if (conversation.Error || conversation.SmtpErrorStatus) {
+		} else if (conversation.network_error || conversation.smtp_error) {
 			return 'failed';
 		} else {
-			return 'accepted';
+			return 'responded';
 		}
 	});
 
 	function getTooltip() {
 		return {
-			accepted: 'Accepted by this host',
+			responded: 'Responded by this host',
 			failed: 'Failed to send to this host',
 			not_attempted: 'Did not attempt to send to this host'
 		}[status];
@@ -35,7 +35,7 @@
 	<button
 		class="mx-host"
 		onclick={() => onselect(host)}
-		class:accepted={status === 'accepted'}
+		class:responded={status === 'responded'}
 		class:failed={status === 'failed'}
 		class:no-attempt={status === 'not_attempted'}
 		class:selected
@@ -54,7 +54,7 @@
 	.mx-host:not(.no-attempt) {
 		cursor: pointer;
 	}
-	.mx-host.accepted {
+	.mx-host.responded {
 		color: var(--green-dark);
 		--active-bg: var(--green-light);
 	}

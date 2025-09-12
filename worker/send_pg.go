@@ -100,7 +100,7 @@ func (b *SendTransaction) FetchSend(queueId int) (*SendRow, []*RecipientRow, err
 			return nil, nil, fmt.Errorf("failed to scan recipient: %w", err)
 		}
 
-		if status == "queued" || status == "retrying" {
+		if status == "queued" || status == "deferred" {
 			recipients = append(recipients, &recipient)
 		}
 	}
@@ -143,8 +143,14 @@ func (b *SendTransaction) RecordAttempt(
 		}
 	}
 
-	resolvedMxHosts, _ := json.Marshal(sendResult.ResolvedMxHosts)
-	smtpConversations, _ := json.Marshal(sendResult.SmtpConversations)
+	resolvedMxHostsJson, _ := json.Marshal(sendResult.ResolvedMxHosts)
+	smtpConversationsJson, _ := json.Marshal(sendResult.SmtpConversations)
+
+	var recipientIds []int
+	for _, recipient := range recipients {
+		recipientIds = append(recipientIds, recipient.Id)
+	}
+	recipientIdsJson, _ := json.Marshal(recipientIds)
 
 	var attemptId int
 	err := b.tx.QueryRowContext(b.ctx, `
@@ -159,6 +165,8 @@ func (b *SendTransaction) RecordAttempt(
 			resolved_mx_hosts,
 			responded_mx_host,
 			smtp_conversations,
+			recipient_ids,
+			duration_ms,
 			error
 		)
 		VALUES (
@@ -172,7 +180,9 @@ func (b *SendTransaction) RecordAttempt(
 			$6,
 			$7,
 			$8,
-			$9
+			$9,
+			$10,
+			$11
 		)
 		RETURNING id
 	`,
@@ -181,9 +191,11 @@ func (b *SendTransaction) RecordAttempt(
 		status,
 		sendResult.NewTryCount,
 		sendResult.Domain,
-		resolvedMxHosts,
+		resolvedMxHostsJson,
 		respondedMxHost,
-		smtpConversations,
+		smtpConversationsJson,
+		recipientIdsJson,
+		sendResult.Duration.Milliseconds(),
 		errorMessage,
 	).Scan(&attemptId)
 

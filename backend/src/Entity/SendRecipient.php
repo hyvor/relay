@@ -33,14 +33,8 @@ class SendRecipient
     #[ORM\Column(type: "string", enumType: SendRecipientStatus::class)]
     private SendRecipientStatus $status;
 
-    #[ORM\Column(type: "datetime_immutable", nullable: true)]
-    private ?\DateTimeImmutable $accepted_at = null;
-
-    #[ORM\Column(type: "datetime_immutable", nullable: true)]
-    private ?\DateTimeImmutable $bounced_at = null;
-
-    #[ORM\Column(type: "datetime_immutable", nullable: true)]
-    private ?\DateTimeImmutable $failed_at = null;
+    #[ORM\Column()]
+    private bool $is_suppressed;
 
     #[ORM\Column(type: "integer")]
     private int $try_count = 0;
@@ -111,36 +105,14 @@ class SendRecipient
         return $this;
     }
 
-    public function getAcceptedAt(): ?\DateTimeImmutable
+    public function getIsSuppressed(): bool
     {
-        return $this->accepted_at;
+        return $this->is_suppressed;
     }
 
-    public function setAcceptedAt(?\DateTimeImmutable $accepted_at): static
+    public function setIsSuppressed(bool $is_suppressed): static
     {
-        $this->accepted_at = $accepted_at;
-        return $this;
-    }
-
-    public function getBouncedAt(): ?\DateTimeImmutable
-    {
-        return $this->bounced_at;
-    }
-
-    public function setBouncedAt(?\DateTimeImmutable $bounced_at): static
-    {
-        $this->bounced_at = $bounced_at;
-        return $this;
-    }
-
-    public function getFailedAt(): ?\DateTimeImmutable
-    {
-        return $this->failed_at;
-    }
-
-    public function setFailedAt(?\DateTimeImmutable $failed_at): static
-    {
-        $this->failed_at = $failed_at;
+        $this->is_suppressed = $is_suppressed;
         return $this;
     }
 

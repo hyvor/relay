@@ -66,9 +66,7 @@ final class Version20250613093659 extends AbstractMigration
                 address text NOT NULL,
                 name text NOT NULL, -- empty if not provided
                 status send_recipients_status NOT NULL DEFAULT 'queued',
-                accepted_at TIMESTAMPTZ,
-                bounced_at TIMESTAMPTZ,
-                failed_at TIMESTAMPTZ,
+                is_suppressed BOOLEAN NOT NULL DEFAULT false,
                 try_count INT NOT NULL DEFAULT 0,
                 UNIQUE (send_id, address, type)
             )
