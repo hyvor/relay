@@ -14,18 +14,14 @@
 
 	let { event, send }: Props = $props();
 
-	function getRecipientsOfDomain(domain: string): string[] {
-		const recipients = send.recipients
-			.filter((r) => {
-				const emailDomain = r.address.split('@')[1];
-				return emailDomain === domain;
-			})
+	function getAttemptRecipients(attempt: SendAttempt): string[] {
+		return send.recipients
+			.filter((r) => attempt.recipient_ids.includes(r.id))
 			.map((r) => r.address);
-		return recipients;
 	}
 
-	function getRecipientsOfDomainJoined(domain: string): string {
-		return getRecipientsOfDomain(domain).join(', ');
+	function getAttemptRecipientsJoined(attempt: SendAttempt): string {
+		return getAttemptRecipients(attempt).join(', ');
 	}
 
 	let { message, description, color } = $derived.by(() => {
@@ -39,7 +35,7 @@
 			case 'suppressed':
 				return {
 					message: `Suppressed: <strong>${event.suppressed_recipients?.join(', ')}</strong>`,
-					description: 'Failed due to suppression',
+					description: null,
 					color: 'var(--red)'
 				};
 			case 'attempt':
@@ -51,19 +47,19 @@
 		function getAttemptMessage(attempt: SendAttempt) {
 			if (attempt.status === 'accepted') {
 				return {
-					message: `Accepted: <strong>${getRecipientsOfDomainJoined(attempt.domain)}</strong>`,
+					message: `Accepted: <strong>${getAttemptRecipientsJoined(attempt)}</strong>`,
 					description: null,
 					color: 'var(--green)'
 				};
 			} else if (attempt.status === 'deferred') {
 				return {
-					message: `Deferred, retrying later: <strong>${getRecipientsOfDomainJoined(attempt.domain)}</strong>`,
+					message: `Deferred, retrying later: <strong>${getAttemptRecipientsJoined(attempt)}</strong>`,
 					description: getAttemptDescription(),
 					color: 'var(--orange)'
 				};
 			} else {
 				return {
-					message: `Bounced: <strong>${getRecipientsOfDomainJoined(attempt.domain)}</strong>`,
+					message: `Bounced: <strong>${getAttemptRecipientsJoined(attempt)}</strong>`,
 					description: getAttemptDescription(),
 					color: 'var(--red)'
 				};

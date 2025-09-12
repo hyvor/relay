@@ -46,11 +46,15 @@
 			});
 		}
 
+		// last queued, then suppressed, then by timestamp
 		events.sort((a, b) => {
 			if (a.type === 'queued') return 1;
 			if (b.type === 'queued') return -1;
 
-			return b.timestamp - a.timestamp;
+			if (a.type === 'suppressed') return 1;
+			if (b.type === 'suppressed') return -1;
+
+			return a.timestamp - b.timestamp;
 		});
 
 		return events;

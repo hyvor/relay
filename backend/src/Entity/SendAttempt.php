@@ -49,6 +49,10 @@ class SendAttempt
     #[ORM\Column(type: "json")]
     private array $smtp_conversations = [];
 
+    /** @var int[] */
+    #[ORM\Column(type: "json")]
+    private array $recipient_ids = [];
+
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $error = null;
 
@@ -186,6 +190,23 @@ class SendAttempt
     public function setSmtpConversations(array $smtpConversations): static
     {
         $this->smtp_conversations = $smtpConversations;
+        return $this;
+    }
+
+    /**
+     * @return int[]
+     */
+    public function getRecipientIds(): array
+    {
+        return $this->recipient_ids;
+    }
+
+    /**
+     * @param int[] $recipientIds
+     */
+    public function setRecipientIds(array $recipientIds): static
+    {
+        $this->recipient_ids = $recipientIds;
         return $this;
     }
 

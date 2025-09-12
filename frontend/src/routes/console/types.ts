@@ -104,6 +104,7 @@ export interface SendAttempt {
     resolved_mx_hosts: string[];
     responded_mx_host: string | null;
     smtp_conversations: Record<string, SmtpConversation>;
+    recipient_ids: number[];
     error: string | null;
 }
 
