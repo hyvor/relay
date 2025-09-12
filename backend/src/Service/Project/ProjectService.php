@@ -7,10 +7,12 @@ use App\Entity\Project;
 use App\Entity\ProjectUser;
 use App\Entity\Type\ProjectSendType;
 use App\Service\Project\Dto\UpdateProjectDto;
+use App\Service\Project\Event\ProjectCreatingEvent;
 use App\Service\ProjectUser\ProjectUserService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ProjectService
 {
@@ -19,6 +21,7 @@ class ProjectService
 
     public function __construct(
         private EntityManagerInterface $em,
+        private EventDispatcherInterface $ed,
         private ProjectUserService $projectUserService,
     ) {
     }
@@ -41,6 +44,8 @@ class ProjectService
         bool $createProjectUser = true,
         bool $flush = true
     ): array {
+        $this->ed->dispatch(new ProjectCreatingEvent($userId));
+
         $project = new Project();
         $project
             ->setUserId($userId)
