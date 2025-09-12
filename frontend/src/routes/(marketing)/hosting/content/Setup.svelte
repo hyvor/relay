@@ -153,7 +153,7 @@
 	PTR, also known as reverse DNS, is a DNS record that maps an IP address to a domain name. SMTP
 	messages contains a
 	<code>EHLO {'<domain>'}</code> command, which identifies the sending server (or IP address). In
-	Hyvor Relay, each sending IP address uses a unique (sub)domain of the
+	Hyvor Relay, each sending IP address uses a unique subdomain of the
 	<a href="#instance-domain">instance domain</a> as the domain name.
 </p>
 
@@ -237,6 +237,11 @@
 	</li>
 	<li>
 		See <a href="/hosting/scaling">Scaling & High Availability</a> to learn how to scale Hyvor Relay.
+	</li>
+	<li>
+		Visit the <strong>Console</strong> (<code>/console</code>),
+		<a href="/docs#project">create a project</a>, and
+		<a href="/docs/send-emails">send emails</a>.
 	</li>
 </ul>
 

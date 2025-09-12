@@ -1,17 +1,23 @@
 <script>
-	import { Table, TableRow } from '@hyvor/design/components';
+	import { Callout, Table, TableRow } from '@hyvor/design/components';
 </script>
 
 <h1>Prod Deploy</h1>
 
-<p>
+<!-- <p>
 	This page covers a <strong>production-ready deployment</strong> that requires multiple servers.
-	If you want to deploy Hyvor Relay on for hobby or small projects (less than 25,000 emails/day),
-	please refer to the
+	If you want to deploy Hyvor Relay on for hobby or small to medium-sized projects (less than
+	100,000 emails/day), refer to the
 	<a href="/hosting/deploy-easy">Easy Deploy</a> page which covers a single server deployment.
-</p>
+</p> -->
 
-<h2 id="infra">Infrastructure</h2>
+<Callout type="info">
+	This documentation is a work in progress. Use <a href="/hosting/deploy-easy">Easy Deploy</a> for
+	now.
+	<!--  -->
+</Callout>
+
+<!-- <h2 id="infra">Infrastructure</h2>
 
 <ul>
 	<li>
@@ -125,4 +131,24 @@
 <p>
 	We recommend using a Linux distribution like Ubuntu or Debian for the app servers. Our Cloud
 	runs on Ubuntu 24.04 LTS. Each server should have <strong>Docker</strong> installed.
-</p>
+</p> -->
+
+<!-- 
+
+Compose file
+
+services:
+  relay:
+    image: hyvor/relay:latest
+    deploy:
+      mode: global
+    networks:
+      - hostnet
+    labels:
+      app: relay
+
+networks:
+  hostnet:
+    name: "host"
+    external: true
+-->

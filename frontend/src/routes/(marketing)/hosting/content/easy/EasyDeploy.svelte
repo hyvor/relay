@@ -13,7 +13,7 @@
 <p>
 	In general, on a server with 4GB RAM and 2 vCPUs, you should be able to easily send more than
 	100,000 emails per day. However, if you need high availability and scalability, see the <a
-		href="/hosting/deploy">Deploy</a
+		href="/hosting/deploy">Prod Deploy</a
 	> page, which uses multiple servers with Docker Swarm.
 </p>
 
@@ -40,9 +40,8 @@
 </p>
 
 <p>
-	<strong>OS</strong>: A Linux-based OS is recommended for production use. Unless your preference
-	or organization policy requires a different distribution, we recommend using Ubuntu 24.04 LTS,
-	which is the same OS we use in our Cloud instance.
+	<strong>OS</strong>: A Linux-based OS is recommended for production use. If you are not sure,
+	use Ubuntu 24.04 LTS, the same OS our Cloud runs on.
 </p>
 
 <p>
@@ -72,8 +71,8 @@ cd deploy/easy
 />
 
 <p>
-	You are now in the <code>deploy/easy</code> directory, which contains the Docker Compose files and
-	other necessary files for this deployment.
+	<code>deploy/easy</code> directory contains the Docker Compose files and other necessary files for
+	this deployment.
 </p>
 
 <h3 id="env">2. Configure Environment Variables</h3>
