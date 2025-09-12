@@ -1,12 +1,12 @@
 <script>
-	import { Button } from '@hyvor/design/components';
+	import { Divider } from '@hyvor/design/components';
 </script>
 
-<h1>Hosting Hyvor Relay</h1>
+<h1>Hosting</h1>
 
 <p>
-	Hyvor Relay is a self-hostable, open-source email API for developers. Think of it as an
-	alternative to AWS SES, Mailgun, or SendGrid, but you self-host it on your own servers.
+	Hyvor Relay is a self-hosted, open-source email API for developers. Think of it as an
+	alternative to AWS SES, Mailgun, or SendGrid, but you host it on your own infrastructure.
 </p>
 
 <h2>Self-Hosting is first-class</h2>
@@ -27,26 +27,28 @@
 		DNS) is built into a single docker image.
 	</li>
 	<li>
-		<strong> Prefer dashboards over config files </strong>: Opinionated towards using a web
-		interface for most of the configurations instead of config files.
+		<strong> Dashboards for ease </strong>: Web interfaces for admins and users to ease setup
+		and debugging.
 	</li>
 	<li>
-		<strong> Industry-grade Monitoring </strong>: Prometheus, Grafana, and Loki are built-in for
-		<a href="/docs/monitoring">monitoring</a>, logging, and alerting.
+		<strong> Industry-grade Monitoring </strong>: Prometheus, Grafana, Altermanager integrations
+		are built-in for observability.
 	</li>
 </ul>
 
-<p style="margin: 30px 0;" class="button">
-	<Button as="a" href="/hosting/deploy">Deploy Now</Button>
+<p>
+	Get started: <a href="/hosting/deploy">Prod Deploy</a> (multiple servers for large sending
+	volumes) or
+	<a href="/hosting/deploy-easy">Easy Deploy</a> (single server for small to medium sending volumes).
 </p>
 
-<h2>Security</h2>
+<h2 id="security">Security</h2>
 
 <h3>DDoS</h3>
 
 <p>
-	<strong> Layer 7 </strong>: Hyvor Relay has built-in rate limiting and IP blocking to prevent
-	DDoS attacks at the application layer for the HTTP, DNS, and SMTP servers.
+	<strong> Layer 7 </strong>: Hyvor Relay has built-in rate limiting to prevent DDoS attacks at
+	the application layer for the HTTP server.
 </p>
 
 <p>
@@ -54,8 +56,10 @@
 	attacks at the network layer. This is usually managed by your cloud provider.
 </p>
 
-<style>
-	.button :global(a) {
-		text-decoration: none !important;
-	}
-</style>
+<Divider />
+
+<p>
+	Report security issues to <a href="mailto:security@hyvor.com">security@hyvor.com</a> (<a
+		href="https://hyvor.com/gpg.txt">PGP Key</a
+	>).
+</p>
