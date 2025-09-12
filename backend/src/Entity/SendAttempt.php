@@ -53,6 +53,9 @@ class SendAttempt
     #[ORM\Column(type: "json")]
     private array $recipient_ids = [];
 
+    #[ORM\Column()]
+    private int $duration_ms;
+
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $error = null;
 
@@ -207,6 +210,17 @@ class SendAttempt
     public function setRecipientIds(array $recipientIds): static
     {
         $this->recipient_ids = $recipientIds;
+        return $this;
+    }
+
+    public function getDurationMs(): int
+    {
+        return $this->duration_ms;
+    }
+
+    public function setDurationMs(int $duration_ms): static
+    {
+        $this->duration_ms = $duration_ms;
         return $this;
     }
 

@@ -166,6 +166,7 @@ func (b *SendTransaction) RecordAttempt(
 			responded_mx_host,
 			smtp_conversations,
 			recipient_ids,
+			duration_ms,
 			error
 		)
 		VALUES (
@@ -180,7 +181,8 @@ func (b *SendTransaction) RecordAttempt(
 			$7,
 			$8,
 			$9,
-			$10
+			$10,
+			$11
 		)
 		RETURNING id
 	`,
@@ -193,6 +195,7 @@ func (b *SendTransaction) RecordAttempt(
 		respondedMxHost,
 		smtpConversationsJson,
 		recipientIdsJson,
+		sendResult.Duration.Milliseconds(),
 		errorMessage,
 	).Scan(&attemptId)
 

@@ -49,8 +49,13 @@
 				<span class="info">Pending</span>
 			{/if}
 		</div>
-		<div class="time">
-			{dayjs.unix(attempt.created_at).format('MMM D, YYYY h:mm A')}
+		<div class="time-wrap">
+			<div class="time">
+				{dayjs.unix(attempt.created_at).format('MMM D, YYYY h:mm A')}
+			</div>
+			<div class="duration">
+				{attempt.duration_ms}ms
+			</div>
 		</div>
 	</div>
 
@@ -94,8 +99,13 @@
 		padding: 15px 25px;
 		border-bottom: 1px solid var(--border);
 	}
-	.time {
+	.time-wrap {
 		text-align: right;
+		font-size: 14px;
+	}
+	.duration {
+		color: var(--text-light);
+		font-size: 12px;
 	}
 	.message {
 		font-size: 14px;
