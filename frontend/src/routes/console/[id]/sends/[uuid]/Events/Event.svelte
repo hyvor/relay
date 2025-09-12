@@ -50,7 +50,7 @@
 				};
 			} else if (attempt.status === 'deferred') {
 				return {
-					message: `Deferred (retrying later): <strong>${getRecipientsOfDomainJoined(attempt.domain)}</strong>`,
+					message: `Deferred, retrying later: <strong>${getRecipientsOfDomainJoined(attempt.domain)}</strong>`,
 					description: getAttemptDescription(),
 					color: 'var(--orange)'
 				};

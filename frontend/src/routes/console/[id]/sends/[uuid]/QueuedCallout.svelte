@@ -23,9 +23,9 @@
 		const hours = Math.floor(diff / 3600);
 
 		if (hours > 0) {
-			return hours === 1 ? '1 hour' : `in ${hours} hours`;
+			return hours === 1 ? 'in 1 hour' : `in ${hours} hours`;
 		} else if (minutes > 0) {
-			return minutes === 1 ? '1 minute' : `in ${minutes} minutes`;
+			return minutes === 1 ? 'in 1 minute' : `in ${minutes} minutes`;
 		} else {
 			return 'in a few seconds';
 		}

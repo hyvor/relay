@@ -100,7 +100,7 @@ func (b *SendTransaction) FetchSend(queueId int) (*SendRow, []*RecipientRow, err
 			return nil, nil, fmt.Errorf("failed to scan recipient: %w", err)
 		}
 
-		if status == "queued" || status == "retrying" {
+		if status == "queued" || status == "deferred" {
 			recipients = append(recipients, &recipient)
 		}
 	}
