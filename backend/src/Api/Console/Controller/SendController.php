@@ -74,13 +74,6 @@ class SendController extends AbstractController
 
         // TODO: recipient count validation
 
-        // TODO: suppressions check
-        /*if ($this->suppressionService->isSuppressed($project, $sendEmailInput->getToAddresses()->getAddress())) {
-            throw new BadRequestException(
-                "Email address {$sendEmailInput->getToAddresses()->getAddress()} is suppressed"
-            );
-        }*/
-
         $queue = $project->getSendType() === ProjectSendType::TRANSACTIONAL ?
             $this->queueService->getTransactionalQueue() :
             $this->queueService->getDistributionalQueue();
@@ -170,12 +163,14 @@ class SendController extends AbstractController
         $attempts = $this->sendAttemptService->getSendAttemptsOfSend($send);
         $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
 
-        return $this->json(new SendObject(
-            $send,
-            attempts: $attempts,
-            feedback: $feedback,
-            content: true
-        ));
+        return $this->json(
+            new SendObject(
+                $send,
+                attempts: $attempts,
+                feedback: $feedback,
+                content: true
+            )
+        );
     }
 
     #[Route("/sends/uuid/{uuid}", requirements: ['uuid' => Requirement::UUID], methods: "GET")]
@@ -197,12 +192,14 @@ class SendController extends AbstractController
         $attempts = $this->sendAttemptService->getSendAttemptsOfSend($send);
         $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
 
-        return $this->json(new SendObject(
-            $send,
-            attempts: $attempts,
-            feedback: $feedback,
-            content: true
-        ));
+        return $this->json(
+            new SendObject(
+                $send,
+                attempts: $attempts,
+                feedback: $feedback,
+                content: true
+            )
+        );
     }
 
 }

@@ -6,7 +6,6 @@ use App\Entity\Domain;
 use App\Entity\Project;
 use App\Entity\Queue;
 use App\Entity\Send;
-use App\Entity\SendAttempt;
 use App\Entity\SendRecipient;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
@@ -27,7 +26,8 @@ class SendService
         private EntityManagerInterface $em,
         private EmailBuilder $emailBuilder,
         private SendRepository $sendRepository,
-        private EventDispatcherInterface $eventDispatcher
+        private EventDispatcherInterface $eventDispatcher,
+        private RecipientFactory $recipientFactory,
     ) {
     }
 
@@ -153,26 +153,14 @@ class SendService
 
         $this->em->persist($send);
 
-        foreach (
+        $this->recipientFactory->create(
+            $send,
             [
                 [SendRecipientType::TO, $to],
                 [SendRecipientType::CC, $cc],
                 [SendRecipientType::BCC, $bcc],
-            ]
-            as [$type, $recipients]
-        ) {
-            foreach ($recipients as $recipient) {
-                $sendRecipient = new SendRecipient();
-                $sendRecipient->setSend($send);
-                $sendRecipient->setStatus(SendRecipientStatus::QUEUED);
-                $sendRecipient->setAddress($recipient->getAddress());
-                $sendRecipient->setName($recipient->getName());
-                $sendRecipient->setType($type);
-
-                $send->addRecipient($sendRecipient);
-                $this->em->persist($sendRecipient);
-            }
-        }
+            ],
+        );
 
         $this->em->flush();
 
