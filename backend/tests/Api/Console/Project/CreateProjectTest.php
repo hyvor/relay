@@ -24,6 +24,7 @@ class CreateProjectTest extends WebTestCase
 
     public function test_create_project_valid(): void
     {
+        AuthFake::enableForSymfony($this->container, ['id' => 1]);
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
 
         $this->client->request(
