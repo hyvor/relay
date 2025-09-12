@@ -93,9 +93,7 @@ export interface SendRecipient {
     address: string;
     name: string;
     status: SendRecipientStatus;
-    accepted_at?: number | null;
-    bounced_at?: number | null;
-    failed_at?: number | null;
+    is_suppressed: boolean;
 }
 
 export interface SendAttempt {

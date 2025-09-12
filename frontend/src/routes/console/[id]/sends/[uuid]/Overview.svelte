@@ -60,7 +60,7 @@
 									<div class="name">{recipient.name}</div>
 								{/if}
 							</div>
-							<RecipientStatus status={recipient.status} />
+							<RecipientStatus {recipient} />
 						</div>
 					{/each}
 				</div>
