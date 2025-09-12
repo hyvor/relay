@@ -30,7 +30,18 @@
 				loading = false;
 			})
 			.catch((err) => {
-				toast.error('Failed to initialize sudo: ' + err.message);
+                if (err.code === 403) {
+                    if (err.message === 'You do not have sudo access.') {
+                        toast.error(err.message);
+                    } else {
+                        const toPage = page.url.searchParams.has('signup') ? 'signup' : 'login';
+                        const url = new URL(err.data[toPage + '_url'], location.origin);
+                        url.searchParams.set('redirect', location.href);
+                        location.href = url.toString();
+                    }
+                } else {
+                    toast.error('Failed to initialize sudo: ' + err.message);
+                }
 			});
 	});
 </script>
