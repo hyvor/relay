@@ -33,9 +33,7 @@ final class SendRecipientFactory extends PersistentProxyObjectFactory
             'address' => self::faker()->email(),
             'name' => self::faker()->name(),
             'status' => SendRecipientStatus::ACCEPTED,
-            'accepted_at' => null,
-            'bounced_at' => null,
-            'failed_at' => null,
+            'is_suppressed' => false,
         ];
     }
 

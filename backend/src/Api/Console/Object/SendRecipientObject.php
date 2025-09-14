@@ -14,10 +14,8 @@ class SendRecipientObject
     public string $address;
     public string $name;
     public SendRecipientStatus $status;
-    public ?int $accepted_at = null;
-    public ?int $bounced_at = null;
-    public ?int $failed_at = null;
     public int $try_count;
+    public bool $is_suppressed;
 
     public function __construct(SendRecipient $recipient)
     {
@@ -26,10 +24,8 @@ class SendRecipientObject
         $this->address = $recipient->getAddress();
         $this->name = $recipient->getName();
         $this->status = $recipient->getStatus();
-        $this->accepted_at = $recipient->getAcceptedAt()?->getTimestamp();
-        $this->bounced_at = $recipient->getBouncedAt()?->getTimestamp();
-        $this->failed_at = $recipient->getFailedAt()?->getTimestamp();
         $this->try_count = $recipient->getTryCount();
+        $this->is_suppressed = $recipient->getIsSuppressed();
     }
 
 }

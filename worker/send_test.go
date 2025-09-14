@@ -16,9 +16,9 @@ func TestSendEmail_Accepted(t *testing.T) {
 	originalSendEmailToHost := sendEmailToHost
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
-			Error:           nil,
-			SmtpErrorStatus: 0,
-			Steps:           []*SmtpStep{},
+			NetworkError: nil,
+			SmtpError:    nil,
+			Steps:        []*SmtpStep{},
 		}
 	}
 
@@ -54,9 +54,12 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 	originalSendEmailToHost := sendEmailToHost
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
-			Error:           nil,
-			SmtpErrorStatus: 500,
-			Steps:           []*SmtpStep{},
+			NetworkError: nil,
+			SmtpError: &SmtpError{
+				Code:    511,
+				Message: "User does not exist",
+			},
+			Steps: []*SmtpStep{},
 		}
 	}
 
@@ -92,9 +95,12 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 	originalSendEmailToHost := sendEmailToHost
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
-			Error:           nil,
-			SmtpErrorStatus: 451,
-			Steps:           []*SmtpStep{},
+			NetworkError: nil,
+			SmtpError: &SmtpError{
+				Code:    451,
+				Message: "Requested action aborted: local error in processing",
+			},
+			Steps: []*SmtpStep{},
 		}
 	}
 
@@ -131,9 +137,12 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 	originalSendEmailToHost := sendEmailToHost
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
-			Error:           nil,
-			SmtpErrorStatus: 451,
-			Steps:           []*SmtpStep{},
+			NetworkError: nil,
+			SmtpError: &SmtpError{
+				Code:    451,
+				Message: "Requested action aborted: local error in processing",
+			},
+			Steps: []*SmtpStep{},
 		}
 	}
 
@@ -169,9 +178,9 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 	originalSendEmailToHost := sendEmailToHost
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
-			Error:           context.DeadlineExceeded,
-			SmtpErrorStatus: 0,
-			Steps:           []*SmtpStep{},
+			NetworkError: context.DeadlineExceeded,
+			SmtpError:    nil,
+			Steps:        []*SmtpStep{},
 		}
 	}
 
@@ -207,9 +216,9 @@ func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 	originalSendEmailToHost := sendEmailToHost
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
-			Error:           context.DeadlineExceeded,
-			SmtpErrorStatus: 0,
-			Steps:           []*SmtpStep{},
+			NetworkError: context.DeadlineExceeded,
+			SmtpError:    nil,
+			Steps:        []*SmtpStep{},
 		}
 	}
 
@@ -321,8 +330,8 @@ func TestSendEmailToHost(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.NoError(t, convo.Error)
-	assert.Equal(t, 0, convo.SmtpErrorStatus)
+	assert.NoError(t, convo.NetworkError)
+	assert.Equal(t, nil, convo.SmtpError)
 	assert.Equal(t, 7, len(convo.Steps))
 
 }
@@ -369,8 +378,8 @@ func TestSendEmailFailedSmtpStatus(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.NoError(t, convo.Error)
-	assert.Equal(t, 451, convo.SmtpErrorStatus)
+	assert.NoError(t, convo.NetworkError)
+	assert.Equal(t, 451, convo.SmtpError.Code)
 
 }
 
@@ -382,7 +391,7 @@ func TestSend_JsonMarsh(t *testing.T) {
 	assert.Equal(t, `"150ms"`, string(data))
 
 	convo := &SmtpConversation{
-		Error: errors.New("some error"),
+		NetworkError: errors.New("some error"),
 	}
 	data, err = convo.MarshalJSON()
 	assert.NoError(t, err)

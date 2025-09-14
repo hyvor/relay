@@ -40,9 +40,9 @@ class WebhookEventListener
     ): void {
         $webhooks = $this->webhookService->getWebhooksForEvent($project, $eventType);
 
-//        if (count($webhooks) === 0) {
-//            return;
-//        }
+        if (count($webhooks) === 0) {
+            return;
+        }
 
         $objects = $objectFactory();
         if (!is_array($objects)) {
@@ -68,6 +68,7 @@ class WebhookEventListener
             SendAttemptStatus::ACCEPTED => WebhooksEventEnum::SEND_RECIPIENT_ACCEPTED,
             SendAttemptStatus::DEFERRED => WebhooksEventEnum::SEND_RECIPIENT_DEFERRED,
             SendAttemptStatus::BOUNCED => WebhooksEventEnum::SEND_RECIPIENT_BOUNCED,
+            SendAttemptStatus::FAILED => WebhooksEventEnum::SEND_RECIPIENT_FAILED,
         };
 
         $send = $attempt->getSend();

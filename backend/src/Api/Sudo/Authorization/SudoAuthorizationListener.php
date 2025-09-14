@@ -4,6 +4,7 @@ namespace App\Api\Sudo\Authorization;
 
 use Hyvor\Internal\Auth\AuthInterface;
 use Hyvor\Internal\Auth\AuthUser;
+use Hyvor\Internal\Bundle\Api\DataCarryingHttpException;
 use Hyvor\Internal\Sudo\SudoUserService;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\Request;

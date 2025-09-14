@@ -5,6 +5,7 @@
 	import IconHourglass from '@hyvor/icons/IconHourglass';
 	import IconSend from '@hyvor/icons/IconSend';
 	import IconChat from '@hyvor/icons/IconChat';
+	import IconSlashCircle from '@hyvor/icons/IconSlashCircle';
 
 	interface Props {
 		event: Event;
@@ -13,18 +14,14 @@
 
 	let { event, send }: Props = $props();
 
-	function getRecipientsOfDomain(domain: string): string[] {
-		const recipients = send.recipients
-			.filter((r) => {
-				const emailDomain = r.address.split('@')[1];
-				return emailDomain === domain;
-			})
+	function getAttemptRecipients(attempt: SendAttempt): string[] {
+		return send.recipients
+			.filter((r) => attempt.recipient_ids.includes(r.id))
 			.map((r) => r.address);
-		return recipients;
 	}
 
-	function getRecipientsOfDomainJoined(domain: string): string {
-		return getRecipientsOfDomain(domain).join(', ');
+	function getAttemptRecipientsJoined(attempt: SendAttempt): string {
+		return getAttemptRecipients(attempt).join(', ');
 	}
 
 	let { message, description, color } = $derived.by(() => {
@@ -35,6 +32,12 @@
 					description: null,
 					color: 'var(--gray)'
 				};
+			case 'suppressed':
+				return {
+					message: `Suppressed: <strong>${event.suppressed_recipients?.join(', ')}</strong>`,
+					description: null,
+					color: 'var(--red)'
+				};
 			case 'attempt':
 				return getAttemptMessage(event.attempt!);
 			case 'feedback':
@@ -44,19 +47,19 @@
 		function getAttemptMessage(attempt: SendAttempt) {
 			if (attempt.status === 'accepted') {
 				return {
-					message: `Accepted: <strong>${getRecipientsOfDomainJoined(attempt.domain)}</strong>`,
+					message: `Accepted: <strong>${getAttemptRecipientsJoined(attempt)}</strong>`,
 					description: null,
 					color: 'var(--green)'
 				};
 			} else if (attempt.status === 'deferred') {
 				return {
-					message: `Deferred (retrying later): <strong>${getRecipientsOfDomainJoined(attempt.domain)}</strong>`,
+					message: `Deferred, retrying later: <strong>${getAttemptRecipientsJoined(attempt)}</strong>`,
 					description: getAttemptDescription(),
 					color: 'var(--orange)'
 				};
 			} else {
 				return {
-					message: `Bounced: <strong>${getRecipientsOfDomainJoined(attempt.domain)}</strong>`,
+					message: `Bounced: <strong>${getAttemptRecipientsJoined(attempt)}</strong>`,
 					description: getAttemptDescription(),
 					color: 'var(--red)'
 				};
@@ -77,9 +80,9 @@
 					return null;
 				}
 
-				const lastStep = smtpConvo.Steps[smtpConvo.Steps.length - 1];
+				const lastStep = smtpConvo.steps[smtpConvo.steps.length - 1];
 
-				return `${lastStep.ReplyCode} ${lastStep.ReplyText}`;
+				return `${lastStep.reply_code} ${lastStep.reply_text}`;
 			}
 		}
 
@@ -108,6 +111,8 @@
 	<div class="icon">
 		{#if event.type === 'queued'}
 			<IconHourglass />
+		{:else if event.type === 'suppressed'}
+			<IconSlashCircle />
 		{:else if event.type === 'attempt'}
 			<IconSend />
 		{:else if event.type === 'feedback'}

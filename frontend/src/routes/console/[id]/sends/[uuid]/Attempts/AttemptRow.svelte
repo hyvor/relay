@@ -34,6 +34,8 @@
 				<Tag color="orange">Deferred</Tag>
 			{:else if attempt.status === 'bounced'}
 				<Tag color="red">Bounced</Tag>
+			{:else if attempt.status === 'failed'}
+				<Tag color="red">Failed</Tag>
 			{/if}
 		</div>
 		<div class="message">
@@ -47,8 +49,13 @@
 				<span class="info">Pending</span>
 			{/if}
 		</div>
-		<div class="time">
-			{dayjs.unix(attempt.created_at).format('MMM D, YYYY h:mm A')}
+		<div class="time-wrap">
+			<div class="time">
+				{dayjs.unix(attempt.created_at).format('MMM D, YYYY h:mm A')}
+			</div>
+			<div class="duration">
+				{attempt.duration_ms}ms
+			</div>
 		</div>
 	</div>
 
@@ -65,12 +72,12 @@
 			{/each}
 		</div>
 
-		{#if selectedConversation?.Error}
-			<div class="convo-error">Error: - {selectedConversation.Error}</div>
+		{#if selectedConversation?.network_error}
+			<div class="convo-error">Error: - {selectedConversation.network_error}</div>
 		{/if}
 
 		<div class="conversation">
-			{#if selectedConversation && selectedConversation.Steps.length}
+			{#if selectedConversation && selectedConversation.steps.length}
 				<SmtpConversation conversation={selectedConversation} />
 			{:else}
 				<div class="no-convo">No SMTP conversation available for this host.</div>
@@ -92,8 +99,13 @@
 		padding: 15px 25px;
 		border-bottom: 1px solid var(--border);
 	}
-	.time {
+	.time-wrap {
 		text-align: right;
+		font-size: 14px;
+	}
+	.duration {
+		color: var(--text-light);
+		font-size: 12px;
 	}
 	.message {
 		font-size: 14px;
@@ -112,9 +124,8 @@
 
 	.no-convo {
 		color: var(--text-light);
-		padding: 45px;
-		text-align: center;
-		font-size: 14px;
+		padding: 10px;
+		font-size: 12px;
 	}
 
 	.convo-error {

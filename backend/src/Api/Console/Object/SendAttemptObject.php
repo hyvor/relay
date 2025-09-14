@@ -25,6 +25,11 @@ class SendAttemptObject
      * @var array<string, mixed>
      */
     public array $smtp_conversations = [];
+    /**
+     * @var int[]
+     */
+    public array $recipient_ids = [];
+    public int $duration_ms;
     public ?string $error;
 
     public function __construct(SendAttempt $attempt)
@@ -37,6 +42,8 @@ class SendAttemptObject
         $this->resolved_mx_hosts = $attempt->getResolvedMxHosts();
         $this->responded_mx_host = $attempt->getRespondedMxHost();
         $this->smtp_conversations = $attempt->getSmtpConversations();
+        $this->recipient_ids = $attempt->getRecipientIds();
+        $this->duration_ms = $attempt->getDurationMs();
         $this->error = $attempt->getError();
     }
 
