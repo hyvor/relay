@@ -21,7 +21,7 @@ class LocalAuthorizationListener
 
     public function __invoke(ControllerEvent $event): void
     {
-        // only console API requests
+        // only local API requests
         if (!str_starts_with($event->getRequest()->getPathInfo(), '/api/local')) return;
         if ($this->env === 'dev') return;
 

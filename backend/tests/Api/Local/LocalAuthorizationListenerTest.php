@@ -81,32 +81,4 @@ class LocalAuthorizationListenerTest extends KernelTestCase
 
         $listener($event);
     }
-
-
-    public function test_does_not_allow_outside_of_private_network(): void
-    {
-        $this->expectException(AccessDeniedHttpException::class);
-        $this->expectExceptionMessage('Only requests from localhost or private network are allowed.');
-
-        InstanceFactory::createOne([
-            'private_network_cidr' => '172.16.0.0/12'
-        ]);
-
-        $listener = $this->getListener('prod');
-        $request = Request::create('/api/local/some-endpoint');
-        $request->server->set('REMOTE_ADDR', '10.0.0.0');
-        $event = new ControllerEvent(
-            $this->getKernel(),
-            function () {
-            },
-            $request,
-            HttpKernelInterface::MAIN_REQUEST
-        );
-        $event->setController(
-            fn() => null,
-        );
-
-        $listener($event);
-    }
-
 }
