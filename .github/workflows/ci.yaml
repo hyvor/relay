@@ -106,7 +106,13 @@ jobs:
           docker run \
           --network ci \
           worker-dev sh -c "
-          go test -v ./... -count=1 -p 1 -timeout 30s"
+          go test -v ./... -count=1 -p 1 -timeout 30s -coverprofile=coverage.txt"
+
+      - name: Upload results to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: hyvor/relay
 
   go-staticcheck:
     runs-on: ubuntu-latest
