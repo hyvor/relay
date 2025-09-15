@@ -60,7 +60,7 @@ class ServerTaskMessageHandler
                 'frankenphp'
             ]);
 
-            $process->run(function ($type, $buffer): void {
+            $process->run(function (string $type, string $buffer): void {
                 if ($type === Process::OUT) {
                     echo $buffer;
                 } else {

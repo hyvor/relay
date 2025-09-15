@@ -45,6 +45,7 @@ class GetProjectUsersTest extends WebTestCase
 
         $this->assertSame(200, $response->getStatusCode());
 
+        /** @var array<int, array{user: array{email: string}}> $json */
         $json = $this->getJson();
         $this->assertSame(2, count($json));
         $this->assertSame('nadil@test.com', $json[0]['user']['email']);

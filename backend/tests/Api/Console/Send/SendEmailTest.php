@@ -682,6 +682,7 @@ class SendEmailTest extends WebTestCase
         $this->assertIsInt($sendId);
 
         $send = $this->em->getRepository(Send::class)->find($sendId);
+        $this->assertNotNull($send);
         $recipients = $send->getRecipients();
 
         $this->assertCount(1, $recipients);
