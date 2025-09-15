@@ -9,9 +9,10 @@
 <h1>Setup</h1>
 
 <p>
-	Once Hyvor Relay is installed, visit <code>http://{'<server-ip>'}/sudo</code> to access Sudo, the
-	administration panel of Hyvor Relay. For fresh installations, the first user who logs in with OIDC
-	credentials becomes a sudo user.
+	Once Hyvor Relay is installed, visit <code>http://{'<server-ip>'}/sudo</code> to access Sudo,
+	the administration panel of Hyvor Relay. For fresh installations, the
+	<strong>first user who logs</strong> in with OIDC credentials
+	<strong>becomes a sudo user</strong>.
 </p>
 
 <p>Let's configure your instance for best email deliverability:</p>
