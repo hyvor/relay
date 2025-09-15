@@ -623,6 +623,36 @@ class SendEmailTest extends WebTestCase
         );
     }
 
+    public function test_more_than_20_recipients_fails(): void
+    {
+        QueueFactory::createTransactional();
+        $project = ProjectFactory::createOne();
+
+        DomainFactory::createOne([
+            "project" => $project,
+            "domain" => "hyvor.com",
+            'status' => DomainStatus::ACTIVE,
+        ]);
+
+        $to = [];
+        for ($i = 1; $i <= 21; $i++) {
+            $to[] = "test" . $i . "@example.com";
+        }
+
+        $this->consoleApi($project, "POST", "/sends", data: [
+            'from' => 'test@hyvor.com',
+            'to' => $to,
+            'body_text' => 'Test email',
+        ]);
+        $this->assertResponseStatusCodeSame(400);
+
+        $json = $this->getJson();
+        $this->assertSame(
+            "Total number of recipients (To, Cc, Bcc) exceeds the maximum allowed limit of 20.",
+            $json['message']
+        );
+    }
+
     public function test_fails_suppressed_emails(): void
     {
         QueueFactory::createTransactional();
