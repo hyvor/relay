@@ -26,6 +26,12 @@ class GoState
         public array $ips,
 
         /**
+         * The number of API workers.
+         * Sent to Go only for metrics
+         */
+        public int $apiWorkers,
+
+        /**
          * The number of workers for each IP address.
          */
         public int $emailWorkersPerIp,
@@ -56,8 +62,7 @@ class GoState
         public int $serversCount,
         public string $env,
         public string $version,
-    )
-    {
+    ) {
     }
 
 

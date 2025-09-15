@@ -29,7 +29,7 @@ class ServerTask
     private ServerTaskType $type;
 
     /**
-     * @var array<string, string>
+     * @var array<string, mixed>
      */
     #[ORM\Column(type: "json")]
     private array $payload;
@@ -89,11 +89,17 @@ class ServerTask
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getPayload(): array
     {
         return $this->payload;
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     */
     public function setPayload(array $payload): self
     {
         $this->payload = $payload;

@@ -52,7 +52,7 @@
 				dnsRecordsStore.update((records) => records.filter((r) => r.id !== record.id));
 			})
 			.catch((error) => {
-				toast.error('Failed to delete DNS record:', error);
+				toast.error('Failed to delete DNS record: ' + error.message);
 			})
 			.finally(() => {
 				confirmed.close();

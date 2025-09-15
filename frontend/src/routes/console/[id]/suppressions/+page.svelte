@@ -186,7 +186,7 @@
 	}
 
 	.content {
-		padding: 15px 30px;
+		padding: 0;
 		flex: 1;
 		overflow: auto;
 	}

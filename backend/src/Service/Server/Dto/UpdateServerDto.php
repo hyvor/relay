@@ -12,13 +12,6 @@ class UpdateServerDto
         }
     }
 
-    public ?string $privateIp {
-        set {
-            $this->privateIpSet = true;
-            $this->privateIp = $value;
-        }
-    }
-
     public int $apiWorkers {
         set {
             $this->apiWorkersSet = true;
@@ -48,7 +41,6 @@ class UpdateServerDto
     }
 
     private(set) bool $lastPingAtSet = false;
-    private(set) bool $privateIpSet = false;
     private(set) bool $apiWorkersSet = false;
     private(set) bool $emailWorkersSet = false;
     private(set) bool $webhookWorkersSet = false;

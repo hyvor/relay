@@ -1,6 +1,6 @@
 # Hyvor Relay
 
-[Hyvor Relay](https://relay.hyvor.com) is a self-hosted, open-source email API for developers. It is designed to be simple to self-host, easy to manage, and powerful enought to send millions of emails per day.
+[Hyvor Relay](https://relay.hyvor.com) is a self-hosted, open-source email API for developers. It uses SMTP to send emails using your own infrastructure. It is designed to be simple to self-host, easy to manage and observe, and powerful enough to send millions of daily emails.
 
 <p align="center">
   <a href="https://relay.hyvor.com">
@@ -25,21 +25,31 @@
 ## Features
 
 - **Self-Hosted**: Docker compose or swarm-based deployment.
+- **Health Checks**: Multiple health checks to ensure best performance and deliverability.
 - **Email API**: Send emails using a simple API.
-- **Logging**: View logs of sent emails with 30 days of retention.
-- **Multi-Tenancy**: Support for multiple tenants with scoped access.
+- **Logs & SMTP Conversations**: View send logs and SMTP conversations of sent emails up to 30 days.
+- **Multi-Tenancy**: Support for multiple tenants with scoped access (useful for organizations and agencies).
 - **Project Management**: Support for multiple isolated projects within a tenant.
-- **Queues**: Two queues for sending emails: transactional and distributional.
-- **Dedicated IPs**: Support for dedicated IPs users.
+- **Queues**: Two main queues to isolate transactional and distributional emails and IP reputation.
 - **Greylisting & Retries Handling**: Automatically manage greylisting and retries.
 - **Bounce Handling**: Automatically handle bounced emails.
-- **Feedback Loops**: Integrate with feedback loops to manage complaints.
+- **Feedback Loops**: Integrate with feedback loops to manage spam complaints.
 - **Suppressions**: Automatically manage email suppressions (bounces, unsubscribes, etc.).
 - **DNS Automation**: Delegate DNS to the in-built DNS server. No need to manage DNS records manually.
 - **Webhooks**: Receive HTTP callbacks for email events.
-- **Health Checks**: Monitor the health of the service in the dashboard.
 - **Easy scaling**: Add more servers and IP addresses as needed.
-- **Observability**: Prometheus metrics, Grafana dashboards, and Loki logs for monitoring.
+- **Observability**: Prometheus metrics, Grafana dashboards, and logs for monitoring.
+<!-- - **Dedicated IPs**: Support for dedicated IPs users. (coming soon) -->
+
+## Screenshots
+
+The sudo dashboard for admins:
+
+![Sudo Dashboard](/meta/assets/screenshot-sudo.png)
+
+The console for users (viewing send logs and SMTP conversations):
+
+![User Console](/meta/assets/screenshot-console.png)
 
 ## Architecture
 
@@ -58,18 +68,20 @@
 
 Visit [hyvor/dev](https://github.com/hyvor/dev) to set up the HYVOR development environment. Then, run `./run relay` to start Hyvor Relay at `https://relay.hyvor.localhost`.
 
+Directory structure:
+
 - `/backend`: Symfony API backend
 - `/frontend`: SvelteKit frontend
 - `/worker`: Go services (single binary)
 
 Even though it is written for AI agents, [AGENTS.md](https://github.com/hyvor/relay/blob/main/AGENTS.md) contains useful information on the project structure and development practices.
 
-<!-- ## Performance
-
-TODO -->
+<!-- ## Performance TODO -->
 
 ## License
 
-Hyvor Relay is licensed under the [AGPL-3.0 License](https://github.com/hyvor/relay/blob/main/LICENSE). AGPLv3 requires you to share the source code of your modifications if you run the software on a server and allow others to use it. For other use cases where you cannot use AGPLv3, contact HYVOR for an [Enterprise License](https://hyvor.com/enterprise).
+Hyvor Relay is licensed under the [AGPL-3.0 License](https://github.com/hyvor/relay/blob/main/LICENSE). For use cases that cannot comply with AGPLv3, contact HYVOR for an [Enterprise License](https://hyvor.com/enterprise).
 
-Copyright © HYVOR. HYVOR name and logo are trademarks of HYVOR.
+![HYVOR Banner](https://raw.githubusercontent.com/hyvor/relay/refs/heads/main/meta/assets/hyvor-banner.svg)
+
+Copyright © HYVOR. HYVOR name and logo are trademarks of HYVOR, SARL.

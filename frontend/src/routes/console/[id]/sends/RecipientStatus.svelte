@@ -1,16 +1,16 @@
 <script lang="ts">
 	import { Tag } from '@hyvor/design/components';
-	import type { SendRecipientStatus } from '../../types';
+	import type { SendRecipient } from '../../types';
 
 	interface Props {
-		status: SendRecipientStatus;
+		recipient: SendRecipient;
 		num?: number; // optionally show a number of recipients (RecipientStatuses)
 	}
 
-	let { status, num }: Props = $props();
+	let { recipient, num }: Props = $props();
 
 	let { color, text } = $derived.by(() => {
-		switch (status) {
+		switch (recipient.status) {
 			case 'accepted':
 				return { color: 'green', text: 'Accepted' };
 			case 'bounced':
@@ -19,10 +19,13 @@
 				return { color: 'red', text: 'Complained' };
 			case 'queued':
 				return { color: 'default', text: 'Queued' };
-			case 'retrying':
-				return { color: 'orange', text: 'Retrying' };
+			case 'deferred':
+				return { color: 'orange', text: 'Deferred' };
 			case 'failed':
-				return { color: 'red', text: 'Failed' };
+				return {
+					color: 'red',
+					text: recipient.is_suppressed ? 'Failed (Suppressed)' : 'Failed'
+				};
 		}
 	});
 </script>

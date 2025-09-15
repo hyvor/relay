@@ -101,7 +101,8 @@ func webhookWorker(
 	metrics *Metrics,
 ) {
 	defer wg.Done()
-	logger.Info("Webhook worker started", "id", id)
+
+	logger.Debug("Webhook worker started", "id", id)
 
 	conn, err := NewRetryingDbConn(ctx, dbConfig, logger)
 	if err != nil {

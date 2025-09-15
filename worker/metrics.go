@@ -1,13 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"log/slog"
+	"net"
 	"net/http"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/common/expfmt"
 )
 
 type MetricsServer struct {
@@ -34,11 +36,17 @@ type Metrics struct {
 	// Server (worker) metrics ====
 	emailSendAttemptsTotal       *prometheus.CounterVec
 	emailDeliveryDurationSeconds *prometheus.HistogramVec
+	workersApiTotal              prometheus.Gauge
 	workersEmailTotal            prometheus.Gauge
 	workersWebhookTotal          prometheus.Gauge
+	workersIncomingTotal         prometheus.Gauge
 	webhookDeliveriesTotal       *prometheus.CounterVec
 	incomingEmailsTotal          *prometheus.CounterVec
 	dnsQueriesTotal              *prometheus.CounterVec
+}
+
+type SymfonyMetricsResponse struct {
+	Metrics string `json:"metrics"`
 }
 
 func NewMetricsServer(ctx context.Context, logger *slog.Logger) *MetricsServer {
@@ -55,6 +63,8 @@ func NewMetricsServer(ctx context.Context, logger *slog.Logger) *MetricsServer {
 	return metrics
 
 }
+
+// NOTE: Make sure to update docs in MetricsTable.svelte when updating metrics
 
 func newMetrics() *Metrics {
 	return &Metrics{
@@ -112,6 +122,12 @@ func newMetrics() *Metrics {
 			},
 			[]string{"queue_name", "ip"},
 		),
+		workersApiTotal: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Name: "workers_api_total",
+				Help: "Total number of API workers",
+			},
+		),
 		workersEmailTotal: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Name: "workers_email_total",
@@ -122,6 +138,12 @@ func newMetrics() *Metrics {
 			prometheus.GaugeOpts{
 				Name: "workers_webhook_total",
 				Help: "Total number of webhook workers",
+			},
+		),
+		workersIncomingTotal: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Name: "workers_incoming_mail_total",
+				Help: "Total number of incoming mail workers",
 			},
 		),
 		webhookDeliveriesTotal: prometheus.NewCounterVec(
@@ -151,6 +173,8 @@ func newMetrics() *Metrics {
 	}
 }
 
+var metricsPort = ":9667"
+
 func (server *MetricsServer) Set(goState GoState) {
 
 	server.isLeader = goState.IsLeader
@@ -164,14 +188,16 @@ func (server *MetricsServer) Set(goState GoState) {
 	server.registry.Unregister(server.metrics.serversTotal)
 	server.registry.Unregister(server.metrics.emailSendAttemptsTotal)
 	server.registry.Unregister(server.metrics.emailDeliveryDurationSeconds)
+	server.registry.Unregister(server.metrics.workersApiTotal)
 	server.registry.Unregister(server.metrics.workersEmailTotal)
 	server.registry.Unregister(server.metrics.workersWebhookTotal)
+	server.registry.Unregister(server.metrics.workersIncomingTotal)
 	server.registry.Unregister(server.metrics.webhookDeliveriesTotal)
 	server.registry.Unregister(server.metrics.incomingEmailsTotal)
 	server.registry.Unregister(server.metrics.dnsQueriesTotal)
 
 	// register global metrics if the current server is the leader
-	if goState.IsLeader {
+	if server.isLeader {
 		server.registry.MustRegister(
 			server.metrics.relayInfo,
 			server.metrics.emailQueueSize,
@@ -184,8 +210,10 @@ func (server *MetricsServer) Set(goState GoState) {
 	// register all server metrics
 	server.registry.MustRegister(server.metrics.emailSendAttemptsTotal)
 	server.registry.MustRegister(server.metrics.emailDeliveryDurationSeconds)
+	server.registry.MustRegister(server.metrics.workersApiTotal)
 	server.registry.MustRegister(server.metrics.workersEmailTotal)
 	server.registry.MustRegister(server.metrics.workersWebhookTotal)
+	server.registry.MustRegister(server.metrics.workersIncomingTotal)
 	server.registry.MustRegister(server.metrics.webhookDeliveriesTotal)
 	server.registry.MustRegister(server.metrics.incomingEmailsTotal)
 	server.registry.MustRegister(server.metrics.dnsQueriesTotal)
@@ -196,8 +224,10 @@ func (server *MetricsServer) Set(goState GoState) {
 		goState.Env,
 		goState.InstanceDomain,
 	).Set(1)
+	server.metrics.workersApiTotal.Set(float64(goState.ApiWorkers))
 	server.metrics.workersEmailTotal.Set(float64(len(goState.Ips) * goState.EmailWorkersPerIp))
 	server.metrics.workersWebhookTotal.Set(float64(goState.WebhookWorkers))
+	server.metrics.workersIncomingTotal.Set(float64(goState.IncomingWorkers))
 	server.metrics.serversTotal.Set(float64(goState.ServersCount))
 
 	if !server.serverStarted {
@@ -205,15 +235,14 @@ func (server *MetricsServer) Set(goState GoState) {
 
 		go func() {
 
-			handler := promhttp.HandlerFor(server.registry, promhttp.HandlerOpts{})
-
 			mux := http.NewServeMux()
+			handler := server.metricsHandler()
 			mux.Handle("/", handler)
 			mux.Handle("/metrics", handler)
 
-			server.logger.Info("Starting metrics server on :9667")
+			server.logger.Info("Starting metrics server at " + metricsPort)
 
-			if err := http.ListenAndServe(":9667", mux); err != nil {
+			if err := http.ListenAndServe(metricsPort, mux); err != nil {
 				server.logger.Error("Failed to start metrics server", "error", err)
 			}
 
@@ -221,7 +250,7 @@ func (server *MetricsServer) Set(goState GoState) {
 
 		go func() {
 			<-server.ctx.Done()
-			server.logger.Info("Shutting down metrics server")
+			server.logger.Info("Metrics server stopping")
 		}()
 	}
 
@@ -229,8 +258,80 @@ func (server *MetricsServer) Set(goState GoState) {
 
 }
 
+func (server *MetricsServer) metricsHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var buf bytes.Buffer
+		var metricsResp SymfonyMetricsResponse
+
+		if !isPrivateIp(r) {
+			http.Error(w, "Forbidden: IP not allowed", http.StatusForbidden)
+			return
+		}
+
+		mfs, _ := server.registry.Gather()
+		enc := expfmt.NewEncoder(&buf, expfmt.NewFormat(expfmt.TypeTextPlain))
+		for _, mf := range mfs {
+			enc.Encode(mf)
+		}
+
+		err := CallLocalApi(server.ctx, "GET", "/metrics", nil, &metricsResp)
+		if err != nil {
+			server.logger.Error("failed to fetch Symfony metrics", "error", err)
+		} else {
+			buf.WriteString(metricsResp.Metrics)
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write(buf.Bytes())
+	}
+}
+
+func isPrivateIp(r *http.Request) bool {
+	privateRanges := []string{
+		"10.0.0.0/8",
+		"172.16.0.0/12",
+		"192.168.0.0/16",
+		"100.64.0.0/10", // CGNAT
+	}
+
+	if r == nil {
+		return false
+	}
+
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		ip = r.RemoteAddr
+	}
+
+	if ip == "" {
+		return false
+	}
+
+	if ip == "127.0.0.1" || ip == "::1" {
+		return true
+	}
+
+	parsedIP := net.ParseIP(ip)
+	if parsedIP == nil {
+		return false
+	}
+
+	for _, cidr := range privateRanges {
+		_, subnet, _ := net.ParseCIDR(cidr)
+		if subnet.Contains(parsedIP) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // stops and restarts the global metrics updater
 func (server *MetricsServer) StartGlobalMetricsUpdater() {
+
+	if !server.isLeader {
+		return
+	}
 
 	if server.cancelGlobalMetricsUpdater != nil {
 		server.cancelGlobalMetricsUpdater()
@@ -238,10 +339,6 @@ func (server *MetricsServer) StartGlobalMetricsUpdater() {
 
 	ctx, cancel := context.WithCancel(server.ctx)
 	server.cancelGlobalMetricsUpdater = cancel
-
-	if !server.isLeader {
-		return
-	}
 
 	go func() {
 		for {
@@ -259,7 +356,7 @@ func (server *MetricsServer) StartGlobalMetricsUpdater() {
 
 func (server *MetricsServer) updateGlobalMetrics() {
 
-	server.logger.Info("Starting to update global metrics")
+	server.logger.Debug("Starting to update global metrics")
 
 	conn, err := NewDbConn(LoadDBConfig())
 
@@ -290,12 +387,11 @@ func (server *MetricsServer) updateGlobalMetrics() {
 
 	// email queue size
 	rows, err := conn.Query(`
-		SELECT count(sends.id), queues.name
+		SELECT count(sends.id), queue_name
 		FROM sends
-		INNER JOIN queues ON sends.queue_id = queues.id
-		WHERE sends.status = 'queued'
-		AND sends.send_after < NOW()
-		GROUP BY queues.name
+		WHERE queued = true
+		AND send_after < NOW()
+		GROUP BY queue_name
 	`)
 
 	if err != nil {

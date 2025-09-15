@@ -16,7 +16,7 @@ final class Version20250613150000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql("CREATE TYPE send_attempt_status AS ENUM ('accepted', 'deferred', 'bounced')");
+        $this->addSql("CREATE TYPE send_attempt_status AS ENUM ('accepted', 'deferred', 'bounced', 'failed')");
 
         $this->addSql(
             <<<SQL
@@ -32,14 +32,14 @@ final class Version20250613150000 extends AbstractMigration
                 resolved_mx_hosts jsonb NOT NULL,
                 responded_mx_host text,
                 smtp_conversations jsonb NOT NULL,
+                recipient_ids jsonb NOT NULL,
+                duration_ms INT NOT NULL,
                 error text
             )
             SQL
         );
 
-        $this->addSql(
-            "CREATE INDEX idx_send_attempts_send_id ON send_attempts (send_id)"
-        );
+        $this->addSql("CREATE INDEX idx_send_attempts_send_id ON send_attempts (send_id)");
     }
 
     public function down(Schema $schema): void

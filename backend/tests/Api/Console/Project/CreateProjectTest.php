@@ -8,6 +8,7 @@ use App\Entity\Project;
 use App\Entity\Type\ProjectSendType;
 use App\Service\Project\ProjectService;
 use App\Tests\Case\WebTestCase;
+use Hyvor\Internal\Auth\AuthFake;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\BrowserKit\Cookie;
 
@@ -16,8 +17,14 @@ use Symfony\Component\BrowserKit\Cookie;
 #[CoversClass(ProjectObject::class)]
 class CreateProjectTest extends WebTestCase
 {
+    protected function shouldEnableAuthFake(): bool
+    {
+        return false;
+    }
+
     public function test_create_project_valid(): void
     {
+        AuthFake::enableForSymfony($this->container, ['id' => 1]);
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
 
         $this->client->request(
@@ -37,6 +44,9 @@ class CreateProjectTest extends WebTestCase
         $project = $json['project'];
         $scopes = $json['scopes'];
 
+        $this->assertIsArray($project);
+        $this->assertIsArray($scopes);
+
         $this->assertArrayHasKey('id', $project);
         $this->assertArrayHasKey('created_at', $project);
         $this->assertArrayHasKey('name', $project);
@@ -46,5 +56,26 @@ class CreateProjectTest extends WebTestCase
         $this->assertNotNull($projectDb);
         $this->assertSame('Valid Project Name', $projectDb->getName());
         $this->assertSame(ProjectSendType::TRANSACTIONAL, $projectDb->getSendType());
+    }
+
+    public function test_disallow_project_creation_for_non_sudo_users(): void
+    {
+        AuthFake::enableForSymfony($this->container, ['id' => 99]);
+        $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
+
+        $this->client->request(
+            "POST",
+            "/api/console/project",
+            [
+                'name' => 'Valid Project Name',
+                'send_type' => 'transactional',
+            ],
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+
+        $json = $this->getJson();
+        $this->assertArrayHasKey('message', $json);
+        $this->assertSame('Currently not available for public usage.', $json['message']);
     }
 }

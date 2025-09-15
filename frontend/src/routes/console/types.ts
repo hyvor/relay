@@ -50,11 +50,11 @@ export type Scope =
 
 export interface ProjectUser {
     id: number;
-	created_at: number;
+    created_at: number;
     scopes: Scope[];
     project: Project;
-	user: ProjectUserMiniObject;
-	oidc_sub: string | null;
+    user: ProjectUserMiniObject;
+    oidc_sub: string | null;
 }
 
 export type Project = {
@@ -77,13 +77,15 @@ export type Send = {
     body_text: string | null;
     raw: string;
     size_bytes: number;
+    queued: boolean;
+    send_after: number;
 
     recipients: SendRecipient[];
     attempts: SendAttempt[];
     feedback: SendFeedback[];
 }
 
-export type SendRecipientStatus = 'queued' | 'accepted' | 'retrying' | 'bounced' | 'failed' | 'complained';
+export type SendRecipientStatus = 'queued' | 'accepted' | 'deferred' | 'bounced' | 'failed' | 'complained';
 
 export interface SendRecipient {
     id: number;
@@ -91,19 +93,19 @@ export interface SendRecipient {
     address: string;
     name: string;
     status: SendRecipientStatus;
-    accepted_at?: number | null;
-    bounced_at?: number | null;
-    failed_at?: number | null;
+    is_suppressed: boolean;
 }
 
 export interface SendAttempt {
     created_at: number;
-    status: 'accepted' | 'deferred' | 'bounced';
+    status: 'accepted' | 'deferred' | 'bounced' | 'failed';
     try_count: number;
     domain: string;
     resolved_mx_hosts: string[];
-    accepted_mx_host: string | null;
+    responded_mx_host: string | null;
     smtp_conversations: Record<string, SmtpConversation>;
+    recipient_ids: number[];
+    duration_ms: number;
     error: string | null;
 }
 
@@ -116,18 +118,21 @@ export interface SendFeedback {
 }
 
 export interface SmtpConversation {
-    StartTime: string;
-    Error: string; // empty if no error
-    SmtpErrorStatus: number;
-    Steps: SmtpStep[];
+    start_time: string;
+    network_error: string; // empty if no error
+    smtp_error: {
+        code: number;
+        message: string;
+    } | null;
+    steps: SmtpStep[];
 }
 
 export interface SmtpStep {
-    Name: 'dial' | 'helo' | 'mail' | 'rcpt' | 'data' | 'data_close' | 'quit';
-    Duration: string;
-    Command: string;
-    ReplyCode: number
-    ReplyText: string;
+    name: 'dial' | 'helo' | 'mail' | 'rcpt' | 'data' | 'data_close' | 'quit';
+    duration: string;
+    command: string;
+    reply_code: number
+    reply_text: string;
 }
 
 export type ApiKey = {
@@ -188,10 +193,10 @@ export interface AnalyticsStats {
 }
 
 export interface ProjectUserMiniObject {
-	id: number;
-	name: string;
-	email: string;
-	username: string | null;
-	picture_url: string | null;
-	oidc_sub: string | null;
+    id: number;
+    name: string;
+    email: string;
+    username: string | null;
+    picture_url: string | null;
+    oidc_sub: string | null;
 }

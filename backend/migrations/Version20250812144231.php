@@ -19,7 +19,7 @@ final class Version20250812144231 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql("CREATE TYPE task_enum AS ENUM ('update_state')");
+        $this->addSql("CREATE TYPE server_task_type AS ENUM ('update_state')");
 
         $this->addSql(
             <<<SQL
@@ -29,11 +29,13 @@ final class Version20250812144231 extends AbstractMigration
           created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
           updated_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
           server_id BIGINT NOT NULL references servers(id) ON DELETE CASCADE,
-          type task_enum,
+          type server_task_type,
           payload JSONB
         );
         SQL
         );
+
+        $this->addSql("CREATE INDEX idx_server_tasks_server_id ON server_tasks (server_id)");
     }
 
     public function down(Schema $schema): void

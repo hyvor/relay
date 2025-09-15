@@ -2,16 +2,16 @@
 
 namespace App\Service\Management\MessageHandler;
 
+use App\Entity\ServerTask;
 use App\Entity\Type\ServerTaskType;
+use App\Service\Go\GoHttpApi;
 use App\Service\Management\GoState\GoStateFactory;
-use App\Service\Management\Message\PingMessage;
 use App\Service\Management\Message\ServerTaskMessage;
-use App\Service\PrivateNetwork\GoHttpApi;
-use App\Service\Server\Dto\UpdateServerDto;
 use App\Service\Server\ServerService;
-use App\Service\Server\ServerTaskService;
+use App\Service\ServerTask\ServerTaskService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Process\Process;
 
 #[AsMessageHandler]
 class ServerTaskMessageHandler
@@ -23,8 +23,7 @@ class ServerTaskMessageHandler
         private LoggerInterface $logger,
         private GoHttpApi $goHttpApi,
         private GoStateFactory $goStateFactory,
-    )
-    {
+    ) {
     }
 
     public function __invoke(ServerTaskMessage $message): void
@@ -41,10 +40,35 @@ class ServerTaskMessageHandler
         $tasks = $this->serverTaskService->getTaskForServer($server);
 
         foreach ($tasks as $task) {
-            if ($task->getType() == ServerTaskType::UPDATE_STATE)
-                $this->goHttpApi->updateState($this->goStateFactory->create());
+            // @phpstan-ignore-next-line
+            if ($task->getType() === ServerTaskType::UPDATE_STATE) {
+                $this->handleUpdateStateTask($task);
+            }
+
             $this->serverTaskService->deleteTask($task);
         }
     }
 
+    private function handleUpdateStateTask(ServerTask $task): void
+    {
+        $payload = $task->getPayload();
+
+        if ($payload['api_workers_updated']) {
+            $process = new Process([
+                'supervisorctl',
+                'restart',
+                'frankenphp'
+            ]);
+
+            $process->run(function (string $type, string $buffer): void {
+                if ($type === Process::OUT) {
+                    echo $buffer;
+                } else {
+                    fwrite(STDERR, $buffer);
+                }
+            });
+        }
+
+        $this->goHttpApi->updateState($this->goStateFactory->create());
+    }
 }

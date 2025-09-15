@@ -11,7 +11,6 @@ import (
 
 	"github.com/emersion/go-sasl"
 	smtp "github.com/emersion/go-smtp"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Inconming server is a simple SMTP server that handles incoming emails to the instance domain emails.
@@ -113,7 +112,6 @@ type IncomingMailServer struct {
 
 	smtpServer *smtp.Server
 	cancelFunc context.CancelFunc
-	pgpool     *pgxpool.Pool
 }
 
 func NewIncomingMailServer(ctx context.Context, logger *slog.Logger, metrics *Metrics) *IncomingMailServer {
@@ -125,12 +123,10 @@ func NewIncomingMailServer(ctx context.Context, logger *slog.Logger, metrics *Me
 }
 
 func (server *IncomingMailServer) Set(instanceDomain string, numWorkers int) {
-	server.logger.Info("Bounce server initializing...")
-
 	server.Shutdown()
 
 	go func() {
-		server.Start(server.ctx, instanceDomain, numWorkers)
+		server.Start(instanceDomain, numWorkers)
 	}()
 
 	go func() {
@@ -160,21 +156,15 @@ func (server *IncomingMailServer) Shutdown() {
 
 }
 
-func (server *IncomingMailServer) Start(ctx context.Context, instanceDomain string, numWorkers int) {
+var smtpServerPort = ":25"
+
+func (server *IncomingMailServer) Start(instanceDomain string, numWorkers int) {
 
 	// channel
 	mailChannel := make(chan *IncomingMail)
 
-	// pgppool
-	pgpool, err := createNewRetryingPgPool(ctx, LoadDBConfig(), 1, int32(numWorkers))
-	if err != nil {
-		server.logger.Error("Failed to create pgpool", "error", err)
-		return
-	}
-	server.pgpool = pgpool
-
 	// worker context
-	workerCtx, cancel := context.WithCancel(ctx)
+	workerCtx, cancel := context.WithCancel(server.ctx)
 	server.cancelFunc = cancel
 	defer cancel()
 
@@ -187,17 +177,17 @@ func (server *IncomingMailServer) Start(ctx context.Context, instanceDomain stri
 	for i := 0; i < numWorkers; i++ {
 		go incomingMailWorker(
 			workerCtx,
+			i,
 			server.logger,
 			server.metrics,
 			mailChannel,
-			pgpool,
 		)
 	}
 
 	smtpServer := smtp.NewServer(be)
 
-	smtpServer.Addr = "0.0.0.0:25"
-	smtpServer.Domain = "localhost"
+	smtpServer.Addr = "0.0.0.0" + smtpServerPort
+	smtpServer.Domain = instanceDomain
 	smtpServer.WriteTimeout = 10 * time.Second
 	smtpServer.ReadTimeout = 10 * time.Second
 	smtpServer.MaxMessageBytes = 1024 * 1024
@@ -206,8 +196,8 @@ func (server *IncomingMailServer) Start(ctx context.Context, instanceDomain stri
 
 	server.smtpServer = smtpServer
 
-	server.logger.Info("Starting Bounce server at", "addr", smtpServer.Addr)
+	server.logger.Info("Starting incoming mail server at " + smtpServer.Addr)
 	if err := smtpServer.ListenAndServe(); err != nil {
-		server.logger.Error("Failed to start Bounce server", "error", err)
+		server.logger.Error("Failed to start incoming mail server", "error", err)
 	}
 }

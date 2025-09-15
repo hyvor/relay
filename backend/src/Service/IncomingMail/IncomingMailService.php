@@ -2,16 +2,21 @@
 
 namespace App\Service\IncomingMail;
 
+use App\Api\Console\Object\BounceObject;
+use App\Api\Console\Object\ComplaintObject;
 use App\Api\Local\Input\ArfInput;
 use App\Api\Local\Input\DsnInput;
 use App\Entity\DebugIncomingEmail;
 use App\Entity\Type\SendFeedbackType;
 use App\Entity\Type\SuppressionReason;
+use App\Service\IncomingMail\Event\IncomingBounceEvent;
+use App\Service\IncomingMail\Event\IncomingComplaintEvent;
 use App\Service\Send\SendService;
 use App\Service\SendFeedback\SendFeedbackService;
 use App\Service\SendRecipient\SendRecipientService;
 use App\Service\Suppression\SuppressionService;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class IncomingMailService
 {
@@ -21,6 +26,7 @@ class IncomingMailService
         private SendRecipientService $sendRecipientService,
         private SendFeedbackService $sendFeedbackService,
         private LoggerInterface $logger,
+        private EventDispatcherInterface $ed
     ) {
     }
 
@@ -28,9 +34,7 @@ class IncomingMailService
         string $bounceUuid,
         DsnInput $dsnInput,
         DebugIncomingEmail $debugIncomingEmail,
-    ): void
-    {
-
+    ): void {
         $recipients = $dsnInput->Recipients;
 
         if (count($recipients) === 0) {
@@ -73,7 +77,7 @@ class IncomingMailService
                 return;
             }
 
-            $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($recipient->EmailAddress);
+            $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $recipient->EmailAddress);
             if ($sendRecipient === null) {
                 $this->logger->error('Failed to get send recipient by email', [
                     'uuid' => $bounceUuid,
@@ -94,14 +98,16 @@ class IncomingMailService
                 $sendRecipient,
                 $debugIncomingEmail
             );
+
+            $bounceObject = new BounceObject($dsnInput->ReadableText, $recipient->Status);
+            $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient, $bounceObject));
         }
     }
 
     public function handleIncomingComplaint(
         ArfInput $arfInput,
         DebugIncomingEmail $debugIncomingEmail,
-    ): void
-    {
+    ): void {
         $parts = explode('@', $arfInput->MessageId);
 
         if (count($parts) < 2) {
@@ -121,7 +127,7 @@ class IncomingMailService
             return;
         }
 
-        $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($arfInput->OriginalRcptTo);
+        $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $arfInput->OriginalRcptTo);
         if ($sendRecipient === null) {
             $this->logger->error('Failed to get send recipient by email', [
                 'uuid' => $uuid,
@@ -138,9 +144,12 @@ class IncomingMailService
         );
 
         $this->sendFeedbackService->createSendFeedback(
-            SendFeedbackType::BOUNCE,
+            SendFeedbackType::COMPLAINT,
             $sendRecipient,
             $debugIncomingEmail
         );
+
+        $complaintObject = new ComplaintObject($arfInput->ReadableText, $arfInput->FeedbackType);
+        $this->ed->dispatch(new IncomingComplaintEvent($send, $sendRecipient, $complaintObject));
     }
 }

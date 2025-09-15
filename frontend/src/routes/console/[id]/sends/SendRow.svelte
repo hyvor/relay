@@ -3,7 +3,6 @@
 	import RelativeTime from '../../@components/content/RelativeTime.svelte';
 	import { consoleUrlProject } from '../../lib/consoleUrl';
 	import { Tag } from '@hyvor/design/components';
-	import RecipientStatuses from './RecipientStatuses.svelte';
 	import { getSortedRecipients } from './[uuid]/recipients';
 	import RecipientStatus from './RecipientStatus.svelte';
 
@@ -48,7 +47,7 @@
 						<div class="r-name">{recipient.name}</div>
 					{/if}
 				</div>
-				<RecipientStatus status={recipient.status} />
+				<RecipientStatus {recipient} />
 			</div>
 		{/each}
 
@@ -72,14 +71,6 @@
 	</div>
 
 	<div class="subject">{send.subject}</div>
-
-	<!-- <div class="status-wrap">
-		<RecipientStatuses recipients={send.recipients} />
-
-		<div class="time">
-			Sent <RelativeTime unix={send.created_at} />
-		</div>
-	</div> -->
 </a>
 
 <style>

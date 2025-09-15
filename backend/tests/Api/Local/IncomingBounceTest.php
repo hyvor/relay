@@ -16,6 +16,7 @@ use App\Service\IncomingMail\IncomingMailService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\SendFactory;
+use App\Tests\Factory\SendRecipientFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(LocalController::class)]
@@ -32,6 +33,8 @@ class IncomingBounceTest extends WebTestCase
         $send = SendFactory::createOne([
             'project' => $project
         ]);
+        SendRecipientFactory::createOne(['send' => $send, 'address' => 'nadil@hyvor.com']);
+        SendRecipientFactory::createOne(['send' => $send, 'address' => 'supun@hyvor.com']);
 
         $response = $this->localApi(
             'POST',

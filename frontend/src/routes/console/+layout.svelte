@@ -70,6 +70,7 @@
 	{:else}
 		<HyvorBar
 			product="core"
+			logo="/img/logo.svg"
 			instance={getAppConfig().hyvor.instance}
 			config={{ name: 'Hyvor Relay' }}
 			cloud={getAppConfig().hosting === 'cloud'}

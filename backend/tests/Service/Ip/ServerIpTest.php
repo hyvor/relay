@@ -31,9 +31,6 @@ class ServerIpTest extends TestCase
             ],
             $addresses
         );
-
-        $privateIp = $ipService->getPrivateIp();
-        $this->assertSame('10.0.0.5', $privateIp);
     }
 
     /**
@@ -47,6 +44,7 @@ class ServerIpTest extends TestCase
             '192.168.1.1',
             '172.20.5.4',
             '10.0.0.5',
+            '100.78.45.84', // CGNAT
 
             // ipV6
             '2401:fa00:0000:0000:0000:0000:abcd:5678',

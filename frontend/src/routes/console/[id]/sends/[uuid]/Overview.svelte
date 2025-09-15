@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { DetailCards, DetailCard, Tag, IconMessage } from '@hyvor/design/components';
+	import { DetailCard, Tag } from '@hyvor/design/components';
 	import type { Send } from '../../../types';
-	import SendStatus from '../RecipientStatuses.svelte';
 	import RelativeTime from '../../../@components/content/RelativeTime.svelte';
-	import AttemptRow from './AttemptRow.svelte';
 	import RecipientStatus from '../RecipientStatus.svelte';
 	import { getSortedRecipients } from './recipients';
 	import byteFormatter from '$lib/byteFormatter';
 	import Events from './Events/Events.svelte';
+	import Attempts from './Attempts/Attempts.svelte';
+	import QueuedCallout from './QueuedCallout.svelte';
 
 	let { send }: { send: Send } = $props();
 
@@ -28,6 +28,10 @@
 </script>
 
 <div class="basics">
+	{#if send.queued}
+		<QueuedCallout after={send.send_after} {recipients} />
+	{/if}
+
 	<div class="grid">
 		<DetailCard label="From" content={send.from_address} />
 
@@ -56,7 +60,7 @@
 									<div class="name">{recipient.name}</div>
 								{/if}
 							</div>
-							<RecipientStatus status={recipient.status} />
+							<RecipientStatus {recipient} />
 						</div>
 					{/each}
 				</div>
@@ -69,6 +73,10 @@
 
 <div class="events">
 	<Events {send} />
+</div>
+
+<div class="attempts">
+	<Attempts {send} />
 </div>
 
 <style>

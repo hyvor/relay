@@ -9,7 +9,6 @@ class ServerObject
     public int $id;
     public int $created_at;
     public string $hostname;
-    public ?string $private_ip;
     public ?int $last_ping_at;
     public bool $is_alive;
     public int $api_workers;
@@ -22,7 +21,6 @@ class ServerObject
         $this->id = $server->getId();
         $this->created_at = $server->getCreatedAt()->getTimestamp();
         $this->hostname = $server->getHostname();
-        $this->private_ip = $server->getPrivateIp();
         $this->last_ping_at = $server->getLastPingAt()?->getTimestamp();
         $this->is_alive = ($server->getLastPingAt() ?? new \DateTimeImmutable()) > (new \DateTimeImmutable('-3 minutes'));
         $this->api_workers = $server->getApiWorkers();

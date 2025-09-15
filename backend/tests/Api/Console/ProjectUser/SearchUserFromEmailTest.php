@@ -39,7 +39,6 @@ class SearchUserFromEmailTest extends WebTestCase
 
         $this->assertCount(1, $json);
         $user = $json[0];
-        $this->assertIsArray($user);
         $this->assertSame(1, $user['id']);
         $this->assertSame('supun@hyvor.com', $user['email']);
     }

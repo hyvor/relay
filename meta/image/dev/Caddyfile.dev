@@ -1,5 +1,6 @@
 {
 	frankenphp
+    metrics
 }
 
 :80 {

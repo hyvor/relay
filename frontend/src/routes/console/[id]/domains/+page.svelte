@@ -141,17 +141,21 @@
 
 	function handleVerifyDomain(domain: Domain) {
 		const toastId = toast.loading('Loading...');
-		verifyDomain(domain.id, domain.domain)
+		verifyDomain(domain.domain)
 			.then((updatedDomain) => {
 				domains = domains.map((d) => (d.id === updatedDomain.id ? updatedDomain : d));
-				if (updatedDomain.dkim_verified) {
+				if (updatedDomain.status === 'active') {
 					toast.success('Domain verified', { id: toastId });
 				} else {
-					toast.error('Domain verification failed', { id: toastId });
+					toast.warning(
+						'Domain verification failed: ' + updatedDomain.dkim_error_message,
+						{
+							id: toastId
+						}
+					);
 				}
 			})
-			.catch((error) => {
-				console.error('Failed to verify domain:', error);
+			.catch(() => {
 				toast.error('Failed to verify domain', { id: toastId });
 			});
 	}
@@ -248,7 +252,8 @@
 				text: 'Cancel'
 			},
 			confirm: {
-				text: 'Delete Domain'
+				text: 'Delete Domain',
+				danger: true
 			}
 		}}
 		on:cancel={handleCancelDelete}

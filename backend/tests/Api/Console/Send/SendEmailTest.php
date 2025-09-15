@@ -10,6 +10,7 @@ use App\Api\Console\Object\SendObject;
 use App\Entity\Send;
 use App\Entity\Type\DomainStatus;
 use App\Entity\Type\ProjectSendType;
+use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
 use App\Service\Send\EmailBuilder;
 use App\Service\Send\SendService;
@@ -622,7 +623,37 @@ class SendEmailTest extends WebTestCase
         );
     }
 
-    public function test_does_not_allow_suppressed_emails(): void
+    public function test_more_than_20_recipients_fails(): void
+    {
+        QueueFactory::createTransactional();
+        $project = ProjectFactory::createOne();
+
+        DomainFactory::createOne([
+            "project" => $project,
+            "domain" => "hyvor.com",
+            'status' => DomainStatus::ACTIVE,
+        ]);
+
+        $to = [];
+        for ($i = 1; $i <= 21; $i++) {
+            $to[] = "test" . $i . "@example.com";
+        }
+
+        $this->consoleApi($project, "POST", "/sends", data: [
+            'from' => 'test@hyvor.com',
+            'to' => $to,
+            'body_text' => 'Test email',
+        ]);
+        $this->assertResponseStatusCodeSame(400);
+
+        $json = $this->getJson();
+        $this->assertSame(
+            "Total number of recipients (To, Cc, Bcc) exceeds the maximum allowed limit of 20.",
+            $json['message']
+        );
+    }
+
+    public function test_fails_suppressed_emails(): void
     {
         QueueFactory::createTransactional();
         $project = ProjectFactory::createOne();
@@ -644,13 +675,24 @@ class SendEmailTest extends WebTestCase
             'body_text' => 'Test email',
         ]);
 
-        $this->assertResponseStatusCodeSame(400);
+        $this->assertResponseIsSuccessful();
 
         $json = $this->getJson();
-        $this->assertSame(
-            "Email address test@example.com is suppressed",
-            $json['message']
-        );
+        $sendId = $json['id'];
+        $this->assertIsInt($sendId);
+
+        $send = $this->em->getRepository(Send::class)->find($sendId);
+        $this->assertNotNull($send);
+        $recipients = $send->getRecipients();
+
+        $this->assertCount(1, $recipients);
+        $recipient = $recipients[0];
+
+        $this->assertSame('test@example.com', $recipient->getAddress());
+        $this->assertSame(SendRecipientType::TO, $recipient->getType());
+        $this->assertSame(SendRecipientStatus::FAILED, $recipient->getStatus());
+        $this->assertTrue($recipient->getIsSuppressed());
+        $this->assertFalse($send->getQueued());
     }
 
     public function test_with_attachments(): void

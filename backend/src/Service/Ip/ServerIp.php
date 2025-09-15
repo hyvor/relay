@@ -6,16 +6,13 @@ use Symfony\Component\HttpFoundation\IpUtils;
 
 class ServerIp
 {
-
-    public const DEFAULT_PRIVATE_IP_RANGE = "10.0.0.0/8";
-
     /**
      * @param callable $netGetInterfacesFunction
      */
     public function __construct(
         private $netGetInterfacesFunction = 'net_get_interfaces',
-    )
-    {}
+    ) {
+    }
 
     /**
      * Gets all IP addresses of the server.
@@ -28,7 +25,7 @@ class ServerIp
         $publicIps = [];
 
         foreach ($allIps as $ip) {
-            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+            if ($this->isPublicIpv4($ip)) {
                 $publicIps[] = $ip;
             }
         }
@@ -36,20 +33,21 @@ class ServerIp
         return $publicIps;
     }
 
-    /**
-     * Gets a private IP address in the 10.0.0.0/8 range
-     */
-    public function getPrivateIp(string $range = self::DEFAULT_PRIVATE_IP_RANGE): ?string
+    private function isPublicIpv4(string $ip): bool
     {
-        $allIps = $this->getAllIpAddresses();
-
-        foreach ($allIps as $ip) {
-            if (IpUtils::checkIp4($ip, $range)) {
-                return $ip;
-            }
+        // must be IPV4
+        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            return false;
         }
 
-        return null;
+        $privateRanges = IpUtils::PRIVATE_SUBNETS;
+        $privateRanges[] = '100.64.0.0/10'; // CGNAT
+
+        if (IpUtils::checkIp($ip, $privateRanges)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

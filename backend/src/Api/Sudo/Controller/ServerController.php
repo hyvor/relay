@@ -4,7 +4,6 @@ namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Input\UpdateServerInput;
 use App\Api\Sudo\Object\ServerObject;
-use App\Service\PrivateNetwork\Exception\PrivateNetworkCallException;
 use App\Service\Server\Dto\UpdateServerDto;
 use App\Service\Server\ServerService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -62,11 +61,7 @@ class ServerController extends AbstractController
             $updates->incomingWorkers = $input->incoming_workers;
         }
 
-        try {
-            $this->serverService->updateServer($server, $updates, updateStateCall: true);
-        } catch (PrivateNetworkCallException $e) {
-            throw new BadRequestHttpException($e->getMessage());
-        }
+        $this->serverService->updateServer($server, $updates, createUpdateStateTask: true);
 
         return $this->json(new ServerObject($server));
     }

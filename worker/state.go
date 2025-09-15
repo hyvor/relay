@@ -11,6 +11,7 @@ type GoState struct {
 	InstanceDomain    string      `json:"instanceDomain"`
 	Hostname          string      `json:"hostname"`
 	Ips               []GoStateIp `json:"ips"`
+	ApiWorkers        int         `json:"apiWorkers"` // only for metrics
 	EmailWorkersPerIp int         `json:"emailWorkersPerIp"`
 	WebhookWorkers    int         `json:"webhookWorkers"`
 	IncomingWorkers   int         `json:"incomingWorkers"`
@@ -90,6 +91,7 @@ func NewServiceState(ctx context.Context, logger *slog.Logger) *ServiceState {
 func (s *ServiceState) Set(goState GoState) {
 
 	s.Logger.Info("Updating worker state",
+		"instance_domain", goState.InstanceDomain,
 		"hostname", goState.Hostname,
 		"ip_count", len(goState.Ips),
 		"ip_queues", goState.IpQueueMapString(),
@@ -115,10 +117,17 @@ func (s *ServiceState) Set(goState GoState) {
 func (s *ServiceState) Initialize() {
 
 	go func() {
+		tries := 0
+
 		for {
 			err := s.doInitialize()
 			if err != nil {
-				s.Logger.Error("Failed to initialize service state, retrying in 2 seconds: " + err.Error())
+				logFunc := s.Logger.Info
+				if tries > 3 {
+					logFunc = s.Logger.Error
+				}
+
+				logFunc("Initializing Go service state did not succeed, retrying in 2 seconds: " + err.Error())
 
 				select {
 				case <-s.ctx.Done():
@@ -128,6 +137,8 @@ func (s *ServiceState) Initialize() {
 			} else {
 				return
 			}
+
+			tries++
 		}
 	}()
 

@@ -5,6 +5,8 @@ namespace App\Service\Send;
 class SendLimits
 {
 
+    public const MAX_RECIPIENTS_PER_SEND = 20;
+
     /**
      * A sensible limit of 998 characters, based on Google's header limits:
      * https://support.google.com/a/answer/14016360?hl=en&src=supportwidget

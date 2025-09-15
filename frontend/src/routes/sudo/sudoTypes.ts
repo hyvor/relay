@@ -6,8 +6,15 @@ export interface SudoInitResponse {
 
 export interface SudoConfig {
     app_version: string;
+    hosting: 'self' | 'cloud';
     instance: string;
     blacklists: Blacklist[];
+    user: {
+        id: number;
+        name: string;
+        email: string;
+        picture_url: string | null;
+    }
 }
 
 export interface Instance {
@@ -20,7 +27,6 @@ export interface Server {
     id: number;
     created_at: number;
     hostname: string;
-    private_ip: string | null;
     last_ping_at?: number | null;
     is_alive: boolean;
     api_workers: number;

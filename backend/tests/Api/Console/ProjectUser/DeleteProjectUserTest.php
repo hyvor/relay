@@ -23,13 +23,16 @@ class DeleteProjectUserTest extends WebTestCase
             'id' => 1,
             'username' => 'supun',
             'name' => 'Supun Wimalasena',
-            'email' => 'supun@hyvor.com']);
+            'email' => 'supun@hyvor.com'
+        ]);
 
         $projectUser = ProjectUserFactory::createOne([
             'project' => $project,
             'user_id' => 1,
             'scopes' => ['project.read', 'project.write'],
         ]);
+        $projectUserId = $projectUser->getId();
+
         $otherProjectUser = ProjectUserFactory::createOne([
             'project' => $project,
             'scopes' => ['project.read', 'project.write'],
@@ -38,18 +41,20 @@ class DeleteProjectUserTest extends WebTestCase
         $this->consoleApi(
             $project,
             'DELETE',
-            '/project-users/' . $projectUser->getId(),
+            '/project-users/' . $projectUserId,
         );
 
         $this->assertResponseStatusCodeSame(200);
 
-        $this->assertNull($this->em->getRepository(ProjectUser::class)->find($projectUser->getId()));
-        $this->assertInstanceOf(ProjectUser::class, $this->em->getRepository(ProjectUser::class)->find($otherProjectUser->getId()));
+        $this->assertNull($this->em->getRepository(ProjectUser::class)->find($projectUserId));
+        $this->assertInstanceOf(
+            ProjectUser::class,
+            $this->em->getRepository(ProjectUser::class)->find($otherProjectUser->getId())
+        );
     }
 
     public function test_fails_when_project_user_not_found(): void
     {
-
         $project = ProjectFactory::createOne();
 
         $this->consoleApi(

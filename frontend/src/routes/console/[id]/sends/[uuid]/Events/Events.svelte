@@ -18,6 +18,16 @@
 			recipients_count: send.recipients.length
 		});
 
+		// add suppression failures
+		const suppressed = send.recipients.filter((r) => r.is_suppressed === true);
+		if (suppressed.length > 0) {
+			events.push({
+				timestamp: send.created_at,
+				type: 'suppressed',
+				suppressed_recipients: suppressed.map((r) => r.address)
+			});
+		}
+
 		// add attempts
 		for (const attempt of send.attempts) {
 			events.push({
@@ -36,7 +46,16 @@
 			});
 		}
 
-		events.sort((a, b) => b.timestamp - a.timestamp);
+		// last queued, then suppressed, then by timestamp
+		events.sort((a, b) => {
+			if (a.type === 'queued') return 1;
+			if (b.type === 'queued') return -1;
+
+			if (a.type === 'suppressed') return 1;
+			if (b.type === 'suppressed') return -1;
+
+			return a.timestamp - b.timestamp;
+		});
 
 		return events;
 	}

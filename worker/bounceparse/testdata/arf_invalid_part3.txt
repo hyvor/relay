@@ -1,0 +1,21 @@
+MIME-Version: 1.0
+Content-Type: multipart/report; report-type=feedback-report;
+     boundary="myinnocentboundary"
+
+--myinnocentboundary
+Content-Type: text/plain; charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+
+This is an email abuse report for an email message.
+
+--myinnocentboundary
+Content-Type: message/feedback-report
+
+Feedback-Type: abuse
+
+--myinnocentboundary
+Content-Type: text/plain
+
+This is the original message.
+
+--myinnocentboundary--

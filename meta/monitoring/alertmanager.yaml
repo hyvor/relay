@@ -1,0 +1,127 @@
+groups:
+    - name: HyvorRelay
+      rules:
+
+          # Worker availability
+          - alert: NoAPIWorkers
+            expr: workers_api_total{job="hyvor-relay"} == 0
+            for: 2m
+            labels:
+                severity: critical
+            annotations:
+                summary: "No API workers running"
+                description: "API workers count is zero for job {{ $labels.job }} on {{ $labels.instance }}."
+
+          - alert: NoEmailWorkers
+            expr: workers_email_total{job="hyvor-relay"} == 0
+            for: 2m
+            labels:
+                severity: critical
+            annotations:
+                summary: "No Email workers running"
+                description: "Email workers count is zero."
+
+          - alert: NoWebhookWorkers
+            expr: workers_webhook_total{job="hyvor-relay"} == 0
+            for: 2m
+            labels:
+                severity: critical
+            annotations:
+                summary: "No Webhook workers running"
+                description: "Webhook workers count is zero."
+
+          - alert: NoIncomingMailWorkers
+            expr: workers_incoming_mail_total{job="hyvor-relay"} == 0
+            for: 2m
+            labels:
+                severity: critical
+            annotations:
+                summary: "No Incoming Mail workers running"
+                description: "Incoming mail workers count is zero."
+
+          # Email sending issues
+          - alert: HighDeferredSends
+            expr: increase(email_send_attempts_total{status="deferred",job="hyvor-relay"}[5m]) > 100
+            for: 5m
+            labels:
+                severity: warning
+            annotations:
+                summary: "High deferred sends"
+                description: "Over 100 emails were deferred in the last 5 minutes."
+
+          - alert: HighBouncedSends
+            expr: increase(email_send_attempts_total{status="bounced",job="hyvor-relay"}[5m]) > 50
+            for: 5m
+            labels:
+                severity: critical
+            annotations:
+                summary: "High bounced sends"
+                description: "Over 50 emails bounced in the last 5 minutes."
+
+          # PostgreSQL
+          - alert: HighPostgresConnections
+            expr: pgsql_connections{job="hyvor-relay"} / pgsql_max_connections{job="hyvor-relay"} > 0.8
+            for: 5m
+            labels:
+                severity: warning
+            annotations:
+                summary: "PostgreSQL connections high"
+                description: "Connections are using more than 80% of the max."
+
+          # Webhooks
+          - alert: FailedWebhooks
+            expr: increase(webhook_deliveries_total{status="failed",job="hyvor-relay"}[5m]) > 10
+            for: 5m
+            labels:
+                severity: critical
+            annotations:
+                summary: "Webhook failures detected"
+                description: "More than 10 failed webhooks in the last 5 minutes."
+
+          # DNS
+          - alert: NXDomainSpike
+            expr: increase(dns_queries_total{status="not_found",job="hyvor-relay"}[5m]) > 50
+            for: 5m
+            labels:
+                severity: warning
+            annotations:
+                summary: "High NXDOMAIN responses"
+                description: "More than 50 DNS queries returned NXDOMAIN in last 5 minutes."
+
+          # Incoming Email
+          - alert: HighBounceRate
+            expr: increase(incoming_emails_total{type="bounce",job="hyvor-relay"}[5m]) > 20
+            for: 5m
+            labels:
+                severity: warning
+            annotations:
+                summary: "High bounce rate"
+                description: "More than 20 bounce emails in the last 5 minutes."
+
+          - alert: HighComplainRate
+            expr: increase(incoming_emails_total{type="fbl",job="hyvor-relay"}[5m]) > 20
+            for: 5m
+            labels:
+                severity: warning
+            annotations:
+                summary: "High complain rate"
+                description: "More than 20 feedback loop emails in the last 5 minutes."
+
+          - alert: HighUnknownEmailRate
+            expr: increase(incoming_emails_total{type="unknown",job="hyvor-relay"}[5m]) > 20
+            for: 5m
+            labels:
+                severity: warning
+            annotations:
+                summary: "High unknown email rate"
+                description: "More than 20 unknown type emails in the last 5 minutes."
+
+          # HTTP
+          - alert: High5xxResponses
+            expr: increase(http_requests_total{status=~"5..",job="hyvor-relay"}[5m]) > 20
+            for: 5m
+            labels:
+                severity: critical
+            annotations:
+                summary: "High rate of 5xx responses"
+                description: "More than 20 HTTP 5xx errors in the last 5 minutes."

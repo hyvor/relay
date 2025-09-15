@@ -63,9 +63,9 @@ services:
       - ./worker/:/worker/
     environment:
       GO_SYMFONY_URL: http://hyvor-relay-backend
+      # OUTGOING_SMTP_PORT: ":587"
     networks:
       - hyvor-network
-    # command: "sleep infinity"
     ports:
       - "10025:25"
       - "5353:53/udp"

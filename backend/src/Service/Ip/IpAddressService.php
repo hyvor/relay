@@ -5,9 +5,11 @@ namespace App\Service\Ip;
 use App\Entity\IpAddress;
 use App\Entity\Server;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
+use App\Service\Ip\Event\IpAddressUpdatedEvent;
 use App\Service\Queue\QueueService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class IpAddressService
 {
@@ -17,6 +19,7 @@ class IpAddressService
     public function __construct(
         private ServerIp $serverIp,
         private EntityManagerInterface $em,
+        private EventDispatcherInterface $ed,
         private Ptr $ptr,
         private QueueService $queueService,
     ) {
@@ -102,7 +105,9 @@ class IpAddressService
         IpAddress $ipAddress,
         UpdateIpAddressDto $updates
     ): IpAddress {
-        if ($updates->hasProperty('queue')) {
+        $ipAddressOld = clone $ipAddress;
+
+        if ($updates->queueSet) {
             $ipAddress->setQueue($updates->queue);
         }
 
@@ -110,6 +115,9 @@ class IpAddressService
 
         $this->em->persist($ipAddress);
         $this->em->flush();
+
+        $event = new IpAddressUpdatedEvent($ipAddressOld, $ipAddress, $updates);
+        $this->ed->dispatch($event);
 
         return $ipAddress;
     }

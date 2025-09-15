@@ -21,15 +21,17 @@ class SuppressionService
         private SuppressionRepository $suppressionRepository,
         private EntityManagerInterface $em,
         private EventDispatcherInterface $eventDispatcher
-    )
-    {
+    ) {
     }
 
     /**
      * @return ArrayCollection<int, Suppression>
      */
-    public function getSuppressionsForProject(Project $project, ?string $email, ?SuppressionReason $reason = null): ArrayCollection
-    {
+    public function getSuppressionsForProject(
+        Project $project,
+        ?string $email,
+        ?SuppressionReason $reason = null
+    ): ArrayCollection {
         $qb = $this->suppressionRepository->createQueryBuilder('s');
 
         $qb
@@ -58,9 +60,28 @@ class SuppressionService
     public function isSuppressed(Project $project, string $email): bool
     {
         return $this->suppressionRepository->findOneBy([
-            'project' => $project,
-            'email' => $email
-        ]) !== null;
+                'project' => $project,
+                'email' => $email
+            ]) !== null;
+    }
+
+    /**
+     * @param Project $project
+     * @param string[] $emails
+     * @return string[] Suppressed emails
+     */
+    public function getSuppressed(Project $project, array $emails): array
+    {
+        /** @var Suppression[] $results */
+        $results = $this->suppressionRepository->createQueryBuilder('s')
+            ->where('s.project = :project')
+            ->andWhere('s.email IN (:emails)')
+            ->setParameter('project', $project)
+            ->setParameter('emails', $emails)
+            ->getQuery()
+            ->getResult();
+
+        return array_map(fn(Suppression $s) => $s->getEmail(), $results);
     }
 
     public function createSuppression(
@@ -68,8 +89,7 @@ class SuppressionService
         string $email,
         SuppressionReason $reason,
         string $description
-    ): Suppression
-    {
+    ): Suppression {
         $suppression = new Suppression();
         $suppression->setCreatedAt($this->now());
         $suppression->setUpdatedAt($this->now());
@@ -84,7 +104,6 @@ class SuppressionService
         $this->eventDispatcher->dispatch(new SuppressionCreatedEvent($suppression));
 
         return $suppression;
-
     }
 
     public function deleteSuppression(Suppression $suppression): void

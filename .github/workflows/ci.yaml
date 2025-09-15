@@ -41,7 +41,7 @@ jobs:
             ./vendor/bin/phpstan analyse --memory-limit=1G --ansi"
 
   php-tests:
-    name: "PHP & Go Tests"
+    name: "PHP Tests"
     runs-on: ubuntu-latest
 
     steps:
@@ -78,7 +78,17 @@ jobs:
           docker network create ci
           docker compose -f meta/ci/compose.ci.yaml up -d
 
-      - name: Build Docker image
+      - name: Build Docker image (Backend)
+        run: docker build -t backend-dev . --target backend-dev
+
+      - name: Run Migrations
+        run: |
+          docker run \
+          --network ci \
+          -e APP_ENV=test \
+          backend-dev sh -c "php bin/console doctrine:migrations:migrate --no-interaction"
+
+      - name: Build Docker image (Worker)
         run: docker build -t worker-dev . --target worker-dev
 
       # Database already migrated from the previous step.

@@ -16,10 +16,11 @@ use App\Entity\Type\SendRecipientStatus;
 use App\Service\Domain\DomainService;
 use App\Service\Send\EmailAddressFormat;
 use App\Service\Send\Exception\EmailTooLargeException;
+use App\Service\Send\SendLimits;
 use App\Service\Send\SendService;
 use App\Service\Queue\QueueService;
+use App\Service\SendAttempt\SendAttemptService;
 use App\Service\SendFeedback\SendFeedbackService;
-use App\Service\Suppression\SuppressionService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -34,10 +35,10 @@ class SendController extends AbstractController
 {
     public function __construct(
         private SendService $sendService,
+        private SendAttemptService $sendAttemptService,
         private SendFeedbackService $sendFeedbackService,
         private DomainService $domainService,
         private QueueService $queueService,
-        private SuppressionService $suppressionService
     ) {
     }
 
@@ -72,14 +73,13 @@ class SendController extends AbstractController
         $cc = $sendEmailInput->getCcAddresses();
         $bcc = $sendEmailInput->getBccAddresses();
 
-        // TODO: recipient count validation
-
-        // TODO: suppressions check
-        /*if ($this->suppressionService->isSuppressed($project, $sendEmailInput->getToAddresses()->getAddress())) {
+        $totalRecipientsCount = count($to) + count($cc) + count($bcc);
+        $maxRecipients = SendLimits::MAX_RECIPIENTS_PER_SEND;
+        if ($totalRecipientsCount > $maxRecipients) {
             throw new BadRequestException(
-                "Email address {$sendEmailInput->getToAddresses()->getAddress()} is suppressed"
+                "Total number of recipients (To, Cc, Bcc) exceeds the maximum allowed limit of $maxRecipients."
             );
-        }*/
+        }
 
         $queue = $project->getSendType() === ProjectSendType::TRANSACTIONAL ?
             $this->queueService->getTransactionalQueue() :
@@ -167,15 +167,17 @@ class SendController extends AbstractController
     #[ScopeRequired(Scope::SENDS_READ)]
     public function getById(Send $send): JsonResponse
     {
-        $attempts = $this->sendService->getSendAttemptsOfSend($send);
+        $attempts = $this->sendAttemptService->getSendAttemptsOfSend($send);
         $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
 
-        return $this->json(new SendObject(
-            $send,
-            attempts: $attempts,
-            feedback: $feedback,
-            content: true
-        ));
+        return $this->json(
+            new SendObject(
+                $send,
+                attempts: $attempts,
+                feedback: $feedback,
+                content: true
+            )
+        );
     }
 
     #[Route("/sends/uuid/{uuid}", requirements: ['uuid' => Requirement::UUID], methods: "GET")]
@@ -194,15 +196,17 @@ class SendController extends AbstractController
             );
         }
 
-        $attempts = $this->sendService->getSendAttemptsOfSend($send);
+        $attempts = $this->sendAttemptService->getSendAttemptsOfSend($send);
         $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
 
-        return $this->json(new SendObject(
-            $send,
-            attempts: $attempts,
-            feedback: $feedback,
-            content: true
-        ));
+        return $this->json(
+            new SendObject(
+                $send,
+                attempts: $attempts,
+                feedback: $feedback,
+                content: true
+            )
+        );
     }
 
 }

@@ -30,10 +30,16 @@ func truncateTestDb() error {
 	defer conn.Close()
 
 	_, err = conn.Exec(`
+		DELETE FROM servers;
+		DELETE FROM ip_addresses;
 		DELETE FROM projects;
+		DELETE FROM domains;
+		DELETE FROM queues;
+		DELETE FROM sends;
+		DELETE FROM send_recipients;
 		DELETE FROM webhooks;
 		DELETE FROM webhook_deliveries;
-		DELETE FROM sends;
+		DELETE FROM send_attempts;
 		DELETE FROM suppressions;
 		DELETE FROM debug_incoming_emails;
 	`)
@@ -56,6 +62,49 @@ func NewTestFactory() (*TestFactory, error) {
 	}
 
 	return &TestFactory{conn: conn}, nil
+}
+
+func (f *TestFactory) Server() (int, error) {
+
+	now := time.Now()
+	hostname := fmt.Sprintf("Test Server %d", rand.Intn(1000000))
+
+	var serverId int
+	err := f.conn.QueryRow(`
+		INSERT INTO servers (created_at, updated_at, hostname)
+		VALUES ($1, $2, $3)
+		RETURNING id
+	`, now, now, hostname).Scan(&serverId)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return serverId, nil
+
+}
+
+func (f *TestFactory) IpAddress() (int, error) {
+
+	serverId, err := f.Server()
+
+	if err != nil {
+		return 0, err
+	}
+
+	var ipId int
+	err = f.conn.QueryRow(`
+		INSERT INTO ip_addresses (server_id, ip_address, created_at, updated_at)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id
+	`, serverId, "192.168.1.1", time.Now(), time.Now()).Scan(&ipId)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return ipId, nil
+
 }
 
 func (f *TestFactory) Project() (int, error) {
@@ -129,10 +178,12 @@ type FactorySend struct {
 }
 
 type FactorySendRecipient struct {
-	Type    string // "to", "cc", "bcc"
-	Status  string // "queued", "accepted", "retrying", "bounced", "complained", "failed"
-	Address string
-	Name    string
+	Id       int
+	Type     string // "to", "cc", "bcc"
+	Status   string // "queued", "accepted", "retrying", "bounced", "complained", "failed"
+	Address  string
+	Name     string
+	TryCount int
 }
 
 func (m *TestFactory) Send(send *FactorySend) (*FactorySend, error) {
@@ -183,18 +234,125 @@ func (m *TestFactory) Send(send *FactorySend) (*FactorySend, error) {
 
 }
 
-func (f *TestFactory) SendRecipient(send *FactorySend, recipients *FactorySendRecipient) error {
+func (f *TestFactory) GetSendById(id int) (*FactorySend, error) {
 
-	_, err := f.conn.Exec(`
+	var send FactorySend
+	row := f.conn.QueryRow(`
+		SELECT 
+			id, uuid, project_id, domain_id, queue_id, queued, send_after,
+			from_address, subject, body_html, body_text
+		FROM sends WHERE id = $1
+	`, id)
+
+	err := row.Scan(
+		&send.Id,
+		&send.Uuid,
+		&send.ProjectId,
+		&send.DomainId,
+		&send.QueueId,
+		&send.Queued,
+		&send.SendAfter,
+		&send.FromAddress,
+		&send.Subject,
+		&send.BodyHtml,
+		&send.BodyText,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &send, nil
+
+}
+
+type FactorySendAttempt struct {
+	Id                int
+	SendId            int
+	IpAddressId       int
+	Status            string
+	TryCount          int
+	Domain            string
+	ResolvedMx        string
+	RespondedMx       sql.NullString
+	SmtpConversations string
+	Error             sql.NullString
+}
+
+func (f *TestFactory) GetSendAttemptById(id int) (*FactorySendAttempt, error) {
+
+	var attempt FactorySendAttempt
+	row := f.conn.QueryRow(`
+		SELECT 
+			id, send_id, ip_address_id, status, try_count, domain,
+			resolved_mx_hosts, responded_mx_host, smtp_conversations, error
+		FROM send_attempts WHERE id = $1
+	`, id)
+
+	err := row.Scan(
+		&attempt.Id,
+		&attempt.SendId,
+		&attempt.IpAddressId,
+		&attempt.Status,
+		&attempt.TryCount,
+		&attempt.Domain,
+		&attempt.ResolvedMx,
+		&attempt.RespondedMx,
+		&attempt.SmtpConversations,
+		&attempt.Error,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &attempt, nil
+
+}
+
+func (f *TestFactory) SendRecipient(send *FactorySend, recipients *FactorySendRecipient) (int, error) {
+
+	var recipientId int
+	err := f.conn.QueryRow(`
 		INSERT INTO send_recipients (
-			send_id, type, status, address, name
+			send_id, type, status, address, name, try_count
 		) VALUES (
-			$1, $2, $3, $4, $5
-		)
+			$1, $2, $3, $4, $5, $6
+		) RETURNING id
 	`, send.Id, recipients.Type, recipients.Status,
-		recipients.Address, recipients.Name)
+		recipients.Address, recipients.Name, recipients.TryCount).Scan(&recipientId)
 
-	return err
+	if err != nil {
+		return 0, err
+	}
+
+	return recipientId, nil
+
+}
+
+func (f *TestFactory) GetSendRecipientById(id int) (*FactorySendRecipient, error) {
+
+	var recipient FactorySendRecipient
+	row := f.conn.QueryRow(`
+		SELECT 
+			id, type, status, address, name, try_count
+		FROM send_recipients WHERE id = $1
+	`, id)
+
+	err := row.Scan(
+		&recipient.Id,
+		&recipient.Type,
+		&recipient.Status,
+		&recipient.Address,
+		&recipient.Name,
+		&recipient.TryCount,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &recipient, nil
 
 }
 

@@ -4,11 +4,11 @@ namespace App\Service\Server;
 
 use App\Entity\Server;
 use App\Service\App\Config;
-use App\Service\PrivateNetwork\Exception\PrivateNetworkCallException;
-use App\Service\PrivateNetwork\PrivateNetworkApi;
 use App\Service\Server\Dto\UpdateServerDto;
+use App\Service\Server\Event\ServerUpdatedEvent;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ServerService
 {
@@ -17,8 +17,8 @@ class ServerService
 
     public function __construct(
         private readonly EntityManagerInterface $em,
+        private readonly EventDispatcherInterface $ed,
         private readonly Config $config,
-        private PrivateNetworkApi $privateNetworkApi
     ) {
     }
 
@@ -75,23 +75,16 @@ class ServerService
         return $server;
     }
 
-    /**
-     * @throws PrivateNetworkCallException
-     */
     public function updateServer(
         Server $server,
         UpdateServerDto $updates,
-        bool $updateStateCall = false,
+        bool $createUpdateStateTask = false,
     ): void {
+        $serverOld = clone $server;
+
         if ($updates->lastPingAtSet) {
             $server->setLastPingAt($updates->lastPingAt);
         }
-        if ($updates->privateIpSet) {
-            $server->setPrivateIp($updates->privateIp);
-        }
-
-        $oldServer = clone $server;
-
         if ($updates->apiWorkersSet) {
             $server->setApiWorkers($updates->apiWorkers);
         }
@@ -110,24 +103,8 @@ class ServerService
         $this->em->persist($server);
         $this->em->flush();
 
-        if ($updateStateCall) {
-            try {
-                $this->privateNetworkApi->callUpdateServerStateApi($server);
-            } catch (PrivateNetworkCallException $e) {
-                /**
-                 * We cannot use a transaction here to rollback automatically
-                 * because the external API call depends on the new state of the server,
-                 * which they do not see if th
-                 */
-
-                $server->setApiWorkers($oldServer->getApiWorkers());
-                $server->setEmailWorkers($oldServer->getEmailWorkers());
-                $server->setWebhookWorkers($oldServer->getWebhookWorkers());
-
-                $this->em->flush();
-                throw $e;
-            }
-        }
+        $event = new ServerUpdatedEvent($serverOld, $server, $updates, $createUpdateStateTask);
+        $this->ed->dispatch($event);
     }
 
 }

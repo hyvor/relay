@@ -18,6 +18,8 @@ class SendObject
     public ?string $body_text;
     public string $raw;
     public int $size_bytes;
+    public bool $queued;
+    public int $send_after;
 
     /**
      * @var SendRecipientObject[]
@@ -43,8 +45,7 @@ class SendObject
         array $attempts = [],
         array $feedback = [],
         bool $content = false
-    )
-    {
+    ) {
         $this->id = $send->getId();
         $this->uuid = $send->getUuid();
         $this->created_at = $send->getCreatedAt()->getTimestamp();
@@ -55,6 +56,8 @@ class SendObject
         $this->body_text = $content ? $send->getBodyText() : null;
         $this->raw = $content ? $send->getRaw() : '';
         $this->size_bytes = $send->getSizeBytes();
+        $this->queued = $send->getQueued();
+        $this->send_after = $send->getSendAfter()->getTimestamp();
 
         $this->recipients = array_map(fn($recipient) => new SendRecipientObject($recipient), $send->getRecipients());
         $this->attempts = array_map(fn(SendAttempt $attempt) => new SendAttemptObject($attempt), $attempts);

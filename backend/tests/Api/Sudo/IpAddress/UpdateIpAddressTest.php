@@ -6,6 +6,8 @@ use App\Api\Sudo\Controller\IpAddressController;
 use App\Api\Sudo\Object\IpAddressObject;
 use App\Entity\IpAddress;
 use App\Entity\Queue;
+use App\Entity\ServerTask;
+use App\Entity\Type\ServerTaskType;
 use App\Service\Ip\IpAddressService;
 use App\Service\Queue\QueueService;
 use App\Tests\Case\WebTestCase;
@@ -42,6 +44,10 @@ class UpdateIpAddressTest extends WebTestCase
         $ipAddressDb = $this->em->getRepository(IpAddress::class)->findOneBy(['id' => $ipAddress->getId()]);
         $this->assertNotNull($ipAddressDb);
         $this->assertEquals($queue->getName(), $ipAddressDb->getQueue()?->getName());
+
+        $serverTasks = $this->em->getRepository(ServerTask::class)->findBy(['server' => $ipAddress->getServer()]);
+        $this->assertCount(1, $serverTasks);
+        $this->assertEquals(ServerTaskType::UPDATE_STATE, $serverTasks[0]->getType());
     }
 
     public function test_update_ip_address_invalid_queue(): void
@@ -86,5 +92,9 @@ class UpdateIpAddressTest extends WebTestCase
         $ipAddressDb = $this->em->getRepository(IpAddress::class)->findOneBy(['id' => $ipAddress->getId()]);
         $this->assertNotNull($ipAddressDb);
         $this->assertNull($ipAddressDb->getQueue());
+
+        $serverTasks = $this->em->getRepository(ServerTask::class)->findBy(['server' => $ipAddress->getServer()]);
+        $this->assertCount(1, $serverTasks);
+        $this->assertEquals(ServerTaskType::UPDATE_STATE, $serverTasks[0]->getType());
     }
 }

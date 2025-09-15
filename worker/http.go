@@ -10,13 +10,15 @@ import (
 	"github.com/hyvor/relay/worker/bounceparse"
 )
 
+var localHttpPort = ":8085"
+
 func StartHttpServer(
 	ctx context.Context,
 	serviceState *ServiceState,
 ) {
 
 	httpServerLogger := serviceState.Logger.With("component", "http_local_server")
-	httpServerLogger.Info("Starting local HTTP server on localhost:8085")
+	httpServerLogger.Info("Starting local HTTP server at localhost:8085")
 
 	mux := http.NewServeMux()
 
@@ -28,7 +30,7 @@ func StartHttpServer(
 	var handler http.Handler = mux
 
 	server := &http.Server{
-		Addr:    ":8085",
+		Addr:    localHttpPort,
 		Handler: handler,
 	}
 
