@@ -208,6 +208,7 @@
 	{selectedUser}
 	bind:selectedScopes
 	isInviting={isInviting}
+	isEditing={false}
 	{availableScopes}
 	onCancel={closeInviteModal}
 	onConfirm={inviteUser}

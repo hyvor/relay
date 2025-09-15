@@ -7,6 +7,7 @@
 		selectedUser: ProjectUserMiniObject | null;
 		selectedScopes: string[];
 		isInviting: boolean;
+		isEditing: boolean;
 		availableScopes: Scope[];
 		onCancel: () => void;
 		onConfirm: () => void;
@@ -17,10 +18,31 @@
 		selectedUser,
 		selectedScopes = $bindable(),
 		isInviting,
+		isEditing,
 		availableScopes,
 		onCancel,
 		onConfirm
 	}: Props = $props();
+
+	// Filter out 'sends.send' when not editing
+	const filteredScopes = $derived(() => {
+		if (isEditing) {
+			return availableScopes;
+		}
+		return availableScopes.filter(scope => scope !== 'sends.send');
+	});
+
+	function handleSelectAll() {
+		console.log('handleSelectAll called', { filteredScopes: filteredScopes(), selectedScopes });
+		selectedScopes = [...filteredScopes()];
+		console.log('after select all', { selectedScopes });
+	}
+
+	function handleDeselectAll() {
+		console.log('handleDeselectAll called', { selectedScopes });
+		selectedScopes = [];
+		console.log('after deselect all', { selectedScopes });
+	}
 </script>
 
 <Modal
@@ -35,8 +57,8 @@
 	on:cancel={onCancel}
 	on:confirm={onConfirm}
 >
-	{#if selectedUser}
-		<div class="modal-content">
+	<div class="modal-content">
+		{#if selectedUser}
 			<div class="invited-user">
 				{#if selectedUser.picture_url}
 					<img src={selectedUser.picture_url} alt={selectedUser.name} class="user-avatar" />
@@ -54,30 +76,51 @@
 			<SplitControl
 				label="Permissions"
 				caption="Select the permissions this user will have in the project"
-				column
 			>
-				<div class="scopes-list">
-					{#each availableScopes as scope (scope)}
-						<label class="scope-item">
+				<div class="scopes-header">
+					<div class="scopes-actions">
+						<button
+							type="button"
+							class="scope-action-btn"
+							disabled={isInviting || selectedScopes.length === filteredScopes().length}
+							onclick={handleSelectAll}
+						>
+							Select all
+						</button>
+						<button
+							type="button"
+							class="scope-action-btn"
+							disabled={isInviting || selectedScopes.length === 0}
+							onclick={handleDeselectAll}
+						>
+							Deselect all
+						</button>
+					</div>
+				</div>
+				<div class="scopes-container">
+					{#each filteredScopes() as scope (scope)}
+						<div class="scope-item">
 							<Checkbox
+								checked={selectedScopes.includes(scope)}
 								bind:group={selectedScopes}
 								value={scope}
 							>
-								{scope}
+								<div class="scope-content">
+									<span class="scope-name">{scope}</span>
+								</div>
 							</Checkbox>
-						</label>
+						</div>
 					{/each}
 				</div>
 			</SplitControl>
-		</div>
-	{/if}
+		{/if}
+	</div>
 </Modal>
 
 <style>
 	.modal-content {
-		padding: 20px 0;
-        max-height: 70vh;
-        overflow-y: auto;
+		max-height: 70vh;
+		overflow-y: auto;
 	}
 
 	.invited-user {
@@ -86,7 +129,7 @@
 		gap: 12px;
 		padding: 16px;
 		background-color: var(--background-light);
-		margin-bottom: 24px;
+		border-radius: var(--box-radius);
 	}
 
 	.user-avatar {
@@ -122,23 +165,55 @@
 		color: var(--text-light);
 	}
 
-	.scopes-list {
+	.scopes-header {
+		margin-bottom: 12px;
+	}
+
+	.scopes-actions {
+		display: flex;
+		gap: 16px;
+	}
+
+	.scope-action-btn {
+		background: none;
+		border: none;
+		color: var(--primary);
+		cursor: pointer;
+		font-size: 14px;
+		padding: 0;
+		text-decoration: underline;
+		transition: color 0.2s;
+	}
+
+	.scope-action-btn:hover:not(:disabled) {
+		color: var(--primary-dark);
+	}
+
+	.scope-action-btn:disabled {
+		color: var(--text-light);
+		cursor: not-allowed;
+		text-decoration: none;
+	}
+
+	.scopes-container {
 		display: flex;
 		flex-direction: column;
-		gap: 12px;
+		gap: 8px;
 	}
 
 	.scope-item {
 		display: flex;
-		align-items: flex-start;
-		gap: 12px;
-		cursor: pointer;
-		padding: 8px;
-		border-radius: var(--box-radius);
-		transition: background-color 0.2s;
+		align-items: center;
 	}
 
-	.scope-item:hover {
-		background-color: var(--hover);
+	.scope-content {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.scope-name {
+		font-weight: 500;
 	}
 </style>
