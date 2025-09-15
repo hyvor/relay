@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Api\Console\Metrics;
+namespace App\Api\Console\Metric;
 
 use Prometheus\CollectorRegistry;
 use Prometheus\Storage\Adapter;

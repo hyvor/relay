@@ -20,10 +20,10 @@ class ServerTaskService
     ) {
     }
 
-    /*
+    /**
      * Create a task for one, multiple or all servers
      * @param null|Server|Server[] $servers
-     * @param array<string, string> $payload
+     * @param array<string, mixed> $payload
      */
     public function createTaskFor(null|Server|array $servers, ServerTaskType $serverTaskType, array $payload): void
     {

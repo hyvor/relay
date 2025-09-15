@@ -4,7 +4,6 @@ namespace App\Tests\Api\Console\Suppression;
 
 use App\Api\Console\Controller\SuppressionController;
 use App\Api\Console\Object\SuppressionObject;
-use App\Entity\Suppression;
 use App\Entity\Type\SuppressionReason;
 use App\Repository\SuppressionRepository;
 use App\Service\Suppression\SuppressionService;
@@ -12,6 +11,7 @@ use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\SuppressionFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\TestWith;
 
 #[CoversClass(SuppressionController::class)]
 #[CoversClass(SuppressionService::class)]
@@ -44,16 +44,16 @@ class GetSuppressionsTest extends WebTestCase
         $content = $this->getJson();
         $this->assertCount(5, $content);
 
-        foreach ($content as $key =>  $delivery) {
+        foreach ($content as $key => $delivery) {
             $this->assertIsArray($delivery);
             $this->assertArrayHasKey('id', $delivery);
             $this->assertArrayHasKey('created_at', $delivery);
             $this->assertArrayHasKey('email', $delivery);
             $this->assertArrayHasKey('reason', $delivery);
             $this->assertArrayHasKey('description', $delivery);
-            
+
             // Ensure $key is treated as integer for array access
-            $suppressionIndex = (int) $key;
+            $suppressionIndex = (int)$key;
             $this->assertSame($suppressions[$suppressionIndex]->getId(), $delivery['id']);
             $this->assertSame($suppressions[$suppressionIndex]->getEmail(), $delivery['email']);
             $this->assertSame($suppressions[$suppressionIndex]->getReason()->value, $delivery['reason']);
@@ -70,7 +70,7 @@ class GetSuppressionsTest extends WebTestCase
             'email' => 'thibault@hyvor.com'
         ]);
 
-        SuppressionFactory::createOne( [
+        SuppressionFactory::createOne([
             'project' => $project,
             'email' => 'supun@hyvor.com'
         ]);
@@ -90,7 +90,9 @@ class GetSuppressionsTest extends WebTestCase
         $this->assertSame($content[0]['id'], $suppression->getId());
     }
 
-    public function test_get_suppressions_with_reason_filter(): void
+    #[TestWith(['bounce'])]
+    #[TestWith(['complaint'])]
+    public function test_get_suppressions_with_reason_filter(string $reason): void
     {
         $project = ProjectFactory::createOne();
 
@@ -110,7 +112,7 @@ class GetSuppressionsTest extends WebTestCase
         $response = $this->consoleApi(
             $project,
             'GET',
-            '/suppressions?reason=bounce'
+            '/suppressions?reason=' . $reason
         );
 
         $this->assertSame(200, $response->getStatusCode());
@@ -119,24 +121,11 @@ class GetSuppressionsTest extends WebTestCase
 
         $this->assertCount(1, $content);
         $this->assertArrayHasKey(0, $content);
-        $this->assertSame($content[0]['id'], $bounceSuppression->getId());
-        $this->assertSame($content[0]['reason'], 'bounce');
-
-        // Test filtering by complaint
-        $response = $this->consoleApi(
-            $project,
-            'GET',
-            '/suppressions?reason=complaint'
+        $this->assertSame(
+            $content[0]['id'],
+            $reason === 'bounce' ? $bounceSuppression->getId() : $complaintSuppression->getId()
         );
-
-        $this->assertSame(200, $response->getStatusCode());
-        /** @var array<array<string, mixed>> $content */
-        $content = $this->getJson();
-
-        $this->assertCount(1, $content);
-        $this->assertArrayHasKey(0, $content);
-        $this->assertSame($content[0]['id'], $complaintSuppression->getId());
-        $this->assertSame($content[0]['reason'], 'complaint');
+        $this->assertSame($content[0]['reason'], $reason);
     }
 
     public function test_get_suppressions_with_combined_filters(): void
@@ -169,7 +158,7 @@ class GetSuppressionsTest extends WebTestCase
         );
 
         $this->assertSame(200, $response->getStatusCode());
-        
+
         /** @var array<array<string, mixed>> $content */
         $content = $this->getJson();
 

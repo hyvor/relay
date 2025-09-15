@@ -99,7 +99,7 @@ class WebhookEventListenerTest extends KernelTestCase
         Project $project,
         WebhooksEventEnum $webhookEvent,
         ?callable $payloadValidator = null,
-        ?int $count = 1
+        int $count = 1
     ): void {
         $deliveries = $this->em->getRepository(WebhookDelivery::class)->findAll();
 

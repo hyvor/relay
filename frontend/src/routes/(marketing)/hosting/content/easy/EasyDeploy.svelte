@@ -35,7 +35,7 @@
 </p>
 
 <p>
-	<strong>IP Addresses</strong>: You need at least one static IPv4 address for the server. This IP
+	<strong>IP Addresses</strong>: You need at least one static IPv4 address for the server, which
 	will be assigned to the transactional queue.
 </p>
 
@@ -46,9 +46,12 @@
 
 <p>
 	<strong>Docker</strong>: Install the latest version, following the
-	<a href="https://docs.docker.com/engine/install/" target="_blank"
-		>official Docker installation guide</a
-	>.
+	<a href="https://docs.docker.com/engine/install/" target="_blank">official guide</a>.
+</p>
+
+<p>
+	<strong> OpenID Connect (OIDC) Provider </strong>: Hyvor Relay relies on OIDC for
+	authentication.
 </p>
 
 <h2 id="install">Install</h2>

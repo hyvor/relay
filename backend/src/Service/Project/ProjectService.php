@@ -34,7 +34,7 @@ class ProjectService
     /**
      * @return array{
      *     project: Project,
-     *     projectUser: ProjectUser|null
+     *     projectUser: ($createProjectUser is true ? ProjectUser : null)
      * }
      */
     public function createProject(

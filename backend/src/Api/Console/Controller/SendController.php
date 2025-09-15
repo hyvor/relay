@@ -16,6 +16,7 @@ use App\Entity\Type\SendRecipientStatus;
 use App\Service\Domain\DomainService;
 use App\Service\Send\EmailAddressFormat;
 use App\Service\Send\Exception\EmailTooLargeException;
+use App\Service\Send\SendLimits;
 use App\Service\Send\SendService;
 use App\Service\Queue\QueueService;
 use App\Service\SendAttempt\SendAttemptService;
@@ -72,7 +73,13 @@ class SendController extends AbstractController
         $cc = $sendEmailInput->getCcAddresses();
         $bcc = $sendEmailInput->getBccAddresses();
 
-        // TODO: recipient count validation
+        $totalRecipientsCount = count($to) + count($cc) + count($bcc);
+        $maxRecipients = SendLimits::MAX_RECIPIENTS_PER_SEND;
+        if ($totalRecipientsCount > $maxRecipients) {
+            throw new BadRequestException(
+                "Total number of recipients (To, Cc, Bcc) exceeds the maximum allowed limit of $maxRecipients."
+            );
+        }
 
         $queue = $project->getSendType() === ProjectSendType::TRANSACTIONAL ?
             $this->queueService->getTransactionalQueue() :

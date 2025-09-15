@@ -72,6 +72,7 @@ class SuppressionService
      */
     public function getSuppressed(Project $project, array $emails): array
     {
+        /** @var Suppression[] $results */
         $results = $this->suppressionRepository->createQueryBuilder('s')
             ->where('s.project = :project')
             ->andWhere('s.email IN (:emails)')

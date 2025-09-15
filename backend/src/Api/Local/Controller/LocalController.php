@@ -2,7 +2,7 @@
 
 namespace App\Api\Local\Controller;
 
-use App\Api\Console\Metrics\MetricsListener;
+use App\Api\Console\Metric\MetricsListener;
 use App\Api\Local\Input\IncomingInput;
 use App\Api\Local\Input\IncomingType;
 use App\Api\Local\Input\SendAttemptDoneInput;
@@ -28,13 +28,11 @@ class LocalController extends AbstractController
     use ClockAwareTrait;
 
     public function __construct(
-        private SendService         $sendService,
         private SendAttemptService $sendAttemptService,
         private IncomingMailService $incomingMailService,
         private DebugIncomingEmailService $debugIncomingEmailService,
-        private MetricsListener     $metricsListener,
-    )
-    {
+        private MetricsListener $metricsListener,
+    ) {
     }
 
     #[Route('/state', methods: 'GET')]
@@ -52,9 +50,7 @@ class LocalController extends AbstractController
     #[Route('/send-attempts/done', methods: 'POST')]
     public function sendAttemptDone(
         #[MapRequestPayload] SendAttemptDoneInput $input,
-    ): JsonResponse
-    {
-
+    ): JsonResponse {
         foreach ($input->send_attempt_ids as $id) {
             $sendAttempt = $this->sendAttemptService->getSendAttemptById($id);
 
@@ -71,8 +67,7 @@ class LocalController extends AbstractController
     #[Route('/incoming', methods: 'POST')]
     public function incoming(
         #[MapRequestPayload] IncomingInput $input
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $isBounce = $input->type === IncomingType::BOUNCE;
         $debugIncomingEmailStatus = $input->error ? DebugIncomingEmailStatus::FAILED : DebugIncomingEmailStatus::SUCCESS;
 
@@ -86,12 +81,26 @@ class LocalController extends AbstractController
             $input->error
         );
 
-        if (!$input->error) {
-            if ($isBounce) {
-                $this->incomingMailService->handleIncomingBounce($input->bounce_uuid, $input->dsn, $debugIncomingEmail);
-            } else {
-                $this->incomingMailService->handleIncomingComplaint($input->arf, $debugIncomingEmail);
-            }
+        if ($input->error) {
+            return new JsonResponse();
+        }
+
+        if ($isBounce) {
+            assert($input->bounce_uuid !== null);
+            assert($input->dsn !== null);
+
+            $this->incomingMailService->handleIncomingBounce(
+                $input->bounce_uuid,
+                $input->dsn,
+                $debugIncomingEmail
+            );
+        } else {
+            assert($input->arf !== null);
+
+            $this->incomingMailService->handleIncomingComplaint(
+                $input->arf,
+                $debugIncomingEmail
+            );
         }
 
         return new JsonResponse();
@@ -103,7 +112,7 @@ class LocalController extends AbstractController
         $renderer = new RenderTextFormat();
         return new JsonResponse(
             [
-            "metrics" => $renderer->render($this->metricsListener->getSamples())
+                "metrics" => $renderer->render($this->metricsListener->getSamples())
             ],
             headers: [
                 'Content-Type' => RenderTextFormat::MIME_TYPE

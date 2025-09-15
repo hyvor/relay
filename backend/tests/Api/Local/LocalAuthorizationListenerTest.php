@@ -26,10 +26,7 @@ class LocalAuthorizationListenerTest extends KernelTestCase
 
     private function getListener(string $env): LocalAuthorizationListener
     {
-        /** @var InstanceService $instanceService */
-        $instanceService = $this->container->get(InstanceService::class);
-
-        return new LocalAuthorizationListener($env, $instanceService);
+        return new LocalAuthorizationListener($env);
     }
 
     public function test_ignores_non_local_apis(): void
@@ -40,7 +37,8 @@ class LocalAuthorizationListenerTest extends KernelTestCase
         $request = Request::create('/api/remote/some-endpoint');
         $event = new ControllerEvent(
             $this->getKernel(),
-            function () {},
+            function () {
+            },
             $request,
             HttpKernelInterface::MAIN_REQUEST
         );
@@ -56,7 +54,8 @@ class LocalAuthorizationListenerTest extends KernelTestCase
         $request = Request::create('/api/local/some-endpoint');
         $event = new ControllerEvent(
             $this->getKernel(),
-            function () {},
+            function () {
+            },
             $request,
             HttpKernelInterface::MAIN_REQUEST
         );
@@ -74,7 +73,8 @@ class LocalAuthorizationListenerTest extends KernelTestCase
         $request->server->set('REMOTE_ADDR', '9.9.9.9');
         $event = new ControllerEvent(
             $this->getKernel(),
-            function () {},
+            function () {
+            },
             $request,
             HttpKernelInterface::MAIN_REQUEST
         );
@@ -85,7 +85,6 @@ class LocalAuthorizationListenerTest extends KernelTestCase
 
     public function test_does_not_allow_outside_of_private_network(): void
     {
-
         $this->expectException(AccessDeniedHttpException::class);
         $this->expectExceptionMessage('Only requests from localhost or private network are allowed.');
 
@@ -98,16 +97,16 @@ class LocalAuthorizationListenerTest extends KernelTestCase
         $request->server->set('REMOTE_ADDR', '10.0.0.0');
         $event = new ControllerEvent(
             $this->getKernel(),
-            function () {},
+            function () {
+            },
             $request,
             HttpKernelInterface::MAIN_REQUEST
         );
         $event->setController(
-            fn () => null,
+            fn() => null,
         );
 
         $listener($event);
-
     }
 
 }

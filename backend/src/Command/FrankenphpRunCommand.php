@@ -21,8 +21,7 @@ class FrankenphpRunCommand extends Command
 {
     public function __construct(
         private ServerService $serverService,
-    )
-    {
+    ) {
         parent::__construct();
     }
 
@@ -38,10 +37,12 @@ class FrankenphpRunCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $currentServer =  $this->serverService->getServerByCurrentHostname();
+        $currentServer = $this->serverService->getServerByCurrentHostname();
 
         if (!$currentServer) {
-            $output->writeln('<error>Current server not found in the database. Ensure the hostname is correctly configured.</error>');
+            $output->writeln(
+                '<error>Current server not found in the database. Ensure the hostname is correctly configured.</error>'
+            );
             return Command::FAILURE;
         }
 
@@ -66,7 +67,7 @@ class FrankenphpRunCommand extends Command
         $output->writeln('<info>Starting FrankenPHP with WORKERS=' . $currentServer->getApiWorkers() . '</info>');
 
         $process->setTimeout(null);
-        $process->run(function ($type, $buffer): void {
+        $process->run(function (string $type, string $buffer): void {
             if ($type === Process::OUT) {
                 echo $buffer;
             } else {
