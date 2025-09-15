@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api;
 
-use App\Api\Console\Metrics\MetricsListener;
+use App\Api\Console\Metric\MetricsListener;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -38,6 +38,7 @@ class MetricsListenerTest extends WebTestCase
         ]);
 
         $listener = $this->getContainer()->get(MetricsListener::class);
+        assert($listener instanceof MetricsListener);
 
         $this->consoleApi(
             $project,
@@ -48,8 +49,6 @@ class MetricsListenerTest extends WebTestCase
 
         $metrics = $listener->getSamples();
         $total = $this->findMetric($metrics, 'http_requests_total');
-
-        $this->assertNotNull($total, 'Expected metric not found');
 
         $sample = $total->getSamples()[0];
 
@@ -66,10 +65,8 @@ class MetricsListenerTest extends WebTestCase
 
         $this->assertSame(200, $response->getStatusCode());
 
-        $content = json_decode($response->getContent(), true);
-        $this->assertIsArray($content);
-        $this->assertNotEmpty($content);
-        $this->assertArrayHasKey('metrics', $content);
+        $content = $this->getJson();
+        $this->assertIsString($content['metrics']);
         $this->assertStringContainsString(
             '# HELP php_info Information about the PHP environment.',
             $content['metrics']

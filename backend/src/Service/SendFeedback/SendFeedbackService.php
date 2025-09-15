@@ -13,6 +13,7 @@ use Symfony\Component\Clock\ClockAwareTrait;
 class SendFeedbackService
 {
     use ClockAwareTrait;
+
     public function __construct(
         private EntityManagerInterface $em,
     ) {
@@ -30,15 +31,17 @@ class SendFeedbackService
             ->where('sr.send = :send')
             ->setParameter('send', $send);
 
-        return $qb->getQuery()->getResult();
+        /** @var SendFeedback[] $result */
+        $result = $qb->getQuery()->getResult();
+
+        return $result;
     }
 
     public function createSendFeedback(
         SendFeedbackType $type,
         SendRecipient $recipient,
         DebugIncomingEmail $debugIncomingEmail
-    ): SendFeedback
-    {
+    ): SendFeedback {
         $sendFeedback = new SendFeedback();
         $sendFeedback->setCreatedAt(new \DateTimeImmutable());
         $sendFeedback->setUpdatedAt(new \DateTimeImmutable());

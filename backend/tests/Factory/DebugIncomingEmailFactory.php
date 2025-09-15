@@ -48,10 +48,10 @@ final class DebugIncomingEmailFactory extends PersistentProxyObjectFactory
         ]);
     }
 
-    public function fbl(): self
+    public function compliant(): self
     {
         return $this->with([
-            'type' => DebugIncomingEmailType::FBL,
+            'type' => DebugIncomingEmailType::COMPLAINT,
             'parsed_data' => $this->generateFblParsedData(),
         ]);
     }
@@ -82,13 +82,13 @@ final class DebugIncomingEmailFactory extends PersistentProxyObjectFactory
         $date = self::faker()->dateTime()->format('r');
 
         return "From: {$from}\r\n" .
-               "To: {$to}\r\n" .
-               "Subject: {$subject}\r\n" .
-               "Date: {$date}\r\n" .
-               "Message-ID: <{$messageId}>\r\n" .
-               "Content-Type: text/plain; charset=utf-8\r\n" .
-               "\r\n" .
-               $body;
+            "To: {$to}\r\n" .
+            "Subject: {$subject}\r\n" .
+            "Date: {$date}\r\n" .
+            "Message-ID: <{$messageId}>\r\n" .
+            "Content-Type: text/plain; charset=utf-8\r\n" .
+            "\r\n" .
+            $body;
     }
 
     /**

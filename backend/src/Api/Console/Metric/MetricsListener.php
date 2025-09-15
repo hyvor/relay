@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Api\Console\Metrics;
+namespace App\Api\Console\Metric;
 
 use Prometheus\CollectorRegistry;
 use Prometheus\Counter;
+use Prometheus\MetricFamilySamples;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\TerminateEvent;
@@ -20,8 +21,7 @@ class MetricsListener
     public function __construct(
         private PrometheusFactory $prometheusFactory,
         private RouterInterface $router,
-    )
-    {
+    ) {
         $this->registry = $this->prometheusFactory->createRegistry();
         $this->requestsTotal = $this->registry->getOrRegisterCounter(
             '',
@@ -54,7 +54,7 @@ class MetricsListener
     {
         $routeName = $request->attributes->get('_route');
 
-        if (!$routeName) {
+        if (!is_string($routeName)) {
             return '/<unknown>';
         }
 
@@ -63,7 +63,10 @@ class MetricsListener
         return $route instanceof Route ? $route->getPath() : '/<unknown>';
     }
 
-    public function getSamples(): mixed
+    /**
+     * @return MetricFamilySamples[]
+     */
+    public function getSamples(): array
     {
         return $this->registry->getMetricFamilySamples();
     }

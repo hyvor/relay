@@ -44,6 +44,9 @@ class CreateProjectTest extends WebTestCase
         $project = $json['project'];
         $scopes = $json['scopes'];
 
+        $this->assertIsArray($project);
+        $this->assertIsArray($scopes);
+
         $this->assertArrayHasKey('id', $project);
         $this->assertArrayHasKey('created_at', $project);
         $this->assertArrayHasKey('name', $project);

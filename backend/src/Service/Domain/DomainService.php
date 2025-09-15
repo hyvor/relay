@@ -26,7 +26,6 @@ class DomainService
         private DomainRepository $domainRepository,
         private EntityManagerInterface $em,
         private Encryption $encryption,
-        private DkimVerificationService $dkimVerificationService,
         private EventDispatcherInterface $eventDispatcher
     ) {
     }

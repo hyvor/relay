@@ -40,9 +40,11 @@ class ServerTaskMessageHandler
         $tasks = $this->serverTaskService->getTaskForServer($server);
 
         foreach ($tasks as $task) {
-            if ($task->getType() == ServerTaskType::UPDATE_STATE) {
+            // @phpstan-ignore-next-line
+            if ($task->getType() === ServerTaskType::UPDATE_STATE) {
                 $this->handleUpdateStateTask($task);
             }
+
             $this->serverTaskService->deleteTask($task);
         }
     }

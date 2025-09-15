@@ -31,7 +31,6 @@ class InstanceService
         private LoggerInterface $logger,
         private DomainService $domainService,
         private EventDispatcherInterface $eventDispatcher,
-        private ServerTaskService $serverTaskService,
     ) {
     }
 

@@ -6,7 +6,6 @@ use App\Entity\Domain;
 use App\Entity\Project;
 use App\Entity\Queue;
 use App\Entity\Send;
-use App\Entity\SendRecipient;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
 use App\Repository\SendRepository;
@@ -15,7 +14,6 @@ use App\Service\Send\Exception\EmailTooLargeException;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Mime\Address;
 
 class SendService
@@ -26,7 +24,6 @@ class SendService
         private EntityManagerInterface $em,
         private EmailBuilder $emailBuilder,
         private SendRepository $sendRepository,
-        private EventDispatcherInterface $eventDispatcher,
         private RecipientFactory $recipientFactory,
     ) {
     }

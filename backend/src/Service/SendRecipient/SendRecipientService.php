@@ -3,7 +3,6 @@
 namespace App\Service\SendRecipient;
 
 use App\Entity\SendAttempt;
-use App\Entity\SendFeedback;
 use App\Entity\SendRecipient;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -16,7 +15,7 @@ class SendRecipientService
 
     public function getSendRecipientByEmail(string $email): ?SendRecipient
     {
-        return $this->entityManager->getRepository(SendFeedback::class)
+        return $this->entityManager->getRepository(SendRecipient::class)
             ->findOneBy(['email' => $email]);
     }
 
@@ -25,6 +24,7 @@ class SendRecipientService
      */
     public function getSendRecipientsBySendAttempt(SendAttempt $sendAttempt): array
     {
+        /** @var SendRecipient[] $results */
         $results = $this->entityManager->getRepository(SendRecipient::class)
             ->createQueryBuilder('r')
             ->where('r.send = :send')
