@@ -35,7 +35,13 @@ class SudoAuthorizationListener
         $user = $this->auth->check($request);
 
         if ($user === false) {
-            throw new AccessDeniedHttpException('Invalid session.');
+            throw new DataCarryingHttpException(
+                403,
+                [
+                    'login_url' => $this->auth->authUrl('login'),
+                ],
+                'Invalid session.'
+            );
         }
 
         $sudoUser = $this->sudoUserService->get($user->id);
