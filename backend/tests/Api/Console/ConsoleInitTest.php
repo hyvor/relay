@@ -43,6 +43,6 @@ class ConsoleInitTest extends WebTestCase
         $this->assertArrayHasKey('project_users', $json);
         $this->assertArrayHasKey('config', $json);
         $this->assertIsArray($json['project_users']);
-        $this->assertCount(7, $json['project_users']);      // 5 + "2"
+        $this->assertCount(5, $json['project_users']);
     }
 }
