@@ -103,18 +103,19 @@ jobs:
       # Database already migrated from the previous step.
       - name: Run Go Tests
         run: |
-          touch coverage.txt
+          touch coverage.xml
           docker run \
           --network ci \
-          --mount type=bind,source=$(pwd)/coverage.txt,target=/app/coverage.txt \
+          --mount type=bind,source=$(pwd)/coverage.xml,target=/worker/coverage.xml \
           worker-dev sh -c "
-          go test -v ./... -count=1 -p 1 -timeout 30s -coverprofile=coverage.txt"
+          go test -v ./... -count=1 -p 1 -timeout 30s -coverprofile=coverage.xml"
 
       - name: Upload results to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.HYVOR_ORG_CODECOV_TOKEN }}
           slug: hyvor/relay
+          files: /worker/coverage.xml
 
   go-staticcheck:
     runs-on: ubuntu-latest
