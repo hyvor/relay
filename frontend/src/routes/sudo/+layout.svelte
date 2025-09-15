@@ -34,8 +34,7 @@
                     if (err.message === 'You do not have sudo access.') {
                         toast.error(err.message);
                     } else {
-                        const toPage = page.url.searchParams.has('signup') ? 'signup' : 'login';
-                        const url = new URL(err.data[toPage + '_url'], location.origin);
+                        const url = new URL(err.data['login_url'], location.origin);
                         url.searchParams.set('redirect', location.href);
                         location.href = url.toString();
                     }
