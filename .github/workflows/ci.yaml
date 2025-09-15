@@ -113,7 +113,7 @@ jobs:
       - name: Upload results to Codecov
         uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.HYVOR_ORG_CODECOV_TOKEN }}
           slug: hyvor/relay
 
   go-staticcheck:
