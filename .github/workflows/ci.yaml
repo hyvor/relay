@@ -58,12 +58,21 @@ jobs:
 
       - name: Run PHP Tests
         run: |
+          touch coverage.xml
           docker run \
           --network ci \
+          --mount type=bind,source=$(pwd)/coverage.xml,target=/app/coverage.xml \
           -e APP_ENV=test \
           backend-dev sh -c "
           php bin/console doctrine:migrations:migrate --no-interaction &&
-          ./vendor/bin/phpunit"
+          ./vendor/bin/phpunit --coverage-clover /app/coverage.xml"
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.HYVOR_ORG_CODECOV_TOKEN }}
+          slug: hyvor/relay
+          files: /app/coverage.xml
 
   go-tests:
     name: "Go Tests"
