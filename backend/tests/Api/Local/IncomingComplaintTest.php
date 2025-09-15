@@ -14,6 +14,7 @@ use App\Service\IncomingMail\IncomingMailService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\SendFactory;
+use App\Tests\Factory\SendRecipientFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(LocalController::class)]
@@ -28,6 +29,10 @@ class IncomingComplaintTest extends WebTestCase
         $project = ProjectFactory::createOne();
         $send = SendFactory::createOne([
             'project' => $project
+        ]);
+        SendRecipientFactory::createOne([
+            'send' => $send,
+            'address' => 'spammer@example.net'
         ]);
 
         $response = $this->localApi(
