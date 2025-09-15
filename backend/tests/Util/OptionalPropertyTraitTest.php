@@ -3,10 +3,10 @@
 namespace App\Tests\Util;
 
 use App\Util\OptionalPropertyTrait;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(OptionalPropertyTrait::class)]
+#[CoversTrait(OptionalPropertyTrait::class)]
 class OptionalPropertyTraitTest extends TestCase
 {
 
