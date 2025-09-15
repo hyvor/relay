@@ -9,6 +9,8 @@ use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
 use Hyvor\Internal\Auth\AuthFake;
+use Hyvor\Internal\Sudo\SudoUserFactory;
+use Hyvor\Internal\Sudo\SudoUserService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\BrowserKit\Cookie;
 
@@ -20,6 +22,7 @@ class ConsoleInitTest extends WebTestCase
     public function test_init_console(): void
     {
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
+        SudoUserFactory::createOne(['user_id' => 1]);
 
         ProjectUserFactory::createMany(5, [
             'user_id' => 1,
