@@ -11,6 +11,7 @@ use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
 use Hyvor\Internal\Auth\AuthFake;
 use Hyvor\Internal\Auth\AuthUser;
+use Hyvor\Internal\Sudo\SudoUserFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Component\Clock\Clock;
@@ -253,6 +254,7 @@ class AuthorizationTest extends WebTestCase
     public function test_user_level_endpoint_works(): void
     {
         AuthFake::enableForSymfony($this->container, ['id' => 1]);
+        SudoUserFactory::createOne(['user_id' => 1]);
 
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
         $this->client->request(
