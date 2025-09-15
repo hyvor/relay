@@ -56,6 +56,7 @@ class DeleteAllProjectUserTest extends WebTestCase
         $json = $this->getJson();
         $this->assertSame([], $json);
 
+        $this->em->clear();
         $this->assertNull($this->em->getRepository(ProjectUser::class)->find($projectUser1->getId()));
         $this->assertNull($this->em->getRepository(ProjectUser::class)->find($projectUser2->getId()));
         $this->assertInstanceOf(ProjectUser::class, $this->em->getRepository(ProjectUser::class)->find($otherProjectUser->getId()));

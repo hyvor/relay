@@ -32,6 +32,7 @@ class UpdateStateTest extends KernelTestCase
         $serverTask = ServerTaskFactory::createOne(
             [
                 'server' => $server,
+                'payload' => ['api_workers_updated' => false]
             ]
         );
         $serverTaskId = $serverTask->getId();

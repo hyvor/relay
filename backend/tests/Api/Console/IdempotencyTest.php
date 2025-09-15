@@ -12,6 +12,7 @@ use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ApiIdempotencyRecordFactory;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
+use App\Tests\Factory\ProjectUserFactory;
 use App\Tests\Factory\QueueFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -156,6 +157,10 @@ class IdempotencyTest extends WebTestCase
         $limiter->consume(60);
 
         $project = ProjectFactory::createOne(['user_id' => 1]);
+        ProjectUserFactory::createOne([
+            'project' => $project,
+            'user_id' => 1,
+        ]);
 
         $idempotencyRecord = ApiIdempotencyRecordFactory::createOne([
             "project" => $project,

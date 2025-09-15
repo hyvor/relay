@@ -11,6 +11,7 @@ use App\Service\Instance\InstanceService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\InstanceFactory;
+use App\Tests\Factory\ServerFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(InstanceController::class)]
@@ -26,6 +27,7 @@ class UpdateInstanceTest extends WebTestCase
         DomainFactory::createOne([
             'project' => $instance->getSystemProject()
         ]);
+        ServerFactory::createOne();
 
         $response = $this->sudoApi(
             'PATCH',
@@ -35,7 +37,12 @@ class UpdateInstanceTest extends WebTestCase
             ]
         );
 
-        $this->assertResponseIsSuccessful();
+        $this->assertSame(200, $response->getStatusCode());
+        $json = $this->getJson();
+        $this->assertArrayHasKey('domain', $json);
+        $this->assertSame("examples.com", $json['domain']);
+
+        $this->em->refresh($instance->_real());
         $this->assertSame("examples.com", $instance->getDomain());
 
         $serverTask = $this->em->getRepository(ServerTask::class)->findAll();

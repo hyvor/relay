@@ -7,6 +7,7 @@ use App\Api\Console\RateLimit\RateLimitListener;
 use App\Service\App\RateLimit\RateLimiterProvider;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
+use App\Tests\Factory\ProjectUserFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(RateLimitListener::class)]
@@ -29,6 +30,10 @@ class RateLimitTest extends WebTestCase
     public function test_adds_rate_limit_for_session_auth(): void
     {
         $project = ProjectFactory::createOne(['user_id' => 1]);
+        ProjectUserFactory::createOne([
+            'project' => $project,
+            'user_id' => 1
+        ]);
 
         $this->consoleApi($project, "GET", "/sends", useSession: true);
 
@@ -41,6 +46,10 @@ class RateLimitTest extends WebTestCase
     public function test_429_on_rate_limited(): void
     {
         $project = ProjectFactory::createOne(['user_id' => 1]);
+        ProjectUserFactory::createOne([
+            'project' => $project,
+            'user_id' => 1
+        ]);
 
         $rateLimit = new RateLimit();
         /** @var RateLimiterProvider $rateLimiterProvider */
@@ -62,6 +71,10 @@ class RateLimitTest extends WebTestCase
     public function test_for_sends_endpoint(): void
     {
         $project = ProjectFactory::createOne();
+        ProjectUserFactory::createOne([
+            'project' => $project,
+            'user_id' => 1
+        ]);
 
         $response = $this->consoleApi($project, "POST", "/sends");
 

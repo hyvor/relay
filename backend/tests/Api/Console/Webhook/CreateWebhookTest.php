@@ -30,7 +30,7 @@ class CreateWebhookTest extends WebTestCase
                 'url' => 'https://example.com/webhook',
                 'description' => 'Test Webhook',
                 'events' => [
-                    'send.accepted'
+                    'send.recipient.accepted'
                 ],
             ]
         );
@@ -45,7 +45,7 @@ class CreateWebhookTest extends WebTestCase
         $this->assertSame('Test Webhook', $content['description']);
         $this->assertArrayHasKey('events', $content);
         $this->assertIsArray($content['events']);
-        $this->assertContains('send.accepted', $content['events']);
+        $this->assertContains('send.recipient.accepted', $content['events']);
     }
 
     public function test_create_webhook_with_invalid_url(): void

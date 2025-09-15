@@ -40,7 +40,7 @@ class UpdateWebhookTest extends WebTestCase
             [
                 'url' => 'https://example.com/new',
                 'description' => 'New description',
-                'events' => ['send.complained', 'suppression.created'],
+                'events' => ['send.recipient.complained', 'suppression.created'],
             ]
         );
 
@@ -52,14 +52,14 @@ class UpdateWebhookTest extends WebTestCase
         $this->assertArrayHasKey('description', $content);
         $this->assertSame('https://example.com/new', $content['url']);
         $this->assertSame('New description', $content['description']);
-        $this->assertContains('send.complained', (array) $content['events']);
+        $this->assertContains('send.recipient.complained', (array) $content['events']);
         $this->assertContains('suppression.created', (array) $content['events']);
 
         $webhookDb = $this->em->getRepository(Webhook::class)->find($webhook->getId());
         $this->assertNotNull($webhookDb);
         $this->assertSame('https://example.com/new', $webhookDb->getUrl());
         $this->assertSame('New description', $webhookDb->getDescription());
-        $this->assertContains('send.complained', $webhookDb->getEvents());
+        $this->assertContains('send.recipient.complained', $webhookDb->getEvents());
         $this->assertContains('suppression.created', $webhookDb->getEvents());
     }
 }

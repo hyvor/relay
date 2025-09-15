@@ -9,6 +9,7 @@ use App\Entity\Type\ProjectSendType;
 use App\Service\Project\ProjectService;
 use App\Tests\Case\WebTestCase;
 use Hyvor\Internal\Auth\AuthFake;
+use Hyvor\Internal\Sudo\SudoUserFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\BrowserKit\Cookie;
 
@@ -25,6 +26,8 @@ class CreateProjectTest extends WebTestCase
     public function test_create_project_valid(): void
     {
         AuthFake::enableForSymfony($this->container, ['id' => 1]);
+        SudoUserFactory::createOne(['user_id' => 1]);
+
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
 
         $this->client->request(
