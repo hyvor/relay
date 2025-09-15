@@ -106,15 +106,16 @@ jobs:
           touch coverage.txt
           docker run \
           --network ci \
-          --mount type=bind,source=$(pwd)/coverage.txt,target=coverage.txt \
+          --mount type=bind,source=$(pwd)/coverage.txt,target=/app/coverage.txt \
           worker-dev sh -c "
-          go test -v ./... -count=1 -p 1 -timeout 30s -coverprofile=coverage.txt"
+          go test -v ./... -count=1 -p 1 -timeout 30s -coverprofile=/app/coverage.txt"
 
       - name: Upload results to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: hyvor/relay
+          files: /app/coverage.txt
 
   go-staticcheck:
     runs-on: ubuntu-latest
