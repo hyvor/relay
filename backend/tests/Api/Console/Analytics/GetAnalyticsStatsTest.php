@@ -17,6 +17,7 @@ class GetAnalyticsStatsTest extends WebTestCase
 
     public function test_gets_stats(): void
     {
+        $this->markTestSkipped();
         // TODO with new recipient status
 
 //        $project = ProjectFactory::createOne();

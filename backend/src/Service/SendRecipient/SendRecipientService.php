@@ -2,6 +2,7 @@
 
 namespace App\Service\SendRecipient;
 
+use App\Entity\Send;
 use App\Entity\SendAttempt;
 use App\Entity\SendRecipient;
 use Doctrine\ORM\EntityManagerInterface;
@@ -13,10 +14,15 @@ class SendRecipientService
     ) {
     }
 
-    public function getSendRecipientByEmail(string $email): ?SendRecipient
-    {
+    public function getSendRecipientByEmail(
+        Send $send,
+        string $email
+    ): ?SendRecipient {
         return $this->entityManager->getRepository(SendRecipient::class)
-            ->findOneBy(['email' => $email]);
+            ->findOneBy([
+                'send' => $send,
+                'address' => $email
+            ]);
     }
 
     /**

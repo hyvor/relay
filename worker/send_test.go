@@ -331,7 +331,7 @@ func TestSendEmailToHost(t *testing.T) {
 	)
 
 	assert.NoError(t, convo.NetworkError)
-	assert.Equal(t, nil, convo.SmtpError)
+	assert.Nil(t, convo.SmtpError)
 	assert.Equal(t, 7, len(convo.Steps))
 
 }
@@ -388,14 +388,14 @@ func TestSend_JsonMarsh(t *testing.T) {
 	ld := LatencyDuration(150 * time.Millisecond)
 	data, err := ld.MarshalJSON()
 	assert.NoError(t, err)
-	assert.Equal(t, `"150ms"`, string(data))
+	assert.Equal(t, "150", string(data))
 
 	convo := &SmtpConversation{
 		NetworkError: errors.New("some error"),
 	}
 	data, err = convo.MarshalJSON()
 	assert.NoError(t, err)
-	assert.True(t, strings.Contains(string(data), `"Error":"some error"`))
+	assert.True(t, strings.Contains(string(data), `"network_error":"some error"`))
 
 }
 

@@ -34,9 +34,7 @@ class IncomingMailService
         string $bounceUuid,
         DsnInput $dsnInput,
         DebugIncomingEmail $debugIncomingEmail,
-    ): void
-    {
-
+    ): void {
         $recipients = $dsnInput->Recipients;
 
         if (count($recipients) === 0) {
@@ -79,7 +77,7 @@ class IncomingMailService
                 return;
             }
 
-            $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($recipient->EmailAddress);
+            $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $recipient->EmailAddress);
             if ($sendRecipient === null) {
                 $this->logger->error('Failed to get send recipient by email', [
                     'uuid' => $bounceUuid,
@@ -109,8 +107,7 @@ class IncomingMailService
     public function handleIncomingComplaint(
         ArfInput $arfInput,
         DebugIncomingEmail $debugIncomingEmail,
-    ): void
-    {
+    ): void {
         $parts = explode('@', $arfInput->MessageId);
 
         if (count($parts) < 2) {
@@ -130,7 +127,7 @@ class IncomingMailService
             return;
         }
 
-        $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($arfInput->OriginalRcptTo);
+        $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $arfInput->OriginalRcptTo);
         if ($sendRecipient === null) {
             $this->logger->error('Failed to get send recipient by email', [
                 'uuid' => $uuid,

@@ -19,6 +19,7 @@ class GetAnalyticsSendsChartTest extends WebTestCase
 
     public function test_gets_sends_chart_data(): void
     {
+        $this->markTestSkipped();
         // TODO with new recipient statuses
 
 //        Clock::set(new MockClock('2025-07-14'));
