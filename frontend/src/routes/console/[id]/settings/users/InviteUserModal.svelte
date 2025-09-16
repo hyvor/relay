@@ -33,15 +33,11 @@
 	});
 
 	function handleSelectAll() {
-		console.log('handleSelectAll called', { filteredScopes: filteredScopes(), selectedScopes });
 		selectedScopes = [...filteredScopes()];
-		console.log('after select all', { selectedScopes });
 	}
 
 	function handleDeselectAll() {
-		console.log('handleDeselectAll called', { selectedScopes });
 		selectedScopes = [];
-		console.log('after deselect all', { selectedScopes });
 	}
 </script>
 
