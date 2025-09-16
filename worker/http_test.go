@@ -148,7 +148,7 @@ func TestDebugParseFbl(t *testing.T) {
 	content, err := os.ReadFile("./bounceparse/testdata/arf1.txt")
 	assert.NoError(t, err)
 	rawBase64 := base64.StdEncoding.EncodeToString(content)
-	jsonData := `{"raw": "` + rawBase64 + `","type": "fbl"}`
+	jsonData := `{"raw": "` + rawBase64 + `","type": "complaint"}`
 
 	resp, err := http.Post("http://localhost"+localHttpPort+"/debug/parse-bounce-fbl", "application/json", strings.NewReader(jsonData))
 	assert.NoError(t, err)
