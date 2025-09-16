@@ -11,7 +11,7 @@
 	import { debugParseBounceFBL } from '../../sudoActions';
 
 	let emailContent = $state('');
-	let type: 'bounce' | 'fbl' = $state('bounce');
+	let type: 'bounce' | 'complaint' = $state('bounce');
 	let parsing = $state(false);
 	let error = $state('');
 	let result = $state('Parser at your service...');
@@ -51,7 +51,7 @@
 
 		<div class="action">
 			<Radio bind:group={type} name="fbl-bounce" value="bounce">Bounce</Radio>
-			<Radio bind:group={type} name="fbl-bounce" value="fbl">FBL</Radio>
+			<Radio bind:group={type} name="fbl-bounce" value="complaint">FBL</Radio>
 			<Button on:click={handleParse}>Parse Email</Button>
 		</div>
 	</div>
