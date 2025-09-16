@@ -5,6 +5,7 @@ namespace App\Tests\Api\Local;
 use App\Api\Local\Controller\LocalController;
 use App\Api\Local\Input\ArfInput;
 use App\Api\Local\Input\IncomingInput;
+use App\Entity\DebugIncomingEmail;
 use App\Entity\Suppression;
 use App\Entity\Type\DebugIncomingEmailStatus;
 use App\Entity\Type\DebugIncomingEmailType;
