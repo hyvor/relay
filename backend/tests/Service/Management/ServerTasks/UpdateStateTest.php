@@ -14,7 +14,6 @@ use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[CoversClass(ServerTaskMessage::class)]
-#[CoversClass(ServerTask::class)]
 #[CoversClass(ServerTaskMessageHandler::class)]
 class UpdateStateTest extends KernelTestCase
 {

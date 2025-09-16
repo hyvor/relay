@@ -5,7 +5,6 @@ namespace App\Tests\Api\Console\Suppression;
 use App\Api\Console\Controller\SuppressionController;
 use App\Api\Console\Object\SuppressionObject;
 use App\Entity\Type\SuppressionReason;
-use App\Repository\SuppressionRepository;
 use App\Service\Suppression\SuppressionService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
@@ -16,7 +15,6 @@ use PHPUnit\Framework\Attributes\TestWith;
 #[CoversClass(SuppressionController::class)]
 #[CoversClass(SuppressionService::class)]
 #[CoversClass(SuppressionObject::class)]
-#[CoversClass(SuppressionRepository::class)]
 class GetSuppressionsTest extends WebTestCase
 {
     public function test_get_suppresions(): void

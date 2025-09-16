@@ -5,7 +5,6 @@ namespace App\Tests\Api\Local;
 use App\Api\Local\Controller\LocalController;
 use App\Api\Local\Input\ArfInput;
 use App\Api\Local\Input\IncomingInput;
-use App\Entity\DebugIncomingEmail;
 use App\Entity\Suppression;
 use App\Entity\Type\DebugIncomingEmailStatus;
 use App\Entity\Type\DebugIncomingEmailType;
@@ -21,7 +20,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(IncomingMailService::class)]
 #[CoversClass(IncomingInput::class)]
 #[CoversClass(ArfInput::class)]
-#[CoversClass(DebugIncomingEmail::class)]
 class IncomingComplaintTest extends WebTestCase
 {
     public function test_incoming_complaint(): void
