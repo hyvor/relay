@@ -33,6 +33,11 @@
             <directory>src</directory>
         </include>
 
+        <exclude>
+            <directory>src/Entity</directory>
+            <directory>src/Repository</directory>
+        </exclude>
+
         <deprecationTrigger>
             <method>Doctrine\Deprecations\Deprecation::trigger</method>
             <method>Doctrine\Deprecations\Deprecation::delegateTriggerToBackend</method>
