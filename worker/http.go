@@ -121,7 +121,7 @@ func handleParseBounceFBL() http.HandlerFunc {
 				return
 			}
 
-		} else if request.Type == "fbl" {
+		} else if request.Type == "complaint" {
 
 			parsed, err = bounceparse.ParseArf(request.RawEmail)
 

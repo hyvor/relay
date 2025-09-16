@@ -124,8 +124,8 @@ export function debugGetIncomingMails(limit: number = 20, offset: number = 0) {
 	});
 }
 
-export function debugParseBounceFBL(raw: string, type: 'bounce' | 'fbl') {
-	return sudoApi.post<{parsed: Record<string, any>}>({
+export function debugParseBounceFBL(raw: string, type: 'bounce' | 'complaint') {
+	return sudoApi.post<{ parsed: Record<string, any> }>({
 		endpoint: '/debug/parse-bounce-fbl',
 		data: { raw, type }
 	});
