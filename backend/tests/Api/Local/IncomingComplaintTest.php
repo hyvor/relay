@@ -21,7 +21,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(IncomingMailService::class)]
 #[CoversClass(IncomingInput::class)]
 #[CoversClass(ArfInput::class)]
-#[CoversClass(DebugIncomingEmail::class)]
 class IncomingComplaintTest extends WebTestCase
 {
     public function test_incoming_complaint(): void

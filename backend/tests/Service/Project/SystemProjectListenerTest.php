@@ -22,7 +22,6 @@ use Hyvor\Internal\Sudo\Event\SudoRemovedEvent;
 
 #[CoversClass(SystemProjectListener::class)]
 #[CoversClass(ProjectUserService::class)]
-#[CoversClass(ProjectUser::class)]
 #[CoversClass(DomainService::class)]
 class SystemProjectListenerTest extends KernelTestCase
 {

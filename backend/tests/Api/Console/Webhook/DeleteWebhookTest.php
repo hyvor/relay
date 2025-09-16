@@ -14,7 +14,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(WebhookController::class)]
 #[CoversClass(WebhookService::class)]
 #[CoversClass(WebhookObject::class)]
-#[CoversClass(Webhook::class)]
 class DeleteWebhookTest extends WebTestCase
 {
     public function test_delete_webhook(): void
