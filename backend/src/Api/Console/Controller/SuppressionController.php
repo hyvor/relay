@@ -25,6 +25,9 @@ class SuppressionController extends AbstractController
     #[ScopeRequired(Scope::SUPPRESSIONS_READ)]
     public function getSuppressions(Request $request, Project $project): JsonResponse
     {
+        $limit = $request->query->getInt("limit", 50);
+        $offset = $request->query->getInt("offset", 0);
+
         $emailSearch = null;
         if ($request->query->has('email')) {
             $emailSearch = $request->query->getString('email');
@@ -38,7 +41,7 @@ class SuppressionController extends AbstractController
 
         $suppressions = $this
             ->suppressionService
-            ->getSuppressionsForProject($project, $emailSearch, $reason)
+            ->getSuppressionsForProject($project, $emailSearch, $reason, $limit, $offset)
             ->map(fn($suppresion) => new SuppressionObject($suppresion));
 
         return $this->json($suppressions);

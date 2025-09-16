@@ -6,7 +6,9 @@
 		toast,
 		confirm,
 		ActionList,
-		ActionListItem
+		ActionListItem,
+		Button,
+		Loader
 	} from '@hyvor/design/components';
 	import IconX from '@hyvor/icons/IconX';
 	import SingleBox from '../../@components/content/SingleBox.svelte';
@@ -18,6 +20,7 @@
 
 	let suppressions: Suppression[] = $state([]);
 	let loading = $state(true);
+	let loadingMore = $state(false);
 	let emailSearchVal = $state('');
 	let emailSearch = $state('');
 	let reason: SuppressionReason | null = $state(null);
@@ -27,29 +30,63 @@
 		return 'All';
 	});
 	let showReason = $state(false);
+	let hasMore = $state(true);
+
+	const LIMIT = 50;
+	let offset = $state(0);
 
 	onMount(() => {
 		loadSuppressions();
 	});
 
-	function loadSuppressions() {
-		loading = true;
-		getSuppressions(emailSearch === '' ? null : emailSearch, reason)
-			.then((suppressionList) => {
-				suppressions = suppressionList;
+	function loadSuppressions(reset = false) {
+		if (reset) {
+			offset = 0;
+			suppressions = [];
+			hasMore = true;
+		}
+
+		const currentOffset = reset ? 0 : offset;
+		const isInitialLoad = currentOffset === 0;
+
+		if (isInitialLoad) {
+			loading = true;
+		} else {
+			loadingMore = true;
+		}
+
+		const search = emailSearch === '' ? null : emailSearch;
+
+		getSuppressions(search, reason, LIMIT, currentOffset)
+			.then((newSuppressions) => {
+				if (reset) {
+					suppressions = newSuppressions;
+				} else {
+					suppressions = [...suppressions, ...newSuppressions];
+				}
+
+				hasMore = newSuppressions.length === LIMIT;
+				offset = currentOffset + newSuppressions.length;
 			})
 			.catch((error) => {
 				toast.error('Failed to load suppressions: ' + error.message);
 			})
 			.finally(() => {
 				loading = false;
+				loadingMore = false;
 			});
 	}
 
 	function selectReason(r: SuppressionReason | null) {
 		showReason = false;
 		reason = r;
-		loadSuppressions();
+		loadSuppressions(true);
+	}
+
+	function handleLoadMore() {
+		if (!loadingMore && hasMore) {
+			loadSuppressions();
+		}
 	}
 
 	async function handleDeleteSuppression(suppression: Suppression) {
@@ -78,19 +115,19 @@
 		onKeydown: (e: KeyboardEvent) => {
 			if (e.key === 'Enter') {
 				emailSearch = emailSearchVal.trim();
-				loadSuppressions();
+				loadSuppressions(true);
 			}
 		},
 		onBlur: () => {
 			if (emailSearch !== emailSearchVal) {
 				emailSearch = emailSearchVal.trim();
-				loadSuppressions();
+				loadSuppressions(true);
 			}
 		},
 		onClear: () => {
 			emailSearchVal = '';
 			emailSearch = '';
-			loadSuppressions();
+			loadSuppressions(true);
 		}
 	};
 
@@ -150,7 +187,21 @@
 	</div>
 
 	<div class="content">
-		<SuppressionList {suppressions} {loading} onDelete={handleDeleteSuppression} />
+		{#if loading}
+			<div class="loader-container">
+				<Loader />
+			</div>
+		{:else}
+			<SuppressionList {suppressions} loading={false} onDelete={handleDeleteSuppression} />
+
+			{#if hasMore && !loading && suppressions.length > 0}
+				<div class="load-more">
+					<Button variant="outline" on:click={handleLoadMore} disabled={loadingMore}>
+						{loadingMore ? 'Loading...' : 'Load More'}
+					</Button>
+				</div>
+			{/if}
+		{/if}
 	</div>
 </SingleBox>
 
@@ -188,6 +239,21 @@
 	.content {
 		padding: 0;
 		flex: 1;
+		display: flex;
+		flex-direction: column;
 		overflow: auto;
+	}
+
+	.loader-container {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		flex: 1;
+	}
+
+	.load-more {
+		display: flex;
+		justify-content: center;
+		margin-top: 20px;
 	}
 </style>
