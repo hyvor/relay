@@ -167,4 +167,24 @@ class GetSuppressionsTest extends WebTestCase
         $this->assertIsString($content[0]['email']);
         $this->assertStringContainsString('thibault', $content[0]['email']);
     }
+
+    public function test_get_suppressions_with_pagination(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $suppressions = SuppressionFactory::createMany(10, [
+            'project' => $project,
+        ]);
+        $response = $this->consoleApi(
+            $project,
+            'GET',
+            '/suppressions?limit=5&offset=0'
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+        /** @var array<array<string, mixed>> $content */
+        $content = $this->getJson();
+
+        $this->assertCount(5, $content);
+    }
 }

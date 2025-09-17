@@ -30,7 +30,9 @@ class SuppressionService
     public function getSuppressionsForProject(
         Project $project,
         ?string $email,
-        ?SuppressionReason $reason = null
+        ?SuppressionReason $reason = null,
+        int $limit = 50,
+        int $offset = 0
     ): ArrayCollection {
         $qb = $this->suppressionRepository->createQueryBuilder('s');
 
@@ -38,6 +40,8 @@ class SuppressionService
             ->distinct()
             ->where('s.project = :project')
             ->setParameter('project', $project)
+            ->setMaxResults($limit)
+            ->setFirstResult($offset)
             ->orderBy('s.created_at', 'DESC');
 
         if ($email !== null) {
