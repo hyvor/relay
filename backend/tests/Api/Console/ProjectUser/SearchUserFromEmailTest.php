@@ -45,27 +45,26 @@ class SearchUserFromEmailTest extends WebTestCase
 
     public function test_search_user_from_email_multiple_hit(): void
     {
-        $this->markTestSkipped();
-//        AuthFake::databaseSet([
-//            ['id' => 1, 'name' => 'John', 'email' => 'supun@test.com'],
-//            ['id' => 2, 'name' => 'Jane', 'email' => 'jane@test.com'],
-//            ['id' => 3, 'name' => 'Johnny', 'email' => 'supun@test.com']
-//        ]);
-//
-//        $project = ProjectFactory::createOne();
-//
-//        $response = $this->consoleApi(
-//            $project,
-//            'GET',
-//            '/search-users?email=supun@test.com',
-//        );
-//
-//        $this->assertResponseStatusCodeSame(200);
-//
-//        /** @var array<array<string, mixed>> $json */
-//        $json = $this->getJson();
-//
-//        $this->assertCount(2, $json);
+       AuthFake::databaseSet([
+           ['id' => 1, 'name' => 'John', 'email' => 'supun@test.com'],
+           ['id' => 2, 'name' => 'Jane', 'email' => 'jane@test.com'],
+           ['id' => 3, 'name' => 'Johnny', 'email' => 'supun@test.com']
+       ]);
+
+       $project = ProjectFactory::createOne();
+
+       $response = $this->consoleApi(
+           $project,
+           'GET',
+           '/search-users?email=supun@test.com',
+       );
+
+       $this->assertResponseStatusCodeSame(200);
+
+       /** @var array<array<string, mixed>> $json */
+       $json = $this->getJson();
+
+       $this->assertCount(2, $json);
     }
 
     public function test_search_user_from_email_not_found(): void
