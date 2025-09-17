@@ -73,6 +73,7 @@
 		justify-content: space-between;
 		align-items: center;
 		padding: 15px 30px;
+		border-radius: var(--box-radius);
 		gap: 10px;
 	}
 	.suppression-row:hover {

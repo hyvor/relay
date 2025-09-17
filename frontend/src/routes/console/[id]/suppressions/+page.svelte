@@ -195,12 +195,14 @@
 		{:else}
 			<SuppressionList {suppressions} loading={false} onDelete={handleDeleteSuppression} />
 
-			<LoadButton
-				text="Load More"
-				loading={loadingMore}
-				show={hasMore && !loading && suppressions.length > 0}
-				on:click={handleLoadMore}
-			/>
+			<div class=load-more>
+				<LoadButton
+					text="Load More"
+					loading={loadingMore}
+					show={hasMore && !loading && suppressions.length > 0}
+					on:click={handleLoadMore}
+				/>
+			</div>
 		{/if}
 	</div>
 </SingleBox>
@@ -237,7 +239,7 @@
 	}
 
 	.content {
-		padding: 0;
+		padding: 30px;
 		flex: 1;
 		display: flex;
 		flex-direction: column;
@@ -249,5 +251,8 @@
 		justify-content: center;
 		align-items: center;
 		flex: 1;
+	}
+	.load-more {
+		margin-top: 5px;
 	}
 </style>
