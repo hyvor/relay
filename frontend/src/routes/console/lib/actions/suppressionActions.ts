@@ -18,7 +18,7 @@ export function getSuppressions(
 	}
 
 	if (limit !== undefined) {
-		data.limit = limit;
+		data.limit = 50;
 	}
 
 	if (offset !== undefined) {

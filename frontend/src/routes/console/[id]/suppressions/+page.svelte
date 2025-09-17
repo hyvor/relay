@@ -8,7 +8,8 @@
 		ActionList,
 		ActionListItem,
 		Button,
-		Loader
+		Loader,
+		LoadButton
 	} from '@hyvor/design/components';
 	import IconX from '@hyvor/icons/IconX';
 	import SingleBox from '../../@components/content/SingleBox.svelte';
@@ -194,13 +195,12 @@
 		{:else}
 			<SuppressionList {suppressions} loading={false} onDelete={handleDeleteSuppression} />
 
-			{#if hasMore && !loading && suppressions.length > 0}
-				<div class="load-more">
-					<Button variant="outline" on:click={handleLoadMore} disabled={loadingMore}>
-						{loadingMore ? 'Loading...' : 'Load More'}
-					</Button>
-				</div>
-			{/if}
+			<LoadButton
+				text="Load More"
+				loading={loadingMore}
+				show={hasMore && !loading && suppressions.length > 0}
+				on:click={handleLoadMore}
+			/>
 		{/if}
 	</div>
 </SingleBox>
@@ -249,11 +249,5 @@
 		justify-content: center;
 		align-items: center;
 		flex: 1;
-	}
-
-	.load-more {
-		display: flex;
-		justify-content: center;
-		margin-top: 20px;
 	}
 </style>
