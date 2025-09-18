@@ -38,9 +38,9 @@ class GetAnalyticsStatsTest extends WebTestCase
         $this->assertResponseStatusCodeSame(200);
 
         $json = $this->getJson();
-        $this->assertSame(4, $json['sends_30d']);
-        $this->assertSame(0.25, $json['bounce_rate_30d']);
-        $this->assertSame(0.25, $json['complaint_rate_30d']);
+        $this->assertSame(4, $json['sends_stats']);
+        $this->assertSame(0.25, $json['bounce_rate_stats']);
+        $this->assertSame(0.25, $json['complaint_rate_stats']);
     }
 
     public function test_gets_stats_7d(): void
@@ -60,9 +60,9 @@ class GetAnalyticsStatsTest extends WebTestCase
         $this->assertResponseStatusCodeSame(200);
 
         $json = $this->getJson();
-        $this->assertSame(2, $json['sends_7d']);
-        $this->assertSame(0.5, $json['bounce_rate_7d']);
-        $this->assertSame(0, $json['complaint_rate_7d']);
+        $this->assertSame(2, $json['sends_stats']);
+        $this->assertSame(0.5, $json['bounce_rate_stats']);
+        $this->assertSame(0.0, $json['complaint_rate_stats']);
     }
 
     public function test_gets_stats_24h(): void
@@ -80,9 +80,9 @@ class GetAnalyticsStatsTest extends WebTestCase
         $this->assertResponseStatusCodeSame(200);
 
         $json = $this->getJson();
-        $this->assertSame(1, $json['sends_24h']);
-        $this->assertSame(0, $json['bounce_rate_24h']);
-        $this->assertSame(0, $json['complaint_rate_24h']);
+        $this->assertSame(1, $json['sends_stats']);
+        $this->assertSame(0.0, $json['bounce_rate_stats']);
+        $this->assertSame(0.0, $json['complaint_rate_stats']);
     }
 
     public function test_invalid_period_fails(): void

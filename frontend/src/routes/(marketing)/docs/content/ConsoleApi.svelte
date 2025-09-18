@@ -662,11 +662,13 @@ type Response = Domain
 
 <CodeBlock
 	code={`
-    type Request = {}
+    type Request = {
+        period?: '30d' | '7d' | '24h' // Optional. Default is '30d'
+    }
     type Response = {
-        sends_30d: number,
-        bounce_rate_30d: number,
-        complaint_rate_30d: number
+        sends_stats: number,
+        bounce_rate_stats: number,
+        complaint_rate_stats: number
     }
 `}
 	language="ts"

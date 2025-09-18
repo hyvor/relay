@@ -37,12 +37,10 @@ class AnalyticsController extends AbstractController
             'complained' => $complained
         ] = $this->sendAnalyticsService->getCountsByPeriod($project, $input->period);
 
-        $periodSuffix = $input->period;
-
         return new JsonResponse([
-            "sends_{$periodSuffix}" => $total,
-            "bounce_rate_{$periodSuffix}" => $total > 0 ? ($bounced / $total) : 0.0,
-            "complaint_rate_{$periodSuffix}" => $total > 0 ? ($complained / $total) : 0.0,
+            'sends_stats' => $total,
+            'bounce_rate_stats' => $total > 0 ? ($bounced / $total) : 0.0,
+            'complaint_rate_stats' => $total > 0 ? ($complained / $total) : 0.0,
         ]);
     }
 
