@@ -130,7 +130,7 @@
 	
 	.period-buttons {
 		display: flex;
-		gap: 8px;
+		gap: 5px;
 		padding: 20px 50px 0;
 		justify-content: flex-start;
 	}
@@ -139,7 +139,7 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 		gap: 16px;
-		padding: 30px 50px;
+		padding: 20px 50px 30px;
 	}
 	
 	.period-label {
