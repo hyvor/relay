@@ -187,9 +187,9 @@ export type Domain = {
 }
 
 export interface AnalyticsStats {
-    sends_stats: number;
-    bounce_rate_stats: number;
-    complaint_rate_stats: number;
+    sends: number;
+    bounce_rate: number;
+    complaint_rate: number;
 }
 
 export interface ProjectUserMiniObject {

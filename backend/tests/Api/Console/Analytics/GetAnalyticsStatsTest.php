@@ -4,7 +4,6 @@ namespace App\Tests\Api\Console\Analytics;
 
 use App\Api\Console\Controller\AnalyticsController;
 use App\Entity\Type\SendRecipientStatus;
-use App\Entity\Type\SendStatus;
 use App\Service\Send\SendAnalyticsService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
@@ -17,7 +16,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 class GetAnalyticsStatsTest extends WebTestCase
 {
 
-    public function test_gets_stats_default_30d(): void
+    public function test_gets_default_30d(): void
     {
         $project = ProjectFactory::createOne();
 
@@ -38,12 +37,12 @@ class GetAnalyticsStatsTest extends WebTestCase
         $this->assertResponseStatusCodeSame(200);
 
         $json = $this->getJson();
-        $this->assertSame(4, $json['sends_stats']);
-        $this->assertSame(0.25, $json['bounce_rate_stats']);
-        $this->assertSame(0.25, $json['complaint_rate_stats']);
+        $this->assertSame(4, $json['sends']);
+        $this->assertSame(0.25, $json['bounce_rate']);
+        $this->assertSame(0.25, $json['complaint_rate']);
     }
 
-    public function test_gets_stats_7d(): void
+    public function test_gets_7d(): void
     {
         $project = ProjectFactory::createOne();
 
@@ -60,12 +59,12 @@ class GetAnalyticsStatsTest extends WebTestCase
         $this->assertResponseStatusCodeSame(200);
 
         $json = $this->getJson();
-        $this->assertSame(2, $json['sends_stats']);
-        $this->assertSame(0.5, $json['bounce_rate_stats']);
-        $this->assertSame(0.0, $json['complaint_rate_stats']);
+        $this->assertSame(2, $json['sends']);
+        $this->assertSame(0.5, $json['bounce_rate']);
+        $this->assertEquals(0.0, $json['complaint_rate']);
     }
 
-    public function test_gets_stats_24h(): void
+    public function test_gets_24h(): void
     {
         $project = ProjectFactory::createOne();
 
@@ -80,9 +79,9 @@ class GetAnalyticsStatsTest extends WebTestCase
         $this->assertResponseStatusCodeSame(200);
 
         $json = $this->getJson();
-        $this->assertSame(1, $json['sends_stats']);
-        $this->assertSame(0.0, $json['bounce_rate_stats']);
-        $this->assertSame(0.0, $json['complaint_rate_stats']);
+        $this->assertSame(1, $json['sends']);
+        $this->assertEquals(0.0, $json['bounce_rate']);
+        $this->assertEquals(0.0, $json['complaint_rate']);
     }
 
     public function test_invalid_period_fails(): void

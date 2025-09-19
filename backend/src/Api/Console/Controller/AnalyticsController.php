@@ -17,8 +17,7 @@ class AnalyticsController extends AbstractController
 
     public function __construct(
         private SendAnalyticsService $sendAnalyticsService
-    )
-    {
+    ) {
     }
 
     // gets:
@@ -38,9 +37,9 @@ class AnalyticsController extends AbstractController
         ] = $this->sendAnalyticsService->getCountsByPeriod($project, $input->period);
 
         return new JsonResponse([
-            'sends_stats' => $total,
-            'bounce_rate_stats' => $total > 0 ? ($bounced / $total) : 0.0,
-            'complaint_rate_stats' => $total > 0 ? ($complained / $total) : 0.0,
+            'sends' => $total,
+            'bounce_rate' => $total > 0 ? ($bounced / $total) : 0.0,
+            'complaint_rate' => $total > 0 ? ($complained / $total) : 0.0,
         ]);
     }
 

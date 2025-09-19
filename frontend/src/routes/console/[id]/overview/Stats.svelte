@@ -18,7 +18,7 @@
 	function loadStats() {
 		statsLoading = true;
 		statsError = '';
-		
+
 		getAnalyticsStats(selectedPeriod)
 			.then((res) => {
 				stats = res;
@@ -67,21 +67,21 @@
 
 <div class="stats-wrap">
 	<div class="period-buttons">
-		<Button 
+		<Button
 			size="x-small"
 			variant={selectedPeriod === '30d' ? 'fill' : 'outline'}
 			onclick={() => setPeriod('30d')}
 		>
 			30d
 		</Button>
-		<Button 
+		<Button
 			size="x-small"
 			variant={selectedPeriod === '7d' ? 'fill' : 'outline'}
 			onclick={() => setPeriod('7d')}
 		>
 			7d
 		</Button>
-		<Button 
+		<Button
 			size="x-small"
 			variant={selectedPeriod === '24h' ? 'fill' : 'outline'}
 			onclick={() => setPeriod('24h')}
@@ -100,22 +100,24 @@
 				{#snippet title()}
 					Sends <span class="period-label">({getPeriodLabel(selectedPeriod)})</span>
 				{/snippet}
-				{stats.sends_stats || 0}
+				{stats.sends || 0}
 			</Stat>
 			<Stat>
 				{#snippet title()}
 					Bounce Rate <span class="period-label">({getPeriodLabel(selectedPeriod)})</span>
 				{/snippet}
-				<span style="color: {getRateColor(stats.bounce_rate_stats || 0, 'bounce')}">
-					{roundToTwoDecimalPlaces((stats.bounce_rate_stats || 0) * 100)}%
+				<span style="color: {getRateColor(stats.bounce_rate || 0, 'bounce')}">
+					{roundToTwoDecimalPlaces((stats.bounce_rate || 0) * 100)}%
 				</span>
 			</Stat>
 			<Stat>
 				{#snippet title()}
-					Complaint Rate <span class="period-label">({getPeriodLabel(selectedPeriod)})</span>
+					Complaint Rate <span class="period-label"
+						>({getPeriodLabel(selectedPeriod)})</span
+					>
 				{/snippet}
-				<span style="color: {getRateColor(stats.complaint_rate_stats || 0, 'complaint')}">
-					{roundToTwoDecimalPlaces((stats.complaint_rate_stats || 0) * 100)}%
+				<span style="color: {getRateColor(stats.complaint_rate || 0, 'complaint')}">
+					{roundToTwoDecimalPlaces((stats.complaint_rate || 0) * 100)}%
 				</span>
 			</Stat>
 		</div>
@@ -127,21 +129,21 @@
 		border-bottom: 1px solid var(--border);
 		max-height: 300px;
 	}
-	
+
 	.period-buttons {
 		display: flex;
 		gap: 5px;
 		padding: 20px 50px 0;
 		justify-content: flex-start;
 	}
-	
+
 	.stats {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 		gap: 16px;
 		padding: 20px 50px 30px;
 	}
-	
+
 	.period-label {
 		font-size: 12px;
 		color: var(--text-light);

@@ -666,9 +666,9 @@ type Response = Domain
         period?: '30d' | '7d' | '24h' // Optional. Default is '30d'
     }
     type Response = {
-        sends_stats: number,
-        bounce_rate_stats: number,
-        complaint_rate_stats: number
+        sends: number,
+        bounce_rate: number,
+        complaint_rate: number
     }
 `}
 	language="ts"
@@ -752,8 +752,8 @@ type Response = Domain
 <h3 id="bounce-object">Bounce Object</h3>
 
 <CodeBlock
-    language="ts"
-    code={`
+	language="ts"
+	code={`
         interface Bounce {
     text: string;
     status: string;
@@ -764,8 +764,8 @@ type Response = Domain
 <h3 id="complaint-object">Complaint Object</h3>
 
 <CodeBlock
-    language="ts"
-    code={`
+	language="ts"
+	code={`
         interface Complaint {
     text: string;
     feedback_type: string;
