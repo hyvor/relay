@@ -16,6 +16,8 @@ class SendObject
     public ?string $subject;
     public ?string $body_html;
     public ?string $body_text;
+    /** @var array<string, string> */
+    public array $headers;
     public string $raw;
     public int $size_bytes;
     public bool $queued;
@@ -54,6 +56,7 @@ class SendObject
         $this->subject = $send->getSubject();
         $this->body_html = $content ? $send->getBodyHtml() : null;
         $this->body_text = $content ? $send->getBodyText() : null;
+        $this->headers = $send->getHeaders();
         $this->raw = $content ? $send->getRaw() : '';
         $this->size_bytes = $send->getSizeBytes();
         $this->queued = $send->getQueued();

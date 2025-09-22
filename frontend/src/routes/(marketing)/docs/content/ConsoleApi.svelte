@@ -1,5 +1,5 @@
 <script>
-	import { CodeBlock, Tag } from '@hyvor/design/components';
+	import { CodeBlock } from '@hyvor/design/components';
 	import Scope from './component/Scope.svelte';
 </script>
 
@@ -695,20 +695,22 @@ type Response = Domain
 <CodeBlock
 	language="ts"
 	code={`
-        interface Send = {
+        interface Send {
 	id: number;
 	uuid: string;
 	created_at: number;
-	sent_at: number | null;
-	failed_at: number | null;
-	status: 'queued' | 'accepted' | 'bounced' | 'complained';
 	from_address: string;
-	to_address: string;
+	from_name: string | null;
 	subject: string | null;
 	body_html: string | null;
 	body_text: string | null;
+	headers: Record<string, string>;
 	raw: string;
+    queued: boolean;
+    send_after: number;
+    recipients: SendRecipient[];
 	attempts: SendAttempt[];
+	feedback: SendFeedback[];
         }
     `}
 />
@@ -723,10 +725,9 @@ type Response = Domain
 	type: 'to' | 'cc' | 'bcc';
 	address: string;
 	name: string;
-	status: 'queued' | 'accepted' | 'retrying' | 'bounced' | 'complained' | 'failed';
-	accepted_at: number | null;
-	bounced_at: number | null;
-	failed_at: number | null;
+	status: 'queued' | 'accepted' | 'deferred' | 'bounced' | 'complained' | 'failed';
+	try_count: number;
+	is_suppressed: boolean;
         }
     `}
 />
@@ -742,8 +743,10 @@ type Response = Domain
 	status: 'accepted' | 'deferred' | 'bounced' | 'failed';
 	try_count: number;
 	resolved_mx_hosts: string[];
-	accepted_mx_host: string | null;
+	responded_mx_host: string | null;
 	smtp_conversations: Record<string, any>;
+	recipient_ids = number[];
+	duration_ms: number;
 	error: string | null;
         }
     `}
