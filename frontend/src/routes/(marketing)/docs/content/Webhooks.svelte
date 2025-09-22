@@ -34,6 +34,9 @@
 	<li>
 		<a href="#send-recipient-complained">send.recipient.complained</a>
 	</li>
+	<li>
+		<a href="#send-recipient-failed">send.recipient.failed</a>
+	</li>
 	<br />
 	<li>
 		<a href="#domain-created">domain.created</a>
@@ -182,6 +185,31 @@
     Objects: <a href="/docs/api-console#send-object">Send</a>,
     <a href="/docs/api-console#send-recipient-object">SendRecipient</a>,
     <a href="/docs/api-console#complaint-object">Complaint</a>
+</p>
+
+<h3 id="send-recipient-failed">send.recipient.failed</h3>
+
+<p>
+	This event is triggered when all attempts to deliver an email to a recipient have failed. This
+	could be due to various reasons, such as network issues, recipient server issues, etc. This event
+	indicates that the email could not be delivered to the recipient after multiple attempts.
+</p>
+
+<CodeBlock
+	code={`
+{
+	send: Send;
+	recipient: SendRecipient;
+	attempt: SendAttempt;
+}
+`}
+	language="ts"
+/>
+
+<p>
+	Objects: <a href="/docs/api-console#send-object">Send</a>,
+	<a href="/docs/api-console#send-recipient-object">SendRecipient</a>
+	<a href="/docs/api-console#send-attempt-object">SendAttempt</a>
 </p>
 
 <h3 id="domain-created">domain.created</h3>
