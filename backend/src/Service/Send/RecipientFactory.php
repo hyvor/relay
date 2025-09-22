@@ -6,8 +6,10 @@ use App\Entity\Send;
 use App\Entity\SendRecipient;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
+use App\Service\Send\Event\SuppressedRecipientCreatedEvent;
 use App\Service\Suppression\SuppressionService;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Mime\Address;
 
 class RecipientFactory
@@ -15,6 +17,7 @@ class RecipientFactory
 
     public function __construct(
         private EntityManagerInterface $em,
+        private EventDispatcherInterface $ed,
         private SuppressionService $suppressionService
     ) {
     }
@@ -51,7 +54,10 @@ class RecipientFactory
                 $send->addRecipient($sendRecipient);
                 $this->em->persist($sendRecipient);
 
-                if (!$isSuppressed) {
+                if ($isSuppressed) {
+                    $event = new SuppressedRecipientCreatedEvent($sendRecipient);
+                    $this->ed->dispatch($event);
+                } else {
                     $shouldQueue = true;
                 }
             }

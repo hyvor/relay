@@ -16,6 +16,7 @@ use App\Service\Domain\Event\DomainDeletedEvent;
 use App\Service\Domain\Event\DomainStatusChangedEvent;
 use App\Service\IncomingMail\Event\IncomingBounceEvent;
 use App\Service\IncomingMail\Event\IncomingComplaintEvent;
+use App\Service\Send\Event\SuppressedRecipientCreatedEvent;
 use App\Service\SendAttempt\Event\SendAttemptCreatedEvent;
 use App\Service\Suppression\Event\SuppressionCreatedEvent;
 use App\Service\Suppression\Event\SuppressionDeletedEvent;
@@ -226,6 +227,29 @@ class WebhookEventListenerTest extends KernelTestCase
                 $this->assertIsArray($payload['complaint']);
                 $this->assertSame('Test complaint', $payload['complaint']['text']);
                 $this->assertSame('spam', $payload['complaint']['feedback_type']);
+            }
+        );
+    }
+
+    public function test_creates_delivery_for_suppressed_send_recipients(): void
+    {
+        $project = ProjectFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project]);
+        $sendRecipient = SendRecipientFactory::createOne(['send' => $send]);
+        $this->createWebhook($project, WebhooksEventEnum::SEND_RECIPIENT_FAILED);
+        $this->ed->dispatch(new SuppressedRecipientCreatedEvent($sendRecipient));
+
+        $this->assertWebhookDeliveryCreated(
+            $project,
+            WebhooksEventEnum::SEND_RECIPIENT_FAILED,
+            function (array $payload) use ($send, $sendRecipient) {
+                $this->assertIsArray($payload['send']);
+                $this->assertSame($send->getId(), $payload['send']['id']);
+
+                $this->assertIsArray($payload['recipient']);
+                $this->assertSame($sendRecipient->getId(), $payload['recipient']['id']);
+
+                $this->assertNull($payload['attempt']);
             }
         );
     }

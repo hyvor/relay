@@ -200,7 +200,7 @@
 {
 	send: Send;
 	recipient: SendRecipient;
-	attempt: SendAttempt;
+	attempt: SendAttempt | null;
 }
 `}
 	language="ts"
