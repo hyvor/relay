@@ -5,7 +5,7 @@ import consoleApi from "../consoleApi.svelte";
 export function getAnalyticsStats(period: '30d' | '7d' | '24h' = '30d') {
 	return consoleApi.get<AnalyticsStats>({
 		endpoint: 'analytics/stats',
-		params: { period }
+		data: { period }
 	});
 }
 

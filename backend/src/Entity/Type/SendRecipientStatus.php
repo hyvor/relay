@@ -25,6 +25,10 @@ enum SendRecipientStatus: string
     // (marked as spam)
     case COMPLAINED = 'complained';
 
+    // the recipient was previously added to the suppression list
+    // therefore the email was automatically marked as suppressed without trying to send it
+    case SUPPRESSED = 'suppressed';
+
     // tried our best to send the message, but failed
     // this happens after the exhaustion of retries
     case FAILED = 'failed';

@@ -9,7 +9,6 @@ class SuppressionObject
     public int $id;
     public int $created_at;
     public string $email;
-    public string $project;
     public string $reason;
     public ?string $description;
 
@@ -18,7 +17,6 @@ class SuppressionObject
         $this->id = $suppression->getId();
         $this->created_at = $suppression->getCreatedAt()->getTimestamp();
         $this->email = $suppression->getEmail();
-        $this->project = $suppression->getProject()->getName();
         $this->reason = $suppression->getReason()->value;
         $this->description = $suppression->getDescription();
     }

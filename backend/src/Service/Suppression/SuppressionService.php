@@ -72,7 +72,7 @@ class SuppressionService
     /**
      * @param Project $project
      * @param string[] $emails
-     * @return string[] Suppressed emails
+     * @return array<string, Suppression> keyed by email
      */
     public function getSuppressed(Project $project, array $emails): array
     {
@@ -85,7 +85,11 @@ class SuppressionService
             ->getQuery()
             ->getResult();
 
-        return array_map(fn(Suppression $s) => $s->getEmail(), $results);
+        $suppressions = [];
+        foreach ($results as $suppression) {
+            $suppressions[$suppression->getEmail()] = $suppression;
+        }
+        return $suppressions;
     }
 
     public function createSuppression(

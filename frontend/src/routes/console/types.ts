@@ -85,7 +85,7 @@ export type Send = {
     feedback: SendFeedback[];
 }
 
-export type SendRecipientStatus = 'queued' | 'accepted' | 'deferred' | 'bounced' | 'failed' | 'complained';
+export type SendRecipientStatus = 'queued' | 'accepted' | 'deferred' | 'bounced' | 'suppressed' | 'failed' | 'complained';
 
 export interface SendRecipient {
     id: number;
@@ -93,7 +93,6 @@ export interface SendRecipient {
     address: string;
     name: string;
     status: SendRecipientStatus;
-    is_suppressed: boolean;
 }
 
 export interface SendAttempt {

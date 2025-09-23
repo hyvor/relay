@@ -13,6 +13,7 @@ use App\Entity\Type\ProjectSendType;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
 use App\Service\Send\EmailBuilder;
+use App\Service\Send\Event\SendRecipientSuppressedEvent;
 use App\Service\Send\SendService;
 use App\Service\Suppression\SuppressionService;
 use App\Tests\Case\WebTestCase;
@@ -20,6 +21,7 @@ use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\SuppressionFactory;
+use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 
@@ -655,6 +657,8 @@ class SendEmailTest extends WebTestCase
 
     public function test_fails_suppressed_emails(): void
     {
+        $ed = TestEventDispatcher::enable($this->container);
+
         QueueFactory::createTransactional();
         $project = ProjectFactory::createOne();
 
@@ -690,9 +694,10 @@ class SendEmailTest extends WebTestCase
 
         $this->assertSame('test@example.com', $recipient->getAddress());
         $this->assertSame(SendRecipientType::TO, $recipient->getType());
-        $this->assertSame(SendRecipientStatus::FAILED, $recipient->getStatus());
-        $this->assertTrue($recipient->getIsSuppressed());
+        $this->assertSame(SendRecipientStatus::SUPPRESSED, $recipient->getStatus());
         $this->assertFalse($send->getQueued());
+
+        $ed->assertDispatched(SendRecipientSuppressedEvent::class);
     }
 
     public function test_with_attachments(): void

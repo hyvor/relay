@@ -15,6 +15,7 @@ use App\Service\Domain\Event\DomainDeletedEvent;
 use App\Service\Domain\Event\DomainStatusChangedEvent;
 use App\Service\IncomingMail\Event\IncomingBounceEvent;
 use App\Service\IncomingMail\Event\IncomingComplaintEvent;
+use App\Service\Send\Event\SendRecipientSuppressedEvent;
 use App\Service\SendAttempt\Event\SendAttemptCreatedEvent;
 use App\Service\SendRecipient\SendRecipientService;
 use App\Service\Suppression\Event\SuppressionCreatedEvent;
@@ -85,6 +86,23 @@ class WebhookEventListener
                     'attempt' => new SendAttemptObject($attempt),
                 ], $recipients);
             }
+        );
+    }
+
+    #[AsEventListener]
+    public function onSendRecipientSuppressed(SendRecipientSuppressedEvent $event): void
+    {
+        $sendRecipient = $event->getSendRecipient();
+        $send = $sendRecipient->getSend();
+
+        $this->createWebhookDeliveries(
+            $send->getProject(),
+            WebhooksEventEnum::SEND_RECIPIENT_SUPPRESSED,
+            fn() => (object)[
+                'send' => new SendObject($send),
+                'recipient' => new SendRecipientObject($sendRecipient),
+                'suppression' => new SuppressionObject($event->getSuppression()),
+            ]
         );
     }
 
