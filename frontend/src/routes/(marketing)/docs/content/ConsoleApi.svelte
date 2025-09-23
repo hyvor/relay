@@ -856,7 +856,6 @@ type Response = Domain
 	id: number;
 	created_at: number;
 	email: string;
-	project: string;
 	reason: 'bounce' | 'complaint';
 	description: string | null;
         }

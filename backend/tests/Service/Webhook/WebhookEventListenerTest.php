@@ -16,7 +16,7 @@ use App\Service\Domain\Event\DomainDeletedEvent;
 use App\Service\Domain\Event\DomainStatusChangedEvent;
 use App\Service\IncomingMail\Event\IncomingBounceEvent;
 use App\Service\IncomingMail\Event\IncomingComplaintEvent;
-use App\Service\Send\Event\SuppressedRecipientCreatedEvent;
+use App\Service\Send\Event\SendRecipientSuppressedEvent;
 use App\Service\SendAttempt\Event\SendAttemptCreatedEvent;
 use App\Service\Suppression\Event\SuppressionCreatedEvent;
 use App\Service\Suppression\Event\SuppressionDeletedEvent;
@@ -236,12 +236,13 @@ class WebhookEventListenerTest extends KernelTestCase
         $project = ProjectFactory::createOne();
         $send = SendFactory::createOne(['project' => $project]);
         $sendRecipient = SendRecipientFactory::createOne(['send' => $send]);
-        $this->createWebhook($project, WebhooksEventEnum::SEND_RECIPIENT_FAILED);
-        $this->ed->dispatch(new SuppressedRecipientCreatedEvent($sendRecipient));
+        $this->createWebhook($project, WebhooksEventEnum::SEND_RECIPIENT_SUPPRESSED);
+        $suppression = SuppressionFactory::createOne(['project' => $project, 'email' => 'supun@hyvor.com']);
+        $this->ed->dispatch(new SendRecipientSuppressedEvent($sendRecipient, $suppression));
 
         $this->assertWebhookDeliveryCreated(
             $project,
-            WebhooksEventEnum::SEND_RECIPIENT_FAILED,
+            WebhooksEventEnum::SEND_RECIPIENT_SUPPRESSED,
             function (array $payload) use ($send, $sendRecipient) {
                 $this->assertIsArray($payload['send']);
                 $this->assertSame($send->getId(), $payload['send']['id']);
@@ -249,7 +250,8 @@ class WebhookEventListenerTest extends KernelTestCase
                 $this->assertIsArray($payload['recipient']);
                 $this->assertSame($sendRecipient->getId(), $payload['recipient']['id']);
 
-                $this->assertNull($payload['attempt']);
+                $this->assertIsArray($payload['suppression']);
+                $this->assertSame('supun@hyvor.com', $payload['suppression']['email']);
             }
         );
     }
