@@ -725,9 +725,8 @@ type Response = Domain
 	type: 'to' | 'cc' | 'bcc';
 	address: string;
 	name: string;
-	status: 'queued' | 'accepted' | 'deferred' | 'bounced' | 'complained' | 'failed';
+	status: 'queued' | 'accepted' | 'deferred' | 'bounced' | 'complained' | 'suppressed' | 'failed';
 	try_count: number;
-	is_suppressed: boolean;
         }
     `}
 />
