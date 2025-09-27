@@ -2,30 +2,27 @@ import http from 'k6/http';
 import { sleep } from 'k6';
 
 export const options = {
-    iterations: 1000,
-    vus: 50,
+    vus: 10, // rate limit
+    duration: '240s',
 };
 
 export default function () {
     
     const res = http.post(
-        'http://hyvor-relay-backend/api/console/email',
+        'https://relay.<instance>/api/console/sends',
         {
-            from: 'supun@hyvor.local.testing',
-            // hyvor.local.testing is resolved to hyvor-service-mailpit for testing purposes
-            to: 'ishini@hyvor.local.testing',
+            from: 'supun@domain.com',
+            to: 'accept@simulator.<instance>',
             subject: 'My subject',
-            body_html: '<p>This is the HTML</p>',
             body_text: 'This is the text',
         },
         {
             headers: {
-                'X-Project-Id': '1',
+                'Authorization': 'Bearer',
             }
         }
     );
 
-    //console.log(res.body);
-
     sleep(1);
+
 }
