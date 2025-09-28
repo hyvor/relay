@@ -22,25 +22,31 @@ class WebhookService
 
     /**
      * @param array<string> $events
+     * @return array{ webhook: Webhook, rawKey: string }
      */
     public function createWebhook(
         Project $project,
         string $url,
         string $description,
         array $events
-    ): Webhook {
+    ): array {
+        $key = bin2hex(random_bytes(16));
         $webhook = new Webhook();
         $webhook->setProject($project);
         $webhook->setUrl($url);
         $webhook->setDescription($description);
         $webhook->setEvents($events);
+        $webhook->setSecretEncrypted(hash('sha256', $key));
         $webhook->setCreatedAt($this->now());
         $webhook->setUpdatedAt($this->now());
 
         $this->em->persist($webhook);
         $this->em->flush();
 
-        return $webhook;
+        return [
+            'webhook' => $webhook,
+            'rawKey' => $key,
+        ];
     }
 
     /**

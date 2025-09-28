@@ -41,14 +41,14 @@ class WebhookController extends AbstractController
     #[ScopeRequired(Scope::WEBHOOKS_WRITE)]
     public function createWebhook(#[MapRequestPayload] CreateWebhookInput $input, Project $project): JsonResponse
     {
-        $webhook = $this->webhookService->createWebhook(
+        $creation = $this->webhookService->createWebhook(
             $project,
             $input->url,
             $input->description,
             $input->events
         );
 
-        return $this->json(new WebhookObject($webhook));
+        return $this->json(new WebhookObject($creation['webhook'], $creation['rawKey']));
     }
 
     #[Route('/webhooks/{id}', methods: 'PATCH')]
