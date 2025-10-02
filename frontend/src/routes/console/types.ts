@@ -150,6 +150,7 @@ export type Webhook = {
     url: string;
     description: string;
     events: string[];
+    key?: string;
 }
 
 export type WebhookDeliveryStatus = 'pending' | 'delivered' | 'failed';
