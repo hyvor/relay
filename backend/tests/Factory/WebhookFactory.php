@@ -32,6 +32,7 @@ final class WebhookFactory extends PersistentProxyObjectFactory
             'description' => self::faker()->text(),
             'project' => ProjectFactory::new(),
             'events' => [],
+            'secret_encrypted' => bin2hex(random_bytes(16))
         ];
     }
 

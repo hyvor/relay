@@ -11,6 +11,7 @@ type WebhookDelivery struct {
 	Url         string
 	RequestBody string
 	TryCount    int
+	Signature   *string
 }
 
 const WEBHOOKS_PER_BATCH = 10
@@ -42,7 +43,7 @@ func (b *WebhooksBatch) FetchWebhooks() ([]WebhookDelivery, error) {
 
 	rows, err := b.tx.QueryContext(b.ctx, `
 		WITH ids AS MATERIALIZED (
-			SELECT id, url, request_body, try_count
+			SELECT id, url, request_body, try_count, signature
 			FROM webhook_deliveries
 			WHERE status = 'pending' AND send_after <= NOW()
 			FOR UPDATE SKIP LOCKED
@@ -51,7 +52,7 @@ func (b *WebhooksBatch) FetchWebhooks() ([]WebhookDelivery, error) {
 		UPDATE webhook_deliveries
 		SET status = 'processing', updated_at = NOW()
 		WHERE id = ANY(SELECT id FROM ids)
-		RETURNING id, url, request_body, try_count
+		RETURNING id, url, request_body, try_count, signature
     `, WEBHOOKS_PER_BATCH)
 
 	if err != nil {
@@ -68,6 +69,7 @@ func (b *WebhooksBatch) FetchWebhooks() ([]WebhookDelivery, error) {
 			&delivery.Url,
 			&delivery.RequestBody,
 			&delivery.TryCount,
+			&delivery.Signature,
 		); err != nil {
 			return nil, err
 		}

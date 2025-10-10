@@ -32,7 +32,8 @@ final class Version20250624093228 extends AbstractMigration
                 request_body TEXT NOT NULL,
                 response TEXT,
                 response_code INT,
-                try_count INT NOT NULL DEFAULT 0
+                try_count INT NOT NULL DEFAULT 0,
+                signature TEXT
             );
          SQL
         );

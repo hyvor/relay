@@ -50,6 +50,9 @@ class WebhookDelivery
     #[ORM\Column]
     private int $try_count = 0;
 
+    #[ORM\Column]
+    private ?string $signature = null;
+
     public function getId(): int
     {
         return $this->id;
@@ -190,6 +193,18 @@ class WebhookDelivery
     public function setTryCount(int $tryCount): static
     {
         $this->try_count = $tryCount;
+
+        return $this;
+    }
+
+    public function getSignature(): ?string
+    {
+        return $this->signature;
+    }
+
+    public function setSignature(?string $signature): static
+    {
+        $this->signature = $signature;
 
         return $this;
     }

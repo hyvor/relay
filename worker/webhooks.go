@@ -237,7 +237,20 @@ func sendWebhook(delivery *WebhookDelivery) *WebhookResult {
 		NewTryCount: delivery.TryCount + 1,
 	}
 
-	resp, err := httpClient.Post(delivery.Url, "application/json", strings.NewReader(delivery.RequestBody))
+	req, err := http.NewRequest("POST", delivery.Url, strings.NewReader(delivery.RequestBody))
+	if err != nil {
+		result.ResponseBody = "Request creation error: " + err.Error()
+		return result
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	
+	// Add X-Signature header if signature is available
+	if delivery.Signature != nil && *delivery.Signature != "" {
+		req.Header.Set("X-Signature", *delivery.Signature)
+	}
+
+	resp, err := httpClient.Do(req)
 
 	if err != nil {
 		result.ResponseBody = "Network error: " + err.Error()
