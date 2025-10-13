@@ -2,8 +2,10 @@
 	import { Button, IconButton, Tag, Tooltip } from '@hyvor/design/components';
 	import IconPencil from '@hyvor/icons/IconPencil';
 	import IconTrash from '@hyvor/icons/IconTrash';
+	import IconCopy from '@hyvor/icons/IconCopy';
 	import type { Webhook } from '../../types';
 	import { cant } from '../../lib/scope.svelte';
+	import { copyAndToast } from '../../lib/helpers/copy';
 
 	export let webhook: Webhook;
 	export let onEdit: (webhook: Webhook) => void;
@@ -49,6 +51,17 @@
 	</div>
 
 	<div class="webhook-actions">
+		{#if webhook.secret}
+			<IconButton
+				variant="fill-light"
+				color="input"
+				size="small"
+				on:click={() => copyAndToast(webhook.secret || '', 'Webhook secret copied')}
+				title="Copy webhook secret"
+			>
+				<IconCopy size={12} />
+			</IconButton>
+		{/if}
 		<IconButton
 			variant="fill-light"
 			color="input"
