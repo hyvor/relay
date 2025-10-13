@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
 	"net"
 	"strings"
 	"testing"
 	"time"
 
+	smtp "github.com/hyvor/relay/worker/smtp"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -333,6 +336,87 @@ func TestSendEmailToHost(t *testing.T) {
 	assert.NoError(t, convo.NetworkError)
 	assert.Nil(t, convo.SmtpError)
 	assert.Equal(t, 7, len(convo.Steps))
+
+}
+
+type fakeConn struct {
+	io.ReadWriter
+}
+
+func (f fakeConn) Close() error                     { return nil }
+func (f fakeConn) LocalAddr() net.Addr              { return nil }
+func (f fakeConn) RemoteAddr() net.Addr             { return nil }
+func (f fakeConn) SetDeadline(time.Time) error      { return nil }
+func (f fakeConn) SetReadDeadline(time.Time) error  { return nil }
+func (f fakeConn) SetWriteDeadline(time.Time) error { return nil }
+
+
+func TestSendEmailToHost_OneRecipientFails(t *testing.T) {
+
+	server := `220 somedomain.com at your service
+250 Go ahead
+250 Sender OK
+250 Recipient OK
+550 No such user here
+354 Body
+250 Bye
+221 Closing connection
+`
+	var wrote bytes.Buffer
+	var fake fakeConn
+	fake.ReadWriter = struct {
+		io.Reader
+		io.Writer
+	}{
+		strings.NewReader(server),
+		&wrote,
+	}
+
+	createSmtpClient = func(host string, _ string) (*smtp.Client, error) {
+		return smtp.NewClient(fake, host)
+	}
+
+	send := &SendRow{
+		Id:        1,
+		Uuid:      "test-uuid",
+		From:      "test@hyvor.com",
+		RawEmail:  "Subject: Test Email",
+		QueueName: "default",
+	}
+
+	recipient1 := &RecipientRow{
+		Id:      1,
+		Type:    "to",
+		Address: "accept@somedomain.com",
+	}
+
+	recipient2 := &RecipientRow{
+		Id:      2,
+		Type:    "to",
+		Address: "fail@somedomain.com",
+	}
+
+
+	convo := sendEmailToHost(
+		send,
+		[]*RecipientRow{recipient1, recipient2},
+		"localhost",
+		"relay.com",
+		"127.0.0.1",
+		"smtp.relay.com",
+	)
+
+	assert.NoError(t, convo.NetworkError)
+	assert.Nil(t, convo.SmtpError)
+
+	smtpErr, ok := convo.RcptSmtpErrors[2]
+	assert.True(t, ok)
+	assert.Equal(t, 550, smtpErr.Code)
+	assert.Equal(t, "No such user here", smtpErr.Message)
+
+	smtpErr, ok = convo.RcptSmtpErrors[1]
+	assert.False(t, ok)
+	assert.Nil(t, smtpErr)
 
 }
 

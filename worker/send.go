@@ -52,7 +52,16 @@ type SmtpConversation struct {
 	// nil if the message was sent successfully (regardless of SMTP status)
 	NetworkError error `json:"network_error"`
 
+	// if there was a SmtpError, it means all recipients were rejected
+	// can be set in the middle of the conversation
+	// e.g. non-250 on EHLO
 	SmtpError *SmtpError `json:"smtp_error"`
+
+	// There were no SMTP errors, but some recipients were rejected
+	// indexed by recipient ID
+	// only set when there are recipient-specific errors
+	// e.g. some RCPT TO commands got 550, while others got 250
+	RcptSmtpErrors map[int]*SmtpError `json:"rcpt_smtp_errors"`
 
 	Steps []*SmtpStep `json:"steps"`
 }
@@ -64,6 +73,16 @@ type SmtpError struct {
 	// e.g. non-250 on EHLO
 	Code    int    `json:"code"`
 	Message string `json:"message"`
+}
+
+func NewSmtpErrorFromReply(reply *smtp.CommandReply) *SmtpError {
+	if reply == nil {
+		return nil
+	}
+	return &SmtpError{
+		Code:    reply.Code,
+		Message: reply.Message,
+	}
 }
 
 // converts the Error field to a string for JSON marshalling
@@ -114,6 +133,10 @@ func (c *SmtpConversation) AddStep(
 
 }
 
+func (c *SmtpConversation) AddStepFromResult(name SmtpStepName, result *smtp.CommandResult) {
+	c.AddStep(name, result.Command, result.Reply.Code, result.Reply.Message)
+}
+
 type SendResultCode int
 
 const (
@@ -130,6 +153,19 @@ const (
 	SendResultFailed
 )
 
+func (c SendResultCode) Status() string {
+	if c == SendResultAccepted {
+		return "accepted"
+	}
+	if c == SendResultDeferred {
+		return "deferred"
+	}
+	if c == SendResultBounced {
+		return "bounced"
+	}
+	return "failed"
+}
+
 type SendResult struct {
 	// always set
 	SentFromIpId int
@@ -144,11 +180,11 @@ type SendResult struct {
 	// when there are SMTP messages
 	SmtpConversations map[string]*SmtpConversation
 
-	// when the send is done
-	Code SendResultCode
-	// saves the MX host that accepted, deferred, or bounced the email
+	// saves the MX host that responded (accepted, deferred, or bounced the email)
 	RespondedMxHost string
-	// only when failed
+	// results for each recipient, indexed by recipient ID
+	RecipientResults map[int]SendResultCode
+	// only when failed, a simple error message
 	Error error
 	// when the email was deferred
 	NewTryCount int
@@ -361,7 +397,7 @@ func sendEmailToHostHandler(
 		conversation.NetworkError = helloResult.Err
 		return conversation
 	}
-	conversation.AddStep(SmtpStepHello, helloResult.Command, helloResult.Reply.Code, helloResult.Reply.Message)
+	conversation.AddStepFromResult(SmtpStepHello, &helloResult)
 	if !helloResult.CodeValid(250) {
 		conversation.SmtpError = &SmtpError{
 			Code:    helloResult.Reply.Code,
@@ -386,8 +422,8 @@ func sendEmailToHostHandler(
 			return conversation
 		}
 
-		conversation.AddStep(SmtpStepStartTLS, startTlsResult.Command, startTlsResult.Reply.Code, startTlsResult.Reply.Message)
-		conversation.AddStep(SmtpStepHello, ehloResult.Command, ehloResult.Reply.Code, ehloResult.Reply.Message)
+		conversation.AddStepFromResult(SmtpStepStartTLS, &startTlsResult)
+		conversation.AddStepFromResult(SmtpStepHello, &ehloResult)
 
 		if !startTlsResult.CodeValid(220) {
 			conversation.SmtpError = &SmtpError{
@@ -414,7 +450,7 @@ func sendEmailToHostHandler(
 		conversation.NetworkError = mailResult.Err
 		return conversation
 	}
-	conversation.AddStep(SmtpStepMail, mailResult.Command, mailResult.Reply.Code, mailResult.Reply.Message)
+	conversation.AddStepFromResult(SmtpStepMail, &mailResult)
 	if !mailResult.CodeValid(250) {
 		conversation.SmtpError = &SmtpError{
 			Code:    mailResult.Reply.Code,
@@ -424,7 +460,11 @@ func sendEmailToHostHandler(
 	}
 
 	// STEP 4: RCPT TO
+	// We continue to the next step if at least one recipient is accepted
 	// ===============
+	var rcptAcceptedAny bool // if at least one RCPT TO was accepted
+	rcptSmtpErrors := make(map[int]*SmtpError)
+
 	for _, rcpt := range recipients {
 		rcptResult := c.Rcpt(rcpt.Address)
 
@@ -433,14 +473,25 @@ func sendEmailToHostHandler(
 			return conversation
 		}
 
-		conversation.AddStep(SmtpStepRcpt, rcptResult.Command, rcptResult.Reply.Code, rcptResult.Reply.Message)
-		if !rcptResult.CodeValid(25) {
-			conversation.SmtpError = &SmtpError{
-				Code:    rcptResult.Reply.Code,
-				Message: rcptResult.Reply.Message,
-			}
+		conversation.AddStepFromResult(SmtpStepRcpt, &rcptResult)
+
+		if rcptResult.CodeValid(250) {
+			rcptAcceptedAny = true
+		} else {
+			rcptSmtpErrors[rcpt.Id] = NewSmtpErrorFromReply(rcptResult.Reply)
+		}
+	}
+
+	// if no recipients were accepted, we consider it a failure
+	// and set the SmtpError to the first recipient error
+	if !rcptAcceptedAny {
+		for _, err := range rcptSmtpErrors {
+			conversation.SmtpError = err
 			return conversation
 		}
+	} else if len(rcptSmtpErrors) > 0 {
+		// some recipients were rejected, but at least one was accepted
+		conversation.RcptSmtpErrors = rcptSmtpErrors
 	}
 
 	// STEP 5: DATA
@@ -450,7 +501,7 @@ func sendEmailToHostHandler(
 		conversation.NetworkError = dataResult.Err
 		return conversation
 	}
-	conversation.AddStep(SmtpStepData, dataResult.Command, dataResult.Reply.Code, dataResult.Reply.Message)
+	conversation.AddStepFromResult(SmtpStepData, &dataResult)
 	if !dataResult.CodeValid(354) {
 		conversation.SmtpError = &SmtpError{
 			Code:    dataResult.Reply.Code,
@@ -471,7 +522,7 @@ func sendEmailToHostHandler(
 		conversation.NetworkError = closeResult.Err
 		return conversation
 	}
-	conversation.AddStep(SmtpStepDataClose, closeResult.Command, closeResult.Reply.Code, closeResult.Reply.Message)
+	conversation.AddStepFromResult(SmtpStepDataClose, &closeResult)
 	if !closeResult.CodeValid(250) {
 		conversation.SmtpError = &SmtpError{
 			Code:    closeResult.Reply.Code,
@@ -482,8 +533,10 @@ func sendEmailToHostHandler(
 
 	// STEP 6: QUIT
 	// ============
-	quitResult := c.Quit() // ignore QUIT error
-	conversation.AddStep(SmtpStepQuit, quitResult.Command, quitResult.Reply.Code, quitResult.Reply.Message)
+	quitResult := c.Quit() // QUIT error won't be considered a failure
+	if quitResult.Err == nil {
+		conversation.AddStepFromResult(SmtpStepQuit, &quitResult)
+	}
 
 	return conversation
 
