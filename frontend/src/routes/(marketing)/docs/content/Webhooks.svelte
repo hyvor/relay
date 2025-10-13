@@ -17,6 +17,9 @@
 	<li>
 		<a href="#retrying">Retrying</a>
 	</li>
+	<li>
+		<a href="#validating">Validating Webhooks</a>
+	</li>
 </ul>
 
 <h2 id="events">Events & Payloads</h2>
@@ -420,4 +423,15 @@
 	If all retries fail, the webhook delivery will be marked as failed, and you can view the
 	delivery status in the Hyvor Relay Console, including the error message received from your
 	server.
+</p>
+
+<h2 id="validating">Validating Webhooks</h2>
+
+<p>
+	When creating a webhook, a secret key is generated. This will be used to sign the webhook
+	requests. You can then verify the signature of the request to make sure it's coming from Hyvor
+	Relay. The signature is a HMAC-SHA256 hash of the request JSON body. The secret key is used as
+	the key. To validate, you should generate a signature using the same algorithm, the given
+	request body, and the secret key. Then, compare the generated signature with the signature in
+	the <code>X-Signature</code> header. If they match, the request is valid.
 </p>

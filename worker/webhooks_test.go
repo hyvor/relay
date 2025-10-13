@@ -247,3 +247,49 @@ func (suite *WebhookWorkerTestSuite) TestWebhookDeliveryMarkedFailedAfterMaxRetr
 	suite.Equal(422, int(delivery.ResponseCode.Int64))
 	suite.Equal(7, delivery.TryCount)
 }
+
+func (suite *WebhookWorkerTestSuite) TestWebhookDeliveryWithSignatureHeader() {
+	receivedSignature := ""
+
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		suite.Equal(req.URL.String(), "/webhook")
+		receivedSignature = req.Header.Get("X-Signature")
+		rw.Write([]byte(`OK`))
+	}))
+	defer server.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+
+	factory, err := NewTestFactory()
+	suite.NoError(err, "Failed to create test factory")
+
+	testSignature := "sha256=test-signature-value"
+	deliveryId, err := factory.WebhookDeliveryWithSignature(server.URL+"/webhook", `{"key": "value"}`, 0, &testSignature)
+	suite.NoError(err, "Failed to create webhook delivery with signature")
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go webhookWorker(ctx, 1, &wg, getTestDbConfig(), logger, newMetrics())
+	go func() {
+		defer wg.Done()
+		time.Sleep(100 * time.Millisecond)
+		cancel()
+	}()
+	wg.Wait()
+
+	suite.Equal(testSignature, receivedSignature, "X-Signature header should match the signature from database")
+
+	delivery, err := getWebhookDeliveryEntityById(factory.conn, deliveryId)
+	suite.NoError(err, "Failed to get webhook delivery by ID")
+
+	suite.Equal("delivered", delivery.Status)
+	suite.Equal("OK", delivery.Response.String)
+	suite.Equal(200, int(delivery.ResponseCode.Int64))
+	suite.Equal(1, delivery.TryCount)
+	suite.Equal(testSignature, delivery.Signature.String)
+}

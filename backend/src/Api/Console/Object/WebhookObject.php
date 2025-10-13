@@ -13,12 +13,14 @@ class WebhookObject
      * @var string[]
      */
     public array $events;
+    public ?string $secret;
 
-    public function __construct(Webhook $webhook)
+    public function __construct(Webhook $webhook, ?string $secret = null)
     {
         $this->id = $webhook->getId();
         $this->url = $webhook->getUrl();
         $this->description = $webhook->getDescription();
         $this->events = $webhook->getEvents();
+        $this->secret = $secret;
     }
 }

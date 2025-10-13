@@ -19,7 +19,7 @@ final class Version20250624093228 extends AbstractMigration
         $this->addSql("CREATE TYPE webhook_delivery_status AS ENUM ('pending', 'processing', 'delivered', 'failed');");
 
         $this->addSql(
-        <<<SQL
+            <<<SQL
             CREATE TABLE webhook_deliveries (
                 id SERIAL PRIMARY KEY,
                 created_at TIMESTAMPTZ NOT NULL,
@@ -32,14 +32,17 @@ final class Version20250624093228 extends AbstractMigration
                 request_body TEXT NOT NULL,
                 response TEXT,
                 response_code INT,
-                try_count INT NOT NULL DEFAULT 0
+                try_count INT NOT NULL DEFAULT 0,
+                signature TEXT NOT NULL
             );
          SQL
         );
 
         $this->addSql("CREATE INDEX idx_webhook_deliveries_webhook_id ON webhook_deliveries (webhook_id)");
         // worker index
-        $this->addSql("CREATE INDEX idx_webhook_deliveries_status ON webhook_deliveries (send_after) WHERE status = 'pending'");
+        $this->addSql(
+            "CREATE INDEX idx_webhook_deliveries_status ON webhook_deliveries (send_after) WHERE status = 'pending'"
+        );
     }
 
     public function down(Schema $schema): void

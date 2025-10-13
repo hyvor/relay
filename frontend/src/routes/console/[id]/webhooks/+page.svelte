@@ -1,5 +1,12 @@
 <script lang="ts">
-	import { Button, toast, confirm, TabNav, TabNavItem, Loader } from '@hyvor/design/components';
+	import { 
+		Button, 
+		toast, 
+		confirm, 
+		TabNav, 
+		TabNavItem, 
+		Loader
+	} from '@hyvor/design/components';
 	import IconPlus from '@hyvor/icons/IconPlus';
 	import SingleBox from '../../@components/content/SingleBox.svelte';
 	import WebhookModal from './WebhookModal.svelte';
@@ -61,7 +68,7 @@
 			});
 	}
 
-	function handleWebhookSaved() {
+	function handleWebhookSaved(webhook: Webhook) {
 		loadWebhooks();
 	}
 
@@ -143,6 +150,7 @@
 	onWebhookSaved={handleWebhookSaved}
 />
 
+
 <style>
 	.top {
 		display: flex;
@@ -170,4 +178,5 @@
 		align-items: center;
 		flex: 1;
 	}
+
 </style>

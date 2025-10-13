@@ -13,6 +13,7 @@ use App\Entity\Webhook;
 use App\Service\Webhook\Dto\UpdateWebhookDto;
 use App\Service\Webhook\WebhookDeliveryService;
 use App\Service\Webhook\WebhookService;
+use Hyvor\Internal\Util\Crypt\Encryption;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,6 +25,7 @@ class WebhookController extends AbstractController
     public function __construct(
         private WebhookService $webhookService,
         private WebhookDeliveryService $webhookDeliveryService,
+        private Encryption $encryption,
     ) {
     }
 
@@ -32,7 +34,10 @@ class WebhookController extends AbstractController
     public function getWebhooks(Project $project): JsonResponse
     {
         $webhooks = $this->webhookService->getWebhooksForProject($project)
-            ->map(fn($webhook) => new WebhookObject($webhook));
+            ->map(fn($webhook) => new WebhookObject(
+                $webhook, 
+                $this->encryption->decryptString($webhook->getSecretEncrypted())
+            ));
 
         return $this->json($webhooks);
     }
@@ -41,14 +46,14 @@ class WebhookController extends AbstractController
     #[ScopeRequired(Scope::WEBHOOKS_WRITE)]
     public function createWebhook(#[MapRequestPayload] CreateWebhookInput $input, Project $project): JsonResponse
     {
-        $webhook = $this->webhookService->createWebhook(
+        $creation = $this->webhookService->createWebhook(
             $project,
             $input->url,
             $input->description,
             $input->events
         );
 
-        return $this->json(new WebhookObject($webhook));
+        return $this->json(new WebhookObject($creation['webhook'], $creation['secret']));
     }
 
     #[Route('/webhooks/{id}', methods: 'PATCH')]
