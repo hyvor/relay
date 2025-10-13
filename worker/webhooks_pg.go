@@ -11,7 +11,7 @@ type WebhookDelivery struct {
 	Url         string
 	RequestBody string
 	TryCount    int
-	Signature   *string
+	Signature   string
 }
 
 const WEBHOOKS_PER_BATCH = 10

@@ -78,7 +78,7 @@
 	}
 
 	function handleWebhookSaved(webhook: Webhook) {
-		if (webhook.key) {
+		if (webhook.secret) {
 			newWebhook = webhook;
 			showWebhookSecretModal = true;
 		}
@@ -183,12 +183,12 @@
 
 			<SplitControl label="Webhook Secret">
 				<div class="key-input-group">
-					<TextInput value={newWebhook.key || ''} readonly block />
+					<TextInput value={newWebhook.secret || ''} readonly block />
 					<IconButton
 						size="small"
 						color="input"
 						style="margin-left:4px;"
-						on:click={() => copyAndToast(newWebhook?.key || '', 'Webhook secret copied')}
+						on:click={() => copyAndToast(newWebhook?.secret || '', 'Webhook secret copied')}
 					>
 						<IconCopy size={12} />
 					</IconButton>

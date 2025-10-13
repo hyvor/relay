@@ -244,11 +244,7 @@ func sendWebhook(delivery *WebhookDelivery) *WebhookResult {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	
-	// Add X-Signature header if signature is available
-	if delivery.Signature != nil && *delivery.Signature != "" {
-		req.Header.Set("X-Signature", *delivery.Signature)
-	}
+	req.Header.Set("X-Signature", delivery.Signature)
 
 	resp, err := httpClient.Do(req)
 

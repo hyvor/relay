@@ -48,7 +48,7 @@ class WebhookController extends AbstractController
             $input->events
         );
 
-        return $this->json(new WebhookObject($creation['webhook'], $creation['rawKey']));
+        return $this->json(new WebhookObject($creation['webhook'], $creation['secret']));
     }
 
     #[Route('/webhooks/{id}', methods: 'PATCH')]
