@@ -1,5 +1,5 @@
 <script>
-	import { CodeBlock, Tag } from '@hyvor/design/components';
+	import { CodeBlock } from '@hyvor/design/components';
 	import Scope from './component/Scope.svelte';
 </script>
 
@@ -662,11 +662,13 @@ type Response = Domain
 
 <CodeBlock
 	code={`
-    type Request = {}
+    type Request = {
+        period?: '30d' | '7d' | '24h' // Optional. Default is '30d'
+    }
     type Response = {
-        sends_30d: number,
-        bounce_rate_30d: number,
-        complaint_rate_30d: number
+        sends: number,
+        bounce_rate: number,
+        complaint_rate: number
     }
 `}
 	language="ts"
@@ -693,20 +695,22 @@ type Response = Domain
 <CodeBlock
 	language="ts"
 	code={`
-        interface Send = {
+        interface Send {
 	id: number;
 	uuid: string;
 	created_at: number;
-	sent_at: number | null;
-	failed_at: number | null;
-	status: 'queued' | 'accepted' | 'bounced' | 'complained';
 	from_address: string;
-	to_address: string;
+	from_name: string | null;
 	subject: string | null;
 	body_html: string | null;
 	body_text: string | null;
+	headers: Record<string, string>;
 	raw: string;
+    queued: boolean;
+    send_after: number;
+    recipients: SendRecipient[];
 	attempts: SendAttempt[];
+	feedback: SendFeedback[];
         }
     `}
 />
@@ -721,10 +725,8 @@ type Response = Domain
 	type: 'to' | 'cc' | 'bcc';
 	address: string;
 	name: string;
-	status: 'queued' | 'accepted' | 'retrying' | 'bounced' | 'complained' | 'failed';
-	accepted_at: number | null;
-	bounced_at: number | null;
-	failed_at: number | null;
+	status: 'queued' | 'accepted' | 'deferred' | 'bounced' | 'complained' | 'suppressed' | 'failed';
+	try_count: number;
         }
     `}
 />
@@ -740,8 +742,10 @@ type Response = Domain
 	status: 'accepted' | 'deferred' | 'bounced' | 'failed';
 	try_count: number;
 	resolved_mx_hosts: string[];
-	accepted_mx_host: string | null;
+	responded_mx_host: string | null;
 	smtp_conversations: Record<string, any>;
+	recipient_ids = number[];
+	duration_ms: number;
 	error: string | null;
         }
     `}
@@ -750,8 +754,8 @@ type Response = Domain
 <h3 id="bounce-object">Bounce Object</h3>
 
 <CodeBlock
-    language="ts"
-    code={`
+	language="ts"
+	code={`
         interface Bounce {
     text: string;
     status: string;
@@ -762,8 +766,8 @@ type Response = Domain
 <h3 id="complaint-object">Complaint Object</h3>
 
 <CodeBlock
-    language="ts"
-    code={`
+	language="ts"
+	code={`
         interface Complaint {
     text: string;
     feedback_type: string;
@@ -852,7 +856,6 @@ type Response = Domain
 	id: number;
 	created_at: number;
 	email: string;
-	project: string;
 	reason: 'bounce' | 'complaint';
 	description: string | null;
         }

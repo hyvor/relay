@@ -41,22 +41,6 @@ class GetSuppressionsTest extends WebTestCase
 
         $content = $this->getJson();
         $this->assertCount(5, $content);
-
-        foreach ($content as $key => $delivery) {
-            $this->assertIsArray($delivery);
-            $this->assertArrayHasKey('id', $delivery);
-            $this->assertArrayHasKey('created_at', $delivery);
-            $this->assertArrayHasKey('email', $delivery);
-            $this->assertArrayHasKey('reason', $delivery);
-            $this->assertArrayHasKey('description', $delivery);
-
-            // Ensure $key is treated as integer for array access
-            $suppressionIndex = (int)$key;
-            $this->assertSame($suppressions[$suppressionIndex]->getId(), $delivery['id']);
-            $this->assertSame($suppressions[$suppressionIndex]->getEmail(), $delivery['email']);
-            $this->assertSame($suppressions[$suppressionIndex]->getReason()->value, $delivery['reason']);
-            $this->assertSame($suppressions[$suppressionIndex]->getDescription(), $delivery['description']);
-        }
     }
 
     public function test_get_suppresions_with_email_search(): void

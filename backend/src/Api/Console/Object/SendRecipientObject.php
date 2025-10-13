@@ -15,7 +15,6 @@ class SendRecipientObject
     public string $name;
     public SendRecipientStatus $status;
     public int $try_count;
-    public bool $is_suppressed;
 
     public function __construct(SendRecipient $recipient)
     {
@@ -25,7 +24,6 @@ class SendRecipientObject
         $this->name = $recipient->getName();
         $this->status = $recipient->getStatus();
         $this->try_count = $recipient->getTryCount();
-        $this->is_suppressed = $recipient->getIsSuppressed();
     }
 
 }

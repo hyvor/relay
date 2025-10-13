@@ -4,7 +4,6 @@ namespace App\Tests\Api\Console\Analytics;
 
 use App\Api\Console\Controller\AnalyticsController;
 use App\Entity\Type\SendRecipientStatus;
-use App\Entity\Type\SendStatus;
 use App\Service\Send\SendAnalyticsService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
@@ -17,7 +16,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 class GetAnalyticsStatsTest extends WebTestCase
 {
 
-    public function test_gets_stats(): void
+    public function test_gets_default_30d(): void
     {
         $project = ProjectFactory::createOne();
 
@@ -38,10 +37,59 @@ class GetAnalyticsStatsTest extends WebTestCase
         $this->assertResponseStatusCodeSame(200);
 
         $json = $this->getJson();
-        $this->assertSame(4, $json['sends_30d']);
-        $this->assertSame(0.25, $json['bounce_rate_30d']);
-        $this->assertSame(0.25, $json['complaint_rate_30d']);
+        $this->assertSame(4, $json['sends']);
+        $this->assertSame(0.25, $json['bounce_rate']);
+        $this->assertSame(0.25, $json['complaint_rate']);
+    }
 
+    public function test_gets_7d(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $send1 = SendFactory::createOne(['project' => $project, 'created_at' => new \DateTime('-2 days')]);
+        SendRecipientFactory::createOne(['send' => $send1, 'status' => SendRecipientStatus::ACCEPTED]);
+        $send2 = SendFactory::createOne(['project' => $project, 'created_at' => new \DateTime('-1 day')]);
+        SendRecipientFactory::createOne(['send' => $send2, 'status' => SendRecipientStatus::BOUNCED]);
+
+        // too old for 7d period
+        $send3 = SendFactory::createOne(['project' => $project, 'created_at' => new \DateTime('-10 days')]);
+        SendRecipientFactory::createOne(['send' => $send3, 'status' => SendRecipientStatus::COMPLAINED]);
+
+        $this->consoleApi($project, 'GET', '/analytics/stats?period=7d');
+        $this->assertResponseStatusCodeSame(200);
+
+        $json = $this->getJson();
+        $this->assertSame(2, $json['sends']);
+        $this->assertSame(0.5, $json['bounce_rate']);
+        $this->assertEquals(0.0, $json['complaint_rate']);
+    }
+
+    public function test_gets_24h(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $send1 = SendFactory::createOne(['project' => $project, 'created_at' => new \DateTime('-2 hours')]);
+        SendRecipientFactory::createOne(['send' => $send1, 'status' => SendRecipientStatus::ACCEPTED]);
+
+        // too old for 24h period
+        $send2 = SendFactory::createOne(['project' => $project, 'created_at' => new \DateTime('-2 days')]);
+        SendRecipientFactory::createOne(['send' => $send2, 'status' => SendRecipientStatus::BOUNCED]);
+
+        $this->consoleApi($project, 'GET', '/analytics/stats?period=24h');
+        $this->assertResponseStatusCodeSame(200);
+
+        $json = $this->getJson();
+        $this->assertSame(1, $json['sends']);
+        $this->assertEquals(0.0, $json['bounce_rate']);
+        $this->assertEquals(0.0, $json['complaint_rate']);
+    }
+
+    public function test_invalid_period_fails(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $this->consoleApi($project, 'GET', '/analytics/stats?period=invalid');
+        $this->assertResponseStatusCodeSame(422);
     }
 
 }

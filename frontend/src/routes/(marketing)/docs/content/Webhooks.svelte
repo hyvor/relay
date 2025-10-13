@@ -37,6 +37,9 @@
 	<li>
 		<a href="#send-recipient-complained">send.recipient.complained</a>
 	</li>
+	<li>
+		<a href="#send-recipient-failed">send.recipient.failed</a>
+	</li>
 	<br />
 	<li>
 		<a href="#domain-created">domain.created</a>
@@ -190,6 +193,61 @@
 	Objects: <a href="/docs/api-console#send-object">Send</a>,
 	<a href="/docs/api-console#send-recipient-object">SendRecipient</a>,
 	<a href="/docs/api-console#complaint-object">Complaint</a>
+</p>
+
+<h3 id="send-recipient-suppressed">send.recipient.suppressed</h3>
+
+<p>
+	This event is triggered when an email is not sent to a recipient because the recipient was
+	previously added to the suppression list. This means that the email was automatically marked as
+	suppressed without trying to send it. No further events will be triggered for this recipient.
+</p>
+
+<CodeBlock
+	code={`
+{
+	send: Send;
+	recipient: SendRecipient;
+	suppression: Suppression;
+}
+`}
+	language="ts"
+/>
+
+<p>
+	Objects: <a href="/docs/api-console#send-object">Send</a>,
+	<a href="/docs/api-console#send-recipient-object">SendRecipient</a>,
+	<a href="/docs/api-console#suppression-object">Suppression</a>
+</p>
+
+<h3 id="send-recipient-failed">send.recipient.failed</h3>
+
+<p>
+	This event is triggered when an email could not be sent to a recipient after multiple attempts
+	due to network or server issues. No further events will be triggered for this recipient.
+</p>
+
+<p>
+	Note: This is different from a bounce. A bounce indicates that the recipient's server rejected
+	the email, while a failure indicates that the email could not be sent due to other issues.
+	Failed emails are not added to the suppression list automatically.
+</p>
+
+<CodeBlock
+	code={`
+{
+	send: Send;
+	recipient: SendRecipient;
+	attempt: SendAttempt;
+}
+`}
+	language="ts"
+/>
+
+<p>
+	Objects: <a href="/docs/api-console#send-object">Send</a>,
+	<a href="/docs/api-console#send-recipient-object">SendRecipient</a>
+	<a href="/docs/api-console#send-attempt-object">SendAttempt</a>
 </p>
 
 <h3 id="domain-created">domain.created</h3>

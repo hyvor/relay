@@ -19,8 +19,10 @@ class SendAnalyticsService
     /**
      * @return array<string, int>
      */
-    public function getLast30dCounts(Project $project): array
+    public function getCountsByPeriod(Project $project, string $period = '30d'): array
     {
+        $dateModifier = $this->getPeriodDateModifier($period);
+        
         $qb = $this->em->createQuery(<<<DQL
             SELECT 
                 COUNT(sr.id) AS total,
@@ -34,7 +36,7 @@ class SendAnalyticsService
         DQL);
 
         $qb->setParameter('project', $project);
-        $qb->setParameter('date', new \DateTime('-30 days'));
+        $qb->setParameter('date', new \DateTime($dateModifier));
 
         /** @var array{total: int, bounced: int, complained: int} $result */
         $result = $qb->getSingleResult();
@@ -44,6 +46,25 @@ class SendAnalyticsService
             'bounced' => (int) $result['bounced'],
             'complained' => (int) $result['complained'],
         ];
+    }
+
+    /**
+     * @deprecated Use getCountsByPeriod instead
+     * @return array<string, int>
+     */
+    public function getLast30dCounts(Project $project): array
+    {
+        return $this->getCountsByPeriod($project, '30d');
+    }
+
+    private function getPeriodDateModifier(string $period): string
+    {
+        return match ($period) {
+            '24h' => '-24 hours',
+            '7d' => '-7 days',
+            '30d' => '-30 days',
+            default => '-30 days',
+        };
     }
 
     /**

@@ -4,10 +4,9 @@
 
 	interface Props {
 		recipient: SendRecipient;
-		num?: number; // optionally show a number of recipients (RecipientStatuses)
 	}
 
-	let { recipient, num }: Props = $props();
+	let { recipient }: Props = $props();
 
 	let { color, text } = $derived.by(() => {
 		switch (recipient.status) {
@@ -21,21 +20,14 @@
 				return { color: 'default', text: 'Queued' };
 			case 'deferred':
 				return { color: 'orange', text: 'Deferred' };
+			case 'suppressed':
+				return { color: 'red', text: 'Suppressed' };
 			case 'failed':
-				return {
-					color: 'red',
-					text: recipient.is_suppressed ? 'Failed (Suppressed)' : 'Failed'
-				};
+				return { color: 'red', text: 'Failed' };
 		}
 	});
 </script>
 
 <Tag size="small" color={color as any}>
 	{text}
-
-	{#snippet end()}
-		{#if num}
-			<span>({num})</span>
-		{/if}
-	{/snippet}
 </Tag>

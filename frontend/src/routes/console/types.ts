@@ -66,39 +66,32 @@ export type Project = {
 export type ProjectSendType = 'transactional' | 'distributional';
 
 export type Send = {
-	id: number;
-	uuid: string;
-	created_at: number;
-	from_address: string;
-	from_name: string | null;
-	subject: string | null;
-	body_html: string | null;
-	body_text: string | null;
-	raw: string;
-	size_bytes: number;
-	queued: boolean;
-	send_after: number;
+    id: number;
+    uuid: string;
+    created_at: number;
+    from_address: string;
+    from_name: string | null;
+    subject: string | null;
+    body_html: string | null;
+    body_text: string | null;
+    raw: string;
+    size_bytes: number;
+    queued: boolean;
+    send_after: number;
 
-	recipients: SendRecipient[];
-	attempts: SendAttempt[];
-	feedback: SendFeedback[];
-};
+    recipients: SendRecipient[];
+    attempts: SendAttempt[];
+    feedback: SendFeedback[];
+}
 
-export type SendRecipientStatus =
-	| 'queued'
-	| 'accepted'
-	| 'deferred'
-	| 'bounced'
-	| 'failed'
-	| 'complained';
+export type SendRecipientStatus = 'queued' | 'accepted' | 'deferred' | 'bounced' | 'suppressed' | 'failed' | 'complained';
 
 export interface SendRecipient {
-	id: number;
-	type: 'to' | 'cc' | 'bcc';
-	address: string;
-	name: string;
-	status: SendRecipientStatus;
-	is_suppressed: boolean;
+    id: number;
+    type: 'to' | 'cc' | 'bcc';
+    address: string;
+    name: string;
+    status: SendRecipientStatus;
 }
 
 export interface SendAttempt {
@@ -193,9 +186,9 @@ export type Domain = {
 };
 
 export interface AnalyticsStats {
-	sends_30d: number;
-	bounce_rate_30d: number;
-	complaint_rate_30d: number;
+    sends: number;
+    bounce_rate: number;
+    complaint_rate: number;
 }
 
 export interface ProjectUserMiniObject {

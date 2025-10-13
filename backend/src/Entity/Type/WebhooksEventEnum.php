@@ -9,6 +9,7 @@ enum WebhooksEventEnum: string
     case SEND_RECIPIENT_DEFERRED = 'send.recipient.deferred';
     case SEND_RECIPIENT_BOUNCED = 'send.recipient.bounced';
     case SEND_RECIPIENT_COMPLAINED = 'send.recipient.complained';
+    case SEND_RECIPIENT_SUPPRESSED = 'send.recipient.suppressed';
     case SEND_RECIPIENT_FAILED = 'send.recipient.failed';
 
     // Created by Workers

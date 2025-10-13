@@ -19,7 +19,7 @@
 		});
 
 		// add suppression failures
-		const suppressed = send.recipients.filter((r) => r.is_suppressed === true);
+		const suppressed = send.recipients.filter((r) => r.status === 'suppressed');
 		if (suppressed.length > 0) {
 			events.push({
 				timestamp: send.created_at,

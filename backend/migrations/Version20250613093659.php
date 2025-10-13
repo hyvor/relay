@@ -54,7 +54,7 @@ final class Version20250613093659 extends AbstractMigration
         // send_recipients table
         $this->addSql("CREATE TYPE send_recipients_type AS ENUM ('to', 'cc', 'bcc')");
         $this->addSql(
-            "CREATE TYPE send_recipients_status AS ENUM ('queued', 'accepted', 'deferred', 'bounced', 'failed', 'complained')"
+            "CREATE TYPE send_recipients_status AS ENUM ('queued', 'accepted', 'deferred', 'bounced', 'failed', 'complained', 'suppressed')"
         );
 
         $this->addSql(
@@ -66,7 +66,6 @@ final class Version20250613093659 extends AbstractMigration
                 address text NOT NULL,
                 name text NOT NULL, -- empty if not provided
                 status send_recipients_status NOT NULL DEFAULT 'queued',
-                is_suppressed BOOLEAN NOT NULL DEFAULT false,
                 try_count INT NOT NULL DEFAULT 0,
                 UNIQUE (send_id, address, type)
             )
