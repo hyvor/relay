@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"strings"
@@ -38,7 +39,7 @@ func TestSendEmail_Accepted(t *testing.T) {
 	result := sendEmailHandler(
 		&SendRow{},
 		[]*RecipientRow{
-			{},
+			{Id: 1},
 		},
 		"hyvor.com",
 		"relay.com",
@@ -47,7 +48,7 @@ func TestSendEmail_Accepted(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultAccepted, result.Code)
+	assert.Equal(t, SendResultAccepted, result.RecipientResultCodes[1])
 	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
 
 }
@@ -79,7 +80,7 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 	result := sendEmailHandler(
 		&SendRow{},
 		[]*RecipientRow{
-			{},
+			{Id: 1},
 		},
 		"hyvor.com",
 		"relay.com",
@@ -88,7 +89,9 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultBounced, result.Code)
+	fmt.Println(result.RecipientResultCodes)
+
+	assert.Equal(t, SendResultBounced, result.RecipientResultCodes[1])
 	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
 
 }
@@ -120,7 +123,7 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 	result := sendEmailHandler(
 		&SendRow{},
 		[]*RecipientRow{
-			{},
+			{Id: 1},
 		},
 		"hyvor.com",
 		"relay.com",
@@ -129,7 +132,7 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultDeferred, result.Code)
+	assert.Equal(t, SendResultDeferred, result.RecipientResultCodes[1])
 	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
 	assert.Equal(t, 1, result.NewTryCount)
 
@@ -161,7 +164,7 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 	result := sendEmailHandler(
 		&SendRow{},
 		[]*RecipientRow{
-			{TryCount: 6},
+			{Id: 1, TryCount: 6},
 		},
 		"hyvor.com",
 		"relay.com",
@@ -170,7 +173,7 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultFailed, result.Code)
+	assert.Equal(t, SendResultFailed, result.RecipientResultCodes[1])
 	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
 	assert.Equal(t, 7, result.NewTryCount)
 
@@ -199,7 +202,7 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 	result := sendEmailHandler(
 		&SendRow{},
 		[]*RecipientRow{
-			{TryCount: 0},
+			{Id: 1, TryCount: 0},
 		},
 		"hyvor.com",
 		"relay.com",
@@ -208,7 +211,7 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultDeferred, result.Code)
+	assert.Equal(t, SendResultDeferred, result.RecipientResultCodes[1])
 	assert.Equal(t, "", result.RespondedMxHost)
 	assert.Equal(t, 1, result.NewTryCount)
 
@@ -237,7 +240,7 @@ func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 	result := sendEmailHandler(
 		&SendRow{},
 		[]*RecipientRow{
-			{TryCount: 1},
+			{Id: 1, TryCount: 1},
 		},
 		"hyvor.com",
 		"relay.com",
@@ -246,7 +249,7 @@ func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultFailed, result.Code)
+	assert.Equal(t, SendResultFailed, result.RecipientResultCodes[1])
 	assert.Equal(t, "", result.RespondedMxHost)
 	assert.Equal(t, 2, result.NewTryCount)
 	assert.Equal(t, context.DeadlineExceeded, result.Error)
@@ -275,7 +278,7 @@ func TestSendEmail_MxFailed(t *testing.T) {
 	result := sendEmailHandler(
 		&SendRow{},
 		[]*RecipientRow{
-			{TryCount: 1},
+			{Id: 4, TryCount: 1},
 		},
 		"hyvor.com",
 		"relay.com",
@@ -284,7 +287,7 @@ func TestSendEmail_MxFailed(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultFailed, result.Code)
+	assert.Equal(t, SendResultFailed, result.RecipientResultCodes[4])
 	assert.Equal(t, "", result.RespondedMxHost)
 	assert.Equal(t, 2, result.NewTryCount)
 	assert.Equal(t, "MX lookup failed: custom host error", result.Error.Error())
