@@ -809,6 +809,7 @@ type Response = Domain
 	url: string;
 	description: string | null;
 	events: string[];
+	secret: string | null;
         }
     `}
 />

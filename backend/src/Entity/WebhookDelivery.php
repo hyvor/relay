@@ -36,7 +36,7 @@ class WebhookDelivery
     private WebhooksEventEnum $event;
 
     #[ORM\Column(enumType: WebhookDeliveryStatus::class)]
-    private WebhookDeliveryStatus $status ;
+    private WebhookDeliveryStatus $status;
 
     #[ORM\Column()]
     private string $request_body;
@@ -49,6 +49,9 @@ class WebhookDelivery
 
     #[ORM\Column]
     private int $try_count = 0;
+
+    #[ORM\Column]
+    private string $signature;
 
     public function getId(): int
     {
@@ -190,6 +193,18 @@ class WebhookDelivery
     public function setTryCount(int $tryCount): static
     {
         $this->try_count = $tryCount;
+
+        return $this;
+    }
+
+    public function getSignature(): string
+    {
+        return $this->signature;
+    }
+
+    public function setSignature(string $signature): static
+    {
+        $this->signature = $signature;
 
         return $this;
     }

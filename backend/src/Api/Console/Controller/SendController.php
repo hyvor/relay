@@ -26,7 +26,6 @@ use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
-use Symfony\Component\HttpKernel\Attribute\ValueResolver;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
@@ -46,7 +45,7 @@ class SendController extends AbstractController
     #[ScopeRequired(Scope::SENDS_SEND)]
     #[IdempotencySupported]
     public function sendEmail(
-        #[ValueResolver(ProjectResolver::class)] Project $project,
+        Project $project,
         #[MapRequestPayload] SendEmailInput $sendEmailInput
     ): JsonResponse {
         $fromAddress = $sendEmailInput->getFromAddress();

@@ -7,40 +7,51 @@ use App\Entity\Type\WebhookDeliveryStatus;
 use App\Entity\Type\WebhooksEventEnum;
 use App\Entity\Webhook;
 use App\Entity\WebhookDelivery;
-use App\Service\ApiKey\Dto\UpdateApiKeyDto;
 use App\Service\Webhook\Dto\UpdateWebhookDto;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
+use Hyvor\Internal\Util\Crypt\Encryption;
+use Random\RandomException;
 use Symfony\Component\Clock\ClockAwareTrait;
 
 class WebhookService
 {
     use ClockAwareTrait;
 
-    public function __construct(private EntityManagerInterface $em) {}
+    public function __construct(
+        private EntityManagerInterface $em,
+        private Encryption $encryption,
+    ) {
+    }
 
     /**
      * @param array<string> $events
+     * @return array{ webhook: Webhook, secret: string }
      */
     public function createWebhook(
         Project $project,
         string $url,
         string $description,
         array $events
-    ): Webhook {
+    ): array {
+        $key = bin2hex(random_bytes(16));
         $webhook = new Webhook();
         $webhook->setProject($project);
         $webhook->setUrl($url);
         $webhook->setDescription($description);
         $webhook->setEvents($events);
+        $webhook->setSecretEncrypted($this->encryption->encryptString($key));
         $webhook->setCreatedAt($this->now());
         $webhook->setUpdatedAt($this->now());
 
         $this->em->persist($webhook);
         $this->em->flush();
 
-        return $webhook;
+        return [
+            'webhook' => $webhook,
+            'secret' => $key,
+        ];
     }
 
     /**
@@ -61,7 +72,6 @@ class WebhookService
         Project $project,
         WebhooksEventEnum $event
     ): array {
-
         $sql = "SELECT w.* FROM webhooks w
                 WHERE w.project_id = :project_id
                 AND w.events @> :event
@@ -72,7 +82,7 @@ class WebhookService
 
         $query = $this->em->createNativeQuery($sql, $rsm);
         $query->setParameter("project_id", $project->getId());
-        $query->setParameter("event", (string) json_encode([$event->value]));
+        $query->setParameter("event", (string)json_encode([$event->value]));
 
         /** @var Webhook[] $webhooks */
         $webhooks = $query->getResult();
@@ -118,7 +128,7 @@ class WebhookService
             'event' => $eventType->value,
             'payload' => $payload,
         ];
-        $requestBody = (string) json_encode($requestBody);
+        $requestBody = (string)json_encode($requestBody);
 
         $delivery = new WebhookDelivery();
         $delivery->setCreatedAt($this->now());
@@ -129,6 +139,13 @@ class WebhookService
         $delivery->setStatus(WebhookDeliveryStatus::PENDING);
         $delivery->setEvent($eventType);
         $delivery->setRequestBody($requestBody);
+        $delivery->setSignature(
+            hash_hmac(
+                'sha256',
+                $requestBody,
+                $this->encryption->decryptString($webhook->getSecretEncrypted())
+            )
+        );
 
         $this->em->persist($delivery);
         $this->em->flush();
