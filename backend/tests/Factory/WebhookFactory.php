@@ -32,8 +32,10 @@ final class WebhookFactory extends PersistentProxyObjectFactory
             'description' => self::faker()->text(),
             'project' => ProjectFactory::new(),
             'events' => [],
-            'secret_encrypted' => bin2hex(random_bytes(16))
+            'secret_encrypted' => self::TEST_ENCRYPTED_SECRET
         ];
     }
+
+    private const TEST_ENCRYPTED_SECRET = "eyJpdiI6Im1zVUJkNmdNbFhxRldQWVA5aGFwZXc9PSIsInZhbHVlIjoiUi9UTU9qcVhiZWlhQTArMDdjNzNBSTN0clgxNjNxU0FtMDhDY0NYQ1RrSjF4THFUQ2g1STRPVE8rQ25MYVBHMyIsIm1hYyI6IjlhMTBiNzkwNjMwYmIzN2Q1OTY4MzRiMGI1ZTZhNzQzMDQ4NjkzMWI3MjE4YWZjYTRhM2U5MzBhMmNiOWQ1OGUiLCJ0YWciOiIifQ==";
 
 }
