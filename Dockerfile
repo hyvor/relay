@@ -51,9 +51,8 @@ COPY meta/image/dev/supervisord.conf.dev /etc/supervisor/conf.d/supervisord.conf
 CMD ["sh", "/app/run"]
 
 FROM backend-base AS final
-COPY backend/composer.json backend/composer.lock /app/backend/
-RUN composer install --no-interaction --no-dev --optimize-autoloader --classmap-authoritative
 COPY backend /app/backend
+RUN composer install --no-interaction --no-dev --optimize-autoloader --classmap-authoritative
 COPY --from=frontend-prod /app/frontend/build /app/static
 COPY --from=worker /app/worker/worker /app/worker
 COPY meta/image/prod/Caddyfile.prod /etc/caddy/Caddyfile
