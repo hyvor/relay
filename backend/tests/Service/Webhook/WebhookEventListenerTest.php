@@ -7,6 +7,7 @@ use App\Api\Console\Object\ComplaintObject;
 use App\Entity\Project;
 use App\Entity\Type\DomainStatus;
 use App\Entity\Type\SendAttemptStatus;
+use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\WebhooksEventEnum;
 use App\Entity\Webhook;
 use App\Entity\WebhookDelivery;
@@ -126,38 +127,32 @@ class WebhookEventListenerTest extends KernelTestCase
         }
     }
 
-    #[TestWith([SendAttemptStatus::ACCEPTED, WebhooksEventEnum::SEND_RECIPIENT_ACCEPTED])]
-    #[TestWith([SendAttemptStatus::DEFERRED, WebhooksEventEnum::SEND_RECIPIENT_DEFERRED])]
-    #[TestWith([SendAttemptStatus::BOUNCED, WebhooksEventEnum::SEND_RECIPIENT_BOUNCED])]
+    #[TestWith([SendRecipientStatus::ACCEPTED, WebhooksEventEnum::SEND_RECIPIENT_ACCEPTED])]
+    #[TestWith([SendRecipientStatus::DEFERRED, WebhooksEventEnum::SEND_RECIPIENT_DEFERRED])]
+    #[TestWith([SendRecipientStatus::BOUNCED, WebhooksEventEnum::SEND_RECIPIENT_BOUNCED])]
+    #[TestWith([SendRecipientStatus::FAILED, WebhooksEventEnum::SEND_RECIPIENT_FAILED])]
     public function test_creates_delivery_for_sent_attempt(
-        SendAttemptStatus $sendAttemptStatus,
+        SendRecipientStatus $sendRecipientStatus,
         WebhooksEventEnum $webhookEvent
     ): void {
         $project = ProjectFactory::createOne();
         $this->createWebhook($project, $webhookEvent);
 
         $send = SendFactory::createOne(['project' => $project]);
+
         $recipient = SendRecipientFactory::createOne([
             'send' => $send,
+            'status' => $sendRecipientStatus,
             'address' => 'nadil@example.com'
         ]);
         SendRecipientFactory::createOne([
             'send' => $send,
             'address' => 'supun@example.com'
         ]);
-        SendRecipientFactory::createOne([
-            'send' => $send,
-            'address' => 'ishini@example.com'
-        ]);
-        SendRecipientFactory::createMany(2, ['send' => $send]);
-        SendRecipientFactory::createOne([
-            'send' => SendFactory::createOne(['project' => $project]),
-            'address' => 'nadil@example.com'
-        ]);
+
         $attempt = SendAttemptFactory::createOne([
-            'status' => $sendAttemptStatus,
             'send' => $send,
-            'domain' => 'example.com',
+            'recipient_ids' => [$recipient->getId()],
         ]);
 
         $this->ed->dispatch(new SendAttemptCreatedEvent($attempt));
@@ -175,7 +170,7 @@ class WebhookEventListenerTest extends KernelTestCase
                 $this->assertIsArray($payload['attempt']);
                 $this->assertSame($attempt->getId(), $payload['attempt']['id']);
             },
-            3
+            1
         );
     }
 

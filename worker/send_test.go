@@ -375,9 +375,14 @@ func TestSendEmailToHost_OneRecipientFails(t *testing.T) {
 		&wrote,
 	}
 
+	var createSmtpClientBackup = createSmtpClient
 	createSmtpClient = func(host string, _ string) (*smtp.Client, error) {
 		return smtp.NewClient(fake, host)
 	}
+
+	defer func() {
+		createSmtpClient = createSmtpClientBackup
+	}()
 
 	send := &SendRow{
 		Id:        1,
