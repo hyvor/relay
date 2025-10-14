@@ -52,6 +52,7 @@ CMD ["sh", "/app/run"]
 
 FROM backend-base AS final
 COPY backend /app/backend
+RUN rm -rf /app/backend/vendor
 RUN composer install --no-interaction --no-dev --optimize-autoloader --classmap-authoritative
 COPY --from=frontend-prod /app/frontend/build /app/static
 COPY --from=worker /app/worker/worker /app/worker
