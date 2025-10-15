@@ -9,6 +9,7 @@ use App\Api\Console\Object\SendRecipientObject;
 use App\Api\Console\Object\SuppressionObject;
 use App\Entity\Project;
 use App\Entity\Type\SendAttemptStatus;
+use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\WebhooksEventEnum;
 use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Service\Domain\Event\DomainDeletedEvent;
@@ -32,9 +33,9 @@ class WebhookEventListener
     }
 
     /**
-     * @param callable(): (object|object[]) $objectFactory
+     * @param callable(): (object) $objectFactory
      */
-    private function createWebhookDeliveries(
+    private function createWebhookDelivery(
         Project $project,
         WebhooksEventEnum $eventType,
         callable $objectFactory
@@ -45,19 +46,14 @@ class WebhookEventListener
             return;
         }
 
-        $objects = $objectFactory();
-        if (!is_array($objects)) {
-            $objects = [$objects];
-        }
+        $object = $objectFactory();
 
         foreach ($webhooks as $webhook) {
-            foreach ($objects as $object) {
-                $this->webhookService->createWebhookDelivery(
-                    $webhook,
-                    $eventType,
-                    $object
-                );
-            }
+            $this->webhookService->createWebhookDelivery(
+                $webhook,
+                $eventType,
+                $object
+            );
         }
     }
 
@@ -65,28 +61,36 @@ class WebhookEventListener
     public function onSendAttemptCreated(SendAttemptCreatedEvent $event): void
     {
         $attempt = $event->sendAttempt;
-        $event = match ($attempt->getStatus()) {
-            SendAttemptStatus::ACCEPTED => WebhooksEventEnum::SEND_RECIPIENT_ACCEPTED,
-            SendAttemptStatus::DEFERRED => WebhooksEventEnum::SEND_RECIPIENT_DEFERRED,
-            SendAttemptStatus::BOUNCED => WebhooksEventEnum::SEND_RECIPIENT_BOUNCED,
-            SendAttemptStatus::FAILED => WebhooksEventEnum::SEND_RECIPIENT_FAILED,
-        };
 
         $send = $attempt->getSend();
         $project = $send->getProject();
+        $recipients = $this->sendRecipientService->getSendRecipientsBySendAttempt($attempt);
 
-        $this->createWebhookDeliveries(
-            $project,
-            $event,
-            function () use ($send, $attempt) {
-                $recipients = $this->sendRecipientService->getSendRecipientsBySendAttempt($attempt);
-                return array_map(fn($recipient) => (object)[
-                    'send' => new SendObject($send),
-                    'recipient' => new SendRecipientObject($recipient),
-                    'attempt' => new SendAttemptObject($attempt),
-                ], $recipients);
+        foreach ($recipients as $recipient) {
+            $event = match ($recipient->getStatus()) {
+                SendRecipientStatus::ACCEPTED => WebhooksEventEnum::SEND_RECIPIENT_ACCEPTED,
+                SendRecipientStatus::DEFERRED => WebhooksEventEnum::SEND_RECIPIENT_DEFERRED,
+                SendRecipientStatus::BOUNCED => WebhooksEventEnum::SEND_RECIPIENT_BOUNCED,
+                SendRecipientStatus::FAILED => WebhooksEventEnum::SEND_RECIPIENT_FAILED,
+                default => null // at this point, only the above statuses should be possible
+            };
+
+            if ($event === null) {
+                continue;
             }
-        );
+
+            $this->createWebhookDelivery(
+                $project,
+                $event,
+                function () use ($send, $attempt, $recipient) {
+                    return (object)[
+                        'send' => new SendObject($send),
+                        'recipient' => new SendRecipientObject($recipient),
+                        'attempt' => new SendAttemptObject($attempt),
+                    ];
+                }
+            );
+        }
     }
 
     #[AsEventListener]
@@ -95,7 +99,7 @@ class WebhookEventListener
         $sendRecipient = $event->getSendRecipient();
         $send = $sendRecipient->getSend();
 
-        $this->createWebhookDeliveries(
+        $this->createWebhookDelivery(
             $send->getProject(),
             WebhooksEventEnum::SEND_RECIPIENT_SUPPRESSED,
             fn() => (object)[
@@ -111,7 +115,7 @@ class WebhookEventListener
     {
         $send = $event->send;
 
-        $this->createWebhookDeliveries(
+        $this->createWebhookDelivery(
             $send->getProject(),
             WebhooksEventEnum::SEND_RECIPIENT_BOUNCED,
             fn() => (object)[
@@ -127,7 +131,7 @@ class WebhookEventListener
     {
         $send = $event->send;
 
-        $this->createWebhookDeliveries(
+        $this->createWebhookDelivery(
             $send->getProject(),
             WebhooksEventEnum::SEND_RECIPIENT_COMPLAINED,
             fn() => (object)[
@@ -141,7 +145,7 @@ class WebhookEventListener
     #[AsEventListener]
     public function onDomainCreate(DomainCreatedEvent $event): void
     {
-        $this->createWebhookDeliveries(
+        $this->createWebhookDelivery(
             $event->domain->getProject(),
             WebhooksEventEnum::DOMAIN_CREATED,
             fn() => (object)['domain' => new DomainObject($event->domain)]
@@ -151,7 +155,7 @@ class WebhookEventListener
     #[AsEventListener]
     public function onDomainStatusChange(DomainStatusChangedEvent $event): void
     {
-        $this->createWebhookDeliveries(
+        $this->createWebhookDelivery(
             $event->domain->getProject(),
             WebhooksEventEnum::DOMAIN_STATUS_CHANGED,
             fn() => (object)[
@@ -166,7 +170,7 @@ class WebhookEventListener
     #[AsEventListener]
     public function onDomainDelete(DomainDeletedEvent $event): void
     {
-        $this->createWebhookDeliveries(
+        $this->createWebhookDelivery(
             $event->domain->getProject(),
             WebhooksEventEnum::DOMAIN_DELETED,
             fn() => (object)['domain' => new DomainObject($event->domain)]
@@ -176,7 +180,7 @@ class WebhookEventListener
     #[AsEventListener]
     public function onSuppressionCreate(SuppressionCreatedEvent $event): void
     {
-        $this->createWebhookDeliveries(
+        $this->createWebhookDelivery(
             $event->suppression->getProject(),
             WebhooksEventEnum::SUPPRESSION_CREATED,
             fn() => (object)['suppression' => new SuppressionObject($event->suppression)]
@@ -186,7 +190,7 @@ class WebhookEventListener
     #[AsEventListener]
     public function onSuppressionDelete(SuppressionDeletedEvent $event): void
     {
-        $this->createWebhookDeliveries(
+        $this->createWebhookDelivery(
             $event->suppression->getProject(),
             WebhooksEventEnum::SUPPRESSION_DELETED,
             fn() => (object)['suppression' => new SuppressionObject($event->suppression)]

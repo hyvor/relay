@@ -8,7 +8,9 @@
 	let { conversation }: Props = $props();
 
 	function codeClass(code: number): string {
-		if (code >= 400) {
+		if (code >= 400 && code < 500) {
+			return 'warning';
+		} else if (code >= 500) {
 			return 'error';
 		}
 		return '';
@@ -67,5 +69,9 @@
 
 	.server.error {
 		color: #e06c75;
+	}
+
+	.server.warning {
+		color: #e6c07b;
 	}
 </style>

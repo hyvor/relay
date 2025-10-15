@@ -254,7 +254,16 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 			return attempt.Error
 		} else {
 			sendAttemptIds = append(sendAttemptIds, attempt.SendAttemptId)
-			if attempt.result.Code == SendResultDeferred {
+
+			var hasDeferred = false
+			for _, code := range attempt.result.RecipientResultCodes {
+				if code == SendResultDeferred {
+					hasDeferred = true
+					break
+				}
+			}
+
+			if hasDeferred {
 				requeingTryCount = attempt.result.NewTryCount
 			}
 		}
@@ -403,7 +412,7 @@ func updateEmailMetricsFromSendResult(
 	metrics.emailSendAttemptsTotal.WithLabelValues(
 		sendResult.QueueName,
 		sendResult.SentFromIp,
-		sendResult.ToStatus(),
+		sendResultToAttemptStatus(sendResult),
 	).Inc()
 
 	metrics.emailDeliveryDurationSeconds.WithLabelValues(

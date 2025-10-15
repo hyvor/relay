@@ -29,6 +29,10 @@ class SendAttemptObject
      * @var int[]
      */
     public array $recipient_ids = [];
+    /**
+     * @var array<int, string>
+     */
+    public array $recipient_statuses = [];
     public int $duration_ms;
     public ?string $error;
 
@@ -43,6 +47,7 @@ class SendAttemptObject
         $this->responded_mx_host = $attempt->getRespondedMxHost();
         $this->smtp_conversations = $attempt->getSmtpConversations();
         $this->recipient_ids = $attempt->getRecipientIds();
+        $this->recipient_statuses = $attempt->getRecipientStatuses();
         $this->duration_ms = $attempt->getDurationMs();
         $this->error = $attempt->getError();
     }

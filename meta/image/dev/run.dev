@@ -4,7 +4,9 @@
 composer install
 
 # Initiate the state of the current server
-bin/console management:init
+# Most of this is handled in the seeder on dev
+# Running again causes problems with detecting IP addresses
+# bin/console management:init
 
 # Run supervisor
 /usr/bin/supervisord

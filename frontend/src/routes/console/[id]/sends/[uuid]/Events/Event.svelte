@@ -1,7 +1,7 @@
 <script lang="ts">
 	import dayjs from 'dayjs';
 	import type { Event } from './events';
-	import type { Send, SendAttempt, SendFeedback } from '../../../../types';
+	import type { Send, SendAttempt, SendFeedback, SmtpConversation } from '../../../../types';
 	import IconHourglass from '@hyvor/icons/IconHourglass';
 	import IconSend from '@hyvor/icons/IconSend';
 	import IconChat from '@hyvor/icons/IconChat';
@@ -80,9 +80,37 @@
 					return null;
 				}
 
+				const rcptError = getRcptError(smtpConvo);
+
+				if (rcptError) {
+					return rcptError;
+				}
+
 				const lastStep = smtpConvo.steps[smtpConvo.steps.length - 1];
 
 				return `${lastStep.reply_code} ${lastStep.reply_text}`;
+			}
+
+			function getRcptError(smtpConvo: SmtpConversation): string {
+				let ret = '';
+
+				const recipientEmails = getAttemptRecipients(attempt);
+
+				for (const step of smtpConvo.steps) {
+					if (step.name != 'rcpt') {
+						continue;
+					}
+					for (const email of recipientEmails) {
+						if (step.command.includes(email) && step.reply_code >= 400) {
+							if (ret) {
+								ret += '\n';
+							}
+							ret += `${email}: ${step.reply_code} ${step.reply_text}`;
+						}
+					}
+				}
+
+				return ret;
 			}
 		}
 

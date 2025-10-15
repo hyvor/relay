@@ -79,6 +79,17 @@ services:
         keep-file: "true"
         mode: non-blocking
 
+  simulator:
+    image: hyvor/smtp-simulator:latest
+    container_name: simulator.net
+    restart: unless-stopped
+    profiles:
+      - simulator
+    environment:
+      - DOMAIN=simulator.net
+    networks:
+      - hyvor-network
+
 networks:
   hyvor-network:
     external: true
