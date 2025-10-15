@@ -116,10 +116,11 @@ func sendResultToAttemptStatus(result *SendResult) string {
 
 	var hasAccepted = false
 	var hasOther = false
-	var hasOtherType SendResultCode
+	var hasOtherType RecipientStatusCode
 
-	for _, code := range result.RecipientResultCodes {
-		if code == SendResultAccepted {
+	for _, rcptResult := range result.RcptResults {
+		code := rcptResult.ToRecipientStatus()
+		if code == RecipientStatusAccepted {
 			hasAccepted = true
 		} else {
 			hasOther = true
@@ -135,9 +136,9 @@ func sendResultToAttemptStatus(result *SendResult) string {
 		}
 	}
 
-	if hasOtherType == SendResultDeferred {
+	if hasOtherType == RecipientStatusDeferred {
 		return "deferred"
-	} else if hasOtherType == SendResultBounced {
+	} else if hasOtherType == RecipientStatusBounced {
 		return "bounced"
 	} else {
 		return "failed"
@@ -153,17 +154,17 @@ func (b *SendTransaction) RecordAttempt(
 
 	// create send attempt
 	var errorMessage sql.NullString
-	if sendResult.Error != nil {
-		errorMessage = sql.NullString{
-			String: sendResult.Error.Error(),
-			Valid:  true,
-		}
-	} else {
-		errorMessage = sql.NullString{
-			String: "",
-			Valid:  false,
-		}
-	}
+	// if sendResult.Error != nil {
+	// 	errorMessage = sql.NullString{
+	// 		String: sendResult.Error.Error(),
+	// 		Valid:  true,
+	// 	}
+	// } else {
+	// 	errorMessage = sql.NullString{
+	// 		String: "",
+	// 		Valid:  false,
+	// 	}
+	// }
 
 	var respondedMxHost sql.NullString
 	if sendResult.RespondedMxHost != "" {
@@ -179,18 +180,7 @@ func (b *SendTransaction) RecordAttempt(
 
 	resolvedMxHostsJson, _ := json.Marshal(sendResult.ResolvedMxHosts)
 	smtpConversationsJson, _ := json.Marshal(sendResult.SmtpConversations)
-
-	recipientStatuses := make(map[int]string)
-	for rcptId, code := range sendResult.RecipientResultCodes {
-		recipientStatuses[rcptId] = code.ToRecipientStatus()
-	}
-	recipientStatusesJson, _ := json.Marshal(recipientStatuses)
-
-	var recipientIds []int
-	for _, recipient := range recipients {
-		recipientIds = append(recipientIds, recipient.Id)
-	}
-	recipientIdsJson, _ := json.Marshal(recipientIds)
+	recipientResultsJson, _ := json.Marshal(sendResult.RcptResults)
 
 	var attemptId int
 	err := b.tx.QueryRowContext(b.ctx, `
@@ -205,8 +195,7 @@ func (b *SendTransaction) RecordAttempt(
 			resolved_mx_hosts,
 			responded_mx_host,
 			smtp_conversations,
-			recipient_ids,
-			recipient_statuses,
+			recipient_results,
 			duration_ms,
 			error
 		)
@@ -223,8 +212,7 @@ func (b *SendTransaction) RecordAttempt(
 			$8,
 			$9,
 			$10,
-			$11,
-			$12
+			$11
 		)
 		RETURNING id
 	`,
@@ -236,8 +224,7 @@ func (b *SendTransaction) RecordAttempt(
 		resolvedMxHostsJson,
 		respondedMxHost,
 		smtpConversationsJson,
-		recipientIdsJson,
-		recipientStatusesJson,
+		recipientResultsJson,
 		sendResult.Duration.Milliseconds(),
 		errorMessage,
 	).Scan(&attemptId)
@@ -246,9 +233,7 @@ func (b *SendTransaction) RecordAttempt(
 		return 0, fmt.Errorf("failed to insert send attempt for send ID %d: %w", send.Id, err)
 	}
 
-	for _, recipient := range recipients {
-
-		code := sendResult.RecipientResultCodes[recipient.Id]
+	for _, rcptResult := range sendResult.RcptResults {
 
 		_, err = b.tx.ExecContext(b.ctx, `
 			UPDATE send_recipients
@@ -256,10 +241,10 @@ func (b *SendTransaction) RecordAttempt(
 				status = $1,
 				try_count = $2
 			WHERE id = $3
-		`, code.ToRecipientStatus(), sendResult.NewTryCount, recipient.Id)
+		`, rcptResult.ToRecipientStatus().ToString(), sendResult.NewTryCount, rcptResult.RecipientId)
 
 		if err != nil {
-			return 0, fmt.Errorf("failed to update recipient ID %d status: %w", recipient.Id, err)
+			return 0, fmt.Errorf("failed to update recipient ID %d status: %w", rcptResult.RecipientId, err)
 		}
 
 	}

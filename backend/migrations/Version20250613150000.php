@@ -34,8 +34,7 @@ final class Version20250613150000 extends AbstractMigration
                 resolved_mx_hosts jsonb NOT NULL,
                 responded_mx_host text,
                 smtp_conversations jsonb NOT NULL,
-                recipient_ids jsonb NOT NULL,
-                recipient_statuses jsonb NOT NULL,
+                recipient_results jsonb NOT NULL,
                 duration_ms INT NOT NULL,
                 error text
             )

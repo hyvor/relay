@@ -4,15 +4,15 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"strings"
 	"testing"
 	"time"
 
-	smtp "github.com/hyvor/relay/worker/smtp"
 	"github.com/stretchr/testify/assert"
+
+	smtp "github.com/hyvor/relay/worker/smtp"
 )
 
 func TestSendEmail_Accepted(t *testing.T) {
@@ -21,7 +21,14 @@ func TestSendEmail_Accepted(t *testing.T) {
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
-			SmtpError:    nil,
+			RcptResults: []*RcptResult{
+				{
+					RecipientId: 1,
+					Code:        250,
+					EnhancedCode: [3]int{0, 0, 0},
+					Message:     "OK",
+				},
+			},
 			Steps:        []*SmtpStep{},
 		}
 	}
@@ -48,7 +55,12 @@ func TestSendEmail_Accepted(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultAccepted, result.RecipientResultCodes[1])
+	var rcptResult = result.RcptResults[0]
+	assert.Equal(t, 1, rcptResult.RecipientId)
+	assert.Equal(t, 250, rcptResult.Code)
+	assert.Equal(t, [3]int{0, 0, 0}, rcptResult.EnhancedCode)
+	assert.Equal(t, "OK", rcptResult.Message)
+
 	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
 
 }
@@ -59,9 +71,13 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
-			SmtpError: &SmtpError{
-				Code:    511,
-				Message: "User does not exist",
+			RcptResults: []*RcptResult{
+				{
+					RecipientId: 1,
+					Code:        511,
+					EnhancedCode: [3]int{5, 1, 1},
+					Message:     "User does not exist",
+				},
 			},
 			Steps: []*SmtpStep{},
 		}
@@ -89,9 +105,12 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	fmt.Println(result.RecipientResultCodes)
+	var rcptResult = result.RcptResults[0]
+	assert.Equal(t, 1, rcptResult.RecipientId)
+	assert.Equal(t, 511, rcptResult.Code)
+	assert.Equal(t, [3]int{5, 1, 1}, rcptResult.EnhancedCode)
+	assert.Equal(t, "User does not exist", rcptResult.Message)
 
-	assert.Equal(t, SendResultBounced, result.RecipientResultCodes[1])
 	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
 
 }
@@ -102,9 +121,13 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
-			SmtpError: &SmtpError{
-				Code:    451,
-				Message: "Requested action aborted: local error in processing",
+			RcptResults: []*RcptResult{
+				{
+					RecipientId: 1,
+					Code:        451,
+					EnhancedCode: [3]int{4, 2, 1},
+					Message:     "Requested action aborted: local error in processing",
+				},
 			},
 			Steps: []*SmtpStep{},
 		}
@@ -132,7 +155,11 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultDeferred, result.RecipientResultCodes[1])
+	var rcptResult = result.RcptResults[0]
+	assert.Equal(t, 1, rcptResult.RecipientId)
+	assert.Equal(t, 451, rcptResult.Code)
+	assert.Equal(t, [3]int{4, 2, 1}, rcptResult.EnhancedCode)
+	assert.Equal(t, "Requested action aborted: local error in processing", rcptResult.Message)
 	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
 	assert.Equal(t, 1, result.NewTryCount)
 
@@ -144,9 +171,13 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
-			SmtpError: &SmtpError{
-				Code:    451,
-				Message: "Requested action aborted: local error in processing",
+			RcptResults: []*RcptResult{
+				{
+					RecipientId: 1,
+					Code:        451,
+					EnhancedCode: [3]int{4, 2, 1},
+					Message:     "Requested action aborted: local error in processing",
+				},
 			},
 			Steps: []*SmtpStep{},
 		}
@@ -173,7 +204,12 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultFailed, result.RecipientResultCodes[1])
+	var rcptResult = result.RcptResults[0]
+	assert.Equal(t, 1, rcptResult.RecipientId)
+	assert.Equal(t, 0, rcptResult.Code)
+	assert.Equal(t, [3]int{0,0,0}, rcptResult.EnhancedCode)
+	assert.Equal(t, "maximum send attempts reached", rcptResult.Message)
+
 	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
 	assert.Equal(t, 7, result.NewTryCount)
 
@@ -185,7 +221,6 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: context.DeadlineExceeded,
-			SmtpError:    nil,
 			Steps:        []*SmtpStep{},
 		}
 	}
@@ -211,7 +246,12 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultDeferred, result.RecipientResultCodes[1])
+	var rcptResult = result.RcptResults[0]
+	assert.Equal(t, 1, rcptResult.RecipientId)
+	assert.Equal(t, 400, rcptResult.Code)
+	assert.Equal(t, [3]int{4, 2, 1}, rcptResult.EnhancedCode)
+	assert.Equal(t, "context deadline exceeded", rcptResult.Message)
+
 	assert.Equal(t, "", result.RespondedMxHost)
 	assert.Equal(t, 1, result.NewTryCount)
 
@@ -223,7 +263,6 @@ func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: context.DeadlineExceeded,
-			SmtpError:    nil,
 			Steps:        []*SmtpStep{},
 		}
 	}
@@ -249,10 +288,15 @@ func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultFailed, result.RecipientResultCodes[1])
+	var rcptResult = result.RcptResults[0]
+	assert.Equal(t, 1, rcptResult.RecipientId)
+	assert.Equal(t, 0, rcptResult.Code)
+	assert.Equal(t, [3]int{0, 0, 0}, rcptResult.EnhancedCode)
+	assert.Equal(t, "context deadline exceeded", rcptResult.Message)
+
 	assert.Equal(t, "", result.RespondedMxHost)
 	assert.Equal(t, 2, result.NewTryCount)
-	assert.Equal(t, context.DeadlineExceeded, result.Error)
+	// assert.Equal(t, context.DeadlineExceeded, result.Error)
 
 }
 
@@ -287,10 +331,14 @@ func TestSendEmail_MxFailed(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultFailed, result.RecipientResultCodes[4])
+	var rcptResult = result.RcptResults[0]
+	assert.Equal(t, 4, rcptResult.RecipientId)
+	assert.Equal(t, 0, rcptResult.Code)
+	assert.Equal(t, [3]int{0, 0, 0}, rcptResult.EnhancedCode)
+	assert.Equal(t, "MX lookup failed: custom host error", rcptResult.Message)
+
 	assert.Equal(t, "", result.RespondedMxHost)
 	assert.Equal(t, 2, result.NewTryCount)
-	assert.Equal(t, "MX lookup failed: custom host error", result.Error.Error())
 
 }
 
@@ -337,8 +385,8 @@ func TestSendEmailToHost(t *testing.T) {
 	)
 
 	assert.NoError(t, convo.NetworkError)
-	assert.Nil(t, convo.SmtpError)
 	assert.Equal(t, 7, len(convo.Steps))
+	assert.Equal(t, 250, convo.RcptResults[0].Code)
 
 }
 
@@ -353,14 +401,13 @@ func (f fakeConn) SetDeadline(time.Time) error      { return nil }
 func (f fakeConn) SetReadDeadline(time.Time) error  { return nil }
 func (f fakeConn) SetWriteDeadline(time.Time) error { return nil }
 
-
 func TestSendEmailToHost_OneRecipientFails(t *testing.T) {
 
 	server := `220 somedomain.com at your service
 250 Go ahead
 250 Sender OK
 250 Recipient OK
-550 No such user here
+550 5.1.1 No such user here
 354 Body
 250 Bye
 221 Closing connection
@@ -404,7 +451,6 @@ func TestSendEmailToHost_OneRecipientFails(t *testing.T) {
 		Address: "fail@somedomain.com",
 	}
 
-
 	convo := sendEmailToHost(
 		send,
 		[]*RecipientRow{recipient1, recipient2},
@@ -415,10 +461,18 @@ func TestSendEmailToHost_OneRecipientFails(t *testing.T) {
 	)
 
 	assert.NoError(t, convo.NetworkError)
-	assert.Nil(t, convo.SmtpError)
 
-	assert.Equal(t, SendResultAccepted, convo.RcptResults[1])
-	assert.Equal(t, SendResultBounced, convo.RcptResults[2])
+	rcptResult1 := convo.RcptResults[0]
+	assert.Equal(t, 1, rcptResult1.RecipientId)
+	assert.Equal(t, 250, rcptResult1.Code)
+	assert.Equal(t, [3]int{0, 0, 0}, rcptResult1.EnhancedCode)
+	assert.Equal(t, "Recipient OK", rcptResult1.Message)
+
+	rcptResult2 := convo.RcptResults[1]
+	assert.Equal(t, 2, rcptResult2.RecipientId)
+	assert.Equal(t, 550, rcptResult2.Code)
+	assert.Equal(t, [3]int{5, 1, 1}, rcptResult2.EnhancedCode)
+	assert.Equal(t, "No such user here", rcptResult2.Message)
 }
 
 func TestSendEmailFailedSmtpStatus(t *testing.T) {
@@ -464,8 +518,10 @@ func TestSendEmailFailedSmtpStatus(t *testing.T) {
 	)
 
 	assert.NoError(t, convo.NetworkError)
-	assert.NotNil(t, convo.SmtpError)
-	assert.Equal(t, 451, convo.SmtpError.Code)
+	assert.Equal(t, 1, len(convo.RcptResults))
+
+	assert.Equal(t, 451, convo.RcptResults[0].Code)
+	assert.Equal(t, RecipientStatusDeferred, convo.RcptResults[0].ToRecipientStatus())
 
 }
 
