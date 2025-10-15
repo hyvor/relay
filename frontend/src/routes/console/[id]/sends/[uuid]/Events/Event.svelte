@@ -15,9 +15,8 @@
 	let { event, send }: Props = $props();
 
 	function getAttemptRecipients(attempt: SendAttempt): string[] {
-		return send.recipients
-			.filter((r) => attempt.recipient_ids.includes(r.id))
-			.map((r) => r.address);
+		const recipientIds = attempt.recipient_results.map((r) => r.recipient_id);
+		return send.recipients.filter((r) => recipientIds.includes(r.id)).map((r) => r.address);
 	}
 
 	function getAttemptRecipientsJoined(attempt: SendAttempt): string {

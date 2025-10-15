@@ -49,14 +49,11 @@ class SendAttempt
     #[ORM\Column(type: "json")]
     private array $smtp_conversations = [];
 
-    /** @var int[] */
+    /**
+     * @var array<mixed>
+     */
     #[ORM\Column(type: "json")]
-    private array $recipient_ids = [];
-
-
-    /** @var array<int, string> */
-    #[ORM\Column(type: "json")]
-    private array $recipient_statuses = [];
+    private array $recipient_results = [];
 
     #[ORM\Column()]
     private int $duration_ms;
@@ -202,36 +199,19 @@ class SendAttempt
     }
 
     /**
-     * @return int[]
+     * @return array<mixed>
      */
-    public function getRecipientIds(): array
+    public function getRecipientResults(): array
     {
-        return $this->recipient_ids;
+        return $this->recipient_results;
     }
 
     /**
-     * @param int[] $recipientIds
+     * @param array<mixed> $recipientStatuses
      */
-    public function setRecipientIds(array $recipientIds): static
+    public function setRecipientResults(array $recipientStatuses): static
     {
-        $this->recipient_ids = $recipientIds;
-        return $this;
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    public function getRecipientStatuses(): array
-    {
-        return $this->recipient_statuses;
-    }
-
-    /**
-     * @param array<int, string> $recipientStatuses
-     */
-    public function setRecipientStatuses(array $recipientStatuses): static
-    {
-        $this->recipient_statuses = $recipientStatuses;
+        $this->recipient_results = $recipientStatuses;
         return $this;
     }
 
