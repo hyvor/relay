@@ -417,15 +417,8 @@ func TestSendEmailToHost_OneRecipientFails(t *testing.T) {
 	assert.NoError(t, convo.NetworkError)
 	assert.Nil(t, convo.SmtpError)
 
-	smtpErr, ok := convo.RcptSmtpErrors[2]
-	assert.True(t, ok)
-	assert.Equal(t, 550, smtpErr.Code)
-	assert.Equal(t, "No such user here", smtpErr.Message)
-
-	smtpErr, ok = convo.RcptSmtpErrors[1]
-	assert.False(t, ok)
-	assert.Nil(t, smtpErr)
-
+	assert.Equal(t, SendResultAccepted, convo.RcptResults[1])
+	assert.Equal(t, SendResultBounced, convo.RcptResults[2])
 }
 
 func TestSendEmailFailedSmtpStatus(t *testing.T) {
@@ -471,6 +464,7 @@ func TestSendEmailFailedSmtpStatus(t *testing.T) {
 	)
 
 	assert.NoError(t, convo.NetworkError)
+	assert.NotNil(t, convo.SmtpError)
 	assert.Equal(t, 451, convo.SmtpError.Code)
 
 }

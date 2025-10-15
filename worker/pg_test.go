@@ -277,6 +277,8 @@ type FactorySendAttempt struct {
 	RespondedMx       sql.NullString
 	SmtpConversations string
 	Error             sql.NullString
+	RecipientStatuses string
+	RecipientIds      string
 }
 
 func (f *TestFactory) GetSendAttemptById(id int) (*FactorySendAttempt, error) {
@@ -285,7 +287,8 @@ func (f *TestFactory) GetSendAttemptById(id int) (*FactorySendAttempt, error) {
 	row := f.conn.QueryRow(`
 		SELECT 
 			id, send_id, ip_address_id, status, try_count, domain,
-			resolved_mx_hosts, responded_mx_host, smtp_conversations, error
+			resolved_mx_hosts, responded_mx_host, smtp_conversations, error,
+			recipient_statuses, recipient_ids
 		FROM send_attempts WHERE id = $1
 	`, id)
 
@@ -300,6 +303,8 @@ func (f *TestFactory) GetSendAttemptById(id int) (*FactorySendAttempt, error) {
 		&attempt.RespondedMx,
 		&attempt.SmtpConversations,
 		&attempt.Error,
+		&attempt.RecipientStatuses,
+		&attempt.RecipientIds,
 	)
 
 	if err != nil {

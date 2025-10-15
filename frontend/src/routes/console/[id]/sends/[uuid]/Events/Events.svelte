@@ -30,6 +30,14 @@
 
 		// add attempts
 		for (const attempt of send.attempts) {
+			let attempts = [attempt];
+
+			if (attempt.status === 'partial') {
+				// each recipient will have their own event
+
+				attempts.push();
+			}
+
 			events.push({
 				timestamp: attempt.created_at,
 				type: 'attempt',
@@ -54,7 +62,7 @@
 			if (a.type === 'suppressed') return 1;
 			if (b.type === 'suppressed') return -1;
 
-			return a.timestamp - b.timestamp;
+			return b.timestamp - a.timestamp;
 		});
 
 		return events;

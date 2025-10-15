@@ -180,6 +180,12 @@ func (b *SendTransaction) RecordAttempt(
 	resolvedMxHostsJson, _ := json.Marshal(sendResult.ResolvedMxHosts)
 	smtpConversationsJson, _ := json.Marshal(sendResult.SmtpConversations)
 
+	recipientStatuses := make(map[int]string)
+	for rcptId, code := range sendResult.RecipientResultCodes {
+		recipientStatuses[rcptId] = code.ToRecipientStatus()
+	}
+	recipientStatusesJson, _ := json.Marshal(recipientStatuses)
+
 	var recipientIds []int
 	for _, recipient := range recipients {
 		recipientIds = append(recipientIds, recipient.Id)
@@ -200,6 +206,7 @@ func (b *SendTransaction) RecordAttempt(
 			responded_mx_host,
 			smtp_conversations,
 			recipient_ids,
+			recipient_statuses,
 			duration_ms,
 			error
 		)
@@ -216,7 +223,8 @@ func (b *SendTransaction) RecordAttempt(
 			$8,
 			$9,
 			$10,
-			$11
+			$11,
+			$12
 		)
 		RETURNING id
 	`,
@@ -229,6 +237,7 @@ func (b *SendTransaction) RecordAttempt(
 		respondedMxHost,
 		smtpConversationsJson,
 		recipientIdsJson,
+		recipientStatusesJson,
 		sendResult.Duration.Milliseconds(),
 		errorMessage,
 	).Scan(&attemptId)

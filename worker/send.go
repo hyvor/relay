@@ -43,6 +43,7 @@ type SmtpStep struct {
 	ReplyText string          `json:"reply_text"`
 }
 
+
 type SmtpConversation struct {
 	StartTime    time.Time     `json:"start_time"`
 	lastStepTime time.Time     `json:"-"`
@@ -57,11 +58,8 @@ type SmtpConversation struct {
 	// e.g. non-250 on EHLO
 	SmtpError *SmtpError `json:"smtp_error"`
 
-	// There were no SMTP errors, but some recipients were rejected
-	// indexed by recipient ID
-	// only set when there are recipient-specific errors
-	// e.g. some RCPT TO commands got 550, while others got 250
-	RcptSmtpErrors map[int]*SmtpError `json:"rcpt_smtp_errors"`
+	// results for each recipient, indexed by recipient ID
+	RcptResults map[int]SendResultCode `json:"rcpt_results"`
 
 	Steps []*SmtpStep `json:"steps"`
 }
@@ -109,6 +107,7 @@ func NewSmtpConversation() *SmtpConversation {
 		NetworkError: nil,
 		SmtpError:    nil,
 		Steps:        make([]*SmtpStep, 0),
+		RcptResults:  make(map[int]SendResultCode),
 	}
 }
 
@@ -299,20 +298,8 @@ func sendEmailHandler(
 		} else {
 			result.RespondedMxHost = host
 
-			for _, rcpt := range recipients {
-				if smtpErr, ok := conversation.RcptSmtpErrors[rcpt.Id]; ok {
-					var rcptCode SendResultCode
-					if smtpErr.Code >= 400 && smtpErr.Code < 500 {
-						rcptCode = SendResultDeferred
-					} else if smtpErr.Code >= 500 {
-						rcptCode = SendResultBounced
-					} else {
-						rcptCode = SendResultFailed
-					}
-					result.SetRecipientResultCode(rcpt.Id, rcptCode)
-				} else {
-					result.SetRecipientResultCode(rcpt.Id, SendResultAccepted)
-				}
+			for rcptId, rcptCode := range conversation.RcptResults {
+				result.SetRecipientResultCode(rcptId, rcptCode)
 			}
 
 			return result
@@ -482,8 +469,8 @@ func sendEmailToHostHandler(
 	// STEP 4: RCPT TO
 	// We continue to the next step if at least one recipient is accepted
 	// ===============
-	var rcptAcceptedAny bool // if at least one RCPT TO was accepted
-	rcptSmtpErrors := make(map[int]*SmtpError)
+	var rcptAcceptedAny bool // if at least one RCPT TO was accepted, so we can continue to DATA
+	var rcptLastError *SmtpError
 
 	for _, rcpt := range recipients {
 		rcptResult := c.Rcpt(rcpt.Address)
@@ -495,23 +482,24 @@ func sendEmailToHostHandler(
 
 		conversation.AddStepFromResult(SmtpStepRcpt, &rcptResult)
 
-		if rcptResult.CodeValid(250) {
+		if rcptResult.Reply.Code == 250 {
 			rcptAcceptedAny = true
+			conversation.RcptResults[rcpt.Id] = SendResultAccepted
+			continue
+		} else if rcptResult.Reply.Code >= 400 && rcptResult.Reply.Code < 500 {
+			conversation.RcptResults[rcpt.Id] = SendResultDeferred
 		} else {
-			rcptSmtpErrors[rcpt.Id] = NewSmtpErrorFromReply(rcptResult.Reply)
+			conversation.RcptResults[rcpt.Id] = SendResultBounced
 		}
+
+		rcptLastError = NewSmtpErrorFromReply(rcptResult.Reply)
 	}
 
 	// if no recipients were accepted, we consider it a failure
 	// and set the SmtpError to the first recipient error
 	if !rcptAcceptedAny {
-		for _, err := range rcptSmtpErrors {
-			conversation.SmtpError = err
-			return conversation
-		}
-	} else if len(rcptSmtpErrors) > 0 {
-		// some recipients were rejected, but at least one was accepted
-		conversation.RcptSmtpErrors = rcptSmtpErrors
+		conversation.SmtpError = rcptLastError
+		return conversation
 	}
 
 	// STEP 5: DATA
