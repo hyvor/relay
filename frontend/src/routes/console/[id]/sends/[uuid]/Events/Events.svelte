@@ -1,5 +1,10 @@
 <script lang="ts">
-	import type { Send } from '../../../../types';
+	import type {
+		Send,
+		SendAttempt,
+		SendAttemptStatus,
+		SendRecipientStatus
+	} from '../../../../types';
 	import { default as EventComponent } from './Event.svelte';
 	import type { Event } from './events';
 
@@ -30,19 +35,40 @@
 
 		// add attempts
 		for (const attempt of send.attempts) {
-			let attempts = [attempt];
+			let generatedAttempts: SendAttempt[] = [];
 
 			if (attempt.status === 'partial') {
-				// each recipient will have their own event
+				// each recipient will have their own event, grouped by recipient statuses
+				const recipientIdsByStatus: Partial<Record<SendRecipientStatus, number[]>> = {};
 
-				attempts.push();
+				for (const recipient of send.recipients) {
+					const status = attempt.recipient_statuses[recipient.id];
+					if (!recipientIdsByStatus[status]) {
+						recipientIdsByStatus[status] = [];
+					}
+					recipientIdsByStatus[status].push(recipient.id);
+				}
+
+				for (const [status, recipientIds] of Object.entries(recipientIdsByStatus)) {
+					if (recipientIds.length === 0) continue;
+
+					generatedAttempts.push({
+						...attempt,
+						status: status as SendAttemptStatus,
+						recipient_ids: recipientIds
+					});
+				}
+			} else {
+				generatedAttempts = [attempt];
 			}
 
-			events.push({
-				timestamp: attempt.created_at,
-				type: 'attempt',
-				attempt
-			});
+			for (const ga of generatedAttempts) {
+				events.push({
+					timestamp: ga.created_at,
+					type: 'attempt',
+					attempt: ga
+				});
+			}
 		}
 
 		// add feedback

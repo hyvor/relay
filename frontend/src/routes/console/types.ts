@@ -101,15 +101,18 @@ export interface SendRecipient {
 	status: SendRecipientStatus;
 }
 
+export type SendAttemptStatus = 'accepted' | 'deferred' | 'bounced' | 'failed' | 'partial';
+
 export interface SendAttempt {
 	created_at: number;
-	status: 'accepted' | 'deferred' | 'bounced' | 'failed' | 'partial';
+	status: SendAttemptStatus;
 	try_count: number;
 	domain: string;
 	resolved_mx_hosts: string[];
 	responded_mx_host: string | null;
 	smtp_conversations: Record<string, SmtpConversation>;
 	recipient_ids: number[];
+	recipient_statuses: Record<number, SendRecipientStatus>;
 	duration_ms: number;
 	error: string | null;
 }
