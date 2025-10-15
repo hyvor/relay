@@ -12,10 +12,10 @@
 
 	let { host, selected, index, conversation, onselect }: Props = $props();
 
-	let status: 'responded' | 'failed' | 'not_attempted' = $derived.by(() => {
+	let status: 'responded' | 'failed' | 'rejected' | 'not_attempted' = $derived.by(() => {
 		if (conversation === null) {
 			return 'not_attempted';
-		} else if (conversation.network_error || conversation.smtp_error) {
+		} else if (conversation.network_error) {
 			return 'failed';
 		} else {
 			return 'responded';
@@ -26,6 +26,7 @@
 		return {
 			responded: 'Responded by this host',
 			failed: 'Failed to send to this host',
+			rejected: 'Rejected by this host',
 			not_attempted: 'Did not attempt to send to this host'
 		}[status];
 	}

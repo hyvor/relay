@@ -34,6 +34,8 @@
 				<Tag color="orange">Deferred</Tag>
 			{:else if attempt.status === 'bounced'}
 				<Tag color="red">Bounced</Tag>
+			{:else if attempt.status === 'partial'}
+				<Tag color="green" outline>Partially Accepted</Tag>
 			{:else if attempt.status === 'failed'}
 				<Tag color="red">Failed</Tag>
 			{/if}
@@ -44,6 +46,11 @@
 			{:else if attempt.status === 'bounced'}
 				<span class="error">
 					{attempt.error || 'No error message'}
+				</span>
+			{:else if attempt.status === 'partial'}
+				<span class="info">
+					Message partially accepted by {attempt.responded_mx_host}. Some recipients were
+					rejected or deferrred.
 				</span>
 			{:else}
 				<span class="info">Pending</span>
