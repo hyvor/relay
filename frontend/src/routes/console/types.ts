@@ -66,43 +66,53 @@ export type Project = {
 export type ProjectSendType = 'transactional' | 'distributional';
 
 export type Send = {
-    id: number;
-    uuid: string;
-    created_at: number;
-    from_address: string;
-    from_name: string | null;
-    subject: string | null;
-    body_html: string | null;
-    body_text: string | null;
-    raw: string;
-    size_bytes: number;
-    queued: boolean;
-    send_after: number;
+	id: number;
+	uuid: string;
+	created_at: number;
+	from_address: string;
+	from_name: string | null;
+	subject: string | null;
+	body_html: string | null;
+	body_text: string | null;
+	raw: string;
+	size_bytes: number;
+	queued: boolean;
+	send_after: number;
 
-    recipients: SendRecipient[];
-    attempts: SendAttempt[];
-    feedback: SendFeedback[];
-}
+	recipients: SendRecipient[];
+	attempts: SendAttempt[];
+	feedback: SendFeedback[];
+};
 
-export type SendRecipientStatus = 'queued' | 'accepted' | 'deferred' | 'bounced' | 'suppressed' | 'failed' | 'complained';
+export type SendRecipientStatus =
+	| 'queued'
+	| 'accepted'
+	| 'deferred'
+	| 'bounced'
+	| 'suppressed'
+	| 'failed'
+	| 'complained';
 
 export interface SendRecipient {
-    id: number;
-    type: 'to' | 'cc' | 'bcc';
-    address: string;
-    name: string;
-    status: SendRecipientStatus;
+	id: number;
+	type: 'to' | 'cc' | 'bcc';
+	address: string;
+	name: string;
+	status: SendRecipientStatus;
 }
+
+export type SendAttemptStatus = 'accepted' | 'deferred' | 'bounced' | 'failed' | 'partial';
 
 export interface SendAttempt {
 	created_at: number;
-	status: 'accepted' | 'deferred' | 'bounced' | 'failed';
+	status: SendAttemptStatus;
 	try_count: number;
 	domain: string;
 	resolved_mx_hosts: string[];
 	responded_mx_host: string | null;
 	smtp_conversations: Record<string, SmtpConversation>;
 	recipient_ids: number[];
+	recipient_statuses: Record<number, SendRecipientStatus>;
 	duration_ms: number;
 	error: string | null;
 }
@@ -186,9 +196,9 @@ export type Domain = {
 };
 
 export interface AnalyticsStats {
-    sends: number;
-    bounce_rate: number;
-    complaint_rate: number;
+	sends: number;
+	bounce_rate: number;
+	complaint_rate: number;
 }
 
 export interface ProjectUserMiniObject {

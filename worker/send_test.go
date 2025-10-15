@@ -1,13 +1,17 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"io"
 	"net"
 	"strings"
 	"testing"
 	"time"
 
+	smtp "github.com/hyvor/relay/worker/smtp"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,7 +39,7 @@ func TestSendEmail_Accepted(t *testing.T) {
 	result := sendEmailHandler(
 		&SendRow{},
 		[]*RecipientRow{
-			{},
+			{Id: 1},
 		},
 		"hyvor.com",
 		"relay.com",
@@ -44,7 +48,7 @@ func TestSendEmail_Accepted(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultAccepted, result.Code)
+	assert.Equal(t, SendResultAccepted, result.RecipientResultCodes[1])
 	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
 
 }
@@ -76,7 +80,7 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 	result := sendEmailHandler(
 		&SendRow{},
 		[]*RecipientRow{
-			{},
+			{Id: 1},
 		},
 		"hyvor.com",
 		"relay.com",
@@ -85,7 +89,9 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultBounced, result.Code)
+	fmt.Println(result.RecipientResultCodes)
+
+	assert.Equal(t, SendResultBounced, result.RecipientResultCodes[1])
 	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
 
 }
@@ -117,7 +123,7 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 	result := sendEmailHandler(
 		&SendRow{},
 		[]*RecipientRow{
-			{},
+			{Id: 1},
 		},
 		"hyvor.com",
 		"relay.com",
@@ -126,7 +132,7 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultDeferred, result.Code)
+	assert.Equal(t, SendResultDeferred, result.RecipientResultCodes[1])
 	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
 	assert.Equal(t, 1, result.NewTryCount)
 
@@ -158,7 +164,7 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 	result := sendEmailHandler(
 		&SendRow{},
 		[]*RecipientRow{
-			{TryCount: 6},
+			{Id: 1, TryCount: 6},
 		},
 		"hyvor.com",
 		"relay.com",
@@ -167,7 +173,7 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultFailed, result.Code)
+	assert.Equal(t, SendResultFailed, result.RecipientResultCodes[1])
 	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
 	assert.Equal(t, 7, result.NewTryCount)
 
@@ -196,7 +202,7 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 	result := sendEmailHandler(
 		&SendRow{},
 		[]*RecipientRow{
-			{TryCount: 0},
+			{Id: 1, TryCount: 0},
 		},
 		"hyvor.com",
 		"relay.com",
@@ -205,7 +211,7 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultDeferred, result.Code)
+	assert.Equal(t, SendResultDeferred, result.RecipientResultCodes[1])
 	assert.Equal(t, "", result.RespondedMxHost)
 	assert.Equal(t, 1, result.NewTryCount)
 
@@ -234,7 +240,7 @@ func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 	result := sendEmailHandler(
 		&SendRow{},
 		[]*RecipientRow{
-			{TryCount: 1},
+			{Id: 1, TryCount: 1},
 		},
 		"hyvor.com",
 		"relay.com",
@@ -243,7 +249,7 @@ func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultFailed, result.Code)
+	assert.Equal(t, SendResultFailed, result.RecipientResultCodes[1])
 	assert.Equal(t, "", result.RespondedMxHost)
 	assert.Equal(t, 2, result.NewTryCount)
 	assert.Equal(t, context.DeadlineExceeded, result.Error)
@@ -272,7 +278,7 @@ func TestSendEmail_MxFailed(t *testing.T) {
 	result := sendEmailHandler(
 		&SendRow{},
 		[]*RecipientRow{
-			{TryCount: 1},
+			{Id: 4, TryCount: 1},
 		},
 		"hyvor.com",
 		"relay.com",
@@ -281,7 +287,7 @@ func TestSendEmail_MxFailed(t *testing.T) {
 		"smtp.relay.com",
 	)
 
-	assert.Equal(t, SendResultFailed, result.Code)
+	assert.Equal(t, SendResultFailed, result.RecipientResultCodes[4])
 	assert.Equal(t, "", result.RespondedMxHost)
 	assert.Equal(t, 2, result.NewTryCount)
 	assert.Equal(t, "MX lookup failed: custom host error", result.Error.Error())
@@ -336,6 +342,85 @@ func TestSendEmailToHost(t *testing.T) {
 
 }
 
+type fakeConn struct {
+	io.ReadWriter
+}
+
+func (f fakeConn) Close() error                     { return nil }
+func (f fakeConn) LocalAddr() net.Addr              { return nil }
+func (f fakeConn) RemoteAddr() net.Addr             { return nil }
+func (f fakeConn) SetDeadline(time.Time) error      { return nil }
+func (f fakeConn) SetReadDeadline(time.Time) error  { return nil }
+func (f fakeConn) SetWriteDeadline(time.Time) error { return nil }
+
+
+func TestSendEmailToHost_OneRecipientFails(t *testing.T) {
+
+	server := `220 somedomain.com at your service
+250 Go ahead
+250 Sender OK
+250 Recipient OK
+550 No such user here
+354 Body
+250 Bye
+221 Closing connection
+`
+	var wrote bytes.Buffer
+	var fake fakeConn
+	fake.ReadWriter = struct {
+		io.Reader
+		io.Writer
+	}{
+		strings.NewReader(server),
+		&wrote,
+	}
+
+	var createSmtpClientBackup = createSmtpClient
+	createSmtpClient = func(host string, _ string) (*smtp.Client, error) {
+		return smtp.NewClient(fake, host)
+	}
+
+	defer func() {
+		createSmtpClient = createSmtpClientBackup
+	}()
+
+	send := &SendRow{
+		Id:        1,
+		Uuid:      "test-uuid",
+		From:      "test@hyvor.com",
+		RawEmail:  "Subject: Test Email",
+		QueueName: "default",
+	}
+
+	recipient1 := &RecipientRow{
+		Id:      1,
+		Type:    "to",
+		Address: "accept@somedomain.com",
+	}
+
+	recipient2 := &RecipientRow{
+		Id:      2,
+		Type:    "to",
+		Address: "fail@somedomain.com",
+	}
+
+
+	convo := sendEmailToHost(
+		send,
+		[]*RecipientRow{recipient1, recipient2},
+		"localhost",
+		"relay.com",
+		"127.0.0.1",
+		"smtp.relay.com",
+	)
+
+	assert.NoError(t, convo.NetworkError)
+	assert.Nil(t, convo.SmtpError)
+
+	assert.Equal(t, SendResultAccepted, convo.RcptResults[1])
+	assert.Equal(t, SendResultBounced, convo.RcptResults[2])
+}
+
 func TestSendEmailFailedSmtpStatus(t *testing.T) {
 
 	// using our own incoming server for testing
@@ -379,6 +464,7 @@ func TestSendEmailFailedSmtpStatus(t *testing.T) {
 	)
 
 	assert.NoError(t, convo.NetworkError)
+	assert.NotNil(t, convo.SmtpError)
 	assert.Equal(t, 451, convo.SmtpError.Code)
 
 }

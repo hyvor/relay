@@ -43,6 +43,7 @@ type SmtpStep struct {
 	ReplyText string          `json:"reply_text"`
 }
 
+
 type SmtpConversation struct {
 	StartTime    time.Time     `json:"start_time"`
 	lastStepTime time.Time     `json:"-"`
@@ -52,7 +53,13 @@ type SmtpConversation struct {
 	// nil if the message was sent successfully (regardless of SMTP status)
 	NetworkError error `json:"network_error"`
 
+	// if there was a SmtpError, it means all recipients were rejected
+	// can be set in the middle of the conversation
+	// e.g. non-250 on EHLO
 	SmtpError *SmtpError `json:"smtp_error"`
+
+	// results for each recipient, indexed by recipient ID
+	RcptResults map[int]SendResultCode `json:"rcpt_results"`
 
 	Steps []*SmtpStep `json:"steps"`
 }
@@ -64,6 +71,16 @@ type SmtpError struct {
 	// e.g. non-250 on EHLO
 	Code    int    `json:"code"`
 	Message string `json:"message"`
+}
+
+func NewSmtpErrorFromReply(reply *smtp.CommandReply) *SmtpError {
+	if reply == nil {
+		return nil
+	}
+	return &SmtpError{
+		Code:    reply.Code,
+		Message: reply.Message,
+	}
 }
 
 // converts the Error field to a string for JSON marshalling
@@ -90,6 +107,7 @@ func NewSmtpConversation() *SmtpConversation {
 		NetworkError: nil,
 		SmtpError:    nil,
 		Steps:        make([]*SmtpStep, 0),
+		RcptResults:  make(map[int]SendResultCode),
 	}
 }
 
@@ -114,6 +132,10 @@ func (c *SmtpConversation) AddStep(
 
 }
 
+func (c *SmtpConversation) AddStepFromResult(name SmtpStepName, result *smtp.CommandResult) {
+	c.AddStep(name, result.Command, result.Reply.Code, result.Reply.Message)
+}
+
 type SendResultCode int
 
 const (
@@ -130,6 +152,19 @@ const (
 	SendResultFailed
 )
 
+func (c SendResultCode) ToRecipientStatus() string {
+	if c == SendResultAccepted {
+		return "accepted"
+	}
+	if c == SendResultDeferred {
+		return "deferred"
+	}
+	if c == SendResultBounced {
+		return "bounced"
+	}
+	return "failed"
+}
+
 type SendResult struct {
 	// always set
 	SentFromIpId int
@@ -144,25 +179,24 @@ type SendResult struct {
 	// when there are SMTP messages
 	SmtpConversations map[string]*SmtpConversation
 
-	// when the send is done
-	Code SendResultCode
-	// saves the MX host that accepted, deferred, or bounced the email
+	// saves the MX host that responded (accepted, deferred, or bounced the email)
 	RespondedMxHost string
-	// only when failed
+	// results for each recipient, indexed by recipient ID
+	RecipientResultCodes map[int]SendResultCode
+	// only when failed, a simple error message
 	Error error
 	// when the email was deferred
 	NewTryCount int
 }
 
-func (r *SendResult) ToStatus() string {
-	if r.Code == SendResultAccepted {
-		return "accepted"
-	} else if r.Code == SendResultDeferred {
-		return "deferred"
-	} else if r.Code == SendResultBounced {
-		return "bounced"
+func (r *SendResult) SetRecipientResultCode(recipientId int, code SendResultCode) {
+	r.RecipientResultCodes[recipientId] = code
+}
+
+func (r *SendResult) SetAllRecipientResultCodes(code SendResultCode) {
+	for recipientId := range r.RecipientResultCodes {
+		r.RecipientResultCodes[recipientId] = code
 	}
-	return "failed"
 }
 
 var sendEmail = sendEmailHandler
@@ -187,8 +221,13 @@ func sendEmailHandler(
 		QueueName:    send.QueueName,
 
 		ResolvedMxHosts:   make([]string, 0),
+		RecipientResultCodes:  make(map[int]SendResultCode),
 		SmtpConversations: make(map[string]*SmtpConversation),
 		NewTryCount:       tryCount + 1,
+	}
+
+	for _, rcpt := range recipients {
+		result.RecipientResultCodes[rcpt.Id] = SendResultAccepted // default
 	}
 
 	defer func() {
@@ -199,7 +238,7 @@ func sendEmailHandler(
 	mxHosts, err := getMxHostsFromDomain(rcptDomain)
 
 	if err != nil {
-		result.Code = SendResultFailed
+		result.SetAllRecipientResultCodes(SendResultFailed)
 		result.Error = err
 		return result
 	}
@@ -233,11 +272,11 @@ func sendEmailHandler(
 				result.RespondedMxHost = host
 
 				if result.NewTryCount >= MAX_SEND_TRIES {
-					result.Code = SendResultFailed
+					result.SetAllRecipientResultCodes(SendResultFailed)
 					result.Error = errors.New("maximum send attempts reached")
 					return result
 				} else {
-					result.Code = SendResultDeferred
+					result.SetAllRecipientResultCodes(SendResultDeferred)
 					result.Error = fmt.Errorf("transient SMTP error: %d %s", conversation.SmtpError.Code, conversation.SmtpError.Message)
 					return result
 				}
@@ -246,7 +285,7 @@ func sendEmailHandler(
 
 				// 5xx errors are permanent, do not requeue
 				result.RespondedMxHost = host
-				result.Code = SendResultBounced
+				result.SetAllRecipientResultCodes(SendResultBounced)
 				result.Error = fmt.Errorf("permanent SMTP error: %d %s", conversation.SmtpError.Code, conversation.SmtpError.Message)
 
 				return result
@@ -258,7 +297,11 @@ func sendEmailHandler(
 
 		} else {
 			result.RespondedMxHost = host
-			result.Code = SendResultAccepted
+
+			for rcptId, rcptCode := range conversation.RcptResults {
+				result.SetRecipientResultCode(rcptId, rcptCode)
+			}
+
 			return result
 		}
 	}
@@ -268,9 +311,9 @@ func sendEmailHandler(
 	// if we reach here, all hosts have failed due to non-smtp errors (e.g. network errors)
 	if result.NewTryCount == 1 {
 		// give it one more try later (15mins) if this was the first try
-		result.Code = SendResultDeferred
+		result.SetAllRecipientResultCodes(SendResultDeferred)
 	} else {
-		result.Code = SendResultFailed
+		result.SetAllRecipientResultCodes(SendResultFailed)
 	}
 
 	return result
@@ -361,7 +404,7 @@ func sendEmailToHostHandler(
 		conversation.NetworkError = helloResult.Err
 		return conversation
 	}
-	conversation.AddStep(SmtpStepHello, helloResult.Command, helloResult.Reply.Code, helloResult.Reply.Message)
+	conversation.AddStepFromResult(SmtpStepHello, &helloResult)
 	if !helloResult.CodeValid(250) {
 		conversation.SmtpError = &SmtpError{
 			Code:    helloResult.Reply.Code,
@@ -386,8 +429,8 @@ func sendEmailToHostHandler(
 			return conversation
 		}
 
-		conversation.AddStep(SmtpStepStartTLS, startTlsResult.Command, startTlsResult.Reply.Code, startTlsResult.Reply.Message)
-		conversation.AddStep(SmtpStepHello, ehloResult.Command, ehloResult.Reply.Code, ehloResult.Reply.Message)
+		conversation.AddStepFromResult(SmtpStepStartTLS, &startTlsResult)
+		conversation.AddStepFromResult(SmtpStepHello, &ehloResult)
 
 		if !startTlsResult.CodeValid(220) {
 			conversation.SmtpError = &SmtpError{
@@ -414,7 +457,7 @@ func sendEmailToHostHandler(
 		conversation.NetworkError = mailResult.Err
 		return conversation
 	}
-	conversation.AddStep(SmtpStepMail, mailResult.Command, mailResult.Reply.Code, mailResult.Reply.Message)
+	conversation.AddStepFromResult(SmtpStepMail, &mailResult)
 	if !mailResult.CodeValid(250) {
 		conversation.SmtpError = &SmtpError{
 			Code:    mailResult.Reply.Code,
@@ -424,7 +467,11 @@ func sendEmailToHostHandler(
 	}
 
 	// STEP 4: RCPT TO
+	// We continue to the next step if at least one recipient is accepted
 	// ===============
+	var rcptAcceptedAny bool // if at least one RCPT TO was accepted, so we can continue to DATA
+	var rcptLastError *SmtpError
+
 	for _, rcpt := range recipients {
 		rcptResult := c.Rcpt(rcpt.Address)
 
@@ -433,14 +480,26 @@ func sendEmailToHostHandler(
 			return conversation
 		}
 
-		conversation.AddStep(SmtpStepRcpt, rcptResult.Command, rcptResult.Reply.Code, rcptResult.Reply.Message)
-		if !rcptResult.CodeValid(25) {
-			conversation.SmtpError = &SmtpError{
-				Code:    rcptResult.Reply.Code,
-				Message: rcptResult.Reply.Message,
-			}
-			return conversation
+		conversation.AddStepFromResult(SmtpStepRcpt, &rcptResult)
+
+		if rcptResult.Reply.Code == 250 {
+			rcptAcceptedAny = true
+			conversation.RcptResults[rcpt.Id] = SendResultAccepted
+			continue
+		} else if rcptResult.Reply.Code >= 400 && rcptResult.Reply.Code < 500 {
+			conversation.RcptResults[rcpt.Id] = SendResultDeferred
+		} else {
+			conversation.RcptResults[rcpt.Id] = SendResultBounced
 		}
+
+		rcptLastError = NewSmtpErrorFromReply(rcptResult.Reply)
+	}
+
+	// if no recipients were accepted, we consider it a failure
+	// and set the SmtpError to the first recipient error
+	if !rcptAcceptedAny {
+		conversation.SmtpError = rcptLastError
+		return conversation
 	}
 
 	// STEP 5: DATA
@@ -450,7 +509,7 @@ func sendEmailToHostHandler(
 		conversation.NetworkError = dataResult.Err
 		return conversation
 	}
-	conversation.AddStep(SmtpStepData, dataResult.Command, dataResult.Reply.Code, dataResult.Reply.Message)
+	conversation.AddStepFromResult(SmtpStepData, &dataResult)
 	if !dataResult.CodeValid(354) {
 		conversation.SmtpError = &SmtpError{
 			Code:    dataResult.Reply.Code,
@@ -471,7 +530,7 @@ func sendEmailToHostHandler(
 		conversation.NetworkError = closeResult.Err
 		return conversation
 	}
-	conversation.AddStep(SmtpStepDataClose, closeResult.Command, closeResult.Reply.Code, closeResult.Reply.Message)
+	conversation.AddStepFromResult(SmtpStepDataClose, &closeResult)
 	if !closeResult.CodeValid(250) {
 		conversation.SmtpError = &SmtpError{
 			Code:    closeResult.Reply.Code,
@@ -482,8 +541,10 @@ func sendEmailToHostHandler(
 
 	// STEP 6: QUIT
 	// ============
-	quitResult := c.Quit() // ignore QUIT error
-	conversation.AddStep(SmtpStepQuit, quitResult.Command, quitResult.Reply.Code, quitResult.Reply.Message)
+	quitResult := c.Quit() // QUIT error won't be considered a failure
+	if quitResult.Err == nil {
+		conversation.AddStepFromResult(SmtpStepQuit, &quitResult)
+	}
 
 	return conversation
 

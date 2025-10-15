@@ -109,13 +109,47 @@ func (b *SendTransaction) FetchSend(queueId int) (*SendRow, []*RecipientRow, err
 
 }
 
+// if all accepted -> accepted
+// if some accepted, some deferred/bounced -> partial
+// otherwise -> deferred or bounced or failed (all same type)
+func sendResultToAttemptStatus(result *SendResult) string {
+
+	var hasAccepted = false
+	var hasOther = false
+	var hasOtherType SendResultCode
+
+	for _, code := range result.RecipientResultCodes {
+		if code == SendResultAccepted {
+			hasAccepted = true
+		} else {
+			hasOther = true
+			hasOtherType = code
+		}
+	}
+	
+	if hasAccepted {
+		if hasOther {
+			return "partial"
+		} else {
+			return "accepted"
+		}
+	}
+
+	if hasOtherType == SendResultDeferred {
+		return "deferred"
+	} else if hasOtherType == SendResultBounced {
+		return "bounced"
+	} else {
+		return "failed"
+	}
+
+}
+
 func (b *SendTransaction) RecordAttempt(
 	send *SendRow,
 	recipients []*RecipientRow,
 	sendResult *SendResult,
 ) (int, error) {
-
-	status := sendResult.ToStatus()
 
 	// create send attempt
 	var errorMessage sql.NullString
@@ -146,6 +180,12 @@ func (b *SendTransaction) RecordAttempt(
 	resolvedMxHostsJson, _ := json.Marshal(sendResult.ResolvedMxHosts)
 	smtpConversationsJson, _ := json.Marshal(sendResult.SmtpConversations)
 
+	recipientStatuses := make(map[int]string)
+	for rcptId, code := range sendResult.RecipientResultCodes {
+		recipientStatuses[rcptId] = code.ToRecipientStatus()
+	}
+	recipientStatusesJson, _ := json.Marshal(recipientStatuses)
+
 	var recipientIds []int
 	for _, recipient := range recipients {
 		recipientIds = append(recipientIds, recipient.Id)
@@ -166,6 +206,7 @@ func (b *SendTransaction) RecordAttempt(
 			responded_mx_host,
 			smtp_conversations,
 			recipient_ids,
+			recipient_statuses,
 			duration_ms,
 			error
 		)
@@ -182,19 +223,21 @@ func (b *SendTransaction) RecordAttempt(
 			$8,
 			$9,
 			$10,
-			$11
+			$11,
+			$12
 		)
 		RETURNING id
 	`,
 		send.Id,
 		sendResult.SentFromIpId,
-		status,
+		sendResultToAttemptStatus(sendResult),
 		sendResult.NewTryCount,
 		sendResult.Domain,
 		resolvedMxHostsJson,
 		respondedMxHost,
 		smtpConversationsJson,
 		recipientIdsJson,
+		recipientStatusesJson,
 		sendResult.Duration.Milliseconds(),
 		errorMessage,
 	).Scan(&attemptId)
@@ -205,13 +248,15 @@ func (b *SendTransaction) RecordAttempt(
 
 	for _, recipient := range recipients {
 
+		code := sendResult.RecipientResultCodes[recipient.Id]
+
 		_, err = b.tx.ExecContext(b.ctx, `
 			UPDATE send_recipients
 			SET 
 				status = $1,
 				try_count = $2
 			WHERE id = $3
-		`, status, sendResult.NewTryCount, recipient.Id)
+		`, code.ToRecipientStatus(), sendResult.NewTryCount, recipient.Id)
 
 		if err != nil {
 			return 0, fmt.Errorf("failed to update recipient ID %d status: %w", recipient.Id, err)

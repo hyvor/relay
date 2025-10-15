@@ -53,6 +53,11 @@ class SendAttempt
     #[ORM\Column(type: "json")]
     private array $recipient_ids = [];
 
+
+    /** @var array<int, string> */
+    #[ORM\Column(type: "json")]
+    private array $recipient_statuses = [];
+
     #[ORM\Column()]
     private int $duration_ms;
 
@@ -210,6 +215,23 @@ class SendAttempt
     public function setRecipientIds(array $recipientIds): static
     {
         $this->recipient_ids = $recipientIds;
+        return $this;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getRecipientStatuses(): array
+    {
+        return $this->recipient_statuses;
+    }
+
+    /**
+     * @param array<int, string> $recipientStatuses
+     */
+    public function setRecipientStatuses(array $recipientStatuses): static
+    {
+        $this->recipient_statuses = $recipientStatuses;
         return $this;
     }
 
