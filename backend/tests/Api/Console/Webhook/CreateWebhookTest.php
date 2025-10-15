@@ -36,6 +36,7 @@ class CreateWebhookTest extends WebTestCase
         $this->assertSame(200, $response->getStatusCode());
 
         $content = $this->getJson();
+        $this->assertArrayHasKey('secret', $content);
         $this->assertArrayHasKey('id', $content);
         $this->assertArrayHasKey('url', $content);
         $this->assertArrayHasKey('description', $content);

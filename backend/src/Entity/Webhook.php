@@ -36,6 +36,9 @@ class Webhook
     #[ORM\Column]
     private array $events = [];
 
+    #[ORM\Column]
+    private string $secret_encrypted;
+
     public function getId(): int
     {
         return $this->id;
@@ -122,6 +125,18 @@ class Webhook
     public function setEvents(array $events): static
     {
         $this->events = $events;
+
+        return $this;
+    }
+
+    public function getSecretEncrypted(): string
+    {
+        return $this->secret_encrypted;
+    }
+
+    public function setSecretEncrypted(string $secret_encrypted): static
+    {
+        $this->secret_encrypted = $secret_encrypted;
 
         return $this;
     }

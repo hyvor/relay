@@ -366,6 +366,15 @@ func (f *TestFactory) WebhookDelivery(
 	requestBody string,
 	tryCount int,
 ) (int, error) {
+	return f.WebhookDeliveryWithSignature(url, requestBody, tryCount, nil)
+}
+
+func (f *TestFactory) WebhookDeliveryWithSignature(
+	url string,
+	requestBody string,
+	tryCount int,
+	signature *string,
+) (int, error) {
 	now := time.Now()
 
 	// First create a project
@@ -377,10 +386,10 @@ func (f *TestFactory) WebhookDelivery(
 	// Then create a webhook
 	var webhookId int
 	err = f.conn.QueryRow(`
-		INSERT INTO webhooks (created_at, updated_at, project_id, url, description, events)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO webhooks (created_at, updated_at, project_id, url, description, events, secret_encrypted)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
-	`, now, now, projectId, url, "Test webhook", `["test.event"]`).Scan(&webhookId)
+	`, now, now, projectId, url, "Test webhook", `["test.event"]`, "test-secret-encrypted").Scan(&webhookId)
 
 	if err != nil {
 		return 0, err
@@ -389,10 +398,10 @@ func (f *TestFactory) WebhookDelivery(
 	// Finally create the webhook delivery
 	var webhookDeliveryId int
 	err = f.conn.QueryRow(`
-		INSERT INTO webhook_deliveries (created_at, updated_at, send_after, webhook_id, url, event, status, request_body, try_count)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO webhook_deliveries (created_at, updated_at, send_after, webhook_id, url, event, status, request_body, try_count, signature)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING id
-	`, now, now, now, webhookId, url, "test.event", "pending", requestBody, tryCount).Scan(&webhookDeliveryId)
+	`, now, now, now, webhookId, url, "test.event", "pending", requestBody, tryCount, signature).Scan(&webhookDeliveryId)
 
 	if err != nil {
 		return 0, err
@@ -414,6 +423,7 @@ type WebhookDeliveryEntity struct {
 	Response     sql.NullString
 	ResponseCode sql.NullInt64
 	TryCount     int
+	Signature    sql.NullString
 }
 
 func getWebhookDeliveryEntityById(db *sql.DB, id int) (*WebhookDeliveryEntity, error) {
@@ -423,7 +433,7 @@ func getWebhookDeliveryEntityById(db *sql.DB, id int) (*WebhookDeliveryEntity, e
 			id, created_at, updated_at, 
 			send_after, webhook_id, url, 
 			event, status, request_body, response, 
-			response_code, try_count
+			response_code, try_count, signature
 		FROM webhook_deliveries WHERE id = $1
 	`, id)
 	if err := row.Scan(
@@ -439,6 +449,7 @@ func getWebhookDeliveryEntityById(db *sql.DB, id int) (*WebhookDeliveryEntity, e
 		&delivery.Response,
 		&delivery.ResponseCode,
 		&delivery.TryCount,
+		&delivery.Signature,
 	); err != nil {
 		return nil, err
 	}
