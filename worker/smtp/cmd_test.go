@@ -1,6 +1,32 @@
 package smtp
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestNewCommandReply(t *testing.T) {
+
+	reply := NewCommandReply(250, "2.1.5 OK")
+
+	assert.Equal(t, 250, reply.Code)
+	assert.Equal(t, [3]int{2, 1, 5}, reply.EnhancedCode)
+	assert.Equal(t, "OK", reply.Message)
+
+	reply = NewCommandReply(550, "5.1.1 User unknown\n5.1.1 User unknown")
+
+	assert.Equal(t, 550, reply.Code)
+	assert.Equal(t, [3]int{5, 1, 1}, reply.EnhancedCode)
+	assert.Equal(t, "User unknown\nUser unknown", reply.Message)
+
+	reply = NewCommandReply(250, "OK without enhanced code")
+	
+	assert.Equal(t, 250, reply.Code)
+	assert.Equal(t, [3]int{}, reply.EnhancedCode)
+	assert.Equal(t, "OK without enhanced code", reply.Message)
+
+}
 
 func TestCodeValid(t *testing.T) {
 

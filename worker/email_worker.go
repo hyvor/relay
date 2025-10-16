@@ -256,8 +256,9 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 			sendAttemptIds = append(sendAttemptIds, attempt.SendAttemptId)
 
 			var hasDeferred = false
-			for _, code := range attempt.result.RecipientResultCodes {
-				if code == SendResultDeferred {
+			for _, rcptResult := range attempt.result.RcptResults {
+				code := rcptResult.ToRecipientStatus()
+				if code == RecipientStatusDeferred {
 					hasDeferred = true
 					break
 				}

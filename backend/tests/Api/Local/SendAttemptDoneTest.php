@@ -77,7 +77,10 @@ class SendAttemptDoneTest extends WebTestCase
             'send' => $send,
             'domain' => 'hyvor.com',
             'status' => SendAttemptStatus::BOUNCED,
-            'error' => '550 5.1.1 User unknown',
+            'recipient_results' => [
+                ['recipient_id' => $recipient1->getId(), 'status' => 'bounced'],
+                ['recipient_id' => $recipient2->getId(), 'status' => 'bounced'],
+            ]
         ]);
 
         $this->localApi(

@@ -2,6 +2,7 @@
 	import type {
 		Send,
 		SendAttempt,
+		SendAttemptRecipientResult,
 		SendAttemptStatus,
 		SendRecipientStatus
 	} from '../../../../types';
@@ -37,29 +38,29 @@
 		for (const attempt of send.attempts) {
 			let generatedAttempts: SendAttempt[] = [];
 
-			if (attempt.status === 'partial') {
-				// each recipient will have their own event, grouped by recipient statuses
-				const recipientIdsByStatus: Partial<Record<SendRecipientStatus, number[]>> = {};
+			// each recipient will have their own event, grouped by recipient statuses
+			const recipientResultsByStatus: Partial<
+				Record<SendRecipientStatus, SendAttemptRecipientResult[]>
+			> = {};
 
-				for (const recipient of send.recipients) {
-					const status = attempt.recipient_statuses[recipient.id];
-					if (!recipientIdsByStatus[status]) {
-						recipientIdsByStatus[status] = [];
-					}
-					recipientIdsByStatus[status].push(recipient.id);
+			for (const rcptResult of attempt.recipient_results) {
+				const status = rcptResult.status;
+
+				if (!recipientResultsByStatus[status]) {
+					recipientResultsByStatus[status] = [];
 				}
 
-				for (const [status, recipientIds] of Object.entries(recipientIdsByStatus)) {
-					if (recipientIds.length === 0) continue;
+				recipientResultsByStatus[status].push(rcptResult);
+			}
 
-					generatedAttempts.push({
-						...attempt,
-						status: status as SendAttemptStatus,
-						recipient_ids: recipientIds
-					});
-				}
-			} else {
-				generatedAttempts = [attempt];
+			for (const [status, results] of Object.entries(recipientResultsByStatus)) {
+				if (results.length === 0) continue;
+
+				generatedAttempts.push({
+					...attempt,
+					status: status as SendAttemptStatus,
+					recipient_results: results
+				});
 			}
 
 			for (const ga of generatedAttempts) {

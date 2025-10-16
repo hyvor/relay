@@ -1,5 +1,11 @@
 package smtp
 
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
+
 type CommandResult struct {
 
 	// Command that was executed.
@@ -42,8 +48,56 @@ func IsSmtpCode(code int, expectCode int) bool {
 
 type CommandReply struct {
 	Code    int
+	EnhancedCode [3]int
 	Message string
 }
 
-// EnhancedCode string // RFC 3463
-// https://github.com/emersion/go-smtp/blob/master/client.go#L917
+func NewCommandReply(code int, message string) *CommandReply {
+	
+	reply := &CommandReply{
+		Code:    code,
+		Message: message,
+	}
+
+	
+	// EnhancedCode string // RFC 3463
+	// https://github.com/emersion/go-smtp/blob/master/client.go#L917
+
+	parts := strings.SplitN(message, " ", 2)
+	if len(parts) != 2 {
+		return reply
+	}
+
+	enchCode, err := parseEnhancedCode(parts[0])
+	if err != nil {
+		return reply
+	}
+
+	// Per RFC 2034, enhanced code should be prepended to each line.
+	msg := parts[1]
+	msg = strings.ReplaceAll(msg, "\n"+parts[0]+" ", "\n")
+
+	reply.EnhancedCode = enchCode
+	reply.Message = msg
+	
+	return reply
+
+}
+
+
+func parseEnhancedCode(s string) ([3]int, error) {
+	parts := strings.Split(s, ".")
+	if len(parts) != 3 {
+		return [3]int{}, fmt.Errorf("wrong amount of enhanced code parts")
+	}
+
+	code := [3]int{}
+	for i, part := range parts {
+		num, err := strconv.Atoi(part)
+		if err != nil {
+			return code, err
+		}
+		code[i] = num
+	}
+	return code, nil
+}
