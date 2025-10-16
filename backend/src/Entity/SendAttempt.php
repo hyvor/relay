@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Entity\Type\SendAttemptStatus;
 use App\Repository\SendAttemptRepository;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 
@@ -55,22 +56,13 @@ class SendAttempt
     private array $smtp_conversations = [];
 
     /**
-     * @var RecipientResult[]
-     */
-    #[ORM\Column(type: "json")]
-    private array $recipient_results = [];
-
-    /**
-     * @var ArrayCollection<int, SendAttemptRecipient>
+     * @var Collection<int, SendAttemptRecipient>
      */
     #[ORM\OneToMany(targetEntity: SendAttemptRecipient::class, mappedBy: 'send_attempt')]
-    private ArrayCollection $recipients;
+    private Collection $recipients;
 
     #[ORM\Column()]
     private int $duration_ms;
-
-    #[ORM\Column(type: "text", nullable: true)]
-    private ?string $error = null;
 
     public function __construct()
     {
@@ -210,23 +202,6 @@ class SendAttempt
         return $this;
     }
 
-    /**
-     * @return RecipientResult[]
-     */
-    public function getRecipientResults(): array
-    {
-        return $this->recipient_results;
-    }
-
-    /**
-     * @param RecipientResult[] $recipientResults
-     */
-    public function setRecipientResults(array $recipientResults): static
-    {
-        $this->recipient_results = $recipientResults;
-        return $this;
-    }
-
     public function getDurationMs(): int
     {
         return $this->duration_ms;
@@ -238,21 +213,10 @@ class SendAttempt
         return $this;
     }
 
-    public function getError(): ?string
-    {
-        return $this->error;
-    }
-
-    public function setError(?string $error): static
-    {
-        $this->error = $error;
-        return $this;
-    }
-
     /**
-     * @return ArrayCollection<int, SendAttemptRecipient>
+     * @return Collection<int, SendAttemptRecipient>
      */
-    public function getRecipients(): ArrayCollection
+    public function getRecipients(): Collection
     {
         return $this->recipients;
     }

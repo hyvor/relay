@@ -34,9 +34,10 @@ final class SendAttemptFactory extends PersistentProxyObjectFactory
             'resolved_mx_hosts' => [self::faker()->domainName()],
             'status' => SendAttemptStatus::ACCEPTED,
             'try_count' => self::faker()->numberBetween(0, 5),
-            'accepted_mx_host' => self::faker()->optional()->domainName(),
+            'responded_mx_host' => self::faker()->optional()->domainName(),
             'smtp_conversations' => [],
-            'error' => self::faker()->optional()->sentence(),
+            'domain' => self::faker()->domainName(),
+            'duration_ms' => self::faker()->numberBetween(100, 5000)
         ];
     }
 }

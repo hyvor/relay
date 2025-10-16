@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"io"
 	"log/slog"
 	"sync"
@@ -531,8 +530,11 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 	assert.Equal(t, 1, updatedSendAttempt.TryCount)
 	assert.Equal(t, `["mx1.hyvor.com", "mx2.hyvor.com"]`, updatedSendAttempt.ResolvedMx)
 	assert.Equal(t, `["mx1.hyvor.com", "mx2.hyvor.com"]`, updatedSendAttempt.ResolvedMx)
-	assert.Equal(t, `[{"code": 250, "status": "accepted", "message": "OK", "recipient_id": ` + fmt.Sprintf("%d", recipientId) + `, "enhanced_code": "2.0.0"}]`, updatedSendAttempt.RecipientResults)
 
+	assert.Equal(t, 1, len(updatedSendAttempt.Recipients))
+	assert.Equal(t, 250, updatedSendAttempt.Recipients[0].SmtpCode)
+	assert.Equal(t, "2.0.0", updatedSendAttempt.Recipients[0].SmtpEnhancedCode)
+	assert.Equal(t, "OK", updatedSendAttempt.Recipients[0].SmtpMessage)
 
 	updatedRecipient, err := factory.GetSendRecipientById(recipientId)
 	assert.NoError(t, err)

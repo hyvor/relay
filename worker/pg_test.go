@@ -276,8 +276,17 @@ type FactorySendAttempt struct {
 	ResolvedMx        string
 	RespondedMx       sql.NullString
 	SmtpConversations string
-	Error             sql.NullString
-	RecipientResults string
+
+	Recipients []*FactorySendAttemptRecipientResult
+}
+
+type FactorySendAttemptRecipientResult struct {
+	Id int
+	RecipientId int
+	Status string
+	SmtpCode int
+	SmtpEnhancedCode string
+	SmtpMessage string
 }
 
 func (f *TestFactory) GetSendAttemptById(id int) (*FactorySendAttempt, error) {
@@ -286,8 +295,7 @@ func (f *TestFactory) GetSendAttemptById(id int) (*FactorySendAttempt, error) {
 	row := f.conn.QueryRow(`
 		SELECT 
 			id, send_id, ip_address_id, status, try_count, domain,
-			resolved_mx_hosts, responded_mx_host, smtp_conversations, error,
-			recipient_results
+			resolved_mx_hosts, responded_mx_host, smtp_conversations
 		FROM send_attempts WHERE id = $1
 	`, id)
 
@@ -301,13 +309,40 @@ func (f *TestFactory) GetSendAttemptById(id int) (*FactorySendAttempt, error) {
 		&attempt.ResolvedMx,
 		&attempt.RespondedMx,
 		&attempt.SmtpConversations,
-		&attempt.Error,
-		&attempt.RecipientResults,
 	)
 
 	if err != nil {
 		return nil, err
 	}
+
+	var recipientResults []*FactorySendAttemptRecipientResult
+	rows, err := f.conn.Query(`
+		SELECT 
+			id, send_recipient_id, recipient_status, smtp_code, smtp_enhanced_code, smtp_message
+		FROM send_attempt_recipients WHERE send_attempt_id = $1
+	`, id)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var result FactorySendAttemptRecipientResult
+		if err := rows.Scan(
+			&result.Id,
+			&result.RecipientId,
+			&result.Status,
+			&result.SmtpCode,
+			&result.SmtpEnhancedCode,
+			&result.SmtpMessage,
+		); err != nil {
+			return nil, err
+		}
+		recipientResults = append(recipientResults, &result)
+	}
+
+	attempt.Recipients = recipientResults
 
 	return &attempt, nil
 

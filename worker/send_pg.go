@@ -152,20 +152,6 @@ func (b *SendTransaction) RecordAttempt(
 	sendResult *SendResult,
 ) (int, error) {
 
-	// create send attempt
-	var errorMessage sql.NullString
-	// if sendResult.Error != nil {
-	// 	errorMessage = sql.NullString{
-	// 		String: sendResult.Error.Error(),
-	// 		Valid:  true,
-	// 	}
-	// } else {
-	// 	errorMessage = sql.NullString{
-	// 		String: "",
-	// 		Valid:  false,
-	// 	}
-	// }
-
 	var respondedMxHost sql.NullString
 	if sendResult.RespondedMxHost != "" {
 		respondedMxHost = sql.NullString{
@@ -180,7 +166,6 @@ func (b *SendTransaction) RecordAttempt(
 
 	resolvedMxHostsJson, _ := json.Marshal(sendResult.ResolvedMxHosts)
 	smtpConversationsJson, _ := json.Marshal(sendResult.SmtpConversations)
-	recipientResultsJson, _ := json.Marshal(sendResult.RcptResults)
 
 	var attemptId int
 	err := b.tx.QueryRowContext(b.ctx, `
@@ -195,9 +180,7 @@ func (b *SendTransaction) RecordAttempt(
 			resolved_mx_hosts,
 			responded_mx_host,
 			smtp_conversations,
-			recipient_results,
-			duration_ms,
-			error
+			duration_ms
 		)
 		VALUES (
 			NOW(),
@@ -210,9 +193,7 @@ func (b *SendTransaction) RecordAttempt(
 			$6,
 			$7,
 			$8,
-			$9,
-			$10,
-			$11
+			$9
 		)
 		RETURNING id
 	`,
@@ -224,9 +205,7 @@ func (b *SendTransaction) RecordAttempt(
 		resolvedMxHostsJson,
 		respondedMxHost,
 		smtpConversationsJson,
-		recipientResultsJson,
 		sendResult.Duration.Milliseconds(),
-		errorMessage,
 	).Scan(&attemptId)
 
 	if err != nil {
@@ -235,6 +214,44 @@ func (b *SendTransaction) RecordAttempt(
 
 	for _, rcptResult := range sendResult.RcptResults {
 
+		var enhancedCode sql.NullString
+
+		if rcptResult.EnhancedCode != [3]int{0, 0, 0} {
+			enhancedCode = sql.NullString{
+				String: fmt.Sprintf("%d.%d.%d", rcptResult.EnhancedCode[0], rcptResult.EnhancedCode[1], rcptResult.EnhancedCode[2]),
+				Valid:  true,
+			}
+		}
+
+		// record current results in send_attempt_recipients
+		_, err = b.tx.ExecContext(b.ctx, `
+			INSERT INTO send_attempt_recipients (
+				created_at,
+				updated_at,
+				send_attempt_id,
+				send_recipient_id,
+				recipient_status,
+				smtp_code,
+				smtp_enhanced_code,
+				smtp_message
+			)
+			VALUES (
+				NOW(),
+				NOW(),
+				$1,
+				$2,
+				$3,
+				$4,
+				$5,
+				$6
+			)
+		`, attemptId, rcptResult.RecipientId, rcptResult.ToRecipientStatus().ToString(), rcptResult.Code, enhancedCode, rcptResult.Message)
+
+		if err != nil {
+			return 0, fmt.Errorf("failed to insert send attempt recipient for recipient ID %d: %w", rcptResult.RecipientId, err)
+		}
+
+		// update send_recipients to the latest state
 		_, err = b.tx.ExecContext(b.ctx, `
 			UPDATE send_recipients
 			SET 
