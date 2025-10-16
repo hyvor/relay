@@ -2,7 +2,7 @@
 	import type {
 		Send,
 		SendAttempt,
-		SendAttemptRecipientResult,
+		SendAttemptRecipient,
 		SendAttemptStatus,
 		SendRecipientStatus
 	} from '../../../../types';
@@ -39,27 +39,27 @@
 			let generatedAttempts: SendAttempt[] = [];
 
 			// each recipient will have their own event, grouped by recipient statuses
-			const recipientResultsByStatus: Partial<
-				Record<SendRecipientStatus, SendAttemptRecipientResult[]>
+			const attemptRecipientsByStatus: Partial<
+				Record<SendRecipientStatus, SendAttemptRecipient[]>
 			> = {};
 
-			for (const rcptResult of attempt.recipient_results) {
-				const status = rcptResult.status;
+			for (const rcptResult of attempt.recipients) {
+				const status = rcptResult.recipient_status;
 
-				if (!recipientResultsByStatus[status]) {
-					recipientResultsByStatus[status] = [];
+				if (!attemptRecipientsByStatus[status]) {
+					attemptRecipientsByStatus[status] = [];
 				}
 
-				recipientResultsByStatus[status].push(rcptResult);
+				attemptRecipientsByStatus[status].push(rcptResult);
 			}
 
-			for (const [status, results] of Object.entries(recipientResultsByStatus)) {
-				if (results.length === 0) continue;
+			for (const [status, attemptRecipients] of Object.entries(attemptRecipientsByStatus)) {
+				if (attemptRecipients.length === 0) continue;
 
 				generatedAttempts.push({
 					...attempt,
 					status: status as SendAttemptStatus,
-					recipient_results: results
+					recipients: attemptRecipients
 				});
 			}
 

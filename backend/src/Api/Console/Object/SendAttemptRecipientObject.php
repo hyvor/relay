@@ -10,6 +10,7 @@ class SendAttemptRecipientObject
 
     public int $id;
     public int $created_at;
+    public int $recipient_id;
     public SendRecipientStatus $recipient_status;
     public int $smtp_code;
     public ?string $smtp_enhanced_code = null;
@@ -19,6 +20,7 @@ class SendAttemptRecipientObject
     {
         $this->id = $recipient->getId();
         $this->created_at = $recipient->getCreatedAt()->getTimestamp();
+        $this->recipient_id = $recipient->getSendRecipientId();
         $this->recipient_status = $recipient->getRecipientStatus();
         $this->smtp_code = $recipient->getSmtpCode();
         $this->smtp_enhanced_code = $recipient->getSmtpEnhancedCode();

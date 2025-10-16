@@ -103,14 +103,6 @@ export interface SendRecipient {
 
 export type SendAttemptStatus = 'accepted' | 'deferred' | 'bounced' | 'failed' | 'partial';
 
-export interface SendAttemptRecipientResult {
-	recipient_id: number;
-	code: number;
-	enhanced_code: string;
-	message: string;
-	status: SendRecipientStatus;
-}
-
 export interface SendAttempt {
 	created_at: number;
 	status: SendAttemptStatus;
@@ -119,9 +111,18 @@ export interface SendAttempt {
 	resolved_mx_hosts: string[];
 	responded_mx_host: string | null;
 	smtp_conversations: Record<string, SmtpConversation>;
-	recipient_results: SendAttemptRecipientResult[];
 	duration_ms: number;
-	error: string | null;
+	recipients: SendAttemptRecipient[];
+}
+
+export interface SendAttemptRecipient {
+	id: number;
+	created_at: number;
+	recipient_id: number;
+	recipient_status: SendRecipientStatus;
+	smtp_code: number;
+	smtp_enhanced_code: string;
+	smtp_message: string;
 }
 
 export interface SendFeedback {

@@ -25,9 +25,8 @@ class SendAttemptRecipient
     #[ORM\JoinColumn(name: "send_attempt_id", nullable: false, onDelete: "CASCADE")]
     private SendAttempt $send_attempt;
 
-    #[ORM\ManyToOne(targetEntity: SendRecipient::class)]
-    #[ORM\JoinColumn(name: "send_recipient_id", nullable: false, onDelete: "CASCADE")]
-    private SendRecipient $send_recipient;
+    #[ORM\Column(type: "integer")]
+    private int $send_recipient_id;
 
     #[ORM\Column(type: "integer")]
     private int $smtp_code;
@@ -91,14 +90,14 @@ class SendAttemptRecipient
         return $this;
     }
 
-    public function getSendRecipient(): SendRecipient
+    public function getSendRecipientId(): int
     {
-        return $this->send_recipient;
+        return $this->send_recipient_id;
     }
 
-    public function setSendRecipient(SendRecipient $send_recipient): static
+    public function setSendRecipient(int $send_recipient_id): static
     {
-        $this->send_recipient = $send_recipient;
+        $this->send_recipient_id = $send_recipient_id;
         return $this;
     }
 
