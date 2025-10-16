@@ -30,7 +30,8 @@ class SendRecipientService
      */
     public function getSendRecipientsBySendAttempt(SendAttempt $sendAttempt): array
     {
-        $recipientIds = $sendAttempt->getRecipientIds();
+        $recipientResults = $sendAttempt->getRecipientResults();
+        $recipientIds = array_map(fn($result) => $result['recipient_id'], $recipientResults);
 
         /** @var SendRecipient[] $results */
         $results = $this->entityManager->getRepository(SendRecipient::class)

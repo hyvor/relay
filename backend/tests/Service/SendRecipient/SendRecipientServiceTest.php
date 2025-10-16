@@ -24,7 +24,10 @@ class SendRecipientServiceTest extends KernelTestCase
         SendRecipientFactory::createOne();
 
         $attempt = SendAttemptFactory::createOne([
-            'recipientIds' => [$recipient1->getId(), $recipient2->getId()]
+            'recipient_results' => [
+                ['recipient_id' => $recipient1->getId()],
+                ['recipient_id' => $recipient2->getId()],
+            ]
         ]);
 
         /** @var SendRecipientService $service */

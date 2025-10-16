@@ -6,6 +6,10 @@ use App\Entity\Type\SendAttemptStatus;
 use App\Repository\SendAttemptRepository;
 use Doctrine\ORM\Mapping as ORM;
 
+
+/**
+ * @phpstan-type RecipientResult array{recipient_id: int}
+ */
 #[ORM\Entity(repositoryClass: SendAttemptRepository::class)]
 #[ORM\Table(name: "send_attempts")]
 class SendAttempt
@@ -50,7 +54,7 @@ class SendAttempt
     private array $smtp_conversations = [];
 
     /**
-     * @var array<mixed>
+     * @var RecipientResult[]
      */
     #[ORM\Column(type: "json")]
     private array $recipient_results = [];
@@ -199,7 +203,7 @@ class SendAttempt
     }
 
     /**
-     * @return array<mixed>
+     * @return RecipientResult[]
      */
     public function getRecipientResults(): array
     {
@@ -207,11 +211,11 @@ class SendAttempt
     }
 
     /**
-     * @param array<mixed> $recipientStatuses
+     * @param RecipientResult[] $recipientResults
      */
-    public function setRecipientResults(array $recipientStatuses): static
+    public function setRecipientResults(array $recipientResults): static
     {
-        $this->recipient_results = $recipientStatuses;
+        $this->recipient_results = $recipientResults;
         return $this;
     }
 

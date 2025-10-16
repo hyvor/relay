@@ -35,8 +35,7 @@ final class Version20250613150000 extends AbstractMigration
                 responded_mx_host text,
                 smtp_conversations jsonb NOT NULL,
                 recipient_results jsonb NOT NULL,
-                duration_ms INT NOT NULL,
-                error text
+                duration_ms INT NOT NULL
             )
             SQL
         );

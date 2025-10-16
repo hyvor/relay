@@ -152,7 +152,9 @@ class WebhookEventListenerTest extends KernelTestCase
 
         $attempt = SendAttemptFactory::createOne([
             'send' => $send,
-            'recipient_ids' => [$recipient->getId()],
+            'recipient_results' => [
+                ['recipient_id' => $recipient->getId()]
+            ],
         ]);
 
         $this->ed->dispatch(new SendAttemptCreatedEvent($attempt));

@@ -36,6 +36,7 @@ final class WebhookDeliveryFactory extends PersistentProxyObjectFactory
             'request_body' => self::faker()->text(),
             'response' => self::faker()->text(),
             'send_after' => new \DateTimeImmutable(),
+            'signature' => self::faker()->sha256(),
         ];
     }
 
