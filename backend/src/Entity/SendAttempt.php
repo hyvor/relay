@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Entity\Type\SendAttemptStatus;
 use App\Repository\SendAttemptRepository;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
 
@@ -59,6 +60,12 @@ class SendAttempt
     #[ORM\Column(type: "json")]
     private array $recipient_results = [];
 
+    /**
+     * @var ArrayCollection<int, SendAttemptRecipient>
+     */
+    #[ORM\OneToMany(targetEntity: SendAttemptRecipient::class, mappedBy: 'send_attempt')]
+    private ArrayCollection $recipients;
+
     #[ORM\Column()]
     private int $duration_ms;
 
@@ -67,6 +74,7 @@ class SendAttempt
 
     public function __construct()
     {
+        $this->recipients = new ArrayCollection();
     }
 
     public function getId(): int
@@ -238,6 +246,31 @@ class SendAttempt
     public function setError(?string $error): static
     {
         $this->error = $error;
+        return $this;
+    }
+
+    /**
+     * @return ArrayCollection<int, SendAttemptRecipient>
+     */
+    public function getRecipients(): ArrayCollection
+    {
+        return $this->recipients;
+    }
+
+    public function addRecipient(SendAttemptRecipient $recipient): static
+    {
+        if (!$this->recipients->contains($recipient)) {
+            $this->recipients->add($recipient);
+            $recipient->setSendAttempt($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRecipient(SendAttemptRecipient $recipient): static
+    {
+        $this->recipients->removeElement($recipient);
+
         return $this;
     }
 }
