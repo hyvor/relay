@@ -5,12 +5,14 @@ namespace App\Tests\Api\Local;
 use App\Api\Local\Controller\LocalController;
 use App\Entity\Suppression;
 use App\Entity\Type\SendAttemptStatus;
+use App\Entity\Type\SendRecipientStatus;
 use App\Service\Send\SendService;
 use App\Service\SendAttempt\Event\SendAttemptCreatedEvent;
 use App\Service\SendAttempt\SendAttemptService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\SendAttemptFactory;
+use App\Tests\Factory\SendAttemptRecipientFactory;
 use App\Tests\Factory\SendFactory;
 use App\Tests\Factory\SendRecipientFactory;
 use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
@@ -77,10 +79,24 @@ class SendAttemptDoneTest extends WebTestCase
             'send' => $send,
             'domain' => 'hyvor.com',
             'status' => SendAttemptStatus::BOUNCED,
-            'recipient_results' => [
-                ['recipient_id' => $recipient1->getId(), 'status' => 'bounced'],
-                ['recipient_id' => $recipient2->getId(), 'status' => 'bounced'],
-            ]
+        ]);
+
+        SendAttemptRecipientFactory::createOne([
+            'send_attempt' => $attempt1,
+            'send_recipient_id' => $recipient1->getId(),
+            'recipient_status' => SendRecipientStatus::BOUNCED,
+            'smtp_code' => 550,
+            'smtp_enhanced_code' => '5.1.1',
+            'smtp_message' => 'User unknown',
+        ]);
+
+        SendAttemptRecipientFactory::createOne([
+            'send_attempt' => $attempt1,
+            'send_recipient_id' => $recipient2->getId(),
+            'recipient_status' => SendRecipientStatus::BOUNCED,
+            'smtp_code' => 550,
+            'smtp_enhanced_code' => '5.1.1',
+            'smtp_message' => 'User unknown',
         ]);
 
         $this->localApi(

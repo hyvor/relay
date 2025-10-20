@@ -7,6 +7,7 @@ use App\Entity\SendAttempt;
 use App\Entity\Type\SendAttemptStatus;
 use App\Entity\Type\SuppressionReason;
 use App\Service\SendRecipient\SendRecipientService;
+use App\Service\Smtp\SmtpResponseParser;
 use App\Service\Suppression\SuppressionService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -41,6 +42,10 @@ class SendAttemptService
      */
     public function handleAfterSendAttempt(SendAttempt $sendAttempt): void
     {
+        foreach ($sendAttempt->getRecipients() as $attemptRecipient) {
+            $parser = SmtpResponseParser::fromAttemptRecipient($attemptRecipient);
+        }
+
         if ($sendAttempt->getStatus() === SendAttemptStatus::BOUNCED) {
             $recipients = $this->sendRecipientService->getSendRecipientsBySendAttempt($sendAttempt);
 

@@ -4,6 +4,7 @@ namespace App\Service\SendRecipient;
 
 use App\Entity\Send;
 use App\Entity\SendAttempt;
+use App\Entity\SendAttemptRecipient;
 use App\Entity\SendRecipient;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -27,11 +28,12 @@ class SendRecipientService
 
     /**
      * @return SendRecipient[]
+     * @deprecated
      */
     public function getSendRecipientsBySendAttempt(SendAttempt $sendAttempt): array
     {
-        $recipientResults = $sendAttempt->getRecipientResults();
-        $recipientIds = array_map(fn($result) => $result['recipient_id'], $recipientResults);
+        $recipients = $sendAttempt->getRecipients();
+        $recipientIds = $recipients->map(static fn(SendAttemptRecipient $recipient) => $recipient->getId())->toArray();
 
         /** @var SendRecipient[] $results */
         $results = $this->entityManager->getRepository(SendRecipient::class)

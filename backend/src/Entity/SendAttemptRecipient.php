@@ -95,7 +95,7 @@ class SendAttemptRecipient
         return $this->send_recipient_id;
     }
 
-    public function setSendRecipient(int $send_recipient_id): static
+    public function setSendRecipientId(int $send_recipient_id): static
     {
         $this->send_recipient_id = $send_recipient_id;
         return $this;
