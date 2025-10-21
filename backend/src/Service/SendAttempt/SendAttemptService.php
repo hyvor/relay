@@ -7,6 +7,7 @@ use App\Entity\SendAttempt;
 use App\Entity\Type\SendAttemptStatus;
 use App\Entity\Type\SuppressionReason;
 use App\Service\SendRecipient\SendRecipientService;
+use App\Service\Smtp\SmtpResponseParser;
 use App\Service\Suppression\SuppressionService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -17,7 +18,6 @@ class SendAttemptService
     public function __construct(
         private EntityManagerInterface $em,
         private EventDispatcherInterface $ed,
-        private SendRecipientService $sendRecipientService,
         private SuppressionService $suppressionService,
     ) {
     }
@@ -37,19 +37,24 @@ class SendAttemptService
 
     /**
      * Send attempt was created from Go, then, /send-attempts/done was called
-     * Now handle any side effects
+     * Now handle any side effects such as suppressions
      */
     public function handleAfterSendAttempt(SendAttempt $sendAttempt): void
     {
-        if ($sendAttempt->getStatus() === SendAttemptStatus::BOUNCED) {
-            $recipients = $this->sendRecipientService->getSendRecipientsBySendAttempt($sendAttempt);
+        $sendRecipients = $sendAttempt->getSend()->getRecipients();
 
-            foreach ($recipients as $recipient) {
+        foreach ($sendAttempt->getRecipients() as $attemptRecipient) {
+            $parser = SmtpResponseParser::fromAttemptRecipient($attemptRecipient);
+            $sendRecipient = $sendRecipients->findFirst(
+                fn($i, $r) => $r->getId() === $attemptRecipient->getSendRecipientId()
+            );
+
+            if ($sendRecipient && $parser->isRecipientBounce()) {
                 $this->suppressionService->createSuppression(
                     $sendAttempt->getSend()->getProject(),
-                    $recipient->getAddress(),
+                    $sendRecipient->getAddress(),
                     SuppressionReason::BOUNCE,
-                    $sendAttempt->getError() ?? ''
+                    $parser->getFullMessage()
                 );
             }
         }

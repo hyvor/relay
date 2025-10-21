@@ -112,10 +112,7 @@ func (c *Client) cmd(format string, args ...any) CommandResult {
 		return commandResult
 	}
 
-	commandResult.Reply = &CommandReply{
-		Code:    code,
-		Message: msg,
-	}
+	commandResult.Reply = NewCommandReply(code, msg)
 
 	return commandResult
 }
@@ -221,10 +218,7 @@ func (d *dataCloser) Close() CommandResult {
 		return commandResult
 	}
 
-	commandResult.Reply = &CommandReply{
-		Code:    code,
-		Message: msg,
-	}
+	commandResult.Reply = NewCommandReply(code, msg)
 
 	return commandResult
 }

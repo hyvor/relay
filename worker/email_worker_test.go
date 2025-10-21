@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"io"
 	"log/slog"
 	"sync"
@@ -265,9 +264,19 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 					SendAttemptId: 1,
 					Error:         nil,
 					result: &SendResult{
-						RecipientResultCodes: map[int]SendResultCode{
-							rcpt1Id: SendResultAccepted,
-							rcpt2Id: SendResultAccepted,
+						RcptResults: []*RcptResult{
+							{
+								RecipientId: rcpt1Id,
+								Code:        250,
+								EnhancedCode: [3]int{2, 0, 0},
+								Message:     "OK",
+							},
+							{
+								RecipientId: rcpt2Id,
+								Code:        250,
+								EnhancedCode: [3]int{2, 0, 0},
+								Message:     "OK",
+							},
 						},
 					},
 				}
@@ -276,8 +285,13 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 					SendAttemptId: 2,
 					Error:         nil,
 					result: &SendResult{
-						RecipientResultCodes: map[int]SendResultCode{
-							rcpt3Id: SendResultAccepted,
+						RcptResults: []*RcptResult{
+							{
+								RecipientId: rcpt3Id,
+								Code:        250,
+								EnhancedCode: [3]int{2, 0, 0},
+								Message: "OK",
+							},
 						},
 					},
 				}
@@ -372,8 +386,13 @@ func TestEmailWorker_ProcessSend_Requeuing(t *testing.T) {
 			attemptCh <- AttemptData{
 				SendAttemptId: 1,
 				result: &SendResult{
-					RecipientResultCodes: map[int]SendResultCode{
-						rcptId: SendResultDeferred,
+					RcptResults: []*RcptResult{
+						{
+							RecipientId: rcptId,
+							Code:        450,
+							EnhancedCode: [3]int{4, 2, 0},
+							Message:     "Try again later",
+						},
 					},
 					NewTryCount: 1,
 				},
@@ -466,8 +485,13 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 			NewTryCount:     1,
 			Domain:          "hyvor.com",
 			ResolvedMxHosts: []string{"mx1.hyvor.com", "mx2.hyvor.com"},
-			RecipientResultCodes: map[int]SendResultCode{
-				recipientId: SendResultAccepted,
+			RcptResults: []*RcptResult{
+				{
+					RecipientId: recipientId,
+					Code:        250,
+					EnhancedCode: [3]int{2, 0, 0},
+					Message:     "OK",
+				},
 			},
 		}
 	}
@@ -506,8 +530,11 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 	assert.Equal(t, 1, updatedSendAttempt.TryCount)
 	assert.Equal(t, `["mx1.hyvor.com", "mx2.hyvor.com"]`, updatedSendAttempt.ResolvedMx)
 	assert.Equal(t, `["mx1.hyvor.com", "mx2.hyvor.com"]`, updatedSendAttempt.ResolvedMx)
-	assert.Equal(t, `{"` + fmt.Sprintf("%d", recipientId) + `": "accepted"}`, updatedSendAttempt.RecipientStatuses)
 
+	assert.Equal(t, 1, len(updatedSendAttempt.Recipients))
+	assert.Equal(t, 250, updatedSendAttempt.Recipients[0].SmtpCode)
+	assert.Equal(t, "2.0.0", updatedSendAttempt.Recipients[0].SmtpEnhancedCode)
+	assert.Equal(t, "OK", updatedSendAttempt.Recipients[0].SmtpMessage)
 
 	updatedRecipient, err := factory.GetSendRecipientById(recipientId)
 	assert.NoError(t, err)

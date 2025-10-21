@@ -111,10 +111,18 @@ export interface SendAttempt {
 	resolved_mx_hosts: string[];
 	responded_mx_host: string | null;
 	smtp_conversations: Record<string, SmtpConversation>;
-	recipient_ids: number[];
-	recipient_statuses: Record<number, SendRecipientStatus>;
 	duration_ms: number;
-	error: string | null;
+	recipients: SendAttemptRecipient[];
+}
+
+export interface SendAttemptRecipient {
+	id: number;
+	created_at: number;
+	recipient_id: number;
+	recipient_status: SendRecipientStatus;
+	smtp_code: number;
+	smtp_enhanced_code: string;
+	smtp_message: string;
 }
 
 export interface SendFeedback {
@@ -128,10 +136,6 @@ export interface SendFeedback {
 export interface SmtpConversation {
 	start_time: string;
 	network_error: string; // empty if no error
-	smtp_error: {
-		code: number;
-		message: string;
-	} | null;
 	steps: SmtpStep[];
 }
 
