@@ -13,6 +13,13 @@ use App\Entity\SendAttemptRecipient;
 class SmtpResponseParser
 {
 
+    const RECIPIENT_ENHANCED_CODES = [
+        '5.1.1', // Bad destination mailbox address
+        '5.1.2', // Bad destination system address
+        '5.1.3', // Bad destination mailbox address syntax
+        '5.5.0' // Other or undefined mailbox status
+    ];
+
     public function __construct(
         private int $code,
         private ?string $enhancedCode,
@@ -40,18 +47,29 @@ class SmtpResponseParser
         /**
          * Most modern SMTP servers provide an enhanced status code for bounces.
          * If it is not present, it is likely an older server.
-         * In that case, we assume there is no need for suppression.
+         * In that case, we assume there is no need for suppressions.
+         * Not developed enough to support enhanced codes, not developed enough to ban based on repeated bounces.
          * (Note: this is an assumption that we may want to revisit in the future.)
          */
         if ($this->enhancedCode === null) {
             return false;
         }
 
-        // Enhanced status codes starting with 5.1.x indicate recipient issues
-        // Google: 550 5.1.1 The email account that you tried to reach does not exist.
-        // Apple: 550 5.1.1 <example@icloud.com>: user does not exist
+        return in_array($this->enhancedCode, self::RECIPIENT_ENHANCED_CODES, true);
+    }
 
-        return true;
+    /**
+     * Checks if the error is due to infrastructure issues (e.g., spam filtering, policy restrictions).
+     * These must be recorded
+     */
+    public function isInfrastructureError(): bool
+    {
+        // must have an enhanced code
+        if ($this->enhancedCode === null) {
+            return false;
+        }
+
+        return str_starts_with($this->enhancedCode, '5.7.') || str_starts_with($this->enhancedCode, '4.7.');
     }
 
     public static function fromAttemptRecipient(SendAttemptRecipient $recipient): self
@@ -61,6 +79,11 @@ class SmtpResponseParser
             $recipient->getSmtpEnhancedCode(),
             $recipient->getSmtpMessage()
         );
+    }
+
+    public function getFullMessage(): string
+    {
+        return "$this->code $this->enhancedCode $this->message";
     }
 
 }
