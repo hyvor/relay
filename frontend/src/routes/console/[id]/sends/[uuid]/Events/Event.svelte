@@ -33,8 +33,9 @@
 				};
 			case 'suppressed':
 				return {
-					message: `Suppressed: <strong>${event.suppressed_recipients?.join(', ')}</strong>`,
-					description: null,
+					message: `Ignored due to suppressions: <strong>${event.suppressed_recipients?.join(', ')}</strong>`,
+					description:
+						"Didn't attempt to send because these recipients are on the suppression list.",
 					color: 'var(--red)'
 				};
 			case 'attempt':
@@ -47,7 +48,7 @@
 			if (attempt.status === 'accepted') {
 				return {
 					message: `Accepted: <strong>${getAttemptRecipientsJoined(attempt)}</strong>`,
-					description: null,
+					description: 'Successfully delivered to the recipient mail server.',
 					color: 'var(--green)'
 				};
 			} else if (attempt.status === 'deferred') {
@@ -65,10 +66,6 @@
 			}
 
 			function getAttemptDescription(): string | null {
-				if (attempt.error) {
-					return attempt.error;
-				}
-
 				if (!attempt.responded_mx_host) {
 					return null;
 				}

@@ -64,6 +64,7 @@ class WebhookEventListener
 
         $send = $attempt->getSend();
         $project = $send->getProject();
+        // TODO:
         $recipients = $this->sendRecipientService->getSendRecipientsBySendAttempt($attempt);
 
         foreach ($recipients as $recipient) {

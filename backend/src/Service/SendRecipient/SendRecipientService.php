@@ -25,24 +25,4 @@ class SendRecipientService
                 'address' => $email
             ]);
     }
-
-    /**
-     * @return SendRecipient[]
-     * @deprecated
-     */
-    public function getSendRecipientsBySendAttempt(SendAttempt $sendAttempt): array
-    {
-        $recipients = $sendAttempt->getRecipients();
-        $recipientIds = $recipients->map(static fn(SendAttemptRecipient $recipient) => $recipient->getId())->toArray();
-
-        /** @var SendRecipient[] $results */
-        $results = $this->entityManager->getRepository(SendRecipient::class)
-            ->createQueryBuilder('r')
-            ->where('r.id IN (:ids)')
-            ->setParameter('ids', $recipientIds)
-            ->getQuery()
-            ->getResult();
-
-        return $results;
-    }
 }
