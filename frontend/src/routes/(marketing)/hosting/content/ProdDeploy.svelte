@@ -1,23 +1,17 @@
 <script>
-	import { Callout, Table, TableRow } from '@hyvor/design/components';
+	import { Table, TableRow } from '@hyvor/design/components';
 </script>
 
 <h1>Prod Deploy</h1>
 
-<!-- <p>
+<p>
 	This page covers a <strong>production-ready deployment</strong> that requires multiple servers.
 	If you want to deploy Hyvor Relay on for hobby or small to medium-sized projects (less than
 	100,000 emails/day), refer to the
-	<a href="/hosting/deploy-easy">Easy Deploy</a> page which covers a single server deployment.
-</p> -->
+	<a href="/hosting/deploy-easy">Easy Deploy</a> page.
+</p>
 
-<Callout type="info">
-	This documentation is a work in progress. Use <a href="/hosting/deploy-easy">Easy Deploy</a> for
-	now.
-	<!--  -->
-</Callout>
-
-<!-- <h2 id="infra">Infrastructure</h2>
+<h2 id="infra">Infrastructure</h2>
 
 <ul>
 	<li>
@@ -30,10 +24,7 @@
 				<a href="#how-many">How many servers?</a>
 			</li>
 			<li>
-				<a href="#private-network">Private Network</a>
-			</li>
-			<li>
-				<a href="#ansible">Ansible</a>
+				<a href="#ansible"> Setting up with Ansible (recommended) </a>
 			</li>
 		</ul>
 	</li>
@@ -43,24 +34,10 @@
 
 <p>
 	Hyvor Relay uses PostgreSQL as the database and also as the message queue. Set up a PostgreSQL
-	server in a production-ready manner. We have tested Hyvor Relay with PostgreSQL 16.
+	server in a production-ready manner. Hyvor Relay has been tested with PostgreSQL 16. If your
+	cloud provider offers a managed PostgreSQL service, feel free to use it. It will make backups,
+	failover, and scaling easier. Otherwise, self-host PostgreSQL with high availability in mind.
 </p>
-
-<ul>
-	<li>
-		<strong>Cloud Provider</strong>: If your cloud provider offers a managed PostgreSQL service,
-		feel free to use it. It will make backups, failover, and scaling easier.
-	</li>
-	<li>
-		<strong>Self-Hosted PostgreSQL</strong>: This is the other option. Additional care will be
-		needed for high availability.
-	</li>
-	<li>
-		<strong>YugabyteDB</strong>: YugabyteDB is a distributed SQL database that is compatible
-		with PostgreSQL. It can be used as a drop-in replacement for PostgreSQL in Hyvor Relay (we
-		use YugabyteDB in Hyvor Relay Cloud).
-	</li>
-</ul>
 
 <p>
 	Since setting up a PostgreSQL server depends a bit on how your infrastructure is set up, we will
@@ -76,8 +53,8 @@
 		password.
 	</li>
 	<li>
-		The PostgreSQL server is configured to allow connections from the app servers. We recommend
-		fully disabling public access to the PostgreSQL server.
+		The PostgreSQL server is configured to allow connections from the app servers (ideally via a
+		private network).
 	</li>
 	<li>Backup strategies are in place.</li>
 </ul>
@@ -93,23 +70,24 @@
 
 <Table columns="1fr 1fr">
 	<TableRow head>
-		<div>Server Count / Size</div>
+		<div>Servers</div>
 		<div>Expected Email Volume</div>
 	</TableRow>
 	<TableRow>
-		<div>1 server, 4GB RAM</div>
+		<div>1 server, 4GB RAM, 2 CPUs</div>
 		<div>1,000,000 emails/day</div>
 	</TableRow>
 	<TableRow>
-		<div>2 servers, 8GB RAM each</div>
+		<div>2 servers, 8GB RAM, 4 CPUs</div>
 		<div>10,000,000 emails/day</div>
 	</TableRow>
 </Table>
 
 <p>
-	Also, make sure to read the <a href="/hosting/scaling">Scaling</a> page on how to scale both PostgreSQL
-	and email workers.
+	See the <a href="/hosting/scaling">Scaling & HA</a> page for more insights to make a better estimate.
 </p>
+
+<!-- 
 
 <h3 id="private-network">Private Network</h3>
 
