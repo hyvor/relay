@@ -97,8 +97,10 @@ class GetSendsTest extends WebTestCase
     #[TestWith([SendRecipientStatus::QUEUED, SendRecipientStatus::ACCEPTED])]
     #[TestWith([SendRecipientStatus::ACCEPTED, SendRecipientStatus::BOUNCED])]
     #[TestWith([SendRecipientStatus::BOUNCED, SendRecipientStatus::QUEUED])]
-    public function test_list_sends_with_status_search(SendRecipientStatus $status, SendRecipientStatus $otherStatus): void
-    {
+    public function test_list_sends_with_status_search(
+        SendRecipientStatus $status,
+        SendRecipientStatus $otherStatus
+    ): void {
         $project = ProjectFactory::createOne();
 
         $domain = DomainFactory::createOne();
@@ -116,7 +118,7 @@ class GetSendsTest extends WebTestCase
             'status' => $status,
         ]);
 
-        $sendOtherStatus = SendFactory::createOne( [
+        $sendOtherStatus = SendFactory::createOne([
             'project' => $project,
             'domain' => $domain,
             'queue' => $queue,
@@ -200,7 +202,7 @@ class GetSendsTest extends WebTestCase
             'queue' => $queue,
         ]);
 
-        SendRecipientFactory::createOne( [
+        SendRecipientFactory::createOne([
             'send' => $send,
             'address' => 'thibault@hyvor.com'
         ]);
@@ -231,6 +233,6 @@ class GetSendsTest extends WebTestCase
         $repository = $this->em->getRepository(Send::class);
         $sendDb = $repository->find($sendResponse['id']);
         $this->assertInstanceOf(Send::class, $sendDb);
-        $this->assertSame($send->getRecipients()[0]->getAddress(), $sendDb->getRecipients()[0]->getAddress());
+        $this->assertSame($send->getRecipients()[0]?->getAddress(), $sendDb->getRecipients()[0]?->getAddress());
     }
 }

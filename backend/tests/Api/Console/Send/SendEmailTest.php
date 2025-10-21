@@ -8,6 +8,7 @@ use App\Api\Console\Input\SendEmail\SendEmailInput;
 use App\Api\Console\Input\SendEmail\UnableToDecodeAttachmentBase64Exception;
 use App\Api\Console\Object\SendObject;
 use App\Entity\Send;
+use App\Entity\SendRecipient;
 use App\Entity\Type\DomainStatus;
 use App\Entity\Type\ProjectSendType;
 use App\Entity\Type\SendRecipientStatus;
@@ -439,6 +440,7 @@ class SendEmailTest extends WebTestCase
         $this->assertGreaterThan(1000, $send->getSizeBytes());
         $this->assertLessThan(2500, $send->getSizeBytes());
 
+        /** @var SendRecipient[] $recipients */
         $recipients = $send->getRecipients();
         $this->assertCount(1, $recipients);
         $recipient = $recipients[0];
@@ -555,6 +557,8 @@ class SendEmailTest extends WebTestCase
         $this->assertCount(1, $send);
 
         $send = $send[0];
+
+        /** @var SendRecipient[] $recipients */
         $recipients = $send->getRecipients();
 
         $this->assertCount(5, $recipients);
@@ -690,6 +694,7 @@ class SendEmailTest extends WebTestCase
         $recipients = $send->getRecipients();
 
         $this->assertCount(1, $recipients);
+        /** @var SendRecipient $recipient */
         $recipient = $recipients[0];
 
         $this->assertSame('test@example.com', $recipient->getAddress());

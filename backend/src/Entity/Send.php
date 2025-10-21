@@ -304,13 +304,11 @@ class Send
     }
 
     /**
-     * @return SendRecipient[]
+     * @return Collection<int, SendRecipient>
      */
-    public function getRecipients(): array
+    public function getRecipients(): Collection
     {
-        /** @var SendRecipient[] $recipients */
-        $recipients = $this->recipients->toArray();
-        return $recipients;
+        return $this->recipients;
     }
 
     public function addRecipient(SendRecipient $recipient): static

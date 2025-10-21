@@ -4,8 +4,14 @@ namespace App\Entity;
 
 use App\Entity\Type\SendAttemptStatus;
 use App\Repository\SendAttemptRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
+
+/**
+ * @phpstan-type RecipientResult array{recipient_id: int}
+ */
 #[ORM\Entity(repositoryClass: SendAttemptRepository::class)]
 #[ORM\Table(name: "send_attempts")]
 class SendAttempt
@@ -49,23 +55,18 @@ class SendAttempt
     #[ORM\Column(type: "json")]
     private array $smtp_conversations = [];
 
-    /** @var int[] */
-    #[ORM\Column(type: "json")]
-    private array $recipient_ids = [];
-
-
-    /** @var array<int, string> */
-    #[ORM\Column(type: "json")]
-    private array $recipient_statuses = [];
+    /**
+     * @var Collection<int, SendAttemptRecipient>
+     */
+    #[ORM\OneToMany(targetEntity: SendAttemptRecipient::class, mappedBy: 'send_attempt')]
+    private Collection $recipients;
 
     #[ORM\Column()]
     private int $duration_ms;
 
-    #[ORM\Column(type: "text", nullable: true)]
-    private ?string $error = null;
-
     public function __construct()
     {
+        $this->recipients = new ArrayCollection();
     }
 
     public function getId(): int
@@ -201,40 +202,6 @@ class SendAttempt
         return $this;
     }
 
-    /**
-     * @return int[]
-     */
-    public function getRecipientIds(): array
-    {
-        return $this->recipient_ids;
-    }
-
-    /**
-     * @param int[] $recipientIds
-     */
-    public function setRecipientIds(array $recipientIds): static
-    {
-        $this->recipient_ids = $recipientIds;
-        return $this;
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    public function getRecipientStatuses(): array
-    {
-        return $this->recipient_statuses;
-    }
-
-    /**
-     * @param array<int, string> $recipientStatuses
-     */
-    public function setRecipientStatuses(array $recipientStatuses): static
-    {
-        $this->recipient_statuses = $recipientStatuses;
-        return $this;
-    }
-
     public function getDurationMs(): int
     {
         return $this->duration_ms;
@@ -246,14 +213,28 @@ class SendAttempt
         return $this;
     }
 
-    public function getError(): ?string
+    /**
+     * @return Collection<int, SendAttemptRecipient>
+     */
+    public function getRecipients(): Collection
     {
-        return $this->error;
+        return $this->recipients;
     }
 
-    public function setError(?string $error): static
+    public function addRecipient(SendAttemptRecipient $recipient): static
     {
-        $this->error = $error;
+        if (!$this->recipients->contains($recipient)) {
+            $this->recipients->add($recipient);
+            $recipient->setSendAttempt($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRecipient(SendAttemptRecipient $recipient): static
+    {
+        $this->recipients->removeElement($recipient);
+
         return $this;
     }
 }

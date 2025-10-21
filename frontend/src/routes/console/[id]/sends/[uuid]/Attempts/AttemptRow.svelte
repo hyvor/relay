@@ -45,7 +45,7 @@
 				Message accepted by {attempt.responded_mx_host}
 			{:else if attempt.status === 'bounced'}
 				<span class="error">
-					{attempt.error || 'No error message'}
+					Message bounced by {attempt.responded_mx_host}
 				</span>
 			{:else if attempt.status === 'partial'}
 				<span class="info">
