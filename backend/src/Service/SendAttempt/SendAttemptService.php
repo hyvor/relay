@@ -18,7 +18,6 @@ class SendAttemptService
     public function __construct(
         private EntityManagerInterface $em,
         private EventDispatcherInterface $ed,
-        private SendRecipientService $sendRecipientService,
         private SuppressionService $suppressionService,
     ) {
     }
@@ -38,23 +37,24 @@ class SendAttemptService
 
     /**
      * Send attempt was created from Go, then, /send-attempts/done was called
-     * Now handle any side effects
+     * Now handle any side effects such as suppressions
      */
     public function handleAfterSendAttempt(SendAttempt $sendAttempt): void
     {
+        $sendRecipients = $sendAttempt->getSend()->getRecipients();
+
         foreach ($sendAttempt->getRecipients() as $attemptRecipient) {
             $parser = SmtpResponseParser::fromAttemptRecipient($attemptRecipient);
-        }
+            $sendRecipient = $sendRecipients->findFirst(
+                fn($i, $r) => $r->getId() === $attemptRecipient->getSendRecipientId()
+            );
 
-        if ($sendAttempt->getStatus() === SendAttemptStatus::BOUNCED) {
-            $recipients = $this->sendRecipientService->getSendRecipientsBySendAttempt($sendAttempt);
-
-            foreach ($recipients as $recipient) {
+            if ($sendRecipient && $parser->isRecipientBounce()) {
                 $this->suppressionService->createSuppression(
                     $sendAttempt->getSend()->getProject(),
-                    $recipient->getAddress(),
+                    $sendRecipient->getAddress(),
                     SuppressionReason::BOUNCE,
-                    $sendAttempt->getError() ?? ''
+                    $parser->getFullMessage()
                 );
             }
         }

@@ -48,7 +48,7 @@ class SendAttemptDoneTest extends WebTestCase
         $eventDispatcher->assertDispatchedCount(SendAttemptCreatedEvent::class, 2);
     }
 
-    public function test_creates_suppression_if_the_attempt_bounces(): void
+    public function test_creates_suppression_for_recipient_bounces(): void
     {
         $project = ProjectFactory::createOne();
         $send = SendFactory::createOne([
@@ -81,6 +81,7 @@ class SendAttemptDoneTest extends WebTestCase
             'status' => SendAttemptStatus::BOUNCED,
         ]);
 
+        // recipient bounce
         SendAttemptRecipientFactory::createOne([
             'send_attempt' => $attempt1,
             'send_recipient_id' => $recipient1->getId(),
@@ -90,12 +91,13 @@ class SendAttemptDoneTest extends WebTestCase
             'smtp_message' => 'User unknown',
         ]);
 
+        // infra bounce
         SendAttemptRecipientFactory::createOne([
             'send_attempt' => $attempt1,
             'send_recipient_id' => $recipient2->getId(),
             'recipient_status' => SendRecipientStatus::BOUNCED,
             'smtp_code' => 550,
-            'smtp_enhanced_code' => '5.1.1',
+            'smtp_enhanced_code' => '5.7.1',
             'smtp_message' => 'User unknown',
         ]);
 
@@ -112,12 +114,9 @@ class SendAttemptDoneTest extends WebTestCase
             ->getRepository(Suppression::class)
             ->findBy(['project' => $project->getId()]);
 
-        $this->assertCount(2, $suppressions);
+        $this->assertCount(1, $suppressions);
 
         $this->assertSame('one@hyvor.com', $suppressions[0]->getEmail());
         $this->assertSame('550 5.1.1 User unknown', $suppressions[0]->getDescription());
-
-        $this->assertSame('two@hyvor.com', $suppressions[1]->getEmail());
-        $this->assertSame('550 5.1.1 User unknown', $suppressions[1]->getDescription());
     }
 }

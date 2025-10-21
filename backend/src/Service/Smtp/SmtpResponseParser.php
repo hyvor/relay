@@ -6,9 +6,7 @@ use App\Entity\SendAttemptRecipient;
 
 /**
  * Most of this is based on https://smtpfieldmanual.com/
- *
- * Reviewed and supported providers:
- * - Apple
+ * See /hosting/providers
  */
 class SmtpResponseParser
 {
