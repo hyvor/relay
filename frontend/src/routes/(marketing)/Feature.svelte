@@ -1,15 +1,22 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
+	import type {Component, Snippet} from 'svelte';
 
 	interface Props {
 		title: string;
 		children: Snippet;
+		icon?: Component;
 	}
 
-	let { title, children }: Props = $props();
+	let { title, children, icon }: Props = $props();
 </script>
 
-<div>
+<div class="feature">
+	<div class="icon">
+		{#if icon}
+			<svelte:component this={icon} size={48} />
+		{/if}
+	</div>
+
 	<div class="title">
 		{title}
 	</div>
@@ -25,6 +32,7 @@
 		line-height: 28px;
 		margin-top: 0;
 		margin-bottom: 8px;
+		font-weight: 600;
 	}
 
 	.content {
@@ -32,5 +40,11 @@
 		line-height: 24px;
 		margin-top: 0;
 		margin-bottom: 24px;
+	}
+
+	.icon {
+		margin-bottom: 15px;
+		width: 40px;
+		height: 40px;
 	}
 </style>
