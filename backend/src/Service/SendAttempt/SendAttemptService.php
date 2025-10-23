@@ -19,6 +19,7 @@ class SendAttemptService
         private EntityManagerInterface $em,
         private EventDispatcherInterface $ed,
         private SuppressionService $suppressionService,
+        private SendRecipientService $sendRecipientService,
     ) {
     }
 
@@ -41,12 +42,11 @@ class SendAttemptService
      */
     public function handleAfterSendAttempt(SendAttempt $sendAttempt): void
     {
-        $sendRecipients = $sendAttempt->getSend()->getRecipients();
-
         foreach ($sendAttempt->getRecipients() as $attemptRecipient) {
             $parser = SmtpResponseParser::fromAttemptRecipient($attemptRecipient);
-            $sendRecipient = $sendRecipients->findFirst(
-                fn($i, $r) => $r->getId() === $attemptRecipient->getSendRecipientId()
+            $sendRecipient = $this->sendRecipientService->getRecipientFromSendAndAttemptRecipient(
+                $sendAttempt->getSend(),
+                $attemptRecipient
             );
 
             if ($sendRecipient && $parser->isRecipientBounce()) {

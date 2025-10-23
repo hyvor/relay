@@ -27,6 +27,7 @@ use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\SendAttemptFactory;
+use App\Tests\Factory\SendAttemptRecipientFactory;
 use App\Tests\Factory\SendFactory;
 use App\Tests\Factory\SendRecipientFactory;
 use App\Tests\Factory\SuppressionFactory;
@@ -152,9 +153,12 @@ class WebhookEventListenerTest extends KernelTestCase
 
         $attempt = SendAttemptFactory::createOne([
             'send' => $send,
-            'recipient_results' => [
-                ['recipient_id' => $recipient->getId()]
-            ],
+        ]);
+
+        SendAttemptRecipientFactory::createOne([
+            'send_attempt' => $attempt,
+            'recipient_status' => $sendRecipientStatus,
+            'send_recipient_id' => $recipient->getId(),
         ]);
 
         $this->ed->dispatch(new SendAttemptCreatedEvent($attempt));

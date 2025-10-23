@@ -25,4 +25,20 @@ class SendRecipientService
                 'address' => $email
             ]);
     }
+
+    public function getRecipientFromSendAndAttemptRecipient(
+        Send $send,
+        SendAttemptRecipient $attemptRecipient
+    ): ?SendRecipient {
+        $sendRecipients = $send->getRecipients();
+
+        foreach ($sendRecipients as $sendRecipient) {
+            if ($sendRecipient->getId() === $attemptRecipient->getSendRecipientId()) {
+                return $sendRecipient;
+            }
+        }
+
+        return null;
+    }
+
 }
