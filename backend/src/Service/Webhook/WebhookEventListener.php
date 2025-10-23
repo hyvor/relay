@@ -8,7 +8,6 @@ use App\Api\Console\Object\SendObject;
 use App\Api\Console\Object\SendRecipientObject;
 use App\Api\Console\Object\SuppressionObject;
 use App\Entity\Project;
-use App\Entity\Type\SendAttemptStatus;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\WebhooksEventEnum;
 use App\Service\Domain\Event\DomainCreatedEvent;
@@ -64,11 +63,9 @@ class WebhookEventListener
 
         $send = $attempt->getSend();
         $project = $send->getProject();
-        // TODO:
-        $recipients = $this->sendRecipientService->getSendRecipientsBySendAttempt($attempt);
 
-        foreach ($recipients as $recipient) {
-            $event = match ($recipient->getStatus()) {
+        foreach ($attempt->getRecipients() as $attemptRecipient) {
+            $event = match ($attemptRecipient->getRecipientStatus()) {
                 SendRecipientStatus::ACCEPTED => WebhooksEventEnum::SEND_RECIPIENT_ACCEPTED,
                 SendRecipientStatus::DEFERRED => WebhooksEventEnum::SEND_RECIPIENT_DEFERRED,
                 SendRecipientStatus::BOUNCED => WebhooksEventEnum::SEND_RECIPIENT_BOUNCED,
@@ -80,13 +77,22 @@ class WebhookEventListener
                 continue;
             }
 
+            $sendRecipient = $this->sendRecipientService->getRecipientFromSendAndAttemptRecipient(
+                $send,
+                $attemptRecipient
+            );
+
+            if ($sendRecipient === null) {
+                continue; // generally should not happen
+            }
+
             $this->createWebhookDelivery(
                 $project,
                 $event,
-                function () use ($send, $attempt, $recipient) {
+                function () use ($send, $attempt, $sendRecipient) {
                     return (object)[
                         'send' => new SendObject($send),
-                        'recipient' => new SendRecipientObject($recipient),
+                        'recipient' => new SendRecipientObject($sendRecipient),
                         'attempt' => new SendAttemptObject($attempt),
                     ];
                 }

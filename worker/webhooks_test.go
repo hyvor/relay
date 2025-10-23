@@ -269,7 +269,7 @@ func (suite *WebhookWorkerTestSuite) TestWebhookDeliveryWithSignatureHeader() {
 	suite.NoError(err, "Failed to create test factory")
 
 	testSignature := "sha256=test-signature-value"
-	deliveryId, err := factory.WebhookDeliveryWithSignature(server.URL+"/webhook", `{"key": "value"}`, 0, &testSignature)
+	deliveryId, err := factory.WebhookDeliveryWithSignature(server.URL+"/webhook", `{"key": "value"}`, 0, testSignature)
 	suite.NoError(err, "Failed to create webhook delivery with signature")
 
 	var wg sync.WaitGroup
