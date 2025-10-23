@@ -281,12 +281,12 @@ type FactorySendAttempt struct {
 }
 
 type FactorySendAttemptRecipientResult struct {
-	Id int
-	RecipientId int
-	Status string
-	SmtpCode int
+	Id               int
+	RecipientId      int
+	Status           string
+	SmtpCode         int
 	SmtpEnhancedCode string
-	SmtpMessage string
+	SmtpMessage      string
 }
 
 func (f *TestFactory) GetSendAttemptById(id int) (*FactorySendAttempt, error) {
@@ -399,14 +399,14 @@ func (f *TestFactory) WebhookDelivery(
 	requestBody string,
 	tryCount int,
 ) (int, error) {
-	return f.WebhookDeliveryWithSignature(url, requestBody, tryCount, nil)
+	return f.WebhookDeliveryWithSignature(url, requestBody, tryCount, "nil")
 }
 
 func (f *TestFactory) WebhookDeliveryWithSignature(
 	url string,
 	requestBody string,
 	tryCount int,
-	signature *string,
+	signature string,
 ) (int, error) {
 	now := time.Now()
 
