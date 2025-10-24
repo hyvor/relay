@@ -3,6 +3,7 @@
 namespace App\Tests\Service\Management\ServerTasks;
 
 use App\Entity\ServerTask;
+use App\Service\Go\GoHttpApi;
 use App\Service\Management\Message\ServerTaskMessage;
 use App\Service\Management\MessageHandler\ServerTaskMessageHandler;
 use App\Tests\Case\KernelTestCase;
@@ -15,6 +16,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[CoversClass(ServerTaskMessage::class)]
 #[CoversClass(ServerTaskMessageHandler::class)]
+#[CoversClass(GoHttpApi::class)]
 class UpdateStateTest extends KernelTestCase
 {
     public function test_update_state_using_server_tasks(): void

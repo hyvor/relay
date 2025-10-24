@@ -37,4 +37,14 @@ trait TestSharedTrait
         return $bus;
     }
 
+    /**
+     * @template T of object
+     * @param class-string<T> $serviceId
+     * @return T
+     */
+    public function getService(string $serviceId): mixed
+    {
+        return $this->container->get($serviceId);
+    }
+
 }

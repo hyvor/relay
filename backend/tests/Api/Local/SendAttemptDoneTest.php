@@ -9,6 +9,8 @@ use App\Entity\Type\SendRecipientStatus;
 use App\Service\Send\SendService;
 use App\Service\SendAttempt\Event\SendAttemptCreatedEvent;
 use App\Service\SendAttempt\SendAttemptService;
+use App\Service\Suppression\Event\SuppressionCreatedEvent;
+use App\Service\Suppression\SuppressionService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\SendAttemptFactory;
@@ -21,6 +23,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(LocalController::class)]
 #[CoversClass(SendService::class)]
 #[CoversClass(SendAttemptService::class)]
+#[CoversClass(SuppressionCreatedEvent::class)]
+#[CoversClass(SuppressionService::class)]
 class SendAttemptDoneTest extends WebTestCase
 {
 
@@ -50,6 +54,8 @@ class SendAttemptDoneTest extends WebTestCase
 
     public function test_creates_suppression_for_recipient_bounces(): void
     {
+        $eventDispatcher = TestEventDispatcher::enable($this->container);
+
         $project = ProjectFactory::createOne();
         $send = SendFactory::createOne([
             'project' => $project,
@@ -118,5 +124,7 @@ class SendAttemptDoneTest extends WebTestCase
 
         $this->assertSame('one@hyvor.com', $suppressions[0]->getEmail());
         $this->assertSame('550 5.1.1 User unknown', $suppressions[0]->getDescription());
+
+        $eventDispatcher->assertDispatched(SuppressionCreatedEvent::class);
     }
 }

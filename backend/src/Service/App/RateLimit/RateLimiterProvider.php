@@ -2,7 +2,6 @@
 
 namespace App\Service\App\RateLimit;
 
-use Illuminate\Support\Facades\RateLimiter;
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\RateLimiter\LimiterInterface;
@@ -15,8 +14,7 @@ class RateLimiterProvider
     public function __construct(
         private LockFactory $lockFactory,
         private CacheItemPoolInterface $cacheItemPool,
-    )
-    {
+    ) {
     }
 
     /**

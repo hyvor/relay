@@ -11,6 +11,11 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
+/**
+ * @codeCoverageIgnore
+ * Code coverage ignored since this is temporary
+ * Other Cloud code should be covered
+ */
 #[AsEventListener(event: ProjectCreatingEvent::class, method: 'onProjectCreation')]
 class ProjectListener
 {

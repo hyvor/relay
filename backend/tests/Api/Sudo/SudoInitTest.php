@@ -3,12 +3,14 @@
 namespace App\Tests\Api\Sudo;
 
 use App\Api\Sudo\Controller\SudoController;
+use App\Service\Blacklist\IpBlacklist;
 use App\Service\Blacklist\IpBlacklists;
 use App\Tests\Case\WebTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(SudoController::class)]
 #[CoversClass(IpBlacklists::class)]
+#[CoversClass(IpBlacklist::class)]
 class SudoInitTest extends WebTestCase
 {
 

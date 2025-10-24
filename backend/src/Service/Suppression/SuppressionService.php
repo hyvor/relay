@@ -61,13 +61,13 @@ class SuppressionService
         return new ArrayCollection($results);
     }
 
-    public function isSuppressed(Project $project, string $email): bool
+    /*public function isSuppressed(Project $project, string $email): bool
     {
         return $this->suppressionRepository->findOneBy([
                 'project' => $project,
                 'email' => $email
             ]) !== null;
-    }
+    }*/
 
     /**
      * @param Project $project
