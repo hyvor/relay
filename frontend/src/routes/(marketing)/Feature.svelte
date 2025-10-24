@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type {Component, Snippet} from 'svelte';
+	import type { Component, Snippet } from 'svelte';
 
 	interface Props {
 		title: string;
@@ -28,22 +28,22 @@
 
 <style>
 	.title {
-		font-size: 20px;
+		font-size: 22px;
 		line-height: 28px;
 		margin-top: 0;
-		margin-bottom: 8px;
+		margin-bottom: 12px;
 		font-weight: 600;
 	}
 
 	.content {
-		font-size: 16px;
-		line-height: 24px;
+		font-size: 18px;
+		line-height: 28px;
 		margin-top: 0;
 		margin-bottom: 24px;
 	}
 
 	.icon {
-		margin-bottom: 15px;
+		margin-bottom: 25px;
 		width: 40px;
 		height: 40px;
 	}

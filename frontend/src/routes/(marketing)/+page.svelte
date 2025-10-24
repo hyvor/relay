@@ -5,6 +5,7 @@
 	import IconCode from '@hyvor/icons/IconCode';
 	import IconHouse from '@hyvor/icons/IconHouse';
 	import Features from './Features.svelte';
+	import Pricing from './Pricing.svelte';
 </script>
 
 <svelte:head>
@@ -36,11 +37,12 @@
 
 			<div class="button-wrap">
 				<Tooltip
-						text="Cloud public release is planned for 2026. You can self-host Hyvor Relay now."
+					text="Cloud public release is planned for 2026. You can self-host Hyvor Relay now."
 				>
 					<Button disabled size="large">Sign up</Button>
 				</Tooltip>
-				<Button as="a" href="/hosting" size="large" variant="outline">Start Self-Hosting</Button
+				<Button as="a" href="/hosting" size="large" variant="outline"
+					>Start Self-Hosting</Button
 				>
 				<Button as="a" href="/docs" size="large" variant="outline">Product Docs</Button>
 			</div>
@@ -51,10 +53,12 @@
 			<hyvor-talk-newsletter website-id="14370"></hyvor-talk-newsletter>
 		</div>
 	</section>
-	<Features />
-	<FAQ />
 	<!-- <Letter /> -->
 </div>
+
+<Pricing />
+<Features />
+<FAQ />
 
 <style>
 	section {
@@ -68,7 +72,7 @@
 		width: 65%;
 	}
 
-	.left .button-wrap{
+	.left .button-wrap {
 		margin-top: 20px;
 		display: block;
 	}
@@ -92,10 +96,6 @@
 		margin-top: 12px;
 		margin-bottom: 18px;
 		color: var(--text-light);
-	}
-
-	.wrap {
-		padding-bottom: 100px;
 	}
 
 	.tags {
