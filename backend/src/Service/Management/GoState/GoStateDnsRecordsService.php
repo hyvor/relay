@@ -23,7 +23,7 @@ class GoStateDnsRecordsService
     /**
      * @return GoStateDnsRecord[]
      */
-    public function getDnsRecords(Instance $instance): array
+    public function getDnsRecords(Instance $instance, bool $custom = true): array
     {
         /** @var GoStateDnsRecord[] $records */
         $records = [];
@@ -83,17 +83,19 @@ class GoStateDnsRecordsService
         );
 
         // 6. Custom DNS records
-        $customDnsRecords = $this->dnsRecordService->getAllDnsRecords();
-        foreach ($customDnsRecords as $dnsRecord) {
-            $records[] = new GoStateDnsRecord(
-                type: $dnsRecord->getType(),
-                host: $dnsRecord->getSubdomain() ?
-                    $dnsRecord->getSubdomain() . '.' . $instance->getDomain() :
-                    $instance->getDomain(),
-                content: $dnsRecord->getContent(),
-                ttl: $dnsRecord->getTtl(),
-                priority: $dnsRecord->getPriority()
-            );
+        if ($custom) {
+            $customDnsRecords = $this->dnsRecordService->getAllDnsRecords();
+            foreach ($customDnsRecords as $dnsRecord) {
+                $records[] = new GoStateDnsRecord(
+                    type: $dnsRecord->getType(),
+                    host: $dnsRecord->getSubdomain() ?
+                        $dnsRecord->getSubdomain() . '.' . $instance->getDomain() :
+                        $instance->getDomain(),
+                    content: $dnsRecord->getContent(),
+                    ttl: $dnsRecord->getTtl(),
+                    priority: $dnsRecord->getPriority()
+                );
+            }
         }
 
         return $records;

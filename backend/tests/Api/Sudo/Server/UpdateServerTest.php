@@ -21,7 +21,6 @@ class UpdateServerTest extends WebTestCase
 
     public function test_update_server_api_workers(): void
     {
-
         $mockResponse = new JsonMockResponse();
         $this->container->set(HttpClientInterface::class, new MockHttpClient($mockResponse));
 
@@ -31,13 +30,15 @@ class UpdateServerTest extends WebTestCase
             'api_workers' => 5,
             'email_workers' => 3,
             'webhook_workers' => 2,
+            'incoming_workers' => 4
         ]);
 
         // Make request to update api workers
         $this->sudoApi('PATCH', '/servers/' . $server->getId(), [
             'api_workers' => 10,
             'email_workers' => 4,
-            'webhook_workers' => 1
+            'webhook_workers' => 1,
+            'incoming_workers' => 5
         ]);
 
         // Assert response
@@ -55,9 +56,11 @@ class UpdateServerTest extends WebTestCase
         $this->assertEquals(10, $response['api_workers']);
         $this->assertEquals(4, $response['email_workers']); // unchanged
         $this->assertEquals(1, $response['webhook_workers']); // unchanged
+        $this->assertEquals(5, $response['incoming_workers']);
 
         // Assert task has been created into DB
-        $taskServer = $this->em->getRepository(ServerTask::class)->findOneBy(['server' => $server->_real()])?->getServer();
+        $taskServer = $this->em->getRepository(ServerTask::class)->findOneBy(['server' => $server->_real()]
+        )?->getServer();
         $this->assertSame($server->getId(), $taskServer?->getId());
     }
 

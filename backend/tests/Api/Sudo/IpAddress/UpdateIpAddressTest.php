@@ -21,6 +21,23 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(QueueService::class)]
 class UpdateIpAddressTest extends WebTestCase
 {
+
+    public function test_when_ip_address_not_found(): void
+    {
+        $this->sudoApi(
+            'PATCH',
+            '/ip-addresses/99999',
+            [
+                'queue_id' => 1,
+            ],
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+
+        $response = $this->getJson();
+        $this->assertEquals("IP address with ID '99999' does not exist.", $response['message']);
+    }
+
     public function test_update_ip_address_queue(): void
     {
         $ipAddress = IpAddressFactory::createOne();

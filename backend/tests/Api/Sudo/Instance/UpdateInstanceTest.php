@@ -4,6 +4,7 @@ namespace App\Tests\Api\Sudo\Instance;
 
 use App\Api\Sudo\Controller\InstanceController;
 use App\Api\Sudo\Input\UpdateInstanceInput;
+use App\Api\Sudo\Object\InstanceObject;
 use App\Entity\ServerTask;
 use App\Entity\Type\ServerTaskType;
 use App\Service\Instance\Dto\UpdateInstanceDto;
@@ -18,6 +19,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(UpdateInstanceInput::class)]
 #[CoversClass(InstanceService::class)]
 #[CoversClass(UpdateInstanceDto::class)]
+#[CoversClass(InstanceObject::class)]
 class UpdateInstanceTest extends WebTestCase
 {
 

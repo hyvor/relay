@@ -94,13 +94,12 @@ class ManagementService
         $lock->acquire(true);
 
         $hasDefaultQueues = $this->queueService->hasDefaultQueues();
-        if ($hasDefaultQueues) {
-            return;
+        if ($hasDefaultQueues === false) {
+            $this->output->writeln('<info>Creating default queues...</info>');
+            $this->queueService->createDefaultQueues();
+            $this->output->writeln('<info>Default queues created successfully.</info>');
         }
 
-        $this->output->writeln('<info>Creating default queues...</info>');
-        $this->queueService->createDefaultQueues();
-        $this->output->writeln('<info>Default queues created successfully.</info>');
 
         $lock->release();
     }

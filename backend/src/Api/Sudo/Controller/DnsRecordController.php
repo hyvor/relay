@@ -4,10 +4,13 @@ namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Input\CreateDnsRecordInput;
 use App\Api\Sudo\Input\UpdateDnsRecordInput;
+use App\Api\Sudo\Object\DefaultDnsRecordObject;
 use App\Api\Sudo\Object\DnsRecordObject;
 use App\Service\Dns\Dto\CreateDnsRecordDto;
 use App\Service\Dns\Dto\UpdateDnsRecordDto;
 use App\Service\Dns\DnsRecordService;
+use App\Service\Instance\InstanceService;
+use App\Service\Management\GoState\GoStateDnsRecordsService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -18,7 +21,20 @@ class DnsRecordController extends AbstractController
 {
     public function __construct(
         private DnsRecordService $dnsRecordService,
+        private InstanceService $instanceService,
+        private GoStateDnsRecordsService $goStateDnsRecordsService
     ) {
+    }
+
+    #[Route('/dns-records/default', methods: 'GET')]
+    public function getDefaultDns(): JsonResponse
+    {
+        $instance = $this->instanceService->getInstance();
+        $dnsRecords = $this->goStateDnsRecordsService->getDnsRecords($instance, custom: false);
+
+        return new JsonResponse(
+            array_map(fn($record) => new DefaultDnsRecordObject($record), $dnsRecords)
+        );
     }
 
     #[Route('/dns-records', methods: ['GET'])]
@@ -97,6 +113,6 @@ class DnsRecordController extends AbstractController
 
         $this->dnsRecordService->deleteDnsRecord($dnsRecord);
 
-        return new JsonResponse();
+        return new JsonResponse(status: 204);
     }
 }
