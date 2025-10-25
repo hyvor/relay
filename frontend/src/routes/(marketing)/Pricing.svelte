@@ -90,7 +90,7 @@
 
 	.main-title {
 		padding: 16px 20px;
-		font-size: 16px;
+		font-size: 20px;
 		font-weight: 600;
 		color: var(--accent-text);
 		background-color: var(--accent);
