@@ -83,10 +83,6 @@ class WebhookEventListener
                 $attemptRecipient
             );
 
-            if ($sendRecipient === null) {
-                continue; // @codeCoverageIgnore
-            }
-
             $this->createWebhookDelivery(
                 $project,
                 $event,
