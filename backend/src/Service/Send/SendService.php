@@ -78,12 +78,6 @@ class SendService
         return new ArrayCollection($results);
     }
 
-
-    public function getSendById(int $id): ?Send
-    {
-        return $this->em->getRepository(Send::class)->find($id);
-    }
-
     public function getSendByUuid(string $uuid): ?Send
     {
         return $this->em->getRepository(Send::class)->findOneBy(['uuid' => $uuid]);

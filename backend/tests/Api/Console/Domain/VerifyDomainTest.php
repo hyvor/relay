@@ -9,6 +9,7 @@ use App\Entity\Type\DomainStatus;
 use App\Service\Domain\DkimVerificationResult;
 use App\Service\Domain\DkimVerificationService;
 use App\Service\Domain\DomainService;
+use App\Service\Domain\DomainStatusService;
 use App\Service\Domain\Event\DomainStatusChangedEvent;
 use App\Service\Domain\Exception\DkimVerificationFailedException;
 use App\Tests\Case\WebTestCase;
@@ -24,8 +25,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 #[CoversClass(DomainController::class)]
 #[CoversClass(DomainService::class)]
+#[CoversClass(DomainStatusService::class)]
 #[CoversClass(DomainObject::class)]
 #[CoversClass(DomainStatusChangedEvent::class)]
+#[CoversClass(DkimVerificationResult::class)]
 class VerifyDomainTest extends WebTestCase
 {
     private MockObject&DkimVerificationService $dkimVerificationService;

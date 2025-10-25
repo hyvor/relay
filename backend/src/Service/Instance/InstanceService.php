@@ -44,11 +44,13 @@ class InstanceService
         $instance = $this->tryGetInstance();
 
         if ($instance === null) {
+            // @codeCoverageIgnoreStart
+
             // this should generally not happen in production
             // useful for tests also
             $instance = $this->createInstance();
-
             $this->logger->critical('Instance not found, created a new one. This should not happen in production.');
+            // @codeCoverageIgnoreEnd
         }
 
         return $instance;

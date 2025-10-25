@@ -2,6 +2,10 @@
 
 namespace App\Service\Dns\Resolve;
 
+/**
+ * @codeCoverageIgnore
+ * @deprecated DNS over DNS is not implemented yet. Use DnsOverHttp
+ */
 class DnsOverDns implements DnsResolveInterface
 {
 

@@ -65,10 +65,9 @@ services:
       GO_SYMFONY_URL: http://hyvor-relay-backend
       # OUTGOING_SMTP_PORT: ":587"
     networks:
-      - hyvor-network
-    ports:
-      - "10025:25"
-      - "5353:53/udp"
+      hyvor-network:
+        aliases:
+          - relay.hyvor.localhost # so that simulator can reach the worker
     logging:
       driver: loki
       options:

@@ -3,6 +3,7 @@
 namespace App\Tests\Service\Management\Health;
 
 use App\Entity\IpAddress;
+use App\Service\Ip\Ptr;
 use App\Service\Management\Health\AllActiveIpsHaveCorrectPtrHealthCheck;
 use App\Service\Ip\IpAddressService;
 use App\Tests\Case\KernelTestCase;
@@ -16,25 +17,27 @@ use PHPUnit\Framework\MockObject\MockObject;
 class AllActiveIpsHaveCorrectPtrHealthCheckTest extends KernelTestCase
 {
     private AllActiveIpsHaveCorrectPtrHealthCheck $healthCheck;
-    private IpAddressService&MockObject $ipAddressService;
+    private Ptr&MockObject $ptr;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->ipAddressService = $this->createMock(IpAddressService::class);
+        $this->ptr = $this->createMock(Ptr::class);
+
+        $this->container->set(Ptr::class, $this->ptr);
+        $ipAddressService = $this->getService(IpAddressService::class);
 
         $this->healthCheck = new AllActiveIpsHaveCorrectPtrHealthCheck(
             $this->em,
-            $this->ipAddressService
+            $ipAddressService
         );
     }
 
     public function testCheckReturnsTrueWhenNoActiveIpsExist(): void
     {
-        $this->ipAddressService->expects($this->never())
-            ->method('updateIpPtrValidity');
-
+        $this->ptr->expects($this->never())
+            ->method('validate');
 
         $result = $this->healthCheck->check();
 
@@ -50,12 +53,11 @@ class AllActiveIpsHaveCorrectPtrHealthCheckTest extends KernelTestCase
             'is_ptr_reverse_valid' => true,
         ]);
 
-        $this->ipAddressService->method('updateIpPtrValidity')
-            ->willReturnCallback(function ($ip) {
-                $this->assertInstanceOf(IpAddress::class, $ip);
-                $ip->setIsPtrForwardValid(true);
-                $ip->setIsPtrReverseValid(true);
-            });
+        $this->ptr->method('validate')
+            ->willReturn([
+                'forward' => true,
+                'reverse' => true,
+            ]);
 
         $result = $this->healthCheck->check();
 
@@ -77,12 +79,11 @@ class AllActiveIpsHaveCorrectPtrHealthCheckTest extends KernelTestCase
             'is_ptr_reverse_valid' => false,
         ]);
 
-        $this->ipAddressService->method('updateIpPtrValidity')
-            ->willReturnCallback(function ($ip) {
-                $this->assertInstanceOf(IpAddress::class, $ip);
-                $ip->setIsPtrForwardValid(false);
-                $ip->setIsPtrReverseValid(false);
-            });
+        $this->ptr->method('validate')
+            ->willReturn([
+                'forward' => false,
+                'reverse' => false,
+            ]);
 
         $result = $this->healthCheck->check();
 

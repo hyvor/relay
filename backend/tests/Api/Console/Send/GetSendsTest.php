@@ -235,4 +235,38 @@ class GetSendsTest extends WebTestCase
         $this->assertInstanceOf(Send::class, $sendDb);
         $this->assertSame($send->getRecipients()[0]?->getAddress(), $sendDb->getRecipients()[0]?->getAddress());
     }
+
+    public function test_with_subject_search(): void
+    {
+        $project = ProjectFactory::createOne();
+        $domain = DomainFactory::createOne();
+        $queue = QueueFactory::createOne();
+
+        $sends = SendFactory::createMany(3, [
+            'project' => $project,
+            'domain' => $domain,
+            'queue' => $queue,
+            'subject' => 'Hello World'
+        ]);
+
+        $sendsOther = SendFactory::createMany(2, [
+            'project' => $project,
+            'domain' => $domain,
+            'queue' => $queue,
+            'subject' => 'Goodbye World'
+        ]);
+
+        $response = $this->consoleApi(
+            $project,
+            'GET',
+            '/sends?subject_search=Hello'
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+        /** @var array<int, array<string, mixed>> $json */
+        $json = $this->getJson();
+        $this->assertCount(3, $json);
+        $send = $json[0];
+        $this->assertSame("Hello World", $send['subject']);
+    }
 }

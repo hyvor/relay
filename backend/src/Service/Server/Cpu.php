@@ -13,7 +13,9 @@ class Cpu
             return (int)trim($cpuCores);
         }
 
+        // @codeCoverageIgnoreStart
         return 1;
+        // @codeCoverageIgnoreEnd
     }
 
 }

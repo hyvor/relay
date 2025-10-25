@@ -15,6 +15,9 @@ readonly class IpAddressUpdatedEvent
     ) {
     }
 
+    /**
+     * @codeCoverageIgnore
+     */
     public function getIpAddressOld(): IpAddress
     {
         return $this->ipAddressOld;

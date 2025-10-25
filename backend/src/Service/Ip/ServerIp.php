@@ -62,7 +62,7 @@ class ServerIp
         $interfaces = call_user_func($this->netGetInterfacesFunction);
 
         if (!is_array($interfaces)) {
-            return [];
+            return []; // @codeCoverageIgnore
         }
 
         foreach ($interfaces as $interface) {
@@ -71,7 +71,7 @@ class ServerIp
             }
 
             if (!isset($interface['unicast']) || !is_array($interface['unicast'])) {
-                continue;
+                continue; // @codeCoverageIgnore
             }
 
             $unicast = $interface['unicast'];

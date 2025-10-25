@@ -1,132 +1,143 @@
 import sudoApi from './sudoApi';
-import { instanceStore, serversStore } from './sudoStore';
-import type { IpAddress, Queue, Server, SudoInitResponse, HealthCheckResults, Instance, DnsRecord, DefaultDnsRecord, DnsRecordType, DebugIncomingEmail } from './sudoTypes';
+import {instanceStore, serversStore} from './sudoStore';
+import type {
+    IpAddress,
+    Queue,
+    Server,
+    SudoInitResponse,
+    HealthCheckResults,
+    Instance,
+    DnsRecord,
+    DefaultDnsRecord,
+    DnsRecordType,
+    DebugIncomingEmail
+} from './sudoTypes';
 
 export function initSudo() {
-	return sudoApi.post<SudoInitResponse>({
-		endpoint: '/init'
-	})
+    return sudoApi.post<SudoInitResponse>({
+        endpoint: '/init'
+    })
 }
 
 export async function updateInstance(updates: { domain?: string }) {
-	const response = await sudoApi.patch<Instance>({
-		endpoint: '/instance',
-		data: updates
-	});
+    const response = await sudoApi.patch<Instance>({
+        endpoint: '/instance',
+        data: updates
+    });
 
-	instanceStore.set(response);
+    instanceStore.set(response);
 
-	return response;
+    return response;
 }
 
 export function getServers() {
-	return sudoApi.get<Server[]>({
-		endpoint: '/servers'
-	});
+    return sudoApi.get<Server[]>({
+        endpoint: '/servers'
+    });
 }
 
 export async function updateServer(serverId: number, updates: Partial<Server>) {
-	const response = await sudoApi.patch<Server>({
-		endpoint: `/servers/${serverId}`,
-		data: updates
-	});
+    const response = await sudoApi.patch<Server>({
+        endpoint: `/servers/${serverId}`,
+        data: updates
+    });
 
-	serversStore.update(servers => servers.map(server => server.id === serverId ? response : server));
+    serversStore.update(servers => servers.map(server => server.id === serverId ? response : server));
 
-	return response;
+    return response;
 }
 
 export function getIpAddresses() {
-	return sudoApi.get<IpAddress[]>({
-		endpoint: '/ip-addresses'
-	});
+    return sudoApi.get<IpAddress[]>({
+        endpoint: '/ip-addresses'
+    });
 }
 
 export function getQueues() {
-	return sudoApi.get<Queue[]>({
-		endpoint: '/queues'
-	});
+    return sudoApi.get<Queue[]>({
+        endpoint: '/queues'
+    });
 }
 
 export function updateIpAddress(ipId: number, data: { queue_id?: number | null }) {
-	return sudoApi.patch<IpAddress>({
-		endpoint: `/ip-addresses/${ipId}`,
-		data
-	});
+    return sudoApi.patch<IpAddress>({
+        endpoint: `/ip-addresses/${ipId}`,
+        data
+    });
 }
 
 export function getLogs() {
-	return sudoApi.get<string[]>({
-		endpoint: '/logs'
-	});
+    return sudoApi.get<string[]>({
+        endpoint: '/logs'
+    });
 }
 
 export function getHealthChecks() {
-	return sudoApi.get<HealthCheckResults>({
-		endpoint: '/health-checks'
-	});
+    return sudoApi.get<HealthCheckResults>({
+        endpoint: '/health-checks'
+    });
 }
 
 export function runHealthChecks() {
-	return sudoApi.post<HealthCheckResults>({
-		endpoint: '/health-checks'
-	});
+    return sudoApi.post<HealthCheckResults>({
+        endpoint: '/health-checks'
+    });
 }
 
 export function getDnsRecords() {
-	return sudoApi.get<DnsRecord[]>({
-		endpoint: '/dns-records'
-	});
+    return sudoApi.get<DnsRecord[]>({
+        endpoint: '/dns-records'
+    });
 }
 
 export function getDefaultDnsRecords() {
-	return sudoApi.get<DefaultDnsRecord[]>({
-		endpoint: '/default-dns'
-	});
+    return sudoApi.get<DefaultDnsRecord[]>({
+        endpoint: '/dns-records/default'
+    });
 }
 
 export function createDnsRecord(record: {
-	type: DnsRecordType;
-	subdomain: string;
-	content: string;
-	ttl: number;
-	priority: number;
+    type: DnsRecordType;
+    subdomain: string;
+    content: string;
+    ttl: number;
+    priority: number;
 }) {
-	return sudoApi.post<DnsRecord>({
-		endpoint: '/dns-records',
-		data: record
-	});
+    return sudoApi.post<DnsRecord>({
+        endpoint: '/dns-records',
+        data: record
+    });
 }
 
 export function updateDnsRecord(recordId: number, record: {
-	type?: DnsRecordType;
-	subdomain?: string;
-	content?: string;
-	ttl?: number;
-	priority?: number;
+    type?: DnsRecordType;
+    subdomain?: string;
+    content?: string;
+    ttl?: number;
+    priority?: number;
 }) {
-	return sudoApi.patch<DnsRecord>({
-		endpoint: `/dns-records/${recordId}`,
-		data: record
-	});
+    return sudoApi.patch<DnsRecord>({
+        endpoint: `/dns-records/${recordId}`,
+        data: record
+    });
 }
 
 export function deleteDnsRecord(recordId: number) {
-	return sudoApi.delete({
-		endpoint: `/dns-records/${recordId}`
-	});
+    return sudoApi.delete({
+        endpoint: `/dns-records/${recordId}`
+    });
 }
 
 export function debugGetIncomingMails(limit: number = 20, offset: number = 0) {
-	return sudoApi.get<DebugIncomingEmail[]>({
-		endpoint: '/debug/incoming-mails',
-		data: { limit, offset }
-	});
+    return sudoApi.get<DebugIncomingEmail[]>({
+        endpoint: '/debug/incoming-mails',
+        data: {limit, offset}
+    });
 }
 
 export function debugParseBounceFBL(raw: string, type: 'bounce' | 'complaint') {
-	return sudoApi.post<{ parsed: Record<string, any> }>({
-		endpoint: '/debug/parse-bounce-fbl',
-		data: { raw, type }
-	});
+    return sudoApi.post<{ parsed: Record<string, any> }>({
+        endpoint: '/debug/parse-bounce-fbl',
+        data: {raw, type}
+    });
 }

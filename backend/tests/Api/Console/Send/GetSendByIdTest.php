@@ -5,18 +5,31 @@ namespace App\Tests\Api\Console\Send;
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\SendController;
 use App\Api\Console\Object\SendAttemptObject;
+use App\Api\Console\Object\SendAttemptRecipientObject;
+use App\Api\Console\Object\SendFeedbackObject;
 use App\Api\Console\Object\SendObject;
+use App\Api\Console\Object\SendRecipientObject;
+use App\Service\SendAttempt\SendAttemptService;
+use App\Service\SendFeedback\SendFeedbackService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\SendAttemptFactory;
+use App\Tests\Factory\SendAttemptRecipientFactory;
 use App\Tests\Factory\SendFactory;
+use App\Tests\Factory\SendFeedbackFactory;
+use App\Tests\Factory\SendRecipientFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(SendController::class)]
 #[CoversClass(SendObject::class)]
+#[CoversClass(SendRecipientObject::class)]
+#[CoversClass(SendAttemptRecipientObject::class)]
+#[CoversClass(SendFeedbackObject::class)]
 #[CoversClass(SendAttemptObject::class)]
+#[CoversClass(SendAttemptService::class)]
+#[CoversClass(SendFeedbackService::class)]
 class GetSendByIdTest extends WebTestCase
 {
 
@@ -49,8 +62,19 @@ class GetSendByIdTest extends WebTestCase
             ]
         );
 
-        SendAttemptFactory::createOne([
+        $recipient = SendRecipientFactory::createOne(['send' => $send]);
+
+        $attempt = SendAttemptFactory::createOne([
             'send' => $send,
+        ]);
+
+        SendAttemptRecipientFactory::createOne([
+            'send_attempt' => $attempt,
+            'send_recipient_id' => $recipient->getId(),
+        ]);
+
+        SendFeedbackFactory::createOne([
+            'sendRecipient' => $recipient
         ]);
 
         $response = $this->consoleApi(

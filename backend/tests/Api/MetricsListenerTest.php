@@ -3,12 +3,14 @@
 namespace App\Tests\Api;
 
 use App\Api\Console\Metric\MetricsListener;
+use App\Api\Console\Metric\PrometheusFactory;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Prometheus\MetricFamilySamples;
 
 #[CoversClass(MetricsListener::class)]
+#[CoversClass(PrometheusFactory::class)]
 class MetricsListenerTest extends WebTestCase
 {
 

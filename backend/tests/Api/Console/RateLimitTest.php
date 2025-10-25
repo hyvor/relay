@@ -12,6 +12,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(RateLimitListener::class)]
 #[CoversClass(RateLimit::class)]
+#[CoversClass(RateLimiterProvider::class)]
 class RateLimitTest extends WebTestCase
 {
 

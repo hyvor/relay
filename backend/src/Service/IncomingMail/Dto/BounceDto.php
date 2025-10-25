@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Api\Console\Object;
+namespace App\Service\IncomingMail\Dto;
 
-class BounceObject implements \JsonSerializable
+class BounceDto implements \JsonSerializable
 {
     public function __construct(
         private string $text,

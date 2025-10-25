@@ -4,12 +4,14 @@ namespace App\Tests\Api\Sudo\Server;
 
 use App\Api\Sudo\Authorization\SudoAuthorizationListener;
 use App\Api\Sudo\Controller\ServerController;
+use App\Service\Server\ServerService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ServerFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ServerController::class)]
 #[CoversClass(SudoAuthorizationListener::class)]
+#[CoversClass(ServerService::class)]
 class GetServersTest extends WebTestCase
 {
 
@@ -19,11 +21,11 @@ class GetServersTest extends WebTestCase
         $server1 = ServerFactory::createOne([
             'hostname' => 'server1.example.com',
         ]);
-        
+
         $server2 = ServerFactory::createOne([
             'hostname' => 'server2.example.com',
         ]);
-        
+
         $server3 = ServerFactory::createOne([
             'hostname' => 'server3.example.com',
         ]);

@@ -66,7 +66,7 @@ func (m *IncomingMail) Handle(ctx context.Context, logger *slog.Logger, metrics 
 	metrics.incomingEmailsTotal.WithLabelValues(string(debugType)).Inc()
 
 	payload["type"] = debugType
-	payload["raw_email"] = m.Data
+	payload["raw_email"] = string(m.Data)
 	payload["mail_from"] = m.MailFrom
 	payload["rcpt_to"] = m.RcptTo
 

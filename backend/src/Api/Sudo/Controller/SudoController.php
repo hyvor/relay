@@ -3,12 +3,10 @@
 namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Authorization\SudoAuthorizationListener;
-use App\Api\Sudo\Object\DefaultDnsRecordObject;
 use App\Api\Sudo\Object\InstanceObject;
 use App\Service\App\Config;
 use App\Service\Blacklist\IpBlacklists;
 use App\Service\Instance\InstanceService;
-use App\Service\Management\GoState\GoStateDnsRecordsService;
 use Hyvor\Internal\InternalConfig;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,8 +19,7 @@ class SudoController extends AbstractController
     public function __construct(
         private Config $config,
         private InternalConfig $internalConfig,
-        private InstanceService $instanceService,
-        private GoStateDnsRecordsService $goStateDnsRecordsService
+        private InstanceService $instanceService
     ) {
     }
 
@@ -47,17 +44,6 @@ class SudoController extends AbstractController
             ],
             'instance' => new InstanceObject($instance)
         ]);
-    }
-
-    #[Route('/default-dns', methods: 'GET')]
-    public function getDefaultDns(): JsonResponse
-    {
-        $instance = $this->instanceService->getInstance();
-        $dnsRecords = $this->goStateDnsRecordsService->getDnsRecords($instance);
-
-        return new JsonResponse(
-            array_map(fn($record) => new DefaultDnsRecordObject($record), $dnsRecords)
-        );
     }
 
 }

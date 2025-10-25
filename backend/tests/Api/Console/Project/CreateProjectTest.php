@@ -6,6 +6,7 @@ use App\Api\Console\Controller\ProjectController;
 use App\Api\Console\Object\ProjectObject;
 use App\Entity\Project;
 use App\Entity\Type\ProjectSendType;
+use App\Service\Project\Event\ProjectCreatingEvent;
 use App\Service\Project\ProjectService;
 use App\Tests\Case\WebTestCase;
 use Hyvor\Internal\Auth\AuthFake;
@@ -16,6 +17,7 @@ use Symfony\Component\BrowserKit\Cookie;
 #[CoversClass(ProjectController::class)]
 #[CoversClass(ProjectService::class)]
 #[CoversClass(ProjectObject::class)]
+#[CoversClass(ProjectCreatingEvent::class)]
 class CreateProjectTest extends WebTestCase
 {
     protected function shouldEnableAuthFake(): bool

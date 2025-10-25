@@ -13,10 +13,10 @@
 
 	function loadMails(more = false) {
 		if (loading) return;
-		
+
 		loading = true;
 		const currentOffset = more ? offset : 0;
-		
+
 		debugGetIncomingMails(limit, currentOffset)
 			.then((data) => {
 				if (more) {
@@ -51,8 +51,10 @@
 		is complex since some email providers do not follow the standard DSN/ARF formats. Therefore,
 		Hyvor Relay logs all bounces and their parse status for 30 days. If you see a bounce/FBL for
 		a popular provider that is not parsed correctly, please report it on
-		<a href="https://github.com/hyvor/relay/issues/new" class="hds-link" target="_blank"
-			>Github</a
+		<a
+			href="https://github.com/hyvor/relay/issues/new?template=bounce-fbl-parsing-issue.md"
+			class="hds-link"
+			target="_blank">Github</a
 		> so we can improve the parsing logic.
 	</div>
 
@@ -64,12 +66,12 @@
 				<BounceRow {mail} />
 			{/each}
 		</div>
-		
+
 		{#if hasMore}
 			<div class="load-more">
 				<LoadButton
 					text="Load More"
-					loading={loading}
+					{loading}
 					show={hasMore}
 					on:click={() => loadMails(true)}
 				/>

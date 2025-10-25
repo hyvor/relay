@@ -14,6 +14,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(SuppressionController::class)]
 #[CoversClass(SuppressionService::class)]
+#[CoversClass(SuppressionDeletedEvent::class)]
 class DeleteSuppressionTest extends WebTestCase
 {
     public function test_delete_suppression(): void
@@ -38,6 +39,5 @@ class DeleteSuppressionTest extends WebTestCase
         $suppressionDb = $this->em->getRepository(Suppression::class)->find($suppressionId);
         $this->assertNull($suppressionDb);
         $eventDispatcher->assertDispatched(SuppressionDeletedEvent::class);
-
     }
 }

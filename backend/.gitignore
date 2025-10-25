@@ -8,7 +8,7 @@
 /var/
 /vendor/
 /packages/
-/src/Service/Tmp
+/tmp
 ###< symfony/framework-bundle ###
 
 ###> phpunit/phpunit ###

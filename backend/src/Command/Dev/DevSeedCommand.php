@@ -84,7 +84,6 @@ class DevSeedCommand extends Command
         $servers = ['orion', 'athena'];
 
         foreach ($servers as $serverHostname) {
-
             $server = ServerFactory::createOne([
                 'hostname' => 'hyvor-relay-' . $serverHostname,
                 'api_workers' => 2,
@@ -112,7 +111,6 @@ class DevSeedCommand extends Command
                 'is_ptr_forward_valid' => true,
                 'is_ptr_reverse_valid' => true,
             ]);
-
         }
 
 
@@ -155,7 +153,7 @@ class DevSeedCommand extends Command
             $typeKey = array_rand($types);
             $type = $types[$typeKey];
 
-            foreach (range(1, rand(1,2)) as $i) {
+            foreach (range(1, rand(1, 2)) as $i) {
                 $recipient = SendRecipientFactory::new()
                     ->distribute('status', SendRecipientStatus::cases())
                     ->create([
@@ -172,14 +170,13 @@ class DevSeedCommand extends Command
             SendAttemptFactory::new()
                 ->distribute('status', SendAttemptStatus::cases())
                 ->create(['send' => $send]);
-
         }
 
         SuppressionFactory::createMany(16, [
             'project' => $project,
         ]);
 
-        DebugIncomingEmailFactory::createMany(50);
+        DebugIncomingEmailFactory::createMany(2);
 
         $output->writeln('<info>Database seeded with test data.</info>');
 

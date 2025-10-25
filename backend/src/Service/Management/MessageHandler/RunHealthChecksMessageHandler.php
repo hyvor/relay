@@ -27,11 +27,13 @@ class RunHealthChecksMessageHandler
             $this->logger->info('Running health checks');
             $this->healthCheckService->runAllHealthChecks();
             $this->logger->info('Health checks completed successfully');
+            // @codeCoverageIgnoreStart
         } catch (\Exception $e) {
             $this->logger->error('Health checks failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
         }
+        // @codeCoverageIgnoreEnd
     }
 } 

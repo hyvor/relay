@@ -75,7 +75,9 @@ class SystemProjectListener
         $domain = $this->domainRepository->findOneBy(['project' => $systemProject]);
 
         if (!$domain) {
+            // @codeCoverageIgnoreStart
             throw new \RuntimeException('System project does not have a domain. This should not happen.');
+            // @codeCoverageIgnoreEnd
         }
 
         return $domain;

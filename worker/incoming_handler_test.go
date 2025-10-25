@@ -87,7 +87,7 @@ This is a test email message.
 	assert.Contains(t, bodyMap, "dsn")
 	assert.Equal(t, "sender@example.org", bodyMap["mail_from"])
 	assert.Equal(t, "bounce+uuid@relay.com", bodyMap["rcpt_to"])
-	assert.Equal(t, m.Data, bodyMap["raw_email"])
+	assert.Equal(t, string(m.Data), bodyMap["raw_email"])
 
 }
 
@@ -154,6 +154,6 @@ Return-Path: <return@hyvor.com>
 	assert.Contains(t, bodyMap, "arf")
 	assert.Equal(t, "sender@example.org", bodyMap["mail_from"])
 	assert.Equal(t, "fbl@relay.com", bodyMap["rcpt_to"])
-	assert.Equal(t, m.Data, bodyMap["raw_email"])
+	assert.Equal(t, string(m.Data), bodyMap["raw_email"])
 
 }

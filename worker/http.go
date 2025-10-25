@@ -98,7 +98,7 @@ func handleParseBounceFBL() http.HandlerFunc {
 
 		type ParseBounceFBLRequest struct {
 			RawEmail []byte `json:"raw"`
-			Type     string `json:"type"`
+			Type     string `json:"type"` // "bounce" or "complaint"
 		}
 
 		var request ParseBounceFBLRequest

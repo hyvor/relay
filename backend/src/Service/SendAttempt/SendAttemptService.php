@@ -49,7 +49,7 @@ class SendAttemptService
                 $attemptRecipient
             );
 
-            if ($sendRecipient && $parser->isRecipientBounce()) {
+            if ($parser->isRecipientBounce()) {
                 $this->suppressionService->createSuppression(
                     $sendAttempt->getSend()->getProject(),
                     $sendRecipient->getAddress(),

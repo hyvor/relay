@@ -5,9 +5,12 @@ namespace App\Tests\Api\Local;
 use App\Api\Local\Controller\LocalController;
 use App\Api\Local\LocalAuthorizationListener;
 use App\Service\Management\GoState\GoState;
+use App\Service\Management\GoState\GoStateDnsRecordsService;
 use App\Service\Management\GoState\GoStateFactory;
 use App\Service\Management\GoState\GoStateIp;
+use App\Service\Server\ServerService;
 use App\Tests\Case\WebTestCase;
+use App\Tests\Factory\DnsRecordFactory;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\ServerFactory;
@@ -15,9 +18,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(LocalController::class)]
 #[CoversClass(GoStateFactory::class)]
+#[CoversClass(ServerService::class)]
 #[CoversClass(GoState::class)]
 #[CoversClass(GoStateIp::class)]
 #[CoversClass(LocalAuthorizationListener::class)]
+#[CoversClass(GoStateDnsRecordsService::class)]
 class GetStateTest extends WebTestCase
 {
 
@@ -51,6 +56,8 @@ class GetStateTest extends WebTestCase
             'server' => $server,
             'queue' => null,
         ]);
+
+        DnsRecordFactory::createOne();
 
         $this->localApi(
             'GET',
