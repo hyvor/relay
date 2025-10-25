@@ -11,6 +11,8 @@ use App\Entity\Type\DebugIncomingEmailStatus;
 use App\Entity\Type\DebugIncomingEmailType;
 use App\Entity\Type\SuppressionReason;
 use App\Service\IncomingMail\Dto\ComplaintDto;
+use App\Service\IncomingMail\Event\IncomingBounceEvent;
+use App\Service\IncomingMail\Event\IncomingComplaintEvent;
 use App\Service\IncomingMail\IncomingMailService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
@@ -23,6 +25,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(IncomingInput::class)]
 #[CoversClass(ArfInput::class)]
 #[CoversClass(ComplaintDto::class)]
+#[CoversClass(IncomingComplaintEvent::class)]
 class IncomingComplaintTest extends WebTestCase
 {
     public function test_incoming_complaint(): void

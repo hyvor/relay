@@ -20,6 +20,7 @@ use PHPUnit\Framework\Attributes\TestWith;
 #[CoversClass(DomainIdOrDomainInput::class)]
 #[CoversClass(DomainService::class)]
 #[CoversClass(DomainObject::class)]
+#[CoversClass(DomainDeletedEvent::class)]
 class DeleteDomainTest extends WebTestCase
 {
 

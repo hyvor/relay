@@ -13,6 +13,7 @@ use App\Entity\Type\DebugIncomingEmailType;
 use App\Entity\Type\SuppressionReason;
 use App\Service\DebugIncomingEmail\DebugIncomingEmailService;
 use App\Service\IncomingMail\Dto\BounceDto;
+use App\Service\IncomingMail\Event\IncomingBounceEvent;
 use App\Service\IncomingMail\IncomingMailService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
@@ -27,6 +28,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(DsnRecipientsInput::class)]
 #[CoversClass(DebugIncomingEmailService::class)]
 #[CoversClass(BounceDto::class)]
+#[CoversClass(IncomingBounceEvent::class)]
 class IncomingBounceTest extends WebTestCase
 {
     public function test_incoming_bounce(): void

@@ -51,7 +51,7 @@ class Dkim
     /**
      * Cleaned to be used in DKIM DNS records.
      */
-    public static function cleanKey(string $key): string
+    private static function cleanKey(string $key): string
     {
         return str_replace([
             '-----BEGIN PUBLIC KEY-----',

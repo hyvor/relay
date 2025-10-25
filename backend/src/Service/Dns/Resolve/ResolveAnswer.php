@@ -18,7 +18,7 @@ class ResolveAnswer
         $data = trim($this->data, '"');
         $parts = preg_split('/"\s+"/', $data);
         if ($parts === false) {
-            return $data;
+            return $data; // @codeCoverageIgnore
         }
         $cleanedParts = array_map(fn($part) => trim($part, '"'), $parts);
         return implode('', $cleanedParts);

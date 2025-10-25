@@ -5,6 +5,7 @@ namespace App\Service\Management\MessageHandler;
 use App\Service\Management\Message\PingMessage;
 use App\Service\Server\Dto\UpdateServerDto;
 use App\Service\Server\ServerService;
+use Hyvor\Internal\Bundle\Log\ContextualLogger;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -12,10 +13,13 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 class PingMessageHandler
 {
 
+    private LoggerInterface $logger;
+
     public function __construct(
         private ServerService $serverService,
-        private LoggerInterface $logger
+        LoggerInterface $logger
     ) {
+        $this->logger = ContextualLogger::forMessageHandler($logger, self::class);
     }
 
     public function __invoke(PingMessage $message): void

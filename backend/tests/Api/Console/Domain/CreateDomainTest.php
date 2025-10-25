@@ -17,6 +17,7 @@ use Symfony\Component\Lock\LockFactory;
 #[CoversClass(DomainController::class)]
 #[CoversClass(DomainService::class)]
 #[CoversClass(DomainObject::class)]
+#[CoversClass(DomainCreatedEvent::class)]
 class CreateDomainTest extends WebTestCase
 {
 
@@ -30,7 +31,6 @@ class CreateDomainTest extends WebTestCase
         ]);
 
 
-
         $this->consoleApi(
             $project,
             'POST',
@@ -39,7 +39,6 @@ class CreateDomainTest extends WebTestCase
                 'domain' => 'example.com',
             ],
         );
-
 
 
         $this->assertResponseStatusCodeSame(400);
@@ -71,7 +70,7 @@ class CreateDomainTest extends WebTestCase
         $this->assertSame('example.com', $json['domain']);
         $dkimSelector = $json['dkim_selector'];
         $this->assertIsString($dkimSelector);
-        
+
         $this->assertStringStartsWith('rly', $dkimSelector);
         $this->assertSame($dkimSelector . '._domainkey.example.com', $json['dkim_host']);
 
