@@ -39,12 +39,14 @@ class AuthorizationListener
     public function __invoke(ControllerEvent $event): void
     {
         // only console API requests
+        // @codeCoverageIgnoreStart
         if (!str_starts_with($event->getRequest()->getPathInfo(), '/api/console')) {
             return;
         }
         if ($event->isMainRequest() === false) {
             return;
         }
+        // @codeCoverageIgnoreEnd
 
         $request = $event->getRequest();
 

@@ -2,13 +2,13 @@
 
 namespace App\Service\IncomingMail;
 
-use App\Api\Console\Object\BounceObject;
-use App\Api\Console\Object\ComplaintObject;
 use App\Api\Local\Input\ArfInput;
 use App\Api\Local\Input\DsnInput;
 use App\Entity\DebugIncomingEmail;
 use App\Entity\Type\SendFeedbackType;
 use App\Entity\Type\SuppressionReason;
+use App\Service\IncomingMail\Dto\BounceDto;
+use App\Service\IncomingMail\Dto\ComplaintDto;
 use App\Service\IncomingMail\Event\IncomingBounceEvent;
 use App\Service\IncomingMail\Event\IncomingComplaintEvent;
 use App\Service\Send\SendService;
@@ -99,7 +99,7 @@ class IncomingMailService
                 $debugIncomingEmail
             );
 
-            $bounceObject = new BounceObject($dsnInput->ReadableText, $recipient->Status);
+            $bounceObject = new BounceDto($dsnInput->ReadableText, $recipient->Status);
             $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient, $bounceObject));
         }
     }
@@ -149,7 +149,7 @@ class IncomingMailService
             $debugIncomingEmail
         );
 
-        $complaintObject = new ComplaintObject($arfInput->ReadableText, $arfInput->FeedbackType);
+        $complaintObject = new ComplaintDto($arfInput->ReadableText, $arfInput->FeedbackType);
         $this->ed->dispatch(new IncomingComplaintEvent($send, $sendRecipient, $complaintObject));
     }
 }

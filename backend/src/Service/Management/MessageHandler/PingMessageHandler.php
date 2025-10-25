@@ -15,8 +15,7 @@ class PingMessageHandler
     public function __construct(
         private ServerService $serverService,
         private LoggerInterface $logger
-    )
-    {
+    ) {
     }
 
     public function __invoke(PingMessage $message): void

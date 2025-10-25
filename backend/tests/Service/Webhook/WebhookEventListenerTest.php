@@ -2,11 +2,8 @@
 
 namespace App\Tests\Service\Webhook;
 
-use App\Api\Console\Object\BounceObject;
-use App\Api\Console\Object\ComplaintObject;
 use App\Entity\Project;
 use App\Entity\Type\DomainStatus;
-use App\Entity\Type\SendAttemptStatus;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\WebhooksEventEnum;
 use App\Entity\Webhook;
@@ -15,6 +12,8 @@ use App\Service\Domain\DkimVerificationResult;
 use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Service\Domain\Event\DomainDeletedEvent;
 use App\Service\Domain\Event\DomainStatusChangedEvent;
+use App\Service\IncomingMail\Dto\BounceDto;
+use App\Service\IncomingMail\Dto\ComplaintDto;
 use App\Service\IncomingMail\Event\IncomingBounceEvent;
 use App\Service\IncomingMail\Event\IncomingComplaintEvent;
 use App\Service\Send\Event\SendRecipientSuppressedEvent;
@@ -186,7 +185,7 @@ class WebhookEventListenerTest extends KernelTestCase
         $send = SendFactory::createOne(['project' => $project]);
         $sendRecipient = SendRecipientFactory::createOne(['send' => $send]);
         $this->createWebhook($project, WebhooksEventEnum::SEND_RECIPIENT_BOUNCED);
-        $bounce = new BounceObject('Test bounce', '5.1.1');
+        $bounce = new BounceDto('Test bounce', '5.1.1');
         $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient, $bounce));
 
         $this->assertWebhookDeliveryCreated(
@@ -212,7 +211,7 @@ class WebhookEventListenerTest extends KernelTestCase
         $send = SendFactory::createOne(['project' => $project]);
         $sendRecipient = SendRecipientFactory::createOne(['send' => $send]);
         $this->createWebhook($project, WebhooksEventEnum::SEND_RECIPIENT_COMPLAINED);
-        $complaint = new ComplaintObject('Test complaint', 'spam');
+        $complaint = new ComplaintDto('Test complaint', 'spam');
         $this->ed->dispatch(new IncomingComplaintEvent($send, $sendRecipient, $complaint));
 
         $this->assertWebhookDeliveryCreated(

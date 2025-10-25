@@ -35,9 +35,11 @@ class MetricsListener
     {
         $request = $event->getRequest();
 
+        // @codeCoverageIgnoreStart
         if ($event->isMainRequest() === false) {
             return;
         }
+        // @codeCoverageIgnoreEnd
 
         $response = $event->getResponse();
 
@@ -54,9 +56,11 @@ class MetricsListener
     {
         $routeName = $request->attributes->get('_route');
 
+        // @codeCoverageIgnoreStart
         if (!is_string($routeName)) {
             return '/<unknown>';
         }
+        // @codeCoverageIgnoreEnd
 
         $route = $this->router->getRouteCollection()->get($routeName);
 

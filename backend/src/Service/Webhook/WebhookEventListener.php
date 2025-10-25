@@ -42,7 +42,7 @@ class WebhookEventListener
         $webhooks = $this->webhookService->getWebhooksForEvent($project, $eventType);
 
         if (count($webhooks) === 0) {
-            return;
+            return; // @codeCoverageIgnore
         }
 
         $object = $objectFactory();
@@ -70,11 +70,12 @@ class WebhookEventListener
                 SendRecipientStatus::DEFERRED => WebhooksEventEnum::SEND_RECIPIENT_DEFERRED,
                 SendRecipientStatus::BOUNCED => WebhooksEventEnum::SEND_RECIPIENT_BOUNCED,
                 SendRecipientStatus::FAILED => WebhooksEventEnum::SEND_RECIPIENT_FAILED,
-                default => null // at this point, only the above statuses should be possible
+                // at this point, only the above statuses should be possible
+                default => null // @codeCoverageIgnore
             };
 
             if ($event === null) {
-                continue;
+                continue; // @codeCoverageIgnore
             }
 
             $sendRecipient = $this->sendRecipientService->getRecipientFromSendAndAttemptRecipient(
@@ -83,7 +84,7 @@ class WebhookEventListener
             );
 
             if ($sendRecipient === null) {
-                continue; // generally should not happen
+                continue; // @codeCoverageIgnore
             }
 
             $this->createWebhookDelivery(

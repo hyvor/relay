@@ -7,6 +7,7 @@ use App\Api\Local\LocalAuthorizationListener;
 use App\Service\Management\GoState\GoState;
 use App\Service\Management\GoState\GoStateFactory;
 use App\Service\Management\GoState\GoStateIp;
+use App\Service\Server\ServerService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\QueueFactory;
@@ -15,6 +16,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(LocalController::class)]
 #[CoversClass(GoStateFactory::class)]
+#[CoversClass(ServerService::class)]
 #[CoversClass(GoState::class)]
 #[CoversClass(GoStateIp::class)]
 #[CoversClass(LocalAuthorizationListener::class)]

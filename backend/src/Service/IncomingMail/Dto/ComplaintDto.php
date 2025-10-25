@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Api\Console\Object;
+namespace App\Service\IncomingMail\Dto;
 
-class ComplaintObject implements \JsonSerializable
+class ComplaintDto implements \JsonSerializable
 {
     public function __construct(
         private string $text,

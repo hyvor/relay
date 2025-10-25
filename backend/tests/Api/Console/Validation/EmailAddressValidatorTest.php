@@ -16,6 +16,7 @@ use Symfony\Component\Validator\Validation;
  * @extends ConstraintValidatorTestCase<EmailAddressValidator>
  */
 #[CoversClass(EmailAddressValidator::class)]
+#[CoversClass(EmailAddress::class)]
 class EmailAddressValidatorTest extends ConstraintValidatorTestCase
 {
     protected function createValidator(): EmailAddressValidator
