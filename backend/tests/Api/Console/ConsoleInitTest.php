@@ -5,6 +5,7 @@ namespace App\Tests\Api\Console;
 use App\Api\Console\Controller\ConsoleController;
 use App\Api\Console\Object\ProjectObject;
 use App\Service\Project\ProjectService;
+use App\Service\ProjectUser\ProjectUserService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
@@ -16,6 +17,7 @@ use Symfony\Component\BrowserKit\Cookie;
 
 #[CoversClass(ConsoleController::class)]
 #[CoversClass(ProjectService::class)]
+#[CoversClass(ProjectUserService::class)]
 #[CoversClass(ProjectObject::class)]
 class ConsoleInitTest extends WebTestCase
 {

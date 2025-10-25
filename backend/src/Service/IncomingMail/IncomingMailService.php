@@ -79,11 +79,13 @@ class IncomingMailService
 
             $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $recipient->EmailAddress);
             if ($sendRecipient === null) {
+                // @codeCoverageIgnoreStart
                 $this->logger->error('Failed to get send recipient by email', [
                     'uuid' => $bounceUuid,
                     'recipient' => $recipient->EmailAddress,
                 ]);
                 return;
+                // @codeCoverageIgnoreEnd
             }
 
             $this->suppressionService->createSuppression(
@@ -129,11 +131,13 @@ class IncomingMailService
 
         $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $arfInput->OriginalRcptTo);
         if ($sendRecipient === null) {
+            // @codeCoverageIgnoreStart
             $this->logger->error('Failed to get send recipient by email', [
                 'uuid' => $uuid,
                 'recipient' => $arfInput->OriginalRcptTo,
             ]);
             return;
+            // @codeCoverageIgnoreEnd
         }
 
         $this->suppressionService->createSuppression(

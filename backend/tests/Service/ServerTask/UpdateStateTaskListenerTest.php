@@ -23,6 +23,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(ServerTaskService::class)]
 #[CoversClass(InstanceUpdatedEvent::class)]
 #[CoversClass(ServerUpdatedEvent::class)]
+#[CoversClass(IpAddressUpdatedEvent::class)]
 class UpdateStateTaskListenerTest extends KernelTestCase
 {
 

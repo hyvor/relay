@@ -22,4 +22,13 @@ class ConfigTest extends KernelTestCase
         $this->assertSame(null, $config->getGoHost());
     }
 
+    public function test_get_hostname(): void
+    {
+        $this->setConfig('envHostname', '');
+
+        $config = $this->getService(Config::class);
+        $hostname = $config->getHostname();
+        $this->assertNotEmpty($hostname);
+    }
+
 }

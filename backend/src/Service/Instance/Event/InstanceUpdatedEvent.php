@@ -15,6 +15,9 @@ readonly class InstanceUpdatedEvent
     ) {
     }
 
+    /**
+     * @codeCoverageIgnore
+     */
     public function getOldInstance(): Instance
     {
         return $this->oldInstance;

@@ -5,6 +5,8 @@ namespace App\Service\Ip;
 use App\Entity\IpAddress;
 use App\Service\Instance\InstanceService;
 
+// This currently uses PHP gethostbyname and gethostbyaddr functions.
+// In future, we might want to replace it with DnsResolveInterface with proper error handling.
 class Ptr
 {
 
@@ -16,17 +18,15 @@ class Ptr
         private $gethostbynameFunction = 'gethostbyname',
         /** @var callable */
         private $gethostbyaddrFunction = 'gethostbyaddr'
-    )
-    {
+    ) {
     }
 
     /**
      * Forward checks the A record of the PTR domain to see if it points to the IP address.
      */
-    public function validateForward(IpAddress $ipAddress): bool
+    private function validateForward(IpAddress $ipAddress): bool
     {
-        $instance = $this->instanceService->getInstance();
-        $ptrDomain = self::getPtrDomain($ipAddress, $instance->getDomain());
+        $ptrDomain = self::getPtrDomain($ipAddress, $this->instanceService->getInstance()->getDomain());
         $aRecord = call_user_func(
             $this->gethostbynameFunction,
             $ptrDomain
@@ -37,7 +37,7 @@ class Ptr
     /**
      * Reverse checks the PTR record of the IP address to see if it points to the PTR domain.
      */
-    public function validateReverse(IpAddress $ipAddress): bool
+    private function validateReverse(IpAddress $ipAddress): bool
     {
         $ptrDomain = self::getPtrDomain($ipAddress, $this->instanceService->getInstance()->getDomain());
         $reverseLookup = call_user_func(

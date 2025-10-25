@@ -4,7 +4,6 @@ namespace App\Service\Queue;
 
 use App\Entity\Queue;
 use App\Entity\Type\QueueType;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query\ResultSetMapping;
 
@@ -27,7 +26,7 @@ class QueueService
         return $this->em->getRepository(Queue::class)->findAll();
     }
 
-    public function getQueueByName(string $name): ?Queue
+    private function getQueueByName(string $name): ?Queue
     {
         return $this->em->getRepository(Queue::class)->findOneBy(['name' => $name]);
     }
@@ -58,7 +57,7 @@ class QueueService
                 ->getSingleScalarResult() > 0;
     }
 
-    public function createQueue(
+    private function createQueue(
         string $name,
         QueueType $type
     ): Queue {

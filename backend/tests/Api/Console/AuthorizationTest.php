@@ -6,6 +6,8 @@ use App\Api\Console\Authorization\AuthorizationListener;
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Authorization\ScopeRequired;
 use App\Entity\ApiKey;
+use App\Service\Project\ProjectService;
+use App\Service\ProjectUser\ProjectUserService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
@@ -19,6 +21,8 @@ use Symfony\Component\Clock\MockClock;
 
 #[CoversClass(AuthorizationListener::class)]
 #[CoversClass(ScopeRequired::class)]
+#[CoversClass(ProjectService::class)]
+#[CoversClass(ProjectUserService::class)]
 class AuthorizationTest extends WebTestCase
 {
 

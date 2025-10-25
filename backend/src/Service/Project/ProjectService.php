@@ -75,15 +75,6 @@ class ProjectService
         ];
     }
 
-    /**
-     * @return ArrayCollection<int, Project>
-     */
-    public function getUsersProject(int $userId): ArrayCollection
-    {
-        $projects = $this->em->getRepository(Project::class)->findBy(['user_id' => $userId]);
-        return new ArrayCollection($projects);
-    }
-
     public function updateProject(Project $project, UpdateProjectDto $updates): Project
     {
         if ($updates->hasProperty('name')) {

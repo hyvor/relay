@@ -14,6 +14,7 @@ use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
 use App\Service\Ip\ServerIp;
 use App\Service\Management\ManagementService;
+use App\Service\Queue\QueueService;
 use App\Service\Server\ServerService;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\IpAddressFactory;
@@ -27,6 +28,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(DomainService::class)]
 #[CoversClass(InstanceService::class)]
 #[CoversClass(IpAddressService::class)]
+#[CoversClass(QueueService::class)]
 class ManagementInitCommandTest extends KernelTestCase
 {
 
