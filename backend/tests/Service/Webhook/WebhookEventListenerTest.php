@@ -41,6 +41,7 @@ use PHPUnit\Framework\Attributes\TestWith;
 #[CoversClass(BounceDto::class)]
 #[CoversClass(ComplaintDto::class)]
 #[CoversClass(DkimVerificationResult::class)]
+#[CoversClass(SendRecipientSuppressedEvent::class)]
 class WebhookEventListenerTest extends KernelTestCase
 {
 

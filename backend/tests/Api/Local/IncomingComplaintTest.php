@@ -14,6 +14,7 @@ use App\Service\IncomingMail\Dto\ComplaintDto;
 use App\Service\IncomingMail\Event\IncomingBounceEvent;
 use App\Service\IncomingMail\Event\IncomingComplaintEvent;
 use App\Service\IncomingMail\IncomingMailService;
+use App\Service\SendFeedback\SendFeedbackService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\SendFactory;
@@ -26,6 +27,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(ArfInput::class)]
 #[CoversClass(ComplaintDto::class)]
 #[CoversClass(IncomingComplaintEvent::class)]
+#[CoversClass(SendFeedbackService::class)]
 class IncomingComplaintTest extends WebTestCase
 {
     public function test_incoming_complaint(): void

@@ -7,6 +7,7 @@ use App\Service\App\Process\ProcessFactory;
 use App\Service\Go\GoHttpApi;
 use App\Service\Management\Message\ServerTaskMessage;
 use App\Service\Management\MessageHandler\ServerTaskMessageHandler;
+use App\Service\ServerTask\ServerTaskService;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\ServerFactory;
 use App\Tests\Factory\ServerTaskFactory;
@@ -18,6 +19,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[CoversClass(ServerTaskMessage::class)]
 #[CoversClass(ServerTaskMessageHandler::class)]
+#[CoversClass(ServerTaskService::class)]
 #[CoversClass(GoHttpApi::class)]
 class ServerTaskMessageHandlerTest extends KernelTestCase
 {

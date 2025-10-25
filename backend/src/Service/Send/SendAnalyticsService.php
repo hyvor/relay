@@ -22,8 +22,9 @@ class SendAnalyticsService
     public function getCountsByPeriod(Project $project, string $period = '30d'): array
     {
         $dateModifier = $this->getPeriodDateModifier($period);
-        
-        $qb = $this->em->createQuery(<<<DQL
+
+        $qb = $this->em->createQuery(
+            <<<DQL
             SELECT 
                 COUNT(sr.id) AS total,
                 SUM(CASE WHEN sr.status = 'bounced' THEN 1 ELSE 0 END) AS bounced,
@@ -33,7 +34,8 @@ class SendAnalyticsService
             WHERE 
                 s.project = :project AND
                 s.created_at >= :date
-        DQL);
+        DQL
+        );
 
         $qb->setParameter('project', $project);
         $qb->setParameter('date', new \DateTime($dateModifier));
@@ -42,19 +44,10 @@ class SendAnalyticsService
         $result = $qb->getSingleResult();
 
         return [
-            'total' => (int) $result['total'],
-            'bounced' => (int) $result['bounced'],
-            'complained' => (int) $result['complained'],
+            'total' => (int)$result['total'],
+            'bounced' => (int)$result['bounced'],
+            'complained' => (int)$result['complained'],
         ];
-    }
-
-    /**
-     * @deprecated Use getCountsByPeriod instead
-     * @return array<string, int>
-     */
-    public function getLast30dCounts(Project $project): array
-    {
-        return $this->getCountsByPeriod($project, '30d');
     }
 
     private function getPeriodDateModifier(string $period): string
@@ -80,7 +73,8 @@ class SendAnalyticsService
         $rsm->addScalarResult('accepted', 'accepted', 'integer');
         $rsm->addScalarResult('queued', 'queued', 'integer');
 
-        $qb = $this->em->createNativeQuery(<<<SQL
+        $qb = $this->em->createNativeQuery(
+            <<<SQL
         SELECT DATE(s.created_at) AS date,
             COUNT(sr.id) AS total,
             SUM(CASE WHEN sr.status = 'bounced' THEN 1 ELSE 0 END) AS bounced,
@@ -93,7 +87,9 @@ class SendAnalyticsService
             s.project_id = :projectId AND
             s.created_at >= :date
         GROUP BY date
-        SQL, $rsm);
+        SQL,
+            $rsm
+        );
 
         $startDate = $this->now()->modify('-30 days');
         $qb->setParameter('projectId', $project->getId());
@@ -108,7 +104,7 @@ class SendAnalyticsService
         while ($currentDate <= $endDate) {
             $dateStr = $currentDate->format('Y-m-d');
 
-            $row = array_filter($result, fn ($r) => $r['date'] === $dateStr);
+            $row = array_filter($result, fn($r) => $r['date'] === $dateStr);
             $row = count($row) ? array_shift($row) : null;
 
             $data[] = [
@@ -123,7 +119,6 @@ class SendAnalyticsService
         }
 
         return $data;
-
     }
 
 

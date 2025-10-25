@@ -6,6 +6,7 @@ use App\Api\Console\Controller\ConsoleController;
 use App\Api\Console\Object\ProjectObject;
 use App\Service\Project\ProjectService;
 use App\Service\ProjectUser\ProjectUserService;
+use App\Service\Send\Compliance;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
@@ -19,6 +20,7 @@ use Symfony\Component\BrowserKit\Cookie;
 #[CoversClass(ProjectService::class)]
 #[CoversClass(ProjectUserService::class)]
 #[CoversClass(ProjectObject::class)]
+#[CoversClass(Compliance::class)]
 class ConsoleInitTest extends WebTestCase
 {
     public function test_init_console(): void

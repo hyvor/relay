@@ -16,6 +16,7 @@ use App\Entity\Type\SendRecipientType;
 use App\Service\Queue\QueueService;
 use App\Service\Send\EmailBuilder;
 use App\Service\Send\Event\SendRecipientSuppressedEvent;
+use App\Service\Send\RecipientFactory;
 use App\Service\Send\SendService;
 use App\Service\Suppression\SuppressionService;
 use App\Tests\Case\WebTestCase;
@@ -35,6 +36,8 @@ use PHPUnit\Framework\Attributes\TestWith;
 #[CoversClass(SuppressionService::class)]
 #[CoversClass(UnableToDecodeAttachmentBase64Exception::class)]
 #[CoversClass(QueueService::class)]
+#[CoversClass(RecipientFactory::class)]
+#[CoversClass(SendRecipientSuppressedEvent::class)]
 class SendEmailTest extends WebTestCase
 {
 

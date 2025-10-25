@@ -29,7 +29,7 @@ class SendRecipientService
     public function getRecipientFromSendAndAttemptRecipient(
         Send $send,
         SendAttemptRecipient $attemptRecipient
-    ): ?SendRecipient {
+    ): SendRecipient {
         $sendRecipients = $send->getRecipients();
 
         foreach ($sendRecipients as $sendRecipient) {
@@ -38,7 +38,11 @@ class SendRecipientService
             }
         }
 
-        return null;
+        // @codeCoverageIgnoreStart
+        throw new \RuntimeException(
+            'SendRecipient not found for SendAttemptRecipient ID ' . $attemptRecipient->getId()
+        );
+        // @codeCoverageIgnoreEnd
     }
 
 }

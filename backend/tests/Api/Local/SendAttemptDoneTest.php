@@ -9,6 +9,7 @@ use App\Entity\Type\SendRecipientStatus;
 use App\Service\Send\SendService;
 use App\Service\SendAttempt\Event\SendAttemptCreatedEvent;
 use App\Service\SendAttempt\SendAttemptService;
+use App\Service\SendRecipient\SendRecipientService;
 use App\Service\Suppression\Event\SuppressionCreatedEvent;
 use App\Service\Suppression\SuppressionService;
 use App\Tests\Case\WebTestCase;
@@ -25,6 +26,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(SendAttemptService::class)]
 #[CoversClass(SuppressionCreatedEvent::class)]
 #[CoversClass(SuppressionService::class)]
+#[CoversClass(SendRecipientService::class)]
+#[CoversClass(SendAttemptCreatedEvent::class)]
 class SendAttemptDoneTest extends WebTestCase
 {
 

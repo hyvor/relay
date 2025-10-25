@@ -16,6 +16,9 @@ class ServerUpdatedEvent
     ) {
     }
 
+    /**
+     * @codeCoverageIgnore
+     */
     public function getOldServer(): Server
     {
         return $this->oldServer;
