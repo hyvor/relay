@@ -119,7 +119,7 @@
 		margin-bottom: 10px;
 	}
 
-/*	mobile styles max width 976px */
+	/*	mobile styles max width 976px */
 	@media (max-width: 976px) {
 		.faq {
 			width: 100%;
@@ -128,10 +128,6 @@
 	}
 
 	h3 {
-		text-align:  center;
-	}
-
-	.faq-title{
-		justify-content: center;
+		text-align: center;
 	}
 </style>

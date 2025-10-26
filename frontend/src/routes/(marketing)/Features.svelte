@@ -21,30 +21,32 @@
 
 	<div class="features">
 		<Feature title="Email API" icon={IconEnvelope}>
-			Send emails using a simple idempotent API. Supports HTML & plain text emails, multiple
-			recipients, attachments, custom headers, etc.
+			Send reliable emails with a clean, idempotent REST API. Supports HTML and plain text,
+			attachments, custom headers, and multiple recipients.
 		</Feature>
 		<Feature title="Automate Everything" icon={IconGear}>
-			A comprehensive scope-based REST API to automate domains, suppressions, API keys, and
-			webhooks.
+			Control your email infrastructure with a powerful, scope-based REST API. Automate domain
+			setup, suppressions, API keys, and webhooks in seconds.
 		</Feature>
 		<Feature title="Webhooks for Events" icon={IconSend}>
-			Receive notifications for email events like accepted, bounced, suppression added, etc.
+			Stay in sync with real-time event webhooks. Get notified on deliveries, bounces, domain
+			verifications, and more.
 		</Feature>
 		<Feature title="Project Management" icon={IconFiles}>
-			Manage multiple projects under a single account. Each project can have its own domains,
-			API keys, webhooks, and settings.
+			Organize your work the developer way. Create isolated projects, each with its own
+			domains, keys, and webhooks. All under one account.
 		</Feature>
 		<Feature title="Domains & DKIM" icon={IconShieldLock}>
-			Manage multiple sending domains, each secured with mandatory DKIM signing.
+			Send from any domain with confidence. Manage multiple domains with enforced DKIM signing
+			for maximum deliverability and trust.
 		</Feature>
 		<Feature title="Bounce & Complaint Handling" icon={IconEnvelopeExclamation}>
-			Hyvor Relay automatically handles bounces and complaints with a managed suppression
-			list.
+			Stop worrying about bad addresses. Hyvor Relay automatically manages bounces,
+			complaints, and suppressions for you.
 		</Feature>
 		<Feature title="Email Logs" icon={IconCardList}>
-			View detailed logs of sent emails including status, headers, SMTP conversations, and
-			more. 30 days of retention.
+			See everything that happens after “Send.” Search full delivery logs (headers, status,
+			and SMTP traces) with 30 days of retention.
 		</Feature>
 	</div>
 
@@ -52,30 +54,32 @@
 
 	<div class="features">
 		<Feature title="Open-Source" icon={IconCode}>
-			Hyvor Relay is open-source and licensed under AGPL-3.0. It is built for easy
-			self-hosting.
+			Fully open-source under AGPL-3.0. Built for developers who want control. Deploy,
+			inspect, and modify Hyvor Relay on your own infrastructure with zero vendor lock-in.
 		</Feature>
 		<Feature title="Commercial Support" icon={IconBuilding}>
-			Optionally, get commercial support from the HYVOR team for self-hosted installations for
-			enterprise use-cases.
+			Self-hosted, enterprise-ready. Get priority updates and expert support directly from the
+			HYVOR team with a commercial license.
 		</Feature>
 		<Feature title="Deliverability" icon={IconTruck}>
-			SPF, reverse DNS, mult-IPs setup, queue separation, and more best practices are
-			built-in.
+			Deliver every email that matters. SPF, reverse DNS, multiple IPs, queue isolation -
+			industry best practices baked in from day one.
 		</Feature>
 		<Feature title="Health Checks" icon={IconActivity}>
-			Get notified immediately on server, DNS, IP reputation, or other issues that impact
-			deliverability.
+			Know before anything breaks. Get instant alerts for server issues, DNS errors, or IP
+			reputation drops so you can fix them fast.
 		</Feature>
 		<Feature title="Scalability" icon={IconArrowsAngleExpand}>
-			Designed to scale horizontally in cloud or on-premise environments using Docker Swarm.
+			Built to grow with your workloads. Scale horizontally on any cloud or on-prem setup with
+			Docker Swarm.
 		</Feature>
 		<Feature title="In-built DNS Server" icon={IconDatabase}>
-			A DNS server that automates forward DNS, MX, SPF, DKIM records. No need to manually
-			configure DNS records.
+			DNS automation, done right. Relay includes an integrated DNS server that manages forward
+			records, MX, SPF, and DKIM - no manual setup required.
 		</Feature>
 		<Feature title="Observability" icon={IconGraphUp}>
-			Integrates with Prometheus and Grafana for monitoring, alerting, and log aggregation.
+			Visibility for every metric that matters. Native integrations with Prometheus and
+			Grafana let you monitor performance, alerts, and logs in one place.
 		</Feature>
 	</div>
 </div>
@@ -94,14 +98,14 @@
 		gap: 24px;
 	}
 
-/*	mobile style */
+	/*	mobile style */
 	@media (max-width: 976px) {
 		.features {
 			grid-template-columns: 1fr;
 			justify-content: center;
 		}
 
-		h3{
+		h3 {
 			text-align: center;
 		}
 	}

@@ -51,7 +51,7 @@
 							'Managed Deliverability',
 							'SLA & Uptime Guarantee'
 						]}
-						ctaText="Get Started"
+						ctaText="Join Waitlist"
 						ctaLink="#waitlist"
 					/>
 				</div>
@@ -100,7 +100,7 @@
 		display: flex;
 	}
 
-/*	mobile styles 976px */
+	/*	mobile styles 976px */
 	@media (max-width: 976px) {
 		.pricing {
 			flex-direction: column;
@@ -115,7 +115,7 @@
 			flex-direction: column;
 		}
 
-		h3{
+		h3 {
 			text-align: center;
 		}
 	}
