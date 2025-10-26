@@ -22,8 +22,11 @@ class SmtpResponseParserTest extends TestCase
     #[TestWith([550, '5.1.3', true])]
     #[TestWith([550, '5.5.0', true])]
     #[TestWith([550, '5.7.1', false])]
+    #[TestWith([null, '5.1.1', true])]
+    #[TestWith([null, '4.2.0', false])]
+    #[TestWith([null, null, false])]
     public function test_is_recipient_bounce(
-        int $code,
+        ?int $code,
         ?string $enhancedCode,
         bool $result
     ): void {
@@ -43,7 +46,20 @@ class SmtpResponseParserTest extends TestCase
         $this->assertSame($result, $parser->isInfrastructureError());
     }
 
-    public function test_full_message(): void
+    #[TestWith([250, null, 'OK', '250 OK'])]
+    #[TestWith([550, null, 'Mailbox not found', '550 Mailbox not found'])]
+    #[TestWith([550, '5.1.1', 'Mailbox not found', '550 5.1.1 Mailbox not found'])]
+    public function test_full_message(
+        ?int $code,
+        ?string $enhancedCode,
+        string $message,
+        string $expectedFullMessage
+    ): void {
+        $parser = new SmtpResponseParser($code, $enhancedCode, $message);
+        $this->assertSame($expectedFullMessage, $parser->getFullMessage());
+    }
+
+    public function test_from_attempt_recipient(): void
     {
         $recipient = new SendAttemptRecipient();
         $recipient->setSmtpCode(550);

@@ -28,8 +28,8 @@ class RunHealthChecksMessageHandlerTest extends KernelTestCase
         $transport->send($message);
         $transport->throwExceptions()->process();
 
-        $logger->hasInfoThatContains("Running health checks");
-        $logger->hasInfoThatContains("Health checks completed successfully");
+        $this->assertTrue($logger->hasInfoThatContains("Running health checks"));
+        $this->assertTrue($logger->hasInfoThatContains("Health checks completed successfully"));
     }
 
 }

@@ -19,7 +19,7 @@ class SmtpResponseParser
     ];
 
     public function __construct(
-        private int $code,
+        private ?int $code,
         private ?string $enhancedCode,
         private string $message,
     ) {
@@ -27,7 +27,12 @@ class SmtpResponseParser
 
     public function isBounce(): bool
     {
-        return $this->code >= 500 && $this->code < 600;
+        if ($this->code !== null) {
+            return $this->code >= 500 && $this->code < 600;
+        } elseif ($this->enhancedCode !== null) {
+            return str_starts_with($this->enhancedCode, '5.');
+        }
+        return false;
     }
 
     /**
@@ -70,6 +75,14 @@ class SmtpResponseParser
         return str_starts_with($this->enhancedCode, '5.7.') || str_starts_with($this->enhancedCode, '4.7.');
     }
 
+    public function getFullMessage(): string
+    {
+        $code = $this->code ?? '';
+        $enhancedCode = $this->enhancedCode !== null ? " $this->enhancedCode" : '';
+        $message = $this->message !== '' ? ' ' . substr($this->message, 0, 255) : '';
+        return "$code$enhancedCode$message";
+    }
+
     public static function fromAttemptRecipient(SendAttemptRecipient $recipient): self
     {
         return new self(
@@ -77,11 +90,6 @@ class SmtpResponseParser
             $recipient->getSmtpEnhancedCode(),
             $recipient->getSmtpMessage()
         );
-    }
-
-    public function getFullMessage(): string
-    {
-        return "$this->code $this->enhancedCode $this->message";
     }
 
 }
