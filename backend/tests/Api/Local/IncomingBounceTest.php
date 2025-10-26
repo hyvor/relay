@@ -243,6 +243,11 @@ class IncomingBounceTest extends WebTestCase
             'rcpt_to' => 'to@example.com',
         ]);
         $this->assertNotNull($debugIncomingEmail);
+
+        $logger = $this->getTestLogger();
+        $this->assertTrue(
+            $logger->hasInfoThatContains('Received bounce that is not a recipient bounce or infrastructure error')
+        );
     }
 
     public function test_incoming_bounce_send_not_found(): void
@@ -282,5 +287,49 @@ class IncomingBounceTest extends WebTestCase
             'rcpt_to' => 'to@example.com',
         ]);
         $this->assertNotNull($debugIncomingEmail);
+    }
+
+    public function test_send_recipient_not_found(): void
+    {
+        $project = ProjectFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project]);
+        $response = $this->localApi(
+            'POST',
+            '/incoming',
+            [
+                'type' => 'bounce',
+                'dsn' => [
+                    'ReadableText' => 'Recipient not found',
+                    'Recipients' => [
+                        [
+                            'EmailAddress' => 'supun@hyvor.com',
+                            'Status' => '5.1.1',
+                            'Action' => 'failed',
+                        ]
+                    ]
+                ],
+                'bounce_uuid' => $send->getUuid(),
+                'raw_email' => 'raw',
+                'mail_from' => 'from@example.com',
+                'rcpt_to' => 'to@example.com'
+            ]
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+
+        // no suppressions
+        $suppressions = $this->em->getRepository(Suppression::class)->findAll();
+        $this->assertCount(0, $suppressions);
+
+        $debugIncomingEmail = $this->em->getRepository(DebugIncomingEmail::class)->findOneBy([
+            'type' => DebugIncomingEmailType::BOUNCE,
+            'status' => DebugIncomingEmailStatus::SUCCESS,
+            'mail_from' => 'from@example.com',
+            'rcpt_to' => 'to@example.com',
+        ]);
+        $this->assertNotNull($debugIncomingEmail);
+
+        $logger = $this->getTestLogger();
+        $this->assertTrue($logger->hasInfoThatContains('Received bounce with unknown recipient'));
     }
 }

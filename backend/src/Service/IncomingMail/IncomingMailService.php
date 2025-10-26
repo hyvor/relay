@@ -14,6 +14,7 @@ use App\Service\IncomingMail\Event\IncomingComplaintEvent;
 use App\Service\Send\SendService;
 use App\Service\SendFeedback\SendFeedbackService;
 use App\Service\SendRecipient\SendRecipientService;
+use App\Service\Smtp\SmtpResponseParser;
 use App\Service\Suppression\SuppressionService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -56,53 +57,52 @@ class IncomingMailService
                 return;
             }
 
-            // We are only interested in bounces that have a status code that starts with 5
-            // (permanent failures)
-            if ($recipient->Status[0] !== '5') {
-                $this->logger->info('Received bounce with non-permanent status code', [
+            $smtpResponseParser = new SmtpResponseParser(null, $recipient->Status, $dsnInput->ReadableText);
+
+            if ($smtpResponseParser->isRecipientBounce()) {
+                $send = $this->sendService->getSendByUuid($bounceUuid);
+
+                if ($send === null) {
+                    $this->logger->info('Received bounce with unknown send UUID', [
+                        'uuid' => $bounceUuid,
+                        'recipient' => $recipient->EmailAddress,
+                    ]);
+                    return;
+                }
+
+                $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $recipient->EmailAddress);
+                if ($sendRecipient === null) {
+                    $this->logger->info('Received bounce with unknown recipient', [
+                        'uuid' => $bounceUuid,
+                        'recipient' => $recipient->EmailAddress,
+                    ]);
+                    return;
+                }
+
+                $this->suppressionService->createSuppression(
+                    $send->getProject(),
+                    $recipient->EmailAddress,
+                    SuppressionReason::BOUNCE,
+                    $dsnInput->ReadableText
+                );
+
+                $this->sendFeedbackService->createSendFeedback(
+                    SendFeedbackType::BOUNCE,
+                    $sendRecipient,
+                    $debugIncomingEmail
+                );
+
+                $bounceObject = new BounceDto($dsnInput->ReadableText, $recipient->Status);
+                $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient, $bounceObject));
+            } elseif ($smtpResponseParser->isInfrastructureError()) {
+                // TODO: record infra bounces #291
+            } else {
+                $this->logger->info('Received bounce that is not a recipient bounce or infrastructure error', [
                     'uuid' => $bounceUuid,
                     'recipient' => $recipient->EmailAddress,
                     'status' => $recipient->Status,
                 ]);
-                return;
             }
-
-            $send = $this->sendService->getSendByUuid($bounceUuid);
-
-            if ($send === null) {
-                $this->logger->error('Failed to get send by UUID', [
-                    'uuid' => $bounceUuid,
-                    'recipient' => $recipient->EmailAddress,
-                ]);
-                return;
-            }
-
-            $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $recipient->EmailAddress);
-            if ($sendRecipient === null) {
-                // @codeCoverageIgnoreStart
-                $this->logger->error('Failed to get send recipient by email', [
-                    'uuid' => $bounceUuid,
-                    'recipient' => $recipient->EmailAddress,
-                ]);
-                return;
-                // @codeCoverageIgnoreEnd
-            }
-
-            $this->suppressionService->createSuppression(
-                $send->getProject(),
-                $recipient->EmailAddress,
-                SuppressionReason::BOUNCE,
-                $dsnInput->ReadableText
-            );
-
-            $this->sendFeedbackService->createSendFeedback(
-                SendFeedbackType::BOUNCE,
-                $sendRecipient,
-                $debugIncomingEmail
-            );
-
-            $bounceObject = new BounceDto($dsnInput->ReadableText, $recipient->Status);
-            $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient, $bounceObject));
         }
     }
 
