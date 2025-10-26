@@ -69,7 +69,7 @@
 	}
 
 	.left {
-		width: 65%;
+		width: 50%;
 	}
 
 	.left .button-wrap {
@@ -77,7 +77,7 @@
 		display: block;
 	}
 	.right {
-		width: 35%;
+		width: 50%;
 		display: flex;
 		justify-content: center;
 		align-items: center;
@@ -105,5 +105,46 @@
 	.button-wrap {
 		display: flex;
 		gap: 12px;
+	}
+
+/*	media queries for 976px*/
+	@media (max-width: 976px) {
+		.wrap{
+
+		}
+		section {
+			flex-direction: column;
+			padding: 40px 0 60px;
+		}
+
+		.left,
+		.right {
+			width: 100%;
+
+		}
+
+		.left{
+			text-align: center;
+
+		}
+
+		.right {
+			margin: 40px auto;
+		}
+
+		h1 {
+			font-size: 36px;
+			line-height: 44px;
+		}
+
+		h2 {
+			font-size: 24px;
+			line-height: 28px;
+		}
+
+		.button-wrap {
+			flex-direction: column;
+			gap: 12px;
+		}
 	}
 </style>

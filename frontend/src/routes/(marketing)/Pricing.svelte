@@ -99,4 +99,24 @@
 	.plans {
 		display: flex;
 	}
+
+/*	mobile styles 976px */
+	@media (max-width: 976px) {
+		.pricing {
+			flex-direction: column;
+			text-align: center;
+		}
+
+		.section {
+			flex: unset;
+		}
+
+		.plans {
+			flex-direction: column;
+		}
+
+		h3{
+			text-align: center;
+		}
+	}
 </style>

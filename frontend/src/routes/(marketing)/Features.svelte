@@ -93,4 +93,16 @@
 		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 		gap: 24px;
 	}
+
+/*	mobile style */
+	@media (max-width: 976px) {
+		.features {
+			grid-template-columns: 1fr;
+			justify-content: center;
+		}
+
+		h3{
+			text-align: center;
+		}
+	}
 </style>
