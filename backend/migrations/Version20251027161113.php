@@ -26,7 +26,7 @@ final class Version20251027161113 extends AbstractMigration
                 smtp_code INT NOT NULL,
                 smtp_enhanced_code TEXT NOT NULL,
                 smtp_message TEXT NOT NULL,
-                send_recipient_id INTEGER NOT NULL,
+                send_recipient_id INTEGER NOT NULL
             )
             SQL
         );

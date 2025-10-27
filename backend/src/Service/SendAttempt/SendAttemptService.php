@@ -6,6 +6,7 @@ use App\Entity\Send;
 use App\Entity\SendAttempt;
 use App\Entity\Type\SendAttemptStatus;
 use App\Entity\Type\SuppressionReason;
+use App\Service\InfrastructureBounce\InfrastructureBounceService;
 use App\Service\SendRecipient\SendRecipientService;
 use App\Service\Smtp\SmtpResponseParser;
 use App\Service\Suppression\SuppressionService;
@@ -20,6 +21,7 @@ class SendAttemptService
         private EventDispatcherInterface $ed,
         private SuppressionService $suppressionService,
         private SendRecipientService $sendRecipientService,
+        private InfrastructureBounceService $infrastructureBounceService,
     ) {
     }
 
@@ -55,6 +57,12 @@ class SendAttemptService
                     $sendRecipient->getAddress(),
                     SuppressionReason::BOUNCE,
                     $parser->getFullMessage()
+                );
+                $this->infrastructureBounceService->createInfrastructureBounce(
+                    $attemptRecipient->getSendRecipientId(),
+                    $attemptRecipient->getSmtpCode(),
+                    $attemptRecipient->getSmtpEnhancedCode() ?? '',
+                    $attemptRecipient->getSmtpMessage()
                 );
             }
         }
