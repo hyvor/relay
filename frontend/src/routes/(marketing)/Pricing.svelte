@@ -24,7 +24,7 @@
 						ctaLink="/hosting"
 					/>
 					<Plan
-						name="Commercial License"
+						name="Enterprise License"
 						price="Tailored Pricing"
 						priceSubtext="Starting at €10,000/year"
 						features={[

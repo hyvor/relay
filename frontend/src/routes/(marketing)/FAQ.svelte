@@ -16,9 +16,19 @@
 		<div class="faq-title">Self-Hosting</div>
 
 		<Accordion title="Can I self-host for free?" icon={IconPiggyBank}>
-			Yes! Hyvor Relay is free and open-source software released under the AGPL-3.0 license.
-			You can self-host it for free under the terms of the AGPL-3.0 license. For use cases
-			where you cannot comply with the AGPL-3.0 license, we offer commercial licenses.
+			Absolutely. Hyvor Relay is fully open-source under the AGPL-3.0 license. You can deploy
+			and run it on your own servers at no cost.
+
+			<p>
+				If your use case doesn't fit AGPL (for example, you can't open-source modifications
+				or need private enterprise use), we offer a <strong
+					>commercial self-hosted license</strong
+				> with full support from the HYVOR team.
+			</p>
+		</Accordion>
+
+		<Accordion title="When should I buy a commercial license?" icon={IconCoin}>
+			<!--  -->
 		</Accordion>
 
 		<Accordion title="Does the commercial version include additional features?" icon={IconStar}>
@@ -26,10 +36,6 @@
 			in terms of features. The commercial license excempts you from the AGPL-3.0 license's
 			obligation to disclose your source code if you modify Hyvor Relay. It also comes with
 			commercial support options.
-		</Accordion>
-
-		<Accordion title="When should I buy a commercial license?" icon={IconCoin}>
-			<!--  -->
 		</Accordion>
 
 		<Accordion title="Will my emails end up in spam?" icon={IconEnvelopeExclamation}>
