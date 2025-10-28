@@ -1,11 +1,11 @@
 <script>
-	import { Button, Tag, Tooltip } from '@hyvor/design/components';
-	// import Letter from './Letter.svelte';
+	import { Button, Tag } from '@hyvor/design/components';
 	import FAQ from './FAQ.svelte';
 	import IconCode from '@hyvor/icons/IconCode';
 	import IconHouse from '@hyvor/icons/IconHouse';
 	import Features from './Features.svelte';
 	import Pricing from './Pricing.svelte';
+	import JoinWaitlist from './JoinWaitlist.svelte';
 </script>
 
 <svelte:head>
@@ -36,24 +36,20 @@
 			</div>
 
 			<div class="button-wrap">
-				<Tooltip
+				<!-- <Tooltip
 					text="Cloud public release is planned for 2026. You can self-host Hyvor Relay now."
 				>
 					<Button disabled size="large">Sign up</Button>
-				</Tooltip>
-				<Button as="a" href="/hosting" size="large" variant="outline"
-					>Start Self-Hosting</Button
-				>
+				</Tooltip> -->
+				<Button as="a" href="/hosting" size="large">Start Self-Hosting</Button>
 				<Button as="a" href="/docs" size="large" variant="outline">Product Docs</Button>
 			</div>
 		</div>
 
 		<div class="right">
-			<script async src="https://talk.hyvor.com/embed/newsletter.js" type="module"></script>
-			<hyvor-talk-newsletter website-id="14370"></hyvor-talk-newsletter>
+			<JoinWaitlist />
 		</div>
 	</section>
-	<!-- <Letter /> -->
 </div>
 
 <Pricing />
@@ -78,9 +74,6 @@
 	}
 	.right {
 		width: 50%;
-		display: flex;
-		justify-content: center;
-		align-items: center;
 	}
 
 	h1 {
@@ -107,10 +100,9 @@
 		gap: 12px;
 	}
 
-/*	media queries for 976px*/
+	/*	media queries for 976px*/
 	@media (max-width: 976px) {
-		.wrap{
-
+		.wrap {
 		}
 		section {
 			flex-direction: column;
@@ -120,12 +112,10 @@
 		.left,
 		.right {
 			width: 100%;
-
 		}
 
-		.left{
+		.left {
 			text-align: center;
-
 		}
 
 		.right {
