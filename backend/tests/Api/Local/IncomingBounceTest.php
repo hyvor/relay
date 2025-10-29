@@ -333,4 +333,55 @@ class IncomingBounceTest extends WebTestCase
         $logger = $this->getTestLogger();
         $this->assertTrue($logger->hasInfoThatContains('Received bounce with unknown recipient'));
     }
+
+    public function test_infrastructure_bounce_created(): void
+    {
+        $project = ProjectFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project]);
+        $sendRecipient = SendRecipientFactory::createOne(['send' => $send, 'address' => 'test@example.com']);
+
+        $response = $this->localApi(
+            'POST',
+            '/incoming',
+            [
+                'type' => 'bounce',
+                'dsn' => [
+                    'ReadableText' => 'Message rejected due to security policy',
+                    'Recipients' => [
+                        [
+                            'EmailAddress' => 'test@example.com',
+                            'Status' => '5.7.1',
+                            'Action' => 'failed',
+                        ]
+                    ]
+                ],
+                'bounce_uuid' => $send->getUuid(),
+                'raw_email' => 'raw',
+                'mail_from' => 'from@example.com',
+                'rcpt_to' => 'to@example.com'
+            ]
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+
+        $suppressions = $this->em->getRepository(Suppression::class)->findAll();
+        $this->assertCount(0, $suppressions);
+
+        $infrastructureBounce = $this->em->getRepository(InfrastructureBounce::class)->findOneBy([
+            'send_recipient_id' => $sendRecipient->getId()
+        ]);
+        $this->assertNotNull($infrastructureBounce);
+        $this->assertSame(0, $infrastructureBounce->getSmtpCode());
+        $this->assertSame('5.7.1', $infrastructureBounce->getSmtpEnhancedCode());
+        $this->assertSame('Message rejected due to security policy', $infrastructureBounce->getSmtpMessage());
+        $this->assertFalse($infrastructureBounce->isRead());
+
+        $debugIncomingEmail = $this->em->getRepository(DebugIncomingEmail::class)->findOneBy([
+            'type' => DebugIncomingEmailType::BOUNCE,
+            'status' => DebugIncomingEmailStatus::SUCCESS,
+            'mail_from' => 'from@example.com',
+            'rcpt_to' => 'to@example.com',
+        ]);
+        $this->assertNotNull($debugIncomingEmail);
+    }
 }
