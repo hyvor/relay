@@ -9,6 +9,7 @@ use App\Entity\DebugIncomingEmail;
 use App\Entity\Suppression;
 use App\Entity\Type\DebugIncomingEmailStatus;
 use App\Entity\Type\DebugIncomingEmailType;
+use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SuppressionReason;
 use App\Service\IncomingMail\Dto\ComplaintDto;
 use App\Service\IncomingMail\Event\IncomingBounceEvent;
@@ -36,7 +37,7 @@ class IncomingComplaintTest extends WebTestCase
         $send = SendFactory::createOne([
             'project' => $project
         ]);
-        SendRecipientFactory::createOne([
+        $recipient = SendRecipientFactory::createOne([
             'send' => $send,
             'address' => 'spammer@example.net'
         ]);
@@ -80,6 +81,8 @@ class IncomingComplaintTest extends WebTestCase
         $this->assertNotNull($debugIncomingEmail);
         $this->assertSame('This is a raw email content', $debugIncomingEmail->getRawEmail());
         $this->assertNull($debugIncomingEmail->getErrorMessage());
+
+        $this->assertSame(SendRecipientStatus::COMPLAINED, $recipient->getStatus());
     }
 
     public function test_incoming_complaint_arf_missing_error_provided(): void
