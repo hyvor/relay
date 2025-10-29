@@ -87,6 +87,17 @@ export interface HealthCheckData {
     },
     none_of_the_ips_are_on_known_blacklists: {
         lists: Record<string, Record<string, BlacklistIpResult>>
+    },
+    no_unread_infrastructure_bounces: {
+        unread_count: number;
+        unread_bounces: Array<{
+            id: number;
+            smtp_code: number;
+            smtp_enhanced_code: string;
+            smtp_message: string;
+            send_recipient_id: number;
+            created_at: string;
+        }>;
     }
 }
 

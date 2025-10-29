@@ -23,7 +23,8 @@
 			all_ips_are_in_spf_record: 'All IPs are included in SPF record',
 			all_servers_can_be_reached_via_private_network:
 				'All servers can be reached via private network',
-			none_of_the_ips_are_on_known_blacklists: 'None of the IPs are on known blacklists'
+			none_of_the_ips_are_on_known_blacklists: 'None of the IPs are on known blacklists',
+			no_unread_infrastructure_bounces: 'No unread infrastructure bounces'
 		}[key]!;
 	}
 
@@ -80,6 +81,19 @@
 			}
 
 			return `Blacklisted IPs: ${blacklistedIps.join(', ')}`;
+		}
+
+		if (checkKey === 'no_unread_infrastructure_bounces') {
+			const bounceData = data as HealthCheckData['no_unread_infrastructure_bounces'];
+			const count = bounceData.unread_count;
+			const bounces = bounceData.unread_bounces.slice(0, 3);
+			const bounceSummary = bounces
+				.map(
+					(bounce) =>
+						`#${bounce.id}: ${bounce.smtp_enhanced_code}`
+				)
+				.join('; ');
+			return `${count} unread infrastructure bounce${count > 1 ? 's' : ''} found. ${bounceSummary}${count > 3 ? ` (and ${count - 3} more)` : ''}`;
 		}
 
 		return JSON.stringify(data);

@@ -51,8 +51,8 @@
 					'All active IPs have correct PTR records (Forward and Reverse)',
 				instance_dkim_correct: 'Instance DKIM is correct',
 				all_ips_are_in_spf_record: 'All IPs are in SPF record',
-				all_servers_can_be_reached_via_private_network:
-					'All servers can be reached via private network'
+				all_servers_can_be_reached_via_private_network:'All servers can be reached via private network',
+				no_unread_infrastructure_bounces: 'No unread infrastructure bounces'
 			}[key] || key
 		);
 	}
