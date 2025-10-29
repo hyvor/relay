@@ -1,7 +1,13 @@
 <script lang="ts">
 	import dayjs from 'dayjs';
 	import type { Event } from './events';
-	import type { Send, SendAttempt, SendFeedback, SmtpConversation } from '../../../../types';
+	import type {
+		Send,
+		SendAttempt,
+		SendAttemptRecipient,
+		SendFeedback,
+		SmtpConversation
+	} from '../../../../types';
 	import IconHourglass from '@hyvor/icons/IconHourglass';
 	import IconSend from '@hyvor/icons/IconSend';
 	import IconChat from '@hyvor/icons/IconChat';
@@ -13,15 +19,6 @@
 	}
 
 	let { event, send }: Props = $props();
-
-	function getAttemptRecipients(attempt: SendAttempt): string[] {
-		const recipientIds = attempt.recipients.map((r) => r.recipient_id);
-		return send.recipients.filter((r) => recipientIds.includes(r.id)).map((r) => r.address);
-	}
-
-	function getAttemptRecipientsJoined(attempt: SendAttempt): string {
-		return getAttemptRecipients(attempt).join(', ');
-	}
 
 	let { message, description, color } = $derived.by(() => {
 		switch (event.type) {
@@ -39,27 +36,39 @@
 					color: 'var(--red)'
 				};
 			case 'attempt':
-				return getAttemptMessage(event.attempt!);
+				return getAttemptMessage(event.attempt!.attempt, event.attempt!.recipient);
 			case 'feedback':
 				return getFeedbackMessage(event.feedback!);
 		}
 
-		function getAttemptMessage(attempt: SendAttempt) {
-			if (attempt.status === 'accepted') {
+		function getAttemptMessage(attempt: SendAttempt, attemptRecipient: SendAttemptRecipient) {
+			const recipient = send.recipients.find((r) => r.id === attemptRecipient.recipient_id)!;
+
+			if (attemptRecipient.recipient_status === 'accepted') {
 				return {
-					message: `Accepted: <strong>${getAttemptRecipientsJoined(attempt)}</strong>`,
+					message: `Accepted: <strong>${recipient.address}</strong>`,
 					description: 'Successfully delivered to the recipient mail server.',
 					color: 'var(--green)'
 				};
-			} else if (attempt.status === 'deferred') {
+			} else if (attemptRecipient.recipient_status === 'deferred') {
 				return {
-					message: `Deferred, retrying later: <strong>${getAttemptRecipientsJoined(attempt)}</strong>`,
+					message: `Deferred, retrying later: <strong>${recipient.address}</strong>`,
 					description: getAttemptDescription(),
 					color: 'var(--orange)'
 				};
+			} else if (attemptRecipient.recipient_status === 'bounced') {
+				const suppressedMessage = attemptRecipient.is_suppressed
+					? ' (Added to suppression list and future sends will be ignored)'
+					: '';
+
+				return {
+					message: `Bounced: <strong>${recipient.address}</strong>`,
+					description: getAttemptDescription() + suppressedMessage,
+					color: 'var(--red)'
+				};
 			} else {
 				return {
-					message: `Bounced: <strong>${getAttemptRecipientsJoined(attempt)}</strong>`,
+					message: `Failed to deliver: <strong>${recipient.address}</strong>`,
 					description: getAttemptDescription(),
 					color: 'var(--red)'
 				};
@@ -90,19 +99,15 @@
 			function getRcptError(smtpConvo: SmtpConversation): string {
 				let ret = '';
 
-				const recipientEmails = getAttemptRecipients(attempt);
-
 				for (const step of smtpConvo.steps) {
 					if (step.name != 'rcpt') {
 						continue;
 					}
-					for (const email of recipientEmails) {
-						if (step.command.includes(email) && step.reply_code >= 400) {
-							if (ret) {
-								ret += '\n';
-							}
-							ret += `${email}: ${step.reply_code} ${step.reply_text}`;
+					if (step.command.includes(recipient.address) && step.reply_code >= 400) {
+						if (ret) {
+							ret += '\n';
 						}
+						ret += `${step.reply_code} ${step.reply_text}`;
 					}
 				}
 
@@ -117,7 +122,8 @@
 			if (feedback.type === 'bounce') {
 				return {
 					message: `Bounced: <strong>${recipientEmail}</strong>`,
-					description: null,
+					description:
+						'Received a bounce notification from the recipient mail server. (Added to suppression list and future sends will be ignored)',
 					color: 'var(--red)'
 				};
 			} else {
