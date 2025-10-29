@@ -152,3 +152,14 @@ export interface DebugIncomingEmail {
     parsed_data?: Record<string, any> | null;
     error_message?: string | null;
 }
+
+export interface InfrastructureBounce {
+    id: number;
+    created_at: number;
+    updated_at: number;
+    is_read: boolean;
+    smtp_code: number;
+    smtp_enhanced_code: string;
+    smtp_message: string;
+    send_recipient_id: number;
+}

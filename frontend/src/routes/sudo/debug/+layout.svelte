@@ -3,6 +3,7 @@
 	import { NavLink } from '@hyvor/design/components';
 	import IconHandThumbsDown from '@hyvor/icons/IconHandThumbsDown';
 	import IconSearch from '@hyvor/icons/IconSearch';
+	import IconExclamationTriangle from '@hyvor/icons/IconExclamationTriangle';
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -29,6 +30,15 @@
 				<IconSearch />
 			{/snippet}
 			Parse Bounce/FBL
+		</NavLink>
+		<NavLink
+			href="/sudo/debug/infrastructure-bounces"
+			active={page.url.pathname === '/sudo/debug/infrastructure-bounces'}
+		>
+			{#snippet start()}
+				<IconExclamationTriangle />
+			{/snippet}
+			Infrastructure Bounces
 		</NavLink>
 	</div>
 

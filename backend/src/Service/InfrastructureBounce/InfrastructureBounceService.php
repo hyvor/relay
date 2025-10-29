@@ -40,5 +40,47 @@ class InfrastructureBounceService
 
         $this->em->flush();
     }
+
+    /**
+     * @param int $limit
+     * @param int $offset
+     * @param bool|null $isRead
+     * @return InfrastructureBounce[]
+     */
+    public function getInfrastructureBounces(int $limit, int $offset, ?bool $isRead = null): array
+    {
+        $qb = $this->em->createQueryBuilder();
+        $qb->select('ib')
+            ->from(InfrastructureBounce::class, 'ib')
+            ->orderBy('ib.created_at', 'DESC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset);
+
+        if ($isRead !== null) {
+            $qb->where('ib.is_read = :isRead')
+                ->setParameter('isRead', $isRead);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function getInfrastructureBounceById(int $id): ?InfrastructureBounce
+    {
+        return $this->em->getRepository(InfrastructureBounce::class)->find($id);
+    }
+
+    public function markAllUnreadAsRead(): int
+    {
+        $qb = $this->em->createQueryBuilder();
+        $qb->update(InfrastructureBounce::class, 'ib')
+            ->set('ib.is_read', ':isRead')
+            ->set('ib.updated_at', ':updatedAt')
+            ->where('ib.is_read = :currentIsRead')
+            ->setParameter('isRead', true)
+            ->setParameter('updatedAt', new \DateTimeImmutable())
+            ->setParameter('currentIsRead', false);
+
+        return $qb->getQuery()->execute();
+    }
 }
 
