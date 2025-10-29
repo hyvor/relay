@@ -28,21 +28,8 @@ class NoUnreadInfrastructureBouncesHealthCheck extends HealthCheckAbstract
             return true;
         }
 
-        $bounceData = [];
-        foreach ($unreadBounces as $bounce) {
-            $bounceData[] = [
-                'id' => $bounce->getId(),
-                'smtp_code' => $bounce->getSmtpCode(),
-                'smtp_enhanced_code' => $bounce->getSmtpEnhancedCode(),
-                'smtp_message' => $bounce->getSmtpMessage(),
-                'send_recipient_id' => $bounce->getSendRecipientId(),
-                'created_at' => $bounce->getCreatedAt()->format('c'),
-            ];
-        }
-
         $this->setData([
             'unread_count' => count($unreadBounces),
-            'unread_bounces' => $bounceData,
         ]);
 
         return false;

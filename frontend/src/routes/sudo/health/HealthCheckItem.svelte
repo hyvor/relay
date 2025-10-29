@@ -1,5 +1,5 @@
 <script lang="ts" generics="Key extends HealthCheckName">
-	import { Tag, Callout } from '@hyvor/design/components';
+	import { Tag, Callout, Button } from '@hyvor/design/components';
 	import type { HealthCheckResult, HealthCheckName, HealthCheckData } from '../sudoTypes';
 	import dayjs from 'dayjs';
 	import relativeTime from 'dayjs/plugin/relativeTime';
@@ -86,14 +86,8 @@
 		if (checkKey === 'no_unread_infrastructure_bounces') {
 			const bounceData = data as HealthCheckData['no_unread_infrastructure_bounces'];
 			const count = bounceData.unread_count;
-			const bounces = bounceData.unread_bounces.slice(0, 3);
-			const bounceSummary = bounces
-				.map(
-					(bounce) =>
-						`#${bounce.id}: ${bounce.smtp_enhanced_code}`
-				)
-				.join('; ');
-			return `${count} unread infrastructure bounce${count > 1 ? 's' : ''} found. ${bounceSummary}${count > 3 ? ` (and ${count - 3} more)` : ''}`;
+
+			return `${count} unread infrastructure bounce${count > 1 ? 's' : ''} found.`;
 		}
 
 		return JSON.stringify(data);
@@ -119,6 +113,14 @@
 
 			{#if checkKey === 'none_of_the_ips_are_on_known_blacklists'}
 				<BlacklistDebug data={result.data as any} />
+			{/if}
+
+			{#if checkKey === 'no_unread_infrastructure_bounces' && !result.passed}
+				<div class="action-button">
+					<Button size="small" as="a" href="/sudo/debug/infrastructure-bounces">
+						View Infrastructure Bounces
+					</Button>
+				</div>
 			{/if}
 		</div>
 	</div>
@@ -182,6 +184,10 @@
 
 	.failure-callout {
 		font-size: 14px;
+		margin-top: 10px;
+	}
+
+	.action-button {
 		margin-top: 10px;
 	}
 

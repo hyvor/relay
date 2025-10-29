@@ -75,17 +75,16 @@
 
 <div class="infrastructure-bounces">
 	<div class="header">
+		<div class="header-left">
+			<TabNav bind:active={filter}>
+				<TabNavItem name="all">All</TabNavItem>
+				<TabNavItem name="unread">Unread</TabNavItem>
+				<TabNavItem name="read">Read</TabNavItem>
+			</TabNav>
+		</div>
 		<Button color="accent" size="small" onclick={handleMarkAllAsRead} disabled={markingAll}>
 			{markingAll ? 'Marking...' : 'Mark All as Read'}
 		</Button>
-	</div>
-
-	<div class="tabs">
-		<TabNav bind:active={filter}>
-			<TabNavItem name="all">All</TabNavItem>
-			<TabNavItem name="unread">Unread</TabNavItem>
-			<TabNavItem name="read">Read</TabNavItem>
-		</TabNav>
 	</div>
 
 	{#if bounces.length === 0 && !loading}
@@ -122,9 +121,8 @@
 		gap: 20px;
 	}
 
-	.tabs {
-		padding: 20px 30px;
-		border-bottom: 1px solid var(--border);
+	.header-left {
+		flex: 1;
 	}
 
 	.rows {
