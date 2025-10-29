@@ -102,8 +102,6 @@
 
 	/*	media queries for 976px*/
 	@media (max-width: 976px) {
-		.wrap {
-		}
 		section {
 			flex-direction: column;
 			padding: 40px 0 60px;

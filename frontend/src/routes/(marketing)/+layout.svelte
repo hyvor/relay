@@ -20,14 +20,14 @@
 				color="input"
 				variant={page.url.pathname.startsWith('/docs') ? 'fill' : 'invisible'}
 				as="a"
-				href="/docs">Docs</Button
+				href="/docs">/docs</Button
 			>
 			<Button
 				size="small"
 				color="input"
 				variant={page.url.pathname.startsWith('/hosting') ? 'fill' : 'invisible'}
 				as="a"
-				href="/hosting">Hosting</Button
+				href="/hosting">/hosting</Button
 			>
 			<Button
 				size="small"
@@ -41,7 +41,7 @@
 				{#snippet start()}
 					<IconGithub size={14} />
 				{/snippet}
-				Github
+				github
 				{#snippet end()}
 					<IconBoxArrowUpRight size={11} />
 				{/snippet}

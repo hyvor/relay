@@ -4,9 +4,9 @@
 	import IconPiggyBank from '@hyvor/icons/IconPiggyBank';
 	import IconStar from '@hyvor/icons/IconStar';
 	import IconEnvelopeExclamation from '@hyvor/icons/IconEnvelopeExclamation';
-	import IconCoin from '@hyvor/icons/IconCoin';
 	import IconSignpost2 from '@hyvor/icons/IconSignpost2';
 	import IconMegaphone from '@hyvor/icons/IconMegaphone';
+	import IconDoorOpen from '@hyvor/icons/IconDoorOpen';
 </script>
 
 <div class="wrap">
@@ -16,42 +16,72 @@
 		<div class="faq-title">Self-Hosting</div>
 
 		<Accordion title="Can I self-host for free?" icon={IconPiggyBank}>
-			Absolutely. Hyvor Relay is fully open-source under the AGPL-3.0 license. You can deploy
-			and run it on your own servers at no cost.
+			Yes. Hyvor Relay is fully open-source under the AGPL-3.0 license. You can deploy and run
+			it on your own servers at no cost. We also offer an <strong>Enterprise license</strong>
+			for organizations that prefer a commercial license without the obligations of AGPL-3.0, along
+			with priority support with SLAs.
 
 			<p>
-				If your use case doesn't fit AGPL (for example, you can't open-source modifications
-				or need private enterprise use), we offer a <strong
-					>commercial self-hosted license</strong
-				> with full support from the HYVOR team.
+				Read the <a
+					class="hds-link"
+					href="https://hyvor.com/docs/hosting-license"
+					target="_blank"
+				>
+					self-hosted licensing
+				</a> page for more insights about when to choose an Enterprise license.
 			</p>
 		</Accordion>
 
-		<Accordion title="When should I buy a commercial license?" icon={IconCoin}>
-			<!--  -->
-		</Accordion>
-
-		<Accordion title="Does the commercial version include additional features?" icon={IconStar}>
-			No, none at all. The commercial version is exactly the same as the open-source version
-			in terms of features. The commercial license excempts you from the AGPL-3.0 license's
-			obligation to disclose your source code if you modify Hyvor Relay. It also comes with
-			commercial support options.
+		<Accordion title="Does the AGPL version include all features?" icon={IconStar}>
+			Yes, both the AGPL and Enterprise versions of Hyvor Relay include the same set of
+			features. The only difference is the licensing terms and the support options available.
 		</Accordion>
 
 		<Accordion title="Will my emails end up in spam?" icon={IconEnvelopeExclamation}>
-			It's a popular belief that self-hosting an email service is hard, mainly due to the
-			complexities of email deliverability. However, we believe this is a misconception born
-			out of limitations in existing self-hosted solutions. Hyvor Relay solves this problem
-			using two key approaches: <strong>automations</strong> (all possible tasks are
-			automated, making it hard to make mistakes) and <strong>monitoring</strong> (if
-			something goes wrong, you'll be notified). With these features, Hyvor Relay makes
-			self-hosting an email service that keeps your emails out of the spam folder, easy and
-			accessible.
+			Hyvor Relay is designed from the ground up to ensure high email deliverability rates. We
+			implement best practices such as DKIM, SPF, suppression lists, bounce handling, and
+			feedback loops to maximize the chances of your emails reaching the inbox and maintaining
+			a good sender reputation.
+
+			<ul>
+				<li>
+					<strong>Automation</strong>: Hyvor Relay automates repetitive tasks such as DNS
+					configuration, bounce handling, and feedback loops, reducing the chances of
+					human error.
+				</li>
+				<li>
+					<strong>Monitoring</strong>: Hyvor Relay continuously monitors your sending
+					domains and IP addresses for deliverability issues and notifies you if any
+					problems arise.
+				</li>
+			</ul>
 
 			<p>
 				In addition, Hyvor Relay has an extensive documentation that teaches you many
 				underlying concepts of SMTP and email deliverability.
 			</p>
+
+			<p>
+				In short, Hyvor Relay does most of the heavy lifting for you to ensure your emails
+				reach the inbox. However, ultimate deliverability also depends on factors such as
+				email content, recipient engagement, domain age and reputation, etc., which are
+				outside the scope of any email sending service.
+			</p>
+
+			<p>
+				For more tips on improving email deliverability, check out the <a
+					class="hds-link"
+					href="/hosting/deliverability"
+					target="_blank"
+				>
+					Deliverability
+				</a> page.
+			</p>
+		</Accordion>
+
+		<Accordion title="Is Single Sign-On (SSO) supported?" icon={IconDoorOpen}>
+			Yes. In fact, <strong>SSO is required</strong> in Hyvor Relay. It does not include its own
+			login or signup system. Instead, it uses OpenID Connect (OIDC) to handle authentication.
 		</Accordion>
 
 		<div class="faq-title">Cloud</div>
@@ -66,16 +96,12 @@
 			title="Will Cloud support both transactional and distributional emails?"
 			icon={IconSignpost2}
 		>
-			Hyvor Relay Cloud will primarily onboard customers sending <strong
+			Hyvor Relay Cloud will only onboard customers sending <strong
 				>transactional emails</strong
-			>. We plan to work with developers, indiehackers, small businesses, and enterprises for
-			transactional emails.
-
-			<p>
-				For <strong>distributional emails</strong> (newsletters, marketing emails, etc.), we
-				will only partner with platforms that specialize in such use-cases. For example, newsletter
-				platforms, marketing automation tools, CRM software, etc.
-			</p>
+			>
+			as a start. We plan to work with developers, indiehackers, small businesses, and enterprises
+			for transactional emails. Distributional email support may be added in the future based on
+			demand.
 		</Accordion>
 
 		<Accordion title="Can I manage a newsletter with Hyvor Relay?" icon={IconMegaphone}>

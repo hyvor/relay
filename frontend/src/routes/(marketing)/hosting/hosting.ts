@@ -47,7 +47,7 @@ export const categories: Category[] = [
 			},
 			{
 				slug: 'scaling',
-				name: 'Scaling & HA',
+				name: 'Scaling',
 				component: Scaling
 			},
 			{
