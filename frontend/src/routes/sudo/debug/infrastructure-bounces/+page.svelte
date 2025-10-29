@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import type { InfrastructureBounce } from '../../sudoTypes';
 	import {
 		getInfrastructureBounces,
@@ -121,15 +120,6 @@
 		padding: 20px 30px;
 		border-bottom: 1px solid var(--border);
 		gap: 20px;
-	}
-
-	.header-left {
-		flex: 1;
-	}
-
-	.note {
-		font-size: 14px;
-		color: var(--text-light);
 	}
 
 	.tabs {
