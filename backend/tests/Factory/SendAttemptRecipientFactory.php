@@ -35,6 +35,7 @@ final class SendAttemptRecipientFactory extends PersistentProxyObjectFactory
             'smtp_enhanced_code' => self::faker()->optional()->regexify('[2-5]\.[0-9]\.[0-9]'),
             'smtp_message' => self::faker()->sentence(),
             'recipient_status' => SendRecipientStatus::ACCEPTED,
+            'is_suppressed' => false,
         ];
     }
 }
