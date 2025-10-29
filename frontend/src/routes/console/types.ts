@@ -93,6 +93,8 @@ export type SendRecipientStatus =
 	| 'failed'
 	| 'complained';
 
+export type SendRecipientStatusForAttempt = Omit<SendRecipientStatus, 'queued' | 'suppressed' | 'complained'>;
+
 export interface SendRecipient {
 	id: number;
 	type: 'to' | 'cc' | 'bcc';
@@ -119,10 +121,11 @@ export interface SendAttemptRecipient {
 	id: number;
 	created_at: number;
 	recipient_id: number;
-	recipient_status: SendRecipientStatus;
+	recipient_status: SendRecipientStatusForAttempt;
 	smtp_code: number;
 	smtp_enhanced_code: string;
 	smtp_message: string;
+	is_suppressed: boolean;
 }
 
 export interface SendFeedback {

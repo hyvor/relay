@@ -56,6 +56,10 @@ class SendAttemptService
                     SuppressionReason::BOUNCE,
                     $parser->getFullMessage()
                 );
+
+                $attemptRecipient->setIsSuppressed(true);
+                $this->em->persist($attemptRecipient);
+                $this->em->flush();
             }
         }
 

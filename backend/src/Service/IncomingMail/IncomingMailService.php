@@ -6,6 +6,7 @@ use App\Api\Local\Input\ArfInput;
 use App\Api\Local\Input\DsnInput;
 use App\Entity\DebugIncomingEmail;
 use App\Entity\Type\SendFeedbackType;
+use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SuppressionReason;
 use App\Service\IncomingMail\Dto\BounceDto;
 use App\Service\IncomingMail\Dto\ComplaintDto;
@@ -79,6 +80,8 @@ class IncomingMailService
                     return;
                 }
 
+                $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::BOUNCED);
+
                 $this->suppressionService->createSuppression(
                     $send->getProject(),
                     $recipient->EmailAddress,
@@ -139,6 +142,8 @@ class IncomingMailService
             return;
             // @codeCoverageIgnoreEnd
         }
+
+        $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::COMPLAINED);
 
         $this->suppressionService->createSuppression(
             $send->getProject(),
