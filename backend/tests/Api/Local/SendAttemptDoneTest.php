@@ -91,7 +91,7 @@ class SendAttemptDoneTest extends WebTestCase
         ]);
 
         // recipient bounce
-        SendAttemptRecipientFactory::createOne([
+        $attemptRecipient1 = SendAttemptRecipientFactory::createOne([
             'send_attempt' => $attempt1,
             'send_recipient_id' => $recipient1->getId(),
             'recipient_status' => SendRecipientStatus::BOUNCED,
@@ -129,5 +129,7 @@ class SendAttemptDoneTest extends WebTestCase
         $this->assertSame('550 5.1.1 User unknown', $suppressions[0]->getDescription());
 
         $eventDispatcher->assertDispatched(SuppressionCreatedEvent::class);
+
+        $this->assertTrue($attemptRecipient1->getIsSuppressed());
     }
 }

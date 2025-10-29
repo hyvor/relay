@@ -15,6 +15,7 @@ class SendAttemptRecipientObject
     public int $smtp_code;
     public ?string $smtp_enhanced_code = null;
     public string $smtp_message;
+    public bool $is_suppressed;
 
     public function __construct(SendAttemptRecipient $recipient)
     {
@@ -25,6 +26,7 @@ class SendAttemptRecipientObject
         $this->smtp_code = $recipient->getSmtpCode();
         $this->smtp_enhanced_code = $recipient->getSmtpEnhancedCode();
         $this->smtp_message = $recipient->getSmtpMessage();
+        $this->is_suppressed = $recipient->getIsSuppressed();
     }
 
 }
