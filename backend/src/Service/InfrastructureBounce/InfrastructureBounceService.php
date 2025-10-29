@@ -12,15 +12,6 @@ class InfrastructureBounceService
     ) {
     }
 
-    /**
-     * @return InfrastructureBounce[]
-     */
-    public function getInfrastructureBouncesBySendRecipientId(int $sendRecipientId): array
-    {
-        return $this->em->getRepository(InfrastructureBounce::class)
-            ->findBy(['send_recipient_id' => $sendRecipientId], ['id' => 'DESC']);
-    }
-
     public function createInfrastructureBounce(
         int $sendRecipientId,
         int $smtpCode,

@@ -7,6 +7,7 @@ use App\Api\Local\Input\DsnInput;
 use App\Api\Local\Input\DsnRecipientsInput;
 use App\Api\Local\Input\IncomingInput;
 use App\Entity\DebugIncomingEmail;
+use App\Entity\InfrastructureBounce;
 use App\Entity\Suppression;
 use App\Entity\Type\DebugIncomingEmailStatus;
 use App\Entity\Type\DebugIncomingEmailType;
