@@ -83,12 +83,12 @@
 			return `Blacklisted IPs: ${blacklistedIps.join(', ')}`;
 		}
 
-	if (checkKey === 'no_unread_infrastructure_bounces') {
-		const bounceData = data as HealthCheckData['no_unread_infrastructure_bounces'];
-		const count = bounceData.unread_count;
+		if (checkKey === 'no_unread_infrastructure_bounces') {
+			const bounceData = data as HealthCheckData['no_unread_infrastructure_bounces'];
+			const count = bounceData.unread_count;
 
-		return `${count} unread infrastructure bounce${count > 1 ? 's' : ''} found. <a href="/sudo/debug/infrastructure-bounces">View infrastructure bounces</a>.`;
-	}
+			return `${count} unread infrastructure bounce${count > 1 ? 's' : ''} found.`;
+		}
 
 		return JSON.stringify(data);
 	}
@@ -113,6 +113,12 @@
 
 			{#if checkKey === 'none_of_the_ips_are_on_known_blacklists'}
 				<BlacklistDebug data={result.data as any} />
+			{/if}
+
+			{#if checkKey === 'no_unread_infrastructure_bounces'}
+				<div class="link-wrap">
+					<a href="/sudo/debug/infrastructure-bounces"> View Infrastructure Bounces </a>
+				</div>
 			{/if}
 		</div>
 	</div>
@@ -185,5 +191,15 @@
 
 	.status {
 		flex-shrink: 0;
+	}
+
+	.link-wrap {
+		margin-top: 8px;
+	}
+
+	.link-wrap a {
+		font-size: 14px;
+		color: var(--text-light);
+		text-decoration: underline;
 	}
 </style>
