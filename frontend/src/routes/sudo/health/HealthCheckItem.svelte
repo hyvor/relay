@@ -21,8 +21,6 @@
 				'All active IPs have correct PTR records (Forward and Reverse)',
 			instance_dkim_correct: 'Instance DKIM is correct',
 			all_ips_are_in_spf_record: 'All IPs are included in SPF record',
-			all_servers_can_be_reached_via_private_network:
-				'All servers can be reached via private network',
 			none_of_the_ips_are_on_known_blacklists: 'None of the IPs are on known blacklists',
 			no_unread_infrastructure_bounces: 'No unread infrastructure bounces'
 		}[key]!;
@@ -106,7 +104,7 @@
 			{#if !result.passed && result.data}
 				<div class="failure-callout">
 					<Callout type="danger" size="small">
-						{@html renderFailureData(result.data)}
+						{renderFailureData(result.data)}
 					</Callout>
 				</div>
 			{/if}
