@@ -148,7 +148,6 @@ export interface DebugIncomingEmail {
 export interface InfrastructureBounce {
     id: number;
     created_at: number;
-    updated_at: number;
     is_read: boolean;
     smtp_code: number;
     smtp_enhanced_code: string;
