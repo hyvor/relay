@@ -84,7 +84,9 @@ class InfrastructureBounceService
             ->setParameter('updatedAt', new \DateTimeImmutable())
             ->setParameter('currentIsRead', false);
 
-        return $qb->getQuery()->execute();
+        /** @var int $result */
+        $result = $qb->getQuery()->execute();
+        return $result;
     }
 }
 

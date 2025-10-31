@@ -61,6 +61,14 @@ class IncomingMailService
             }
 
             $smtpResponseParser = new SmtpResponseParser(null, $recipient->Status, $dsnInput->ReadableText);
+            if (!$smtpResponseParser->isRecipientBounce() && !$smtpResponseParser->isInfrastructureError()) {
+                $this->logger->info('Received bounce that is not a recipient bounce or infrastructure error', [
+                    'uuid' => $bounceUuid,
+                    'recipient' => $recipient->EmailAddress,
+                    'status' => $recipient->Status,
+                ]);
+                return;
+            }
 
             $send = $this->sendService->getSendByUuid($bounceUuid);
 
@@ -111,12 +119,6 @@ class IncomingMailService
                     $recipient->Status,
                     $dsnInput->ReadableText
                 );
-            } else {
-                $this->logger->info('Received bounce that is not a recipient bounce or infrastructure error', [
-                    'uuid' => $bounceUuid,
-                    'recipient' => $recipient->EmailAddress,
-                    'status' => $recipient->Status,
-                ]);
             }
         }
     }

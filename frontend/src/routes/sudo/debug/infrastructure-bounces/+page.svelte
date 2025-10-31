@@ -74,7 +74,6 @@
 		const bounceIndex = bounces.findIndex((b) => b.id === id);
 		if (bounceIndex !== -1) {
 			bounces[bounceIndex].is_read = true;
-			bounces[bounceIndex].updated_at = Math.floor(Date.now() / 1000);
 		}
 	}
 </script>
