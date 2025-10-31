@@ -87,6 +87,9 @@ export interface HealthCheckData {
     },
     none_of_the_ips_are_on_known_blacklists: {
         lists: Record<string, Record<string, BlacklistIpResult>>
+    },
+    no_unread_infrastructure_bounces: {
+        unread_count: number;
     }
 }
 
@@ -140,4 +143,14 @@ export interface DebugIncomingEmail {
     rcpt_to: string;
     parsed_data?: Record<string, any> | null;
     error_message?: string | null;
+}
+
+export interface InfrastructureBounce {
+    id: number;
+    created_at: number;
+    is_read: boolean;
+    smtp_code: number;
+    smtp_enhanced_code: string;
+    smtp_message: string;
+    send_recipient_id: number;
 }

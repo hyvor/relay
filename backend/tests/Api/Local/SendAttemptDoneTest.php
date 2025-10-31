@@ -3,6 +3,7 @@
 namespace App\Tests\Api\Local;
 
 use App\Api\Local\Controller\LocalController;
+use App\Entity\InfrastructureBounce;
 use App\Entity\Suppression;
 use App\Entity\Type\SendAttemptStatus;
 use App\Entity\Type\SendRecipientStatus;
@@ -131,5 +132,11 @@ class SendAttemptDoneTest extends WebTestCase
         $eventDispatcher->assertDispatched(SuppressionCreatedEvent::class);
 
         $this->assertTrue($attemptRecipient1->getIsSuppressed());
+
+        $infra_bounces = $this->em
+            ->getRepository(InfrastructureBounce::class)
+            ->findAll();
+
+        $this->assertCount(1, $infra_bounces);
     }
 }

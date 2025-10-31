@@ -10,7 +10,8 @@ import type {
     DnsRecord,
     DefaultDnsRecord,
     DnsRecordType,
-    DebugIncomingEmail
+    DebugIncomingEmail,
+    InfrastructureBounce
 } from './sudoTypes';
 
 export function initSudo() {
@@ -139,5 +140,28 @@ export function debugParseBounceFBL(raw: string, type: 'bounce' | 'complaint') {
     return sudoApi.post<{ parsed: Record<string, any> }>({
         endpoint: '/debug/parse-bounce-fbl',
         data: {raw, type}
+    });
+}
+
+export function getInfrastructureBounces(limit: number = 20, offset: number = 0, isRead?: boolean) {
+    const data: Record<string, any> = {limit, offset};
+    if (isRead !== undefined) {
+        data.is_read = isRead;
+    }
+    return sudoApi.get<InfrastructureBounce[]>({
+        endpoint: '/infrastructure-bounces',
+        data
+    });
+}
+
+export function markInfrastructureBounceAsRead(id: number) {
+    return sudoApi.patch<InfrastructureBounce>({
+        endpoint: `/infrastructure-bounces/${id}/mark-as-read`
+    });
+}
+
+export function markAllInfrastructureBouncesAsRead() {
+    return sudoApi.post<{marked_count: number}>({
+        endpoint: '/infrastructure-bounces/mark-all-as-read'
     });
 }

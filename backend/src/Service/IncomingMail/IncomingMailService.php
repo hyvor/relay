@@ -12,6 +12,7 @@ use App\Service\IncomingMail\Dto\BounceDto;
 use App\Service\IncomingMail\Dto\ComplaintDto;
 use App\Service\IncomingMail\Event\IncomingBounceEvent;
 use App\Service\IncomingMail\Event\IncomingComplaintEvent;
+use App\Service\InfrastructureBounce\InfrastructureBounceService;
 use App\Service\Send\SendService;
 use App\Service\SendFeedback\SendFeedbackService;
 use App\Service\SendRecipient\SendRecipientService;
@@ -27,6 +28,7 @@ class IncomingMailService
         private SuppressionService $suppressionService,
         private SendRecipientService $sendRecipientService,
         private SendFeedbackService $sendFeedbackService,
+        private InfrastructureBounceService $infrastructureBounceService,
         private LoggerInterface $logger,
         private EventDispatcherInterface $ed
     ) {
@@ -59,27 +61,35 @@ class IncomingMailService
             }
 
             $smtpResponseParser = new SmtpResponseParser(null, $recipient->Status, $dsnInput->ReadableText);
+            if (!$smtpResponseParser->isRecipientBounce() && !$smtpResponseParser->isInfrastructureError()) {
+                $this->logger->info('Received bounce that is not a recipient bounce or infrastructure error', [
+                    'uuid' => $bounceUuid,
+                    'recipient' => $recipient->EmailAddress,
+                    'status' => $recipient->Status,
+                ]);
+                return;
+            }
+
+            $send = $this->sendService->getSendByUuid($bounceUuid);
+
+            if ($send === null) {
+                $this->logger->info('Received bounce with unknown send UUID', [
+                    'uuid' => $bounceUuid,
+                    'recipient' => $recipient->EmailAddress,
+                ]);
+                return;
+            }
+
+            $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $recipient->EmailAddress);
+            if ($sendRecipient === null) {
+                $this->logger->info('Received bounce with unknown recipient', [
+                    'uuid' => $bounceUuid,
+                    'recipient' => $recipient->EmailAddress,
+                ]);
+                return;
+            }
 
             if ($smtpResponseParser->isRecipientBounce()) {
-                $send = $this->sendService->getSendByUuid($bounceUuid);
-
-                if ($send === null) {
-                    $this->logger->info('Received bounce with unknown send UUID', [
-                        'uuid' => $bounceUuid,
-                        'recipient' => $recipient->EmailAddress,
-                    ]);
-                    return;
-                }
-
-                $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $recipient->EmailAddress);
-                if ($sendRecipient === null) {
-                    $this->logger->info('Received bounce with unknown recipient', [
-                        'uuid' => $bounceUuid,
-                        'recipient' => $recipient->EmailAddress,
-                    ]);
-                    return;
-                }
-
                 $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::BOUNCED);
 
                 $this->suppressionService->createSuppression(
@@ -98,13 +108,17 @@ class IncomingMailService
                 $bounceObject = new BounceDto($dsnInput->ReadableText, $recipient->Status);
                 $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient, $bounceObject));
             } elseif ($smtpResponseParser->isInfrastructureError()) {
-                // TODO: record infra bounces #291
-            } else {
-                $this->logger->info('Received bounce that is not a recipient bounce or infrastructure error', [
+                $this->logger->info('Received infrastructure error with unknown send UUID', [
                     'uuid' => $bounceUuid,
                     'recipient' => $recipient->EmailAddress,
-                    'status' => $recipient->Status,
                 ]);
+
+                $this->infrastructureBounceService->createInfrastructureBounce(
+                    $sendRecipient->getId(),
+                    0, // SMTP code is not available in DSN, using 0 as default
+                    $recipient->Status,
+                    $dsnInput->ReadableText
+                );
             }
         }
     }

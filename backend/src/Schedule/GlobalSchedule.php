@@ -6,6 +6,7 @@ use App\Entity\Type\DomainStatus;
 use App\Service\Domain\Message\PurgeStalePendingSuspendedDomainsMessage;
 use App\Service\Domain\Message\ReverifyDomainsMessage;
 use App\Service\Idempotency\Message\ClearExpiredIdempotencyRecordsMessage;
+use App\Service\InfrastructureBounce\Message\ClearOldInfrastructureBouncesMessage;
 use App\Service\Management\Message\RunHealthChecksMessage;
 use App\Service\Send\Message\ClearExpiredSendsMessage;
 use Symfony\Component\Lock\LockFactory;
@@ -38,6 +39,9 @@ class GlobalSchedule implements ScheduleProviderInterface
 
             // sends
             ->add(RecurringMessage::every('1 day', new ClearExpiredSendsMessage))
+
+            // infrastructure bounces
+            ->add(RecurringMessage::every('1 day', new ClearOldInfrastructureBouncesMessage))
 
             // domain verification
 
