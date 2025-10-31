@@ -6,12 +6,13 @@ use App\Entity\Send;
 use App\Entity\SendAttempt;
 use App\Entity\SendAttemptRecipient;
 use App\Entity\SendRecipient;
+use App\Entity\Type\SendRecipientStatus;
 use Doctrine\ORM\EntityManagerInterface;
 
 class SendRecipientService
 {
     public function __construct(
-        private EntityManagerInterface $entityManager,
+        private EntityManagerInterface $em,
     ) {
     }
 
@@ -19,7 +20,7 @@ class SendRecipientService
         Send $send,
         string $email
     ): ?SendRecipient {
-        return $this->entityManager->getRepository(SendRecipient::class)
+        return $this->em->getRepository(SendRecipient::class)
             ->findOneBy([
                 'send' => $send,
                 'address' => $email
@@ -43,6 +44,15 @@ class SendRecipientService
             'SendRecipient not found for SendAttemptRecipient ID ' . $attemptRecipient->getId()
         );
         // @codeCoverageIgnoreEnd
+    }
+
+    public function updateSendRecipientStatus(
+        SendRecipient $sendRecipient,
+        SendRecipientStatus $status
+    ): void {
+        $sendRecipient->setStatus($status);
+        $this->em->persist($sendRecipient);
+        $this->em->flush();
     }
 
 }

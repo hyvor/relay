@@ -27,7 +27,8 @@ final class Version20251016101939 extends AbstractMigration
                 smtp_code INT NOT NULL,
                 smtp_enhanced_code TEXT,
                 smtp_message TEXT NOT NULL,
-                recipient_status send_recipients_status NOT NULL
+                recipient_status send_recipients_status NOT NULL,
+                is_suppressed BOOLEAN DEFAULT FALSE
             )
             SQL
         );

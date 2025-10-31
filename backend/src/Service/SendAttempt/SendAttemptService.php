@@ -64,6 +64,10 @@ class SendAttemptService
                     $attemptRecipient->getSmtpEnhancedCode() ?? '',
                     $attemptRecipient->getSmtpMessage()
                 );
+
+                $attemptRecipient->setIsSuppressed(true);
+                $this->em->persist($attemptRecipient);
+                $this->em->flush();
             }
         }
 

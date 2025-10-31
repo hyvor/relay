@@ -40,6 +40,9 @@ class SendAttemptRecipient
     #[ORM\Column(type: "string", enumType: SendRecipientStatus::class)]
     private SendRecipientStatus $recipient_status;
 
+    #[ORM\Column()]
+    private bool $is_suppressed;
+
     public function __construct()
     {
         $this->created_at = new \DateTimeImmutable();
@@ -144,4 +147,16 @@ class SendAttemptRecipient
         $this->recipient_status = $recipient_status;
         return $this;
     }
+
+    public function getIsSuppressed(): bool
+    {
+        return $this->is_suppressed;
+    }
+
+    public function setIsSuppressed(bool $is_suppressed): static
+    {
+        $this->is_suppressed = $is_suppressed;
+        return $this;
+    }
+
 }

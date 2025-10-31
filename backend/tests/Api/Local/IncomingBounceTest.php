@@ -11,6 +11,7 @@ use App\Entity\InfrastructureBounce;
 use App\Entity\Suppression;
 use App\Entity\Type\DebugIncomingEmailStatus;
 use App\Entity\Type\DebugIncomingEmailType;
+use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SuppressionReason;
 use App\Service\DebugIncomingEmail\DebugIncomingEmailService;
 use App\Service\IncomingMail\Dto\BounceDto;
@@ -42,8 +43,8 @@ class IncomingBounceTest extends WebTestCase
         $send = SendFactory::createOne([
             'project' => $project
         ]);
-        SendRecipientFactory::createOne(['send' => $send, 'address' => 'nadil@hyvor.com']);
-        SendRecipientFactory::createOne(['send' => $send, 'address' => 'supun@hyvor.com']);
+        $recipient1 = SendRecipientFactory::createOne(['send' => $send, 'address' => 'nadil@hyvor.com']);
+        $recipient2 = SendRecipientFactory::createOne(['send' => $send, 'address' => 'supun@hyvor.com']);
 
         $response = $this->localApi(
             'POST',
@@ -96,6 +97,9 @@ class IncomingBounceTest extends WebTestCase
         $this->assertNotNull($debugIncomingEmail);
         $this->assertSame('This is a raw email content', $debugIncomingEmail->getRawEmail());
         $this->assertNull($debugIncomingEmail->getErrorMessage());
+
+        $this->assertSame(SendRecipientStatus::BOUNCED, $recipient1->getStatus());
+        $this->assertSame(SendRecipientStatus::BOUNCED, $recipient2->getStatus());
     }
 
     public function test_incoming_bounce_dsn_missing(): void
