@@ -4,7 +4,14 @@
 		getInfrastructureBounces,
 		markAllInfrastructureBouncesAsRead
 	} from '../../sudoActions';
-	import { IconMessage, toast, Button, LoadButton, TabNav, TabNavItem } from '@hyvor/design/components';
+	import {
+		IconMessage,
+		toast,
+		Button,
+		LoadButton,
+		TabNav,
+		TabNavItem
+	} from '@hyvor/design/components';
 	import InfrastructureBounceRow from './InfrastructureBounceRow.svelte';
 
 	let bounces: InfrastructureBounce[] = $state([]);
@@ -70,7 +77,6 @@
 			bounces[bounceIndex].updated_at = Math.floor(Date.now() / 1000);
 		}
 	}
-
 </script>
 
 <div class="infrastructure-bounces">
@@ -98,7 +104,12 @@
 
 		{#if hasMore}
 			<div class="load-more">
-				<LoadButton text="Load More" {loading} show={hasMore} on:click={() => loadBounces(true)} />
+				<LoadButton
+					text="Load More"
+					{loading}
+					show={hasMore}
+					on:click={() => loadBounces(true)}
+				/>
 			</div>
 		{/if}
 	{/if}
@@ -135,4 +146,3 @@
 		text-align: center;
 	}
 </style>
-
