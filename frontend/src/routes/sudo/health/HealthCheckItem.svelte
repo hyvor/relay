@@ -4,6 +4,7 @@
 	import dayjs from 'dayjs';
 	import relativeTime from 'dayjs/plugin/relativeTime';
 	import BlacklistDebug from './BlacklistDebug.svelte';
+	import { formatCheckName } from '../lib/helpers/format';
 
 	dayjs.extend(relativeTime);
 
@@ -14,19 +15,6 @@
 
 	let { checkKey, result }: Props = $props();
 
-	function formatCheckName(key: HealthCheckName): string {
-		return {
-			all_queues_have_at_least_one_ip: 'All queues have at least one IP',
-			all_active_ips_have_correct_ptr:
-				'All active IPs have correct PTR records (Forward and Reverse)',
-			instance_dkim_correct: 'Instance DKIM is correct',
-			all_ips_are_in_spf_record: 'All IPs are included in SPF record',
-			all_servers_can_be_reached_via_private_network:
-				'All servers can be reached via private network',
-			none_of_the_ips_are_on_known_blacklists: 'None of the IPs are on known blacklists',
-			no_unread_infrastructure_bounces: 'No unread infrastructure bounces'
-		}[key]!;
-	}
 
 	function formatCheckedTime(checkedAt: string): string {
 		return dayjs(checkedAt).fromNow();

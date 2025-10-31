@@ -32,11 +32,9 @@ class InfrastructureBounceController extends AbstractController
             $limit,
             $offset,
             $isRead
-        );
+        )->map(fn($bounce) => new InfrastructureBounceObject($bounce));
 
-        return new JsonResponse(
-            array_map(fn($bounce) => new InfrastructureBounceObject($bounce), $bounces)
-        );
+        return $this->json($bounces);
     }
 
     #[Route('/infrastructure-bounces/{id}/mark-as-read', methods: 'PATCH')]

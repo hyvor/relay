@@ -8,7 +8,6 @@ class InfrastructureBounceObject
 {
     public int $id;
     public int $created_at;
-    public int $updated_at;
     public bool $is_read;
     public int $smtp_code;
     public string $smtp_enhanced_code;
@@ -19,7 +18,6 @@ class InfrastructureBounceObject
     {
         $this->id = $bounce->getId();
         $this->created_at = $bounce->getCreatedAt()->getTimestamp();
-        $this->updated_at = $bounce->getUpdatedAt()->getTimestamp();
         $this->is_read = $bounce->isRead();
         $this->smtp_code = $bounce->getSmtpCode();
         $this->smtp_enhanced_code = $bounce->getSmtpEnhancedCode();

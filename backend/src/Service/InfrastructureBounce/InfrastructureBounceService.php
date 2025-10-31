@@ -3,6 +3,7 @@
 namespace App\Service\InfrastructureBounce;
 
 use App\Entity\InfrastructureBounce;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 
 class InfrastructureBounceService
@@ -45,14 +46,14 @@ class InfrastructureBounceService
      * @param int $limit
      * @param int $offset
      * @param bool|null $isRead
-     * @return InfrastructureBounce[]
+     * @return ArrayCollection<int, InfrastructureBounce>
      */
-    public function getInfrastructureBounces(int $limit, int $offset, ?bool $isRead = null): array
+    public function getInfrastructureBounces(int $limit, int $offset, ?bool $isRead = null): ArrayCollection
     {
         $qb = $this->em->createQueryBuilder();
         $qb->select('ib')
             ->from(InfrastructureBounce::class, 'ib')
-            ->orderBy('ib.created_at', 'DESC')
+            ->orderBy('ib.id', 'DESC')
             ->setMaxResults($limit)
             ->setFirstResult($offset);
 
@@ -61,7 +62,10 @@ class InfrastructureBounceService
                 ->setParameter('isRead', $isRead);
         }
 
-        return $qb->getQuery()->getResult();
+        /** @var InfrastructureBounce[] $results */
+        $results = $qb->getQuery()->getResult();
+
+        return new ArrayCollection($results);
     }
 
     public function getInfrastructureBounceById(int $id): ?InfrastructureBounce

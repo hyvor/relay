@@ -30,6 +30,20 @@ final class Version20251027161113 extends AbstractMigration
             )
             SQL
         );
+
+        // Index on is_read since used for filtering
+        $this->addSql(
+            <<<SQL
+            CREATE INDEX is_read ON infrastructure_bounces (is_read)
+            SQL
+        );
+
+        // Index on created_at since used for deleting
+        $this->addSql(
+            <<<SQL
+            CREATE INDEX created_at ON infrastructure_bounces (created_at)
+            SQL
+        );
     }
 
     public function down(Schema $schema): void
