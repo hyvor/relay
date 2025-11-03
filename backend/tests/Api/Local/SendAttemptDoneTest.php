@@ -132,11 +132,5 @@ class SendAttemptDoneTest extends WebTestCase
         $eventDispatcher->assertDispatched(SuppressionCreatedEvent::class);
 
         $this->assertTrue($attemptRecipient1->getIsSuppressed());
-
-        $infra_bounces = $this->em
-            ->getRepository(InfrastructureBounce::class)
-            ->findAll();
-
-        $this->assertCount(1, $infra_bounces);
     }
 }

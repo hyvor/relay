@@ -58,16 +58,18 @@ class SendAttemptService
                     SuppressionReason::BOUNCE,
                     $parser->getFullMessage()
                 );
+
+                $attemptRecipient->setIsSuppressed(true);
+                $this->em->persist($attemptRecipient);
+                $this->em->flush();
+            }
+            if ($parser->isInfrastructureError()) {
                 $this->infrastructureBounceService->createInfrastructureBounce(
                     $attemptRecipient->getSendRecipientId(),
                     $attemptRecipient->getSmtpCode(),
                     $attemptRecipient->getSmtpEnhancedCode() ?? '',
                     $attemptRecipient->getSmtpMessage()
                 );
-
-                $attemptRecipient->setIsSuppressed(true);
-                $this->em->persist($attemptRecipient);
-                $this->em->flush();
             }
         }
 

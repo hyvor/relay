@@ -1,5 +1,3 @@
-import type { HealthCheckName } from "../../sudoTypes";
-
 export function formatCheckName(key: string): string {
     return {
         all_queues_have_at_least_one_ip: 'All queues have at least one IP',

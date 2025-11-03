@@ -4,7 +4,7 @@
 	import dayjs from 'dayjs';
 	import relativeTime from 'dayjs/plugin/relativeTime';
 	import BlacklistDebug from './BlacklistDebug.svelte';
-	import { formatCheckName } from '../lib/helpers/format';
+	import { formatCheckName } from './formatHealthChecks';
 
 	dayjs.extend(relativeTime);
 
