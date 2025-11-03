@@ -20,25 +20,25 @@
 	<h3 id="features">Features</h3>
 
 	<div class="features">
-		<Feature title="Email API" icon={IconEnvelope}>
+		<Feature title="Email API" icon={IconEnvelope} docsLink="/docs/send-emails">
 			Send reliable emails with a clean, idempotent REST API. Supports HTML and plain text,
 			attachments, custom headers, and multiple recipients.
 		</Feature>
-		<Feature title="Automate Everything" icon={IconGear}>
-			Control your email infrastructure with a powerful, scope-based REST API. Automate domain
-			setup, suppressions, API keys, and webhooks in seconds.
+		<Feature title="Automate Everything" icon={IconGear} docsLink="/docs/api-console">
+			Control your email sending with a powerful, scope-based REST API. Automate domain setup,
+			suppressions, API keys, and webhooks in seconds.
 		</Feature>
-		<Feature title="Webhooks for Events" icon={IconSend}>
+		<Feature title="Webhooks for Events" icon={IconSend} docsLink="/docs/webhooks">
 			Stay in sync with real-time event webhooks. Get notified on deliveries, bounces, domain
 			verifications, and more.
+		</Feature>
+		<Feature title="Domains & DKIM" icon={IconShieldLock} docsLink="/docs/domains">
+			Send from any domain with confidence. Manage multiple domains with enforced DKIM signing
+			for maximum deliverability and trust.
 		</Feature>
 		<Feature title="Project Management" icon={IconFiles}>
 			Organize your work the developer way. Create isolated projects, each with its own
 			domains, keys, and webhooks. All under one account.
-		</Feature>
-		<Feature title="Domains & DKIM" icon={IconShieldLock}>
-			Send from any domain with confidence. Manage multiple domains with enforced DKIM signing
-			for maximum deliverability and trust.
 		</Feature>
 		<Feature title="Bounce & Complaint Handling" icon={IconEnvelopeExclamation}>
 			Stop worrying about bad addresses. Hyvor Relay automatically manages bounces,
@@ -53,15 +53,32 @@
 	<h3 id="features">Self-Hosting</h3>
 
 	<div class="features">
-		<Feature title="Open-Source" icon={IconCode}>
+		<Feature
+			title="Open-Source"
+			icon={IconCode}
+			docsLink="https://github.com/hyvor/relay"
+			docsText="View on GitHub"
+			docsBlank={true}
+		>
 			Fully open-source under AGPL-3.0. Built for developers who want control. Deploy,
 			inspect, and modify Hyvor Relay on your own infrastructure with zero vendor lock-in.
 		</Feature>
-		<Feature title="Commercial Support" icon={IconBuilding}>
+		<Feature
+			title="Commercial Support"
+			icon={IconBuilding}
+			docsLink="https://hyvor.com/hosting-license"
+			docsText="Why an Enterprise License?"
+			docsBlank={true}
+		>
 			Self-hosted, enterprise-ready. Get priority updates and expert support directly from the
-			HYVOR team with a commercial license.
+			HYVOR team with an enterprise license.
 		</Feature>
-		<Feature title="Deliverability" icon={IconTruck}>
+		<Feature
+			title="Deliverability"
+			icon={IconTruck}
+			docsLink="/hosting/deliverability"
+			docsText="Learn more"
+		>
 			Deliver every email that matters. SPF, reverse DNS, multiple IPs, queue isolation -
 			industry best practices baked in from day one.
 		</Feature>
@@ -69,7 +86,7 @@
 			Know before anything breaks. Get instant alerts for server issues, DNS errors, or IP
 			reputation drops so you can fix them fast.
 		</Feature>
-		<Feature title="Scalability" icon={IconArrowsAngleExpand}>
+		<Feature title="Scalability" icon={IconArrowsAngleExpand} docsLink="/hosting/scaling">
 			Built to grow with your workloads. Scale horizontally on any cloud or on-prem setup with
 			Docker Swarm.
 		</Feature>
@@ -77,7 +94,7 @@
 			DNS automation, done right. Relay includes an integrated DNS server that manages forward
 			records, MX, SPF, and DKIM - no manual setup required.
 		</Feature>
-		<Feature title="Observability" icon={IconGraphUp}>
+		<Feature title="Observability" icon={IconGraphUp} docsLink="/hosting/monitoring">
 			Visibility for every metric that matters. Native integrations with Prometheus and
 			Grafana let you monitor performance, alerts, and logs in one place.
 		</Feature>

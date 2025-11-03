@@ -29,7 +29,7 @@
 						priceSubtext="Starting at €10,000/year"
 						features={[
 							'No AGPL-3.0 Obligations',
-							'Premium Support',
+							'Priority Support',
 							'Volume-Based Pricing',
 							'SLA Options'
 						]}

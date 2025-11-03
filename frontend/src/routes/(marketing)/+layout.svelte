@@ -49,7 +49,7 @@
 		</div>
 
 		<Button size="small" as="a" href="/console">
-			Go to Console
+			/console
 			{#snippet end()}
 				&rarr;
 			{/snippet}
