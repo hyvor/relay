@@ -30,7 +30,7 @@
 						features={[
 							'No AGPL-3.0 Obligations',
 							'Premium Support',
-							'Annual Contracts',
+							'Volume-Based Pricing',
 							'SLA Options'
 						]}
 						ctaText="Get Quote"
