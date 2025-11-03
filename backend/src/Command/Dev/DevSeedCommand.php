@@ -13,6 +13,7 @@ use App\Tests\Factory\ApiKeyFactory;
 use App\Tests\Factory\DebugIncomingEmailFactory;
 use App\Tests\Factory\DnsRecordFactory;
 use App\Tests\Factory\DomainFactory;
+use App\Tests\Factory\InfrastructureBounceFactory;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
@@ -177,6 +178,12 @@ class DevSeedCommand extends Command
         ]);
 
         DebugIncomingEmailFactory::createMany(2);
+
+        InfrastructureBounceFactory::createMany(5);
+
+        InfrastructureBounceFactory::createOne([
+            'is_read' => true
+        ]);
 
         $output->writeln('<info>Database seeded with test data.</info>');
 

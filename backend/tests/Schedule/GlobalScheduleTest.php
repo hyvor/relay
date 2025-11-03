@@ -22,7 +22,7 @@ class GlobalScheduleTest extends TestCase
         $schedule = new GlobalSchedule($this->createMock(LockFactory::class));
         $s = $schedule->getSchedule();
         $messages = $s->getRecurringMessages();
-        $this->assertCount(6, $messages);
+        $this->assertCount(7, $messages);
 
         $verifyDomainMessages = $this->getMessagesOfType($schedule, ReverifyDomainsMessage::class);
         $this->assertCount(2, $verifyDomainMessages);
