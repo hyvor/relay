@@ -15,14 +15,13 @@ class ClearOldInfrastructureBouncesMessageHandlerTest extends KernelTestCase
 
     public function test_deletes(): void
     {
-
         $bounce1 = InfrastructureBounceFactory::createOne(['created_at' => new \DateTimeImmutable('-2 years')]);
         $bounce2 = InfrastructureBounceFactory::createOne(['created_at' => new \DateTimeImmutable('-2 months')]);
         $bounce3 = InfrastructureBounceFactory::createOne(['created_at' => new \DateTimeImmutable('-30 days')]);
         $bounce4 = InfrastructureBounceFactory::createOne(['created_at' => new \DateTimeImmutable('-1 week')]);
         $bounce5 = InfrastructureBounceFactory::createOne(['created_at' => new \DateTimeImmutable('-1 day')]);
 
-        $transport = $this->transport('scheduler_global');
+        $transport = $this->transport('scheduler_default');
         $transport->send(new ClearOldInfrastructureBouncesMessage());
         $transport->throwExceptions()->process();
 
@@ -32,7 +31,6 @@ class ClearOldInfrastructureBouncesMessageHandlerTest extends KernelTestCase
         $bounceIds = array_map(fn(InfrastructureBounce $bounce) => $bounce->getId(), $bounces);
         $this->assertContains($bounce4->getId(), $bounceIds);
         $this->assertContains($bounce5->getId(), $bounceIds);
-
     }
 
 }

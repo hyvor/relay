@@ -9,15 +9,15 @@ stderr_logfile=/dev/stderr
 stdout_logfile_maxbytes=0
 stderr_logfile_maxbytes=0
 
-[program:messenger-worker-scheduler-server]
-command=php bin/console messenger:consume scheduler_server -v
+[program:messenger-worker-scheduler-default]
+command=php bin/console messenger:consume scheduler_default -v
 stdout_logfile=/dev/stdout
 stderr_logfile=/dev/stderr
 stdout_logfile_maxbytes=0
 stderr_logfile_maxbytes=0
 
-[program:messenger-worker-scheduler-global]
-command=php bin/console messenger:consume scheduler_global -v
+[program:messenger-worker-scheduler-server]
+command=php bin/console messenger:consume scheduler_server -v
 stdout_logfile=/dev/stdout
 stderr_logfile=/dev/stderr
 stdout_logfile_maxbytes=0

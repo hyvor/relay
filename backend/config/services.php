@@ -6,10 +6,11 @@ use App\Api\Console\Resolver\EntityResolver;
 use App\Api\Console\Resolver\ProjectResolver;
 use App\Service\Dns\Resolve\DnsOverHttp;
 use App\Service\Dns\Resolve\DnsResolveInterface;
+use App\Service\SelfHosted\RelayTelemetryProvider;
 use Prometheus\Storage\Adapter;
-use Prometheus\Storage\APC;
 use Prometheus\Storage\APCng;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
+use Hyvor\Internal\SelfHosted\Provider\TelemetryProviderInterface;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     $containerConfigurator->parameters()
@@ -58,4 +59,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // metrics
     $services->set(APCng::class);
     $services->alias(Adapter::class, APCng::class);
+
+    // telemetry
+    $services->alias(TelemetryProviderInterface::class, RelayTelemetryProvider::class);
 };

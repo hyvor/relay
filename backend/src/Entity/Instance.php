@@ -21,6 +21,9 @@ class Instance
     #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable $updated_at;
 
+    #[ORM\Column(type: "string")]
+    private string $uuid;
+
     #[ORM\Column(type: "string", length: 255)]
     private string $domain;
 
@@ -79,6 +82,17 @@ class Instance
     public function setUpdatedAt(\DateTimeImmutable $time): static
     {
         $this->updated_at = $time;
+        return $this;
+    }
+
+    public function getUuid(): string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(string $uuid): static
+    {
+        $this->uuid = $uuid;
         return $this;
     }
 

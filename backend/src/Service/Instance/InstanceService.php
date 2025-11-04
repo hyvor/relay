@@ -15,6 +15,7 @@ use Hyvor\Internal\Util\Crypt\Encryption;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Uid\Uuid;
 
 class InstanceService
 {
@@ -84,6 +85,7 @@ class InstanceService
         $instance
             ->setCreatedAt($this->now())
             ->setUpdatedAt($this->now())
+            ->setUuid(Uuid::v4())
             ->setDomain(self::DEFAULT_DOMAIN)
             ->setDkimPublicKey($publicKey)
             ->setDkimPrivateKeyEncrypted($this->encryption->encryptString($privateKey))

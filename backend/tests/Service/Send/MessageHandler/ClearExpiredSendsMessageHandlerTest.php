@@ -15,14 +15,13 @@ class ClearExpiredSendsMessageHandlerTest extends KernelTestCase
 
     public function test_deletes(): void
     {
-
         $send1 = SendFactory::createOne(['createdAt' => new \DateTimeImmutable('-2 years')]);
         $send2 = SendFactory::createOne(['createdAt' => new \DateTimeImmutable('-2 months')]);
         $send3 = SendFactory::createOne(['createdAt' => new \DateTimeImmutable('-30 days')]);
         $send4 = SendFactory::createOne(['createdAt' => new \DateTimeImmutable('-1 week')]);
         $send5 = SendFactory::createOne(['createdAt' => new \DateTimeImmutable('-1 day')]);
 
-        $transport = $this->transport('scheduler_global');
+        $transport = $this->transport('scheduler_default');
         $transport->send(new ClearExpiredSendsMessage());
         $transport->throwExceptions()->process();
 
@@ -32,7 +31,6 @@ class ClearExpiredSendsMessageHandlerTest extends KernelTestCase
         $sendsIds = array_map(fn(Send $send) => $send->getId(), $sends);
         $this->assertContains($send4->getId(), $sendsIds);
         $this->assertContains($send5->getId(), $sendsIds);
-
     }
 
 }
