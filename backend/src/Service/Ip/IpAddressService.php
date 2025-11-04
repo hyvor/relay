@@ -37,6 +37,11 @@ class IpAddressService
         );
     }
 
+    public function getIpAddressesCount(): int
+    {
+        return $this->em->getRepository(IpAddress::class)->count([]);
+    }
+
     public function getIpAddressById(int $id): ?IpAddress
     {
         return $this->em->getRepository(IpAddress::class)->find($id);
