@@ -3,10 +3,12 @@
 namespace App\Service\Ip;
 
 use App\Entity\IpAddress;
+use App\Service\Dns\Resolve\DnsResolveInterface;
+use App\Service\Dns\Resolve\DnsResolvingFailedException;
+use App\Service\Dns\Resolve\DnsType;
 use App\Service\Instance\InstanceService;
+use App\Service\Ip\Dto\PtrValidationDto;
 
-// This currently uses PHP gethostbyname and gethostbyaddr functions.
-// In future, we might want to replace it with DnsResolveInterface with proper error handling.
 class Ptr
 {
 
@@ -14,47 +16,59 @@ class Ptr
 
     public function __construct(
         private InstanceService $instanceService,
-        /** @var callable */
-        private $gethostbynameFunction = 'gethostbyname',
-        /** @var callable */
-        private $gethostbyaddrFunction = 'gethostbyaddr'
+        private DnsResolveInterface $dnsResolver,
     ) {
     }
 
     /**
      * Forward checks the A record of the PTR domain to see if it points to the IP address.
      */
-    private function validateForward(IpAddress $ipAddress): bool
+    private function validateARecord(string $domainToResolve, string $aShouldMatch): PtrValidationDto
     {
-        $ptrDomain = self::getPtrDomain($ipAddress, $this->instanceService->getInstance()->getDomain());
-        $aRecord = call_user_func(
-            $this->gethostbynameFunction,
-            $ptrDomain
-        );
-        return $aRecord === $ipAddress->getIpAddress();
+        try {
+            $dnsAnswer = $this->dnsResolver->resolve($domainToResolve, DnsType::A);
+        } catch (DnsResolvingFailedException $e) {
+            return new PtrValidationDto(
+                valid: false,
+                error: 'DNS resolving failed: ' . $e->getMessage()
+            );
+        }
+
+        if (!$dnsAnswer->ok()) {
+            return new PtrValidationDto(
+                valid: false,
+                error: 'DNS error: ' . $dnsAnswer->error()
+            );
+        }
+
+        $aRecords = $dnsAnswer->answers;
+        // we connect so that it fails if there are multiple A records
+        $aRecordsJoined = implode(', ', array_map(fn($answer) => $answer->data, $aRecords));
+
+        if ($aRecordsJoined !== $aShouldMatch) {
+            return new PtrValidationDto(
+                valid: false,
+                error: 'A record mismatch: expected "' . $aShouldMatch . '", got "' . $aRecordsJoined . '"'
+            );
+        }
+
+        return new PtrValidationDto(valid: true);
     }
 
     /**
-     * Reverse checks the PTR record of the IP address to see if it points to the PTR domain.
-     */
-    private function validateReverse(IpAddress $ipAddress): bool
-    {
-        $ptrDomain = self::getPtrDomain($ipAddress, $this->instanceService->getInstance()->getDomain());
-        $reverseLookup = call_user_func(
-            $this->gethostbyaddrFunction,
-            $ipAddress->getIpAddress()
-        );
-        return $reverseLookup === $ptrDomain;
-    }
-
-    /**
-     * @return array{forward: bool, reverse: bool}
+     * @return array{forward: PtrValidationDto, reverse: PtrValidationDto}
      */
     public function validate(IpAddress $ipAddress): array
     {
+        $ptrDomain = self::getPtrDomain($ipAddress, $this->instanceService->getInstance()->getDomain());
+        $ipString = $ipAddress->getIpAddress();
+
+        $ipSplit = explode('.', $ipString);
+        $reverseDomain = implode('.', array_reverse($ipSplit)) . '.in-addr.arpa';
+
         return [
-            'forward' => $this->validateForward($ipAddress),
-            'reverse' => $this->validateReverse($ipAddress),
+            'forward' => $this->validateARecord($ptrDomain, $ipString),
+            'reverse' => $this->validateARecord($reverseDomain, $ptrDomain)
         ];
     }
 

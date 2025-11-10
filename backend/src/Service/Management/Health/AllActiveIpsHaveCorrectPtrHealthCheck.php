@@ -5,8 +5,6 @@ namespace App\Service\Management\Health;
 use App\Entity\IpAddress;
 use App\Service\Ip\IpAddressService;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
-
 
 class AllActiveIpsHaveCorrectPtrHealthCheck extends HealthCheckAbstract
 {
@@ -29,13 +27,15 @@ class AllActiveIpsHaveCorrectPtrHealthCheck extends HealthCheckAbstract
         $invalidData = [];
 
         foreach ($allIps as $ip) {
-            $this->ipAddressService->updateIpPtrValidity($ip);
+            $validation = $this->ipAddressService->updateIpPtrValidity($ip);
 
-            if (!$ip->getIsPtrForwardValid() || !$ip->getIsPtrReverseValid()) {
+            if (!$validation['forward']->valid || !$validation['reverse']->valid) {
                 $invalidData[] = [
                     'ip' => $ip->getIpAddress(),
-                    'forward_valid' => $ip->getIsPtrForwardValid(),
-                    'reverse_valid' => $ip->getIsPtrReverseValid(),
+                    'forward_valid' => $validation['forward']->valid,
+                    'forward_error' => $validation['forward']->error,
+                    'reverse_valid' => $validation['reverse']->valid,
+                    'reverse_error' => $validation['reverse']->error,
                 ];
             }
         }

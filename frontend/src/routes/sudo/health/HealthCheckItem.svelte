@@ -15,7 +15,6 @@
 
 	let { checkKey, result }: Props = $props();
 
-
 	function formatCheckedTime(checkedAt: string): string {
 		return dayjs(checkedAt).fromNow();
 	}
@@ -23,10 +22,19 @@
 	function renderFailureData(data: HealthCheckData[Key]): string {
 		if (checkKey === 'all_active_ips_have_correct_ptr') {
 			const ptrData = data as HealthCheckData['all_active_ips_have_correct_ptr'];
+
+			function getValidInvalidMsg(valid: boolean, error: string | null): string {
+				if (valid) {
+					return 'OK';
+				} else {
+					return 'invalid' + (error ? ` (${error})` : '');
+				}
+			}
+
 			return `Invalid PTRs: ${ptrData.invalid_ptrs
 				.map(
 					(ptr) =>
-						`${ptr.ip} (Forward: ${ptr.forward_valid ? 'Valid' : 'Invalid'}, Reverse: ${ptr.reverse_valid ? 'Valid' : 'Invalid'})`
+						`${ptr.ip}: forward ${getValidInvalidMsg(ptr.forward_valid, ptr.forward_error)}, reverse ${getValidInvalidMsg(ptr.reverse_valid, ptr.reverse_error)}`
 				)
 				.join(', ')}`;
 		}
@@ -71,12 +79,12 @@
 			return `Blacklisted IPs: ${blacklistedIps.join(', ')}`;
 		}
 
-	if (checkKey === 'no_unread_infrastructure_bounces') {
-		const bounceData = data as HealthCheckData['no_unread_infrastructure_bounces'];
-		const count = bounceData.unread_count;
+		if (checkKey === 'no_unread_infrastructure_bounces') {
+			const bounceData = data as HealthCheckData['no_unread_infrastructure_bounces'];
+			const count = bounceData.unread_count;
 
-		return `${count} unread infrastructure bounce${count > 1 ? 's' : ''} found. <a href="/sudo/debug/infrastructure-bounces">View infrastructure bounces</a>.`;
-	}
+			return `${count} unread infrastructure bounce${count > 1 ? 's' : ''} found. <a href="/sudo/debug/infrastructure-bounces">View infrastructure bounces</a>.`;
+		}
 
 		return JSON.stringify(data);
 	}
