@@ -23,10 +23,13 @@ class Ptr
     /**
      * Forward checks the A record of the PTR domain to see if it points to the IP address.
      */
-    private function validateARecord(string $domainToResolve, string $aShouldMatch): PtrValidationDto
-    {
+    private function validateARecord(
+        string $domainToResolve,
+        string $aShouldMatch,
+        bool $isReverse = false
+    ): PtrValidationDto {
         try {
-            $dnsAnswer = $this->dnsResolver->resolve($domainToResolve, DnsType::A);
+            $dnsAnswer = $this->dnsResolver->resolve($domainToResolve, $isReverse ? DnsType::PTR : DnsType::A);
         } catch (DnsResolvingFailedException $e) {
             return new PtrValidationDto(
                 valid: false,
@@ -68,7 +71,7 @@ class Ptr
 
         return [
             'forward' => $this->validateARecord($ptrDomain, $ipString),
-            'reverse' => $this->validateARecord($reverseDomain, $ptrDomain)
+            'reverse' => $this->validateARecord($reverseDomain, $ptrDomain, true)
         ];
     }
 
