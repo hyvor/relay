@@ -9,5 +9,6 @@ enum DnsType: string
     case AAAA = 'AAAA';
     case MX = 'MX';
     case TXT = 'TXT';
+    case PTR = 'PTR';
 
 }

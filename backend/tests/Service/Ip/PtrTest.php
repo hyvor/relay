@@ -37,11 +37,11 @@ class PtrTest extends KernelTestCase
         $dnsResolver
             ->method('resolve')
             ->willReturnCallback(function (string $domain, DnsType $type) {
-                $this->assertSame(DnsType::A, $type);
-
                 if ($domain === 'smtp42.hyvorrelay.com') {
+                    $this->assertSame(DnsType::A, $type);
                     throw new DnsResolvingFailedException('Simulated DNS failure');
                 } elseif ($domain === '1.1.1.1.in-addr.arpa') {
+                    $this->assertSame(DnsType::PTR, $type);
                     return new ResolveResult(3, []); // NXDOMAIN
                 }
             });
@@ -71,15 +71,15 @@ class PtrTest extends KernelTestCase
         $dnsResolver
             ->method('resolve')
             ->willReturnCallback(function (string $domain, DnsType $type) {
-                $this->assertSame(DnsType::A, $type);
-
                 if ($domain === 'smtp43.hyvorrelay.com') {
+                    $this->assertSame(DnsType::A, $type);
                     // forward has 2 records, should only have one
                     return new ResolveResult(0, [
                         new ResolveAnswer('smtp43.hyvorrelay.com', '1.1.1.1'),
                         new ResolveAnswer('smtp43.hyvorrelay.com', '2.2.2.2'),
                     ]);
                 } elseif ($domain === '4.3.2.1.in-addr.arpa') {
+                    $this->assertSame(DnsType::PTR, $type);
                     return new ResolveResult(0, [
                         new ResolveAnswer("4.3.2.1.in-addr.arpa", 'smtp43.hyvorrelay.com'),
                     ]);
