@@ -28,6 +28,7 @@ class GoStateDnsRecordsService
         /** @var GoStateDnsRecord[] $records */
         $records = [];
         $allIps = $this->ipAddressService->getAllIpAddresses();
+        $allIpsString = array_map(fn($ip) => $ip->getIpAddress(), $allIps);
         $dnsMxIps = [];
         $dnsMxIpAddedServers = [];
 
@@ -71,7 +72,7 @@ class GoStateDnsRecordsService
         $records[] = new GoStateDnsRecord(
             type: DnsRecordType::TXT,
             host: $instance->getDomain(),
-            content: 'v=spf1 ip4:' . implode(' ip4:', $dnsMxIps) . ' ~all',
+            content: 'v=spf1 ip4:' . implode(' ip4:', $allIpsString) . ' ~all',
         );
 
         // 5. DKIM record for the instance domain

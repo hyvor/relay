@@ -9,6 +9,7 @@ use App\Service\Management\GoState\GoStateDnsRecordsService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\InstanceFactory;
 use App\Tests\Factory\IpAddressFactory;
+use App\Tests\Factory\ServerFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(DnsRecordController::class)]
@@ -25,15 +26,18 @@ class GetDefaultDnsRecordsTest extends WebTestCase
             'dkim_public_key' => 'testkey'
         ]);
 
-        $ip1 = IpAddressFactory::createOne(['ip_address' => '1.1.1.1']); // on server 1
-        $ip2 = IpAddressFactory::createOne(['ip_address' => '2.2.2.2']); // on server 2
+        $server1 = ServerFactory::createOne();
+
+        $ip1 = IpAddressFactory::createOne(['server' => $server1, 'ip_address' => '1.1.1.1']); // on server 1
+        $ip2 = IpAddressFactory::createOne(['server' => $server1, 'ip_address' => '2.2.2.2']); // on server 1
+        $ip3 = IpAddressFactory::createOne(['ip_address' => '3.3.3.3']); // on server 2
 
         $this->sudoApi("GET", "/dns-records/default");
 
         /** @var array<array{type: string, host: string, content: string}> $json */
         $json = $this->getJson();
 
-        $this->assertCount(7, $json);
+        $this->assertCount(8, $json);
 
         $records = [
             [
@@ -45,6 +49,11 @@ class GetDefaultDnsRecordsTest extends WebTestCase
                 'type' => 'A',
                 'host' => 'smtp' . $ip2->getId() . '.hyvor-relay.net',
                 'content' => '2.2.2.2',
+            ],
+            [
+                'type' => 'A',
+                'host' => 'smtp' . $ip3->getId() . '.hyvor-relay.net',
+                'content' => '3.3.3.3',
             ],
             // MX record
             [
@@ -61,13 +70,13 @@ class GetDefaultDnsRecordsTest extends WebTestCase
             [
                 'type' => 'A',
                 'host' => 'mx.hyvor-relay.net',
-                'content' => '2.2.2.2',
+                'content' => '3.3.3.3',
             ],
             // SPF
             [
                 'type' => 'TXT',
                 'host' => 'hyvor-relay.net',
-                'content' => 'v=spf1 ip4:1.1.1.1 ip4:2.2.2.2 ~all',
+                'content' => 'v=spf1 ip4:1.1.1.1 ip4:2.2.2.2 ip4:3.3.3.3 ~all',
             ],
             // DKIM
             [
