@@ -71,7 +71,9 @@ export interface HealthCheckData {
         invalid_ptrs: Array<{
             ip: string;
             forward_valid: boolean;
+            forward_error: string | null;
             reverse_valid: boolean;
+            reverse_error: string | null;
         }>;
     },
     all_queues_have_at_least_one_ip: {
