@@ -47,7 +47,7 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: 'hyvor-relay'
+  - job_name: 'hyvor-relay'	// Job name must start with 'hyvor-relay'
     static_configs:
       - targets: 
         - 'your-relay-server-1-private-ip:9667'
