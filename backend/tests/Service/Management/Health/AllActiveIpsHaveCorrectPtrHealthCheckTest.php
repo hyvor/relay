@@ -3,6 +3,7 @@
 namespace App\Tests\Service\Management\Health;
 
 use App\Entity\IpAddress;
+use App\Service\Ip\Dto\PtrValidationDto;
 use App\Service\Ip\Ptr;
 use App\Service\Management\Health\AllActiveIpsHaveCorrectPtrHealthCheck;
 use App\Service\Ip\IpAddressService;
@@ -55,8 +56,8 @@ class AllActiveIpsHaveCorrectPtrHealthCheckTest extends KernelTestCase
 
         $this->ptr->method('validate')
             ->willReturn([
-                'forward' => true,
-                'reverse' => true,
+                'forward' => new PtrValidationDto(true),
+                'reverse' => new PtrValidationDto(true),
             ]);
 
         $result = $this->healthCheck->check();
@@ -81,8 +82,8 @@ class AllActiveIpsHaveCorrectPtrHealthCheckTest extends KernelTestCase
 
         $this->ptr->method('validate')
             ->willReturn([
-                'forward' => false,
-                'reverse' => false,
+                'forward' => new PtrValidationDto(false, 'Simulated forward PTR failure'),
+                'reverse' => new PtrValidationDto(false, 'Simulated reverse PTR failure'),
             ]);
 
         $result = $this->healthCheck->check();
@@ -92,5 +93,14 @@ class AllActiveIpsHaveCorrectPtrHealthCheckTest extends KernelTestCase
         $this->assertArrayHasKey('invalid_ptrs', $this->healthCheck->getData());
         $this->assertIsArray($this->healthCheck->getData()['invalid_ptrs']);
         $this->assertCount(2, $this->healthCheck->getData()['invalid_ptrs']);
+
+        $invalidPtrs = $this->healthCheck->getData()['invalid_ptrs'];
+        $this->assertIsArray($invalidPtrs);
+        $this->assertIsArray($invalidPtrs[0]);
+        $this->assertEquals($ip1->getIpAddress(), $invalidPtrs[0]['ip']);
+        $this->assertFalse($invalidPtrs[0]['forward_valid']);
+        $this->assertEquals('Simulated forward PTR failure', $invalidPtrs[0]['forward_error']);
+        $this->assertFalse($invalidPtrs[0]['reverse_valid']);
+        $this->assertEquals('Simulated reverse PTR failure', $invalidPtrs[0]['reverse_error']);
     }
 } 

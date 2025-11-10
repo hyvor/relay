@@ -4,6 +4,7 @@ namespace App\Service\Ip;
 
 use App\Entity\IpAddress;
 use App\Entity\Server;
+use App\Service\Ip\Dto\PtrValidationDto;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
 use App\Service\Ip\Event\IpAddressUpdatedEvent;
 use App\Service\Queue\QueueService;
@@ -122,15 +123,20 @@ class IpAddressService
         return $ipAddress;
     }
 
-    public function updateIpPtrValidity(IpAddress $ip): void
+    /**
+     * @return array{forward: PtrValidationDto, reverse: PtrValidationDto}
+     */
+    public function updateIpPtrValidity(IpAddress $ip): array
     {
         $validity = $this->ptr->validate($ip);
 
-        $ip->setIsPtrForwardValid($validity['forward']);
-        $ip->setIsPtrReverseValid($validity['reverse']);
+        $ip->setIsPtrForwardValid($validity['forward']->valid);
+        $ip->setIsPtrReverseValid($validity['reverse']->valid);
 
         $this->em->persist($ip);
         $this->em->flush();
+
+        return $validity;
     }
 
 }
