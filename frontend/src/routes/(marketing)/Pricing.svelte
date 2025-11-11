@@ -2,7 +2,7 @@
 	import Plan from './Plan.svelte';
 </script>
 
-<div class="wrap">
+<div class="wrap" id="pricing">
 	<div class="hds-container">
 		<h3>Pricing</h3>
 		<div class="pricing">
