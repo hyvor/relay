@@ -2,7 +2,7 @@
 	import Plan from './Plan.svelte';
 </script>
 
-<div class="wrap">
+<div class="wrap" id="pricing">
 	<div class="hds-container">
 		<h3>Pricing</h3>
 		<div class="pricing">
@@ -29,7 +29,7 @@
 						priceSubtext="Starting at €10,000/year"
 						features={[
 							'No AGPL-3.0 Obligations',
-							'Premium Support',
+							'Priority Support',
 							'Volume-Based Pricing',
 							'SLA Options'
 						]}

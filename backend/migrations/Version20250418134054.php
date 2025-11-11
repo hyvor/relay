@@ -24,6 +24,7 @@ final class Version20250418134054 extends AbstractMigration
             id serial PRIMARY KEY,
             created_at timestamptz NOT NULL,
             updated_at timestamptz NOT NULL,
+            uuid uuid NOT NULL,
             domain text NOT NULL,
             dkim_public_key text NOT NULL,
             dkim_private_key_encrypted text NOT NULL,

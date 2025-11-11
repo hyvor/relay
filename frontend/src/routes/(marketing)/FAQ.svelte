@@ -22,7 +22,7 @@
 			with priority support with SLAs.
 
 			<p>
-				Read the <a
+				Read our <a
 					class="hds-link"
 					href="https://hyvor.com/docs/hosting-license"
 					target="_blank"
@@ -89,7 +89,9 @@
 		<Accordion title="When will Hyvor Relay Cloud open for public access?" icon={IconCloud}>
 			We are planning to launch Hyvor Relay Cloud to the public in Q1 2026. Stay tuned for
 			updates on our website and social media channels. It will be a paid service with a
-			competitive usage-based pricing model.
+			competitive usage-based pricing model. <a class="hds-link" href="#waitlist"
+				>Join the waitlist</a
+			>.
 		</Accordion>
 
 		<Accordion
@@ -100,8 +102,8 @@
 				>transactional emails</strong
 			>
 			as a start. We plan to work with developers, indiehackers, small businesses, and enterprises
-			for transactional emails. Distributional email support may be added in the future based on
-			demand.
+			for transactional emails. Distributional (marketing) email support may be added in the future
+			based on demand.
 		</Accordion>
 
 		<Accordion title="Can I manage a newsletter with Hyvor Relay?" icon={IconMegaphone}>

@@ -107,4 +107,30 @@ class ServerService
         $this->ed->dispatch($event);
     }
 
+
+    /**
+     * @return array<string, int>
+     */
+    public function getAllWorkersCounts(): array
+    {
+        $conn = $this->em->getConnection();
+        $sql = 'SELECT
+            SUM(api_workers) AS api_workers,
+            SUM(email_workers) AS email_workers,
+            SUM(incoming_workers) AS incoming_workers,
+            SUM(webhook_workers) AS webhook_workers
+        FROM servers';
+        $stmt = $conn->prepare($sql);
+        $result = $stmt->executeQuery();
+        /** @var array<string, ?int> $data */
+        $data = $result->fetchAssociative();
+
+        return [
+            'api_workers' => $data['api_workers'] ?? 0,
+            'email_workers' => $data['email_workers'] ?? 0,
+            'incoming_workers' => $data['incoming_workers'] ?? 0,
+            'webhook_workers' => $data['webhook_workers'] ?? 0,
+        ];
+    }
+
 }

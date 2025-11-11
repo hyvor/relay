@@ -34,6 +34,11 @@ TRUSTED_PROXIES=
 # One of: debug, info, notice, warning, error, critical, alert, emergency
 # Default: info
 LOG_LEVEL=info
+
+# Telemetry collection (see /hosting/telemetry)
+# Set to "false" to disable anonymous telemetry data collection
+# Default: true
+TELEMETRY=true
 `}
 	language="yaml"
 />

@@ -28,7 +28,7 @@ final class DomainFactory extends PersistentProxyObjectFactory
     protected function defaults(): array
     {
         return [
-            'project' => ProjectFactory::createOne(),
+            'project' => ProjectFactory::new(),
             'domain' => self::faker()->unique()->domainName(),
             'status' => DomainStatus::PENDING,
             'status_changed_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),

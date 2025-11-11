@@ -27,6 +27,7 @@ final class InstanceFactory extends PersistentProxyObjectFactory
     protected function defaults(): array
     {
         return [
+            'uuid' => self::faker()->uuid(),
             'domain' => self::faker()->domainName(),
             'created_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'updated_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),

@@ -28,7 +28,7 @@ final class IpAddressFactory extends PersistentProxyObjectFactory
     protected function defaults(): array
     {
         return [
-            'server' => ServerFactory::createOne(),
+            'server' => ServerFactory::new(),
             'ip_address' => self::faker()->ipv4(),
             'queue' => null,
             'created_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),

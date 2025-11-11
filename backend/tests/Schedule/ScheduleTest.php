@@ -3,7 +3,7 @@
 namespace App\Tests\Schedule;
 
 use App\Entity\Type\DomainStatus;
-use App\Schedule\GlobalSchedule;
+use App\Schedule\DefaultSchedule;
 use App\Schedule\ServerSchedule;
 use App\Service\Domain\Message\ReverifyDomainsMessage;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -13,7 +13,7 @@ use Symfony\Component\Scheduler\Generator\MessageContext;
 use Symfony\Component\Scheduler\Schedule;
 use Symfony\Component\Scheduler\Trigger\TriggerInterface;
 
-#[CoversClass(GlobalSchedule::class)]
+#[CoversClass(DefaultSchedule::class)]
 #[CoversClass(ServerSchedule::class)]
 class ScheduleTest extends TestCase
 {

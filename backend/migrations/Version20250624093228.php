@@ -39,6 +39,8 @@ final class Version20250624093228 extends AbstractMigration
         );
 
         $this->addSql("CREATE INDEX idx_webhook_deliveries_webhook_id ON webhook_deliveries (webhook_id)");
+        $this->addSql("CREATE INDEX idx_webhook_deliveries_created_at ON webhook_deliveries (created_at)");
+
         // worker index
         $this->addSql(
             "CREATE INDEX idx_webhook_deliveries_status ON webhook_deliveries (send_after) WHERE status = 'pending'"
