@@ -50,7 +50,7 @@ class FrankenphpRunCommand extends Command
             'frankenphp',
             'run',
             '--config',
-            '/etc/caddy/Caddyfile',
+            '/app/Caddyfile',
         ];
 
         if ($input->getOption('watch')) {
@@ -61,6 +61,7 @@ class FrankenphpRunCommand extends Command
             $cmd,
             env: [
                 'WORKERS' => $currentServer->getApiWorkers(),
+                'SERVER_NAME' => ':8080'
             ]
         );
 

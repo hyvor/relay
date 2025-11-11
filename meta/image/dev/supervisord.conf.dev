@@ -1,6 +1,7 @@
 [supervisord]
 nodaemon=true
 pidfile=/run/supervisor.pid
+logfile=/app/supervisord.log
 
 [program:frankenphp]
 command=php bin/console frankenphp:run --watch

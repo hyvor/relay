@@ -1,1 +1,5 @@
 .git
+tmp
+backend/var
+backend/vendor
+backend/.phpunit.cache
