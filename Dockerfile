@@ -3,9 +3,6 @@ FROM composer:2.8.8 AS composer
 FROM dunglas/frankenphp:1.4.4-php8.4 AS frankenphp
 FROM golang:1.23.4 AS golang
 
-ARG APP_VERSION=0.0.0
-ENV APP_VERSION=${APP_VERSION}
-
 FROM bun AS frontend-base
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/bun.lock frontend/svelte.config.js frontend/vite.config.ts frontend/tsconfig.json /app/frontend/
@@ -33,6 +30,8 @@ COPY worker/ /app/worker/
 RUN go build -o ./worker .
 
 FROM frankenphp AS backend-base
+ARG APP_VERSION=0.0.0
+ENV APP_VERSION=${APP_VERSION}
 ENV APP_RUNTIME="Runtime\FrankenPhpSymfony\Runtime"
 WORKDIR /app/backend
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
