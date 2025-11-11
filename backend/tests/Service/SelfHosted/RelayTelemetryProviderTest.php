@@ -4,7 +4,6 @@ namespace App\Tests\Service\SelfHosted;
 
 use App\Entity\Type\DomainStatus;
 use App\Entity\Type\SendRecipientStatus;
-use App\Repository\ProjectRepository;
 use App\Service\SelfHosted\RelayTelemetryProvider;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\DomainFactory;

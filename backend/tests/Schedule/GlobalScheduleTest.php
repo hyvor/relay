@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Lock\LockFactory;
 use Hyvor\Internal\Bundle\Testing\Scheduler\SchedulerTestingTrait;
+use Symfony\Contracts\Cache\CacheInterface;
 
 #[CoversClass(DefaultSchedule::class)]
 class GlobalScheduleTest extends TestCase
@@ -19,10 +20,12 @@ class GlobalScheduleTest extends TestCase
     // just make sure the objects are created without errors
     public function test_global_schedule(): void
     {
-        $schedule = new DefaultSchedule($this->createMock(LockFactory::class));
+        $schedule = new DefaultSchedule(
+            $this->createMock(LockFactory::class), $this->createMock(CacheInterface::class)
+        );
         $s = $schedule->getSchedule();
         $messages = $s->getRecurringMessages();
-        $this->assertCount(7, $messages);
+        $this->assertCount(8, $messages);
 
         $verifyDomainMessages = $this->getMessagesOfType($schedule, ReverifyDomainsMessage::class);
         $this->assertCount(2, $verifyDomainMessages);

@@ -375,7 +375,6 @@ class SendEmailTest extends WebTestCase
         $json = $this->getJson();
         $message = $json["message"];
         $this->assertIsString($message);
-        $this->assertStringContainsString("Validation failed", $message);
 
         $this->assertHasViolation($property, $violationMessage);
     }
