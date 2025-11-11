@@ -81,7 +81,7 @@ class PtrTest extends KernelTestCase
                 } elseif ($domain === '4.3.2.1.in-addr.arpa') {
                     $this->assertSame(DnsType::PTR, $type);
                     return new ResolveResult(0, [
-                        new ResolveAnswer("4.3.2.1.in-addr.arpa", 'smtp43.hyvorrelay.com'),
+                        new ResolveAnswer("4.3.2.1.in-addr.arpa", 'smtp43.hyvorrelay.com.'),
                     ]);
                 }
             });

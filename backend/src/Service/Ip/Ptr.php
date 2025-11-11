@@ -47,6 +47,9 @@ class Ptr
         $aRecords = $dnsAnswer->answers;
         // we connect so that it fails if there are multiple A records
         $aRecordsJoined = implode(', ', array_map(fn($answer) => $answer->data, $aRecords));
+        if ($isReverse) {
+            $aRecordsJoined = rtrim($aRecordsJoined, '.');
+        }
 
         if ($aRecordsJoined !== $aShouldMatch) {
             return new PtrValidationDto(
