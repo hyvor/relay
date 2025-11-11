@@ -4,7 +4,7 @@
     }
 }
 
-:80 {
+:8080 {
 	# backend
 	@backend {
 		path /api/*
