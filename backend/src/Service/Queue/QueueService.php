@@ -109,4 +109,13 @@ class QueueService
 
         return $this->getQueueById((int)$queueId);
     }
+
+    public function getQueuesCount(): int
+    {
+        return (int)$this->em->getRepository(Queue::class)
+            ->createQueryBuilder('q')
+            ->select('COUNT(q.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

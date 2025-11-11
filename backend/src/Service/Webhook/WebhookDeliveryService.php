@@ -12,8 +12,7 @@ class WebhookDeliveryService
     public function __construct(
         private WebhookService $webhookService,
         private EntityManagerInterface $em,
-    )
-    {
+    ) {
     }
 
     /**
@@ -36,5 +35,20 @@ class WebhookDeliveryService
             ->getResult();
 
         return new ArrayCollection($deliveries);
+    }
+
+    public function getLast24HoursDeliveriesCount(): int
+    {
+        $since = new \DateTimeImmutable('-24 hours');
+
+        $count = $this->em->getRepository(WebhookDelivery::class)
+            ->createQueryBuilder('wd')
+            ->select('COUNT(wd.id)')
+            ->where('wd.created_at >= :since')
+            ->setParameter('since', $since)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return (int)$count;
     }
 }

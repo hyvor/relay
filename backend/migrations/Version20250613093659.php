@@ -45,6 +45,7 @@ final class Version20250613093659 extends AbstractMigration
         $this->addSql("CREATE INDEX idx_sends_project_id ON sends (project_id)");
         $this->addSql("CREATE INDEX idx_sends_domain_id ON sends (domain_id)");
         $this->addSql("CREATE INDEX idx_sends_queue_id ON sends (queue_id)");
+        $this->addSql("CREATE INDEX idx_sends_created_at ON sends (created_at)");
 
         // worker index
         $this->addSql(

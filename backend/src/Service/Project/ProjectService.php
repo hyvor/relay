@@ -26,6 +26,11 @@ class ProjectService
     ) {
     }
 
+    public function getTotalProjectsCount(): int
+    {
+        return $this->em->getRepository(Project::class)->count();
+    }
+
     public function getProjectById(int $id): ?Project
     {
         return $this->em->getRepository(Project::class)->find($id);

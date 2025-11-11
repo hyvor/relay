@@ -146,4 +146,24 @@ class DomainService
 
         $this->eventDispatcher->dispatch(new DomainDeletedEvent($domainClone));
     }
+
+
+    /**
+     * @return array{total: int, active: int}
+     */
+    public function getDomainsCounts(): array
+    {
+        $query = $this->domainRepository->createQueryBuilder('d')
+            ->select('COUNT(d.id) as total')
+            ->addSelect('SUM(CASE WHEN d.status = :activeStatus THEN 1 ELSE 0 END) as active')
+            ->setParameter('activeStatus', DomainStatus::ACTIVE)
+            ->getQuery();
+
+        /** @var array<string, int> $result */
+        $result = $query->getSingleResult();
+        return [
+            'total' => $result['total'],
+            'active' => $result['active'],
+        ];
+    }
 }

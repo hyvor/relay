@@ -158,4 +158,45 @@ class SendService
         return $send;
     }
 
+
+    /**
+     * @return array{sends_24h_count: int, recipients_24h_count: int, recipients_24h_accepted_count: int, recipients_24h_bounced_count: int, recipients_24h_complained_count: int, recipients_24h_failed_count: int, recipients_24h_suppressed_count: int}
+     */
+    public function getLast24HoursSendCount(): array
+    {
+        $conn = $this->em->getConnection();
+        $sql = <<<SQL
+        SELECT
+            -- Sends in last 24h
+            COUNT(DISTINCT s.id) AS sends_24h_count,
+            
+            -- Recipients by status in last 24h
+            COUNT(r.id) AS recipients_24h_count,
+            COUNT(CASE WHEN r.status = 'accepted'   THEN 1 END) AS recipients_24h_accepted_count,
+            COUNT(CASE WHEN r.status = 'bounced'    THEN 1 END) AS recipients_24h_bounced_count,
+            COUNT(CASE WHEN r.status = 'complained' THEN 1 END) AS recipients_24h_complained_count,
+            COUNT(CASE WHEN r.status = 'failed'     THEN 1 END) AS recipients_24h_failed_count,
+            COUNT(CASE WHEN r.status = 'suppressed' THEN 1 END) AS recipients_24h_suppressed_count
+        FROM sends s
+        LEFT JOIN send_recipients r ON r.send_id = s.id
+        WHERE s.created_at >= NOW() - INTERVAL '24 hours';
+        SQL;
+
+        $stmt = $conn->prepare($sql);
+        $result = $stmt->executeQuery();
+        /** @var array<string, ?int> $data */
+        $data = $result->fetchAssociative();
+
+        return [
+            'sends_24h_count' => $data['sends_24h_count'] ?? 0,
+            'recipients_24h_count' => $data['recipients_24h_count'] ?? 0,
+            'recipients_24h_accepted_count' => $data['recipients_24h_accepted_count'] ?? 0,
+            'recipients_24h_bounced_count' => $data['recipients_24h_bounced_count'] ?? 0,
+            'recipients_24h_complained_count' => $data['recipients_24h_complained_count'] ?? 0,
+            'recipients_24h_failed_count' => $data['recipients_24h_failed_count'] ?? 0,
+            'recipients_24h_suppressed_count' => $data['recipients_24h_suppressed_count'] ?? 0,
+        ];
+    }
+
+
 }

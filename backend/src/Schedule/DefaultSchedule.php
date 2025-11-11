@@ -71,6 +71,7 @@ class DefaultSchedule implements ScheduleProviderInterface
             ->lock($this->lockFactory->createLock('global-schedule', 20))
 
             // stateful
-            ->stateful($this->cache);
+            ->stateful($this->cache)
+            ->processOnlyLastMissedRun(true);
     }
 }
