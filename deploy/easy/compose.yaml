@@ -1,11 +1,11 @@
 services:
   postgres:
-    image: postgres:16.6
+    image: postgres:18
     container_name: hyvor-relay-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${PGSQL_PASSWORD}
+      POSTGRES_PASSWORD: "${PGSQL_PASSWORD}"
       POSTGRES_DB: hyvor_relay
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d hyvor_relay"]

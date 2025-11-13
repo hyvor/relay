@@ -37,4 +37,4 @@ read -rp "Enter OIDC Client Secret: " OIDC_CLIENT_SECRET
 replace_var ".env" "OIDC_CLIENT_SECRET" "$OIDC_CLIENT_SECRET"
 
 echo "✅ OIDC values updated in .env"
-echo "🎉 All done! Your .env and compose.yaml have been updated."
+echo "🎉 All done! Your .env and compose.yaml have been updated. Verify the changes and start your services."
