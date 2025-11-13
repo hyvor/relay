@@ -176,6 +176,8 @@ export type WebhookDelivery = {
 	event: string;
 	status: WebhookDeliveryStatus;
 	response: string;
+	response_code: number | null;
+	try_count: number;
 	created_at: number;
 };
 

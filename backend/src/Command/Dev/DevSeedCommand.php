@@ -24,6 +24,8 @@ use App\Tests\Factory\SendRecipientFactory;
 use App\Tests\Factory\ServerFactory;
 use App\Tests\Factory\SendFactory;
 use App\Tests\Factory\SuppressionFactory;
+use App\Tests\Factory\WebhookDeliveryFactory;
+use App\Tests\Factory\WebhookFactory;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -183,6 +185,18 @@ class DevSeedCommand extends Command
 
         InfrastructureBounceFactory::createOne([
             'is_read' => true
+        ]);
+
+        $webhooks = WebhookFactory::createMany(5, [
+            'project' => $project,
+        ]);
+
+        WebhookDeliveryFactory::createMany(5, [
+            'webhook' => $webhooks[0]
+        ]);
+
+        WebhookDeliveryFactory::createMany(5, [
+            'webhook' => $webhooks[2]
         ]);
 
         $output->writeln('<info>Database seeded with test data.</info>');
