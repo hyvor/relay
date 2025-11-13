@@ -1,4 +1,3 @@
-
 import type { Component } from 'svelte';
 import Introduction from './content/Introduction.svelte';
 import Setup from './content/Setup.svelte';
@@ -22,20 +21,20 @@ export const categories: Category[] = [
 				component: Introduction
 			},
 			{
+				slug: 'deploy-easy',
+				name: 'Easy Deploy',
+				component: EasyDeploy
+			},
+			{
 				slug: 'deploy',
 				name: 'Prod Deploy',
 				component: ProdDeploy
 			},
 			{
-				slug: 'deploy-easy',
-				name: 'Easy Deploy',
-				component: EasyDeploy,
-			},
-			{
 				slug: 'setup',
 				name: 'Setup',
 				component: Setup
-			},
+			}
 		]
 	},
 	{
@@ -54,8 +53,8 @@ export const categories: Category[] = [
 			{
 				slug: 'dns',
 				name: 'DNS',
-				component: Dns,
-			},
+				component: Dns
+			}
 		]
 	},
 	{
@@ -64,25 +63,25 @@ export const categories: Category[] = [
 			{
 				slug: 'deliverability',
 				name: 'Deliverability',
-				component: Deliverability,
+				component: Deliverability
 			},
 			{
 				slug: 'providers',
 				name: 'Email Providers',
-				component: EmailProviders,
+				component: EmailProviders
 			},
 			{
 				slug: 'env',
 				name: 'Environment Variables',
-				component: Env,
+				component: Env
 			},
 			{
 				slug: 'telemetry',
 				name: 'Telemetry',
-				component: Telemetry,
-			},
+				component: Telemetry
+			}
 		]
-	},
+	}
 ];
 
 export const pages = categories.reduce((acc, category) => acc.concat(category.pages), [] as Page[]);
