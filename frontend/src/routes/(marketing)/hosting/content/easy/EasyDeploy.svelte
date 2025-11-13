@@ -40,8 +40,8 @@
 </p>
 
 <p>
-	<strong>OS</strong>: A Linux-based OS is recommended for production use. Hyvor Relay is tested
-	on Ubuntu 24.04 LTS.
+	<strong>OS</strong>: A Linux-based operating system. Hyvor Relay is tested on Ubuntu 24.04 LTS
+	in production.
 </p>
 
 <p>
@@ -64,34 +64,19 @@
 	</li>
 </ul>
 
-<h2 id="before-start">Before you start...</h2>
+<p>
+	<strong>Firewall</strong>: the following ports should be open on your server:
+</p>
 
 <ul>
 	<li>
-		<strong>Firewall</strong>: the following ports should be open on your server:
-		<ul>
-			<li>
-				<strong>80</strong>: API
-			</li>
-			<li>
-				<strong>25</strong>: SMTP server for incoming emails (bounces & complaints)
-			</li>
-			<li>
-				<strong>53</strong>: DNS Server
-			</li>
-		</ul>
+		<strong>80</strong>: API
 	</li>
 	<li>
-		<strong>Host Network</strong>: The application runs in the
-		<a href="https://docs.docker.com/engine/network/drivers/host/">host network mode</a> to use the
-		server's IP addresses directly. Hyvor Relay does not support other network modes (e.g., bridge,
-		overlay).
+		<strong>25</strong>: SMTP server for incoming emails (bounces & complaints)
 	</li>
 	<li>
-		<strong>Postgres</strong>: The Docker Compose file includes a <code>postgres:18</code>
-		service, which is suitable for most use cases. However, if you want to use an external Postgres
-		database (for example, a managed database service), you can do so by updating the
-		<code>DATABASE_URL</code> environment variable in the <code>.env</code> file.
+		<strong>53</strong>: DNS Server
 	</li>
 </ul>
 
@@ -218,4 +203,22 @@ docker compose logs -f app
 	keys, tokens) in the application. You should not change this value after the initial setup, as
 	it will invalidate existing encrypted data. Key rotation is not supported yet, but
 	<a href="https://github.com/hyvor/internal/issues/55" target="_blank">planned</a>.
+</p>
+
+<h3 id="host-network">Host Network</h3>
+
+<p>
+	The application uses the <a
+		href="https://docs.docker.com/engine/network/drivers/host/"
+		target="_blank">host network mode</a
+	> to bind to the server's IP addresses directly. This allows Hyvor Relay to control the IP addresses
+	used for sending emails. Other network modes (e.g., bridge, overlay) are not supported.
+</p>
+
+<h3 id="external-postgres">External Postgres</h3>
+
+<p>
+	If you want to use an external Postgres database (for example, a managed database service), you
+	can do so by updating the <code>DATABASE_URL</code> environment variable in the
+	<code>.env</code> file.
 </p>
