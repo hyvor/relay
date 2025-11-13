@@ -54,6 +54,38 @@
 	authentication.
 </p>
 
+<h2 id="before-start">Before you start...</h2>
+
+<ul>
+	<li>
+		<strong>Firewall</strong>: the following ports should be open on your server:
+		<ul>
+			<li>
+				<strong>80</strong>: API
+			</li>
+			<li>
+				<strong>25</strong>: SMTP server for incoming emails (bounces & complaints)
+			</li>
+			<li>
+				<strong>53</strong>: DNS Server
+			</li>
+		</ul>
+	</li>
+	<li>
+		<strong>Host Network</strong>: The application runs in the
+		<a href="https://docs.docker.com/engine/network/drivers/host/">host network mode</a> to use the
+		server's IP addresses directly. Hyvor Relay does not support other network modes (e.g., bridge,
+		overlay).
+	</li>
+	<li>
+		<strong>Postgres</strong>: The Postgres database is bound to
+		<code>127.0.0.1:5432</code> by default. If your cloud provider provides a managed Postgres
+		service, you can use that as well. Just make sure to update the <code>DATABASE_URL</code>
+		environment variable in the
+		<code>.env</code> file accordingly.
+	</li>
+</ul>
+
 <h2 id="install">Install</h2>
 
 <h3 id="download-tarball">1. Download Deployment Files</h3>
