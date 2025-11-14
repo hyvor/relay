@@ -50,11 +50,6 @@ export const categories: Category[] = [
 				slug: 'scaling',
 				name: 'Scaling',
 				component: Scaling
-			},
-			{
-				slug: 'dns',
-				name: 'DNS',
-				component: Dns
 			}
 		]
 	},
@@ -65,6 +60,11 @@ export const categories: Category[] = [
 				slug: 'health-checks',
 				name: 'Health Checks',
 				component: HealthChecks
+			},
+			{
+				slug: 'dns',
+				name: 'DNS Server',
+				component: Dns
 			}
 		]
 	},
