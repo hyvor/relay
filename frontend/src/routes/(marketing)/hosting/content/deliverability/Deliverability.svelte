@@ -36,6 +36,9 @@
 		<a href="#technical">Technical Configurations</a>
 	</li>
 	<li>
+		<a href="#other-factors">Other Factors</a>
+	</li>
+	<li>
 		<a href="#blacklists">Blacklists</a>
 	</li>
 	<li>
@@ -142,6 +145,39 @@
 	</p>
 </Callout>
 
+<h2 id="other-factors">Other Factors</h2>
+
+<p>
+	There are other factors that affect email deliverability beyond content and technical
+	configurations:
+</p>
+
+<ul>
+	<li>
+		<strong>Domain Age</strong>: Older domains generally have better deliverability than newly
+		registered ones. This applies to both the
+		<a href="/hosting/setup#instance-domain">instance domain</a> and sending (FROM) domain. There
+		is no quick fix for this; time is the only cure. Keep sending good emails consistently to those
+		who expect them.
+	</li>
+	<li>
+		<strong>Sender Reputation</strong>: Email providers maintain a reputation score for sending
+		IP addresses and domains based on various factors like complaint rates, bounce rates, and
+		spam trap hits. Suppressions, which Hyvor Relay handles, are important to avoid resending to
+		addresses that have bounced or marked your emails as spam.
+	</li>
+	<li>
+		<strong>Engagement Metrics</strong>: High open rates, click-through rates, and low complaint
+		rates positively impact deliverability. Send high quality, relevant content to engaged
+		recipients.
+	</li>
+	<li>
+		<strong>Sending Volume & Frequency</strong>: Sudden spikes in sending volume can raise red
+		flags. Maintain a consistent sending pattern. Hyvor Relay's API rate limits can help manage
+		this.
+	</li>
+</ul>
+
 <h2 id="blacklists">Blacklists</h2>
 
 <p>
@@ -216,9 +252,9 @@
 	reputation.
 </p>
 
-<h3 id="tools">Tools</h3>
+<h2 id="tools">Tools</h2>
 
-<h4 id="tools-email-deliverability">Email Deliverability Testing Tools</h4>
+<p>For testing email deliverability:</p>
 
 <ul>
 	<li>
@@ -249,16 +285,25 @@
 	</li>
 </ul>
 
-<h4 id="tools-blacklist-checkers">Blacklist Checkers</h4>
+<p>For checking blacklists:</p>
 
 <ul>
 	<li>
-		<a href="https://mxtoolbox.com/blacklists.aspx" target="_blank" rel="nofollow noopener">
+		<a
+			href="https://mxtoolbox.com/blacklists.aspx?source=hyvor-relay"
+			target="_blank"
+			rel="nofollow noopener"
+		>
 			MXToolbox Blacklist Check</a
 		>: Check if your sending IPs are listed on over 100 DNS-based blacklists.
 	</li>
 	<li>
-		<a href="https://multirbl.valli.org/" target="_blank" rel="nofollow noopener"> MultiRBL</a>:
-		Another tool to check your sending IPs against multiple DNS-based blacklists.
+		<a
+			href="https://multirbl.valli.org?source=hyvor-relay"
+			target="_blank"
+			rel="nofollow noopener"
+		>
+			MultiRBL</a
+		>: Another tool to check your sending IPs against multiple DNS-based blacklists.
 	</li>
 </ul>
