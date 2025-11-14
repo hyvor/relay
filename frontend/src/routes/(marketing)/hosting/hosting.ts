@@ -5,11 +5,12 @@ import ProdDeploy from './content/ProdDeploy.svelte';
 import Monitoring from './content/monitoring/Monitoring.svelte';
 import EasyDeploy from './content/easy/EasyDeploy.svelte';
 import Env from './content/Env.svelte';
-import Deliverability from './content/Deliverability.svelte';
+import Deliverability from './content/deliverability/Deliverability.svelte';
 import Dns from './content/Dns.svelte';
 import Scaling from './content/Scaling.svelte';
 import EmailProviders from './content/EmailProviders.svelte';
 import Telemetry from './content/Telemetry.svelte';
+import HealthChecks from './content/HealthChecks.svelte';
 
 export const categories: Category[] = [
 	{
@@ -54,6 +55,16 @@ export const categories: Category[] = [
 				slug: 'dns',
 				name: 'DNS',
 				component: Dns
+			}
+		]
+	},
+	{
+		name: 'Features',
+		pages: [
+			{
+				slug: 'health-checks',
+				name: 'Health Checks',
+				component: HealthChecks
 			}
 		]
 	},
