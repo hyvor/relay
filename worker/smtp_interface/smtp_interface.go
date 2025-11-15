@@ -2,9 +2,15 @@ package smtp_interface
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
+	"io"
 	"mime"
+	"mime/quotedprintable"
 	"net/mail"
+	"strings"
+
+	"golang.org/x/net/html/charset"
 )
 
 // converts a SMTP message to a API request compatible with Hyvor Relay's POST /api/console/sends
@@ -48,7 +54,7 @@ func MimeToApiRequest(mimeMessage []byte) (*ApiRequest, error) {
 		return nil, ErrNoFromHeader
 	}
 
-	mediaType, params, err := mime.ParseMediaType(message.Header.Get("Content-Type"))
+	mediaType, _, err := mime.ParseMediaType(message.Header.Get("Content-Type"))
 	if err != nil {
 		mediaType = "text/plain"
 	}
@@ -68,9 +74,74 @@ func MimeToApiRequest(mimeMessage []byte) (*ApiRequest, error) {
 	// add body
 	// wip:
 
-	//
+	if strings.HasPrefix(mediaType, "multipart/") {
+		// walk multipart parts
+		// mr := multipart.NewReader(message.Body, params["boundary"])	
+	} else {
+
+		body, err := decodeMessageBody(message)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if mediaType == "text/html" {
+			apiRequest.BodyHtml = body
+		} else {
+			apiRequest.BodyText = body
+		}
+
+	}
 
 	return apiRequest, nil
+
+}
+
+func decodeMessageBody(message *mail.Message) (string, error) {
+
+	// get encoding
+	encoding := message.Header.Get("Content-Transfer-Encoding")
+	if encoding == "" {
+		encoding = "7bit"
+	}
+
+	// get charset
+	contentType := message.Header.Get("Content-Type")
+	_, params, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		params = map[string]string{}
+	}
+	charsetName := params["charset"]
+	if charsetName == "" {
+		charsetName = "utf-8"
+	}
+
+	// decode body based on encoding
+
+	var reader io.Reader
+
+	switch strings.ToLower(encoding) {
+	case "base64":
+		reader = base64.NewDecoder(base64.StdEncoding, message.Body)
+	case "quoted-printable":
+		reader = quotedprintable.NewReader(message.Body)
+	default:
+		reader = message.Body
+	}
+
+	// convert to UTF-8 string
+	utf8Reader, err := charset.NewReaderLabel(charsetName, reader)
+	if err != nil {
+        return "", err
+    }
+
+	decoded, err := io.ReadAll(utf8Reader)
+    if err != nil {
+        return "", err
+    }
+
+    return string(decoded), nil
+
 
 }
 

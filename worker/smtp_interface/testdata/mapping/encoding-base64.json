@@ -7,6 +7,6 @@
             "email": "recipient@example.com"
         }
     ],
-    "subject": "Test Email",
-    "body_html": "<p>Hello World!</p>"
+    "subject": "Base64 Test Email",
+    "body_text": "Hello,\n\nThis email uses base64 encoding."
 }
