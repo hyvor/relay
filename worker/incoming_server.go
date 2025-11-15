@@ -82,20 +82,20 @@ func (s *Session) Rcpt(to string, opts *smtp.RcptOptions) error {
 }
 
 func (s *Session) Data(r io.Reader) error {
-	if b, err := io.ReadAll(r); err != nil {
+	b, err := io.ReadAll(r)
+	if err != nil {
 		s.logger.Error("Error reading email data", "error", err)
 		return err
-	} else {
-
-		s.logger.Info("Received email",
-			"MAIL", s.incomingMail.MailFrom,
-			"RCPT", s.incomingMail.RcptTo,
-			"data", string(b),
-		)
-
-		s.incomingMail.Data = b
-		s.mailChannel <- &s.incomingMail
 	}
+
+	s.logger.Info("Received email",
+		"MAIL", s.incomingMail.MailFrom,
+		"RCPT", s.incomingMail.RcptTo,
+		"data", string(b),
+	)
+
+	s.incomingMail.Data = b
+	s.mailChannel <- &s.incomingMail
 	return nil
 }
 
