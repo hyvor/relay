@@ -1,0 +1,12 @@
+{
+    "from": {
+        "email": "sender@example.com"
+    },
+    "to": [
+        {
+            "email": "recipient@example.com"
+        }
+    ],
+    "subject": "Quoted-Printable Test",
+    "body_text": "Hello,\n\nThis email uses quoted-printable encoding.\nNon-ASCII characters are encoded like this: é ñ ü\n\nLines ending with = are soft-wrapped.\n\nBest regards,\nSender"
+}

@@ -1,0 +1,13 @@
+{
+    "from": {
+        "email": "sender@example.com"
+    },
+    "to": [
+        {
+            "email": "recipient@example.com"
+        }
+    ],
+    "subject": "HTML & Text Email",
+    "body_html": "<h1>Hello!</h1>\n<p>This is the <b>HTML version</b> of the email.</p>",
+    "body_text": "Hello!\nThis is the plain text version."
+}

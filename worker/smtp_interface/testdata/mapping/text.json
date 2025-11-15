@@ -1,0 +1,14 @@
+{
+    "from": {
+        "email": "sender@example.com",
+        "name": "Sender"
+    },
+    "to": [
+        {
+            "email": "recipient@example.com",
+            "name": "Recipient"
+        }
+    ],
+    "subject": "Text Only Email",
+    "body_text": "Hello!\nThis is a plain text email."
+}

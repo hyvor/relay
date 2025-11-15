@@ -1,0 +1,16 @@
+From: sender@example.com
+To: recipient@example.com
+Subject: Quoted-Printable Test
+MIME-Version: 1.0
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
+
+Hello,
+
+This email uses quoted-printable encoding.
+Non-ASCII characters are encoded like this: =C3=A9 =C3=B1 =C3=BC
+
+Lines ending with = are soft-wrapped.
+
+Best regards,
+Sender

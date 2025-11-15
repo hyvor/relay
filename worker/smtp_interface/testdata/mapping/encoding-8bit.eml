@@ -1,0 +1,14 @@
+From: sender@example.com
+To: recipient@example.com
+Subject: 8bit Test Email
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Hello,
+
+This email contains extended characters:
+é, ñ, ü, å, €.
+
+Best regards,
+Sender

@@ -1,0 +1,26 @@
+From: sender@example.com
+To: recipient@example.com
+Subject: HTML & Text Email with Attachment
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="MIXED_BOUNDARY"
+
+--MIXED_BOUNDARY
+Content-Type: multipart/alternative; boundary="ALT_BOUNDARY"
+
+--ALT_BOUNDARY
+Content-Type: text/plain; charset="UTF-8"
+
+Hello text!
+--ALT_BOUNDARY
+Content-Type: text/html; charset="UTF-8"
+
+<p>Hello HTML!</p>
+--ALT_BOUNDARY--
+
+--MIXED_BOUNDARY
+Content-Type: application/pdf
+Content-Disposition: attachment; filename="example.pdf"
+Content-Transfer-Encoding: base64
+
+JVBERi0xLjQKJcfs
+--MIXED_BOUNDARY--

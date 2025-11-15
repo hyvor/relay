@@ -1,0 +1,14 @@
+From: sender@example.com
+To: recipient@example.com
+Subject: 7bit Test Email
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Hello,
+
+This is a simple 7bit ASCII test email.
+All characters are plain ASCII and lines are short.
+
+Best regards,
+Sender

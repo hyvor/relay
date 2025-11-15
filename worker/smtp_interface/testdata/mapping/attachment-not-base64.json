@@ -1,0 +1,18 @@
+{
+    "from": {
+        "email": "sender@example.com"
+    },
+    "to": [
+        {
+            "email": "recipient@example.com"
+        }
+    ],
+    "subject": "Attachment Not Base64 Encoding",
+    "attachments": [
+        {
+            "name": "data.csv",
+            "content_type": "text/csv",
+            "content": "aWQsbmFtZSxzY29yZQoxLEFsaWNlLDk1CjIsQm9iLDg4"
+        }
+    ]
+}
