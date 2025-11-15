@@ -6,15 +6,15 @@
 
 <p>
 	This page covers how to deploy Hyvor Relay on a single server using Docker Compose. This is the
-	easiest way to deploy Hyvor Relay, and it is suitable for testing Hyvor Relay or for small to
-	medium-sized use cases.
+	easiest way to deploy Hyvor Relay, and it is suitable for <strong>most use cases</strong> where you
+	need a reliable transactional email service.
 </p>
 
 <p>
 	In general, on a server with 4GB RAM and 2 vCPUs, you should be able to easily send more than
-	100,000 emails per day. However, if you need high availability and scalability, see the <a
-		href="/hosting/deploy">Prod Deploy</a
-	> page, which uses multiple servers with Docker Swarm.
+	<a href="/hosting/scaling#onemil-per-day"> 1,000,000 emails per day</a>. However, if you need
+	high availability and scalability, see the <a href="/hosting/deploy">Prod Deploy</a> page, which
+	uses multiple servers with Docker Swarm.
 </p>
 
 <ul>
@@ -35,13 +35,13 @@
 </p>
 
 <p>
-	<strong>IP Addresses</strong>: You need at least one static IPv4 address for the server, which
-	will be assigned to the transactional queue.
+	<strong>IP Addresses</strong>: You need at least one static IPv4 address for the server. Add
+	more IP addresses for more queues.
 </p>
 
 <p>
-	<strong>OS</strong>: A Linux-based OS is recommended for production use. If you are not sure,
-	use Ubuntu 24.04 LTS, the same OS our Cloud runs on.
+	<strong>OS</strong>: A Linux-based operating system. Hyvor Relay is tested on Ubuntu 24.04 LTS
+	in production.
 </p>
 
 <p>
@@ -51,8 +51,34 @@
 
 <p>
 	<strong> OpenID Connect (OIDC) Provider </strong>: Hyvor Relay relies on OIDC for
-	authentication.
+	authentication. Create an application in your OIDC provider and obtain the issuer URL, client
+	ID, and client secret. Then, allow the following URLs:
 </p>
+
+<ul>
+	<li>
+		<strong>Callback URL</strong>: <code>http://your-server-ip/api/oidc/callback</code>
+	</li>
+	<li>
+		<strong>Logout URL</strong>: <code>http://your-server-ip</code>
+	</li>
+</ul>
+
+<p>
+	<strong>Firewall</strong>: the following ports should be open on your server:
+</p>
+
+<ul>
+	<li>
+		<strong>80</strong>: API
+	</li>
+	<li>
+		<strong>25</strong>: SMTP server for incoming emails (bounces & complaints)
+	</li>
+	<li>
+		<strong>53</strong>: DNS Server
+	</li>
+</ul>
 
 <h2 id="install">Install</h2>
 
@@ -74,70 +100,63 @@ cd deploy/easy
 />
 
 <p>
-	<code>deploy/easy</code> directory contains the Docker Compose files and other necessary files for
-	this deployment.
+	<code>deploy/easy</code> directory contains the following files:
 </p>
+
+<CodeBlock
+	code={`
+.env 			 	# Environment variables
+compose.yaml			# Docker Compose file
+config			 	# Bash script to update .env file
+`}
+/>
 
 <h3 id="env">2. Configure Environment Variables</h3>
 
-<p>
-	The <a href="https://github.com/hyvor/relay/blob/main/deploy/easy/.env" target="_blank"
-		>.env file</a
-	> contains the environment variables for the deployment. Open it in a text editor and set the following
-	variables:
-</p>
-
-<h4 id="env-app-secret">App Secret</h4>
-
-<p>
-	The <code>APP_SECRET</code> variable is a 32-bytes key used to encrypt sensitive data (e.g., API
-	keys, tokens) in the application. Use the following command to generate a base64-encoded key:
-</p>
+<p>Run the config script:</p>
 
 <CodeBlock
 	code={`
-openssl rand -base64 32
+./config
 `}
 />
 
-<h4 id="env-oidc">OIDC Configuration</h4>
-
-<p>
-	Hyvor Relay requires OIDC (OpenID Connect) for authentication. In your OIDC provider, create a
-	new application and set the following values:
-</p>
-
-<CodeBlock
-	code={`
-OIDC_ISSUER_URL=https://your-oidc-provider.com
-OIDC_CLIENT_ID=your-client-id
-OIDC_CLIENT_SECRET=your-client-secret
-`}
-/>
-
-<p>You might also need to allow the following URLs in your OIDC provider:</p>
+<p>This script does the following, in order:</p>
 
 <ul>
 	<li>
-		<strong>Callback URL</strong>: <code>https://your-relay-domain.com/api/oidc/callback</code>
+		Set <code>APP_SECRET</code> to a secure random value in <code>.env</code> file, generated
+		using
+		<code>openssl rand -base64 32</code>.
 	</li>
 	<li>
-		<strong>Logout URL</strong>: <code>https://your-relay-domain.com</code>
+		Generate a strong random password for the Postgres database and update the
+		<code>DATABASE_URL</code> variable in <code>.env</code> file and the corresponding variable
+		in <code>compose.yaml</code>.
+	</li>
+	<li>
+		Prompt you to enter the OIDC provider details (issuer URL, client ID, client secret) and
+		update the corresponding variables in <code>.env</code> file.
 	</li>
 </ul>
 
+<p>Make sure to verify the config:</p>
+
+<CodeBlock
+	code={`
+cat .env
+cat compose.yaml
+`}
+/>
+
 <p>
-	If needed, feel free to change other environment variables. See the <a href="/hosting/env"
-		>Environment Variables</a
-	> page for all available variables.
+	If needed, feel free to change other environment variables. See the
+	<a href="/hosting/env">Environment Variables</a> page for all available variables.
 </p>
 
 <h3 id="docker-compose">3. Start Docker Compose</h3>
 
-<p>
-	Once you have configured the environment variables, you can run the following command to start
-	the services:
-</p>
+<p>Start the services:</p>
 
 <CodeBlock
 	code={`
@@ -171,4 +190,35 @@ docker compose logs -f app
 <p>
 	Next, head to the <a href="/hosting/setup">Setup</a> page to learn how to set up your Hyvor Relay
 	instance for best deliverability.
+</p>
+
+<hr />
+
+<h2 id="things-to-know">Things to know</h2>
+
+<h3 id="app-secret">App Secret</h3>
+
+<p>
+	The <code>APP_SECRET</code> variable is a 32-bytes key used to encrypt sensitive data (e.g., API
+	keys, tokens) in the application. You should not change this value after the initial setup, as
+	it will invalidate existing encrypted data. Key rotation is not supported yet, but
+	<a href="https://github.com/hyvor/internal/issues/55" target="_blank">planned</a>.
+</p>
+
+<h3 id="host-network">Host Network</h3>
+
+<p>
+	The application uses the <a
+		href="https://docs.docker.com/engine/network/drivers/host/"
+		target="_blank">host network mode</a
+	> to bind to the server's IP addresses directly. This allows Hyvor Relay to control the IP addresses
+	used for sending emails. Other network modes (e.g., bridge, overlay) are not supported.
+</p>
+
+<h3 id="external-postgres">External Postgres</h3>
+
+<p>
+	If you want to use an external Postgres database (for example, a managed database service), you
+	can do so by updating the <code>DATABASE_URL</code> environment variable in the
+	<code>.env</code> file.
 </p>
