@@ -16,6 +16,7 @@ func TestMimeToApiRequest(t *testing.T) {
 	assert.NoError(t, err)
 
 	for _, file := range files {
+
 		t.Run(filepath.Base(file), func(t *testing.T) {
 
 			// read the file content

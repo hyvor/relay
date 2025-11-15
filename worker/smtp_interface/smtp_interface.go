@@ -110,7 +110,7 @@ func walkMultipart(mr *multipart.Reader, apiRequest *ApiRequest, top bool) error
 
 	for {
 
-		part, err := mr.NextPart()
+		part, err := mr.NextRawPart()
 		if err == io.EOF {
 			break
 		}
