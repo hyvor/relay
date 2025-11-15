@@ -106,7 +106,7 @@ func messageToMultipartReader(message *mail.Message) (*multipart.Reader, error) 
 
 func walkMultipart(mr *multipart.Reader, apiRequest *ApiRequest, top bool) error {
 
-	// var topBody string
+	var topBody []byte
 
 	for {
 
@@ -183,7 +183,7 @@ func walkMultipart(mr *multipart.Reader, apiRequest *ApiRequest, top bool) error
 			// and if the content type is not known,
 			// save it later so that we can use it as body text if no other body is found
 			if top {
-				// topBody = body
+				topBody = body
 			}
 		}
 	}
@@ -192,7 +192,7 @@ func walkMultipart(mr *multipart.Reader, apiRequest *ApiRequest, top bool) error
 	// and no body text or html found,
 	// use the saved topBody as body text
 	if top && apiRequest.BodyText == "" && apiRequest.BodyHtml == "" {
-		// apiRequest.BodyText = topBody
+		apiRequest.BodyText = string(topBody)
 	}
 
 	return nil
