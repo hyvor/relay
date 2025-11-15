@@ -6,8 +6,10 @@ import (
 	"errors"
 	"io"
 	"mime"
+	"mime/multipart"
 	"mime/quotedprintable"
 	"net/mail"
+	"net/textproto"
 	"strings"
 
 	"golang.org/x/net/html/charset"
@@ -54,9 +56,9 @@ func MimeToApiRequest(mimeMessage []byte) (*ApiRequest, error) {
 		return nil, ErrNoFromHeader
 	}
 
-	mediaType, _, err := mime.ParseMediaType(message.Header.Get("Content-Type"))
+	multipartReader, err := messageToMultipartReader(message)
 	if err != nil {
-		mediaType = "text/plain"
+		return nil, err
 	}
 
 	var apiRequest = &ApiRequest{
@@ -68,45 +70,133 @@ func MimeToApiRequest(mimeMessage []byte) (*ApiRequest, error) {
 		Headers: make(map[string]string),
 	}
 
-	// copy custom headers
-	// TODO:
-
-	// add body
-	// wip:
-
-	if strings.HasPrefix(mediaType, "multipart/") {
-		// walk multipart parts
-		// mr := multipart.NewReader(message.Body, params["boundary"])	
-	} else {
-
-		body, err := decodeMessageBody(message)
-
-		if err != nil {
-			return nil, err
-		}
-
-		if mediaType == "text/html" {
-			apiRequest.BodyHtml = body
-		} else {
-			apiRequest.BodyText = body
-		}
-
+	err = walkMultipart(multipartReader, apiRequest, true)
+	if err != nil {
+		return nil, err
 	}
 
 	return apiRequest, nil
 
 }
 
-func decodeMessageBody(message *mail.Message) (string, error) {
+// artifically convert mail.Message to multipart.Reader
+// this makes code nicer by reusing walkMultipart function
+func messageToMultipartReader(message *mail.Message) (*multipart.Reader, error) {
+
+	messageBody, err := io.ReadAll(message.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	buf := &bytes.Buffer{}
+    mw := multipart.NewWriter(buf)
+
+    // Create a single part
+    part, err := mw.CreatePart(textproto.MIMEHeader(message.Header))
+    if err != nil {
+        return nil, err
+    }
+    part.Write(messageBody)
+
+    mw.Close() // finalize multipart content
+
+    // Create a reader with the same boundary
+    mr := multipart.NewReader(buf, mw.Boundary())
+    return mr, nil
+	
+}
+
+func walkMultipart(mr *multipart.Reader, apiRequest *ApiRequest, top bool) error {
+
+	// var topBody string
+
+	for {
+
+		part, err := mr.NextPart()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		contentType := part.Header.Get("Content-Type")
+		contentDisposition := part.Header.Get("Content-Disposition")
+
+		mediaType, params, _ := mime.ParseMediaType(contentType)
+
+		// nested multipart
+		if strings.HasPrefix(mediaType, "multipart/") {
+			nestedMR := multipart.NewReader(part, params["boundary"])
+			if err := walkMultipart(nestedMR, apiRequest, false); err != nil {
+				return err
+			}
+			continue
+		}
+
+		// attachments
+		if strings.HasPrefix(contentDisposition, "attachment") || strings.HasPrefix(contentDisposition, "inline") {
+			filename := part.FileName()
+			body, err := io.ReadAll(part)
+			if err != nil {
+				continue
+			}
+			b64 := base64.StdEncoding.EncodeToString(body)
+			apiRequest.Attachments = append(apiRequest.Attachments, Attachment{
+				Name:        filename,
+				Content:     b64,
+				ContentType: mediaType,
+			})
+			continue
+		}
+
+		// body parts
+		body, err := decodeMessageBody(part)
+
+		if err != nil {
+			return err
+		}
+
+		switch mediaType {
+		case "text/plain":
+			if apiRequest.BodyText == "" {
+				apiRequest.BodyText = body
+			}
+		case "text/html":
+			if apiRequest.BodyHtml == "" {
+				apiRequest.BodyHtml = body
+			}
+		default:
+			// if this is the top-level part,
+			// and if the content type is not known,
+			// save it later so that we can use it as body text if no other body is found
+			if top {
+				// topBody = body
+			}
+		}
+	}
+
+	// if this is the top-level part,
+	// and no body text or html found,
+	// use the saved topBody as body text
+	if top && apiRequest.BodyText == "" && apiRequest.BodyHtml == "" {
+		// apiRequest.BodyText = topBody
+	}
+
+	return nil
+
+}
+
+func decodeMessageBody(part *multipart.Part) (string, error) {
 
 	// get encoding
-	encoding := message.Header.Get("Content-Transfer-Encoding")
+	encoding := part.Header.Get("Content-Transfer-Encoding")
 	if encoding == "" {
 		encoding = "7bit"
 	}
 
 	// get charset
-	contentType := message.Header.Get("Content-Type")
+	contentType := part.Header.Get("Content-Type")
 	_, params, err := mime.ParseMediaType(contentType)
 	if err != nil {
 		params = map[string]string{}
@@ -122,11 +212,11 @@ func decodeMessageBody(message *mail.Message) (string, error) {
 
 	switch strings.ToLower(encoding) {
 	case "base64":
-		reader = base64.NewDecoder(base64.StdEncoding, message.Body)
+		reader = base64.NewDecoder(base64.StdEncoding, part)
 	case "quoted-printable":
-		reader = quotedprintable.NewReader(message.Body)
+		reader = quotedprintable.NewReader(part)
 	default:
-		reader = message.Body
+		reader = part
 	}
 
 	// convert to UTF-8 string
