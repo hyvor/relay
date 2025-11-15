@@ -83,11 +83,6 @@ func MimeToApiRequest(mimeMessage []byte) (*ApiRequest, error) {
 // this makes code nicer by reusing walkMultipart function
 func messageToMultipartReader(message *mail.Message) (*multipart.Reader, error) {
 
-	messageBody, err := io.ReadAll(message.Body)
-	if err != nil {
-		return nil, err
-	}
-
 	buf := &bytes.Buffer{}
     mw := multipart.NewWriter(buf)
 
@@ -96,7 +91,10 @@ func messageToMultipartReader(message *mail.Message) (*multipart.Reader, error) 
     if err != nil {
         return nil, err
     }
-    part.Write(messageBody)
+	_, err = io.Copy(part, message.Body)
+	if err != nil {
+		return nil, err
+	}
 
     mw.Close() // finalize multipart content
 
@@ -137,14 +135,28 @@ func walkMultipart(mr *multipart.Reader, apiRequest *ApiRequest, top bool) error
 		// attachments
 		if strings.HasPrefix(contentDisposition, "attachment") || strings.HasPrefix(contentDisposition, "inline") {
 			filename := part.FileName()
-			body, err := io.ReadAll(part)
-			if err != nil {
-				continue
+
+			var attachmentBase64 string
+
+			if part.Header.Get("Content-Transfer-Encoding") == "base64" {
+				// if already base64 encoded, read as is
+				attachmentBase64Bytes, err := io.ReadAll(part)
+				if err != nil {
+					continue
+				}
+				attachmentBase64 = string(attachmentBase64Bytes)
+			} else {
+				// otherwise, read and encode to base64
+				body, err := decodeMessageBody(part)
+				if err != nil {
+					continue
+				}
+				attachmentBase64 = base64.StdEncoding.EncodeToString(body)
 			}
-			b64 := base64.StdEncoding.EncodeToString(body)
+
 			apiRequest.Attachments = append(apiRequest.Attachments, Attachment{
 				Name:        filename,
-				Content:     b64,
+				Content:     attachmentBase64,
 				ContentType: mediaType,
 			})
 			continue
@@ -160,11 +172,11 @@ func walkMultipart(mr *multipart.Reader, apiRequest *ApiRequest, top bool) error
 		switch mediaType {
 		case "text/plain":
 			if apiRequest.BodyText == "" {
-				apiRequest.BodyText = body
+				apiRequest.BodyText = string(body)
 			}
 		case "text/html":
 			if apiRequest.BodyHtml == "" {
-				apiRequest.BodyHtml = body
+				apiRequest.BodyHtml = string(body)
 			}
 		default:
 			// if this is the top-level part,
@@ -187,7 +199,7 @@ func walkMultipart(mr *multipart.Reader, apiRequest *ApiRequest, top bool) error
 
 }
 
-func decodeMessageBody(part *multipart.Part) (string, error) {
+func decodeMessageBody(part *multipart.Part) ([]byte, error) {
 
 	// get encoding
 	encoding := part.Header.Get("Content-Transfer-Encoding")
@@ -222,15 +234,15 @@ func decodeMessageBody(part *multipart.Part) (string, error) {
 	// convert to UTF-8 string
 	utf8Reader, err := charset.NewReaderLabel(charsetName, reader)
 	if err != nil {
-        return "", err
+        return nil, err
     }
 
 	decoded, err := io.ReadAll(utf8Reader)
     if err != nil {
-        return "", err
+        return nil, err
     }
 
-    return string(decoded), nil
+    return decoded, nil
 
 
 }
