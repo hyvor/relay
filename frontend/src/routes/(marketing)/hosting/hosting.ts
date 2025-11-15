@@ -35,12 +35,7 @@ export const categories: Category[] = [
 				slug: 'setup',
 				name: 'Setup',
 				component: Setup
-			}
-		]
-	},
-	{
-		name: 'Advanced',
-		pages: [
+			},
 			{
 				slug: 'monitoring',
 				name: 'Monitoring',

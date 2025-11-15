@@ -5,8 +5,8 @@
 <h1>Hosting</h1>
 
 <p>
-	Hyvor Relay is a self-hosted, open-source email API for developers. Think of it as an
-	alternative to AWS SES, Mailgun, or SendGrid, but you host it on your own infrastructure.
+	<a href="/">Hyvor Relay</a> is a self-hosted, open-source email API for developers. Think of it as
+	an alternative to AWS SES, Mailgun, or SendGrid, but you host it on your own infrastructure.
 </p>
 
 <h2>Self-Hosting is first-class</h2>
@@ -16,8 +16,8 @@
 <ul>
 	<li>
 		<strong>Open Source</strong>: Fully open-source codebase available on
-		<a href="https://github.com/hyvor/relay" target="_blank">GitHub</a>. All features are
-		available without restrictions.
+		<a href="https://github.com/hyvor/relay" target="_blank">GitHub</a>. All features are (and
+		will remain) available in the open-source version.
 	</li>
 	<li>
 		<strong>Minimal Dependencies</strong>: Easy docker-based deployments with just PostgreSQL as

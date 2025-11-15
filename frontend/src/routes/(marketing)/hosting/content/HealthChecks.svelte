@@ -139,3 +139,8 @@
 	If any IP addresses are found on these blacklists, the check will fail and list the affected IPs
 	along with the respective blacklist names and a link to removal instructions.
 </p>
+
+<p>
+	Learn how <a href="/hosting/deliverability#blacklists">blacklists affect email deliverability</a
+	>.
+</p>
