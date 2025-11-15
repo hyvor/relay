@@ -10,6 +10,7 @@ class HeadersValidator extends ConstraintValidator
 {
 
     // IMPORTANT! should be lowercase
+    // document in SendEmails.svelte (/docs/send-emails#limits)
     private const array UNALLOWED_HEADERS = [
         // emails
         'from',

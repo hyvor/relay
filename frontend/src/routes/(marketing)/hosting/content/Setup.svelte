@@ -81,7 +81,7 @@
 	{#snippet icon()}
 		💡
 	{/snippet}
-	On Hyvor Relay Cloud, the instance domain is <strong>hyvor-relay.com</strong>.
+	On Hyvor Relay Cloud, the instance domain is <strong>mail.hyvor-relay.com</strong>.
 </Callout>
 
 <p>
