@@ -1,0 +1,10 @@
+From: Sender <sender@example.com>
+To: Recipient <recipient@example.com>
+Subject: Text Only Email
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+X-Custom-1: one
+X-Custom-2: two
+
+Hello!
+This is a plain text email.

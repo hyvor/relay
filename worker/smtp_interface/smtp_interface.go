@@ -70,6 +70,9 @@ func MimeToApiRequest(mimeMessage []byte) (*ApiRequest, error) {
 		Headers: make(map[string]string),
 	}
 
+	// add the top-level custom headers
+	addCustomHeaders(apiRequest, message.Header)
+
 	err = walkMultipart(multipartReader, apiRequest, true)
 	if err != nil {
 		return nil, err

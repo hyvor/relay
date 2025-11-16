@@ -17,7 +17,7 @@ import (
 // It handles:
 // 1. Bounce emails: emails sent to bounce+<uuid>@<instance_domain>. (DSN format, RFC 3464)
 // 2. Feedback loop emails: emails sent to fbl@<instance_domain> or abuse@<instance_domain>. (ARF format, RFC 5965).
-// 3. Forward emails to the API: when AUTH is used, the password is treated as the API key, and the email is forwarded to the API.
+// 3. Forward emails to the API when AUTH is used; the password is treated as the API key, and the email is forwarded to the API.
 
 // The IncomingBackend implements SMTP server methods.
 type IncomingBackend struct {
