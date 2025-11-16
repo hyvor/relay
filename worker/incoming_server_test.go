@@ -70,4 +70,11 @@ func TestIncomingServer(t *testing.T) {
 
 	conn.Close()
 
+	// AUTH
+	conn, err = smtp.Dial("localhost:25252")
+	assert.NoError(t, err)
+
+	err = conn.Auth(smtp.PlainAuth("", "user", "password", "localhost"))
+	assert.NoError(t, err)
+
 }
