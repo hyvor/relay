@@ -125,7 +125,7 @@ type IncomingMailServer struct {
 	smtpServer1 *smtp.Server // 25
 	smtpServer2 *smtp.Server // 587
 
-	cancelFunc context.CancelFunc
+	workersCancelFunc context.CancelFunc
 }
 
 func NewIncomingMailServer(ctx context.Context, logger *slog.Logger, metrics *Metrics) *IncomingMailServer {
@@ -147,24 +147,27 @@ func (server *IncomingMailServer) Set(instanceDomain string, numWorkers int) {
 }
 
 func (server *IncomingMailServer) Shutdown() {
-	if server.smtpServer1 != nil {
-		return
-	}
 
-	if server.cancelFunc != nil {
-		server.cancelFunc()
-		server.cancelFunc = nil
+	if server.workersCancelFunc != nil {
+		server.workersCancelFunc()
+		server.workersCancelFunc = nil
 	}
 
 	shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCtxCancel()
 
-	if err := server.smtpServer1.Shutdown(shutdownCtx); err != nil {
-		server.logger.Error("Failed to shutdown SMTP server", "error", err)
+	var shutdownServerFunc = func(s *smtp.Server) {
+		if s != nil {
+			err := s.Shutdown(shutdownCtx)
+			if err != nil {
+				server.logger.Error("Failed to shutdown SMTP server", "error", err)
+			}
+		}
+		s = nil
 	}
 
-	server.smtpServer1 = nil
-	
+	shutdownServerFunc(server.smtpServer1)
+	shutdownServerFunc(server.smtpServer2)
 
 }
 
@@ -178,7 +181,7 @@ func (server *IncomingMailServer) StartChannelAndSmtpServers(instanceDomain stri
 
 	// worker context
 	workerCtx, cancel := context.WithCancel(server.ctx)
-	server.cancelFunc = cancel
+	server.workersCancelFunc = cancel
 
 	for i := 0; i < numWorkers; i++ {
 		go incomingMailWorker(
