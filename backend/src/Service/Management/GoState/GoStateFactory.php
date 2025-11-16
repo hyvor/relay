@@ -45,7 +45,7 @@ class GoStateFactory
             $ips[] = new GoStateIp(
                 id: $ip->getId(),
                 ip: $ip->getIpAddress(),
-                ptr: Ptr::getPtrDomain($ip, $instance->getDomain()),
+                ptr: Ptr::getPtrDomain($ip, $this->config->getInstanceDomain()),
                 queueId: $queue->getId(),
                 queueName: $queue->getName(),
             );
@@ -54,7 +54,7 @@ class GoStateFactory
         $dnsIp = count($ips) > 0 ? $ips[0]->ip : "";
 
         return new GoState(
-            instanceDomain: $instance->getDomain(),
+            instanceDomain: $this->config->getInstanceDomain(),
             hostname: $server->getHostname(),
             ips: $ips,
             apiWorkers: $server->getApiWorkers(),

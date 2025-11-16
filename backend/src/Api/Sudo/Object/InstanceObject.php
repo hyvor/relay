@@ -14,10 +14,10 @@ class InstanceObject
     public string $dkim_host;
     public string $dkim_txt_value;
 
-    public function __construct(Instance $instance)
+    public function __construct(Instance $instance, string $instanceDomain)
     {
-        $this->domain = $instance->getDomain();
-        $this->dkim_host = Dkim::dkimHost(InstanceService::DEFAULT_DKIM_SELECTOR, $instance->getDomain());
+        $this->domain = $instanceDomain;
+        $this->dkim_host = Dkim::dkimHost(InstanceService::DEFAULT_DKIM_SELECTOR, $instanceDomain);
         $this->dkim_txt_value = Dkim::dkimTxtValue($instance->getDkimPublicKey());
     }
 

@@ -3,11 +3,6 @@
 namespace App\Service\Project;
 
 use App\Api\Console\Authorization\Scope;
-use App\Entity\Domain;
-use App\Repository\DomainRepository;
-use App\Service\Domain\DomainService;
-use App\Service\Domain\Dto\UpdateDomainDto;
-use App\Service\Instance\Event\InstanceUpdatedEvent;
 use App\Service\Instance\InstanceService;
 use App\Service\ProjectUser\ProjectUserService;
 use Hyvor\Internal\Sudo\SudoUserService;
@@ -21,7 +16,6 @@ use Hyvor\Internal\Sudo\Event\SudoRemovedEvent;
  */
 #[AsEventListener(SudoAddedEvent::class, method: 'onSudoAdded')]
 #[AsEventListener(SudoRemovedEvent::class, method: 'onSudoRemoved')]
-#[AsEventListener(InstanceUpdatedEvent::class, method: 'onInstanceUpdated')]
 class SystemProjectListener
 {
 
@@ -29,8 +23,6 @@ class SystemProjectListener
         private SudoUserService $sudoUserService,
         private InstanceService $instanceService,
         private ProjectUserService $projectUserService,
-        private DomainRepository $domainRepository,
-        private DomainService $domainService,
     ) {
     }
 
@@ -69,7 +61,8 @@ class SystemProjectListener
         $this->resetSystemProjectAccess();
     }
 
-    private function getSystemProjectDomain(): Domain
+    /*TODO: Re-enable this with management init
+     * private function getSystemProjectDomain(): Domain
     {
         $systemProject = $this->instanceService->getInstance()->getSystemProject();
         $domain = $this->domainRepository->findOneBy(['project' => $systemProject]);
@@ -94,6 +87,6 @@ class SystemProjectListener
 
             $this->domainService->updateDomain($systemProjectDomain, $updates);
         }
-    }
+    }*/
 
 }

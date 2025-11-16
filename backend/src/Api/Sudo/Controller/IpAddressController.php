@@ -4,8 +4,7 @@ namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Input\UpdateIpAddressInput;
 use App\Api\Sudo\Object\IpAddressObject;
-use App\Entity\IpAddress;
-use App\Service\Instance\InstanceService;
+use App\Service\App\Config;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
 use App\Service\Ip\IpAddressService;
 use App\Service\Queue\QueueService;
@@ -20,8 +19,8 @@ class IpAddressController extends AbstractController
 
     public function __construct(
         private IpAddressService $ipAddressService,
-        private InstanceService $instanceService,
-        private QueueService $queueService
+        private QueueService $queueService,
+        private Config $appConfig,
     ) {
     }
 
@@ -29,10 +28,9 @@ class IpAddressController extends AbstractController
     public function getIpAddresses(): JsonResponse
     {
         $ipAddresses = $this->ipAddressService->getAllIpAddresses();
-        $instance = $this->instanceService->getInstance();
 
         $ipAddressObjects = array_map(
-            fn($ipAddress) => new IpAddressObject($ipAddress, $instance),
+            fn($ipAddress) => new IpAddressObject($ipAddress, $this->appConfig->getInstanceDomain()),
             $ipAddresses
         );
 
@@ -62,8 +60,7 @@ class IpAddressController extends AbstractController
         }
 
         $ipAddress = $this->ipAddressService->updateIpAddress($ipAddress, $updates);
-        $instance = $this->instanceService->getInstance();
 
-        return $this->json(new IpAddressObject($ipAddress, $instance));
+        return $this->json(new IpAddressObject($ipAddress, $this->appConfig->getInstanceDomain()));
     }
 }

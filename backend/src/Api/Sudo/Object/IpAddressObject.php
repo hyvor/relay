@@ -18,13 +18,13 @@ class IpAddressObject
     public bool $is_ptr_forward_valid = false;
     public bool $is_ptr_reverse_valid = false;
 
-    public function __construct(IpAddress $ipAddress, Instance $instance)
+    public function __construct(IpAddress $ipAddress, string $instanceDomain)
     {
         $this->id = $ipAddress->getId();
         $this->created_at = $ipAddress->getCreatedAt()->getTimestamp();
         $this->server_id = $ipAddress->getServer()->getId();
         $this->ip_address = $ipAddress->getIpAddress();
-        $this->ptr = Ptr::getPtrDomain($ipAddress, $instance->getDomain());
+        $this->ptr = Ptr::getPtrDomain($ipAddress, $instanceDomain);
         $queue = $ipAddress->getQueue();
         $this->queue = $queue ? new QueueObject($queue) : null;
         $this->is_ptr_forward_valid = $ipAddress->getIsPtrForwardValid();

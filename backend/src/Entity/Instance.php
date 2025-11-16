@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\InstanceRepository;
-use App\Service\Ip\ServerIp;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: InstanceRepository::class)]

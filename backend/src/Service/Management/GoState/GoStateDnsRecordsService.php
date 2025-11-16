@@ -4,9 +4,9 @@ namespace App\Service\Management\GoState;
 
 use App\Entity\Instance;
 use App\Entity\Type\DnsRecordType;
+use App\Service\App\Config;
 use App\Service\Dns\DnsRecordService;
 use App\Service\Domain\Dkim;
-use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
 use App\Service\Ip\Ptr;
 
@@ -14,8 +14,8 @@ class GoStateDnsRecordsService
 {
     public function __construct(
         private IpAddressService $ipAddressService,
-        private InstanceService $instanceService,
         private DnsRecordService $dnsRecordService,
+        private Config $config,
     ) {
     }
 
@@ -32,12 +32,14 @@ class GoStateDnsRecordsService
         $dnsMxIps = [];
         $dnsMxIpAddedServers = [];
 
+        $instanceDomain = $this->config->getInstanceDomain();
+
         // 1. Forward A records for each IP address (reverse PTR records)
         // smtp1.hyvorrelay.email -> 1.1.1.1
         foreach ($allIps as $ip) {
             $records[] = new GoStateDnsRecord(
                 type: DnsRecordType::A,
-                host: Ptr::getPtrDomain($ip, $this->instanceService->getInstance()->getDomain()),
+                host: Ptr::getPtrDomain($ip, $instanceDomain),
                 content: $ip->getIpAddress(),
             );
 
@@ -53,8 +55,8 @@ class GoStateDnsRecordsService
         // hyvorrelay.email -> mx.hyvorrelay.com
         $records[] = new GoStateDnsRecord(
             type: DnsRecordType::MX,
-            host: $instance->getDomain(),
-            content: 'mx.' . $instance->getDomain(),
+            host: $instanceDomain,
+            content: 'mx.' . $instanceDomain,
             priority: 10
         );
 
@@ -63,7 +65,7 @@ class GoStateDnsRecordsService
         foreach ($dnsMxIps as $ip) {
             $records[] = new GoStateDnsRecord(
                 type: DnsRecordType::A,
-                host: 'mx.' . $instance->getDomain(),
+                host: 'mx.' . $instanceDomain,
                 content: $ip,
             );
         }
@@ -71,14 +73,14 @@ class GoStateDnsRecordsService
         // 4. SPF record for the instance domain
         $records[] = new GoStateDnsRecord(
             type: DnsRecordType::TXT,
-            host: $instance->getDomain(),
+            host: $instanceDomain,
             content: 'v=spf1 ip4:' . implode(' ip4:', $allIpsString) . ' ~all',
         );
 
         // 5. DKIM record for the instance domain
         $records[] = new GoStateDnsRecord(
             type: DnsRecordType::TXT,
-            host: 'default._domainkey.' . $instance->getDomain(),
+            host: 'default._domainkey.' . $instanceDomain,
             content: Dkim::dkimTxtValue($instance->getDkimPublicKey()),
             ttl: 3600
         );
@@ -90,8 +92,8 @@ class GoStateDnsRecordsService
                 $records[] = new GoStateDnsRecord(
                     type: $dnsRecord->getType(),
                     host: $dnsRecord->getSubdomain() ?
-                        $dnsRecord->getSubdomain() . '.' . $instance->getDomain() :
-                        $instance->getDomain(),
+                        $dnsRecord->getSubdomain() . '.' . $instanceDomain :
+                        $instanceDomain,
                     content: $dnsRecord->getContent(),
                     ttl: $dnsRecord->getTtl(),
                     priority: $dnsRecord->getPriority()

@@ -106,7 +106,7 @@ class EmailBuilder
         $instance = $this->instanceService->getInstance();
         $email = $this->signEmail(
             $email,
-            $instance->getDomain(),
+            $this->config->getInstanceDomain(),
             $instance->getDkimPrivateKeyEncrypted(),
             InstanceService::DEFAULT_DKIM_SELECTOR
         );

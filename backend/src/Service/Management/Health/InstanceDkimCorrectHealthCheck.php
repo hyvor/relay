@@ -2,6 +2,7 @@
 
 namespace App\Service\Management\Health;
 
+use App\Service\App\Config;
 use App\Service\Dns\Resolve\DnsResolveInterface;
 use App\Service\Dns\Resolve\DnsResolvingFailedException;
 use App\Service\Dns\Resolve\DnsType;
@@ -13,6 +14,7 @@ class InstanceDkimCorrectHealthCheck extends HealthCheckAbstract
 
     public function __construct(
         private InstanceService $instanceService,
+        private Config $config,
         private DnsResolveInterface $dnsResolve,
     ) {
     }
@@ -20,7 +22,7 @@ class InstanceDkimCorrectHealthCheck extends HealthCheckAbstract
     public function check(): bool
     {
         $instance = $this->instanceService->getInstance();
-        $dkimHost = Dkim::dkimHost(InstanceService::DEFAULT_DKIM_SELECTOR, $instance->getDomain());
+        $dkimHost = Dkim::dkimHost(InstanceService::DEFAULT_DKIM_SELECTOR, $this->config->getInstanceDomain());
         $expectedDkimTxtValue = Dkim::dkimTxtValue($instance->getDkimPublicKey());
 
         try {
