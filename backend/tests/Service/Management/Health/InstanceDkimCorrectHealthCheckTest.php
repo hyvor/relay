@@ -26,9 +26,7 @@ class InstanceDkimCorrectHealthCheckTest extends KernelTestCase
         bool $verified,
         ?string $errorMessage = null
     ): void {
-        InstanceFactory::new()->withDefaultDkim()->create([
-            'domain' => 'relay.net',
-        ]);
+        InstanceFactory::new()->withDefaultDkim()->create();
 
         /** @var InstanceService $instanceService */
         $instanceService = $this->container->get(InstanceService::class);
@@ -60,19 +58,19 @@ class InstanceDkimCorrectHealthCheckTest extends KernelTestCase
         $this->doTest(
             true,
             false,
-            'DNS resolving failed for default._domainkey.relay.net: bad request'
+            'DNS resolving failed for default._domainkey.mail.hyvor-relay.com: bad request'
         );
 
         $this->doTest(
             new ResolveResult(3, []),
             false,
-            'DNS query for default._domainkey.relay.net failed with error: Non-existent domain (NXDOMAIN)'
+            'DNS query for default._domainkey.mail.hyvor-relay.com failed with error: Non-existent domain (NXDOMAIN)'
         );
 
         $this->doTest(
             new ResolveResult(0, []),
             false,
-            'No DKIM record found for default._domainkey.relay.net'
+            'No DKIM record found for default._domainkey.mail.hyvor-relay.com'
         );
 
         $this->doTest(

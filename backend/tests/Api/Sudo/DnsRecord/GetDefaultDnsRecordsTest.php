@@ -22,7 +22,6 @@ class GetDefaultDnsRecordsTest extends WebTestCase
     public function test_get_default_dns_records(): void
     {
         $instance = InstanceFactory::createOne([
-            'domain' => 'hyvor-relay.net',
             'dkim_public_key' => 'testkey'
         ]);
 
@@ -42,46 +41,46 @@ class GetDefaultDnsRecordsTest extends WebTestCase
         $records = [
             [
                 'type' => 'A',
-                'host' => 'smtp' . $ip1->getId() . '.hyvor-relay.net',
+                'host' => 'smtp' . $ip1->getId() . '.mail.hyvor-relay.com',
                 'content' => '1.1.1.1'
             ],
             [
                 'type' => 'A',
-                'host' => 'smtp' . $ip2->getId() . '.hyvor-relay.net',
+                'host' => 'smtp' . $ip2->getId() . '.mail.hyvor-relay.com',
                 'content' => '2.2.2.2',
             ],
             [
                 'type' => 'A',
-                'host' => 'smtp' . $ip3->getId() . '.hyvor-relay.net',
+                'host' => 'smtp' . $ip3->getId() . '.mail.hyvor-relay.com',
                 'content' => '3.3.3.3',
             ],
             // MX record
             [
                 'type' => 'MX',
-                'host' => 'hyvor-relay.net',
-                'content' => 'mx.hyvor-relay.net',
+                'host' => 'mail.hyvor-relay.com',
+                'content' => 'mx.mail.hyvor-relay.com',
             ],
             // A records for MX
             [
                 'type' => 'A',
-                'host' => 'mx.hyvor-relay.net',
+                'host' => 'mx.mail.hyvor-relay.com',
                 'content' => '1.1.1.1',
             ],
             [
                 'type' => 'A',
-                'host' => 'mx.hyvor-relay.net',
+                'host' => 'mx.mail.hyvor-relay.com',
                 'content' => '3.3.3.3',
             ],
             // SPF
             [
                 'type' => 'TXT',
-                'host' => 'hyvor-relay.net',
+                'host' => 'mail.hyvor-relay.com',
                 'content' => 'v=spf1 ip4:1.1.1.1 ip4:2.2.2.2 ip4:3.3.3.3 ~all',
             ],
             // DKIM
             [
                 'type' => 'TXT',
-                'host' => 'default._domainkey.hyvor-relay.net',
+                'host' => 'default._domainkey.mail.hyvor-relay.com',
                 'content' => 'v=DKIM1; k=rsa; p=testkey'
             ],
         ];

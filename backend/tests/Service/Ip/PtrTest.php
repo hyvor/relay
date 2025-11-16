@@ -30,15 +30,13 @@ class PtrTest extends KernelTestCase
 
     public function test_validate_dns_error(): void
     {
-        $instance = InstanceFactory::createOne([
-            'domain' => 'hyvorrelay.com',
-        ]);
+        $instance = InstanceFactory::createOne();
 
         $dnsResolver = $this->createMock(DnsResolveInterface::class);
         $dnsResolver
             ->method('resolve')
             ->willReturnCallback(function (string $domain, DnsType $type) {
-                if ($domain === 'smtp42.hyvorrelay.com') {
+                if ($domain === 'smtp42.mail.hyvor-relay.com') {
                     $this->assertSame(DnsType::A, $type);
                     throw new DnsResolvingFailedException('Simulated DNS failure');
                 } elseif ($domain === '1.1.1.1.in-addr.arpa') {
@@ -49,7 +47,7 @@ class PtrTest extends KernelTestCase
 
         $instanceService = $this->getService(InstanceService::class);
         $config = $this->getService(Config::class);
-        $ptr = new Ptr($instanceService, $config, $dnsResolver);
+        $ptr = new Ptr($config, $dnsResolver);
 
         $ipAddress = new IpAddress();
         $ipAddress->setId(42);
@@ -65,31 +63,29 @@ class PtrTest extends KernelTestCase
 
     public function test_validate_partial_success(): void
     {
-        $instance = InstanceFactory::createOne([
-            'domain' => 'hyvorrelay.com',
-        ]);
+        $instance = InstanceFactory::createOne();
 
         $dnsResolver = $this->createMock(DnsResolveInterface::class);
         $dnsResolver
             ->method('resolve')
             ->willReturnCallback(function (string $domain, DnsType $type) {
-                if ($domain === 'smtp43.hyvorrelay.com') {
+                if ($domain === 'smtp43.mail.hyvor-relay.com') {
                     $this->assertSame(DnsType::A, $type);
                     // forward has 2 records, should only have one
                     return new ResolveResult(0, [
-                        new ResolveAnswer('smtp43.hyvorrelay.com', '1.1.1.1'),
-                        new ResolveAnswer('smtp43.hyvorrelay.com', '2.2.2.2'),
+                        new ResolveAnswer('smtp43.mail.hyvor-relay.com', '1.1.1.1'),
+                        new ResolveAnswer('smtp43.mail.hyvor-relay.com', '2.2.2.2'),
                     ]);
                 } elseif ($domain === '4.3.2.1.in-addr.arpa') {
                     $this->assertSame(DnsType::PTR, $type);
                     return new ResolveResult(0, [
-                        new ResolveAnswer("4.3.2.1.in-addr.arpa", 'smtp43.hyvorrelay.com.'),
+                        new ResolveAnswer("4.3.2.1.in-addr.arpa", 'smtp43.mail.hyvor-relay.com.'),
                     ]);
                 }
             });
 
-        $instanceService = $this->getService(InstanceService::class);
-        $ptr = new Ptr($instanceService, $dnsResolver);
+        $config = $this->getService(Config::class);
+        $ptr = new Ptr($config, $dnsResolver);
 
         $ipAddress = new IpAddress();
         $ipAddress->setId(43);

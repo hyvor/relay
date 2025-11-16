@@ -67,7 +67,7 @@ class GetStateTest extends WebTestCase
 
         $json = $this->getJson();
 
-        $this->assertSame('relay.hyvor.localhost', $json['instanceDomain']);
+        $this->assertSame('mail.hyvor-relay.com', $json['instanceDomain']);
         $this->assertSame('hyvor-relay', $json['hostname']);
         $this->assertSame('test', $json['env']);
 
@@ -78,7 +78,7 @@ class GetStateTest extends WebTestCase
         $ip = $ips[0];
         $this->assertIsArray($ip);
         $this->assertSame($ipEntity->getId(), $ip['id']);
-        $this->assertSame('smtp' . $ipEntity->getId() . '.relay.hyvor.localhost', $ip['ptr']);
+        $this->assertSame('smtp' . $ipEntity->getId() . '.mail.hyvor-relay.com', $ip['ptr']);
     }
 
     public function test_fails_when_server_not_initialized(): void

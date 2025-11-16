@@ -43,9 +43,7 @@ class AllIpsAreInSpfRecordHealthCheckTest extends KernelTestCase
 
     public function testCheckReturnsTrueWhenIpsAreInSpfRecord(): void
     {
-        $instance = InstanceFactory::createOne([
-            'domain' => 'example.com',
-        ]);
+        $instance = InstanceFactory::createOne();
 
         $ip_address1 = IpAddressFactory::createOne();
         $ip_address2 = IpAddressFactory::createOne();
@@ -63,9 +61,7 @@ class AllIpsAreInSpfRecordHealthCheckTest extends KernelTestCase
 
     public function testCheckReturnsFalseWhenIpsAreNotInSpfRecord(): void
     {
-        $instance = InstanceFactory::createOne([
-            'domain' => 'example.com',
-        ]);
+        $instance = InstanceFactory::createOne();
 
         $ip_address1 = IpAddressFactory::createOne();
         $ip_address2 = IpAddressFactory::createOne();
@@ -80,14 +76,12 @@ class AllIpsAreInSpfRecordHealthCheckTest extends KernelTestCase
         $this->assertArrayHasKey('invalid_ips', $data);
         $this->assertArrayHasKey('domain', $data);
         $this->assertSame([$ip_address2->getIpAddress()], $data['invalid_ips']);
-        $this->assertEquals('example.com', $data['domain']);
+        $this->assertEquals('mail.hyvor-relay.com', $data['domain']);
     }
 
     public function testCheckReturnsFalseWhenInvalidIp(): void
     {
-        $instance = InstanceFactory::createOne([
-            'domain' => 'example.com',
-        ]);
+        $instance = InstanceFactory::createOne();
 
         $ip_address1 = IpAddressFactory::createOne(
             [
@@ -106,14 +100,12 @@ class AllIpsAreInSpfRecordHealthCheckTest extends KernelTestCase
         $this->assertArrayHasKey('invalid_ips', $data);
         $this->assertArrayHasKey('domain', $data);
         $this->assertSame([$ip_address1->getIpAddress()], $data['invalid_ips']);
-        $this->assertEquals('example.com', $data['domain']);
+        $this->assertEquals('mail.hyvor-relay.com', $data['domain']);
     }
 
     public function testCheckReturnsTrueWhenIpRangeInSpfRecord(): void
     {
-        $instance = InstanceFactory::createOne([
-            'domain' => 'example.com',
-        ]);
+        $instance = InstanceFactory::createOne();
 
         $ip_address1 = IpAddressFactory::createOne();
         $ip_address2 = IpAddressFactory::createOne();

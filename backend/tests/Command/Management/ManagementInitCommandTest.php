@@ -67,7 +67,7 @@ class ManagementInitCommandTest extends KernelTestCase
         // SYSTEM PROJECT DOMAIN
         $domain = $this->em->getRepository(Domain::class)->findOneBy(['project' => $systemProject]);
         $this->assertNotNull($domain);
-        $this->assertSame('relay.hyvor.localhost', $domain->getDomain());
+        $this->assertSame('mail.hyvor-relay.com', $domain->getDomain());
         $this->assertSame('default', $domain->getDkimSelector());
         $this->assertSame($instance->getDkimPublicKey(), $domain->getDkimPublicKey());
         $this->assertSame(
