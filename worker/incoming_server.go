@@ -13,7 +13,7 @@ import (
 	smtp "github.com/emersion/go-smtp"
 )
 
-// Inconming server is a simple SMTP server that handles incoming emails to the instance domain emails.
+// Incoming server is a simple SMTP server that handles incoming emails to the instance domain emails.
 // It handles:
 // 1. Bounce emails: emails sent to bounce+<uuid>@<instance_domain>. (DSN format, RFC 3464)
 // 2. Feedback loop emails: emails sent to fbl@<instance_domain> or abuse@<instance_domain>. (ARF format, RFC 5965).
