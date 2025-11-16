@@ -18,6 +18,7 @@ class Ptr
     public function __construct(
         private Config $config,
         private DnsResolveInterface $dnsResolver,
+        private Config $config,
     ) {
     }
 
