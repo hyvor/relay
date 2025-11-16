@@ -3,6 +3,7 @@
 namespace App\Tests\Service\Management\Health;
 
 use App\Entity\IpAddress;
+use App\Service\App\Config;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
 use App\Service\Management\Health\AllIpsAreInSpfRecordHealthCheck;
@@ -29,15 +30,13 @@ class AllIpsAreInSpfRecordHealthCheckTest extends KernelTestCase
         parent::setUp();
 
         $this->dnsResolver = $this->createMock(Resolver::class);
-
-        /** @var InstanceService $instanceService */
-        $instanceService = $this->container->get(InstanceService::class);
         /** @var IpAddressService $ipAddressService */
         $ipAddressService = $this->container->get(IpAddressService::class);
 
+        $config = $this->getService(Config::class);
         $this->healthCheck = new AllIpsAreInSpfRecordHealthCheck(
-            $instanceService,
             $ipAddressService,
+            $config,
             $this->dnsResolver
         );
     }

@@ -3,6 +3,7 @@
 namespace App\Tests\Service\Ip;
 
 use App\Entity\IpAddress;
+use App\Service\App\Config;
 use App\Service\Dns\Resolve\DnsResolveInterface;
 use App\Service\Dns\Resolve\DnsResolvingFailedException;
 use App\Service\Dns\Resolve\DnsType;
@@ -47,7 +48,8 @@ class PtrTest extends KernelTestCase
             });
 
         $instanceService = $this->getService(InstanceService::class);
-        $ptr = new Ptr($instanceService, $dnsResolver);
+        $config = $this->getService(Config::class);
+        $ptr = new Ptr($instanceService, $config, $dnsResolver);
 
         $ipAddress = new IpAddress();
         $ipAddress->setId(42);

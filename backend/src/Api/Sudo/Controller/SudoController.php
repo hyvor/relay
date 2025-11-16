@@ -42,7 +42,7 @@ class SudoController extends AbstractController
                     'picture_url' => $user->picture_url,
                 ]
             ],
-            'instance' => new InstanceObject($instance)
+            'instance' => new InstanceObject($instance, $this->config->getInstanceDomain())
         ]);
     }
 

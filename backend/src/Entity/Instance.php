@@ -23,9 +23,6 @@ class Instance
     #[ORM\Column(type: "string")]
     private string $uuid;
 
-    #[ORM\Column(type: "string", length: 255)]
-    private string $domain;
-
     #[ORM\Column(type: "text")]
     private string $dkim_public_key;
 
@@ -92,17 +89,6 @@ class Instance
     public function setUuid(string $uuid): static
     {
         $this->uuid = $uuid;
-        return $this;
-    }
-
-    public function getDomain(): string
-    {
-        return $this->domain;
-    }
-
-    public function setDomain(string $domain): static
-    {
-        $this->domain = $domain;
         return $this;
     }
 

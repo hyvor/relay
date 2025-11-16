@@ -3,6 +3,7 @@
 namespace App\Tests\Service\Management\Health;
 
 use App\Entity\Domain;
+use App\Service\App\Config;
 use App\Service\Dns\Resolve\DnsResolveInterface;
 use App\Service\Dns\Resolve\DnsResolvingFailedException;
 use App\Service\Dns\Resolve\ResolveAnswer;
@@ -39,7 +40,8 @@ class InstanceDkimCorrectHealthCheckTest extends KernelTestCase
             $resolver->method('resolve')->willReturn($result);
         }
 
-        $service = new InstanceDkimCorrectHealthCheck($instanceService, $resolver);
+        $config = $this->getService(Config::class);
+        $service = new InstanceDkimCorrectHealthCheck($instanceService, $config, $resolver);
         $result = $service->check();
 
         $this->assertSame($verified, $result);

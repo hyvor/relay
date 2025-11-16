@@ -15,7 +15,6 @@ use SPFLib\Exception\InvalidIPAddressException;
 class AllIpsAreInSpfRecordHealthCheck extends HealthCheckAbstract
 {
     public function __construct(
-        private InstanceService $instanceService,
         private IpAddressService $ipAddressService,
         private Config $config,
         private ?Resolver $dnsResolver = null,
@@ -24,7 +23,6 @@ class AllIpsAreInSpfRecordHealthCheck extends HealthCheckAbstract
 
     public function check(): bool
     {
-        $instance = $this->instanceService->getInstance();
         $ip_addresses = $this->ipAddressService->getAllIpAddresses();
         $invalid_ips = [];
         foreach ($ip_addresses as $ipAddress) {
@@ -42,7 +40,7 @@ class AllIpsAreInSpfRecordHealthCheck extends HealthCheckAbstract
         if (count($invalid_ips) > 0) {
             $this->setData([
                 'invalid_ips' => $invalid_ips,
-                'domain' => $domain,
+                'domain' => $this->config->getInstanceDomain(),
             ]);
             return false;
         }

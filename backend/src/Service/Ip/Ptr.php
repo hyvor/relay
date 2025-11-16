@@ -16,9 +16,8 @@ class Ptr
     private const string PTR_PREFIX = 'smtp';
 
     public function __construct(
-        private InstanceService $instanceService,
-        private DnsResolveInterface $dnsResolver,
         private Config $config,
+        private DnsResolveInterface $dnsResolver,
     ) {
     }
 

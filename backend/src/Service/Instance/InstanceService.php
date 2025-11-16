@@ -83,7 +83,6 @@ class InstanceService
             ->setCreatedAt($this->now())
             ->setUpdatedAt($this->now())
             ->setUuid(Uuid::v4())
-            ->setDomain($this->config->getInstanceDomain())
             ->setDkimPublicKey($publicKey)
             ->setDkimPrivateKeyEncrypted($this->encryption->encryptString($privateKey))
             ->setSystemProject($systemProject);
