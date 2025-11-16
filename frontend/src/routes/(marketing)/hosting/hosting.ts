@@ -1,4 +1,3 @@
-
 import type { Component } from 'svelte';
 import Introduction from './content/Introduction.svelte';
 import Setup from './content/Setup.svelte';
@@ -6,11 +5,12 @@ import ProdDeploy from './content/ProdDeploy.svelte';
 import Monitoring from './content/monitoring/Monitoring.svelte';
 import EasyDeploy from './content/easy/EasyDeploy.svelte';
 import Env from './content/Env.svelte';
-import Deliverability from './content/Deliverability.svelte';
+import Deliverability from './content/deliverability/Deliverability.svelte';
 import Dns from './content/Dns.svelte';
 import Scaling from './content/Scaling.svelte';
 import EmailProviders from './content/EmailProviders.svelte';
 import Telemetry from './content/Telemetry.svelte';
+import HealthChecks from './content/HealthChecks.svelte';
 
 export const categories: Category[] = [
 	{
@@ -22,25 +22,20 @@ export const categories: Category[] = [
 				component: Introduction
 			},
 			{
+				slug: 'deploy-easy',
+				name: 'Easy Deploy',
+				component: EasyDeploy
+			},
+			{
 				slug: 'deploy',
 				name: 'Prod Deploy',
 				component: ProdDeploy
-			},
-			{
-				slug: 'deploy-easy',
-				name: 'Easy Deploy',
-				component: EasyDeploy,
 			},
 			{
 				slug: 'setup',
 				name: 'Setup',
 				component: Setup
 			},
-		]
-	},
-	{
-		name: 'Advanced',
-		pages: [
 			{
 				slug: 'monitoring',
 				name: 'Monitoring',
@@ -50,12 +45,22 @@ export const categories: Category[] = [
 				slug: 'scaling',
 				name: 'Scaling',
 				component: Scaling
+			}
+		]
+	},
+	{
+		name: 'Features',
+		pages: [
+			{
+				slug: 'health-checks',
+				name: 'Health Checks',
+				component: HealthChecks
 			},
 			{
 				slug: 'dns',
-				name: 'DNS',
-				component: Dns,
-			},
+				name: 'DNS Server',
+				component: Dns
+			}
 		]
 	},
 	{
@@ -64,25 +69,25 @@ export const categories: Category[] = [
 			{
 				slug: 'deliverability',
 				name: 'Deliverability',
-				component: Deliverability,
+				component: Deliverability
 			},
 			{
 				slug: 'providers',
 				name: 'Email Providers',
-				component: EmailProviders,
+				component: EmailProviders
 			},
 			{
 				slug: 'env',
 				name: 'Environment Variables',
-				component: Env,
+				component: Env
 			},
 			{
 				slug: 'telemetry',
 				name: 'Telemetry',
-				component: Telemetry,
-			},
+				component: Telemetry
+			}
 		]
-	},
+	}
 ];
 
 export const pages = categories.reduce((acc, category) => acc.concat(category.pages), [] as Page[]);
