@@ -4,14 +4,14 @@
 
 ```
 swaks --to someone@example.com --from supun@hyvor.com \
-  --server localhost --port 11125
+  --server localhost --port 11025
 ```
 
 Sending with a body:
 
 ```
 cd meta/test_emails
-swaks --server localhost --port 11125 --body @arf.txt --to someone@example.com --from someone@hyvor.com
+swaks --server localhost --port 11025 --body @arf.txt --to someone@example.com --from someone@hyvor.com
 ```
 
 ## Sending Emails via SMTP
@@ -21,7 +21,7 @@ swaks \
   --to to@example.com \
   --from test@hyvor.local.testing \
   --server localhost \
-  --port 11125 \
+  --port 11025 \
   --body="<p>Hello  World</p>" \
   --add-header "Content-Type: text/html" \
   --add-header "X-Relay-Test: true" \

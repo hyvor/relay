@@ -345,13 +345,13 @@ func TestSendEmail_MxFailed(t *testing.T) {
 func TestSendEmailToHost(t *testing.T) {
 
 	// using our own incoming server for testing
-	smtpServerPort = ":25252"
+	smtpServerPort1 = ":25252"
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	incomingServer := NewIncomingMailServer(ctx, slogDiscard(), newMetrics())
-	go incomingServer.Start("hyvorrelay.io", 2)
+	go incomingServer.StartChannelAndSmtpServers("hyvorrelay.io", 2)
 	time.Sleep(100 * time.Millisecond)
 
 	send := &SendRow{
@@ -478,13 +478,13 @@ func TestSendEmailToHost_OneRecipientFails(t *testing.T) {
 func TestSendEmailFailedSmtpStatus(t *testing.T) {
 
 	// using our own incoming server for testing
-	smtpServerPort = ":25253"
+	smtpServerPort1 = ":25253"
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	incomingServer := NewIncomingMailServer(ctx, slogDiscard(), newMetrics())
-	go incomingServer.Start("hyvorrelay.io", 2)
+	go incomingServer.StartChannelAndSmtpServers("hyvorrelay.io", 2)
 	time.Sleep(100 * time.Millisecond)
 
 	send := &SendRow{

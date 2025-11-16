@@ -65,7 +65,8 @@ services:
       GO_SYMFONY_URL: http://hyvor-relay-backend
       # OUTGOING_SMTP_PORT: ":587"
     ports:
-      - "11125:25"
+      - "11025:25"
+      - "11587:587"
     networks:
       hyvor-network:
         aliases:

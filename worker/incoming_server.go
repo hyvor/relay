@@ -122,7 +122,9 @@ type IncomingMailServer struct {
 	logger  *slog.Logger
 	metrics *Metrics
 
-	smtpServer *smtp.Server
+	smtpServer1 *smtp.Server // 25
+	smtpServer2 *smtp.Server // 587
+
 	cancelFunc context.CancelFunc
 }
 
@@ -136,10 +138,7 @@ func NewIncomingMailServer(ctx context.Context, logger *slog.Logger, metrics *Me
 
 func (server *IncomingMailServer) Set(instanceDomain string, numWorkers int) {
 	server.Shutdown()
-
-	go func() {
-		server.Start(instanceDomain, numWorkers)
-	}()
+	server.StartChannelAndSmtpServers(instanceDomain, numWorkers)
 
 	go func() {
 		<-server.ctx.Done()
@@ -148,7 +147,7 @@ func (server *IncomingMailServer) Set(instanceDomain string, numWorkers int) {
 }
 
 func (server *IncomingMailServer) Shutdown() {
-	if server.smtpServer == nil {
+	if server.smtpServer1 != nil {
 		return
 	}
 
@@ -160,17 +159,19 @@ func (server *IncomingMailServer) Shutdown() {
 	shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCtxCancel()
 
-	if err := server.smtpServer.Shutdown(shutdownCtx); err != nil {
+	if err := server.smtpServer1.Shutdown(shutdownCtx); err != nil {
 		server.logger.Error("Failed to shutdown SMTP server", "error", err)
 	}
 
-	server.smtpServer = nil
+	server.smtpServer1 = nil
+	
 
 }
 
-var smtpServerPort = ":25"
+var smtpServerPort1 = ":25"
+var smtpServerPort2 = ":587"
 
-func (server *IncomingMailServer) Start(instanceDomain string, numWorkers int) {
+func (server *IncomingMailServer) StartChannelAndSmtpServers(instanceDomain string, numWorkers int) {
 
 	// channel
 	mailChannel := make(chan *IncomingMail)
@@ -178,13 +179,6 @@ func (server *IncomingMailServer) Start(instanceDomain string, numWorkers int) {
 	// worker context
 	workerCtx, cancel := context.WithCancel(server.ctx)
 	server.cancelFunc = cancel
-	defer cancel()
-
-	be := &IncomingBackend{
-		logger:         server.logger,
-		instanceDomain: instanceDomain,
-		mailChannel:    mailChannel,
-	}
 
 	for i := 0; i < numWorkers; i++ {
 		go incomingMailWorker(
@@ -196,9 +190,27 @@ func (server *IncomingMailServer) Start(instanceDomain string, numWorkers int) {
 		)
 	}
 
+	go server.StartSmtpServer(smtpServerPort1, instanceDomain, mailChannel, 1)
+	go server.StartSmtpServer(smtpServerPort2, instanceDomain, mailChannel, 2)
+
+}
+
+func (server *IncomingMailServer) StartSmtpServer(
+	port string,
+	instanceDomain string,
+	mailChannel chan *IncomingMail,
+	serverNumber int,
+) {
+
+	be := &IncomingBackend{
+		logger:         server.logger,
+		instanceDomain: instanceDomain,
+		mailChannel:    mailChannel,
+	}
+
 	smtpServer := smtp.NewServer(be)
 
-	smtpServer.Addr = "0.0.0.0" + smtpServerPort
+	smtpServer.Addr = "0.0.0.0" + port
 	smtpServer.Domain = instanceDomain
 	smtpServer.WriteTimeout = 10 * time.Second
 	smtpServer.ReadTimeout = 10 * time.Second
@@ -206,10 +218,15 @@ func (server *IncomingMailServer) Start(instanceDomain string, numWorkers int) {
 	smtpServer.MaxRecipients = 10
 	smtpServer.AllowInsecureAuth = true
 
-	server.smtpServer = smtpServer
+	if serverNumber == 1 {
+		server.smtpServer1 = smtpServer
+	} else if serverNumber == 2 {
+		server.smtpServer2 = smtpServer
+	}
 
 	server.logger.Info("Starting incoming mail server at " + smtpServer.Addr)
 	if err := smtpServer.ListenAndServe(); err != nil {
 		server.logger.Error("Failed to start incoming mail server", "error", err)
 	}
+
 }
