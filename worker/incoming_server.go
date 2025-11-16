@@ -88,8 +88,9 @@ func (s *Session) Rcpt(to string, opts *smtp.RcptOptions) error {
 		}
 
 	}
-
+	
 	s.incomingMail.RcptTo = parsed.Address
+
 	return nil
 }
 
@@ -156,18 +157,21 @@ func (server *IncomingMailServer) Shutdown() {
 	shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCtxCancel()
 
-	var shutdownServerFunc = func(s *smtp.Server) {
-		if s != nil {
-			err := s.Shutdown(shutdownCtx)
-			if err != nil {
-				server.logger.Error("Failed to shutdown SMTP server", "error", err)
-			}
+	if server.smtpServer1 != nil {
+		err := server.smtpServer1.Shutdown(shutdownCtx)
+		if err != nil {
+			server.logger.Error("Failed to shutdown SMTP server", "error", err)
 		}
-		s = nil
+		server.smtpServer1 = nil
 	}
 
-	shutdownServerFunc(server.smtpServer1)
-	shutdownServerFunc(server.smtpServer2)
+	if server.smtpServer2 != nil {
+		err := server.smtpServer2.Shutdown(shutdownCtx)
+		if err != nil {
+			server.logger.Error("Failed to shutdown SMTP server", "error", err)
+		}
+		server.smtpServer2 = nil
+	}
 
 }
 

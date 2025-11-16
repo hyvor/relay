@@ -20,9 +20,17 @@ func TestIncomingServer(t *testing.T) {
 		metrics: newMetrics(),
 	}
 
+	originalSmtpServerPort1 := smtpServerPort1
+	originalSmtpServerPort2 := smtpServerPort2
+
 	smtpServerPort1 = ":25251"
 	smtpServerPort2 = ":25252"
-	go server.StartChannelAndSmtpServers("example.com", 2)
+	defer func() {
+		smtpServerPort1 = originalSmtpServerPort1
+		smtpServerPort2 = originalSmtpServerPort2
+	}()
+
+	go server.Set("example.com", 2)
 
 	time.Sleep(100 * time.Millisecond)
 
