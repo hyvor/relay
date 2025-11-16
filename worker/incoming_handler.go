@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hyvor/relay/worker/bounceparse"
+	"github.com/hyvor/relay/worker/smtp_interface"
 )
 
 type IncomingMailType string
@@ -20,10 +21,21 @@ type IncomingMail struct {
 	RcptTo         string
 	Data           []byte
 	InstanceDomain string
+	ApiKey string // using the auth password
+}
+
+func (m *IncomingMail) HasApiKey() bool {
+	return m.ApiKey != ""
 }
 
 // call after the data is read
 func (m *IncomingMail) Handle(ctx context.Context, logger *slog.Logger, metrics *Metrics) {
+
+
+	if m.HasApiKey() {
+		forwardEmailToApi(ctx, logger, metrics, m)
+		return
+	}
 
 	isBounce, bounceUuid := checkBounce(m.RcptTo, m.InstanceDomain)
 	isFbl := checkFbl(m.RcptTo, m.InstanceDomain)
@@ -145,5 +157,40 @@ func incomingMailWorker(
 			mail.Handle(ctx, logger, metrics)
 		}
 	}
+
+}
+
+func forwardEmailToApi(
+	ctx context.Context,
+	logger *slog.Logger,
+	metrics *Metrics,
+	m *IncomingMail,
+) {
+
+	payload, err := smtp_interface.MimeToApiRequest(m.Data)
+
+	if err != nil {
+		logger.Error("Unable to convert mime to API request", "error", err.Error())
+		return
+	}
+
+	err = CallConsoleSendApi(
+		ctx,
+		m.ApiKey,
+		payload,
+	)
+
+	if err != nil {
+		logger.Error("Unable to forward incoming email to API", "error", err.Error())
+		return
+	}
+
+	metrics.incomingEmailsTotal.WithLabelValues("send").Inc()
+
+	logger.Debug(
+		"Forwarded incoming sending email to API",
+		"MAIL", m.MailFrom,
+		"RCPT", m.RcptTo,
+	)
 
 }

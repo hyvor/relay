@@ -20,8 +20,17 @@ func TestIncomingServer(t *testing.T) {
 		metrics: newMetrics(),
 	}
 
-	smtpServerPort = ":25251"
-	go server.Start("example.com", 2)
+	originalSmtpServerPort1 := smtpServerPort1
+	originalSmtpServerPort2 := smtpServerPort2
+
+	smtpServerPort1 = ":25251"
+	smtpServerPort2 = ":25252"
+	defer func() {
+		smtpServerPort1 = originalSmtpServerPort1
+		smtpServerPort2 = originalSmtpServerPort2
+	}()
+
+	go server.Set("example.com", 2)
 
 	time.Sleep(100 * time.Millisecond)
 
@@ -60,5 +69,12 @@ func TestIncomingServer(t *testing.T) {
 	assert.Equal(t, err.Error(), "451 4.0.0 this SMTP server only accepts emails for example.com")
 
 	conn.Close()
+
+	// AUTH
+	conn, err = smtp.Dial("localhost:25252")
+	assert.NoError(t, err)
+
+	err = conn.Auth(smtp.PlainAuth("", "user", "password", "localhost"))
+	assert.NoError(t, err)
 
 }

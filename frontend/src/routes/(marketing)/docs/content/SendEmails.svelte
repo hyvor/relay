@@ -1,12 +1,32 @@
 <script>
 	import { CodeBlock, TabbedCodeBlock, Table, TableRow } from '@hyvor/design/components';
+
+	// HeadersValidation.php
+	const unallowedCustomHeaders = [
+		'From',
+		'To',
+		'Cc',
+		'Bcc',
+		'Sender',
+		'Date',
+		'Subject',
+		'Content-Type',
+		'MIME-Version',
+		'DKIM-Signature',
+		'Return-Path',
+		'X-Mailer',
+		'X-Originating-IP',
+		'Authentication-Results'
+	];
 </script>
 
-<h1>Send Emails</h1>
+<h1>Send Emails via API</h1>
+
+<p></p>
 
 <p>
-	This page explains how to send emails using the Console API. Before getting started, make sure
-	to <a href="/docs">set up a project</a>
+	This page explains how to send emails using the <strong>Console API</strong>. Before getting
+	started, make sure to <a href="/docs">set up a project</a>
 	and familiarize yourself with the
 	<a href="/docs/api-console">Console API</a>.
 </p>
@@ -32,6 +52,16 @@
 	<strong>Endpoint:</strong><br />
 	<code>POST /api/console/sends</code>
 </p>
+
+<p>
+	<strong>Authorization:</strong><br />
+	<CodeBlock code={`Authorization: Bearer <your-api-key>`} />
+</p>
+
+<div>
+	Create an API key at <strong><a href="/console">Console</a> &rarr; API</strong> with the
+	<strong>sends.send</strong> scope enabled.
+</div>
 
 <p>
 	<strong>Request:</strong>
@@ -74,6 +104,7 @@ interface SendRequest {
 	body_text?: string;
 
 	// additional headers
+	// see #limits for restrictions
 	headers?: Record<string, string>;
 
 	attachments?: Attachment[];
@@ -305,5 +336,13 @@ type Attachment = {
 	<li>
 		<strong>Attachments</strong> are limited to <strong>10</strong> per email. There is no size limit
 		for each attachment, but the total email size must not exceed 10MB.
+	</li>
+	<li id="custom-headers-limit">
+		<strong>Custom headers</strong> do not allow the following headers:
+		<div>
+			{#each unallowedCustomHeaders as header, i}
+				<code>{header}</code>{#if i < unallowedCustomHeaders.length - 1},&nbsp;{/if}
+			{/each}
+		</div>
 	</li>
 </ul>

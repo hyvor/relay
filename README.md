@@ -1,6 +1,8 @@
 # Hyvor Relay
 
-[Hyvor Relay](https://relay.hyvor.com) is a self-hosted, open-source email API for developers. It uses SMTP to send emails using your own infrastructure. It is designed to be simple to self-host, easy to manage and observe, and powerful enough to send millions of daily emails.
+[Hyvor Relay](https://relay.hyvor.com) is a self-hosted, open-source email API for developers. It uses SMTP to send
+emails using your own infrastructure. It is designed to be simple to self-host, easy to manage and observe, and powerful
+enough to send millions of daily emails.
 
 <p align="center">
   <a href="https://relay.hyvor.com">
@@ -39,6 +41,7 @@
 - **Webhooks**: Receive HTTP callbacks for email events.
 - **Easy scaling**: Add more servers and IP addresses as needed.
 - **Observability**: Prometheus metrics, Grafana dashboards, and logs for monitoring.
+
 <!-- - **Dedicated IPs**: Support for dedicated IPs users. (coming soon) -->
 
 ## Screenshots
@@ -61,12 +64,13 @@ The console for users (viewing send logs and SMTP conversations):
 ## Roadmap & Community
 
 - [Roadmap](https://github.com/hyvor/relay/blob/main/ROADMAP.md)
-- [HYVOR Community](https://hyvor.community) (best for discussions and support)
-- [Discord](https://hyvor.com/discord) (best for latest updates)
+- [HYVOR Community](https://hyvor.community)
+- [Discord](https://hyvor.com/go/discord)
 
 ## Contributing
 
-Visit [hyvor/dev](https://github.com/hyvor/dev) to set up the HYVOR development environment. Then, run `./run relay` to start Hyvor Relay at `https://relay.hyvor.localhost`.
+Visit [hyvor/dev](https://github.com/hyvor/dev) to set up the HYVOR development environment. Then, run `./run relay` to
+start Hyvor Relay at `https://relay.hyvor.localhost`.
 
 Directory structure:
 
@@ -74,13 +78,11 @@ Directory structure:
 - `/frontend`: SvelteKit frontend
 - `/worker`: Go services (single binary)
 
-Even though it is written for AI agents, [AGENTS.md](https://github.com/hyvor/relay/blob/main/AGENTS.md) contains useful information on the project structure and development practices.
-
 <!-- ## Performance TODO -->
 
 ## License
 
-Hyvor Relay is licensed under the [AGPL-3.0 License](https://github.com/hyvor/relay/blob/main/LICENSE). For use cases that cannot comply with AGPLv3, contact HYVOR for an [Enterprise License](https://hyvor.com/enterprise).
+Hyvor Relay is licensed under the [AGPL-3.0 License](https://github.com/hyvor/relay/blob/main/LICENSE). We also offer [enterprise licenses](https://hyvor.com/enterprise) for organizations that require a commercial license or do not wish to comply with the AGPLv3 terms. See [Self-Hosting License FAQ](https://hyvor.com/docs/hosting-license) for more information.
 
 ![HYVOR Banner](https://raw.githubusercontent.com/hyvor/relay/refs/heads/main/meta/assets/hyvor-banner.svg)
 

@@ -11,6 +11,7 @@
 </script>
 
 <Header />
+
 {@render children?.()}
 <Footer />
 

@@ -1,0 +1,12 @@
+{
+    "from": {
+        "email": "sender@example.com"
+    },
+    "to": [
+        {
+            "email": "recipient@example.com"
+        }
+    ],
+    "subject": "7bit Test Email",
+    "body_text": "Hello,\n\nThis is a simple 7bit ASCII test email.\nAll characters are plain ASCII and lines are short.\n\nBest regards,\nSender"
+}

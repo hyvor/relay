@@ -37,4 +37,4 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            APP_VERSION: ${{ github.ref_name }}
+            APP_VERSION=${{ github.ref_name }}

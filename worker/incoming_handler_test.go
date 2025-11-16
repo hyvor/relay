@@ -7,6 +7,29 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestIncomingMail_HandleForwardToApi(t *testing.T) {
+
+	m := &IncomingMail{
+		Data: []byte(`From: sender@example.com
+To: recipient@example.com
+Subject: Test Email
+
+This is a test email message.
+`),
+		MailFrom:       "doesnotmatter@example.com",
+		RcptTo:         "doesnotmatter@example.com",
+		InstanceDomain: "doesnotmatter.com",
+		ApiKey:         "test-api-key",
+	}
+
+	m.Handle(
+		context.Background(),
+		slogDiscard(),
+		newMetrics(),
+	)
+
+}
+
 func TestIncomingMail_HandleBounce(t *testing.T) {
 
 	m := &IncomingMail{

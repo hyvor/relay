@@ -13,10 +13,11 @@ import (
 	smtp "github.com/emersion/go-smtp"
 )
 
-// Inconming server is a simple SMTP server that handles incoming emails to the instance domain emails.
+// Incoming server is a simple SMTP server that handles incoming emails to the instance domain emails.
 // It handles:
 // 1. Bounce emails: emails sent to bounce+<uuid>@<instance_domain>. (DSN format, RFC 3464)
-// 2. Feedback loop emails: emails sent to feedback+<uuid>@<instance_domain>. (ARF format, RFC 5965).
+// 2. Feedback loop emails: emails sent to fbl@<instance_domain> or abuse@<instance_domain>. (ARF format, RFC 5965).
+// 3. Forward emails to the API when AUTH is used; the password is treated as the API key, and the email is forwarded to the API.
 
 // The IncomingBackend implements SMTP server methods.
 type IncomingBackend struct {
@@ -51,7 +52,11 @@ func (s *Session) AuthMechanisms() []string {
 
 // Auth is the handler for supported authenticators.
 func (s *Session) Auth(mech string) (sasl.Server, error) {
-	return nil, errors.New("authentication not supported")
+	return sasl.NewPlainServer(func(identity, username, password string) error {
+		s.incomingMail.ApiKey = password
+		return nil
+	}), nil
+
 }
 
 func (s *Session) Mail(from string, opts *smtp.MailOptions) error {
@@ -66,36 +71,44 @@ func (s *Session) Rcpt(to string, opts *smtp.RcptOptions) error {
 		return errors.New("recipient address is invalid: " + err.Error())
 	}
 
-	atIndex := strings.LastIndex(parsed.Address, "@")
-	if atIndex == -1 || atIndex == len(parsed.Address)-1 {
-		return errors.New("recipient address is invalid: missing domain part")
+	if !s.incomingMail.HasApiKey() {
+
+		// verify that the domain is the instance domain
+		// if AUTH is used, skip this check (forward to API)
+
+		atIndex := strings.LastIndex(parsed.Address, "@")
+		if atIndex == -1 || atIndex == len(parsed.Address)-1 {
+			return errors.New("recipient address is invalid: missing domain part")
+		}
+
+		domain := parsed.Address[atIndex+1:]
+
+		if domain != s.incomingMail.InstanceDomain {
+			return errors.New("this SMTP server only accepts emails for " + s.incomingMail.InstanceDomain)
+		}
+
 	}
-
-	domain := parsed.Address[atIndex+1:]
-
-	if domain != s.incomingMail.InstanceDomain {
-		return errors.New("this SMTP server only accepts emails for " + s.incomingMail.InstanceDomain)
-	}
-
+	
 	s.incomingMail.RcptTo = parsed.Address
+
 	return nil
 }
 
 func (s *Session) Data(r io.Reader) error {
-	if b, err := io.ReadAll(r); err != nil {
+	b, err := io.ReadAll(r)
+	if err != nil {
 		s.logger.Error("Error reading email data", "error", err)
 		return err
-	} else {
-
-		s.logger.Info("Received email",
-			"MAIL", s.incomingMail.MailFrom,
-			"RCPT", s.incomingMail.RcptTo,
-			"data", string(b),
-		)
-
-		s.incomingMail.Data = b
-		s.mailChannel <- &s.incomingMail
 	}
+
+	s.logger.Debug("Received email",
+		"MAIL", s.incomingMail.MailFrom,
+		"RCPT", s.incomingMail.RcptTo,
+		"data", string(b),
+	)
+
+	s.incomingMail.Data = b
+	s.mailChannel <- &s.incomingMail
 	return nil
 }
 
@@ -110,8 +123,10 @@ type IncomingMailServer struct {
 	logger  *slog.Logger
 	metrics *Metrics
 
-	smtpServer *smtp.Server
-	cancelFunc context.CancelFunc
+	smtpServer1 *smtp.Server // 25
+	smtpServer2 *smtp.Server // 587
+
+	workersCancelFunc context.CancelFunc
 }
 
 func NewIncomingMailServer(ctx context.Context, logger *slog.Logger, metrics *Metrics) *IncomingMailServer {
@@ -124,10 +139,7 @@ func NewIncomingMailServer(ctx context.Context, logger *slog.Logger, metrics *Me
 
 func (server *IncomingMailServer) Set(instanceDomain string, numWorkers int) {
 	server.Shutdown()
-
-	go func() {
-		server.Start(instanceDomain, numWorkers)
-	}()
+	server.StartChannelAndSmtpServers(instanceDomain, numWorkers)
 
 	go func() {
 		<-server.ctx.Done()
@@ -136,43 +148,44 @@ func (server *IncomingMailServer) Set(instanceDomain string, numWorkers int) {
 }
 
 func (server *IncomingMailServer) Shutdown() {
-	if server.smtpServer == nil {
-		return
-	}
 
-	if server.cancelFunc != nil {
-		server.cancelFunc()
-		server.cancelFunc = nil
+	if server.workersCancelFunc != nil {
+		server.workersCancelFunc()
+		server.workersCancelFunc = nil
 	}
 
 	shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCtxCancel()
 
-	if err := server.smtpServer.Shutdown(shutdownCtx); err != nil {
-		server.logger.Error("Failed to shutdown SMTP server", "error", err)
+	if server.smtpServer1 != nil {
+		err := server.smtpServer1.Shutdown(shutdownCtx)
+		if err != nil {
+			server.logger.Error("Failed to shutdown SMTP server", "error", err)
+		}
+		server.smtpServer1 = nil
 	}
 
-	server.smtpServer = nil
+	if server.smtpServer2 != nil {
+		err := server.smtpServer2.Shutdown(shutdownCtx)
+		if err != nil {
+			server.logger.Error("Failed to shutdown SMTP server", "error", err)
+		}
+		server.smtpServer2 = nil
+	}
 
 }
 
-var smtpServerPort = ":25"
+var smtpServerPort1 = ":25"
+var smtpServerPort2 = ":587"
 
-func (server *IncomingMailServer) Start(instanceDomain string, numWorkers int) {
+func (server *IncomingMailServer) StartChannelAndSmtpServers(instanceDomain string, numWorkers int) {
 
 	// channel
 	mailChannel := make(chan *IncomingMail)
 
 	// worker context
 	workerCtx, cancel := context.WithCancel(server.ctx)
-	server.cancelFunc = cancel
-	defer cancel()
-
-	be := &IncomingBackend{
-		logger:         server.logger,
-		instanceDomain: instanceDomain,
-		mailChannel:    mailChannel,
-	}
+	server.workersCancelFunc = cancel
 
 	for i := 0; i < numWorkers; i++ {
 		go incomingMailWorker(
@@ -184,9 +197,27 @@ func (server *IncomingMailServer) Start(instanceDomain string, numWorkers int) {
 		)
 	}
 
+	go server.StartSmtpServer(smtpServerPort1, instanceDomain, mailChannel, 1)
+	go server.StartSmtpServer(smtpServerPort2, instanceDomain, mailChannel, 2)
+
+}
+
+func (server *IncomingMailServer) StartSmtpServer(
+	port string,
+	instanceDomain string,
+	mailChannel chan *IncomingMail,
+	serverNumber int,
+) {
+
+	be := &IncomingBackend{
+		logger:         server.logger,
+		instanceDomain: instanceDomain,
+		mailChannel:    mailChannel,
+	}
+
 	smtpServer := smtp.NewServer(be)
 
-	smtpServer.Addr = "0.0.0.0" + smtpServerPort
+	smtpServer.Addr = "0.0.0.0" + port
 	smtpServer.Domain = instanceDomain
 	smtpServer.WriteTimeout = 10 * time.Second
 	smtpServer.ReadTimeout = 10 * time.Second
@@ -194,10 +225,15 @@ func (server *IncomingMailServer) Start(instanceDomain string, numWorkers int) {
 	smtpServer.MaxRecipients = 10
 	smtpServer.AllowInsecureAuth = true
 
-	server.smtpServer = smtpServer
+	if serverNumber == 1 {
+		server.smtpServer1 = smtpServer
+	} else if serverNumber == 2 {
+		server.smtpServer2 = smtpServer
+	}
 
 	server.logger.Info("Starting incoming mail server at " + smtpServer.Addr)
 	if err := smtpServer.ListenAndServe(); err != nil {
 		server.logger.Error("Failed to start incoming mail server", "error", err)
 	}
+
 }

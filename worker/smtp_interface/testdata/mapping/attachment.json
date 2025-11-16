@@ -1,0 +1,20 @@
+{
+    "from": {
+        "email": "sender@example.com"
+    },
+    "to": [
+        {
+            "email": "recipient@example.com"
+        }
+    ],
+    "subject": "HTML & Text Email with Attachment",
+    "body_html": "<p>Hello HTML!</p>",
+    "body_text": "Hello text!",
+    "attachments": [
+        {
+            "name": "example.pdf",
+            "content_type": "application/pdf",
+            "content": "JVBERi0xLjQKJcfs"
+        }
+    ]
+}

@@ -31,6 +31,7 @@ class WebhookDeliveryService
             ->createQueryBuilder('wd')
             ->where('wd.webhook IN (:webhooks)')
             ->setParameter('webhooks', $webhooks)
+            ->orderBy('wd.id', 'DESC')
             ->getQuery()
             ->getResult();
 

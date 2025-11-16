@@ -1,0 +1,12 @@
+{
+    "from": {
+        "email": "sender@example.com"
+    },
+    "to": [
+        {
+            "email": "recipient@example.com"
+        }
+    ],
+    "subject": "Base64 Test Email",
+    "body_text": "Hello,\n\nThis email uses base64 encoding."
+}

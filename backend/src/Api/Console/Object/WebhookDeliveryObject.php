@@ -14,6 +14,8 @@ class WebhookDeliveryObject
     public WebhooksEventEnum $event;
     public WebhookDeliveryStatus $status;
     public ?string $response;
+    public ?int $response_code;
+    public int $try_count;
 
     public function __construct(WebhookDelivery $webhookDelivery)
     {
@@ -23,5 +25,7 @@ class WebhookDeliveryObject
         $this->event = $webhookDelivery->getEvent();
         $this->status = $webhookDelivery->getStatus();
         $this->response = $webhookDelivery->getResponse();
+        $this->response_code = $webhookDelivery->getResponseCode();
+        $this->try_count = $webhookDelivery->getTryCount();
     }
 }
