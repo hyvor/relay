@@ -22,8 +22,7 @@ class RateLimitListener
     public function __construct(
         private RateLimit $rateLimit,
         private RateLimiterProvider $rateLimiterProvider,
-    )
-    {
+    ) {
     }
 
     private const string RATE_LIMIT_HEADERS_ATTRIBUTE_KEY = 'console_api_rate_limit_headers';
@@ -35,7 +34,6 @@ class RateLimitListener
 
     private function getRateLimiter(Request $request): LimiterInterface
     {
-
         // check if this is a session request (user logged in)
         if (AuthorizationListener::hasUser($request)) {
             $user = AuthorizationListener::getUser($request);
@@ -48,24 +46,30 @@ class RateLimitListener
 
         // special limit for the POST /sends endpoint
         if ($request->getMethod() === 'POST' && $request->getPathInfo() === '/api/console/sends') {
-            return $this->rateLimiterProvider->rateLimiter($this->rateLimit->sends(), 'sends:project:' . $project->getId());
+            return $this->rateLimiterProvider->rateLimiter(
+                $this->rateLimit->sends(),
+                'sends:project:' . $project->getId()
+            );
         }
 
-        return  $this->rateLimiterProvider->rateLimiter($this->rateLimit->apiKey(), 'api_key:' . $apiKey->getId());
-
+        return $this->rateLimiterProvider->rateLimiter($this->rateLimit->apiKey(), 'api_key:' . $apiKey->getId());
     }
 
     public function onController(ControllerEvent $controllerEvent): void
     {
-        if ($controllerEvent->isMainRequest() === false) return;
+        if ($controllerEvent->isMainRequest() === false) {
+            return;
+        }
 
         $request = $controllerEvent->getRequest();
-        if (!$this->isConsoleApiRequest($request)) return;
+        if (!$this->isConsoleApiRequest($request)) {
+            return;
+        }
 
         $limiter = $this->getRateLimiter($request);
         $limit = $limiter->consume();
 
-        $resetIn = $limit->getRetryAfter()->getTimestamp() - time();
+        $resetIn = max($limit->getRetryAfter()->getTimestamp() - time(), 0);
         $request->attributes->set(self::RATE_LIMIT_HEADERS_ATTRIBUTE_KEY, [
             'X-RateLimit-Limit' => $limit->getLimit(),
             'X-RateLimit-Remaining' => $limit->getRemainingTokens(),
@@ -81,10 +85,14 @@ class RateLimitListener
 
     public function onResponse(ResponseEvent $responseEvent): void
     {
-        if ($responseEvent->isMainRequest() === false) return;
+        if ($responseEvent->isMainRequest() === false) {
+            return;
+        }
 
         $request = $responseEvent->getRequest();
-        if (!$this->isConsoleApiRequest($request)) return;
+        if (!$this->isConsoleApiRequest($request)) {
+            return;
+        }
 
         $response = $responseEvent->getResponse();
 
@@ -92,7 +100,7 @@ class RateLimitListener
             /** @var array<string, string|int> $rateLimitHeaders */
             $rateLimitHeaders = $request->attributes->get(self::RATE_LIMIT_HEADERS_ATTRIBUTE_KEY);
             foreach ($rateLimitHeaders as $header => $value) {
-                $response->headers->set($header, (string) $value);
+                $response->headers->set($header, (string)$value);
             }
         }
     }
