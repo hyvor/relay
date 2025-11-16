@@ -159,7 +159,7 @@ func newMetrics() *Metrics {
 				Name: "incoming_emails_total",
 				Help: "Total number of incoming emails",
 			},
-			// type = "bounce", "fbl", "unknown"
+			// type = "bounce", "fbl", "send", "unknown"
 			[]string{"type"},
 		),
 		dnsQueriesTotal: prometheus.NewCounterVec(

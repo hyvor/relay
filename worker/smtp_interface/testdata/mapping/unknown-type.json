@@ -1,0 +1,12 @@
+{
+    "from": {
+        "email": "sender@example.com"
+    },
+    "to": [
+        {
+            "email": "recipient@example.com"
+        }
+    ],
+    "subject": "",
+    "body_text": "This is an unknown email"
+}

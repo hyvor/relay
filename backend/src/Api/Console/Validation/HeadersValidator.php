@@ -10,6 +10,8 @@ class HeadersValidator extends ConstraintValidator
 {
 
     // IMPORTANT! should be lowercase
+    // document in SendEmails.svelte (/docs/send-emails#limits)
+    // MUST BE kept in sync with custom_headers.go
     private const array UNALLOWED_HEADERS = [
         // emails
         'from',
@@ -23,6 +25,9 @@ class HeadersValidator extends ConstraintValidator
         'subject',
         'content-type',
         'mime-version',
+        'content-transfer-encoding',
+        'content-disposition',
+        'message-id',
 
         // security
         'dkim-signature',

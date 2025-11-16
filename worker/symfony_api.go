@@ -9,13 +9,15 @@ import (
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/hyvor/relay/worker/smtp_interface"
 )
 
 // calls Symfony local API
 
 var ErrUnexpectedStatusCode = errors.New("unexpected status code")
 
-func localApiUrl(endpoint string) string {
+func getSymfonyUrl(endpoint string) string {
 	var envValue = os.Getenv("GO_SYMFONY_URL")
 	var baseUrl string
 
@@ -25,18 +27,19 @@ func localApiUrl(endpoint string) string {
 		baseUrl = "http://localhost:80"
 	}
 
-	return baseUrl + "/api/local" + endpoint
+	return baseUrl + endpoint
 }
 
-func handleCallLocalApi(
+func callSymfonyApi(
 	ctx context.Context,
 	method string,
 	endpoint string,
 	body interface{},
+	headers map[string]string,
 	responseJsonObject interface{},
 ) error {
 
-	url := localApiUrl(endpoint)
+	url := getSymfonyUrl(endpoint)
 
 	var bodyReader io.Reader
 	if body != nil {
@@ -56,6 +59,10 @@ func handleCallLocalApi(
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -89,4 +96,43 @@ func handleCallLocalApi(
 
 }
 
+func handleCallLocalApi(
+	ctx context.Context,
+	method string,
+	endpoint string,
+	body interface{},
+	responseJsonObject interface{},
+) error {
+
+	return callSymfonyApi(
+		ctx,
+		method,
+		"/api/local"+endpoint,
+		body,
+		nil,
+		responseJsonObject,
+	)
+
+}
+
+func handleCallSendEmailApi(
+	ctx context.Context,
+	apiKey string,
+	body *smtp_interface.ApiRequest,
+) error {
+
+	return callSymfonyApi(
+		ctx,
+		"POST",
+		"/api/console/sends",
+		body,
+		map[string]string{
+			"Authorization": "Bearer " + apiKey,
+		},
+		nil,
+	)
+
+}
+
 var CallLocalApi = handleCallLocalApi
+var CallConsoleSendApi = handleCallSendEmailApi

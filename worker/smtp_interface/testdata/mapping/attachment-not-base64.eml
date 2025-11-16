@@ -1,0 +1,10 @@
+From: sender@example.com
+To: recipient@example.com
+Subject: Attachment Not Base64 Encoding
+Content-Type: text/csv
+Content-Disposition: attachment; filename="data.csv"
+Content-Transfer-Encoding: 8bit
+
+id,name,score
+1,Alice,95
+2,Bob,88

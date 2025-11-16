@@ -1,0 +1,17 @@
+From: sender@example.com
+To: recipient@example.com
+Subject: HTML & Text Email
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="ALT_BOUNDARY"
+
+--ALT_BOUNDARY
+Content-Type: text/plain; charset="UTF-8"
+
+Hello!
+This is the plain text version.
+--ALT_BOUNDARY
+Content-Type: text/html; charset="UTF-8"
+
+<h1>Hello!</h1>
+<p>This is the <b>HTML version</b> of the email.</p>
+--ALT_BOUNDARY--

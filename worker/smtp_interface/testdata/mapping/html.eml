@@ -1,0 +1,8 @@
+From: sender@example.com
+To: recipient@example.com
+Subject: Test Email
+MIME-Version: 1.0
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+
+<p>Hello World!</p>

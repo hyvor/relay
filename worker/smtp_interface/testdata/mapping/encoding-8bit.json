@@ -1,0 +1,12 @@
+{
+    "from": {
+        "email": "sender@example.com"
+    },
+    "to": [
+        {
+            "email": "recipient@example.com"
+        }
+    ],
+    "subject": "8bit Test Email",
+    "body_text": "Hello,\n\nThis email contains extended characters:\né, ñ, ü, å, €.\n\nBest regards,\nSender"
+}
