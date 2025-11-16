@@ -16,7 +16,8 @@ import (
 // Inconming server is a simple SMTP server that handles incoming emails to the instance domain emails.
 // It handles:
 // 1. Bounce emails: emails sent to bounce+<uuid>@<instance_domain>. (DSN format, RFC 3464)
-// 2. Feedback loop emails: emails sent to feedback+<uuid>@<instance_domain>. (ARF format, RFC 5965).
+// 2. Feedback loop emails: emails sent to fbl@<instance_domain> or abuse@<instance_domain>. (ARF format, RFC 5965).
+// 3. Forward emails to the API: when AUTH is used, the password is treated as the API key, and the email is forwarded to the API.
 
 // The IncomingBackend implements SMTP server methods.
 type IncomingBackend struct {
@@ -51,7 +52,11 @@ func (s *Session) AuthMechanisms() []string {
 
 // Auth is the handler for supported authenticators.
 func (s *Session) Auth(mech string) (sasl.Server, error) {
-	return nil, errors.New("authentication not supported")
+	return sasl.NewPlainServer(func(identity, username, password string) error {
+		s.incomingMail.ApiKey = password
+		return nil
+	}), nil
+
 }
 
 func (s *Session) Mail(from string, opts *smtp.MailOptions) error {
@@ -66,15 +71,22 @@ func (s *Session) Rcpt(to string, opts *smtp.RcptOptions) error {
 		return errors.New("recipient address is invalid: " + err.Error())
 	}
 
-	atIndex := strings.LastIndex(parsed.Address, "@")
-	if atIndex == -1 || atIndex == len(parsed.Address)-1 {
-		return errors.New("recipient address is invalid: missing domain part")
-	}
+	if !s.incomingMail.HasApiKey() {
 
-	domain := parsed.Address[atIndex+1:]
+		// verify that the domain is the instance domain
+		// if AUTH is used, skip this check (forward to API)
 
-	if domain != s.incomingMail.InstanceDomain {
-		return errors.New("this SMTP server only accepts emails for " + s.incomingMail.InstanceDomain)
+		atIndex := strings.LastIndex(parsed.Address, "@")
+		if atIndex == -1 || atIndex == len(parsed.Address)-1 {
+			return errors.New("recipient address is invalid: missing domain part")
+		}
+
+		domain := parsed.Address[atIndex+1:]
+
+		if domain != s.incomingMail.InstanceDomain {
+			return errors.New("this SMTP server only accepts emails for " + s.incomingMail.InstanceDomain)
+		}
+
 	}
 
 	s.incomingMail.RcptTo = parsed.Address
@@ -88,7 +100,7 @@ func (s *Session) Data(r io.Reader) error {
 		return err
 	}
 
-	s.logger.Info("Received email",
+	s.logger.Debug("Received email",
 		"MAIL", s.incomingMail.MailFrom,
 		"RCPT", s.incomingMail.RcptTo,
 		"data", string(b),
