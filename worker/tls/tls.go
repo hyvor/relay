@@ -1,4 +1,4 @@
-package main
+package tls
 
 // Generates TLS certificates using Let's Encrypt for the (incoming) email server (STARTTLS)
 // Note that web server TLS is handled by Caddy (FrankenPHP)
@@ -30,26 +30,6 @@ func (d *DnsProvider) DeleteRecords(ctx context.Context, zone string, recs []lib
 	return recs, nil
 }
 
-type DbStorage struct{}
-
-func (s *DbStorage) Store(key string, value []byte) error {
-	// Implement storing the certificate data in your database
-	fmt.Println("Storing key:", key)
-	return nil
-}
-
-func (s *DbStorage) Load(key string) ([]byte, error) {
-	// Implement loading the certificate data from your database
-	fmt.Println("Loading key:", key)
-	return nil, nil
-}
-
-func (s *DbStorage) Delete(key string) error {
-	// Implement deleting the certificate data from your database
-	fmt.Println("Deleting key:", key)
-	return nil
-}
-
 
 
 func generateTLSCertificates() error {
@@ -68,7 +48,7 @@ func generateTLSCertificates() error {
     }
 
 	domain := "mail.hyvor-relay.com"
-	err := certmagic.ManageSync(nil, []string{domain})
+	err := magic.ManageSync(nil, []string{domain})
 
 	if err != nil {
 		return err
