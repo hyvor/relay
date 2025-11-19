@@ -30,7 +30,12 @@ final class Version20250418134054 extends AbstractMigration
             system_project_id bigint NOT NULL references projects(id) ON DELETE CASCADE,
             last_health_check_at timestamptz DEFAULT NULL,
             health_check_results jsonb DEFAULT NULL,
-            sudo_initialized boolean DEFAULT false
+            sudo_initialized boolean DEFAULT false,
+            
+            tls_certificate TEXT DEFAULT NULL,
+            tls_certificate_domain TEXT DEFAULT NULL,
+            tls_certificate_expires_at timestamptz DEFAULT NULL,
+            tls_private_key_encrypted TEXT DEFAULT NULL,
         )
         SQL
         );

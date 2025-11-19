@@ -6,9 +6,18 @@ readonly class AccountInternalDto
 {
 
     public function __construct(
-        public string $privateKeyEncrypted,
+        public string $privateKeyPem,
         public ?string $kid,
     ) {
+    }
+
+    public function getPrivateKey(): \OpenSSLAsymmetricKey
+    {
+        $key = openssl_pkey_get_private($this->privateKeyPem);
+        if ($key === false) {
+            throw new \RuntimeException('Invalid private key PEM');
+        }
+        return $key;
     }
 
 }
