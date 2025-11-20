@@ -1,75 +1,20 @@
 <script lang="ts">
-	import { Button, SplitControl, TextInput, toast } from '@hyvor/design/components';
+	import { Caption, SplitControl, TextInput } from '@hyvor/design/components';
 	import { instanceStore } from '../../sudoStore';
-	import { updateInstance } from '../../sudoActions';
-	import { onMount } from 'svelte';
 
 	let instanceDomain = $state($instanceStore.domain);
-	let updating = $state(false);
-	let input = $state({} as HTMLInputElement);
-
-	function handleClick() {
-		if (updating) return;
-
-		if (instanceDomain.trim() === '') {
-			toast.error('Instance domain cannot be empty.');
-			return;
-		}
-
-		if (instanceDomain.trim() === $instanceStore.domain) {
-			return;
-		}
-
-		updating = true;
-
-		updateInstance({
-			domain: instanceDomain.trim()
-		})
-			.then(() => {
-				toast.success('Instance domain updated successfully.');
-				input.blur();
-			})
-			.finally(() => {
-				updating = false;
-			})
-			.catch((error) => {
-				toast.error(error.message);
-			});
-	}
-
-	onMount(() => {
-		if (location.search.includes('instance-domain')) {
-			input.focus();
-		}
-	});
 </script>
 
 <SplitControl label="Instance Domain">
-	<div class="instance-domain-input">
-		<TextInput
-			placeholder="Enter the instance domain"
-			bind:value={instanceDomain}
-			block
-			bind:input
-			on:keyup={(e) => e.key === 'Enter' && handleClick()}
-		/>
-		<div class="save">
-			<Button
-				disabled={instanceDomain.trim() === $instanceStore.domain ||
-					instanceDomain.trim() === '' ||
-					updating}
-				onclick={handleClick}
-			>
-				Save</Button
-			>
-		</div>
-	</div>
+	{#snippet caption()}
+		<Caption>
+			<a
+				href="/hosting/setup#instance-domain"
+				style="text-decoration: underline;"
+				target="_blank">Instance domain</a
+			> is used for sending and receiving emails. Its DNS records are managed by the in-built DNS
+			server.
+		</Caption>
+	{/snippet}
+	<TextInput placeholder="Enter the instance domain" value={instanceDomain} block disabled />
 </SplitControl>
-
-<style>
-	.instance-domain-input {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-	}
-</style>

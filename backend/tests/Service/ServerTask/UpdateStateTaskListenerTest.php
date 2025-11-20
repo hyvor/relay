@@ -3,6 +3,7 @@
 namespace App\Tests\Service\ServerTask;
 
 use App\Repository\ServerTaskRepository;
+use App\Service\Dns\Event\CustomDnsRecordsChangedEvent;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
 use App\Service\Ip\Event\IpAddressUpdatedEvent;
 use App\Service\Server\Dto\UpdateServerDto;
@@ -19,6 +20,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(ServerTaskService::class)]
 #[CoversClass(ServerUpdatedEvent::class)]
 #[CoversClass(IpAddressUpdatedEvent::class)]
+#[CoversClass(CustomDnsRecordsChangedEvent::class)]
 class UpdateStateTaskListenerTest extends KernelTestCase
 {
 
@@ -76,6 +78,20 @@ class UpdateStateTaskListenerTest extends KernelTestCase
             $ipAddress,
             $updates
         );
+
+        $this->ed->dispatch($event);
+
+        $serverTasks = $this->getService(ServerTaskRepository::class)->findAll();
+        $this->assertCount(1, $serverTasks);
+        $task = $serverTasks[0];
+        $this->assertSame($server->getId(), $task->getServer()->getId());
+        $this->assertSame(['api_workers_updated' => false], $task->getPayload());
+    }
+
+    public function test_on_custom_dns_records_changed(): void
+    {
+        $server = ServerFactory::createOne();
+        $event = new CustomDnsRecordsChangedEvent();
 
         $this->ed->dispatch($event);
 

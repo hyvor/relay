@@ -66,6 +66,10 @@ class AcmeClient
 
     private function loadAccount(): void
     {
+        if (isset($this->account)) {
+            return;
+        }
+
         $this->account = $this->cache->get(self::CACHE_ACCOUNT_KEY, function () {
             $privateKey = openssl_pkey_new([
                 "private_key_type" => OPENSSL_KEYTYPE_RSA,

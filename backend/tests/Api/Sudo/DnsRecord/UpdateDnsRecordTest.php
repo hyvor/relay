@@ -5,8 +5,10 @@ namespace App\Tests\Api\Sudo\DnsRecord;
 use App\Api\Sudo\Controller\DnsRecordController;
 use App\Entity\Type\DnsRecordType;
 use App\Service\Dns\DnsRecordService;
+use App\Service\Dns\Event\CustomDnsRecordsChangedEvent;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DnsRecordFactory;
+use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(DnsRecordController::class)]
@@ -22,6 +24,8 @@ class UpdateDnsRecordTest extends WebTestCase
 
     public function test_update_dns_record_successful(): void
     {
+        $eventDispatcher = TestEventDispatcher::enable($this->container);
+
         $dnsRecord = DnsRecordFactory::createOne([
             'type' => DnsRecordType::A,
             'subdomain' => 'old',
@@ -53,6 +57,8 @@ class UpdateDnsRecordTest extends WebTestCase
         $this->assertEquals('updates.example.com', $record->getContent());
         $this->assertEquals(7200, $record->getTtl());
         $this->assertEquals(10, $record->getPriority());
+
+        $eventDispatcher->assertDispatched(CustomDnsRecordsChangedEvent::class);
     }
 
 }
