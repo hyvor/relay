@@ -222,6 +222,10 @@ compose.yaml			# Docker Compose file
 	</li>
 </ul>
 
+<p>Then, run the following command to verify that the configuration is correct:</p>
+
+<CodeBlock code="docker compose run --rm relay bin/console verify" />
+
 <h4>4. Deploy Hyvor Relay</h4>
 
 <!--  -->
