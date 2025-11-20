@@ -228,7 +228,13 @@ compose.yaml			# Docker Compose file
 
 <h4>4. Deploy Hyvor Relay</h4>
 
-<!--  -->
+<p>Start the Hyvor Relay service:</p>
+
+<CodeBlock
+	code={`
+docker stack deploy -c compose.yaml relay
+`}
+/>
 
 <!-- 
 

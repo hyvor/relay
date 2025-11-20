@@ -1,12 +1,22 @@
 services:
   relay:
+    # Note: always use a specific tag for production deployments
     image: hyvor/relay:latest
+
+    # Use global mode to run one replica per node
     deploy:
       mode: global
+
+    env_file:
+      - .env
+
+    # swarm does not support network_mode: host directly
+    # so we create an external network that maps to host
     networks:
       - hostnet
 
 networks:
+  # hostnet here is just the Docker host network
   hostnet:
     name: "host"
     external: true
