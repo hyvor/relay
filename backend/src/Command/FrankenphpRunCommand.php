@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use App\Service\App\Config;
 use App\Service\Server\ServerService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -21,6 +22,7 @@ class FrankenphpRunCommand extends Command
 {
     public function __construct(
         private ServerService $serverService,
+        private Config $config,
     ) {
         parent::__construct();
     }
@@ -40,8 +42,9 @@ class FrankenphpRunCommand extends Command
         $currentServer = $this->serverService->getServerByCurrentHostname();
 
         if (!$currentServer) {
+            $hostname = $this->config->getHostname();
             $output->writeln(
-                '<error>Current server not found in the database. Ensure the hostname is correctly configured.</error>'
+                "<error>Current server not found in the database (Hostname: $hostname)</error>"
             );
             return Command::FAILURE;
         }
