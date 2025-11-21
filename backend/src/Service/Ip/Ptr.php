@@ -3,6 +3,7 @@
 namespace App\Service\Ip;
 
 use App\Entity\IpAddress;
+use App\Service\App\Config;
 use App\Service\Dns\Resolve\DnsResolveInterface;
 use App\Service\Dns\Resolve\DnsResolvingFailedException;
 use App\Service\Dns\Resolve\DnsType;
@@ -15,7 +16,7 @@ class Ptr
     private const string PTR_PREFIX = 'smtp';
 
     public function __construct(
-        private InstanceService $instanceService,
+        private Config $config,
         private DnsResolveInterface $dnsResolver,
     ) {
     }
@@ -66,7 +67,7 @@ class Ptr
      */
     public function validate(IpAddress $ipAddress): array
     {
-        $ptrDomain = self::getPtrDomain($ipAddress, $this->instanceService->getInstance()->getDomain());
+        $ptrDomain = self::getPtrDomain($ipAddress, $this->config->getInstanceDomain());
         $ipString = $ipAddress->getIpAddress();
 
         $ipSplit = explode('.', $ipString);

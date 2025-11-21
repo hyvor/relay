@@ -1,7 +1,7 @@
 Features to implement:
 
 - [ ] Incoming email routing
-- [ ] Send via SMTP
+- [x] Send via SMTP
 - [ ] Dedicated IPs for users
 - [ ] Custom DKIM selectors
 

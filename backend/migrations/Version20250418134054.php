@@ -25,7 +25,6 @@ final class Version20250418134054 extends AbstractMigration
             created_at timestamptz NOT NULL,
             updated_at timestamptz NOT NULL,
             uuid uuid NOT NULL,
-            domain text NOT NULL,
             dkim_public_key text NOT NULL,
             dkim_private_key_encrypted text NOT NULL,
             system_project_id bigint NOT NULL references projects(id) ON DELETE CASCADE,

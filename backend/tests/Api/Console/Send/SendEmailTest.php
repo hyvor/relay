@@ -488,7 +488,7 @@ class SendEmailTest extends WebTestCase
         // signed from the FROM domain
         $this->assertStringContainsString("d=hyvor.com;", $rawHeaders);
         // signed from the instance domain
-        $this->assertStringContainsString("d=relay.hyvor.localhost;", $rawHeaders);
+        $this->assertStringContainsString("d=mail.hyvor-relay.com;", $rawHeaders);
         $this->assertStringContainsString("\r\nContent-Type: multipart/alternative;", $rawHeaders);
         // custom headers
         $this->assertStringContainsString("X-Custom-Header: Custom Value\r\n", $rawHeaders);
@@ -516,7 +516,7 @@ class SendEmailTest extends WebTestCase
             "h=From: To: Subject: X-Custom-Header: Reply-To: Message-ID: X-Mailer: MIME-Version: Date;",
             $second
         );
-        $this->assertStringContainsString("i=@relay.hyvor.localhost", $second);
+        $this->assertStringContainsString("i=@mail.hyvor-relay.com", $second);
         $this->assertStringContainsString("s=default", $second);
     }
 

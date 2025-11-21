@@ -5,23 +5,20 @@ namespace App\Service\Instance;
 use App\Entity\Instance;
 use App\Entity\Type\ProjectSendType;
 use App\Repository\InstanceRepository;
+use App\Service\App\Config;
 use App\Service\Domain\Dkim;
 use App\Service\Domain\DomainService;
-use App\Service\Instance\Dto\UpdateInstanceDto;
-use App\Service\Instance\Event\InstanceUpdatedEvent;
 use App\Service\Project\ProjectService;
 use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Util\Crypt\Encryption;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Uid\Uuid;
 
 class InstanceService
 {
     use ClockAwareTrait;
 
-    public const string DEFAULT_DOMAIN = 'relay.hyvor.localhost';
     public const string DEFAULT_DKIM_SELECTOR = 'default';
 
     public function __construct(
@@ -31,7 +28,7 @@ class InstanceService
         private ProjectService $projectService,
         private LoggerInterface $logger,
         private DomainService $domainService,
-        private EventDispatcherInterface $eventDispatcher,
+        private Config $config,
     ) {
     }
 
@@ -73,7 +70,7 @@ class InstanceService
         $systemProject = $newProject['project'];
         $systemProjectDomain = $this->domainService->createDomain(
             $systemProject,
-            self::DEFAULT_DOMAIN,
+            $this->config->getInstanceDomain(),
             dkimSelector: self::DEFAULT_DKIM_SELECTOR,
             customDkimPublicKey: $publicKey,
             customDkimPrivateKey: $privateKey,
@@ -86,7 +83,6 @@ class InstanceService
             ->setCreatedAt($this->now())
             ->setUpdatedAt($this->now())
             ->setUuid(Uuid::v4())
-            ->setDomain(self::DEFAULT_DOMAIN)
             ->setDkimPublicKey($publicKey)
             ->setDkimPrivateKeyEncrypted($this->encryption->encryptString($privateKey))
             ->setSystemProject($systemProject);
@@ -97,21 +93,5 @@ class InstanceService
         $this->em->flush();
 
         return $instance;
-    }
-
-    public function updateInstance(Instance $instance, UpdateInstanceDto $updates): void
-    {
-        $oldInstance = clone $instance;
-
-        if ($updates->domainSet) {
-            $instance->setDomain($updates->domain);
-        }
-
-        $instance->setUpdatedAt($this->now());
-
-        $this->em->persist($instance);
-        $this->em->flush();
-
-        $this->eventDispatcher->dispatch(new InstanceUpdatedEvent($oldInstance, $instance, $updates));
     }
 }

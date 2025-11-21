@@ -4,7 +4,7 @@
     }
 }
 
-:80 {
+{$WEB_URL:http://} {
 	# backend
 	@backend {
 		path /api/*
@@ -35,4 +35,9 @@
         header Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
 		rewrite * /fallback.html
 	}
+}
+
+# Instance domain TLS
+{$INSTANCE_DOMAIN} {
+
 }

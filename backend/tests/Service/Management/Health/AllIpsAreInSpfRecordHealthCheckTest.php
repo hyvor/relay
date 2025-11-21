@@ -3,6 +3,7 @@
 namespace App\Tests\Service\Management\Health;
 
 use App\Entity\IpAddress;
+use App\Service\App\Config;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
 use App\Service\Management\Health\AllIpsAreInSpfRecordHealthCheck;
@@ -29,24 +30,20 @@ class AllIpsAreInSpfRecordHealthCheckTest extends KernelTestCase
         parent::setUp();
 
         $this->dnsResolver = $this->createMock(Resolver::class);
-
-        /** @var InstanceService $instanceService */
-        $instanceService = $this->container->get(InstanceService::class);
         /** @var IpAddressService $ipAddressService */
         $ipAddressService = $this->container->get(IpAddressService::class);
 
+        $config = $this->getService(Config::class);
         $this->healthCheck = new AllIpsAreInSpfRecordHealthCheck(
-            $instanceService,
             $ipAddressService,
+            $config,
             $this->dnsResolver
         );
     }
 
     public function testCheckReturnsTrueWhenIpsAreInSpfRecord(): void
     {
-        $instance = InstanceFactory::createOne([
-            'domain' => 'example.com',
-        ]);
+        $instance = InstanceFactory::createOne();
 
         $ip_address1 = IpAddressFactory::createOne();
         $ip_address2 = IpAddressFactory::createOne();
@@ -64,9 +61,7 @@ class AllIpsAreInSpfRecordHealthCheckTest extends KernelTestCase
 
     public function testCheckReturnsFalseWhenIpsAreNotInSpfRecord(): void
     {
-        $instance = InstanceFactory::createOne([
-            'domain' => 'example.com',
-        ]);
+        $instance = InstanceFactory::createOne();
 
         $ip_address1 = IpAddressFactory::createOne();
         $ip_address2 = IpAddressFactory::createOne();
@@ -81,14 +76,12 @@ class AllIpsAreInSpfRecordHealthCheckTest extends KernelTestCase
         $this->assertArrayHasKey('invalid_ips', $data);
         $this->assertArrayHasKey('domain', $data);
         $this->assertSame([$ip_address2->getIpAddress()], $data['invalid_ips']);
-        $this->assertEquals('example.com', $data['domain']);
+        $this->assertEquals('mail.hyvor-relay.com', $data['domain']);
     }
 
     public function testCheckReturnsFalseWhenInvalidIp(): void
     {
-        $instance = InstanceFactory::createOne([
-            'domain' => 'example.com',
-        ]);
+        $instance = InstanceFactory::createOne();
 
         $ip_address1 = IpAddressFactory::createOne(
             [
@@ -107,14 +100,12 @@ class AllIpsAreInSpfRecordHealthCheckTest extends KernelTestCase
         $this->assertArrayHasKey('invalid_ips', $data);
         $this->assertArrayHasKey('domain', $data);
         $this->assertSame([$ip_address1->getIpAddress()], $data['invalid_ips']);
-        $this->assertEquals('example.com', $data['domain']);
+        $this->assertEquals('mail.hyvor-relay.com', $data['domain']);
     }
 
     public function testCheckReturnsTrueWhenIpRangeInSpfRecord(): void
     {
-        $instance = InstanceFactory::createOne([
-            'domain' => 'example.com',
-        ]);
+        $instance = InstanceFactory::createOne();
 
         $ip_address1 = IpAddressFactory::createOne();
         $ip_address2 = IpAddressFactory::createOne();
