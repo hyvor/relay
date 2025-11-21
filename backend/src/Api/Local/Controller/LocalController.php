@@ -14,6 +14,7 @@ use App\Service\Send\SendService;
 use App\Service\Management\GoState\GoStateFactory;
 use App\Service\Management\GoState\ServerNotFoundException;
 use App\Service\SendAttempt\SendAttemptService;
+use App\Service\Tls\Acme\AcmeClient;
 use Prometheus\RenderTextFormat;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -32,6 +33,7 @@ class LocalController extends AbstractController
         private IncomingMailService $incomingMailService,
         private DebugIncomingEmailService $debugIncomingEmailService,
         private MetricsListener $metricsListener,
+        private AcmeClient $client
     ) {
     }
 

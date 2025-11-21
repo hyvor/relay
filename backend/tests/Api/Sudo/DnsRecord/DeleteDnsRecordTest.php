@@ -5,8 +5,10 @@ namespace App\Tests\Api\Sudo\DnsRecord;
 use App\Api\Sudo\Controller\DnsRecordController;
 use App\Entity\DnsRecord;
 use App\Service\Dns\DnsRecordService;
+use App\Service\Dns\Event\CustomDnsRecordsChangedEvent;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DnsRecordFactory;
+use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(DnsRecordController::class)]
@@ -23,6 +25,7 @@ class DeleteDnsRecordTest extends WebTestCase
 
     public function test_delete_dns_record(): void
     {
+        $eventDispatcher = TestEventDispatcher::enable($this->container);
         $dnsRecord = DnsRecordFactory::createOne();
         $id = $dnsRecord->getId();
 
@@ -33,6 +36,8 @@ class DeleteDnsRecordTest extends WebTestCase
         $this->assertNull(
             $this->em->getRepository(DnsRecord::class)->find($id)
         );
+
+        $eventDispatcher->assertDispatched(CustomDnsRecordsChangedEvent::class);
     }
 
 }
