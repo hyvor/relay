@@ -37,6 +37,10 @@ final class Version20251119041929 extends AbstractMigration
         )
         SQL
         );
+
+        $this->addSql(
+            "ALTER TABLE instances ADD COLUMN mail_tls_certificate_id bigint DEFAULT NULL references tls_certificates(id) ON DELETE SET NULL"
+        );
     }
 
     public function down(Schema $schema): void

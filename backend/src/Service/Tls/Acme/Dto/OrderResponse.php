@@ -4,15 +4,17 @@ namespace App\Service\Tls\Acme\Dto;
 
 use App\Service\Tls\Acme\Exception\AcmeException;
 
-readonly class NewOrderResponse
+readonly class OrderResponse
 {
 
     /**
      * @param string[] $authorizations
      */
     public function __construct(
+        public string $status,
         public string $finalize,
         public array $authorizations,
+        public string $certificate,
     ) {
     }
 

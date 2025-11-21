@@ -5,7 +5,7 @@ namespace App\Service\Tls\Acme;
 use App\Service\Tls\Acme\Dto\AccountInternalDto;
 use App\Service\Tls\Acme\Dto\AuthorizationResponse\AuthorizationResponse;
 use App\Service\Tls\Acme\Dto\DirectoryDto;
-use App\Service\Tls\Acme\Dto\NewOrderResponse;
+use App\Service\Tls\Acme\Dto\OrderResponse;
 use App\Service\Tls\Acme\Exception\AcmeException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -14,6 +14,7 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class AcmeClient
 {
@@ -41,6 +42,11 @@ class AcmeClient
         } else {
             $this->directoryUrl = self::DIRECTORY_URL_LETSENCRYPT_STAGING;
         }
+    }
+
+    public function setLogger(LoggerInterface $logger): void
+    {
+        $this->logger = $logger;
     }
 
     /**
@@ -133,11 +139,17 @@ class AcmeClient
             ],
         ];
 
+        $headers = new HeaderBag();
         $response = $this->httpRequest(
             $this->directory->newOrder,
             $payload,
-            returnType: NewOrderResponse::class
+            returnType: OrderResponse::class,
+            headerBag: $headers,
         );
+        $orderUrl = $headers->get('location');
+        if (!$orderUrl) {
+            throw new AcmeException('No order URL returned from ACME server');
+        }
 
         $authorizationUrl = $response->firstAuthorizationUrl();
         $authorization = $this->httpRequest($authorizationUrl, returnType: AuthorizationResponse::class);
@@ -152,19 +164,112 @@ class AcmeClient
         $dnsValue = rtrim(strtr(base64_encode(hash('sha256', $keyAuthorization, true)), '+/', '-_'), '=');
 
         return new PendingOrder(
+            domain: $domain,
             dnsRecordValue: $dnsValue,
+            orderUrl: $orderUrl,
             challengeUrl: $dnsChallenge->url,
+            authorizationUrl: $authorizationUrl,
             finalizeOrderUrl: $response->finalize,
         );
+    }
+
+    /**
+     * @return string PEM-encoded certificate
+     * @throws AcmeException
+     */
+    public function finalizeOrder(PendingOrder $order, \OpenSSLAsymmetricKey $privateKey): string
+    {
+        // notify challenge is ready
+        $this->httpRequest($order->challengeUrl);
+
+        // poll for authorization status
+        $maxAttempts = 10;
+        $attempt = 0;
+        do {
+            $attempt++;
+            $authorization = $this->httpRequest($order->authorizationUrl, returnType: AuthorizationResponse::class);
+            sleep(2);
+
+            if ($attempt > 1) {
+                $this->logger->info('Polling ACME server for authorization status', [
+                    'attempt' => $attempt,
+                    'status' => $authorization->status,
+                ]);
+            }
+        } while ($authorization->status === 'pending' && $attempt < $maxAttempts);
+
+        if ($authorization->status !== 'valid') {
+            throw new AcmeException('Authorization failed, status: ' . $authorization->status);
+        }
+
+        // Finalize order
+        $this->logger->info('Authorization valid, proceeding to finalize order');
+        $csr = openssl_csr_new(['CN' => $order->domain], $privateKey, ['digest_alg' => 'sha256']);
+        if (!$csr instanceof \OpenSSLCertificateSigningRequest) {
+            throw new AcmeException('Failed to generate CSR: ' . openssl_error_string());
+        }
+        openssl_csr_export($csr, $csrPem, false);
+
+        assert(is_string($csrPem));
+        $csrDer = $this->pemToDer($csrPem);
+
+        $payload = [
+            'csr' => $this->base64url($csrDer),
+        ];
+        $this->httpRequest($order->finalizeOrderUrl, $payload);
+
+        // At this point, the order is being processed by the ACME server.
+        // Poll the order URL until the certificate is ready to be downloaded.
+        $this->logger->info('ACME client finalized order. Polling for order status to be "valid"');
+        $attempt = 0;
+        do {
+            $attempt++;
+            $response = $this->httpRequest($order->orderUrl, returnType: OrderResponse::class);
+            sleep(2);
+            if ($attempt > 1) {
+                $this->logger->info('Polling ACME server for order status', [
+                    'attempt' => $attempt,
+                    'status' => $response->status,
+                ]);
+            }
+        } while (
+            (
+                $response->status === 'processing' ||
+                $response->status === 'pending'
+            ) &&
+            $attempt < $maxAttempts
+        );
+
+        if ($response->status !== 'valid') {
+            throw new AcmeException('Order finalization failed, status: ' . $response->status);
+        }
+
+        // Download certificate
+        $this->logger->info('Order is valid. Downloading certificate from ACME server');
+        $certPem = $this->httpRequest($response->certificate, returnRawContent: true);
+
+        $this->logger->info('Certificate downloaded successfully from ACME server');
+
+        return $certPem;
+    }
+
+    private function pemToDer(string $pem): string
+    {
+        $lines = explode("\n", trim($pem));
+        $lines = array_filter($lines, fn($line) => !str_contains($line, 'BEGIN') && !str_contains($line, 'END'));
+        $b64 = implode('', $lines);
+        return base64_decode($b64);
     }
 
     /**
      * @param class-string<T> $returnType
      * @param array<string, mixed> $payload
      * @param 'POST'|'GET'|'HEAD' $method
-     * @return T
+     * @param ReturnRawContent $returnRawContent
+     * @return (ReturnRawContent is true ? string : T)
      * @throws AcmeException
      * @template T of object
+     * @template ReturnRawContent of bool
      */
     private function httpRequest(
         string $url,
@@ -172,14 +277,18 @@ class AcmeClient
         string $returnType = \stdClass::class,
         string $method = 'POST',
         ?HeaderBag $headerBag = null, // will capture headers
-    ): object
-    {
+        bool $returnRawContent = false,
+    ) {
         try {
             $response = $this->http->request(
                 $method,
                 $url,
                 $method === 'POST' ? ['json' => $this->sign($payload, $url)] : [],
             );
+
+            if ($returnRawContent) {
+                return $response->getContent();
+            }
 
             $body = $response->toArray();
             /** @var T $object */
