@@ -7,6 +7,7 @@ use App\Tests\Case\KernelTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[CoversClass(AcmeClient::class)]
@@ -23,7 +24,7 @@ class AcmeClientTest extends KernelTestCase
             'keyChange' => 'https://acme.org/keyChange',
         ]);
 
-        $nonceResponse = new JsonMockResponse(info: [
+        $nonceResponse = new MockResponse(info: [
             'response_headers' => [
                 'Replay-Nonce' => ['test-nonce-123']
             ]

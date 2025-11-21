@@ -21,6 +21,13 @@ return static function (MonologConfig $monolog, ContainerConfigurator $container
             ->type('stream')
             ->path('php://stderr')
             ->formatter('monolog.formatter.json');
+        // Separate handler for streamer logs (to avoid buffering delays in long-running commands)
+        $monolog->handler('streamer')
+            ->type('stream')
+            ->path('php://stderr')
+            ->formatter('monolog.formatter.line')
+            ->channels()->elements(['streamer']);
+        $monolog->channels(['streamer']);
     } else {
         $monolog->handler('test')
             ->type('test')

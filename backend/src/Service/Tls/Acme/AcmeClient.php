@@ -2,12 +2,16 @@
 
 namespace App\Service\Tls\Acme;
 
+use App\Service\Dns\Resolve\DnsResolveInterface;
+use App\Service\Dns\Resolve\DnsResolvingFailedException;
+use App\Service\Dns\Resolve\DnsType;
 use App\Service\Tls\Acme\Dto\AccountInternalDto;
 use App\Service\Tls\Acme\Dto\AuthorizationResponse\AuthorizationResponse;
 use App\Service\Tls\Acme\Dto\DirectoryDto;
 use App\Service\Tls\Acme\Dto\OrderResponse;
 use App\Service\Tls\Acme\Exception\AcmeException;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\HeaderBag;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -27,13 +31,14 @@ class AcmeClient
     private string $directoryUrl;
     private DirectoryDto $directory;
     private AccountInternalDto $account;
-    private ?string $nonce = null;
 
     public function __construct(
         private HttpClientInterface $http,
         private LoggerInterface $logger,
         private CacheInterface $cache,
         private DenormalizerInterface $denormalizer,
+        private ClockInterface $clock,
+        private DnsResolveInterface $dnsResolve,
         #[Autowire('%kernel.environment%')]
         private string $env,
     ) {
@@ -104,8 +109,10 @@ class AcmeClient
      */
     private function newAccount(): AccountInternalDto
     {
+        $this->logger->info('Creating new ACME account');
+
         $payload = [
-            'contact' => [""],
+            'contact' => [],
             'termsOfServiceAgreed' => true
         ];
 
@@ -133,6 +140,7 @@ class AcmeClient
      */
     public function newOrder(string $domain): PendingOrder
     {
+        $this->logger->info('Calling new order endpoint');
         $payload = [
             'identifiers' => [
                 ['type' => 'dns', 'value' => $domain],
@@ -151,17 +159,27 @@ class AcmeClient
             throw new AcmeException('No order URL returned from ACME server');
         }
 
+        $this->logger->info('Order created successfully, fetching authorization', [
+            'authorizationUrls' => $response->authorizations,
+        ]);
         $authorizationUrl = $response->firstAuthorizationUrl();
-        $authorization = $this->httpRequest($authorizationUrl, returnType: AuthorizationResponse::class);
+        $authorization = $this->httpRequest(
+            $authorizationUrl,
+            // needs empty payload than empty object
+            // https://datatracker.ietf.org/doc/html/rfc8555/#section-7.5
+            payload: "",
+            returnType: AuthorizationResponse::class,
+        );
 
+        $this->logger->info('Authorization fetched, preparing DNS-01 challenge response');
         $dnsChallenge = $authorization->getFirstDns01Challenge();
-        $thumbprint = base64_encode(
+        $thumbprint = $this->base64url(
             hash('sha256', (string)json_encode($this->getJwk()), true)
         );
         $keyAuthorization = $dnsChallenge->token . '.' . $thumbprint;
 
         // SHA256 digest, base64url-encoded without padding
-        $dnsValue = rtrim(strtr(base64_encode(hash('sha256', $keyAuthorization, true)), '+/', '-_'), '=');
+        $dnsValue = $this->base64url(hash('sha256', $keyAuthorization, true));
 
         return new PendingOrder(
             domain: $domain,
@@ -174,20 +192,75 @@ class AcmeClient
     }
 
     /**
+     * @throws AcmeException
+     */
+    private function waitForDns(PendingOrder $order): void
+    {
+        $attempt = 0;
+        $maxAttempts = 30;
+        $sleepSeconds = 5;
+
+        while ($attempt < $maxAttempts) {
+            try {
+                $acmeRecord = '_acme-challenge.' . $order->domain;
+                $resolved = $this->dnsResolve->resolve(
+                    $acmeRecord,
+                    DnsType::TXT
+                );
+
+                $foundValues = [];
+                foreach ($resolved->answers as $answer) {
+                    if ($answer->getCleanedTxt() === $order->dnsRecordValue) {
+                        $this->logger->info('DNS challenge record found via DNS resolver, good to proceed');
+                        return;
+                    }
+                    $foundValues[] = $answer->getCleanedTxt();
+                }
+
+                $this->logger->info(
+                    "DNS challenge record not found yet, waiting for {$sleepSeconds}s before retrying",
+                    [
+                        'attempt' => "$attempt/$maxAttempts",
+                        'acmeRecord' => $acmeRecord,
+                        'dnsRecordValue' => $order->dnsRecordValue,
+                        'foundValues' => $foundValues,
+                    ]
+                );
+
+                $attempt++;
+                $this->clock->sleep($sleepSeconds);
+            } catch (DnsResolvingFailedException $e) {
+                throw new AcmeException('DNS resolution failed for challenge record: ' . $e->getMessage());
+            }
+        }
+
+        throw new AcmeException('DNS challenge record not found after maximum attempts');
+    }
+
+    /**
      * @return string PEM-encoded certificate
      * @throws AcmeException
      */
     public function finalizeOrder(PendingOrder $order, \OpenSSLAsymmetricKey $privateKey): string
     {
+        $this->waitForDns($order);
+
         // notify challenge is ready
         $this->httpRequest($order->challengeUrl);
+        $this->logger->info('Notified ACME server that challenge is ready, polling for authorization status');
+
+        sleep(10);
 
         // poll for authorization status
         $maxAttempts = 10;
         $attempt = 0;
         do {
             $attempt++;
-            $authorization = $this->httpRequest($order->authorizationUrl, returnType: AuthorizationResponse::class);
+            $authorization = $this->httpRequest(
+                $order->authorizationUrl,
+                payload: "",
+                returnType: AuthorizationResponse::class
+            );
             sleep(2);
 
             if ($attempt > 1) {
@@ -209,9 +282,8 @@ class AcmeClient
             throw new AcmeException('Failed to generate CSR: ' . openssl_error_string());
         }
         openssl_csr_export($csr, $csrPem, false);
-
         assert(is_string($csrPem));
-        $csrDer = $this->pemToDer($csrPem);
+        $csrDer = $this->csrPemToDer($csrPem);
 
         $payload = [
             'csr' => $this->base64url($csrDer),
@@ -224,7 +296,7 @@ class AcmeClient
         $attempt = 0;
         do {
             $attempt++;
-            $response = $this->httpRequest($order->orderUrl, returnType: OrderResponse::class);
+            $response = $this->httpRequest($order->orderUrl, payload: "", returnType: OrderResponse::class);
             sleep(2);
             if ($attempt > 1) {
                 $this->logger->info('Polling ACME server for order status', [
@@ -244,21 +316,26 @@ class AcmeClient
             throw new AcmeException('Order finalization failed, status: ' . $response->status);
         }
 
+        if (!$response->certificate) {
+            throw new AcmeException('No certificate URL returned from ACME server');
+        }
+
         // Download certificate
         $this->logger->info('Order is valid. Downloading certificate from ACME server');
-        $certPem = $this->httpRequest($response->certificate, returnRawContent: true);
+        $certPem = $this->httpRequest($response->certificate, payload: "", returnRawContent: true);
 
         $this->logger->info('Certificate downloaded successfully from ACME server');
 
         return $certPem;
     }
 
-    private function pemToDer(string $pem): string
+    private function csrPemToDer(string $pem): string
     {
-        $lines = explode("\n", trim($pem));
-        $lines = array_filter($lines, fn($line) => !str_contains($line, 'BEGIN') && !str_contains($line, 'END'));
-        $b64 = implode('', $lines);
-        return base64_decode($b64);
+        $begin = "-----BEGIN CERTIFICATE REQUEST-----";
+        $end = "-----END CERTIFICATE REQUEST-----";
+        $pem = substr($pem, strpos($pem, $begin) + strlen($begin));
+        $pem = substr($pem, 0, (int)strpos($pem, $end));
+        return base64_decode($pem);
     }
 
     /**
@@ -273,26 +350,28 @@ class AcmeClient
      */
     private function httpRequest(
         string $url,
-        array $payload = [],
+        string|array $payload = [],
         string $returnType = \stdClass::class,
         string $method = 'POST',
         ?HeaderBag $headerBag = null, // will capture headers
         bool $returnRawContent = false,
     ) {
         try {
+            $options = [
+                'headers' => [
+                    'Content-Type' => 'application/jose+json',
+                ],
+            ];
+
+            if ($method === 'POST') {
+                $options['json'] = $this->sign($payload, $url);
+            }
+
             $response = $this->http->request(
                 $method,
                 $url,
-                $method === 'POST' ? ['json' => $this->sign($payload, $url)] : [],
+                $options,
             );
-
-            if ($returnRawContent) {
-                return $response->getContent();
-            }
-
-            $body = $response->toArray();
-            /** @var T $object */
-            $object = $this->denormalizer->denormalize($body, $returnType);
 
             if ($headerBag !== null) {
                 foreach ($response->getHeaders() as $name => $values) {
@@ -301,6 +380,15 @@ class AcmeClient
                     }
                 }
             }
+
+            if ($returnRawContent) {
+                return $response->getContent();
+            }
+
+            $body = $response->toArray();
+            dump($url, $body);
+            /** @var T $object */
+            $object = $this->denormalizer->denormalize($body, $returnType);
 
             return $object;
         } catch (ExceptionInterface $e) {
@@ -325,19 +413,17 @@ class AcmeClient
     /**
      * account->privateKey must be set before calling this method
      *
-     * @param array<string, mixed> $payload
+     * @param string|array<string, mixed> $payload
      * @return array<string, mixed>
      * @throws AcmeException
      */
-    private function sign(array $payload, string $url): array
+    private function sign(string|array $payload, string $url): array
     {
-        if (!$this->nonce) {
-            $this->fetchNonce();
-        }
+        $nonce = $this->fetchNonce();
 
         $protected = [
             'alg' => 'RS256',
-            'nonce' => $this->nonce,
+            'nonce' => $nonce,
             'url' => $url,
         ];
 
@@ -349,7 +435,7 @@ class AcmeClient
         }
 
         $protectedBase64 = $this->base64url($this->jsonEncode($protected));
-        $payloadBase64 = $this->base64url($this->jsonEncode($payload));
+        $payloadBase64 = $this->base64url(is_string($payload) ? $payload : $this->jsonEncode($payload));
 
         openssl_sign(
             $protectedBase64 . "." . $payloadBase64,
@@ -377,9 +463,9 @@ class AcmeClient
          */
         $details = openssl_pkey_get_details($this->account->getPrivateKey());
         return [
+            'e' => $this->base64url($details['rsa']['e']),
             'kty' => 'RSA',
             'n' => $this->base64url($details['rsa']['n']),
-            'e' => $this->base64url($details['rsa']['e']),
         ];
     }
 
@@ -388,7 +474,7 @@ class AcmeClient
      */
     private function jsonEncode(array $data): string
     {
-        $json = json_encode($data);
+        $json = json_encode((object)$data);
         assert(is_string($json));
         return $json;
     }
@@ -401,13 +487,14 @@ class AcmeClient
     /**
      * @throws AcmeException
      */
-    private function fetchNonce(): void
+    private function fetchNonce(): string
     {
         $headers = new HeaderBag();
         $this->httpRequest(
             $this->directory->newNonce,
             method: 'HEAD',
-            headerBag: $headers
+            headerBag: $headers,
+            returnRawContent: true,
         );
 
         $nonce = $headers->get('replay-nonce');
@@ -416,7 +503,7 @@ class AcmeClient
             throw new AcmeException('No nonce returned from ACME server');
         }
 
-        $this->nonce = $nonce;
+        return $nonce;
     }
 
 }

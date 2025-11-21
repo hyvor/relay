@@ -14,7 +14,7 @@ readonly class OrderResponse
         public string $status,
         public string $finalize,
         public array $authorizations,
-        public string $certificate,
+        public ?string $certificate = null,
     ) {
     }
 

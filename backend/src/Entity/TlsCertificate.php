@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Entity\Type\TlsCertificateStatus;
+use App\Entity\Type\TlsCertificateType;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -21,8 +22,8 @@ class TlsCertificate
     #[ORM\Column(type: 'datetimetz_immutable')]
     private \DateTimeImmutable $updated_at;
 
-    #[ORM\Column(length: 255)]
-    private string $type;
+    #[ORM\Column(type: 'string', enumType: TlsCertificateType::class)]
+    private TlsCertificateType $type;
 
     #[ORM\Column(length: 255)]
     private string $domain;
@@ -31,7 +32,7 @@ class TlsCertificate
     private TlsCertificateStatus $status;
 
     #[ORM\Column(type: 'text')]
-    private string $private_key_encrypted;
+    private string $private_key_encrypted; // PEM format, encrypted
 
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $certificate = null;
@@ -75,12 +76,12 @@ class TlsCertificate
         return $this;
     }
 
-    public function getType(): string
+    public function getType(): TlsCertificateType
     {
         return $this->type;
     }
 
-    public function setType(string $type): static
+    public function setType(TlsCertificateType $type): static
     {
         $this->type = $type;
         return $this;

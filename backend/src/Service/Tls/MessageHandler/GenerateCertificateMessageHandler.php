@@ -3,6 +3,7 @@
 namespace App\Service\Tls\MessageHandler;
 
 use App\Entity\Type\DnsRecordType;
+use App\Service\App\Config;
 use App\Service\Dns\DnsRecordService;
 use App\Service\Dns\Dto\CreateDnsRecordDto;
 use App\Service\Tls\Acme\AcmeClient;
@@ -25,10 +26,11 @@ class GenerateCertificateMessageHandler
         private AcmeClient $acmeClient,
         private TlsCertificateService $tlsCertificateService,
         private DnsRecordService $dnsRecordService,
-        LoggerInterface $logger,
+        private Config $config,
+        LoggerInterface $streamerLogger,
         private ClockInterface $clock,
     ) {
-        $this->logger = ContextualLogger::forMessageHandler($logger, self::class);
+        $this->logger = ContextualLogger::forMessageHandler($streamerLogger, self::class);
     }
 
     public function __invoke(GenerateCertificateMessage $message): void
@@ -59,25 +61,43 @@ class GenerateCertificateMessageHandler
             $logger->info('Account initialized. Creating new order');
             $order = $this->acmeClient->newOrder($cert->getDomain());
 
-            $logger->info('Order created. Creating DNS challenge record');
+            $acmeSubdomain = $this->getAcmeSubdomain($order->domain);
+            $logger->info('Order created. Creating DNS challenge record', [
+                'domain' => $order->domain,
+                'acmeSubdomain' => $acmeSubdomain,
+                'dnsRecordValue' => $order->dnsRecordValue,
+            ]);
             $dnsRecord = new CreateDnsRecordDto(
                 DnsRecordType::TXT,
-                '_acme-challenge',
+                $acmeSubdomain,
                 $order->dnsRecordValue,
                 ttl: 30
             );
             $this->dnsRecordService->createDnsRecord($dnsRecord);
 
-            $logger->info('DNS challenge record created. Waiting for DNS propagation (60 seconds)');
-            $this->clock->sleep(60);
+            $waitSeconds = 2;
+            $logger->info("DNS challenge record created. Waiting for DNS propagation ($waitSeconds seconds)");
+            $this->clock->sleep($waitSeconds);
 
             $logger->info('Finalizing order with ACME server');
             $certPem = $this->acmeClient->finalizeOrder($order, $privateKey);
         } catch (AcmeException $e) {
             $logger->error('ACME error occurred during certificate generation', [
-                'exception' => $e,
+                'exception' => $e->getMessage(),
             ]);
             return;
+        }
+    }
+
+    private function getAcmeSubdomain(string $fullDomain): string
+    {
+        $instanceDomain = $this->config->getInstanceDomain();
+        $suffix = '.' . $instanceDomain;
+        if (str_ends_with($fullDomain, $suffix)) {
+            $subdomain = substr($fullDomain, 0, -strlen($suffix));
+            return "_acme-challenge.$subdomain";
+        } else {
+            return '_acme-challenge';
         }
     }
 

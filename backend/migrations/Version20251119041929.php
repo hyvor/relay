@@ -33,7 +33,7 @@ final class Version20251119041929 extends AbstractMigration
             private_key_encrypted TEXT NOT NULL, -- PEM format, encrypted
             certificate TEXT, -- PEM format
             valid_from timestamptz,
-            valid_to timestamptz,
+            valid_to timestamptz
         )
         SQL
         );
