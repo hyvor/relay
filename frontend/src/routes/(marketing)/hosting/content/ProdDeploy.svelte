@@ -1,5 +1,5 @@
 <script>
-	import { CodeBlock, Table, TableRow } from '@hyvor/design/components';
+	import { Callout, CodeBlock, Table, TableRow } from '@hyvor/design/components';
 </script>
 
 <h1>Prod Deploy</h1>
@@ -37,7 +37,6 @@
 		and email queue.
 	</li>
 </ul>
-
 <h2 id="pgsql">PostgreSQL</h2>
 
 <p>
@@ -123,6 +122,27 @@ host    hyvor_relay    relay_servers xx.xx.xx.xx/yy    scram-sha-256`}
 <p>
 	Therefore, we recommend having <strong>at least 2 IP addresses per queue</strong> (there are 2 default
 	queues - "transactional" and "distributional") for production deployments.
+</p>
+
+<h3 id="oidc">OpenID Connect (OIDC) Provider</h3>
+
+<p>
+	Hyvor Relay relies on OIDC for authentication. Create an application for Hyvor Relay in our OIDC
+	provider. Make sure to allow the following URLs in your OIDC provider:
+</p>
+
+<ul>
+	<li>
+		<strong>Callback URL</strong>: <code>http://your-server-ip/api/oidc/callback</code>
+	</li>
+	<li>
+		<strong>Logout URL</strong>: <code>http://your-server-ip</code>
+	</li>
+</ul>
+
+<p>
+	Once the web domain is configured in the next steps, you can change the URLs to use the domain
+	instead of the IP address.
 </p>
 
 <h3 id="server-requirements">Server Requirements</h3>
@@ -222,6 +242,13 @@ compose.yaml			# Docker Compose file
 	</li>
 </ul>
 
+<Callout type="info">
+	<strong>Important:</strong> Do not add quotes around the values in the <code>.env</code> file (
+	<a href="https://github.com/docker/cli/issues/3630#issuecomment-1235260564" target="_blank"
+		>Docker Swarm bug</a
+	>)
+</Callout>
+
 <p>Then, run the following command to verify that the configuration is correct:</p>
 
 <CodeBlock code="docker compose run --rm relay bin/console verify" />
@@ -236,31 +263,21 @@ docker stack deploy -c compose.yaml relay
 `}
 />
 
-<!-- 
+<p>To verify that the service is running, use:</p>
 
-<h3 id="app-server-setup">App Server Setup</h3>
+<CodeBlock code="docker service ls" />
+
+<p>Check logs to make sure everything is working correctly:</p>
+
+<CodeBlock
+	code={`
+	# on each server
+	docker ps
+	docker logs -f <CONTAINER_ID>
+`}
+/>
 
 <p>
-	We recommend using a Linux distribution like Ubuntu or Debian for the app servers. Our Cloud
-	runs on Ubuntu 24.04 LTS. Each server should have <strong>Docker</strong> installed.
-</p> -->
-
-<!-- 
-
-Compose file
-
-services:
-  relay:
-    image: hyvor/relay:latest
-    deploy:
-      mode: global
-    networks:
-      - hostnet
-    labels:
-      app: relay
-
-networks:
-  hostnet:
-    name: "host"
-    external: true
--->
+	You should see the logs indicating that the application has run migrations, configured the
+	server and the IP addresses, and started the application (email workers, webhook workers, etc.).
+</p>
