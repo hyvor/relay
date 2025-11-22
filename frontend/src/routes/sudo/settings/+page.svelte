@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { Caption, SplitControl, Tag, Textarea, TextInput } from '@hyvor/design/components';
-	import { instanceStore } from '../sudoStore';
+	import { SplitControl, Tag } from '@hyvor/design/components';
 	import InstanceDomain from './instance/InstanceDomain.svelte';
 	import IconCheck from '@hyvor/icons/IconCheck';
+	import MailTlsCert from './instance/tlsmail/MailTlsCert.svelte';
 </script>
 
 <div class="settings">
@@ -29,12 +29,7 @@
 				label="Mail Server"
 				caption="Used in the incoming mail server (STARTTLS)."
 			>
-				<Tag color="green">
-					{#snippet start()}
-						<IconCheck />
-					{/snippet}
-					Enabled
-				</Tag>
+				<MailTlsCert />
 			</SplitControl>
 		{/snippet}
 	</SplitControl>

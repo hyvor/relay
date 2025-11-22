@@ -23,6 +23,14 @@ class TlsCertificateService
         return $this->em->getRepository(TlsCertificate::class)->find($id);
     }
 
+    public function getLatestCertificateByType(TlsCertificateType $type): ?TlsCertificate
+    {
+        return $this->em->getRepository(TlsCertificate::class)->findOneBy(
+            ['type' => $type],
+            ['id' => 'DESC']
+        );
+    }
+
     public function getDecryptedPrivateKey(TlsCertificate $cert): \OpenSSLAsymmetricKey
     {
         $privateKeyPem = $this->encryption->decryptString($cert->getPrivateKeyEncrypted());

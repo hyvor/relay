@@ -10,7 +10,8 @@ import type {
 	DefaultDnsRecord,
 	DnsRecordType,
 	DebugIncomingEmail,
-	InfrastructureBounce
+	InfrastructureBounce,
+	TlsCertificate
 } from './sudoTypes';
 
 export function initSudo() {
@@ -156,5 +157,11 @@ export function markInfrastructureBounceAsRead(id: number) {
 export function markAllInfrastructureBouncesAsRead() {
 	return sudoApi.post<{ marked_count: number }>({
 		endpoint: '/infrastructure-bounces/mark-all-as-read'
+	});
+}
+
+export function getTlsMailCerts() {
+	return sudoApi.get<{ current: TlsCertificate | null; latest: TlsCertificate | null }>({
+		endpoint: '/tls/mail'
 	});
 }
