@@ -18,7 +18,6 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class AcmeClient
 {
@@ -245,11 +244,12 @@ class AcmeClient
     {
         $this->waitForDns($order);
 
+        $waitSeconds = 10;
+        $this->logger->info("DNS challenge record verified, waiting $waitSeconds seconds before notifying ACME server");
+        $this->clock->sleep($waitSeconds);
+
         // notify challenge is ready
         $this->httpRequest($order->challengeUrl);
-        $this->logger->info('Notified ACME server that challenge is ready, polling for authorization status');
-
-        sleep(10);
 
         // poll for authorization status
         $maxAttempts = 10;
@@ -261,7 +261,7 @@ class AcmeClient
                 payload: "",
                 returnType: AuthorizationResponse::class
             );
-            sleep(2);
+            $this->clock->sleep(2);
 
             if ($attempt > 1) {
                 $this->logger->info('Polling ACME server for authorization status', [
@@ -297,7 +297,7 @@ class AcmeClient
         do {
             $attempt++;
             $response = $this->httpRequest($order->orderUrl, payload: "", returnType: OrderResponse::class);
-            sleep(2);
+            $this->clock->sleep(2);
             if ($attempt > 1) {
                 $this->logger->info('Polling ACME server for order status', [
                     'attempt' => $attempt,
@@ -386,7 +386,6 @@ class AcmeClient
             }
 
             $body = $response->toArray();
-            dump($url, $body);
             /** @var T $object */
             $object = $this->denormalizer->denormalize($body, $returnType);
 

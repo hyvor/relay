@@ -3,6 +3,7 @@
 namespace App\Service\Tls\Command;
 
 use App\Entity\Type\TlsCertificateType;
+use App\Service\App\Config;
 use App\Service\Tls\Message\GenerateCertificateMessage;
 use App\Service\Tls\TlsCertificateService;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -18,7 +19,8 @@ class GenerateMailTlsCertificateCommand extends Command
 
     public function __construct(
         private TlsCertificateService $tlsCertificateService,
-        private MessageBusInterface $bus
+        private MessageBusInterface $bus,
+        private Config $config,
     ) {
         parent::__construct();
     }
@@ -30,7 +32,7 @@ class GenerateMailTlsCertificateCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $domain = $input->getArgument('domain');
+        $domain = $input->getArgument('domain') ?? 'mx.' . $this->config->getInstanceDomain();
         assert(is_string($domain));
         $cert = $this->tlsCertificateService->createCertificate(
             TlsCertificateType::MAIL,
