@@ -14,6 +14,7 @@ use Hyvor\Internal\Bundle\Log\ContextualLogger;
 use Hyvor\Internal\Util\Crypt\Encryption;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
@@ -28,6 +29,7 @@ class GenerateCertificateMessageHandler
         private DnsRecordService $dnsRecordService,
         private Config $config,
         LoggerInterface $streamerLogger,
+        private LockFactory $lockFactory,
         private ClockInterface $clock,
     ) {
         $this->logger = ContextualLogger::forMessageHandler($streamerLogger, self::class);
@@ -35,6 +37,17 @@ class GenerateCertificateMessageHandler
 
     public function __invoke(GenerateCertificateMessage $message): void
     {
+        $lock = $this->lockFactory->createLockFromKey(
+            $message->getLockKey(),
+            300,
+            false
+        );
+
+        if (!$lock->acquire()) {
+            $this->logger->error('Could not acquire lock for TLS certificate generation, aborting');
+            return;
+        }
+
         $tlsCertificateId = $message->getTlsCertificateId();
         $cert = $this->tlsCertificateService->getCertificateById($tlsCertificateId);
 
@@ -86,6 +99,8 @@ class GenerateCertificateMessageHandler
                 'exception' => $e->getMessage(),
             ]);
             return;
+        } finally {
+            $lock->release();
         }
     }
 

@@ -165,3 +165,9 @@ export function getTlsMailCerts() {
 		endpoint: '/tls/mail-certs'
 	});
 }
+
+export function generateMailCert() {
+	return sudoApi.post<TlsCertificate>({
+		endpoint: '/tls/mail-certs/generate'
+	});
+}

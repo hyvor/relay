@@ -9,6 +9,7 @@ use App\Service\Dns\DnsRecordService;
 use App\Service\Domain\Dkim;
 use App\Service\Ip\IpAddressService;
 use App\Service\Ip\Ptr;
+use App\Service\MxServer\MxServer;
 
 class GoStateDnsRecordsService
 {
@@ -16,6 +17,7 @@ class GoStateDnsRecordsService
         private IpAddressService $ipAddressService,
         private DnsRecordService $dnsRecordService,
         private Config $config,
+        private MxServer $mxServer,
     ) {
     }
 
@@ -56,7 +58,7 @@ class GoStateDnsRecordsService
         $records[] = new GoStateDnsRecord(
             type: DnsRecordType::MX,
             host: $instanceDomain,
-            content: 'mx.' . $instanceDomain,
+            content: $this->mxServer->getMxHostname(),
             priority: 10
         );
 

@@ -4,6 +4,7 @@
 	import type { TlsCertificate } from '../../../sudoTypes';
 	import { onMount } from 'svelte';
 	import GenerateMailTls from './GenerateMailTls.svelte';
+	import TlsCertDisplay from './TlsCertDisplay.svelte';
 
 	let current: null | TlsCertificate = null;
 	let latest: null | TlsCertificate = null;
@@ -44,6 +45,16 @@
 		> and run a health check. You can also generate one manually:
 	</div>
 	<GenerateMailTls />
+{:else}
+	{#if current}
+		<TlsCertDisplay type="current" cert={current} />
+	{/if}
+
+	{#if latest}
+		<TlsCertDisplay type="latest" cert={latest} />
+	{/if}
+
+	<GenerateMailTls re />
 {/if}
 
 <style>

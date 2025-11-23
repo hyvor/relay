@@ -5,9 +5,13 @@ namespace App\Api\Sudo\Controller;
 use App\Api\Sudo\Object\TlsCertificateObject;
 use App\Entity\Type\TlsCertificateType;
 use App\Service\Instance\InstanceService;
+use App\Service\Tls\Exception\AnotherTlsGenerationRequestInProgressException;
+use App\Service\Tls\MailTlsGenerator;
 use App\Service\Tls\TlsCertificateService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
 class TlsController extends AbstractController
@@ -44,10 +48,15 @@ class TlsController extends AbstractController
         ]);
     }
 
-    #[Route('/tls/mail-certs', methods: 'POST')]
-    public function generateMailTlsCert(): JsonResponse
+    #[Route('/tls/mail-certs/generate', methods: 'POST')]
+    public function generateMailTlsCert(MailTlsGenerator $generator): JsonResponse
     {
-        //
+        try {
+            $cert = $generator->generate();
+        } catch (AnotherTlsGenerationRequestInProgressException) {
+            throw new BadRequestHttpException('Another TLS certificate generation request is already in progress.');
+        }
+        return new JsonResponse(new TlsCertificateObject($cert));
     }
 
 }
