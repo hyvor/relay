@@ -174,6 +174,10 @@
 		color: var(--text-light);
 	}
 
+	.nav-links :global(a.active) {
+		background-color: var(--accent-light) !important;
+	}
+
 	@media (max-width: 992px) {
 		.wrap {
 			width: 100%;
