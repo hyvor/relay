@@ -19,8 +19,8 @@ class TlsController extends AbstractController
     ) {
     }
 
-    #[Route('/tls/mail', methods: 'GET')]
-    public function getMailTls(): JsonResponse
+    #[Route('/tls/mail-certs', methods: 'GET')]
+    public function getMailTlsCertificates(): JsonResponse
     {
         $instance = $this->instanceService->getInstance();
 
@@ -42,6 +42,12 @@ class TlsController extends AbstractController
             // if another one is being generated
             'latest' => $latestCert ? new TlsCertificateObject($latestCert) : null
         ]);
+    }
+
+    #[Route('/tls/mail-certs', methods: 'POST')]
+    public function generateMailTlsCert(): JsonResponse
+    {
+        //
     }
 
 }

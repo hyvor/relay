@@ -162,6 +162,6 @@ export function markAllInfrastructureBouncesAsRead() {
 
 export function getTlsMailCerts() {
 	return sudoApi.get<{ current: TlsCertificate | null; latest: TlsCertificate | null }>({
-		endpoint: '/tls/mail'
+		endpoint: '/tls/mail-certs'
 	});
 }

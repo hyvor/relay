@@ -3,6 +3,7 @@
 	import { getTlsMailCerts } from '../../../sudoActions';
 	import type { TlsCertificate } from '../../../sudoTypes';
 	import { onMount } from 'svelte';
+	import GenerateMailTls from './GenerateMailTls.svelte';
 
 	let current: null | TlsCertificate = null;
 	let latest: null | TlsCertificate = null;
@@ -37,8 +38,12 @@
 {:else if current === null && latest === null}
 	<div class="none">
 		No TLS certificate configured yet. Incoming mail server will not advertise STARTTLS, and
-		emails will be sent without encryption.
+		emails will be sent without encryption. A certificate will be automatically generated after
+		you set up the <a href="/hosting/setup#instance-domain" target="_blank" class="hds-link"
+			>instance domain DNS</a
+		> and run a health check. You can also generate one manually:
 	</div>
+	<GenerateMailTls />
 {/if}
 
 <style>

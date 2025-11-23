@@ -12,7 +12,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(TlsController::class)]
 #[CoversClass(TlsCertificateService::class)]
-class GetMailTlsTest extends WebTestCase
+class GetMailTlsCertificatesTest extends WebTestCase
 {
 
     public function test_gets_mail_tls(): void
@@ -25,7 +25,7 @@ class GetMailTlsTest extends WebTestCase
 
         $this->sudoApi(
             'GET',
-            '/tls/mail',
+            '/tls/mail-certs',
         );
 
         $this->assertResponseIsSuccessful();
@@ -46,7 +46,7 @@ class GetMailTlsTest extends WebTestCase
 
         $this->sudoApi(
             'GET',
-            '/tls/mail',
+            '/tls/mail-certs',
         );
 
         $this->assertResponseIsSuccessful();
