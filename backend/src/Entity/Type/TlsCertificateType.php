@@ -9,5 +9,6 @@ enum TlsCertificateType: string
     case MAIL = 'mail';
 
     // anything else?
+    case OTHER = 'other'; // NOT USED YET, FOR PHPSTAN
 
 }

@@ -5,6 +5,7 @@ namespace App\Service\Tls;
 use App\Entity\TlsCertificate;
 use App\Entity\Type\TlsCertificateStatus;
 use App\Entity\Type\TlsCertificateType;
+use App\Service\Instance\InstanceService;
 use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Util\Crypt\Encryption;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -14,8 +15,11 @@ class TlsCertificateService
 
     use ClockAwareTrait;
 
-    public function __construct(private EntityManagerInterface $em, private Encryption $encryption)
-    {
+    public function __construct(
+        private EntityManagerInterface $em,
+        private Encryption $encryption,
+        private InstanceService $instanceService,
+    ) {
     }
 
     public function getCertificateById(int $id): ?TlsCertificate
@@ -70,12 +74,24 @@ class TlsCertificateService
         return $cert;
     }
 
-    public function setCertificate(TlsCertificate $cert, string $certPem): void
-    {
-        $cert->setStatus(TlsCertificateStatus::ACTIVE);
+    public function activateCertificate(
+        TlsCertificate $cert,
+        string $certPem,
+        \DateTimeImmutable $validFrom,
+        \DateTimeImmutable $validTo
+    ): void {
         $cert->setCertificate($certPem);
-
+        $cert->setValidFrom($validFrom);
+        $cert->setValidTo($validTo);
+        $cert->setStatus(TlsCertificateStatus::ACTIVE);
         $this->em->persist($cert);
+
+        if ($cert->getType() === TlsCertificateType::MAIL) {
+            $instance = $this->instanceService->getInstance();
+            $instance->setMailTlsCertificateId($cert->getId());
+            $this->em->persist($instance);
+        }
+
         $this->em->flush();
     }
 

@@ -93,7 +93,14 @@ class GenerateCertificateMessageHandler
             $this->clock->sleep($waitSeconds);
 
             $logger->info('Finalizing order with ACME server');
-            $certPem = $this->acmeClient->finalizeOrder($order, $privateKey);
+            $finalCertificate = $this->acmeClient->finalizeOrder($order, $privateKey);
+
+            $this->tlsCertificateService->activateCertificate(
+                $cert,
+                $finalCertificate->certificatePem,
+                $finalCertificate->validFrom,
+                $finalCertificate->validTo,
+            );
         } catch (AcmeException $e) {
             $logger->error('ACME error occurred during certificate generation', [
                 'exception' => $e->getMessage(),

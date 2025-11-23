@@ -8,6 +8,7 @@ use App\Service\Dns\Resolve\DnsType;
 use App\Service\Tls\Acme\Dto\AccountInternalDto;
 use App\Service\Tls\Acme\Dto\AuthorizationResponse\AuthorizationResponse;
 use App\Service\Tls\Acme\Dto\DirectoryDto;
+use App\Service\Tls\Acme\Dto\FinalCertificate;
 use App\Service\Tls\Acme\Dto\OrderResponse;
 use App\Service\Tls\Acme\Exception\AcmeException;
 use Psr\Log\LoggerInterface;
@@ -237,10 +238,9 @@ class AcmeClient
     }
 
     /**
-     * @return string PEM-encoded certificate
      * @throws AcmeException
      */
-    public function finalizeOrder(PendingOrder $order, \OpenSSLAsymmetricKey $privateKey): string
+    public function finalizeOrder(PendingOrder $order, \OpenSSLAsymmetricKey $privateKey): FinalCertificate
     {
         $this->waitForDns($order);
 
@@ -326,7 +326,7 @@ class AcmeClient
 
         $this->logger->info('Certificate downloaded successfully from ACME server');
 
-        return $certPem;
+        return FinalCertificate::fromPem($certPem);
     }
 
     private function csrPemToDer(string $pem): string

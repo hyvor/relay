@@ -75,4 +75,10 @@
 	.status {
 		margin-top: 3px;
 	}
+
+	.dates {
+		text-align: right;
+		font-size: 14px;
+		color: var(--text-light);
+	}
 </style>

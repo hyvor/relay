@@ -28,6 +28,7 @@
 			<SplitControl
 				label="Mail Server"
 				caption="Used in the incoming mail server (STARTTLS)."
+				column
 			>
 				<MailTlsCert />
 			</SplitControl>
