@@ -6,7 +6,7 @@
 	import { Button } from '@hyvor/design/components';
 </script>
 
-<Header logo="https://hyvor.com/api/public/logo/core.svg" subName="Relay" darkToggle={false}>
+<Header logo="https://hyvor.com/api/public/logo/relay.svg" subName="Relay" darkToggle={false}>
 	{#snippet end()}
 		<div class="docs">
 			<Button

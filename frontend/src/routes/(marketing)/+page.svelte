@@ -88,7 +88,7 @@
 		line-height: 32px;
 		margin-top: 12px;
 		margin-bottom: 18px;
-		color: var(--text-light);
+		color: #555;
 	}
 
 	.tags {
