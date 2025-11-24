@@ -103,6 +103,15 @@ class GoStateDnsRecordsService
             }
         }
 
+        // 7. A static TXT record that contains the instance UUID
+        // used for DNS pointed health check
+        $records[] = new GoStateDnsRecord(
+            type: DnsRecordType::TXT,
+            host: '_instance.' . $instanceDomain,
+            content: $instance->getUuid(),
+            ttl: 3600
+        );
+
         return $records;
     }
 
