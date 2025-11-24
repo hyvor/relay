@@ -52,7 +52,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "<p style=\"font-size:16px\">\n<img \n src=\"https://hyvor.com/api/public/logo/core.svg\"\n width=\"25\"\n /> Hyvor Relay\n </p>\n\n <hr />\n\n<h3>${info_instance_domain}</h3>\n\nenv: <strong>${info_env}</strong> <br />\nversion: <strong>${info_env}</strong>",
+        "content": "<p style=\"font-size:16px\">\n<img \n src=\"https://hyvor.com/api/public/logo/relay.svg\"\n width=\"25\"\n /> Hyvor Relay\n </p>\n\n <hr />\n\n<h3>${info_instance_domain}</h3>\n\nenv: <strong>${info_env}</strong> <br />\nversion: <strong>${info_env}</strong>",
         "mode": "html"
       },
       "pluginVersion": "11.5.2",

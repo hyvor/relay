@@ -71,11 +71,12 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		color: var(--accent);
 	}
 
 	.docs-link {
 		margin-top: 15px;
-		color: var(--text-light);
+		color: #555;
 	}
 	.docs-link a:hover {
 		text-decoration: underline;

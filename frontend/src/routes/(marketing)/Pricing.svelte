@@ -29,8 +29,8 @@
 						priceSubtext="Starting at €10,000/year"
 						features={[
 							'No AGPL-3.0 Obligations',
-							'Priority Support',
 							'Volume-Based Pricing',
+							'Enterprise Support',
 							'SLA Options'
 						]}
 						ctaText="Get Quote"
@@ -43,7 +43,7 @@
 				<div class="plans">
 					<Plan
 						name="Standard"
-						price="€30/month"
+						price="€30/month*"
 						priceSubtext="300,000 emails/month included"
 						features={[
 							'€1 per additional 10,000 emails',
@@ -57,6 +57,8 @@
 				</div>
 			</div>
 		</div>
+
+		<div class="star">* Cloud pricing is estimated and will be finalized at launch.</div>
 	</div>
 </div>
 
@@ -98,6 +100,13 @@
 
 	.plans {
 		display: flex;
+	}
+
+	.star {
+		font-size: 14px;
+		color: var(--text-light);
+		margin-top: 20px;
+		text-align: center;
 	}
 
 	/*	mobile styles 976px */

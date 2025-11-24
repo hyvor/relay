@@ -30,17 +30,17 @@
 				loading = false;
 			})
 			.catch((err) => {
-                if (err.code === 403) {
-                    if (err.message === 'You do not have sudo access.') {
-                        toast.error(err.message);
-                    } else {
-                        const url = new URL(err.data['login_url'], location.origin);
-                        url.searchParams.set('redirect', location.href);
-                        location.href = url.toString();
-                    }
-                } else {
-                    toast.error('Failed to initialize sudo: ' + err.message);
-                }
+				if (err.code === 403) {
+					if (err.message === 'You do not have sudo access.') {
+						toast.error(err.message);
+					} else {
+						const url = new URL(err.data['login_url'], location.origin);
+						url.searchParams.set('redirect', location.href);
+						location.href = url.toString();
+					}
+				} else {
+					toast.error('Failed to initialize sudo: ' + err.message);
+				}
 			});
 	});
 </script>
@@ -58,7 +58,7 @@
 		<main>
 			<HyvorBar
 				product="core"
-				logo="/img/logo.svg"
+				logo="https://hyvor.com/api/public/logo/relay.svg"
 				instance={$sudoConfigStore.instance}
 				cloud={$sudoConfigStore.hosting === 'cloud'}
 				config={{ name: 'Hyvor Relay', chat: false }}

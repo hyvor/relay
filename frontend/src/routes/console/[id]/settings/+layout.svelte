@@ -55,7 +55,7 @@
 		overflow: auto;
 	}
 	.nav :global(a.active) {
-		background-color: var(--accent-light-mid);
+		background-color: var(--accent-light);
 	}
 	.content {
 		flex: 1;

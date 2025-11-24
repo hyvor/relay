@@ -53,7 +53,7 @@
 		overflow: auto;
 	}
 	.nav :global(a.active) {
-		background-color: var(--accent-light-mid);
+		background-color: var(--accent-light) !important;
 	}
 	.content {
 		flex: 1;

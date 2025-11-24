@@ -1,4 +1,5 @@
 <script lang="ts">
+	import './app.css';
 	import { Base } from '@hyvor/design/components';
 	import { onMount } from 'svelte';
 	import { track } from '@hyvor/design/marketing';
@@ -17,9 +18,3 @@
 <Base>
 	{@render children?.()}
 </Base>
-
-<style>
-	:global(:root) {
-		--accent-light-mid: var(--accent-lightest);
-	}
-</style>
