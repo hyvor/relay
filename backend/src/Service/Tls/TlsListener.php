@@ -29,7 +29,7 @@ class TlsListener
         }
 
         try {
-            $this->mailTlsGenerator->generate();
+            $this->mailTlsGenerator->dispatchToGenerate();
             // @codeCoverageIgnoreStart
         } catch (AnotherTlsGenerationRequestInProgressException) {
             return; // ignore

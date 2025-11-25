@@ -4,12 +4,14 @@ namespace App\Service\Tls;
 
 use App\Entity\TlsCertificate;
 use App\Entity\Type\TlsCertificateType;
+use App\Service\App\MessageTransport;
 use App\Service\MxServer\MxServer;
 use App\Service\Tls\Exception\AnotherTlsGenerationRequestInProgressException;
 use App\Service\Tls\Message\GenerateCertificateMessage;
 use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\TransportNamesStamp;
 
 class MailTlsGenerator
 {
@@ -27,7 +29,7 @@ class MailTlsGenerator
     /**
      * @throws AnotherTlsGenerationRequestInProgressException
      */
-    public function generate(): TlsCertificate
+    public function dispatchToGenerate(string $transport = MessageTransport::ASYNC): TlsCertificate
     {
         $key = new Key(self::LOCK_NAME);
         $lock = $this->lockFactory->createLockFromKey(
@@ -47,7 +49,9 @@ class MailTlsGenerator
         );
 
         $message = new GenerateCertificateMessage($cert->getId(), $key);
-        $this->bus->dispatch($message);
+        $this->bus->dispatch($message, [
+            new TransportNamesStamp($transport)
+        ]);
 
         return $cert;
     }

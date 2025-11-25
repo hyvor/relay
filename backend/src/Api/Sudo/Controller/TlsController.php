@@ -52,7 +52,7 @@ class TlsController extends AbstractController
     public function generateMailTlsCert(MailTlsGenerator $generator): JsonResponse
     {
         try {
-            $cert = $generator->generate();
+            $cert = $generator->dispatchToGenerate();
         } catch (AnotherTlsGenerationRequestInProgressException) {
             throw new BadRequestHttpException('Another TLS certificate generation request is already in progress.');
         }

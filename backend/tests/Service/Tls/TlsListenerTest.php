@@ -17,7 +17,7 @@ class TlsListenerTest extends KernelTestCase
     public function test_calls_mail_tls_generator_on_dns_server_correctly_pointed_event(): void
     {
         $generator = $this->createMock(MailTlsGenerator::class);
-        $generator->expects($this->once())->method('generate');
+        $generator->expects($this->once())->method('dispatchToGenerate');
         $this->container->set(MailTlsGenerator::class, $generator);
 
         $event = new DnsServerCorrectlyPointedEvent();
@@ -30,7 +30,7 @@ class TlsListenerTest extends KernelTestCase
         $instance = InstanceFactory::createOne(['mail_tls_certificate_id' => $tlsCert->getId()]);
 
         $generator = $this->createMock(MailTlsGenerator::class);
-        $generator->expects($this->never())->method('generate');
+        $generator->expects($this->never())->method('dispatchToGenerate');
         $this->container->set(MailTlsGenerator::class, $generator);
 
         $event = new DnsServerCorrectlyPointedEvent();

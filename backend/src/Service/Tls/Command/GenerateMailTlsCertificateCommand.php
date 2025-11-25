@@ -4,6 +4,9 @@ namespace App\Service\Tls\Command;
 
 use App\Entity\Type\TlsCertificateType;
 use App\Service\App\Config;
+use App\Service\App\MessageTransport;
+use App\Service\Tls\Exception\AnotherTlsGenerationRequestInProgressException;
+use App\Service\Tls\MailTlsGenerator;
 use App\Service\Tls\Message\GenerateCertificateMessage;
 use App\Service\Tls\TlsCertificateService;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -18,31 +21,19 @@ class GenerateMailTlsCertificateCommand extends Command
 {
 
     public function __construct(
-        private TlsCertificateService $tlsCertificateService,
-        private MessageBusInterface $bus,
-        private Config $config,
+        private MailTlsGenerator $mailTlsGenerator,
     ) {
         parent::__construct();
     }
 
-    protected function configure(): void
-    {
-        $this->addArgument('domain');
-    }
-
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $domain = $input->getArgument('domain') ?? 'mx.' . $this->config->getInstanceDomain();
-        assert(is_string($domain));
-        $cert = $this->tlsCertificateService->createCertificate(
-            TlsCertificateType::MAIL,
-            $domain
-        );
-
-        $message = new GenerateCertificateMessage($cert->getId());
-        $this->bus->dispatch($message, [
-            new TransportNamesStamp('sync') // handle immediately
-        ]);
+        try {
+            $this->mailTlsGenerator->dispatchToGenerate(MessageTransport::SYNC);
+        } catch (AnotherTlsGenerationRequestInProgressException) {
+            $output->writeln('<error>Another TLS generation request is already in progress. Aborting.</error>');
+            return Command::FAILURE;
+        }
 
         return Command::SUCCESS;
     }
