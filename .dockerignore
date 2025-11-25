@@ -1,1 +1,7 @@
 .git
+node_modules
+.svelte-kit
+vendor
+frontend/build
+backend/var
+tmp/
