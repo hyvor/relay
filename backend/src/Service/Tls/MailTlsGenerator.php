@@ -9,9 +9,7 @@ use App\Service\Tls\Exception\AnotherTlsGenerationRequestInProgressException;
 use App\Service\Tls\Message\GenerateCertificateMessage;
 use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\LockFactory;
-use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\Messenger\Stamp\TransportNamesStamp;
 
 class MailTlsGenerator
 {

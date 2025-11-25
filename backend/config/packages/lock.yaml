@@ -1,2 +1,6 @@
 framework:
-    lock: '%env(DATABASE_URL)%'
+  lock: '%env(DATABASE_URL)%'
+
+when@test:
+  framework:
+    lock: 'in-memory'
