@@ -6,7 +6,7 @@
 	import { Button } from '@hyvor/design/components';
 </script>
 
-<Header logo="https://hyvor.com/api/public/logo/relay.svg" subName="Relay" darkToggle={false}>
+<Header product="relay" subName="Relay" darkToggle={false}>
 	{#snippet end()}
 		<div class="docs">
 			<Button
@@ -54,7 +54,8 @@
 <style>
 	.docs {
 		display: flex;
-		gap: 12px;
+		gap: 8px;
 		align-items: center;
+		margin-right: 12px;
 	}
 </style>
