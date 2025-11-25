@@ -11,6 +11,8 @@ use App\Service\Tls\Acme\Dto\DirectoryDto;
 use App\Service\Tls\Acme\Dto\FinalCertificate;
 use App\Service\Tls\Acme\Dto\OrderResponse;
 use App\Service\Tls\Acme\Exception\AcmeException;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -20,8 +22,10 @@ use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-class AcmeClient
+class AcmeClient implements LoggerAwareInterface
 {
+
+    use LoggerAwareTrait;
 
     public const string DIRECTORY_URL_LETSENCRYPT_PRODUCTION = 'https://acme-v02.api.letsencrypt.org/directory';
     public const string DIRECTORY_URL_LETSENCRYPT_STAGING = 'https://acme-staging-v02.api.letsencrypt.org/directory';
@@ -34,7 +38,6 @@ class AcmeClient
 
     public function __construct(
         private HttpClientInterface $http,
-        private LoggerInterface $logger,
         private CacheInterface $cache,
         private DenormalizerInterface $denormalizer,
         private ClockInterface $clock,
@@ -47,11 +50,6 @@ class AcmeClient
         } else {
             $this->directoryUrl = self::DIRECTORY_URL_LETSENCRYPT_STAGING;
         }
-    }
-
-    public function setLogger(LoggerInterface $logger): void
-    {
-        $this->logger = $logger;
     }
 
     /**
@@ -109,7 +107,7 @@ class AcmeClient
      */
     private function newAccount(): AccountInternalDto
     {
-        $this->logger->info('Creating new ACME account');
+        $this->logger?->info('Creating new ACME account');
 
         $payload = [
             'contact' => [],
@@ -140,7 +138,7 @@ class AcmeClient
      */
     public function newOrder(string $domain): PendingOrder
     {
-        $this->logger->info('Calling new order endpoint');
+        $this->logger?->info('Calling new order endpoint');
         $payload = [
             'identifiers' => [
                 ['type' => 'dns', 'value' => $domain],
@@ -159,7 +157,7 @@ class AcmeClient
             throw new AcmeException('No order URL returned from ACME server');
         }
 
-        $this->logger->info('Order created successfully, fetching authorization', [
+        $this->logger?->info('Order created successfully, fetching authorization', [
             'authorizationUrls' => $response->authorizations,
         ]);
         $authorizationUrl = $response->firstAuthorizationUrl();
@@ -171,7 +169,7 @@ class AcmeClient
             returnType: AuthorizationResponse::class,
         );
 
-        $this->logger->info('Authorization fetched, preparing DNS-01 challenge response');
+        $this->logger?->info('Authorization fetched, preparing DNS-01 challenge response');
         $dnsChallenge = $authorization->getFirstDns01Challenge();
         $thumbprint = $this->base64url(
             hash('sha256', (string)json_encode($this->getJwk()), true)
@@ -211,13 +209,13 @@ class AcmeClient
                 $foundValues = [];
                 foreach ($resolved->answers as $answer) {
                     if ($answer->getCleanedTxt() === $order->dnsRecordValue) {
-                        $this->logger->info('DNS challenge record found via DNS resolver, good to proceed');
+                        $this->logger?->info('DNS challenge record found via DNS resolver, good to proceed');
                         return;
                     }
                     $foundValues[] = $answer->getCleanedTxt();
                 }
 
-                $this->logger->info(
+                $this->logger?->info(
                     "DNS challenge record not found yet, waiting for {$sleepSeconds}s before retrying",
                     [
                         'attempt' => "$attempt/$maxAttempts",
@@ -245,7 +243,9 @@ class AcmeClient
         $this->waitForDns($order);
 
         $waitSeconds = 10;
-        $this->logger->info("DNS challenge record verified, waiting $waitSeconds seconds before notifying ACME server");
+        $this->logger?->info(
+            "DNS challenge record verified, waiting $waitSeconds seconds before notifying ACME server"
+        );
         $this->clock->sleep($waitSeconds);
 
         // notify challenge is ready
@@ -264,7 +264,7 @@ class AcmeClient
             $this->clock->sleep(2);
 
             if ($attempt > 1) {
-                $this->logger->info('Polling ACME server for authorization status', [
+                $this->logger?->info('Polling ACME server for authorization status', [
                     'attempt' => $attempt,
                     'status' => $authorization->status,
                 ]);
@@ -276,7 +276,7 @@ class AcmeClient
         }
 
         // Finalize order
-        $this->logger->info('Authorization valid, proceeding to finalize order');
+        $this->logger?->info('Authorization valid, proceeding to finalize order');
         $csr = openssl_csr_new(['CN' => $order->domain], $privateKey, ['digest_alg' => 'sha256']);
         if (!$csr instanceof \OpenSSLCertificateSigningRequest) {
             throw new AcmeException('Failed to generate CSR: ' . openssl_error_string());
@@ -292,14 +292,14 @@ class AcmeClient
 
         // At this point, the order is being processed by the ACME server.
         // Poll the order URL until the certificate is ready to be downloaded.
-        $this->logger->info('ACME client finalized order. Polling for order status to be "valid"');
+        $this->logger?->info('ACME client finalized order. Polling for order status to be "valid"');
         $attempt = 0;
         do {
             $attempt++;
             $response = $this->httpRequest($order->orderUrl, payload: "", returnType: OrderResponse::class);
             $this->clock->sleep(2);
             if ($attempt > 1) {
-                $this->logger->info('Polling ACME server for order status', [
+                $this->logger?->info('Polling ACME server for order status', [
                     'attempt' => $attempt,
                     'status' => $response->status,
                 ]);
@@ -321,10 +321,10 @@ class AcmeClient
         }
 
         // Download certificate
-        $this->logger->info('Order is valid. Downloading certificate from ACME server');
+        $this->logger?->info('Order is valid. Downloading certificate from ACME server');
         $certPem = $this->httpRequest($response->certificate, payload: "", returnRawContent: true);
 
-        $this->logger->info('Certificate downloaded successfully from ACME server');
+        $this->logger?->info('Certificate downloaded successfully from ACME server');
 
         return FinalCertificate::fromPem($certPem);
     }
@@ -391,7 +391,7 @@ class AcmeClient
 
             return $object;
         } catch (ExceptionInterface $e) {
-            $this->logger->error('HTTP request to ACME server failed', [
+            $this->logger?->error('HTTP request to ACME server failed', [
                 'url' => $url,
                 'payload' => $payload,
                 'exception' => $e->getMessage(),
@@ -399,7 +399,7 @@ class AcmeClient
 
             throw new AcmeException('HTTP request failed: ' . $e->getMessage());
         } catch (\Symfony\Component\Serializer\Exception\ExceptionInterface $e) {
-            $this->logger->error('Failed to deserialize ACME server response', [
+            $this->logger?->error('Failed to deserialize ACME server response', [
                 'url' => $url,
                 'payload' => $payload,
                 'exception' => $e->getMessage(),

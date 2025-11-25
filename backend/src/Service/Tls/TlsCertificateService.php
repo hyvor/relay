@@ -67,13 +67,7 @@ class TlsCertificateService
         TlsCertificateType $type,
         string $domain
     ): TlsCertificate {
-        $privateKeyResource = openssl_pkey_new([
-            'private_key_type' => OPENSSL_KEYTYPE_RSA,
-            'private_key_bits' => 2048,
-        ]);
-        assert($privateKeyResource !== false);
-        openssl_pkey_export($privateKeyResource, $privateKeyPem);
-        assert(is_string($privateKeyPem));
+        $privateKeyPem = PrivateKey::generatePrivateKeyPem();
         $encryptedPrivateKey = $this->encryption->encryptString($privateKeyPem);
 
         $cert = new TlsCertificate();

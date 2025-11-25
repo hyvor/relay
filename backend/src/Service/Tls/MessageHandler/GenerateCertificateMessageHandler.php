@@ -2,6 +2,7 @@
 
 namespace App\Service\Tls\MessageHandler;
 
+use App\Entity\DnsRecord;
 use App\Entity\Type\DnsRecordType;
 use App\Service\App\Config;
 use App\Service\Dns\DnsRecordService;
@@ -11,7 +12,6 @@ use App\Service\Tls\Acme\Exception\AcmeException;
 use App\Service\Tls\Message\GenerateCertificateMessage;
 use App\Service\Tls\TlsCertificateService;
 use Hyvor\Internal\Bundle\Log\ContextualLogger;
-use Hyvor\Internal\Util\Crypt\Encryption;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Lock\LockFactory;
@@ -65,6 +65,9 @@ class GenerateCertificateMessageHandler
             'domain' => $cert->getDomain(),
         ]);
 
+        /** @var ?DnsRecord $dnsRecord */
+        $dnsRecord = null;
+
         try {
             $logger->info('Starting ACME client and setting up an account');
 
@@ -80,15 +83,17 @@ class GenerateCertificateMessageHandler
                 'acmeSubdomain' => $acmeSubdomain,
                 'dnsRecordValue' => $order->dnsRecordValue,
             ]);
-            $dnsRecord = new CreateDnsRecordDto(
-                DnsRecordType::TXT,
-                $acmeSubdomain,
-                $order->dnsRecordValue,
-                ttl: 30
-            );
-            $this->dnsRecordService->createDnsRecord($dnsRecord);
 
-            $waitSeconds = 2;
+            $dnsRecord = $this->dnsRecordService->createDnsRecord(
+                new CreateDnsRecordDto(
+                    DnsRecordType::TXT,
+                    $acmeSubdomain,
+                    $order->dnsRecordValue,
+                    ttl: 30
+                )
+            );
+
+            $waitSeconds = 10;
             $logger->info("DNS challenge record created. Waiting for DNS propagation ($waitSeconds seconds)");
             $this->clock->sleep($waitSeconds);
 
@@ -107,6 +112,13 @@ class GenerateCertificateMessageHandler
             ]);
             return;
         } finally {
+            if ($dnsRecord !== null) {
+                $this->dnsRecordService->deleteDnsRecord($dnsRecord);
+                $logger->info('DNS challenge record deleted', [
+                    'dnsRecordId' => $dnsRecord->getId(),
+                ]);
+            }
+
             $lock->release();
         }
     }
@@ -119,7 +131,7 @@ class GenerateCertificateMessageHandler
             $subdomain = substr($fullDomain, 0, -strlen($suffix));
             return "_acme-challenge.$subdomain";
         } else {
-            return '_acme-challenge';
+            return '_acme-challenge'; // @codeCoverageIgnore
         }
     }
 
