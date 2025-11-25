@@ -34,7 +34,7 @@ class DnsServerPointedHealthCheck extends HealthCheckAbstract
 
         try {
             $dnsAnswer = $this->dnsResolve->resolve(
-                "_instance." . $this->config->getInstanceDomain(),
+                "_hash." . $this->config->getInstanceDomain(),
                 DnsType::TXT
             );
         } catch (DnsResolvingFailedException $e) {
@@ -61,9 +61,10 @@ class DnsServerPointedHealthCheck extends HealthCheckAbstract
         }
 
         $txtValue = $txtRecord->getCleanedTxt();
-        if ($txtValue !== $instance->getUuid()) {
+        $expectedValue = hash('sha256', $instance->getUuid());
+        if ($txtValue !== $expectedValue) {
             $this->setData([
-                'error' => "The TXT record content does not match the instance UUID. Expected {$instance->getUuid()}, found {$txtValue}.",
+                'error' => "The TXT record content does not match the instance UUID. Expected {$expectedValue}, found {$txtValue}.",
             ]);
             return false;
         }

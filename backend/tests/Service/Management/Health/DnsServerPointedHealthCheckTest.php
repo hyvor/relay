@@ -70,7 +70,7 @@ class DnsServerPointedHealthCheckTest extends KernelTestCase
         $dnsResolver->method('resolve')
             ->willReturn(
                 new ResolveResult(0, [
-                    new ResolveAnswer('name', $instance->getUuid())
+                    new ResolveAnswer('name', hash('sha256', $instance->getUuid()))
                 ])
             );
         $this->container->set(DnsResolveInterface::class, $dnsResolver);

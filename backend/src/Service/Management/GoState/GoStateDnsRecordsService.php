@@ -87,7 +87,16 @@ class GoStateDnsRecordsService
             ttl: 3600
         );
 
-        // 6. Custom DNS records
+        // 6. A static TXT record that contains a hash of the instance UUID
+        // used for DNS pointed health check
+        $records[] = new GoStateDnsRecord(
+            type: DnsRecordType::TXT,
+            host: '_hash.' . $instanceDomain,
+            content: hash('sha256', $instance->getUuid()),
+            ttl: 3600
+        );
+
+        // 7. Custom DNS records
         if ($custom) {
             $customDnsRecords = $this->dnsRecordService->getAllDnsRecords();
             foreach ($customDnsRecords as $dnsRecord) {
@@ -102,15 +111,6 @@ class GoStateDnsRecordsService
                 );
             }
         }
-
-        // 7. A static TXT record that contains the instance UUID
-        // used for DNS pointed health check
-        $records[] = new GoStateDnsRecord(
-            type: DnsRecordType::TXT,
-            host: '_instance.' . $instanceDomain,
-            content: $instance->getUuid(),
-            ttl: 3600
-        );
 
         return $records;
     }
