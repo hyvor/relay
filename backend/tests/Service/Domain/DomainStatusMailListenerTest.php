@@ -20,7 +20,7 @@ class DomainStatusMailListenerTest extends KernelTestCase
 //            DomainStatus::ACTIVE,
 //        );
 //
-//        $this->ed->dispatch($event);
+//        $this->getEd()->dispatch($event);
     }
 
 }

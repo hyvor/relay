@@ -7,12 +7,16 @@ use App\Service\Dns\Resolve\DnsResolvingFailedException;
 use App\Service\Dns\Resolve\ResolveAnswer;
 use App\Service\Dns\Resolve\ResolveResult;
 use App\Service\Management\Health\DnsServerPointedHealthCheck;
+use App\Service\Management\Health\Event\DnsServerCorrectlyPointedEvent;
 use App\Tests\Case\KernelTestCase;
+use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\InstanceFactory;
+use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 
 #[CoversClass(DnsServerPointedHealthCheck::class)]
+#[CoversClass(DnsServerCorrectlyPointedEvent::class)]
 class DnsServerPointedHealthCheckTest extends KernelTestCase
 {
 
@@ -59,6 +63,7 @@ class DnsServerPointedHealthCheckTest extends KernelTestCase
 
     public function test_dns_server_pointed_check(): void
     {
+        $ed = TestEventDispatcher::enable($this->container);
         $instance = InstanceFactory::createOne();
 
         $dnsResolver = $this->createMock(DnsResolveInterface::class);
@@ -73,6 +78,8 @@ class DnsServerPointedHealthCheckTest extends KernelTestCase
         $check = $this->getService(DnsServerPointedHealthCheck::class);
         $result = $check->check();
         $this->assertTrue($result);
+
+        $ed->assertDispatched(DnsServerCorrectlyPointedEvent::class);
     }
 
 }

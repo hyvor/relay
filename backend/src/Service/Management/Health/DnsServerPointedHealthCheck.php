@@ -7,6 +7,8 @@ use App\Service\Dns\Resolve\DnsResolveInterface;
 use App\Service\Dns\Resolve\DnsResolvingFailedException;
 use App\Service\Dns\Resolve\DnsType;
 use App\Service\Instance\InstanceService;
+use App\Service\Management\Health\Event\DnsServerCorrectlyPointedEvent;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Checks if the DNS server is correctly pointed by verifying a static DNS records:
@@ -22,6 +24,7 @@ class DnsServerPointedHealthCheck extends HealthCheckAbstract
         private InstanceService $instanceService,
         private Config $config,
         private DnsResolveInterface $dnsResolve,
+        private EventDispatcherInterface $ed,
     ) {
     }
 
@@ -64,6 +67,8 @@ class DnsServerPointedHealthCheck extends HealthCheckAbstract
             ]);
             return false;
         }
+
+        $this->ed->dispatch(new DnsServerCorrectlyPointedEvent());
 
         return true;
     }

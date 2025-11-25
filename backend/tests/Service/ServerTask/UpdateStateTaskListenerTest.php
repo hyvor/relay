@@ -37,7 +37,7 @@ class UpdateStateTaskListenerTest extends KernelTestCase
             createUpdateStateTask: false
         );
 
-        $this->ed->dispatch($event);
+        $this->getEd()->dispatch($event);
 
         $serverTasks = $this->getService(ServerTaskRepository::class)->findAll();
         $this->assertCount(0, $serverTasks);
@@ -56,7 +56,7 @@ class UpdateStateTaskListenerTest extends KernelTestCase
             updates: $updates,
             createUpdateStateTask: true
         );
-        $this->ed->dispatch($event);
+        $this->getEd()->dispatch($event);
 
         $serverTasks = $this->getService(ServerTaskRepository::class)->findAll();
         $this->assertCount(1, $serverTasks);
@@ -79,7 +79,7 @@ class UpdateStateTaskListenerTest extends KernelTestCase
             $updates
         );
 
-        $this->ed->dispatch($event);
+        $this->getEd()->dispatch($event);
 
         $serverTasks = $this->getService(ServerTaskRepository::class)->findAll();
         $this->assertCount(1, $serverTasks);
@@ -93,7 +93,7 @@ class UpdateStateTaskListenerTest extends KernelTestCase
         $server = ServerFactory::createOne();
         $event = new CustomDnsRecordsChangedEvent();
 
-        $this->ed->dispatch($event);
+        $this->getEd()->dispatch($event);
 
         $serverTasks = $this->getService(ServerTaskRepository::class)->findAll();
         $this->assertCount(1, $serverTasks);

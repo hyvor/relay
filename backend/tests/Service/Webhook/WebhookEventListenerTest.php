@@ -70,7 +70,7 @@ class WebhookEventListenerTest extends KernelTestCase
         // not selected, other project
         $webhook4 = WebhookFactory::createOne(['events' => [WebhooksEventEnum::DOMAIN_CREATED]]);
 
-        $this->ed->dispatch(new DomainCreatedEvent($domain));
+        $this->getEd()->dispatch(new DomainCreatedEvent($domain));
 
         $deliveries = $this->em->getRepository(WebhookDelivery::class)->findAll();
 
@@ -166,7 +166,7 @@ class WebhookEventListenerTest extends KernelTestCase
             'send_recipient_id' => $recipient->getId(),
         ]);
 
-        $this->ed->dispatch(new SendAttemptCreatedEvent($attempt));
+        $this->getEd()->dispatch(new SendAttemptCreatedEvent($attempt));
 
         $this->assertWebhookDeliveryCreated(
             $project,
@@ -192,7 +192,7 @@ class WebhookEventListenerTest extends KernelTestCase
         $sendRecipient = SendRecipientFactory::createOne(['send' => $send]);
         $this->createWebhook($project, WebhooksEventEnum::SEND_RECIPIENT_BOUNCED);
         $bounce = new BounceDto('Test bounce', '5.1.1');
-        $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient, $bounce));
+        $this->getEd()->dispatch(new IncomingBounceEvent($send, $sendRecipient, $bounce));
 
         $this->assertWebhookDeliveryCreated(
             $project,
@@ -218,7 +218,7 @@ class WebhookEventListenerTest extends KernelTestCase
         $sendRecipient = SendRecipientFactory::createOne(['send' => $send]);
         $this->createWebhook($project, WebhooksEventEnum::SEND_RECIPIENT_COMPLAINED);
         $complaint = new ComplaintDto('Test complaint', 'spam');
-        $this->ed->dispatch(new IncomingComplaintEvent($send, $sendRecipient, $complaint));
+        $this->getEd()->dispatch(new IncomingComplaintEvent($send, $sendRecipient, $complaint));
 
         $this->assertWebhookDeliveryCreated(
             $project,
@@ -244,7 +244,7 @@ class WebhookEventListenerTest extends KernelTestCase
         $sendRecipient = SendRecipientFactory::createOne(['send' => $send]);
         $this->createWebhook($project, WebhooksEventEnum::SEND_RECIPIENT_SUPPRESSED);
         $suppression = SuppressionFactory::createOne(['project' => $project, 'email' => 'supun@hyvor.com']);
-        $this->ed->dispatch(new SendRecipientSuppressedEvent($sendRecipient, $suppression));
+        $this->getEd()->dispatch(new SendRecipientSuppressedEvent($sendRecipient, $suppression));
 
         $this->assertWebhookDeliveryCreated(
             $project,
@@ -268,7 +268,7 @@ class WebhookEventListenerTest extends KernelTestCase
         $project = ProjectFactory::createOne();
         $domain = DomainFactory::createOne(['project' => $project]);
         $this->createWebhook($project, WebhooksEventEnum::DOMAIN_CREATED);
-        $this->ed->dispatch(new DomainCreatedEvent($domain));
+        $this->getEd()->dispatch(new DomainCreatedEvent($domain));
 
         $this->assertWebhookDeliveryCreated(
             $project,
@@ -290,7 +290,7 @@ class WebhookEventListenerTest extends KernelTestCase
         $result->verified = true;
         $result->checkedAt = new \DateTimeImmutable();
 
-        $this->ed->dispatch(
+        $this->getEd()->dispatch(
             new DomainStatusChangedEvent(
                 $domain,
                 DomainStatus::PENDING,
@@ -318,7 +318,7 @@ class WebhookEventListenerTest extends KernelTestCase
         $project = ProjectFactory::createOne();
         $domain = DomainFactory::createOne(['project' => $project]);
         $this->createWebhook($project, WebhooksEventEnum::DOMAIN_DELETED);
-        $this->ed->dispatch(new DomainDeletedEvent($domain));
+        $this->getEd()->dispatch(new DomainDeletedEvent($domain));
 
         $this->assertWebhookDeliveryCreated(
             $project,
@@ -335,7 +335,7 @@ class WebhookEventListenerTest extends KernelTestCase
         $project = ProjectFactory::createOne();
         $suppression = SuppressionFactory::createOne(['project' => $project]);
         $this->createWebhook($project, WebhooksEventEnum::SUPPRESSION_CREATED);
-        $this->ed->dispatch(new SuppressionCreatedEvent($suppression));
+        $this->getEd()->dispatch(new SuppressionCreatedEvent($suppression));
 
         $this->assertWebhookDeliveryCreated(
             $project,
@@ -352,7 +352,7 @@ class WebhookEventListenerTest extends KernelTestCase
         $project = ProjectFactory::createOne();
         $suppression = SuppressionFactory::createOne(['project' => $project]);
         $this->createWebhook($project, WebhooksEventEnum::SUPPRESSION_DELETED);
-        $this->ed->dispatch(new SuppressionDeletedEvent($suppression));
+        $this->getEd()->dispatch(new SuppressionDeletedEvent($suppression));
 
         $this->assertWebhookDeliveryCreated(
             $project,
