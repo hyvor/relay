@@ -52,6 +52,15 @@ class GoState
          */
         public bool $isLeader,
 
+        // MAIL SERVER ================
+
+        /**
+         * Whether mail TLS is enabled and private key and certificate are available
+         * @var array{enabled: bool, privateKey: string, certificate: string}
+         */
+        public array $mailTls,
+
+        // DNS SERVER ================
         /**
          * Whether to run the DNS server and data for it
          */
@@ -59,6 +68,7 @@ class GoState
         /** @var GoStateDnsRecord[] */
         public array $dnsRecords,
 
+        // METRICS ==================
         public int $serversCount,
         public string $env,
         public string $version,

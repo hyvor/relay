@@ -1,17 +1,9 @@
 <script>
-	import { IconButton } from '@hyvor/design/components';
-	import IconPencil from '@hyvor/icons/IconPencil';
 	import { instanceStore } from './sudoStore';
 </script>
 
 <div class="instance-domain">
 	<div class="value">{$instanceStore.domain}</div>
-
-	<a href="/sudo/settings?instance-domain">
-		<IconButton size={22} color="input">
-			<IconPencil size={11} />
-		</IconButton>
-	</a>
 </div>
 
 <style>

@@ -58,12 +58,12 @@ class RateLimitListener
     public function onController(ControllerEvent $controllerEvent): void
     {
         if ($controllerEvent->isMainRequest() === false) {
-            return;
+            return; // @codeCoverageIgnore
         }
 
         $request = $controllerEvent->getRequest();
         if (!$this->isConsoleApiRequest($request)) {
-            return;
+            return; // @codeCoverageIgnore
         }
 
         $limiter = $this->getRateLimiter($request);
@@ -86,12 +86,12 @@ class RateLimitListener
     public function onResponse(ResponseEvent $responseEvent): void
     {
         if ($responseEvent->isMainRequest() === false) {
-            return;
+            return; // @codeCoverageIgnore
         }
 
         $request = $responseEvent->getRequest();
         if (!$this->isConsoleApiRequest($request)) {
-            return;
+            return; // @codeCoverageIgnore
         }
 
         $response = $responseEvent->getResponse();

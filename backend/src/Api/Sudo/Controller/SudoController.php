@@ -7,6 +7,7 @@ use App\Api\Sudo\Object\InstanceObject;
 use App\Service\App\Config;
 use App\Service\Blacklist\IpBlacklists;
 use App\Service\Instance\InstanceService;
+use App\Service\Tls\TlsCertificateService;
 use Hyvor\Internal\InternalConfig;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;

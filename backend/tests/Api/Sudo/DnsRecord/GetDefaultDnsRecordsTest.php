@@ -22,7 +22,8 @@ class GetDefaultDnsRecordsTest extends WebTestCase
     public function test_get_default_dns_records(): void
     {
         $instance = InstanceFactory::createOne([
-            'dkim_public_key' => 'testkey'
+            'dkim_public_key' => 'testkey',
+            'uuid' => '846fa554-e6c6-47a9-850d-8b7a5d4866c7'
         ]);
 
         $server1 = ServerFactory::createOne();
@@ -36,7 +37,7 @@ class GetDefaultDnsRecordsTest extends WebTestCase
         /** @var array<array{type: string, host: string, content: string}> $json */
         $json = $this->getJson();
 
-        $this->assertCount(8, $json);
+        $this->assertCount(9, $json);
 
         $records = [
             [
@@ -83,6 +84,12 @@ class GetDefaultDnsRecordsTest extends WebTestCase
                 'host' => 'default._domainkey.mail.hyvor-relay.com',
                 'content' => 'v=DKIM1; k=rsa; p=testkey'
             ],
+            // HASH
+            [
+                'type' => 'TXT',
+                'host' => '_hash.mail.hyvor-relay.com',
+                'content' => 'd34e759a31b9ebe11ebb46ab4d23f4247052ab098f8f48dceef5293d0e4665f3',
+            ]
         ];
 
         foreach ($records as $index => $record) {

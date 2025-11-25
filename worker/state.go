@@ -17,12 +17,20 @@ type GoState struct {
 	IncomingWorkers   int         `json:"incomingWorkers"`
 	IsLeader          bool        `json:"isLeader"`
 
+	MailTls GoStateMailTls `json:"mailTls"`
+
 	DnsIp      string             `json:"dnsIp"`
 	DnsRecords []GoStateDnsRecord `json:"dnsRecords"`
 
 	ServersCount int    `json:"serversCount"`
 	Env          string `json:"env"`
 	Version      string `json:"version"`
+}
+
+type GoStateMailTls struct {
+	Enabled    bool   `json:"enabled"`
+	PrivateKey string `json:"privateKey"`
+	Certificate string `json:"certificate"`
 }
 
 func (g GoState) IpAddresses() []string {
@@ -99,6 +107,7 @@ func (s *ServiceState) Set(goState GoState) {
 		"email_workers_ip_per", goState.EmailWorkersPerIp,
 		"webhook_workers", goState.WebhookWorkers,
 		"incoming_workers", goState.IncomingWorkers,
+		"mail_tls_enabled", goState.MailTls.Enabled,
 		"is_leader", goState.IsLeader,
 		"env", goState.Env,
 		"version", goState.Version,
@@ -106,7 +115,7 @@ func (s *ServiceState) Set(goState GoState) {
 
 	s.EmailWorkersPool.Set(goState.Ips, goState.EmailWorkersPerIp, goState.InstanceDomain)
 	s.WebhookWorkersPool.Set(goState.WebhookWorkers)
-	s.IncomingMailServer.Set(goState.InstanceDomain, goState.IncomingWorkers)
+	s.IncomingMailServer.Set(goState.InstanceDomain, goState.IncomingWorkers, goState.MailTls)
 	s.DnsServer.Set(goState.DnsIp, goState.DnsRecords)
 	s.MetricsServer.Set(goState)
 

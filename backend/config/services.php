@@ -4,13 +4,18 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use App\Api\Console\Resolver\EntityResolver;
 use App\Api\Console\Resolver\ProjectResolver;
+use App\Service\App\Lock\LockDoctrineFactory;
+use App\Service\App\Lock\LockDoctrineStoreFactory;
 use App\Service\Dns\Resolve\DnsOverHttp;
 use App\Service\Dns\Resolve\DnsResolveInterface;
 use App\Service\SelfHosted\RelayTelemetryProvider;
 use Prometheus\Storage\Adapter;
 use Prometheus\Storage\APCng;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
 use Hyvor\Internal\SelfHosted\Provider\TelemetryProviderInterface;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\StoreFactory;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     $containerConfigurator->parameters()
@@ -50,6 +55,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // ================ OTHER SERVICES =================
     $services->alias(DnsResolveInterface::class, DnsOverHttp::class);
 
+    // see hyvor/internal
     $services->set(PdoSessionHandler::class)
         ->args([
             env('DATABASE_URL'),

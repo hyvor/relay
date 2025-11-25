@@ -30,6 +30,7 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
     protected function setUp(): void
     {
         parent::setUp();
+
         $this->client = static::createClient();
         $this->container = static::getContainer();
 

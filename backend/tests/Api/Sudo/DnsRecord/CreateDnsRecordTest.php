@@ -5,7 +5,9 @@ namespace App\Tests\Api\Sudo\DnsRecord;
 use App\Api\Sudo\Controller\DnsRecordController;
 use App\Service\Dns\DnsRecordService;
 use App\Service\Dns\Dto\CreateDnsRecordDto;
+use App\Service\Dns\Event\CustomDnsRecordsChangedEvent;
 use App\Tests\Case\WebTestCase;
+use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(DnsRecordController::class)]
@@ -16,6 +18,8 @@ class CreateDnsRecordTest extends WebTestCase
 
     public function test_creates_dns_record(): void
     {
+        $eventDispatcher = TestEventDispatcher::enable($this->container);
+
         $this->sudoApi("POST", "/dns-records", [
             'type' => 'A',
             'subdomain' => 'www',
@@ -30,6 +34,8 @@ class CreateDnsRecordTest extends WebTestCase
         $this->assertEquals('www', $json['subdomain']);
         $this->assertEquals('1.1.1.1', $json['content']);
         $this->assertEquals(600, $json['ttl']);
+
+        $eventDispatcher->assertDispatched(CustomDnsRecordsChangedEvent::class);
     }
 
 }

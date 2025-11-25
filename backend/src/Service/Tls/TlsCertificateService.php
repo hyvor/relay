@@ -1,0 +1,104 @@
+<?php
+
+namespace App\Service\Tls;
+
+use App\Entity\Instance;
+use App\Entity\TlsCertificate;
+use App\Entity\Type\TlsCertificateStatus;
+use App\Entity\Type\TlsCertificateType;
+use App\Service\Instance\InstanceService;
+use Doctrine\ORM\EntityManagerInterface;
+use Hyvor\Internal\Util\Crypt\Encryption;
+use Symfony\Component\Clock\ClockAwareTrait;
+
+class TlsCertificateService
+{
+
+    use ClockAwareTrait;
+
+    public function __construct(
+        private EntityManagerInterface $em,
+        private Encryption $encryption,
+        private InstanceService $instanceService,
+    ) {
+    }
+
+    public function getInstanceMailTlsCertificate(Instance $instance): ?TlsCertificate
+    {
+        $certId = $instance->getMailTlsCertificateId();
+        return $certId ? $this->getCertificateById($certId) : null;
+    }
+
+    public function getCertificateById(int $id): ?TlsCertificate
+    {
+        return $this->em->getRepository(TlsCertificate::class)->find($id);
+    }
+
+    public function getLatestCertificateByType(TlsCertificateType $type): ?TlsCertificate
+    {
+        return $this->em->getRepository(TlsCertificate::class)->findOneBy(
+            ['type' => $type],
+            ['id' => 'DESC']
+        );
+    }
+
+    public function getDecryptedPrivateKeyPem(TlsCertificate $cert): string
+    {
+        return $this->encryption->decryptString($cert->getPrivateKeyEncrypted());
+    }
+
+    public function getDecryptedPrivateKey(TlsCertificate $cert): \OpenSSLAsymmetricKey
+    {
+        $privateKeyPem = $this->getDecryptedPrivateKeyPem($cert);
+
+        $privateKey = openssl_pkey_get_private($privateKeyPem);
+        if ($privateKey === false) {
+            throw new \RuntimeException('Failed to load private key'); // @codeCoverageIgnore
+        }
+
+        return $privateKey;
+    }
+
+    public function createCertificate(
+        TlsCertificateType $type,
+        string $domain
+    ): TlsCertificate {
+        $privateKeyPem = PrivateKey::generatePrivateKeyPem();
+        $encryptedPrivateKey = $this->encryption->encryptString($privateKeyPem);
+
+        $cert = new TlsCertificate();
+        $cert->setCreatedAt($this->clock->now());
+        $cert->setUpdatedAt($this->clock->now());
+        $cert->setType($type);
+        $cert->setDomain($domain);
+        $cert->setStatus(TlsCertificateStatus::PENDING);
+        $cert->setPrivateKeyEncrypted($encryptedPrivateKey);
+
+        $this->em->persist($cert);
+        $this->em->flush();
+
+        return $cert;
+    }
+
+    public function activateCertificate(
+        TlsCertificate $cert,
+        string $certPem,
+        \DateTimeImmutable $validFrom,
+        \DateTimeImmutable $validTo
+    ): void {
+        $cert->setCertificate($certPem);
+        $cert->setValidFrom($validFrom);
+        $cert->setValidTo($validTo);
+        $cert->setStatus(TlsCertificateStatus::ACTIVE);
+        $this->em->persist($cert);
+
+        if ($cert->getType() === TlsCertificateType::MAIL) {
+            $instance = $this->instanceService->getInstance();
+            $instance->setMailTlsCertificateId($cert->getId());
+            $this->em->persist($instance);
+        }
+
+        $this->em->flush();
+    }
+
+}

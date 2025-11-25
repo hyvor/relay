@@ -4,6 +4,7 @@ namespace App\Tests\Case;
 
 use App\Service\App\Config;
 use Monolog\Handler\TestHandler;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Zenstruck\Foundry\Test\Factories;
 use Zenstruck\Messenger\Test\InteractsWithMessenger;
@@ -47,6 +48,11 @@ trait TestSharedTrait
         /** @var T $service */
         $service = $this->container->get($serviceId);
         return $service;
+    }
+
+    public function getEd(): EventDispatcherInterface
+    {
+        return $this->getService(EventDispatcherInterface::class);
     }
 
 }

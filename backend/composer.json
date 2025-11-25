@@ -23,6 +23,7 @@
         "promphp/prometheus_client_php": "^2.14",
         "runtime/frankenphp-symfony": "^0.2.0",
         "symfony/console": "7.3.*",
+        "symfony/doctrine-messenger": "7.3.*",
         "symfony/dotenv": "7.3.*",
         "symfony/flex": "^2.8.1",
         "symfony/framework-bundle": "7.3.*",

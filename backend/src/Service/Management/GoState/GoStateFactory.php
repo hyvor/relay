@@ -7,6 +7,7 @@ use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
 use App\Service\Ip\Ptr;
 use App\Service\Server\ServerService;
+use App\Service\Tls\TlsCertificateService;
 
 class GoStateFactory
 {
@@ -17,12 +18,14 @@ class GoStateFactory
         private InstanceService $instanceService,
         private Config $config,
         private GoStateDnsRecordsService $goStateService,
+        private TlsCertificateService $tlsCertificateService
     ) {
     }
 
     public function create(): GoState
     {
         $instance = $this->instanceService->getInstance();
+        $mailTlsCert = $this->tlsCertificateService->getInstanceMailTlsCertificate($instance);
 
         $server = $this->serverService->getServerByCurrentHostname();
 
@@ -62,6 +65,19 @@ class GoStateFactory
             webhookWorkers: $server->getWebhookWorkers(),
             incomingWorkers: $server->getIncomingWorkers(),
             isLeader: $isLeader,
+
+            // mail server settings
+            mailTls: $mailTlsCert === null ?
+                [
+                    'enabled' => false,
+                    'privateKey' => '',
+                    'certificate' => '',
+                ] :
+                [
+                    'enabled' => true,
+                    'privateKey' => $this->tlsCertificateService->getDecryptedPrivateKeyPem($mailTlsCert),
+                    'certificate' => $mailTlsCert->getCertificate() ?? '',
+                ],
 
             // data for the DNS server
             dnsIp: $dnsIp,

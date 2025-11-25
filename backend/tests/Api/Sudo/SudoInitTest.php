@@ -4,8 +4,10 @@ namespace App\Tests\Api\Sudo;
 
 use App\Api\Sudo\Authorization\SudoAuthorizationListener;
 use App\Api\Sudo\Controller\SudoController;
+use App\Api\Sudo\Object\InstanceObject;
 use App\Service\Blacklist\IpBlacklist;
 use App\Service\Blacklist\IpBlacklists;
+use App\Service\Instance\InstanceService;
 use App\Tests\Case\WebTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 
@@ -13,6 +15,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(SudoAuthorizationListener::class)]
 #[CoversClass(IpBlacklists::class)]
 #[CoversClass(IpBlacklist::class)]
+#[CoversClass(InstanceObject::class)]
+#[CoversClass(InstanceService::class)]
 class SudoInitTest extends WebTestCase
 {
 

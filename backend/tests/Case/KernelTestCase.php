@@ -6,7 +6,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\Container;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
 {
@@ -16,7 +15,6 @@ class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
     protected Container $container;
     protected Application $application;
     protected EntityManagerInterface $em;
-    protected EventDispatcherInterface $ed;
 
     protected function setUp(): void
     {
@@ -31,11 +29,6 @@ class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
         /** @var EntityManagerInterface $em */
         $em = $this->container->get(EntityManagerInterface::class);
         $this->em = $em;
-
-        /** @var EventDispatcherInterface $eventDispatcher */
-        $eventDispatcher = $this->container->get(EventDispatcherInterface::class);
-        $this->ed = $eventDispatcher;
-        // $this->container->set(LoggerInterface::class, $this->createMock(LoggerInterface::class));
     }
 
     protected function commandTester(string $name): CommandTester

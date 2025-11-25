@@ -2,12 +2,14 @@
 
 namespace App\Service\ServerTask;
 
+use App\Service\Dns\Event\CustomDnsRecordsChangedEvent;
 use App\Service\Ip\Event\IpAddressUpdatedEvent;
 use App\Service\Server\Event\ServerUpdatedEvent;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 
 #[AsEventListener(ServerUpdatedEvent::class, 'onServerUpdated')]
 #[AsEventListener(IpAddressUpdatedEvent::class, 'onIpAddressUpdated')]
+#[AsEventListener(CustomDnsRecordsChangedEvent::class, 'onCustomDnsRecordsChanged')]
 class UpdateStateTaskListener
 {
 
@@ -34,6 +36,11 @@ class UpdateStateTaskListener
             $server = $event->getIpAddress()->getServer();
             $this->serverTaskService->createUpdateStateTask($server);
         }
+    }
+
+    public function onCustomDnsRecordsChanged(CustomDnsRecordsChangedEvent $event): void
+    {
+        $this->serverTaskService->createUpdateStateTask(null);
     }
 
 }

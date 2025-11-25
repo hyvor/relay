@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"io"
 	"log/slog"
@@ -137,9 +138,9 @@ func NewIncomingMailServer(ctx context.Context, logger *slog.Logger, metrics *Me
 	}
 }
 
-func (server *IncomingMailServer) Set(instanceDomain string, numWorkers int) {
+func (server *IncomingMailServer) Set(instanceDomain string, numWorkers int, mailTls GoStateMailTls) {
 	server.Shutdown()
-	server.StartChannelAndSmtpServers(instanceDomain, numWorkers)
+	server.StartChannelAndSmtpServers(instanceDomain, numWorkers, mailTls)
 
 	go func() {
 		<-server.ctx.Done()
@@ -178,7 +179,7 @@ func (server *IncomingMailServer) Shutdown() {
 var smtpServerPort1 = ":25"
 var smtpServerPort2 = ":587"
 
-func (server *IncomingMailServer) StartChannelAndSmtpServers(instanceDomain string, numWorkers int) {
+func (server *IncomingMailServer) StartChannelAndSmtpServers(instanceDomain string, numWorkers int, mailTls GoStateMailTls) {
 
 	// channel
 	mailChannel := make(chan *IncomingMail)
@@ -197,14 +198,15 @@ func (server *IncomingMailServer) StartChannelAndSmtpServers(instanceDomain stri
 		)
 	}
 
-	go server.StartSmtpServer(smtpServerPort1, instanceDomain, mailChannel, 1)
-	go server.StartSmtpServer(smtpServerPort2, instanceDomain, mailChannel, 2)
+	go server.StartSmtpServer(smtpServerPort1, instanceDomain, mailTls, mailChannel, 1)
+	go server.StartSmtpServer(smtpServerPort2, instanceDomain, mailTls, mailChannel, 2)
 
 }
 
 func (server *IncomingMailServer) StartSmtpServer(
 	port string,
 	instanceDomain string,
+	mailTls GoStateMailTls,
 	mailChannel chan *IncomingMail,
 	serverNumber int,
 ) {
@@ -224,6 +226,22 @@ func (server *IncomingMailServer) StartSmtpServer(
 	smtpServer.MaxMessageBytes = 1024 * 1024
 	smtpServer.MaxRecipients = 10
 	smtpServer.AllowInsecureAuth = true
+
+	if mailTls.Enabled {
+		cert, err := tls.X509KeyPair([]byte(mailTls.Certificate), []byte(mailTls.PrivateKey))
+
+		if err != nil {
+			server.logger.Info("cert", "certificate", mailTls.Certificate)
+			server.logger.Info("cert", "privateKey", mailTls.PrivateKey)
+			server.logger.Error("Failed to load TLS certificate for incoming mail server", "error", err)
+			return
+		}
+
+		smtpServer.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+			Certificates:  []tls.Certificate{cert},
+		}
+	}
 
 	if serverNumber == 1 {
 		server.smtpServer1 = smtpServer

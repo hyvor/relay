@@ -7,7 +7,6 @@ use App\Service\App\Config;
 use App\Service\Dns\Resolve\DnsResolveInterface;
 use App\Service\Dns\Resolve\DnsResolvingFailedException;
 use App\Service\Dns\Resolve\DnsType;
-use App\Service\Instance\InstanceService;
 use App\Service\Ip\Dto\PtrValidationDto;
 
 class Ptr

@@ -44,6 +44,9 @@ class Instance
     #[ORM\Column(type: "boolean")]
     private bool $sudo_initialized = false;
 
+    #[ORM\Column()]
+    private ?int $mail_tls_certificate_id = null;
+
     public function __construct()
     {
     }
@@ -162,6 +165,17 @@ class Instance
     public function setSudoInitialized(bool $sudoInitialized): static
     {
         $this->sudo_initialized = $sudoInitialized;
+        return $this;
+    }
+
+    public function getMailTlsCertificateId(): ?int
+    {
+        return $this->mail_tls_certificate_id;
+    }
+
+    public function setMailTlsCertificateId(?int $mailTlsCertificateId): static
+    {
+        $this->mail_tls_certificate_id = $mailTlsCertificateId;
         return $this;
     }
 

@@ -20,6 +20,8 @@ class ConfigTest extends KernelTestCase
         $this->assertSame('test', $config->getEnv());
         $this->assertSame(HostingEnum::CLOUD, $config->getHosting());
         $this->assertSame(null, $config->getGoHost());
+        $this->assertSame("https://relay.hyvor.com", $config->getWebUrl());
+        $this->assertSame("mail.hyvor-relay.com", $config->getInstanceDomain());
     }
 
     public function test_get_hostname(): void

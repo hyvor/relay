@@ -6,8 +6,10 @@ use App\Entity\DnsRecord;
 use App\Repository\DnsRecordRepository;
 use App\Service\Dns\Dto\CreateDnsRecordDto;
 use App\Service\Dns\Dto\UpdateDnsRecordDto;
+use App\Service\Dns\Event\CustomDnsRecordsChangedEvent;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class DnsRecordService
 {
@@ -16,6 +18,7 @@ class DnsRecordService
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly DnsRecordRepository $dnsRecordRepository,
+        private EventDispatcherInterface $ed,
     ) {
     }
 
@@ -47,6 +50,8 @@ class DnsRecordService
         $this->em->persist($dnsRecord);
         $this->em->flush();
 
+        $this->ed->dispatch(new CustomDnsRecordsChangedEvent());
+
         return $dnsRecord;
     }
 
@@ -76,11 +81,15 @@ class DnsRecordService
 
         $this->em->persist($dnsRecord);
         $this->em->flush();
+
+        $this->ed->dispatch(new CustomDnsRecordsChangedEvent());
     }
 
     public function deleteDnsRecord(DnsRecord $dnsRecord): void
     {
         $this->em->remove($dnsRecord);
         $this->em->flush();
+
+        $this->ed->dispatch(new CustomDnsRecordsChangedEvent());
     }
 }

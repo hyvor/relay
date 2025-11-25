@@ -1,14 +1,15 @@
 framework:
   messenger:
     transports:
-      default: 'doctrine://default?auto_setup=1'
+      async: 'doctrine://default?auto_setup=1'
       sync: 'sync://'
 
 when@test:
   framework:
     messenger:
       transports:
-        default: 'test://'
+        async: 'test://'
+        sync: 'test://'
         scheduler_default: 'test://'
         scheduler_server: 'test://'
 

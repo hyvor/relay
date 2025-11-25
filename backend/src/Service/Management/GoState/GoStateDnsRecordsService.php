@@ -9,6 +9,7 @@ use App\Service\Dns\DnsRecordService;
 use App\Service\Domain\Dkim;
 use App\Service\Ip\IpAddressService;
 use App\Service\Ip\Ptr;
+use App\Service\MxServer\MxServer;
 
 class GoStateDnsRecordsService
 {
@@ -16,6 +17,7 @@ class GoStateDnsRecordsService
         private IpAddressService $ipAddressService,
         private DnsRecordService $dnsRecordService,
         private Config $config,
+        private MxServer $mxServer,
     ) {
     }
 
@@ -56,7 +58,7 @@ class GoStateDnsRecordsService
         $records[] = new GoStateDnsRecord(
             type: DnsRecordType::MX,
             host: $instanceDomain,
-            content: 'mx.' . $instanceDomain,
+            content: $this->mxServer->getMxHostname(),
             priority: 10
         );
 
@@ -85,7 +87,16 @@ class GoStateDnsRecordsService
             ttl: 3600
         );
 
-        // 6. Custom DNS records
+        // 6. A static TXT record that contains a hash of the instance UUID
+        // used for DNS pointed health check
+        $records[] = new GoStateDnsRecord(
+            type: DnsRecordType::TXT,
+            host: '_hash.' . $instanceDomain,
+            content: hash('sha256', $instance->getUuid()),
+            ttl: 3600
+        );
+
+        // 7. Custom DNS records
         if ($custom) {
             $customDnsRecords = $this->dnsRecordService->getAllDnsRecords();
             foreach ($customDnsRecords as $dnsRecord) {

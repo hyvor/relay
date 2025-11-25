@@ -30,7 +30,7 @@ func TestIncomingServer(t *testing.T) {
 		smtpServerPort2 = originalSmtpServerPort2
 	}()
 
-	go server.Set("example.com", 2)
+	go server.Set("example.com", 2, GoStateMailTls{Enabled: false})
 
 	time.Sleep(100 * time.Millisecond)
 
