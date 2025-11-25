@@ -88,7 +88,7 @@
 
 		if (checkKey === 'dns_server_pointed') {
 			const dnsData = data as HealthCheckData['dns_server_pointed'];
-			return `DNS server not pointed correctly to the in-built DNS server. Error: ${dnsData.error}`;
+			return `Your instance domain's DNS is not pointed correctly to the in-built DNS server. Error: ${dnsData.error}`;
 		}
 
 		return JSON.stringify(data);

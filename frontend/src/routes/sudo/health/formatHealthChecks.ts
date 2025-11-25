@@ -7,6 +7,6 @@ export function formatCheckName(key: string): string {
 		all_ips_are_in_spf_record: 'All IPs are included in SPF record',
 		none_of_the_ips_are_on_known_blacklists: 'None of the IPs are on known blacklists',
 		no_unread_infrastructure_bounces: 'No unread infrastructure bounces',
-		dns_server_pointed: 'DNS server is pointed'
+		dns_server_pointed: 'Instance domain pointed to DNS server'
 	}[key]!;
 }
