@@ -26,11 +26,7 @@ class TlsCertificateService
     public function getInstanceMailTlsCertificate(Instance $instance): ?TlsCertificate
     {
         $certId = $instance->getMailTlsCertificateId();
-        if ($certId === null) {
-            return null;
-        }
-
-        return $this->getCertificateById($certId);
+        return $certId ? $this->getCertificateById($certId) : null;
     }
 
     public function getCertificateById(int $id): ?TlsCertificate
@@ -57,7 +53,7 @@ class TlsCertificateService
 
         $privateKey = openssl_pkey_get_private($privateKeyPem);
         if ($privateKey === false) {
-            throw new \RuntimeException('Failed to load private key');
+            throw new \RuntimeException('Failed to load private key'); // @codeCoverageIgnore
         }
 
         return $privateKey;

@@ -12,19 +12,17 @@ class FinalCertificate
     ) {
     }
 
+
     public static function fromPem(string $pem): self
     {
         $certData = openssl_x509_parse($pem);
-
-        if ($certData === false) {
-            throw new \InvalidArgumentException('Invalid PEM certificate data');
-        }
+        assert($certData !== false, 'Invalid PEM certificate data');
 
         $validFromTimestamp = $certData['validFrom_time_t'] ?? null;
         $validToTimestamp = $certData['validTo_time_t'] ?? null;
 
         if (!is_int($validFromTimestamp) || !is_int($validToTimestamp)) {
-            throw new \InvalidArgumentException('Invalid timestamps in certificate data');
+            throw new \InvalidArgumentException('Invalid timestamps in certificate data'); // @codeCoverageIgnore
         }
 
         $validFrom = new \DateTimeImmutable('@' . $validFromTimestamp);

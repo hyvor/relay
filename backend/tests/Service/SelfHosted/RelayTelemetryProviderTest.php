@@ -4,7 +4,14 @@ namespace App\Tests\Service\SelfHosted;
 
 use App\Entity\Type\DomainStatus;
 use App\Entity\Type\SendRecipientStatus;
+use App\Service\Domain\DomainService;
+use App\Service\Ip\IpAddressService;
+use App\Service\Project\ProjectService;
+use App\Service\Queue\QueueService;
 use App\Service\SelfHosted\RelayTelemetryProvider;
+use App\Service\Send\SendService;
+use App\Service\Server\ServerService;
+use App\Service\Webhook\WebhookDeliveryService;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\InstanceFactory;
@@ -17,6 +24,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use Hyvor\Internal\Auth\Oidc\OidcUserFactory;
 
 #[CoversClass(RelayTelemetryProvider::class)]
+#[CoversClass(ServerService::class)]
+#[CoversClass(DomainService::class)]
+#[CoversClass(SendService::class)]
+#[CoversClass(IpAddressService::class)]
+#[CoversClass(QueueService::class)]
+#[CoversClass(ProjectService::class)]
+#[CoversClass(WebhookDeliveryService::class)]
 class RelayTelemetryProviderTest extends KernelTestCase
 {
 

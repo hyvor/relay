@@ -4,6 +4,7 @@ namespace App\Tests\Service\Domain\MessageHandler;
 
 use App\Entity\Domain;
 use App\Entity\Type\DomainStatus;
+use App\Service\App\MessageTransport;
 use App\Service\Domain\Message\PurgeStalePendingSuspendedDomainsMessage;
 use App\Service\Domain\MessageHandler\PurgeStalePendingSuspendedDomainsMessageHandler;
 use App\Tests\Case\KernelTestCase;
@@ -54,7 +55,7 @@ class PurgeStalePendingSuspendedDomainsMessageHandlerTest extends KernelTestCase
             'status_changed_at' => new \DateTimeImmutable('-20 day'),
         ]);
 
-        $transport = $this->transport('default');
+        $transport = $this->transport(MessageTransport::ASYNC);
         $transport->send(new PurgeStalePendingSuspendedDomainsMessage());
         $transport->throwExceptions()->process();
 
@@ -84,7 +85,7 @@ class PurgeStalePendingSuspendedDomainsMessageHandlerTest extends KernelTestCase
 
     public function test_when_0(): void
     {
-        $transport = $this->transport('default');
+        $transport = $this->transport(MessageTransport::ASYNC);
         $transport->send(new PurgeStalePendingSuspendedDomainsMessage());
         $transport->throwExceptions()->process();
 

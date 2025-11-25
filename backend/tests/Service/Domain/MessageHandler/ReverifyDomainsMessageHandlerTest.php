@@ -3,6 +3,7 @@
 namespace App\Tests\Service\Domain\MessageHandler;
 
 use App\Entity\Type\DomainStatus;
+use App\Service\App\MessageTransport;
 use App\Service\Domain\DkimVerificationResult;
 use App\Service\Domain\DkimVerificationService;
 use App\Service\Domain\DomainStatusService;
@@ -56,7 +57,7 @@ class ReverifyDomainsMessageHandlerTest extends KernelTestCase
             'status' => DomainStatus::WARNING
         ]);
 
-        $transport = $this->transport('default');
+        $transport = $this->transport(MessageTransport::ASYNC);
         $transport->send(new ReverifyDomainsMessage([DomainStatus::ACTIVE, DomainStatus::WARNING]));
         $transport->throwExceptions()->process();
 
@@ -92,7 +93,7 @@ class ReverifyDomainsMessageHandlerTest extends KernelTestCase
             'status' => DomainStatus::ACTIVE,
         ]);
 
-        $transport = $this->transport('default');
+        $transport = $this->transport(MessageTransport::ASYNC);
         $transport->send(new ReverifyDomainsMessage([DomainStatus::ACTIVE, DomainStatus::WARNING], batchSize: 2));
         $transport->throwExceptions()->process();
 
@@ -113,7 +114,7 @@ class ReverifyDomainsMessageHandlerTest extends KernelTestCase
 
         DomainFactory::createMany(10, ['status' => DomainStatus::ACTIVE]);
 
-        $transport = $this->transport('default');
+        $transport = $this->transport(MessageTransport::ASYNC);
         $transport->send(new ReverifyDomainsMessage([DomainStatus::ACTIVE, DomainStatus::WARNING], batchSize: 2));
         $transport->throwExceptions()->process();
 
@@ -152,7 +153,7 @@ class ReverifyDomainsMessageHandlerTest extends KernelTestCase
             'domain' => 'example3.com',
         ]);
 
-        $transport = $this->transport('default');
+        $transport = $this->transport(MessageTransport::ASYNC);
         $transport->send(new ReverifyDomainsMessage([DomainStatus::PENDING], batchSize: 2));
         $transport->throwExceptions()->process();
 

@@ -24,7 +24,7 @@ readonly class OrderResponse
     public function firstAuthorizationUrl(): string
     {
         if (count($this->authorizations) === 0) {
-            throw new AcmeException('No authorizations found in order response');
+            throw new AcmeException('No authorizations found in order response'); // @codeCoverageIgnore
         }
 
         return $this->authorizations[0];

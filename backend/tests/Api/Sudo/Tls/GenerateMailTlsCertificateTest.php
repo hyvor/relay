@@ -9,6 +9,7 @@ use App\Service\App\MessageTransport;
 use App\Service\MxServer\MxServer;
 use App\Service\Tls\MailTlsGenerator;
 use App\Service\Tls\Message\GenerateCertificateMessage;
+use App\Service\Tls\TlsCertificateService;
 use App\Tests\Case\WebTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\Lock\Key;
@@ -16,6 +17,7 @@ use Symfony\Component\Lock\LockFactory;
 
 #[CoversClass(TlsController::class)]
 #[CoversClass(MailTlsGenerator::class)]
+#[CoversClass(TlsCertificateService::class)]
 #[CoversClass(MxServer::class)]
 class GenerateMailTlsCertificateTest extends WebTestCase
 {

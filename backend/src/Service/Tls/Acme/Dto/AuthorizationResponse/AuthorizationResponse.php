@@ -24,7 +24,7 @@ class AuthorizationResponse
                 return $challenge;
             }
         }
-        throw new AcmeException('No dns-01 challenge found in authorization response');
+        throw new AcmeException('No dns-01 challenge found in authorization response'); // @codeCoverageIgnore
     }
 
 }

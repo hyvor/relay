@@ -9,6 +9,7 @@ when@test:
     messenger:
       transports:
         async: 'test://'
+        sync: 'test://'
         scheduler_default: 'test://'
         scheduler_server: 'test://'
 

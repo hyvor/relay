@@ -21,14 +21,13 @@ use Hyvor\Internal\Util\Crypt\Encryption;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\Clock\Clock;
 use Symfony\Component\Clock\MockClock;
-use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\LockFactory;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[CoversClass(GenerateCertificateMessageHandler::class)]
 #[CoversClass(TlsCertificateService::class)]
 #[CoversClass(PrivateKey::class)]
+#[CoversClass(GenerateCertificateMessage::class)]
 class GenerateCertificateMessageHandlerTest extends KernelTestCase
 {
 

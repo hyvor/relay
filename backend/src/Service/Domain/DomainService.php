@@ -89,18 +89,6 @@ class DomainService
         return $domain;
     }
 
-    public function updateDomain(Domain $domain, UpdateDomainDto $updates): void
-    {
-        if ($updates->domainSet) {
-            $domain->setDomain($updates->domain);
-        }
-
-        $domain->setUpdatedAt($this->now());
-
-        $this->em->persist($domain);
-        $this->em->flush();
-    }
-
     /**
      * @return ArrayCollection<int, Domain>
      */

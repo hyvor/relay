@@ -3,6 +3,7 @@
 namespace App\Tests\Api\Sudo\Tls;
 
 use App\Api\Sudo\Controller\TlsController;
+use App\Api\Sudo\Object\TlsCertificateObject;
 use App\Entity\Type\TlsCertificateType;
 use App\Service\Tls\TlsCertificateService;
 use App\Tests\Case\WebTestCase;
@@ -12,6 +13,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(TlsController::class)]
 #[CoversClass(TlsCertificateService::class)]
+#[CoversClass(TlsCertificateObject::class)]
 class GetMailTlsCertificatesTest extends WebTestCase
 {
 

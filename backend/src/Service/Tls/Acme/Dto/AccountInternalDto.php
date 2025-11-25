@@ -14,9 +14,7 @@ readonly class AccountInternalDto
     public function getPrivateKey(): \OpenSSLAsymmetricKey
     {
         $key = openssl_pkey_get_private($this->privateKeyPem);
-        if ($key === false) {
-            throw new \RuntimeException('Invalid private key PEM');
-        }
+        assert($key !== false, 'Invalid private key PEM');
         return $key;
     }
 

@@ -9,6 +9,7 @@ use App\Service\Management\GoState\GoStateDnsRecordsService;
 use App\Service\Management\GoState\GoStateFactory;
 use App\Service\Management\GoState\GoStateIp;
 use App\Service\Server\ServerService;
+use App\Service\Tls\TlsCertificateService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DnsRecordFactory;
 use App\Tests\Factory\IpAddressFactory;
@@ -23,6 +24,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(GoStateIp::class)]
 #[CoversClass(LocalAuthorizationListener::class)]
 #[CoversClass(GoStateDnsRecordsService::class)]
+#[CoversClass(TlsCertificateService::class)]
 class GetStateTest extends WebTestCase
 {
 
