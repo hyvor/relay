@@ -11,15 +11,15 @@
 		<div class="docs">
 			<Button
 				size="small"
-				color="input"
-				variant={page.url.pathname.startsWith('/docs') ? 'fill' : 'invisible'}
+				color="accent"
+				variant={page.url.pathname.startsWith('/docs') ? 'fill-light' : 'invisible'}
 				as="a"
 				href="/docs">Docs</Button
 			>
 			<Button
 				size="small"
-				color="input"
-				variant={page.url.pathname.startsWith('/hosting') ? 'fill' : 'invisible'}
+				color="accent"
+				variant={page.url.pathname.startsWith('/hosting') ? 'fill-light' : 'invisible'}
 				as="a"
 				href="/hosting">Hosting</Button
 			>
@@ -29,7 +29,7 @@
 				href="https://github.com/hyvor/relay"
 				target="_blank"
 				rel="noopener noreferrer"
-				color="input"
+				color="accent"
 				variant="invisible"
 			>
 				{#snippet start()}
@@ -50,3 +50,11 @@
 		</Button>
 	{/snippet}
 </Header>
+
+<style>
+	.docs {
+		display: flex;
+		gap: 12px;
+		align-items: center;
+	}
+</style>
