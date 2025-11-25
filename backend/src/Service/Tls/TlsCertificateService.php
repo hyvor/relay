@@ -2,6 +2,7 @@
 
 namespace App\Service\Tls;
 
+use App\Entity\Instance;
 use App\Entity\TlsCertificate;
 use App\Entity\Type\TlsCertificateStatus;
 use App\Entity\Type\TlsCertificateType;
@@ -22,6 +23,16 @@ class TlsCertificateService
     ) {
     }
 
+    public function getInstanceMailTlsCertificate(Instance $instance): ?TlsCertificate
+    {
+        $certId = $instance->getMailTlsCertificateId();
+        if ($certId === null) {
+            return null;
+        }
+
+        return $this->getCertificateById($certId);
+    }
+
     public function getCertificateById(int $id): ?TlsCertificate
     {
         return $this->em->getRepository(TlsCertificate::class)->find($id);
@@ -35,9 +46,14 @@ class TlsCertificateService
         );
     }
 
+    public function getDecryptedPrivateKeyPem(TlsCertificate $cert): string
+    {
+        return $this->encryption->decryptString($cert->getPrivateKeyEncrypted());
+    }
+
     public function getDecryptedPrivateKey(TlsCertificate $cert): \OpenSSLAsymmetricKey
     {
-        $privateKeyPem = $this->encryption->decryptString($cert->getPrivateKeyEncrypted());
+        $privateKeyPem = $this->getDecryptedPrivateKeyPem($cert);
 
         $privateKey = openssl_pkey_get_private($privateKeyPem);
         if ($privateKey === false) {

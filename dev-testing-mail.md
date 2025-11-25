@@ -1,9 +1,11 @@
-## Testing
+When running dev, the (incoming) mail server is available at localhost:11025.
 
 ### Incoming Bounce Mails
 
+Install `swaks` if you don't have it already (https://jetmore.org/john/code/swaks/)
+
 ```
-swaks --to someone@example.com --from supun@hyvor.com \
+swaks --to someone@example.com --from supun@hyvor.local.testing \
   --server localhost --port 11025
 ```
 
@@ -27,11 +29,7 @@ swaks \
   --add-header "X-Relay-Test: true" \
   --auth-password test-api-key \
   --auth-user relay
+  --tls
 ```
 
-## Server Requirements
-
--   Assume one SMTP message takes 1 second to process.
--   One worker can process 86400 messages per day.
--   50 workers (which is totally possible with a 4GB PGSQL + 4GB App server) can process 4,320,000 million messages per day.
--   8GB Postgres can have
+### Testing STARTTLS
