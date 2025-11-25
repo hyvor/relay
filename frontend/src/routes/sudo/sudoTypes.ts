@@ -92,6 +92,9 @@ export interface HealthCheckData {
 	no_unread_infrastructure_bounces: {
 		unread_count: number;
 	};
+	dns_server_pointed: {
+		error: string;
+	};
 }
 
 export interface BlacklistIpResult {

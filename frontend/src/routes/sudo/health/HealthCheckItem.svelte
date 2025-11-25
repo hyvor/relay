@@ -86,6 +86,11 @@
 			return `${count} unread infrastructure bounce${count > 1 ? 's' : ''} found. <a href="/sudo/debug/infrastructure-bounces">View infrastructure bounces</a>.`;
 		}
 
+		if (checkKey === 'dns_server_pointed') {
+			const dnsData = data as HealthCheckData['dns_server_pointed'];
+			return `DNS server not pointed correctly to the in-built DNS server. Error: ${dnsData.error}`;
+		}
+
 		return JSON.stringify(data);
 	}
 </script>
