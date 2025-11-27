@@ -28,7 +28,7 @@ swaks \
   --add-header "Content-Type: text/html" \
   --add-header "X-Relay-Test: true" \
   --auth-password test-api-key \
-  --auth-user relay
+  --auth-user relay \
   --tls
 ```
 
