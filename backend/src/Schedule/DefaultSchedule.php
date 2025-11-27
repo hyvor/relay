@@ -9,6 +9,7 @@ use App\Service\Idempotency\Message\ClearExpiredIdempotencyRecordsMessage;
 use App\Service\InfrastructureBounce\Message\ClearOldInfrastructureBouncesMessage;
 use App\Service\Management\Message\RunHealthChecksMessage;
 use App\Service\Send\Message\ClearExpiredSendsMessage;
+use App\Service\Webhook\Message\ClearOldWebhookDeliveriesMessage;
 use Symfony\Component\Console\Messenger\RunCommandMessage;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
@@ -45,6 +46,9 @@ class DefaultSchedule implements ScheduleProviderInterface
 
             // infrastructure bounces
             ->add(RecurringMessage::every('1 day', new ClearOldInfrastructureBouncesMessage))
+
+            // webhooks deliveries
+            ->add(RecurringMessage::every('1 day', new ClearOldWebhookDeliveriesMessage))
 
             // domain verification
 
