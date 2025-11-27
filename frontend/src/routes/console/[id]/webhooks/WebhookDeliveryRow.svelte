@@ -126,7 +126,7 @@
 		width: 100%;
 		display: grid;
 		align-items: center;
-		grid-template-columns: 140px 180px 120px 120px 1fr 50px;
+		grid-template-columns: 140px 180px 150px 120px 1fr 50px;
 		gap: 10px;
 		padding: 15px 25px;
 		border-radius: 20px;
