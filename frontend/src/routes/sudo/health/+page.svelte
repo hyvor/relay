@@ -65,9 +65,11 @@
 			<div class="header">
 				<div class="header-content">
 					<div class="title">Health Checks</div>
-					<div class="last-checked">
-						Last checked: <RelativeTime unix={healthCheckResults.last_checked_at!} />
-					</div>
+					{#if healthCheckResults.last_checked_at}
+						<div class="last-checked">
+							Last checked: <RelativeTime unix={healthCheckResults.last_checked_at!} />
+						</div>
+					{/if}
 				</div>
 				<Button
 					color="accent"
