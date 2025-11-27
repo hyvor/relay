@@ -16,6 +16,7 @@ class WebhookDeliveryObject
     public ?string $response;
     public ?int $response_code;
     public int $try_count;
+    public string $request_body;
 
     public function __construct(WebhookDelivery $webhookDelivery)
     {
@@ -27,5 +28,6 @@ class WebhookDeliveryObject
         $this->response = $webhookDelivery->getResponse();
         $this->response_code = $webhookDelivery->getResponseCode();
         $this->try_count = $webhookDelivery->getTryCount();
+        $this->request_body = $webhookDelivery->getRequestBody();
     }
 }
