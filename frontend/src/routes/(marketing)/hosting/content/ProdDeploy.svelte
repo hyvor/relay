@@ -1,5 +1,6 @@
 <script>
 	import { Callout, CodeBlock, Table, TableRow } from '@hyvor/design/components';
+	import DomainsPartial from './easy/DomainsPartial.svelte';
 </script>
 
 <h1>Prod Deploy</h1>
@@ -133,10 +134,10 @@ host    hyvor_relay    relay_servers xx.xx.xx.xx/yy    scram-sha-256`}
 
 <ul>
 	<li>
-		<strong>Callback URL</strong>: <code>http://your-server-ip/api/oidc/callback</code>
+		<strong>Callback URL</strong>: <code>https://your-web-url/api/oidc/callback</code>
 	</li>
 	<li>
-		<strong>Logout URL</strong>: <code>http://your-server-ip</code>
+		<strong>Logout URL</strong>: <code>https://your-web-url</code>
 	</li>
 </ul>
 
@@ -234,11 +235,21 @@ compose.yaml			# Docker Compose file
 		<CodeBlock code="openssl rand -base64 32" />
 	</li>
 	<li>
-		<code>OIDC_ISSUER_URL</code>, <code>OIDC_CLIENT_ID</code>, <code>OIDC_CLIENT_SECRET</code>:
-		Set these variables based on your OIDC provider configuration.
+		<code>DATABASE_URL</code>: Set this to point to your PostgreSQL server.
 	</li>
 	<li>
-		<code>DATABASE_URL</code>: Set this to point to your PostgreSQL server.
+		<code>WEB_URL</code>: The public URL where Hyvor Relay and its API will be accessible.
+		Example:
+		<code>https://relay.yourdomain.com</code>
+	</li>
+	<li>
+		<code>INSTANCE_DOMAIN</code>: The dedicated domain name used for the incoming mail server,
+		EHLO identification, and PTR records. Example: <code>mail.relay.yourdomain.com</code>.
+		<strong>Must be different from the Web URL</strong>.
+	</li>
+	<li>
+		<code>OIDC_ISSUER_URL</code>, <code>OIDC_CLIENT_ID</code>, <code>OIDC_CLIENT_SECRET</code>:
+		Set these variables based on your OIDC provider configuration.
 	</li>
 </ul>
 

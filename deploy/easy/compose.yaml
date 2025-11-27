@@ -5,10 +5,10 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "${PGSQL_PASSWORD}"
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?postgres password not set}
       POSTGRES_DB: hyvor_relay
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d hyvor_relay" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hyvor_relay"]
       interval: 5s
       timeout: 5s
       retries: 5
