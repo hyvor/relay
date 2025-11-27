@@ -32,8 +32,8 @@
 		also used as a compatibility layer for sending emails via SMTP.
 	</li>
 	<li>
-		<strong>DNS Server</strong>: Manages DNS records for the instance domain, making it easier
-		scale your infrastructure whenever needed (e.g. adding new sending IPs)
+		<strong>DNS Server</strong>: Manages DNS records for the instance domain, automating DKIM,
+		SPF, PTR, and other DNS records required for SMTP & TLS.
 	</li>
 	<li>
 		<strong>Webhook Workers</strong>: Responsible for sending webhooks to user-defined
@@ -73,8 +73,8 @@
 	<li>
 		Finally, you would need to <strong>configure DNS records</strong> to point the web domain to
 		Hyvor Relay HTTP server. Then, you would also delegate DNS management of your instance domain
-		(which is used for email sending) to Hyvor Relay DNS server by updating the NS records. We discuss
-		the web and instance domains in detail in the next pages.
+		to Hyvor Relay DNS server by updating the NS records. We discuss the web and instance domains
+		in detail in the next pages.
 	</li>
 </ul>
 
@@ -110,6 +110,10 @@
 	<li>
 		<strong>Health Checks</strong>: Built-in health checks for all components to ensure smooth
 		operation.
+	</li>
+	<li>
+		<strong>Scalability</strong>: Designed to scale horizontally by adding more servers and
+		workers.
 	</li>
 	<li>
 		<strong> Industry-grade Monitoring </strong>: Prometheus, Grafana, Altermanager integrations

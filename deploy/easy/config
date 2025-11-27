@@ -26,6 +26,14 @@ replace_var ".env" "PGSQL_PASSWORD" "$PGSQL_PASSWORD"
 replace_var "compose.yaml" "PGSQL_PASSWORD" "$PGSQL_PASSWORD"
 echo "✅ Updated PGSQL_PASSWORD in .env and compose.yaml"
 
+# Prompt for WEB_URL
+read -rp "Enter the Web URL (e.g., https://relay.example.com): " WEB_URL
+replace_var ".env" "WEB_URL" "$WEB_URL"
+
+# Prompt for INSTANCE_DOMAIN
+read -rp "Enter the Instance Domain (e.g., example.com): " INSTANCE_DOMAIN
+replace_var ".env" "INSTANCE_DOMAIN" "$INSTANCE_DOMAIN"
+
 # Prompt for OIDC configuration
 read -rp "Enter OIDC Issuer URL: " OIDC_ISSUER_URL
 replace_var ".env" "OIDC_ISSUER_URL" "$OIDC_ISSUER_URL"

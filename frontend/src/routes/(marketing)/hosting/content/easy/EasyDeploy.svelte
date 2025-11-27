@@ -80,6 +80,10 @@
 	</li>
 </ul>
 
+<p>
+	<strong>Domains</strong>
+</p>
+
 <h2 id="install">Install</h2>
 
 <h3 id="download-tarball">1. Download Deployment Files</h3>
