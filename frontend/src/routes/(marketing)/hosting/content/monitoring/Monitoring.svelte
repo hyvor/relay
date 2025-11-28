@@ -5,7 +5,11 @@
 
 <h1>Monitoring</h1>
 
-<p>Hyvor Relay integrates with the Prometheus/Grafana stack for monitoring.</p>
+<p>
+	For all production deployments, it is crucial to set up monitoring to ensure the health and
+	performance of your Hyvor Relay instance. Hyvor Relay has in-built support for Prometheus
+	metrics. It also comes with a pre-configured Grafana dashboard for visualizing these metrics.
+</p>
 
 <ul>
 	<li>
@@ -20,7 +24,12 @@
 	<li>
 		<a href="#logs">Logs</a>
 	</li>
+	<li>
+		<a href="#uptime">Uptime</a>
+	</li>
 </ul>
+
+<!--  -->
 
 <h2 id="prometheus">Prometheus</h2>
 
@@ -139,3 +148,29 @@ app:
 <p>
 	Make sure to replace the <code>loki-url</code> and restart your Docker containers.
 </p>
+
+<h2 id="uptime">Uptime</h2>
+
+<p>Configure your uptime monitoring tool to monitor the following:</p>
+
+<ul>
+	<li>
+		<strong>HTTP (Frontend)</strong>: <code>https://relay.yourdomain.com</code>
+	</li>
+	<li>
+		<strong>HTTP (Backend)</strong>: <code>https://relay.yourdomain.com/api/health</code>
+	</li>
+	<li>
+		<strong> DNS Record </strong>: TXT for <code>_hash.{'<instance-domain>'}</code>
+		<ul>
+			<li>
+				use a DNS lookup tool to get its value one time. Set up a monitor to check that the
+				value does not change.
+			</li>
+		</ul>
+	</li>
+	<li>
+		<strong>SMTP (TCP)</strong>: Port <code>25</code> and <code>587</code> on
+		<code>mx.{'<instance-domain>'}</code>
+	</li>
+</ul>

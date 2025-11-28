@@ -1,6 +1,7 @@
 <script>
 	import { Callout, CodeBlock, Table, TableRow } from '@hyvor/design/components';
-	import DomainsPartial from './easy/DomainsPartial.svelte';
+	import AppSecretPartial from './easy/AppSecretPartial.svelte';
+	import HostNetworkPartial from './easy/HostNetworkPartial.svelte';
 </script>
 
 <h1>Prod Deploy</h1>
@@ -292,3 +293,23 @@ docker stack deploy -c compose.yaml relay
 	You should see the logs indicating that the application has run migrations, configured the
 	server and the IP addresses, and started the application (email workers, webhook workers, etc.).
 </p>
+
+<h2 id="setup">Setup</h2>
+
+<p>
+	Once the application is running, you should see the Hyvor Relay homepage at <strong
+		>https://your-web-url</strong
+	>.
+</p>
+
+<p>
+	Next, head to the <a href="/hosting/setup">Setup</a> page to learn how to set up your Hyvor Relay
+	instance for best deliverability.
+</p>
+
+<hr />
+
+<h2 id="things-to-know">Things to know</h2>
+
+<AppSecretPartial />
+<HostNetworkPartial />
