@@ -36,6 +36,8 @@ jobs:
           target: final
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          sbom: true
+          provenance: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
