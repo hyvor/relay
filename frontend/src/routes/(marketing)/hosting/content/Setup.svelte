@@ -11,8 +11,7 @@
 <p>
 	Once Hyvor Relay is installed, visit <code>http://{'<server-ip>'}/sudo</code> to access Sudo,
 	the administration panel of Hyvor Relay. For fresh installations, the
-	<strong>first user who logs</strong> in with OIDC credentials
-	<strong>becomes a sudo user</strong>.
+	<strong>first user who logs in with OIDC credentials becomes a sudo user</strong>.
 </p>
 
 <p>Let's configure your instance for best email deliverability:</p>
@@ -32,8 +31,10 @@
 <h2 id="web-domain">(1) Web Domain</h2>
 
 <p>
-	Web domain is where you access the Hyvor Relay Console, Sudo, and API. Point the web domain to
-	one of your server's IP addresses using an <code>A</code> record.
+	Web domain is where you access the Hyvor Relay Console, Sudo, and API. This is the domain name
+	of the environment variable <code>WEB_URL</code>
+	you set during installation. Point the web domain to one of your server's IP addresses using an
+	<code>A</code> record.
 </p>
 
 <Table columns="1fr 3fr 3fr">
@@ -60,22 +61,15 @@
 
 <p>
 	The instance domain and its subdomains are used for the
-	<code>EHLO</code> domain in SMTP and PTR records, and it is crucial for email deliverability.
+	<code>EHLO</code> domain in SMTP and PTR records, and it is crucial for email deliverability.DNS
+	management of the instance domain is delegated to Hyvor Relay DNS servers using a
+	<code>NS</code> record.
 </p>
 
-<p>You can either:</p>
-
-<ul>
-	<li>
-		Use a subdomain (ex: <strong>relay-instance.yourdomain.com</strong>) of your main domain.
-		This must be different from the web domain.
-	</li>
-	<li>
-		Or, you can use a completely different domain (ex: <strong>yourdomain-relay.com</strong>).
-		If you allow third-party users to send emails using your Hyvor Relay installation, this is
-		preferable to avoid any email reputation issues with your main domain.
-	</li>
-</ul>
+<p>
+	You configured the isntance domain during the installation using the environment variable
+	<code>INSTANCE_DOMAIN</code>. Example: <strong>mail.relay.yourdomain.com</strong>.
+</p>
 
 <Callout type="info">
 	{#snippet icon()}
@@ -85,17 +79,7 @@
 </Callout>
 
 <p>
-	To set up the instance domain, visit Sudo (<code>http://{'<web-domain>'}/sudo</code>) and edit
-	the instance domain.
-</p>
-
-<DocsImage src="/img/docs/setup-domain.png" alt="Instance Domain in Hyvor Relay Sudo" width={350} />
-
-<p>
-	Email deliverability requires several DNS records that needs to be synced with the instance.
-	Manully changing these records can be tedious. To solve this problem, Hyvor Relay provides an
-	in-built DNS server that can manage all the DNS records of the instance domain. To use that, set
-	up an <code>NS</code> record as follows:
+	Set up an <code>NS</code> record as follows:
 </p>
 
 <Table columns="1fr 3fr 3fr">
@@ -106,12 +90,12 @@
 	</TableRow>
 	<TableRow>
 		<div><code>NS</code></div>
-		<div><code>relay-instance.yourdomain.com</code></div>
-		<div><code>relay-ns.yourdomain.com</code></div>
+		<div><code>mail.relay.yourdomain.com</code></div>
+		<div><code>ns.relay.yourdomain.com</code></div>
 	</TableRow>
 	<TableRow>
 		<div><code>A</code></div>
-		<div><code>relay-ns.yourdomain.com</code></div>
+		<div><code>ns.relay.yourdomain.com</code></div>
 		<div><code>x.x.x.x</code> (your server IP)</div>
 	</TableRow>
 </Table>
@@ -129,23 +113,9 @@
 		<IconArrowLeftRight />
 	{/snippet}
 	If you run multiple Hyvor Relay servers, it is recommended to set up multiple NS records pointing
-	to different servers for redundancy. (Ex: <strong>relay-ns1.yourdomain.com</strong>
+	to different servers for redundancy. (Ex: <strong>ns1.relay.yourdomain.com</strong>
 	pointing to one server IP and
-	<strong>relay-ns2.yourdomain.com</strong> pointing to another server IP.)
-</Callout>
-
-<br />
-
-<Callout type="info">
-	{#snippet title()}
-		Can't use NS records?
-	{/snippet}
-	{#snippet icon()}
-		<IconInfoCircle />
-	{/snippet}
-	If you cannot use NS records due to domain registrar limitations, organizational policies, or other
-	reasons, you can
-	<a href="/hosting/dns">manually set up the required DNS records</a>.
+	<strong>ns2.relay.yourdomain.com</strong> pointing to another server IP.)
 </Callout>
 
 <h2 id="ptr">(3) PTR Records</h2>
@@ -197,6 +167,25 @@
 	There is a health check to verify PTR records. Visit Sudo &rarr; Health section to see the results.
 </Callout>
 
+<h2 id="whats-next">What's Next?</h2>
+
+<ul>
+	<li>
+		Visit <strong>Sudo &rarr; Health</strong> and make sure all checks are passing.
+	</li>
+	<li>
+		Visit the <strong>Console</strong> (<code>/console</code>),
+		<a href="/docs#project">create a project</a>, and
+		<a href="/docs/send-emails">send emails</a>.
+	</li>
+	<li>
+		<a href="/hosting/monitoring">Set up monitoring</a> to get alerts on issues.
+	</li>
+	<li>
+		See <a href="/hosting/scaling">Scaling</a> to learn how to scale Hyvor Relay.
+	</li>
+</ul>
+
 <Divider color="var(--gray-light)" margin={30} />
 
 <h2 id="sudo-users">Managing Sudo Users</h2>
@@ -226,197 +215,3 @@
 		</ul>
 	</li>
 </ul>
-
-<h2 id="whats-next">What's Next?</h2>
-
-<ul>
-	<li>
-		Visit <strong>Sudo &rarr; Health</strong> and make sure all checks are passing.
-	</li>
-	<li>
-		<a href="/hosting/monitoring">Set up monitoring</a> to get alerts on issues.
-	</li>
-	<li>
-		See <a href="/hosting/scaling">Scaling & High Availability</a> to learn how to scale Hyvor Relay.
-	</li>
-	<li>
-		Visit the <strong>Console</strong> (<code>/console</code>),
-		<a href="/docs#project">create a project</a>, and
-		<a href="/docs/send-emails">send emails</a>.
-	</li>
-</ul>
-
-<!--  -->
-
-<!-- <h3 id="dns">DNS Record</h3>
-
-<p>
-	SMTP servers now know the domain name of the sending IP address. However, most email providers
-	will also check the DNS records of that domain to verify its legitimacy. To pass this check, for
-	each IP address, point its designated domain name to the IP address using an <code>A</code> record.
-</p>
-
-<p>Ex:</p>
-
-<Table columns="1fr 2fr 1fr">
-	<TableRow head>
-		<div>Type</div>
-		<div>Host</div>
-		<div>IP Address</div>
-	</TableRow>
-	<TableRow>
-		<div>A</div>
-		<div>smtp1.relay.yourdomain.com</div>
-		<div><code>8.8.8.8</code></div>
-	</TableRow>
-	<TableRow>
-		<div>A</div>
-		<div>smtp2.relay.yourdomain.com</div>
-		<div><code>9.9.9.9</code></div>
-	</TableRow>
-	<TableRow>
-		<div>...</div>
-		<div>...</div>
-		<div>...</div>
-	</TableRow>
-</Table> -->
-
-<!-- <h2 id="return-path">(3) Return-Path (SPF & MX)</h2>
-
-<p>
-	In a SMTP message, <code>MAIL FROM</code>, a.k.a <code>Return-Path</code>, is set to the email
-	address where you want to receive bounces and other delivery notifications. The domain of this
-	email address is also used for SPF verification, which is an important part of email
-	deliverability.
-</p>
-
-<p>
-	In Hyvor Relay, the Return-Path domain is your <a href="#domain">Instance Domain</a>.
-</p>
-
-<h3 id="spf">SPF</h3>
-
-<p>
-	SPF (Sender Policy Framework) is a DNS record that specifies which mail servers are allowed to
-	send emails on behalf of a domain. The <code>MAIL FROM</code> (Return-Path) domain is used for
-	the verification, not the <code>From</code> address domain of the email. Therefore, you need to only
-	set up for your Instance Domain.
-</p>
-
-<p>Example SPF record:</p>
-
-<Table columns="1fr 2fr 2fr">
-	<TableRow head>
-		<div>Type</div>
-		<div>Host</div>
-		<div>Value</div>
-	</TableRow>
-	<TableRow>
-		<div>TXT</div>
-		<div>relay.yourdomain.com</div>
-		<div><code>v=spf1 ip4:8.8.8.8 -all</code></div>
-	</TableRow>
-</Table>
-
-<p>You should add all sending IP addresses of your Hyvor Relay installation to the SPF record.</p>
-
-<ul>
-	<li>
-		Add all IPs one by one:
-		<code>v=spf1 ip4:1.1.1.1 ip4:2.2.2.2 -all</code>
-
-		<p>
-			If you have many IP addresses, this can be tedious. You can copy the full value of the
-			SPF record from the Sudo &rarr; Health section.
-		</p>
-	</li>
-	<li>
-		Add IP ranges:
-		<code>v=spf1 ip4:1.1.1.0/24 -all</code>
-
-		<p>
-			If all your IP addresses are in a range, you can use CIDR notation to specify the range.
-			Make sure you control all the IP addresses in that range to avoid spoofing.
-		</p>
-	</li>
-</ul>
-
-<p>SPF Breakdown:</p>
-
-<ul>
-	<li>
-		<code>v=spf1</code>: Indicates that the TXT record is an SPF record.
-	</li>
-	<li>
-		<code>ip4:{'<ip>'}</code>: Allow the specified IPv4 address or range to send emails for this
-		domain.
-	</li>
-	<li>
-		<code>-all</code>: Indicates that all other IP addresses are not allowed to send emails for
-		this domain. This is a strict policy. You can use <code>~all</code> (with tilde) for a soft policy,
-		which allows other IPs but marks them as suspicious.
-	</li>
-</ul>
-
-<h2 id="mx">MX</h2>
-
-<p>
-	When you send a SMTP message, sometimes, the recipient's mail server will accept the email but
-	later fail to deliver it to the recipient's mailbox in cases like the mailbox being full. Such
-	cases cannot be known by the sender just by looking at the SMTP response. The standard way that
-	email providers handle such cases is to send a bounce email to the <code>Return-Path</code> address.
-</p>
-
-<p>
-	First, in sudo enable "Incoming" setting for at least one of your IP addresses. This will start
-	a process that listens to port 25 of the IP address and accepts incoming emails. In production
-	systems, we recommend enabling <strong>one IP per server</strong> and having at least two servers
-	for redundancy.
-</p>
-
-<DocsImage src="/img/docs/setup-incoming.png" alt="Incoming Setting in Hyvor Relay Sudo" />
-
-<p>
-	Then, create an MX record for your <a href="#domain">Instance Domain</a>. Here we chose
-	<code>mx.</code> subdomain.
-</p>
-
-<Table columns="1fr 2fr 2fr">
-	<TableRow head>
-		<div>Type</div>
-		<div>Host</div>
-		<div>Value</div>
-	</TableRow>
-	<TableRow>
-		<div>MX</div>
-		<div><code>relay.yourdomain.com</code></div>
-		<div><code>mx.relay.yourdomain.com</code></div>
-	</TableRow>
-</Table>
-
-<p>
-	Then, set up one <code>A</code> record for each IP address that you have enabled for incoming emails.
-</p>
-
-<Table columns="1fr 2fr 1fr">
-	<TableRow head>
-		<div>Type</div>
-		<div>Host</div>
-		<div>IP Address</div>
-	</TableRow>
-	<TableRow>
-		<div>A</div>
-		<div><code>mx.relay.yourdomain.com</code></div>
-		<div><code>1.1.1.1</code></div>
-	</TableRow>
-	<TableRow>
-		<div>A</div>
-		<div><code>mx.relay.yourdomain.com</code></div>
-		<div><code>2.2.2.2</code></div>
-	</TableRow>
-	<TableRow>
-		<div>...</div>
-		<div>...</div>
-		<div>...</div>
-	</TableRow>
-</Table> -->
