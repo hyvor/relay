@@ -13,11 +13,13 @@ services:
       timeout: 5s
       retries: 5
     ports:
+      # Since the app runs in host network mode, we bind Postgres to the host
+      # 127.0.0.1 makes it accessible only locally.
       - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
 
-  app:
+  relay:
     image: hyvor/relay:latest
     container_name: hyvor-relay
     restart: unless-stopped

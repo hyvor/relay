@@ -111,7 +111,6 @@ cd deploy/easy
 	code={`
 .env 			 	# Environment variables
 compose.yaml			# Docker Compose file
-config			 	# Bash script to update .env file
 `}
 />
 
@@ -128,10 +127,9 @@ config			 	# Bash script to update .env file
 		<CodeBlock code="openssl rand -base64 32" />
 	</li>
 	<li>
-		<code>POSTGRES_PASSWORD</code>: Use a strong password for the Postgres database (you can use
-		the same
-		<code>openssl rand -base64 32</code> command to generate one). This will be used in the
-		<code>DATABASE_URL</code> variable.
+		<code>POSTGRES_PASSWORD</code>: Use a strong, URL-safe password for the Postgres database.
+		You can generate one using the following command:
+		<CodeBlock code="openssl rand -base64 32 | tr '+/' '-_' | tr -d '='" />
 	</li>
 	<li>
 		<code>WEB_URL</code>: The public URL where Hyvor Relay and its API will be accessible.
@@ -149,6 +147,8 @@ config			 	# Bash script to update .env file
 		Set these variables based on your OIDC provider configuration.
 	</li>
 </ul>
+
+<p>Then, run the following command to verify</p>
 
 <p>
 	See the <a href="/hosting/env">Environment Variables</a> page for all available variables.
