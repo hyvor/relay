@@ -25,6 +25,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ secrets.HYVOR_ORG_DOCKERHUB_USERNAME }}/relay
+          tags: |
+            type=semver,pattern={{version}}
 
       - name: Build and push
         uses: docker/build-push-action@v4
