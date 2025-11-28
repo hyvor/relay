@@ -1,6 +1,6 @@
 FROM oven/bun:1 AS bun
 FROM composer:2.8.8 AS composer
-FROM dunglas/frankenphp:1.4.4-php8.4 AS frankenphp
+FROM dunglas/frankenphp:1.10.0-php8.4.15 AS frankenphp
 FROM golang:1.25.4 AS golang
 
 FROM bun AS frontend-base
