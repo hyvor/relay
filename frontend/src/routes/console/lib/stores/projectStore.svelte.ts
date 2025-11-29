@@ -26,8 +26,8 @@ export function getCurrentProjectUser() {
 }
 
 export function setCurrentProjectUser(projectUser: ProjectUser) {
-	currentProjectUser = projectUser;
-	currentProjectEditing = projectUser.project;
+    currentProjectUser = projectUser;
+    currentProjectEditing = { ...projectUser.project }; // Create a copy
 }
 
 export function getCurrentProject() {
@@ -43,7 +43,7 @@ export function getCurrentProjectEditing() {
 }
 
 export function setCurrentProjectEditing(project: Project) {
-	currentProjectEditing = project;
+    currentProjectEditing = { ...project }; // Create a copy to be safe
 }
 
 /* export function setProjectEditingStore(
