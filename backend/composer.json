@@ -10,7 +10,7 @@
         "ext-iconv": "*",
         "ext-openssl": "*",
         "ext-pdo_pgsql": "*",
-        "doctrine/dbal": "^3.10.4",
+        "doctrine/dbal": "^3.10.3",
         "doctrine/doctrine-bundle": "^2.18.1",
         "doctrine/doctrine-migrations-bundle": "^3.7.0",
         "doctrine/orm": "^3.5.7",
