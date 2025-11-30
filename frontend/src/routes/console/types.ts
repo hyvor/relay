@@ -179,6 +179,7 @@ export type WebhookDelivery = {
 	response_code: number | null;
 	try_count: number;
 	created_at: number;
+	request_body: string;
 };
 
 export type SuppressionReason = 'bounce' | 'complaint';
