@@ -30,7 +30,7 @@ WEB_URL=
 
 # Instance domain.
 # The domain name used for the incoming mail server, EHLO identification, and PTR records.
-# Example: relay-instance.yourdomain.com
+# Example: mail.relay.yourdomain.com
 # See https://relay.hyvor.com/hosting/setup#instance-domain
 INSTANCE_DOMAIN=
 

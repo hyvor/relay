@@ -55,9 +55,9 @@
 		<strong>SMTP Server:</strong>
 
 		{#if active === 'cloud'}
-			<code>mail.hyvor-relay.com</code>
+			<code>mx.mail.hyvor-relay.com</code>
 		{:else}
-			<code>relay-instance.yourdomain.com</code> <br /> (replace with
+			<code>mx.mail.relay.yourdomain.com</code> <br /> (replace with
 			<a href="/hosting/setup#instance-domain">your instance domain</a>)
 		{/if}
 	</li>

@@ -41,7 +41,7 @@
 		handled by the
 		<a href="/hosting/dns">DNS Server</a>.
 		<div style="margin-top: 5px">
-			(A) <code>smtpx.relay-instance.yourdomain.com</code> &rarr;
+			(A) <code>smtpx.mail.relay.yourdomain.com</code> &rarr;
 			<code>8.8.8.8</code>
 		</div>
 	</li>
@@ -50,7 +50,7 @@
 		managed by the ISP or hosting provider that owns the IP address. We discuss this on the
 		<a href="/hosting/setup#ptr">Setup</a> page.
 		<div style="margin-top: 5px">
-			(PTR) <code>8.8.8.8</code> &rarr; <code>smtpx.relay-instance.yourdomain.com</code>
+			(PTR) <code>8.8.8.8</code> &rarr; <code>smtpx.mail.relay.yourdomain.com</code>
 		</div>
 	</li>
 </ul>

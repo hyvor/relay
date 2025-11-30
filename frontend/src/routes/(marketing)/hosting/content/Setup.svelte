@@ -71,13 +71,6 @@
 	<code>INSTANCE_DOMAIN</code>. Example: <strong>mail.relay.yourdomain.com</strong>.
 </p>
 
-<Callout type="info">
-	{#snippet icon()}
-		💡
-	{/snippet}
-	On Hyvor Relay Cloud, the instance domain is <strong>mail.hyvor-relay.com</strong>.
-</Callout>
-
 <p>
 	Set up an <code>NS</code> record as follows:
 </p>
@@ -101,8 +94,9 @@
 </Table>
 
 <p>
-	This tells the world that the DNS records of <code>relay-instance.yourdomain.com</code> and its subdomains
-	are managed by Hyvor Relay DNS servers.
+	This tells the world that the DNS records of <code>mail.relay.yourdomain.com</code> and its
+	subdomains are managed by <code>ns.relay.yourdomain.com</code>, which points to your Hyvor Relay
+	instance's IP address.
 </p>
 
 <Callout type="info">
@@ -116,6 +110,13 @@
 	to different servers for redundancy. (Ex: <strong>ns1.relay.yourdomain.com</strong>
 	pointing to one server IP and
 	<strong>ns2.relay.yourdomain.com</strong> pointing to another server IP.)
+</Callout>
+
+<Callout type="info" style="margin-top: 15px;">
+	{#snippet icon()}
+		💡
+	{/snippet}
+	On Hyvor Relay Cloud, the instance domain is <strong>mail.hyvor-relay.com</strong>.
 </Callout>
 
 <h2 id="ptr">(3) PTR Records</h2>
@@ -153,10 +154,10 @@
 
 <ul>
 	<li>
-		<code>8.8.8.8</code> &rarr; <code>smtp1.relay-instance.yourdomain.com</code>
+		<code>8.8.8.8</code> &rarr; <code>smtp1.mail.relay.yourdomain.com</code>
 	</li>
 	<li>
-		<code>9.9.9.9</code> &rarr; <code>smtp2.relay-instance.yourdomain.com</code>
+		<code>9.9.9.9</code> &rarr; <code>smtp2.mail.relay.yourdomain.com</code>
 	</li>
 </ul>
 
