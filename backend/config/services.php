@@ -9,13 +9,12 @@ use App\Service\App\Lock\LockDoctrineStoreFactory;
 use App\Service\Dns\Resolve\DnsOverHttp;
 use App\Service\Dns\Resolve\DnsResolveInterface;
 use App\Service\SelfHosted\RelayTelemetryProvider;
+use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 use Prometheus\Storage\Adapter;
 use Prometheus\Storage\APCng;
-use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
 use Hyvor\Internal\SelfHosted\Provider\TelemetryProviderInterface;
-use Symfony\Component\Lock\LockFactory;
-use Symfony\Component\Lock\Store\StoreFactory;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     $containerConfigurator->parameters()
@@ -68,4 +67,9 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     // telemetry
     $services->alias(TelemetryProviderInterface::class, RelayTelemetryProvider::class);
+
+    if ($containerConfigurator->env() === 'test') {
+        $services->set(EventDispatcherInterface::class, TestEventDispatcher::class);
+        $services->alias('event_dispatcher', EventDispatcherInterface::class);
+    }
 };

@@ -25,7 +25,6 @@ class DeleteDnsRecordTest extends WebTestCase
 
     public function test_delete_dns_record(): void
     {
-        $eventDispatcher = TestEventDispatcher::enable($this->container);
         $dnsRecord = DnsRecordFactory::createOne();
         $id = $dnsRecord->getId();
 
@@ -37,7 +36,7 @@ class DeleteDnsRecordTest extends WebTestCase
             $this->em->getRepository(DnsRecord::class)->find($id)
         );
 
-        $eventDispatcher->assertDispatched(CustomDnsRecordsChangedEvent::class);
+        $this->getEd()->assertDispatched(CustomDnsRecordsChangedEvent::class);
     }
 
 }

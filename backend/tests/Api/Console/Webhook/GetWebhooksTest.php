@@ -25,6 +25,7 @@ class GetWebhooksTest extends WebTestCase
         $webhooks = WebhookFactory::createMany(10, [
             'project' => $project,
         ]);
+        usort($webhooks, fn($a, $b) => $a->getCreatedAt() <=> $b->getCreatedAt());
 
         $otherProjectWebhooks = WebhookFactory::createMany(5, [
             'project' => $otherProject,
@@ -45,7 +46,7 @@ class GetWebhooksTest extends WebTestCase
             $this->assertArrayHasKey('id', $webhookData);
             $this->assertArrayHasKey('url', $webhookData);
             $this->assertArrayHasKey('description', $webhookData);
-            $webhookIndex = (int) $key;
+            $webhookIndex = (int)$key;
             $this->assertSame($webhooks[$webhookIndex]->getUrl(), $webhookData['url']);
             $this->assertSame($webhooks[$webhookIndex]->getDescription(), $webhookData['description']);
         }

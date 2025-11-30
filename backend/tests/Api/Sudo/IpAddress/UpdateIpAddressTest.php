@@ -14,6 +14,7 @@ use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\QueueFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(IpAddressController::class)]
 #[CoversClass(IpAddressService::class)]

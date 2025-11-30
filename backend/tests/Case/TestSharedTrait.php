@@ -3,6 +3,7 @@
 namespace App\Tests\Case;
 
 use App\Service\App\Config;
+use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 use Monolog\Handler\TestHandler;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -50,9 +51,11 @@ trait TestSharedTrait
         return $service;
     }
 
-    public function getEd(): EventDispatcherInterface
+    public function getEd(): TestEventDispatcher
     {
-        return $this->getService(EventDispatcherInterface::class);
+        $ed = $this->getService(EventDispatcherInterface::class);
+        assert($ed instanceof TestEventDispatcher);
+        return $ed;
     }
 
 }

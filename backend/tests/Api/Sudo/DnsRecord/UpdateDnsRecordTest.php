@@ -24,8 +24,6 @@ class UpdateDnsRecordTest extends WebTestCase
 
     public function test_update_dns_record_successful(): void
     {
-        $eventDispatcher = TestEventDispatcher::enable($this->container);
-
         $dnsRecord = DnsRecordFactory::createOne([
             'type' => DnsRecordType::A,
             'subdomain' => 'old',
@@ -58,7 +56,7 @@ class UpdateDnsRecordTest extends WebTestCase
         $this->assertEquals(7200, $record->getTtl());
         $this->assertEquals(10, $record->getPriority());
 
-        $eventDispatcher->assertDispatched(CustomDnsRecordsChangedEvent::class);
+        $this->getEd()->assertDispatched(CustomDnsRecordsChangedEvent::class);
     }
 
 }

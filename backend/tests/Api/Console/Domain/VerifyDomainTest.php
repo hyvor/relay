@@ -38,7 +38,7 @@ class VerifyDomainTest extends WebTestCase
     {
         parent::setUp();
 
-        $this->eventDispatcher = TestEventDispatcher::enable($this->container);
+        $this->eventDispatcher = $this->getEd();
         $this->dkimVerificationService = $this->createMock(
             DkimVerificationService::class
         );
