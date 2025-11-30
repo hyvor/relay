@@ -53,10 +53,7 @@
     "autoload": {
         "psr-4": {
             "App\\": "src/"
-        },
-        "classmap": [
-            "config/"
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {
