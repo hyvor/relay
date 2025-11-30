@@ -32,7 +32,7 @@ class AuthorizationListener
         private ProjectService $projectService,
         private ProjectUserService $projectUserService,
         private ApiKeyService $apiKeyService,
-        private AuthInterface $auth,
+        private AuthInterface $auth
     ) {
     }
 

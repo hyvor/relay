@@ -9,10 +9,8 @@ use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
-use Doctrine\ORM\Query\ResultSetMapping;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
-use Symfony\Component\Lock\LockFactory;
 
 #[CoversClass(DomainController::class)]
 #[CoversClass(DomainService::class)]

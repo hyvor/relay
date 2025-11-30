@@ -113,10 +113,10 @@ class GenerateCertificateMessageHandler
             return;
         } finally {
             if ($dnsRecord !== null) {
-                $this->dnsRecordService->deleteDnsRecord($dnsRecord);
-                $logger->info('DNS challenge record deleted', [
+                $logger->info('Deleting ACME challenge DNS record', [
                     'dnsRecordId' => $dnsRecord->getId(),
                 ]);
+                $this->dnsRecordService->deleteDnsRecord($dnsRecord);
             }
 
             $lock->release();

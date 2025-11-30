@@ -20,6 +20,24 @@ APP_SECRET=
 # Use the format: "postgresql://user:pass@host:5432/database_name?serverVersion=16&charset=utf8"
 DATABASE_URL=
 
+# Web URL.
+# The public URL where Hyvor Relay and its API will be accessible.
+# Example: https://relay.yourdomain.com
+# If https is used, Caddy will automatically provision SSL certificates.
+# If behind a reverse proxy that handles SSL, use http:// URL.
+# See https://relay.hyvor.com/hosting/setup#web-domain
+WEB_URL=
+
+# Instance domain.
+# The domain name used for the incoming mail server, EHLO identification, and PTR records.
+# Example: relay-instance.yourdomain.com
+# See https://relay.hyvor.com/hosting/setup#instance-domain
+INSTANCE_DOMAIN=
+
+# The PostgreSQL database URL.
+# Use the format: "postgresql://user:pass@host:5432/database_name?serverVersion=16&charset=utf8"
+DATABASE_URL=
+
 # OpenID Connect (OIDC) configuration
 OIDC_ISSUER_URL=
 OIDC_CLIENT_ID=

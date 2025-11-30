@@ -25,6 +25,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ secrets.HYVOR_ORG_DOCKERHUB_USERNAME }}/relay
+          tags: |
+            type=semver,pattern={{version}}
 
       - name: Build and push
         uses: docker/build-push-action@v4
@@ -34,6 +36,8 @@ jobs:
           target: final
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          sbom: true
+          provenance: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |

@@ -1,4 +1,10 @@
+<script>
+	import { Callout } from '@hyvor/design/components';
+</script>
+
 <h1>Scaling</h1>
+
+<Callout type="info">This documentation is still a work in progress.</Callout>
 
 <p>
 	This document helps you think about scaling Hyvor Relay. It might oversimplify certain aspects,
@@ -100,8 +106,4 @@
 <ul>
 	<li>10 million emails per day = ~115.74 emails per second</li>
 	<li>You need about 120 email workers to handle this volume.</li>
-	<li>
-		Assuming each send log (content, headers, etc.) takes about 10KB of storage, you will need
-		about 1.2TB of storage per day for send logs alone.
-	</li>
 </ul>
