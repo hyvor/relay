@@ -58,7 +58,7 @@
 </script>
 
 <svelte:head>
-	<title>Console · Hyvor Relay</title>
+	<title>Console | Hyvor Relay</title>
 	<meta name="robots" content="noindex" />
 </svelte:head>
 

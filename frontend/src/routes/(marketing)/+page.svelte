@@ -10,8 +10,11 @@
 
 <svelte:head>
 	<title>Hyvor Relay</title>
-	<meta name="description" content="Alternative to AWS SES & Mailgun" />
-	<link rel="canonical" href="https://post.hyvor.com" />
+	<meta
+		name="description"
+		content="Open-Source Email API for Developers. Self-hosted Alternative to SES, Mailgun, SendGrid."
+	/>
+	<link rel="canonical" href="https://relay.hyvor.com" />
 </svelte:head>
 
 <div class="hds-container wrap">

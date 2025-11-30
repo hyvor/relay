@@ -13,11 +13,11 @@
 
 <svelte:head>
 	<title>
-		{data.name} - Hyvor Relay Docs
+		{data.name} | Hyvor Relay
 	</title>
 	<link
 		rel="canonical"
-		href="https://blogs.hyvor.com/hosting{data.slug ? '/' + data.slug : ''}"
+		href="https://relay.hyvor.com/hosting{data.slug ? '/' + data.slug : ''}"
 	/>
 </svelte:head>
 
