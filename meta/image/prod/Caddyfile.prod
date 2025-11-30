@@ -36,8 +36,3 @@ localhost:80, {$WEB_URL:http://} {
 		rewrite * /fallback.html
 	}
 }
-
-# Instance domain TLS
-{$INSTANCE_DOMAIN} {
-
-}
