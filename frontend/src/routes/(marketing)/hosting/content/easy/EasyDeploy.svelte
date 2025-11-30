@@ -181,7 +181,7 @@ docker compose logs -f relay
 
 <CodeBlock
 	code={`
-docker compose exec relay bin/console verify:setup
+docker compose exec relay bin/console verify
 `}
 />
 

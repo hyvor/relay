@@ -61,8 +61,8 @@
 
 <p>
 	The instance domain and its subdomains are used for the
-	<code>EHLO</code> domain in SMTP and PTR records, and it is crucial for email deliverability.DNS
-	management of the instance domain is delegated to Hyvor Relay DNS servers using a
+	<code>EHLO</code> domain in SMTP and PTR records, and it is crucial for email deliverability.
+	DNS management of the instance domain is delegated to Hyvor Relay DNS servers using a
 	<code>NS</code> record.
 </p>
 
@@ -123,7 +123,7 @@
 
 <p>
 	PTR, also known as reverse DNS, is a DNS record that maps an IP address to a domain name. SMTP
-	messages contains a
+	messages contain a
 	<code>EHLO {'<domain>'}</code> command, which identifies the sending server (or IP address). In
 	Hyvor Relay, each sending IP address uses a unique subdomain of the
 	<a href="#instance-domain">instance domain</a> as the domain name.
@@ -199,19 +199,19 @@
 		<code>cd</code> into the Hyvor Relay deployment directory.
 	</li>
 	<li>
-		<code> docker compose exec -it app sh </code> to enter the app container.
+		<code> docker compose exec -it relay bash </code> to enter the app container.
 	</li>
 	<li>
 		Then, use the following commands:
 		<ul style="margin-top: 8px">
 			<li>
-				<code>sudo:list</code>: List all sudo users.
+				<code>bin/console sudo:list</code>: List all sudo users.
 			</li>
 			<li>
-				<code>sudo:add {'<email>'}</code>: Add a new sudo user by email.
+				<code>bin/console sudo:add {'<email>'}</code>: Add a new sudo user by email.
 			</li>
 			<li>
-				<code>sudo:remove {'<id>'}</code>: Remove a sudo user by ID.
+				<code>bin/console sudo:remove {'<id>'}</code>: Remove a sudo user by ID.
 			</li>
 		</ul>
 	</li>
