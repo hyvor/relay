@@ -60,4 +60,4 @@ class SudoAuthorizationListener
         assert($user instanceof AuthUser, 'User must be an instance of AuthUser');
         return $user;
     }
-} 
+}

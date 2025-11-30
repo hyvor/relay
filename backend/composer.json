@@ -15,7 +15,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.7.0",
         "doctrine/orm": "^3.5.8",
         "egulias/email-validator": "^4.0.4",
-        "hyvor/internal": "^3.1.16",
+        "hyvor/internal": "^3.1.17",
         "mlocati/spf-lib": "^3.3",
         "phpdocumentor/reflection-docblock": "^5.6.5",
         "phpmailer/phpmailer": "^6.12",
