@@ -13,9 +13,9 @@
 
 <svelte:head>
 	<title>
-		{data.name} - Hyvor Relay Docs
+		{data.name} | Hyvor Relay
 	</title>
-	<link rel="canonical" href="https://blogs.hyvor.com/docs{data.slug ? '/' + data.slug : ''}" />
+	<link rel="canonical" href="https://relay.hyvor.com/docs{data.slug ? '/' + data.slug : ''}" />
 </svelte:head>
 
 <div class="docs-wrap">
