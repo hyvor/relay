@@ -11,9 +11,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
@@ -39,7 +36,6 @@ jobs:
           target: final
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
           sbom: true
           provenance: true
           cache-from: type=gha
