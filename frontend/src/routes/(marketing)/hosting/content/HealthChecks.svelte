@@ -24,6 +24,9 @@
 		<a href="#instance-dkim"> Instance DKIM is correct</a>
 	</li>
 	<li>
+		<a href="#instance-domain-pointed-dns"> Instance domain pointed to DNS server </a>
+	</li>
+	<li>
 		<a href="#no-unread-infra-bounces"> No unread infrastructure bounces </a>
 	</li>
 	<li>
@@ -82,7 +85,16 @@
 	<strong>Sudo &rarr; Setttings &rarr; Instance &rarr; Instance DKIM</strong>.
 </p>
 
-<h3 id="no-unread-infra-bounces">5. No unread infrastructure bounces</h3>
+<h3 id="instance-domain-pointed-dns">5. Instance domain pointed to DNS server</h3>
+
+<p>
+	This check ensures that the <a href="/hosting/setup#instance-domain">instance domain</a> is
+	correctly pointed to the Hyvor Relay DNS server. This is verified using a unique TXT record at
+	the
+	<code>_hash</code> subdomain.
+</p>
+
+<h3 id="no-unread-infra-bounces">6. No unread infrastructure bounces</h3>
 
 <p>
 	When emails are sent, sometimes they bounce back due to various reasons (invalid email address,
@@ -104,7 +116,7 @@
 	have reviewed the bounces, you can mark them as read to clear this check.
 </p>
 
-<h3 id="blacklists">6. None of the IPs are on known blacklists</h3>
+<h3 id="blacklists">7. None of the IPs are on known blacklists</h3>
 
 <p>
 	This check ensures that none of the sending IP addresses are listed on the following email

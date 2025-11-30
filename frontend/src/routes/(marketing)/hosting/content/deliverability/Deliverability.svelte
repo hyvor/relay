@@ -140,8 +140,8 @@
 	</p>
 
 	<p>
-		<strong>DMARC</strong> has to be set up by you as the owner of the sending domain. Hyvor Relay
-		cannot manage this for you.
+		<strong>DMARC</strong> has to be set up by the owner of the sending domain (FROM address). Ask
+		your end users to set it up for their domains.
 	</p>
 </Callout>
 

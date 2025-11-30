@@ -146,13 +146,15 @@
 <h3>DDoS</h3>
 
 <p>
-	<strong> Layer 7 </strong>: Hyvor Relay has built-in rate limiting to prevent DDoS attacks at
+	<strong> Layer 7 </strong>: Hyvor Relay has built-in rate limiting to mitigate DDoS attacks at
 	the application layer for the HTTP server.
 </p>
 
 <p>
 	<strong>Layer 3/4</strong>: You need to ensure that your server is protected against DDoS
-	attacks at the network layer. This is usually managed by your cloud provider.
+	attacks at the network layer. This is usually managed by your cloud provider. Since Hyvor Relay
+	also exposes SMTP and DNS servers, it is highly recommended to use a cloud provider that offers
+	strong DDoS protection.
 </p>
 
 <Divider />
