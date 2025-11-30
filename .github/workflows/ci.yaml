@@ -62,7 +62,7 @@ jobs:
           docker run \
           --network ci \
           --mount type=bind,source=$(pwd)/coverage.xml,target=/app/coverage.xml \
-          -e APP_ENV=test \
+          -e DATABASE_URL=postgresql://postgres:postgres@postgres:5432/hyvor_relay_testing \
           backend-dev sh -c "
           php bin/console doctrine:migrations:migrate --no-interaction &&
           ./vendor/bin/phpunit --coverage-clover /app/coverage.xml"
@@ -94,7 +94,7 @@ jobs:
         run: |
           docker run \
           --network ci \
-          -e APP_ENV=test \
+          -e DATABASE_URL=postgresql://postgres:postgres@postgres:5432/hyvor_relay_testing \
           backend-dev sh -c "php bin/console doctrine:migrations:migrate --no-interaction"
 
       - name: Build Docker image (Worker)
