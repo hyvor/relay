@@ -80,6 +80,10 @@
 	</li>
 </ul>
 
+<p>
+	<strong>Domains</strong>
+</p>
+
 <h2 id="install">Install</h2>
 
 <h3 id="download-tarball">1. Download Deployment Files</h3>
@@ -107,51 +111,45 @@ cd deploy/easy
 	code={`
 .env 			 	# Environment variables
 compose.yaml			# Docker Compose file
-config			 	# Bash script to update .env file
 `}
 />
 
 <h3 id="env">2. Configure Environment Variables</h3>
 
-<p>Run the config script:</p>
-
-<CodeBlock
-	code={`
-./config
-`}
-/>
-
-<p>This script does the following, in order:</p>
+<p>
+	Edit the <code>.env</code> file to set the following variables:
+</p>
 
 <ul>
 	<li>
-		Set <code>APP_SECRET</code> to a secure random value in <code>.env</code> file, generated
-		using
-		<code>openssl rand -base64 32</code>.
+		<code>APP_SECRET</code>: A strong random string. You can generate one using the following
+		command:
+		<CodeBlock code="openssl rand -base64 32" />
 	</li>
 	<li>
-		Generate a strong random password for the Postgres database and update the
-		<code>DATABASE_URL</code> variable in <code>.env</code> file and the corresponding variable
-		in <code>compose.yaml</code>.
+		<code>POSTGRES_PASSWORD</code>: Use a strong, URL-safe password for the Postgres database.
+		You can generate one using the following command:
+		<CodeBlock code="openssl rand -base64 32 | tr '+/' '-_' | tr -d '='" />
 	</li>
 	<li>
-		Prompt you to enter the OIDC provider details (issuer URL, client ID, client secret) and
-		update the corresponding variables in <code>.env</code> file.
+		<code>WEB_URL</code>: The public URL where Hyvor Relay and its API will be accessible.
+		Example:
+		<code>https://relay.yourdomain.com</code>
+	</li>
+	<li>
+		<code>INSTANCE_DOMAIN</code>: The dedicated domain name used for the incoming mail server,
+		EHLO identification, and PTR records. Example: <code>mail.relay.yourdomain.com</code>.
+		<strong>Must be different from the Web URL</strong>. DNS of this (sub)domain will be handled
+		by Hyvor Relay.
+	</li>
+	<li>
+		<code>OIDC_ISSUER_URL</code>, <code>OIDC_CLIENT_ID</code>, <code>OIDC_CLIENT_SECRET</code>:
+		Set these variables based on your OIDC provider configuration.
 	</li>
 </ul>
 
-<p>Make sure to verify the config:</p>
-
-<CodeBlock
-	code={`
-cat .env
-cat compose.yaml
-`}
-/>
-
 <p>
-	If needed, feel free to change other environment variables. See the
-	<a href="/hosting/env">Environment Variables</a> page for all available variables.
+	See the <a href="/hosting/env">Environment Variables</a> page for all available variables.
 </p>
 
 <h3 id="docker-compose">3. Start Docker Compose</h3>
@@ -170,7 +168,7 @@ docker compose up -d
 
 <CodeBlock
 	code={`
-docker compose logs -f app
+docker compose logs -f relay
 `}
 />
 
@@ -179,11 +177,19 @@ docker compose logs -f app
 	server and the IP addresses, and started the application (email workers, webhook workers, etc.).
 </p>
 
+<p>You can run the following command for a quick status check:</p>
+
+<CodeBlock
+	code={`
+docker compose exec relay bin/console verify
+`}
+/>
+
 <h2 id="setup">Setup</h2>
 
 <p>
 	Once the application is running, you should see the Hyvor Relay homepage at <strong
-		>http://your-server-ip</strong
+		>https://your-web-url</strong
 	>.
 </p>
 

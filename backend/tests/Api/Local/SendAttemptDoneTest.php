@@ -34,8 +34,6 @@ class SendAttemptDoneTest extends WebTestCase
 
     public function test_dispatches_events(): void
     {
-        $eventDispatcher = TestEventDispatcher::enable($this->container);
-
         $attempt1 = SendAttemptFactory::createOne();
         $attempt2 = SendAttemptFactory::createOne();
 
@@ -53,13 +51,11 @@ class SendAttemptDoneTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        $eventDispatcher->assertDispatchedCount(SendAttemptCreatedEvent::class, 2);
+        $this->getEd()->assertDispatchedCount(SendAttemptCreatedEvent::class, 2);
     }
 
     public function test_creates_suppression_for_recipient_bounces(): void
     {
-        $eventDispatcher = TestEventDispatcher::enable($this->container);
-
         $project = ProjectFactory::createOne();
         $send = SendFactory::createOne([
             'project' => $project,
@@ -129,7 +125,7 @@ class SendAttemptDoneTest extends WebTestCase
         $this->assertSame('one@hyvor.com', $suppressions[0]->getEmail());
         $this->assertSame('550 5.1.1 User unknown', $suppressions[0]->getDescription());
 
-        $eventDispatcher->assertDispatched(SuppressionCreatedEvent::class);
+        $this->getEd()->assertDispatched(SuppressionCreatedEvent::class);
 
         $this->assertTrue($attemptRecipient1->getIsSuppressed());
     }

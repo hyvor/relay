@@ -18,8 +18,6 @@ class CreateDnsRecordTest extends WebTestCase
 
     public function test_creates_dns_record(): void
     {
-        $eventDispatcher = TestEventDispatcher::enable($this->container);
-
         $this->sudoApi("POST", "/dns-records", [
             'type' => 'A',
             'subdomain' => 'www',
@@ -35,7 +33,7 @@ class CreateDnsRecordTest extends WebTestCase
         $this->assertEquals('1.1.1.1', $json['content']);
         $this->assertEquals(600, $json['ttl']);
 
-        $eventDispatcher->assertDispatched(CustomDnsRecordsChangedEvent::class);
+        $this->getEd()->assertDispatched(CustomDnsRecordsChangedEvent::class);
     }
 
 }

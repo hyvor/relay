@@ -5,8 +5,9 @@
 <h1>Getting Started</h1>
 
 <p>
-	Hyvor Relay is an open-source, self-hostable email API for developers. This page will help you
-	setting up your account and a project, adding a domain, and sending your first email.
+	Hyvor Relay is an open-source, self-hostable email API designed for developers. This page will
+	guide you through setting up your account and project, adding a domain, and sending your first
+	email.
 </p>
 
 <h2 id="cloud-vs-self-hosted">Cloud vs Self-hosted</h2>
@@ -24,11 +25,10 @@
 </p>
 
 <p>
-	This documentation (<a href="/docs">/docs</a>) is for developers who use
-	<strong>any instance</strong>
-	of Hyvor Relay. If there are any differences between the cloud and self-hosted instances, we
-	will mention them in the relevant sections. If you are a system administrator who wants to spin
-	up an instance, visit
+	This documentation (<a href="/docs">/docs</a>) is intended for developers working with
+	<strong>any Hyvor Relay instance</strong>. Whenever relevant, we will note any differences
+	between the Cloud and self-hosted deployments. If you are a system administrator who wants to
+	spin up an instance, visit
 	<a href="/hosting">/hosting</a>.
 </p>
 
@@ -95,7 +95,7 @@
 <p>
 	You are now all set to send emails using the API. Visit the <a href="/docs/send-emails"
 		>Send Emails</a
-	> page to understand how to send emails using the API.
+	> page for more details.
 </p>
 
 <DocsImage src="/img/docs/intro-postman.png" alt="Sending an email via Console API, with Postman" />

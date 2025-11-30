@@ -24,7 +24,6 @@ use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\SuppressionFactory;
-use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 
@@ -665,8 +664,6 @@ class SendEmailTest extends WebTestCase
 
     public function test_fails_suppressed_emails(): void
     {
-        $ed = TestEventDispatcher::enable($this->container);
-
         QueueFactory::createTransactional();
         $project = ProjectFactory::createOne();
 
@@ -706,7 +703,7 @@ class SendEmailTest extends WebTestCase
         $this->assertSame(SendRecipientStatus::SUPPRESSED, $recipient->getStatus());
         $this->assertFalse($send->getQueued());
 
-        $ed->assertDispatched(SendRecipientSuppressedEvent::class);
+        $this->getEd()->assertDispatched(SendRecipientSuppressedEvent::class);
     }
 
     public function test_with_attachments(): void

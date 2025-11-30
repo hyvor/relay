@@ -19,7 +19,6 @@ class DeleteSuppressionTest extends WebTestCase
 {
     public function test_delete_suppression(): void
     {
-        $eventDispatcher = TestEventDispatcher::enable($this->container);
         $project = ProjectFactory::createOne();
 
         $suppression = SuppressionFactory::createOne([
@@ -38,6 +37,6 @@ class DeleteSuppressionTest extends WebTestCase
 
         $suppressionDb = $this->em->getRepository(Suppression::class)->find($suppressionId);
         $this->assertNull($suppressionDb);
-        $eventDispatcher->assertDispatched(SuppressionDeletedEvent::class);
+        $this->getEd()->assertDispatched(SuppressionDeletedEvent::class);
     }
 }

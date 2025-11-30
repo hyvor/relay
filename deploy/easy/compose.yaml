@@ -5,19 +5,21 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "${PGSQL_PASSWORD}"
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?postgres password not set}
       POSTGRES_DB: hyvor_relay
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d hyvor_relay" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hyvor_relay"]
       interval: 5s
       timeout: 5s
       retries: 5
     ports:
+      # Since the app runs in host network mode, we bind Postgres to the host
+      # 127.0.0.1 makes it accessible only locally.
       - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
 
-  app:
+  relay:
     image: hyvor/relay:latest
     container_name: hyvor-relay
     restart: unless-stopped

@@ -42,7 +42,6 @@ class DeleteDomainTest extends WebTestCase
     #[TestWith([false])]
     public function test_delete_domain(bool $useDomain): void
     {
-        $eventDispatcher = TestEventDispatcher::enable($this->container);
         $project = ProjectFactory::createOne();
 
         $domain = DomainFactory::createOne(
@@ -65,7 +64,7 @@ class DeleteDomainTest extends WebTestCase
 
         $domainDb = $this->em->getRepository(Domain::class)->find($domainId);
         $this->assertNull($domainDb);
-        $eventDispatcher->assertDispatched(DomainDeletedEvent::class);
+        $this->getEd()->assertDispatched(DomainDeletedEvent::class);
     }
 
     public function test_delete_non_existent_domain(): void

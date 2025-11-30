@@ -9,7 +9,7 @@ use App\Entity\Type\SendRecipientType;
 use App\Service\Send\Event\SendRecipientSuppressedEvent;
 use App\Service\Suppression\SuppressionService;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Mime\Address;
 
 class RecipientFactory

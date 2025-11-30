@@ -22,4 +22,9 @@ return static function (RoutingConfigurator $routes): void {
     $routes->import('@InternalBundle/src/Controller/OidcController.php', 'attribute')
         ->prefix('/api/oidc')
         ->namePrefix('api_oidc_');
+
+    // root API
+    $routes->import('../../src/Api/Root', 'attribute')
+        ->prefix('/api')
+        ->namePrefix('api_root_');
 };

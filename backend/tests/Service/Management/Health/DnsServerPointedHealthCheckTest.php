@@ -63,7 +63,6 @@ class DnsServerPointedHealthCheckTest extends KernelTestCase
 
     public function test_dns_server_pointed_check(): void
     {
-        $ed = TestEventDispatcher::enable($this->container);
         $instance = InstanceFactory::createOne();
 
         $dnsResolver = $this->createMock(DnsResolveInterface::class);
@@ -79,7 +78,7 @@ class DnsServerPointedHealthCheckTest extends KernelTestCase
         $result = $check->check();
         $this->assertTrue($result);
 
-        $ed->assertDispatched(DnsServerCorrectlyPointedEvent::class);
+        $this->getEd()->assertDispatched(DnsServerCorrectlyPointedEvent::class);
     }
 
 }

@@ -25,6 +25,7 @@ return static function (MonologConfig $monolog, ContainerConfigurator $container
         $monolog->handler('streamer')
             ->type('stream')
             ->path('php://stderr')
+            ->level("%env(LOG_LEVEL)%")
             ->formatter('monolog.formatter.line')
             ->channels()->elements(['streamer']);
         $monolog->channels(['streamer']);

@@ -9,10 +9,9 @@ use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
-use Doctrine\ORM\Query\ResultSetMapping;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
-use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(DomainController::class)]
 #[CoversClass(DomainService::class)]
@@ -23,7 +22,6 @@ class CreateDomainTest extends WebTestCase
 
     public function test_fails_when_domain_already_exists(): void
     {
-        $eventDispatcher = TestEventDispatcher::enable($this->container);
         $project = ProjectFactory::createOne();
         $domain = DomainFactory::createOne([
             'project' => $project,
@@ -45,13 +43,11 @@ class CreateDomainTest extends WebTestCase
         $json = $this->getJson();
         $this->assertSame('Domain already exists', $json['message']);
 
-        $eventDispatcher->assertNotDispatched(DomainCreatedEvent::class);
+        $this->getEd()->assertNotDispatched(DomainCreatedEvent::class);
     }
 
     public function test_creates_domain(): void
     {
-        $eventDispatcher = TestEventDispatcher::enable($this->container);
-
         $project = ProjectFactory::createOne();
 
         $this->consoleApi(
@@ -78,8 +74,8 @@ class CreateDomainTest extends WebTestCase
         $this->assertIsString($dkimTxtValue);
         $this->assertStringStartsWith('v=DKIM1; k=rsa; p=', $dkimTxtValue);
 
-        $eventDispatcher->assertDispatched(DomainCreatedEvent::class);
-        $firstEvent = $eventDispatcher->getFirstEvent(DomainCreatedEvent::class);
+        $this->getEd()->assertDispatched(DomainCreatedEvent::class);
+        $firstEvent = $this->getEd()->getFirstEvent(DomainCreatedEvent::class);
         $this->assertSame(
             $json['id'],
             $firstEvent->domain->getId()
