@@ -297,7 +297,8 @@ type Attachment = {
 </ul>
 
 <p>
-	See <a href="/docs/webhooks#send-accepted">Webhook Send Events</a> for more information on each status.
+	See <a href="/docs/webhooks#send-recipient-accepted">Webhook Send Events</a> for more information
+	on each status.
 </p>
 
 <h2 id="rate-limit">Rate Limiting</h2>

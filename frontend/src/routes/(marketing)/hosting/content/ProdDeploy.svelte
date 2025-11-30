@@ -23,11 +23,12 @@
 <ul>
 	<li>
 		<strong>Multiple app servers</strong>: One or more app servers running Hyvor Relay in a
-		Docker Swarm cluster. Email sending is load balanced across the app servers. API, DNS, and
+		Docker Swarm cluster. Email sending is load balanced across the app servers.
+		<!-- API, DNS, and
 		incoming emails are also technically load balanced across the app servers, but a dedicated
 		load balancer is required for highly traffic setups, which is discussed later (<a
 			href="/hosting/scaling#haproxy">HAProxy</a
-		>).
+		>). -->
 	</li>
 	<li>
 		<strong>Multiple IP Addresses</strong>: Each app server has one or more dedicated IP

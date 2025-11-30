@@ -50,6 +50,7 @@ function getSudoApi() {
 			const toThrow = new Error(error) as any;
 			toThrow.message = error;
 			toThrow.code = e && e.status ? e.status : 500;
+			toThrow.data = e && e.data ? e.data : null;
 
 			if (e.violations) {
 				toThrow.message = e.violations.map((v: any) => v.property + ": " + v.message).join(', ');
