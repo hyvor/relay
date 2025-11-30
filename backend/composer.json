@@ -22,24 +22,24 @@
         "phpstan/phpdoc-parser": "^2.3",
         "promphp/prometheus_client_php": "^2.14.1",
         "runtime/frankenphp-symfony": "^0.2.0",
-        "symfony/console": "7.4.*",
-        "symfony/doctrine-messenger": "7.4.*",
-        "symfony/dotenv": "7.4.*",
+        "symfony/console": "7.3.*",
+        "symfony/doctrine-messenger": "7.3.*",
+        "symfony/dotenv": "7.3.*",
         "symfony/flex": "^2.10.0",
-        "symfony/framework-bundle": "7.4.*",
-        "symfony/lock": "7.4.*",
-        "symfony/messenger": "7.4.*",
-        "symfony/mime": "7.4.*",
+        "symfony/framework-bundle": "7.3.*",
+        "symfony/lock": "7.3.*",
+        "symfony/messenger": "7.3.*",
+        "symfony/mime": "7.3.*",
         "symfony/monolog-bundle": "^3.11",
-        "symfony/process": "7.4.*",
-        "symfony/property-access": "7.4.*",
-        "symfony/property-info": "7.4.*",
-        "symfony/rate-limiter": "7.4.*",
-        "symfony/runtime": "7.4.*",
-        "symfony/scheduler": "7.4.*",
-        "symfony/serializer": "7.4.*",
-        "symfony/uid": "7.4.*",
-        "symfony/yaml": "7.4.*"
+        "symfony/process": "7.3.*",
+        "symfony/property-access": "7.3.*",
+        "symfony/property-info": "7.3.*",
+        "symfony/rate-limiter": "7.3.*",
+        "symfony/runtime": "7.3.*",
+        "symfony/scheduler": "7.3.*",
+        "symfony/serializer": "7.3.*",
+        "symfony/uid": "7.3.*",
+        "symfony/yaml": "7.3.*"
     },
     "config": {
         "allow-plugins": {
@@ -82,7 +82,7 @@
     "extra": {
         "symfony": {
             "allow-contrib": false,
-            "require": "7.4.*",
+            "require": "7.3.*",
             "docker": false
         }
     },
@@ -90,8 +90,8 @@
         "dama/doctrine-test-bundle": "^8.4",
         "phpstan/phpstan": "^2.1.32",
         "phpunit/phpunit": "^12.4.4",
-        "symfony/browser-kit": "7.4.*",
-        "symfony/css-selector": "7.4.*",
+        "symfony/browser-kit": "7.3.*",
+        "symfony/css-selector": "7.3.*",
         "symfony/maker-bundle": "^1.65",
         "zenstruck/foundry": "^2.8.0",
         "zenstruck/messenger-test": "^1.12.0"

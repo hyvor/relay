@@ -168,7 +168,7 @@ docker compose up -d
 
 <CodeBlock
 	code={`
-docker compose logs -f app
+docker compose logs -f relay
 `}
 />
 
