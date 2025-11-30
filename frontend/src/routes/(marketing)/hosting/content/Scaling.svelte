@@ -13,13 +13,13 @@
 
 <ul>
 	<li>
-		<a href="postgres-connections">Postgres Max Connections</a>
+		<a href="#postgres-connections">Postgres Max Connections</a>
 	</li>
 	<li>
-		<a href="scaling-examples">Scaling Examples</a>
+		<a href="#scaling-examples">Scaling Examples</a>
 		<ul style="margin-top:10px">
 			<li>
-				<a href="onemil-per-day">1 Million Emails Per Day</a>
+				<a href="#onemil-per-day">1 Million Emails Per Day</a>
 			</li>
 		</ul>
 	</li>

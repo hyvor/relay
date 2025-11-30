@@ -14,11 +14,6 @@ const config = {
 		adapter: adapter({
 			fallback: "fallback.html",
 		}),
-
-		prerender: {
-			handleHttpError: "warn",
-			handleMissingId: "warn",
-		}
 	}
 };
 
