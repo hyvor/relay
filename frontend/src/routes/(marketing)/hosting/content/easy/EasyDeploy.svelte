@@ -148,8 +148,6 @@ compose.yaml			# Docker Compose file
 	</li>
 </ul>
 
-<p>Then, run the following command to verify</p>
-
 <p>
 	See the <a href="/hosting/env">Environment Variables</a> page for all available variables.
 </p>
@@ -178,6 +176,14 @@ docker compose logs -f app
 	You should see the logs indicating that the application has run migrations, configured the
 	server and the IP addresses, and started the application (email workers, webhook workers, etc.).
 </p>
+
+<p>You can run the following command for a quick status check:</p>
+
+<CodeBlock
+	code={`
+docker compose exec relay bin/console verify:setup
+`}
+/>
 
 <h2 id="setup">Setup</h2>
 

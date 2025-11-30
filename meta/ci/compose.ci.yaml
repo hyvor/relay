@@ -1,6 +1,6 @@
 services:
-  postgres:
-    container_name: postgres
+  hyvor-service-pgsql:
+    container_name: hyvor-service-pgsql
     image: postgres:16.6
     environment:
       POSTGRES_USER: postgres

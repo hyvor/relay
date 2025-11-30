@@ -56,16 +56,21 @@ jobs:
       - name: Build Docker image
         run: docker build -t backend-dev . --target backend-dev
 
+      - name: Run Migrations
+        run: |
+          docker run \
+          --network ci \
+          -e DATABASE_URL=postgresql://postgres:postgres@hyvor-service-pgsql:5432/hyvor_relay_testing \
+          backend-dev sh -c "php bin/console doctrine:migrations:migrate --no-interaction"
+
       - name: Run PHP Tests
         run: |
           touch coverage.xml
           docker run \
           --network ci \
           --mount type=bind,source=$(pwd)/coverage.xml,target=/app/coverage.xml \
-          -e DATABASE_URL=postgresql://postgres:postgres@postgres:5432/hyvor_relay_testing \
-          backend-dev sh -c "
-          php bin/console doctrine:migrations:migrate --no-interaction &&
-          ./vendor/bin/phpunit --coverage-clover /app/coverage.xml"
+          -e APP_ENV=test \
+          backend-dev sh -c "./vendor/bin/phpunit --coverage-clover /app/coverage.xml"
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
@@ -94,7 +99,7 @@ jobs:
         run: |
           docker run \
           --network ci \
-          -e DATABASE_URL=postgresql://postgres:postgres@postgres:5432/hyvor_relay_testing \
+          -e DATABASE_URL=postgresql://postgres:postgres@hyvor-service-pgsql:5432/hyvor_relay_testing \
           backend-dev sh -c "php bin/console doctrine:migrations:migrate --no-interaction"
 
       - name: Build Docker image (Worker)
