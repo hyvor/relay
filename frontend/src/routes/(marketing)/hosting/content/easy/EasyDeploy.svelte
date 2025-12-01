@@ -70,13 +70,13 @@
 
 <ul>
 	<li>
-		<strong>443</strong>: API
-	</li>
-	<li>
-		<strong>80</strong>: API (only if you do not use TLS)
+		<strong>443</strong> and <strong>80</strong>: API
 	</li>
 	<li>
 		<strong>25</strong>: SMTP server for incoming emails (bounces & complaints)
+	</li>
+	<li>
+		<strong>587</strong>: SMTP server for sending emails via SMTP
 	</li>
 	<li>
 		<strong>53</strong>: DNS Server

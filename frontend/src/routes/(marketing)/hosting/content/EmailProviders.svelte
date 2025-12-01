@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Table, TableRow, Tooltip } from '@hyvor/design/components';
+	import { Callout, Table, TableRow, Tooltip } from '@hyvor/design/components';
 
 	interface ProviderSmtpResponse {
 		name: string;
@@ -41,6 +41,8 @@
 </script>
 
 <h1>Email Providers</h1>
+
+<Callout type="info">This documentation is still a work in progress.</Callout>
 
 <p>
 	While SMTP is a standardized protocol, different email providers implement it in slightly
