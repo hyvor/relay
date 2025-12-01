@@ -1,5 +1,5 @@
 <script>
-	import { CodeBlock } from '@hyvor/design/components';
+	import { CodeBlock, Divider } from '@hyvor/design/components';
 </script>
 
 <h1>Easy Deploy</h1>
@@ -70,7 +70,10 @@
 
 <ul>
 	<li>
-		<strong>80</strong>: API
+		<strong>443</strong>: API
+	</li>
+	<li>
+		<strong>80</strong>: API (only if you do not use TLS)
 	</li>
 	<li>
 		<strong>25</strong>: SMTP server for incoming emails (bounces & complaints)
@@ -79,10 +82,6 @@
 		<strong>53</strong>: DNS Server
 	</li>
 </ul>
-
-<p>
-	<strong>Domains</strong>
-</p>
 
 <h2 id="install">Install</h2>
 
@@ -134,7 +133,8 @@ compose.yaml			# Docker Compose file
 	<li>
 		<code>WEB_URL</code>: The public URL where Hyvor Relay and its API will be accessible.
 		Example:
-		<code>https://relay.yourdomain.com</code>
+		<code>https://relay.yourdomain.com</code>. This is required for TLS. If you run Hyvor Relay
+		behind a reverse proxy that handles TLS, use <code>http://</code>.
 	</li>
 	<li>
 		<code>INSTANCE_DOMAIN</code>: The dedicated domain name used for the incoming mail server,
@@ -188,17 +188,16 @@ docker compose exec relay bin/console verify
 <h2 id="setup">Setup</h2>
 
 <p>
+	Next, head to the <a href="/hosting/setup">Setup</a> page to continue the setup process.
+</p>
+
+<!-- <p>
 	Once the application is running, you should see the Hyvor Relay homepage at <strong
-		>https://your-web-url</strong
+		>https://relay.yourdomain.com</strong
 	>.
-</p>
+</p> -->
 
-<p>
-	Next, head to the <a href="/hosting/setup">Setup</a> page to learn how to set up your Hyvor Relay
-	instance for best deliverability.
-</p>
-
-<hr />
+<Divider color="var(--gray-light)" margin={30} />
 
 <h2 id="things-to-know">Things to know</h2>
 
