@@ -1,5 +1,5 @@
 <script>
-	import { Callout, CodeBlock, Table, TableRow } from '@hyvor/design/components';
+	import { Callout, CodeBlock, Divider, Table, TableRow } from '@hyvor/design/components';
 	import AppSecretPartial from './easy/AppSecretPartial.svelte';
 	import HostNetworkPartial from './easy/HostNetworkPartial.svelte';
 </script>
@@ -298,17 +298,10 @@ docker stack deploy -c compose.yaml relay
 <h2 id="setup">Setup</h2>
 
 <p>
-	Once the application is running, you should see the Hyvor Relay homepage at <strong
-		>https://your-web-url</strong
-	>.
+	Next, head to the <a href="/hosting/setup">Setup</a> page to continue the setup process.
 </p>
 
-<p>
-	Next, head to the <a href="/hosting/setup">Setup</a> page to learn how to set up your Hyvor Relay
-	instance for best deliverability.
-</p>
-
-<hr />
+<Divider color="var(--gray-light)" margin={30} />
 
 <h2 id="things-to-know">Things to know</h2>
 

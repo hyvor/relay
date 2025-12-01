@@ -2,29 +2,31 @@
 	import { Callout, Divider, Table, TableRow } from '@hyvor/design/components';
 	import { DocsImage } from '@hyvor/design/marketing';
 	import IconArrowLeftRight from '@hyvor/icons/IconArrowLeftRight';
-	import IconInfoCircle from '@hyvor/icons/IconInfoCircle';
 	import IconLightbulb from '@hyvor/icons/IconLightbulb';
 </script>
 
 <h1>Setup</h1>
 
 <p>
-	Once Hyvor Relay is installed, visit <code>http://{'<server-ip>'}/sudo</code> to access Sudo,
-	the administration panel of Hyvor Relay. For fresh installations, the
-	<strong>first user who logs in with OIDC credentials becomes a sudo user</strong>.
+	Hyvor Relay is now installed on your server(s). The next step is to configure your DNS to access
+	Hyvor Relay and ensure optimal email deliverability.
 </p>
-
-<p>Let's configure your instance for best email deliverability:</p>
 
 <ul style="list-style-type: none;">
 	<li>
 		<a href="#web-domain">(1) Web Domain </a>
 	</li>
 	<li>
-		<a href="#instance-domain">(2) Instance Domain </a>
+		<a href="#sudo">(2) Access Sudo</a>
 	</li>
 	<li>
-		<a href="#ptr">(3) PTR Records</a>
+		<a href="#instance-domain">(3) Instance Domain </a>
+	</li>
+	<li>
+		<a href="#ptr">(4) PTR Records</a>
+	</li>
+	<li>
+		<a href="#health-checks">(5) Health Checks</a>
 	</li>
 </ul>
 
@@ -50,6 +52,17 @@
 	</TableRow>
 </Table>
 
+<p>
+	If you used <strong>https</strong> in the <code>WEB_URL</code>, Caddy will automatically obtain
+	and configure a TLS certificate for your web domain using Let's Encrypt. This might take a few
+	minutes to complete. Make sure to monitor logs.
+</p>
+
+<p>
+	Once the DNS changes have propagated, you should see the Hyvor Relay homepage at
+	<strong>https://relay.yourdomain.com</strong>.
+</p>
+
 <Callout type="info">
 	{#snippet icon()}
 		💡
@@ -57,22 +70,53 @@
 	On Hyvor Relay Cloud, the web domain is <strong>relay.hyvor.com</strong>.
 </Callout>
 
-<h2 id="instance-domain">(2) Instance Domain</h2>
+<h2 id="sudo">(2) Access Sudo</h2>
 
 <p>
-	The instance domain and its subdomains are used for the
-	<code>EHLO</code> domain in SMTP and PTR records, and it is crucial for email deliverability.
-	DNS management of the instance domain is delegated to Hyvor Relay DNS servers using a
-	<code>NS</code> record.
+	Next, visit <code>https://relay.yourdomain.com/sudo</code> to access Sudo, the administration panel
+	of Hyvor Relay. Log in using your OIDC credentials.
 </p>
 
+<Callout type="warning">
+	{#snippet icon()}
+		⚠️
+	{/snippet}
+	For fresh installations, the first user who logs in with OIDC credentials becomes a sudo user.
+</Callout>
+
 <p>
-	You configured the isntance domain during the installation using the environment variable
+	In <strong>Sudo &rarr; Servers</strong>, you should see your server(s) listed along with their
+	public IP addresses.
+</p>
+
+<h2 id="instance-domain">(3) Instance Domain</h2>
+
+<p>
+	You configured the instance domain during the installation using the environment variable
 	<code>INSTANCE_DOMAIN</code>. Example: <strong>mail.relay.yourdomain.com</strong>.
 </p>
 
+<p>The instance domain and its subdomains are used for many things:</p>
+
+<ul>
+	<li>
+		To populate <code>PTR</code> records for outgoing IP addresses.
+	</li>
+	<li>For instance DKIM signing (useful for feedback loops).</li>
+	<li>
+		For the <code>MX</code> records of the incoming mail server that is repsonsible for bounces,
+		complaints, and <a href="/docs/send-emails-smtp">sending via SMTP</a>.
+	</li>
+</ul>
+
 <p>
-	Set up an <code>NS</code> record as follows:
+	The instance domain is critical for email deliverability. Hyvor Relay is designed to manage the
+	DNS records of the instance domain and its subdomains, making management easier.
+</p>
+
+<p>
+	To delegate DNS management of the instance domain to Hyvor Relay, set up a
+	<code>NS</code> record pointing to Hyvor Relay's DNS server.
 </p>
 
 <Table columns="1fr 3fr 3fr">
@@ -83,7 +127,9 @@
 	</TableRow>
 	<TableRow>
 		<div><code>NS</code></div>
-		<div><code>mail.relay.yourdomain.com</code></div>
+		<div>
+			<code>mail.relay.yourdomain.com</code> <br />(your instance domain)
+		</div>
 		<div><code>ns.relay.yourdomain.com</code></div>
 	</TableRow>
 	<TableRow>
@@ -139,14 +185,10 @@
 	points to the IP address (<strong>"forward DNS match"</strong>).
 </p>
 
-<h3 id="add-ptr">Adding PTR Records</h3>
-
 <p>
 	Setting PTR records is something Hyvor Relay's DNS server cannot do for you, as it requires
-	access to the IP address's reverse DNS zone, which is usually managed by your hosting provider.
-	Consult your hosting provider's documentation or support and set up PTR records for <strong
-		>ALL</strong
-	>
+	access to the IP address's reverse DNS zone, which is managed by your hosting provider. Consult
+	your hosting provider's documentation or support and set up PTR records for <strong>ALL</strong>
 	IP addresses as shown in Sudo.
 </p>
 
@@ -161,19 +203,22 @@
 	</li>
 </ul>
 
-<Callout type="info">
-	{#snippet icon()}
-		<IconLightbulb />
-	{/snippet}
-	There is a health check to verify PTR records. Visit Sudo &rarr; Health section to see the results.
-</Callout>
+<h2 id="health-checks">(4) Health Checks</h2>
+
+<p>
+	After the above steps are completed, run a full health check at <strong
+		>Sudo &rarr; Health &rarr; Run Checks</strong
+	> to verify that everything is set up correctly. Note that some DNS-related checks might take longer
+	to pass due to DNS caching.
+</p>
+
+<p>If everthing is passing, your Hyvor Relay instance is ready to send emails!</p>
+
+<Divider color="var(--gray-light)" margin={30} />
 
 <h2 id="whats-next">What's Next?</h2>
 
 <ul>
-	<li>
-		Visit <strong>Sudo &rarr; Health</strong> and make sure all checks are passing.
-	</li>
 	<li>
 		Visit the <strong>Console</strong> (<code>/console</code>),
 		<a href="/docs#project">create a project</a>, and
