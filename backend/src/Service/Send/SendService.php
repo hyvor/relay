@@ -37,6 +37,8 @@ class SendService
         ?string $fromSearch,
         ?string $toSearch,
         ?string $subjectSearch,
+        ?string $dateFromSearch,
+        ?string $dateToSearch,
         int $limit,
         int $offset
     ): ArrayCollection {
@@ -70,6 +72,16 @@ class SendService
         if ($subjectSearch !== null) {
             $qb->andWhere('LOWER(s.subject) LIKE LOWER(:subjectSearch)')
                 ->setParameter('subjectSearch', '%' . strtolower($subjectSearch) . '%');
+        }
+
+        if ($dateFromSearch !== null) {
+            $qb->andWhere('s.created_at >= :dateFromSearch')
+                ->setParameter('dateFromSearch', $dateFromSearch);
+        }
+
+        if ($dateToSearch !== null) {
+            $qb->andWhere('s.created_at <= :dateToSearch')
+                ->setParameter('dateToSearch', $dateToSearch);
         }
 
         /** @var Send[] $results */

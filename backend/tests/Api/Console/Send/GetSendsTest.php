@@ -269,4 +269,74 @@ class GetSendsTest extends WebTestCase
         $send = $json[0];
         $this->assertSame("Hello World", $send['subject']);
     }
+
+    public function test_with_date_from_search_today(): void
+    {
+        $project = ProjectFactory::createOne();
+        $domain = DomainFactory::createOne();
+
+        $sends = SendFactory::createMany(3, [
+            'project' => $project,
+            'domain' => $domain,
+            'createdAt' => new \DateTimeImmutable('2025-01-01')
+        ]);
+
+        $send = SendFactory::createOne([
+            'project' => $project,
+            'domain' => $domain,
+            'createdAt' => new \DateTimeImmutable('2025-01-02')
+        ]);
+
+        $response = $this->consoleApi(
+            $project,
+            'GET',
+            '/sends?date_from_search=2025-01-01&date_to_search=2025-01-01'
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+        /** @var array<int, array<string, mixed>> $json */
+        $json = $this->getJson();
+        $this->assertCount(3, $json);
+    }
+
+    public function test_with_date_to_search_this_week(): void
+    {
+        $project = ProjectFactory::createOne();
+        $domain = DomainFactory::createOne();
+
+        $sendsThisWeek = SendFactory::createMany(3, [
+            'project' => $project,
+            'domain' => $domain,
+            'createdAt' => new \DateTimeImmutable('2025-01-06') // Monday
+        ]);
+
+        SendFactory::createOne([
+            'project' => $project,
+            'domain' => $domain,
+            'createdAt' => new \DateTimeImmutable('2025-01-08') // Wednesday
+        ]);
+
+        $sendsLastWeek = SendFactory::createMany(2, [
+            'project' => $project,
+            'domain' => $domain,
+            'createdAt' => new \DateTimeImmutable('2025-01-01') // Last week
+        ]);
+
+        SendFactory::createOne([
+            'project' => $project,
+            'domain' => $domain,
+            'createdAt' => new \DateTimeImmutable('2025-01-13') // Next week
+        ]);
+
+        $response = $this->consoleApi(
+            $project,
+            'GET',
+            '/sends?date_from_search=2025-01-06&date_to_search=2025-01-12'
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+        /** @var array<int, array<string, mixed>> $json */
+        $json = $this->getJson();
+        $this->assertCount(4, $json);
+    }
 }
