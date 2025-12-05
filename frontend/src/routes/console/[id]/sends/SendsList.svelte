@@ -10,10 +10,12 @@
 		from_search?: string | null;
 		to_search?: string | null;
 		subject_search?: string | null;
+		date_from_search?: string | null;
+		date_to_search?: string | null;
 		key: number; // just for forcing re-render
 	}
 
-	let { status, from_search = null, to_search = null, subject_search = null, key = $bindable() }: Props = $props();
+	let { status, from_search = null, to_search = null, subject_search = null, date_from_search = null, date_to_search = null, key = $bindable() }: Props = $props();
 
 	let loading = $state(true);
 	let hasMore = $state(true);
@@ -27,7 +29,7 @@
 	function load(more = false) {
 		more ? (loadingMore = true) : (loading = true);
 
-		getSends(status, from_search, to_search, subject_search, EMAILS_PER_PAGE, more ? emails.length : 0)
+		getSends(status, from_search, to_search, subject_search, date_from_search, date_to_search, EMAILS_PER_PAGE, more ? emails.length : 0)
 			.then((data) => {
 				emails = more ? [...emails, ...data] : data;
 				emailStore.set(emails);
@@ -48,6 +50,8 @@
 		from_search;
 		to_search;
 		subject_search;
+		date_from_search;
+		date_to_search;
 
 		load();
 	});
