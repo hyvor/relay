@@ -147,6 +147,16 @@ class SendController extends AbstractController
             $subjectSearch = $request->query->getString("subject_search");
         }
 
+        $dateFromSearch = null;
+        if ($request->query->has("date_from_search")) {
+            $dateFromSearch = $request->query->getString("date_from_search");
+        }
+
+        $dateToSearch = null;
+        if ($request->query->has("date_to_search")) {
+            $dateToSearch = $request->query->getString("date_to_search");
+        }
+
         $sends = $this->sendService
             ->getSends(
                 $project,
@@ -154,6 +164,8 @@ class SendController extends AbstractController
                 $fromSearch,
                 $toSearch,
                 $subjectSearch,
+                $dateFromSearch,
+                $dateToSearch,
                 $limit,
                 $offset
             )
