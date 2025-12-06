@@ -255,6 +255,7 @@ class AcmeClient implements LoggerAwareInterface
 
         // notify challenge is ready
         $this->httpRequest($order->challengeUrl);
+        $this->logger?->info('Notified ACME server that challenge is ready, polling for authorization status');
 
         // poll for authorization status
         $maxAttempts = 10;
@@ -266,10 +267,10 @@ class AcmeClient implements LoggerAwareInterface
                 payload: "",
                 returnType: AuthorizationResponse::class
             );
-            $this->clock->sleep(2);
+            $this->clock->sleep(2 * $attempt);
 
             if ($attempt > 1) {
-                $this->logger?->info('Polling ACME server for authorization status', [
+                $this->logger?->info('Still polling ACME server for authorization status', [
                     'attempt' => $attempt,
                     'status' => $authorization->status,
                 ]);
