@@ -9,7 +9,7 @@ services:
       - ./frontend/static:/app/frontend/static
       - ./frontend/vite.config.ts:/app/frontend/vite.config.ts
       - ./frontend/package.json:/app/frontend/package.json
-      - ./frontend/bun.lock:/app/frontend/bun.lock
+      - ./frontend/package-lock.json:/app/frontend/package-lock.json
       - ./frontend/tsconfig.json:/app/frontend/tsconfig.json
       - ./frontend/svelte.config.js:/app/frontend/svelte.config.js
     labels:

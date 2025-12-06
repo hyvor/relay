@@ -1,21 +1,21 @@
-FROM oven/bun:1 AS bun
+FROM node:24.9.0 AS node
 FROM composer:2.8.8 AS composer
 FROM dunglas/frankenphp:1.10.0-php8.4.15 AS frankenphp
 FROM golang:1.25.4 AS golang
 
-FROM bun AS frontend-base
+FROM node AS frontend-base
 WORKDIR /app/frontend
-COPY frontend/package.json frontend/bun.lock frontend/svelte.config.js frontend/vite.config.ts frontend/tsconfig.json /app/frontend/
+COPY frontend/package.json frontend/package-lock.json frontend/svelte.config.js frontend/vite.config.ts frontend/tsconfig.json /app/frontend/
 COPY frontend/src /app/frontend/src
 COPY frontend/static /app/frontend/static
 
 FROM frontend-base AS frontend-dev
-RUN bun install
-CMD ["bun", "run", "dev"]
+RUN npm install
+CMD ["npm", "run", "dev"]
 
 FROM frontend-base AS frontend-prod
-RUN  bun install \
-    && bun run build \
+RUN  npm install \
+    && npm run build \
     && find . -maxdepth 1 -not -name build -not -name . -exec rm -rf {} \;
 
 FROM golang AS worker-dev
