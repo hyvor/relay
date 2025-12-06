@@ -1,5 +1,5 @@
 <script>
-	import { CodeBlock } from '@hyvor/design/components';
+    import {CodeBlock} from '@hyvor/design/components';
 </script>
 
 <h1>Environment Variables</h1>
@@ -7,7 +7,7 @@
 <p>These are the environment variables that you can set for Hyvor Relay.</p>
 
 <CodeBlock
-	code={`
+        code={`
 # Environment: prod, dev, or test
 # you probably want to use prod for a deployment
 APP_ENV=prod
@@ -34,10 +34,6 @@ WEB_URL=
 # See https://relay.hyvor.com/hosting/setup#instance-domain
 INSTANCE_DOMAIN=
 
-# The PostgreSQL database URL.
-# Use the format: "postgresql://user:pass@host:5432/database_name?serverVersion=16&charset=utf8"
-DATABASE_URL=
-
 # OpenID Connect (OIDC) configuration
 OIDC_ISSUER_URL=
 OIDC_CLIENT_ID=
@@ -58,5 +54,5 @@ LOG_LEVEL=info
 # Default: true
 TELEMETRY=true
 `}
-	language="yaml"
+        language="yaml"
 />
