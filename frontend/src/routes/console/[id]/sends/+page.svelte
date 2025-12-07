@@ -215,22 +215,24 @@
 					<div class="custom-date-inputs">
 						<div class="date-input-row">
 							<label for="date-from">From</label>
-							<input
+							<TextInput
 								type="date"
 								id="date-from"
 								bind:value={customDateFrom}
 								min={minCustomDate}
 								max={maxCustomDate}
+								size="small"
 							/>
 						</div>
 						<div class="date-input-row">
 							<label for="date-to">To</label>
-							<input
+							<TextInput
 								type="date"
 								id="date-to"
 								bind:value={customDateTo}
 								min={minCustomDate}
 								max={maxCustomDate}
+								size="small"
 							/>
 						</div>
 					</div>
@@ -372,18 +374,5 @@
 		font-size: 13px;
 		color: var(--text-light);
 		width: 40px;
-	}
-	.date-input-row input[type='date'] {
-		flex: 1;
-		padding: 6px 10px;
-		border: 1px solid var(--border);
-		border-radius: 6px;
-		font-size: 13px;
-		background: var(--background);
-		color: var(--text);
-	}
-	.date-input-row input[type='date']:focus {
-		outline: none;
-		border-color: var(--accent);
 	}
 </style>
