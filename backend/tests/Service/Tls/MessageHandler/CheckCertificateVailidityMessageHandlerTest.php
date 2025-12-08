@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use App\Tests\Factory\TlsCertificateFactory;
 use App\Service\Tls\TlsCertificateService;
 use App\Service\Tls\MailTlsGenerator;
+use App\Service\Tls\Message\GenerateCertificateMessage;
 
 
 #[CoversClass(CheckCertificateVailidityMessageHandler::class)]
@@ -47,8 +48,6 @@ class CheckCertificateVailidityMessageHandlerTest extends KernelTestCase
         $transport->send($message);
         $transport->processOrFail();
 
-        $this->assertTrue(
-            $this->getTestLogger()->hasInfoThatContains("Mail TLS certificate expires within threshold, starting renewal")
-        );
+        $this->transport(MessageTransport::ASYNC)->queue()->assertContains(GenerateCertificateMessage::class);
     }
 }
