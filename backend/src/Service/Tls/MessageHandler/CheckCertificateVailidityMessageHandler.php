@@ -32,19 +32,19 @@ class CheckCertificateVailidityMessageHandler
     public function __invoke(CheckCertificateVailidityMessage $message): void
     {
         $cert = $this->tlsCertificateService->getLatestCertificateByType(TlsCertificateType::MAIL);
-
+    
         if ($cert === null) {
             $this->logger->info('No mail TLS certificate found, skipping validity check');
             return;
         }
-
+        
         if ($cert->getStatus() !== TlsCertificateStatus::ACTIVE) {
             $this->logger->info('Mail TLS certificate is not active, skipping validity check', [
                 'status' => $cert->getStatus()->value,
             ]);
             return;
         }
-
+    
         $validTo = $cert->getValidTo();
         if ($validTo === null) {
             $this->logger->warning('Mail TLS certificate has no valid_to date, skipping validity check');
@@ -53,7 +53,7 @@ class CheckCertificateVailidityMessageHandler
 
         $now = $this->clock->now();
         $thresholdDate = $now->modify('+' . self::RENEWAL_THRESHOLD_DAYS . ' days');
-
+        
         if ($validTo > $thresholdDate) {
             $this->logger->info('Mail TLS certificate is valid, no renewal needed', [
                 'validTo' => $validTo->format('Y-m-d H:i:s'),
