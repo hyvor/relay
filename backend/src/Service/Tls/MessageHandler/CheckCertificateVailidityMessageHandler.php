@@ -12,6 +12,7 @@ use Hyvor\Internal\Bundle\Log\ContextualLogger;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use App\Service\Instance\InstanceService;
 
 #[AsMessageHandler]
 class CheckCertificateVailidityMessageHandler
@@ -24,6 +25,7 @@ class CheckCertificateVailidityMessageHandler
         private TlsCertificateService $tlsCertificateService,
         private MailTlsGenerator $mailTlsGenerator,
         private ClockInterface $clock,
+        private InstanceService $instanceService,
         LoggerInterface $streamerLogger,
     ) {
         $this->logger = ContextualLogger::forMessageHandler($streamerLogger, self::class);
@@ -31,7 +33,8 @@ class CheckCertificateVailidityMessageHandler
 
     public function __invoke(CheckCertificateVailidityMessage $message): void
     {
-        $cert = $this->tlsCertificateService->getLatestCertificateByType(TlsCertificateType::MAIL);
+        $instance = $this->instanceService->getInstance();
+        $cert = $this->tlsCertificateService->getInstanceMailTlsCertificate($instance);
     
         if ($cert === null) {
             $this->logger->info('No mail TLS certificate found, skipping validity check');

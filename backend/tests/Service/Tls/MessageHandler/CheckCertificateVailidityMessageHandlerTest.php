@@ -8,6 +8,7 @@ use App\Service\Tls\Message\CheckCertificateVailidityMessage;
 use App\Tests\Case\KernelTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use App\Tests\Factory\TlsCertificateFactory;
+use App\Tests\Factory\InstanceFactory;
 use App\Service\Tls\TlsCertificateService;
 use App\Service\Tls\MailTlsGenerator;
 use App\Service\Tls\Message\GenerateCertificateMessage;
@@ -25,6 +26,10 @@ class CheckCertificateVailidityMessageHandlerTest extends KernelTestCase
             'validTo' => new \DateTimeImmutable('+40 days'),
         ]);
 
+        InstanceFactory::createOne([
+            'mail_tls_certificate_id' => $tlsCertificate->getId(),
+        ]);
+
         $message = new CheckCertificateVailidityMessage();
 
         $transport = $this->transport(MessageTransport::ASYNC);
@@ -34,6 +39,8 @@ class CheckCertificateVailidityMessageHandlerTest extends KernelTestCase
         $this->assertTrue(
             $this->getTestLogger()->hasInfoThatContains("Mail TLS certificate is valid, no renewal needed")
         );
+
+        $this->assertCount(0, $transport->queue());
     }
 
     public function test_refresh_certificate_when_expired(): void
@@ -42,14 +49,16 @@ class CheckCertificateVailidityMessageHandlerTest extends KernelTestCase
             'validTo' => new \DateTimeImmutable('-1 year'),
         ]);
 
+        InstanceFactory::createOne([
+            'mail_tls_certificate_id' => $tlsCertificate->getId(),
+        ]);
+
         $message = new CheckCertificateVailidityMessage();
 
         $transport = $this->transport(MessageTransport::ASYNC);
         $transport->send($message);
-        $transport->processOrFail();
+        $transport->throwExceptions()->process(1);
 
-       $this->assertTrue(
-            $this->getTestLogger()->hasInfoThatContains("Mail TLS certificate renewal dispatched")
-       );
+       $transport->queue()->assertContains(GenerateCertificateMessage::class);
     }
 }

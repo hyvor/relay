@@ -70,6 +70,5 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     if ($containerConfigurator->env() === 'test') {
         $services->set(EventDispatcherInterface::class, TestEventDispatcher::class);
-        $services->alias('event_dispatcher', EventDispatcherInterface::class);
     }
 };
