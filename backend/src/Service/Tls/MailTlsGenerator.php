@@ -47,12 +47,12 @@ class MailTlsGenerator
             TlsCertificateType::MAIL,
             $domain
         );
-
+       
         $message = new GenerateCertificateMessage($cert->getId(), $key);
         $this->bus->dispatch($message, [
             new TransportNamesStamp($transport)
         ]);
-
+        
         return $cert;
     }
 

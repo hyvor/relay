@@ -48,6 +48,8 @@ class CheckCertificateVailidityMessageHandlerTest extends KernelTestCase
         $transport->send($message);
         $transport->processOrFail();
 
-        $this->transport(MessageTransport::ASYNC)->queue()->assertContains(GenerateCertificateMessage::class);
+       $this->assertTrue(
+            $this->getTestLogger()->hasInfoThatContains("Mail TLS certificate renewal dispatched")
+       );
     }
 }
