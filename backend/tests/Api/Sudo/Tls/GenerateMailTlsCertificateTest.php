@@ -35,6 +35,10 @@ class GenerateMailTlsCertificateTest extends WebTestCase
         $this->assertSame($tlsCert->getStatus(), TlsCertificateStatus::PENDING);
 
         $this->transport(MessageTransport::ASYNC)->queue()->assertContains(GenerateCertificateMessage::class);
+
+        $lockKey = new Key('mail_tls_certificate_generation_lock');
+        $lock = $this->getService(LockFactory::class)->createLockFromKey($lockKey);
+        $lock->release();
     }
 
     public function test_when_lock_already_acquired(): void
