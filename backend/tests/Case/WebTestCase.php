@@ -16,6 +16,7 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Lock\LockFactory;
 
 class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
 {
@@ -44,6 +45,30 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
 
         // metrics in memory
         $this->container->set(Adapter::class, new InMemory());
+
+        $this->resetInMemoryLockStore();
+    }
+
+    /**
+     * Clears the lock storage in Symfony's InMemoryStore service.
+     * The container is reused between tests, so locks can leak.
+     */
+    private function resetInMemoryLockStore(): void
+    {
+        $lockFactory = $this->container->get(LockFactory::class);
+        $factoryReflection = new \ReflectionClass($lockFactory);
+        $storeProperty = $factoryReflection->getProperty('store');
+        $store = $storeProperty->getValue($lockFactory);
+
+        $storeReflection = new \ReflectionClass($store);
+        if ($storeReflection->hasProperty('locks')) {
+            $locksProperty = $storeReflection->getProperty('locks');
+            $locksProperty->setValue($store, []);
+        }
+        if ($storeReflection->hasProperty('readLocks')) {
+            $readLocksProperty = $storeReflection->getProperty('readLocks');
+            $readLocksProperty->setValue($store, []);
+        }
     }
 
     protected function shouldEnableAuthFake(): bool

@@ -37,18 +37,17 @@ class MailTlsGenerator
             ttl: 300,  // 5 minutes
             autoRelease: false, // since the generation is handled asynchronously
         );
-        dd('here');
+
         if (!$lock->acquire()) {
             throw new AnotherTlsGenerationRequestInProgressException();
         }
-        dd('here2');
+
 
         $domain = $this->mxServer->getMxHostname();
         $cert = $this->tlsCertificateService->createCertificate(
             TlsCertificateType::MAIL,
             $domain
         );
-        dd('here3');
        
         $message = new GenerateCertificateMessage($cert->getId(), $key);
         $this->bus->dispatch($message, [
