@@ -33,31 +33,28 @@ class CheckCertificateVailidityMessageHandler
 
     public function __invoke(CheckCertificateVailidityMessage $message): void
     {
-        dd('message received');
         $instance = $this->instanceService->getInstance();
         $cert = $this->tlsCertificateService->getInstanceMailTlsCertificate($instance);
-        dd('instance received');
         if ($cert === null) {
             $this->logger->info('No mail TLS certificate found, skipping validity check');
             return;
         }
-        dd('cert received');
         if ($cert->getStatus() !== TlsCertificateStatus::ACTIVE) {
             $this->logger->info('Mail TLS certificate is not active, skipping validity check', [
                 'status' => $cert->getStatus()->value,
             ]);
             return;
         }
-        dd('cert active');
+        dump('cert active');
         $validTo = $cert->getValidTo();
         if ($validTo === null) {
             $this->logger->warning('Mail TLS certificate has no valid_to date, skipping validity check');
             return;
         }
-        dd('cert valid to');
+        dump('cert valid to');
         $now = $this->clock->now();
         $thresholdDate = $now->modify('+' . self::RENEWAL_THRESHOLD_DAYS . ' days');
-        dd('threshold date');
+        dump('threshold date');
         if ($validTo > $thresholdDate) {
      
             $this->logger->info('Mail TLS certificate is valid, no renewal needed', [
@@ -66,13 +63,13 @@ class CheckCertificateVailidityMessageHandler
             ]);
             return;
         }
-        dd('logging renewal');
+        dump('logging renewal');
         $this->logger->info('Mail TLS certificate expires within threshold, starting renewal', [
             'validTo' => $validTo->format('Y-m-d H:i:s'),
             'thresholdDays' => self::RENEWAL_THRESHOLD_DAYS,
         ]);
 
-        dd('dispatching renewal');
+        dump('dispatching renewal');
         try {
             $this->mailTlsGenerator->dispatchToGenerate();
             $this->logger->info('Mail TLS certificate renewal dispatched');
