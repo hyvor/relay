@@ -59,7 +59,7 @@ class CheckCertificateVailidityMessageHandlerTest extends KernelTestCase
     
         $transport = $this->transport(MessageTransport::ASYNC);
         $transport->send($message);
-        $transport->processOrFail();
+        $transport->throwExceptions()->process(1);
 
         $this->transport(MessageTransport::ASYNC)->queue()->assertContains(GenerateCertificateMessage::class);
 

@@ -10,7 +10,6 @@ use App\Service\Tls\Message\CheckCertificateVailidityMessage;
 use App\Service\Tls\TlsCertificateService;
 use Hyvor\Internal\Bundle\Log\ContextualLogger;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use App\Service\Instance\InstanceService;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -27,7 +26,6 @@ class CheckCertificateVailidityMessageHandler
     public function __construct(
         private TlsCertificateService $tlsCertificateService,
         private MailTlsGenerator $mailTlsGenerator,
-        private ClockInterface $clock,
         private InstanceService $instanceService,
         LoggerInterface $streamerLogger,
     ) {
@@ -53,7 +51,7 @@ class CheckCertificateVailidityMessageHandler
             $this->logger->warning('Mail TLS certificate has no valid_to date, skipping validity check');
             return;
         }
-        $now = $this->clock->now();
+        $now = $this->now();
         $thresholdDate = $now->modify('+' . self::RENEWAL_THRESHOLD_DAYS . ' days');
         if ($validTo > $thresholdDate) {
             $this->logger->info('Mail TLS certificate is valid, no renewal needed', [
