@@ -17,6 +17,7 @@ use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\InMemoryStore;
 
 class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
 {
@@ -45,6 +46,9 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
 
         // metrics in memory
         $this->container->set(Adapter::class, new InMemory());
+
+        // Reset lock store to avoid lock leakage between tests
+        $this->container->set(LockFactory::class, new LockFactory(new InMemoryStore()));
     }
 
     protected function shouldEnableAuthFake(): bool
