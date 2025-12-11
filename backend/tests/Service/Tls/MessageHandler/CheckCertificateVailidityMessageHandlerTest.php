@@ -63,7 +63,7 @@ class CheckCertificateVailidityMessageHandlerTest extends KernelTestCase
     
         $transport = $this->transport(MessageTransport::ASYNC);
         $transport->send($message);
-        $transport->throwExceptions()->process(1);
+        $transport->throwExceptions()->process();
     
         $this->assertTrue(
             $this->getTestLogger()->hasInfoThatContains("Mail TLS certificate expires within threshold, starting renewal")
