@@ -17,6 +17,8 @@ use App\Service\Instance\InstanceService;
 #[AsMessageHandler]
 class CheckCertificateVailidityMessageHandler
 {
+    use ClockAwareTrait;
+    
     private const RENEWAL_THRESHOLD_DAYS = 30;
 
     private LoggerInterface $logger;
