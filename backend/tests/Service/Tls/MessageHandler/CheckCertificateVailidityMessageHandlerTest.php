@@ -50,17 +50,23 @@ class CheckCertificateVailidityMessageHandlerTest extends KernelTestCase
         $tlsCertificate = TlsCertificateFactory::createOne([
             'validTo' => new \DateTimeImmutable('-1 year'),
         ]);
-
+    
         InstanceFactory::createOne([
             'mail_tls_certificate_id' => $tlsCertificate->getId(),
         ]);
-
+    
+        $mailTlsGenerator = $this->createMock(MailTlsGenerator::class);
+        $mailTlsGenerator->expects($this->once())->method('dispatchToGenerate');
+        $this->container->set(MailTlsGenerator::class, $mailTlsGenerator);
+    
         $message = new CheckCertificateVailidityMessage();
-
+    
         $transport = $this->transport(MessageTransport::ASYNC);
         $transport->send($message);
         $transport->throwExceptions()->process(1);
-
-        $this->transport(MessageTransport::ASYNC)->queue()->assertContains(GenerateCertificateMessage::class);
+    
+        $this->assertTrue(
+            $this->getTestLogger()->hasInfoThatContains("Mail TLS certificate expires within threshold, starting renewal")
+        );
     }
 }
