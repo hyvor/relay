@@ -48,7 +48,7 @@ class CheckCertificateVailidityMessageHandlerTest extends KernelTestCase
     public function test_refresh_certificate_when_expired(): void
     {
         $tlsCertificate = TlsCertificateFactory::createOne([
-            'validTo' => new \DateTimeImmutable('-1 year'),
+            'validTo' => new \DateTimeImmutable('+10 days'),
         ]);
     
         InstanceFactory::createOne([
