@@ -55,7 +55,6 @@ class CheckCertificateVailidityMessageHandlerTest extends KernelTestCase
             'mail_tls_certificate_id' => $tlsCertificate->getId(),
         ]);
     
-    
         $message = new CheckCertificateVailidityMessage();
     
         $transport = $this->transport(MessageTransport::ASYNC);

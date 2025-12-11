@@ -13,12 +13,13 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use App\Service\Instance\InstanceService;
+use Symfony\Component\Clock\ClockAwareTrait;
 
 #[AsMessageHandler]
 class CheckCertificateVailidityMessageHandler
 {
     use ClockAwareTrait;
-    
+
     private const RENEWAL_THRESHOLD_DAYS = 30;
 
     private LoggerInterface $logger;
@@ -47,32 +48,25 @@ class CheckCertificateVailidityMessageHandler
             ]);
             return;
         }
-        dump('cert active');
         $validTo = $cert->getValidTo();
         if ($validTo === null) {
             $this->logger->warning('Mail TLS certificate has no valid_to date, skipping validity check');
             return;
         }
-        dump('cert valid to');
         $now = $this->clock->now();
         $thresholdDate = $now->modify('+' . self::RENEWAL_THRESHOLD_DAYS . ' days');
-        dump('threshold date', $thresholdDate->format('Y-m-d H:i:s'));
-        dump('valid to', $validTo->format('Y-m-d H:i:s'));
         if ($validTo > $thresholdDate) {
-     
             $this->logger->info('Mail TLS certificate is valid, no renewal needed', [
                 'validTo' => $validTo->format('Y-m-d H:i:s'),
                 'thresholdDate' => $thresholdDate->format('Y-m-d H:i:s'),
             ]);
             return;
         }
-        dump('logging renewal');
         $this->logger->info('Mail TLS certificate expires within threshold, starting renewal', [
             'validTo' => $validTo->format('Y-m-d H:i:s'),
             'thresholdDays' => self::RENEWAL_THRESHOLD_DAYS,
         ]);
 
-        dump('dispatching renewal');
         try {
             $this->mailTlsGenerator->dispatchToGenerate();
             $this->logger->info('Mail TLS certificate renewal dispatched');
