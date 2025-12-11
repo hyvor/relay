@@ -12,6 +12,8 @@ use App\Tests\Factory\InstanceFactory;
 use App\Service\Tls\TlsCertificateService;
 use App\Service\Tls\MailTlsGenerator;
 use App\Service\Tls\Message\GenerateCertificateMessage;
+use Symfony\Component\Lock\Key;
+use Symfony\Component\Lock\LockFactory;
 
 
 #[CoversClass(CheckCertificateVailidityMessageHandler::class)]
