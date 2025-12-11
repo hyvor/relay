@@ -53,8 +53,7 @@ class CheckCertificateVailidityMessageHandler
         }
         $now = $this->now();
         $thresholdDate = $now->modify('+' . self::RENEWAL_THRESHOLD_DAYS . ' days');
-        dump('thresholdDate', $thresholdDate->format('Y-m-d H:i:s'));
-        dump('validTo', $validTo->format('Y-m-d H:i:s'));
+
         if ($validTo > $thresholdDate) {
             $this->logger->info('Mail TLS certificate is valid, no renewal needed', [
                 'validTo' => $validTo->format('Y-m-d H:i:s'),
