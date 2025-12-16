@@ -33,6 +33,7 @@ doctrine:
         alias: InternalBundle
     controller_resolver:
       auto_mapping: false
+      enabled: false
 
 when@test:
   doctrine:
