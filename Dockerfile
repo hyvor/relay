@@ -41,6 +41,7 @@ RUN apt update  && apt install -y supervisor
 FROM backend-base AS backend-dev
 RUN curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh' | bash && apt install -y symfony-cli
 RUN install-php-extensions pcov
+RUN curl --proto '=https' --tlsv1.2 -sSf https://carthage.software/mago.sh | bash
 COPY backend/composer.json backend/composer.lock /app/backend/
 RUN composer install
 COPY backend /app/backend/
