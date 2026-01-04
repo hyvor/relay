@@ -9,7 +9,7 @@ use App\Service\Idempotency\Message\ClearExpiredIdempotencyRecordsMessage;
 use App\Service\InfrastructureBounce\Message\ClearOldInfrastructureBouncesMessage;
 use App\Service\Management\Message\RunHealthChecksMessage;
 use App\Service\Send\Message\ClearExpiredSendsMessage;
-use App\Service\Tls\Message\CheckCertificateVailidityMessage;
+use App\Service\Tls\Message\CheckMailCertificateValidityMessage;
 use App\Service\Webhook\Message\ClearOldWebhookDeliveriesMessage;
 use Symfony\Component\Console\Messenger\RunCommandMessage;
 use Symfony\Component\Lock\LockFactory;
@@ -70,7 +70,7 @@ class DefaultSchedule implements ScheduleProviderInterface
             ->add(RecurringMessage::every('1 hour', new PurgeStalePendingSuspendedDomainsMessage))
 
             // tls certificate renewal
-            ->add(RecurringMessage::every('1 day', new CheckCertificateVailidityMessage))
+            ->add(RecurringMessage::every('1 day', new CheckMailCertificateValidityMessage))
 
             // telemetry
             ->add(RecurringMessage::every('24 hours', new RunCommandMessage('self-hosted:record-telemetry')))

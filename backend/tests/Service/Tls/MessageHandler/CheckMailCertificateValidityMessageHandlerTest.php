@@ -3,8 +3,8 @@
 namespace App\Tests\Service\Tls\MessageHandler;
 
 use App\Service\App\MessageTransport;
-use App\Service\Tls\MessageHandler\CheckCertificateVailidityMessageHandler;
-use App\Service\Tls\Message\CheckCertificateVailidityMessage;
+use App\Service\Tls\MessageHandler\CheckMailCertificateValidityMessageHandler;
+use App\Service\Tls\Message\CheckMailCertificateValidityMessage;
 use App\Tests\Case\KernelTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use App\Tests\Factory\TlsCertificateFactory;
@@ -16,11 +16,11 @@ use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\LockFactory;
 
 
-#[CoversClass(CheckCertificateVailidityMessageHandler::class)]
+#[CoversClass(CheckMailCertificateValidityMessageHandler::class)]
 #[CoversClass(TlsCertificateService::class)]
-#[CoversClass(CheckCertificateVailidityMessage::class)]
+#[CoversClass(CheckMailCertificateValidityMessage::class)]
 #[CoversClass(MailTlsGenerator::class)]
-class CheckCertificateVailidityMessageHandlerTest extends KernelTestCase
+class CheckMailCertificateValidityMessageHandlerTest extends KernelTestCase
 {
     public function test_no_renewal_needed_when_certificate_is_valid(): void
     {
@@ -32,7 +32,7 @@ class CheckCertificateVailidityMessageHandlerTest extends KernelTestCase
             'mail_tls_certificate_id' => $tlsCertificate->getId(),
         ]);
 
-        $message = new CheckCertificateVailidityMessage();
+        $message = new CheckMailCertificateValidityMessage();
 
         $transport = $this->transport(MessageTransport::ASYNC);
         $transport->send($message);
@@ -50,13 +50,13 @@ class CheckCertificateVailidityMessageHandlerTest extends KernelTestCase
         $tlsCertificate = TlsCertificateFactory::createOne([
             'validTo' => $this->now()->modify('+10 days'),
         ]);
-    
+
         InstanceFactory::createOne([
             'mail_tls_certificate_id' => $tlsCertificate->getId(),
         ]);
-    
-        $message = new CheckCertificateVailidityMessage();
-    
+
+        $message = new CheckMailCertificateValidityMessage();
+
         $transport = $this->transport(MessageTransport::ASYNC);
         $transport->send($message);
         $transport->throwExceptions()->process(1);
@@ -64,7 +64,9 @@ class CheckCertificateVailidityMessageHandlerTest extends KernelTestCase
         $this->transport(MessageTransport::ASYNC)->queue()->assertContains(GenerateCertificateMessage::class);
 
         $this->assertTrue(
-            $this->getTestLogger()->hasInfoThatContains("Mail TLS certificate expires within threshold, starting renewal")
+            $this->getTestLogger()->hasInfoThatContains(
+                "Mail TLS certificate expires within threshold, starting renewal"
+            )
         );
     }
 }
