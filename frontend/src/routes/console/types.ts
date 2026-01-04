@@ -219,3 +219,5 @@ export interface ProjectUserMiniObject {
 	picture_url: string | null;
 	oidc_sub: string | null;
 }
+
+export type DateFilterPreset = 'today' | 'yesterday' | 'this_week' | 'custom' | null;
