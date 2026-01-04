@@ -6,11 +6,13 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\Container;
+use Symfony\Component\Clock\ClockAwareTrait;
 
 class KernelTestCase extends \Symfony\Bundle\FrameworkBundle\Test\KernelTestCase
 {
 
     use TestSharedTrait;
+    use ClockAwareTrait;
 
     protected Container $container;
     protected Application $application;

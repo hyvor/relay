@@ -42,17 +42,18 @@ class MailTlsGenerator
             throw new AnotherTlsGenerationRequestInProgressException();
         }
 
+
         $domain = $this->mxServer->getMxHostname();
         $cert = $this->tlsCertificateService->createCertificate(
             TlsCertificateType::MAIL,
             $domain
         );
-
+       
         $message = new GenerateCertificateMessage($cert->getId(), $key);
         $this->bus->dispatch($message, [
             new TransportNamesStamp($transport)
         ]);
-
+        
         return $cert;
     }
 
