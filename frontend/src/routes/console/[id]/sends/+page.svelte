@@ -193,21 +193,41 @@
 				</ActionList>
 			</Selector>
 
-			<Selector name="Date" bind:show={showDateFilter} value={dateFilterDisplayValue} width={280}>
+			<Selector
+				name="Date"
+				bind:show={showDateFilter}
+				value={dateFilterDisplayValue}
+				width={280}
+			>
 				<ActionList selection="single" selectionAlign="end">
-					<ActionListItem on:click={() => selectDateFilter(null)} selected={dateFilterPreset === null}>
+					<ActionListItem
+						on:click={() => selectDateFilter(null)}
+						selected={dateFilterPreset === null}
+					>
 						All
 					</ActionListItem>
-					<ActionListItem on:click={() => selectDateFilter('today')} selected={dateFilterPreset === 'today'}>
+					<ActionListItem
+						on:click={() => selectDateFilter('today')}
+						selected={dateFilterPreset === 'today'}
+					>
 						Today
 					</ActionListItem>
-					<ActionListItem on:click={() => selectDateFilter('yesterday')} selected={dateFilterPreset === 'yesterday'}>
+					<ActionListItem
+						on:click={() => selectDateFilter('yesterday')}
+						selected={dateFilterPreset === 'yesterday'}
+					>
 						Yesterday
 					</ActionListItem>
-					<ActionListItem on:click={() => selectDateFilter('this_week')} selected={dateFilterPreset === 'this_week'}>
+					<ActionListItem
+						on:click={() => selectDateFilter('this_week')}
+						selected={dateFilterPreset === 'this_week'}
+					>
 						This week
 					</ActionListItem>
-					<ActionListItem on:click={() => selectDateFilter('custom')} selected={dateFilterPreset === 'custom'}>
+					<ActionListItem
+						on:click={() => selectDateFilter('custom')}
+						selected={dateFilterPreset === 'custom'}
+					>
 						Custom
 					</ActionListItem>
 				</ActionList>
@@ -216,6 +236,7 @@
 						<div class="date-input-row">
 							<label for="date-from">From</label>
 							<TextInput
+								block
 								type="date"
 								id="date-from"
 								bind:value={customDateFrom}
@@ -227,10 +248,11 @@
 						<div class="date-input-row">
 							<label for="date-to">To</label>
 							<TextInput
+								block
 								type="date"
 								id="date-to"
 								bind:value={customDateTo}
-								min={minCustomDate}
+								min={customDateFrom ? customDateFrom : minCustomDate}
 								max={maxCustomDate}
 								size="small"
 							/>
