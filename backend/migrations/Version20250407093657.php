@@ -24,12 +24,14 @@ final class Version20250407093657 extends AbstractMigration
             created_at TIMESTAMPTZ NOT NULL,
             updated_at TIMESTAMPTZ NOT NULL,
             user_id INTEGER NOT NULL,
+            organization_id INTEGER NOT NULL,
             name VARCHAR(255) NOT NULL,
             send_type project_send_type NOT NULL
         )
         '
         );
         $this->addSql('CREATE INDEX idx_projects_user_id ON projects (user_id)');
+        $this->addSql('CREATE INDEX idx_projects_organization_id ON projects (organization_id)');
     }
 
     public function down(Schema $schema): void
