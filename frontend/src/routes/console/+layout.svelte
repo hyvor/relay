@@ -1,11 +1,13 @@
 <script lang="ts">
-	import { HyvorBar, Loader, toast } from '@hyvor/design/components';
+	import { Loader, toast } from '@hyvor/design/components';
 	import { onMount } from 'svelte';
 	import type { AppConfig, ProjectUser } from './types';
 	import consoleApi from './lib/consoleApi.svelte';
 	import { getAppConfig, setAppConfig } from './lib/stores/consoleStore';
 	import { setCurrentProjectUser, setProjectUsers } from './lib/stores/projectStore.svelte';
 	import { page } from '$app/state';
+	import { CloudContext, type CloudContextOrganization, HyvorBar } from '@hyvor/design/cloud';
+	import { goto } from '$app/navigation';
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -16,19 +18,26 @@
 	interface InitResponse {
 		config: AppConfig;
 		project_users: ProjectUser[];
+		organization: CloudContextOrganization;
 	}
 
 	let isLoading = $state(true);
 
-	onMount(() => {
+	let organization = $state(null as null | CloudContextOrganization);
+
+	function startConsole(switchingOrg = false) {
+		isLoading = true;
+
 		consoleApi
 			.get<InitResponse>({
 				userApi: true,
-				endpoint: 'init'
+				endpoint: 'init',
 			})
 			.then((res) => {
 				setAppConfig(res.config);
-				setProjectUsers(res.project_users);
+	 			setProjectUsers(res.project_users);
+
+				organization = res.organization;
 
 				function getProjectId(): number | undefined {
 					const projectId = page.params.id;
@@ -40,6 +49,10 @@
 
 				if (userProject) {
 					setCurrentProjectUser(userProject);
+				}
+
+				if (switchingOrg && !page.url.pathname.startsWith('/console/new')) {
+					goto('/console');
 				}
 
 				isLoading = false;
@@ -54,7 +67,9 @@
 					toast.error(err.message);
 				}
 			});
-	});
+	}
+
+	onMount(startConsole);
 </script>
 
 <svelte:head>
@@ -68,18 +83,37 @@
 			<Loader size="large"></Loader>
 		</div>
 	{:else}
-		<HyvorBar
-			product="core"
-			logo="https://hyvor.com/api/public/logo/relay.svg"
-			instance={getAppConfig().hyvor.instance}
-			config={{ name: 'Hyvor Relay' }}
-			cloud={getAppConfig().hosting === 'cloud'}
-			authOverride={{
+		<CloudContext
+			context={{
+				component: "relay",
+				deployment: "cloud",
+				instance: getAppConfig().hyvor.instance,
 				user: getAppConfig().user,
-				logoutUrl: '/api/oidc/logout'
+				license: {
+					type: 'none',
+					subscription: null,
+					license: null,
+					trial_ends_at: null
+				},
+				organization,
+				callbacks: {
+					onOrganizationSwitch: (switcher) => {
+						isLoading = true;
+
+						switcher
+							.then((_org) => {
+								startConsole(true);
+							})
+							.catch(() => {
+								isLoading = false;
+							});
+					}
+				}
 			}}
-		/>
-		{@render children?.()}
+		>
+			<HyvorBar />
+			{@render children?.()}
+		</CloudContext>
 	{/if}
 </main>
 
