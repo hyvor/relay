@@ -11,6 +11,9 @@ use App\Service\Project\Event\ProjectCreatingEvent;
 use App\Service\ProjectUser\ProjectUserService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
+use Hyvor\Internal\Bundle\Comms\CommsInterface;
+use Hyvor\Internal\Bundle\Comms\Event\ToCore\Resource\ResourceCreated;
+use Hyvor\Internal\Component\Component;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -22,7 +25,8 @@ class ProjectService
     public function __construct(
         private EntityManagerInterface $em,
         private EventDispatcherInterface $ed,
-        private ProjectUserService $projectUserService,
+		private ProjectUserService $projectUserService,
+		private CommsInterface $comms,
     ) {
     }
 
@@ -43,7 +47,8 @@ class ProjectService
      * }
      */
     public function createProject(
-        int $userId,
+		int $userId,
+		int $organizationId,
         string $name,
         ProjectSendType $sendType,
         bool $createProjectUser = true,
@@ -52,7 +57,9 @@ class ProjectService
         $this->ed->dispatch(new ProjectCreatingEvent($userId));
 
         $project = new Project();
-        $project
+		$project
+			->setCreatedByUserId($userId)
+			->setOrganizationId($organizationId)
             ->setUserId($userId)
             ->setName($name)
             ->setCreatedAt($this->now())
@@ -72,7 +79,12 @@ class ProjectService
 
         if ($flush) {
             $this->em->flush();
-        }
+		}
+
+		/* $this->comms->send(new ResourceCreated( */
+		/* 	Component::RELAY, */
+		/* 	$organizationId */
+		/* )); */
 
         return [
             'project' => $project,

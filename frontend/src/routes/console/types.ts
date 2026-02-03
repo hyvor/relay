@@ -221,3 +221,11 @@ export interface ProjectUserMiniObject {
 }
 
 export type DateFilterPreset = 'today' | 'yesterday' | 'this_week' | 'custom' | null;
+
+export type OrganizationRole = 'admin' | 'manager' | 'member' | 'billing';
+
+export type Organization = {
+    id: number;
+    name: string;
+    role: OrganizationRole;
+}

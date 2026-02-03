@@ -2,26 +2,27 @@
 	import { toast, confirm } from '@hyvor/design/components';
 	import SettingsBody from '../../../@components/content/SettingsBody.svelte';
 	import ScopeMask from '../../../@components/Scope/ScopeMask.svelte';
-	import InviteUserModal from './InviteUserModal.svelte';
-	import UserSearch from './UserSearch.svelte';
+	import AddUserModal from './AddUserModal.svelte';
 	import UserList from './UserList.svelte';
 	import consoleApi from '../../../lib/consoleApi.svelte';
 	import { getAppConfig } from '../../../lib/stores/consoleStore';
 	import { onMount } from 'svelte';
-	import type { ProjectUserMiniObject, ProjectUser, Scope } from '../../../types';
-
-	let searchEmail = $state('');
-	let searchResults = $state<ProjectUserMiniObject[]>([]);
-	let isSearching = $state(false);
-	let hasSearched = $state(false);
+	import type { ProjectUser, Scope } from '../../../types';
+	import { OrganizationMemberSearch } from '@hyvor/design/cloud';
 
 	let projectUsers = $state<ProjectUser[]>([]);
 	let isLoadingUsers = $state(true);
 
 	let showInviteModal = $state(false);
-	let selectedUser = $state<ProjectUserMiniObject | null>(null);
 	let selectedScopes = $state<string[]>(['project.read']);
-	let isInviting = $state(false);
+	let isAdding = $state(false);
+	let addingUserId: number | undefined = $state(undefined);
+
+	$effect(() => {
+		if (addingUserId !== undefined) {
+			openAddUserModal();
+		}
+	})
 
 	const availableScopes: Scope[] = [
 		'project.read',
@@ -58,76 +59,38 @@
 		}
 	}
 
-	async function searchUsers() {
-		if (!searchEmail.trim()) {
-			searchResults = [];
-			hasSearched = false;
-			return;
-		}
-
-		try {
-			isSearching = true;
-			hasSearched = true;
-			const results = await consoleApi.get<ProjectUserMiniObject[]>({
-				endpoint: 'search-users',
-				data: { email: searchEmail.trim() }
-			});
-			searchResults = results;
-		} catch (error: any) {
-			toast.error('Failed to search users: ' + error.message);
-			searchResults = [];
-		} finally {
-			isSearching = false;
-		}
-	}
-
-	function handleSearchEnter() {
-		if (searchEmail.trim()) {
-			searchUsers();
-		} else {
-			searchResults = [];
-			hasSearched = false;
-		}
-	}
-
-	function openInviteModal(user: ProjectUserMiniObject) {
-		selectedUser = user;
+	function openAddUserModal() {
 		selectedScopes = ['project.read'];
 		showInviteModal = true;
 	}
 
-	function closeInviteModal() {
+	function closeAddUserModal() {
 		showInviteModal = false;
-		selectedUser = null;
 		selectedScopes = ['project.read'];
 	}
 
-	async function inviteUser() {
-		if (!selectedUser || selectedScopes.length === 0) {
+	async function addUser() {
+		if (selectedScopes.length === 0) {
 			return;
 		}
 
 		try {
-			isInviting = true;
+			isAdding = true;
 			const newProjectUser = await consoleApi.post<ProjectUser>({
 				endpoint: 'project-users',
 				data: {
-					user_id: selectedUser.id,
+					user_id: addingUserId,
 					scopes: selectedScopes
 				}
 			});
-			
-			projectUsers = [...projectUsers, newProjectUser];
-			toast.success(`${selectedUser.name} has been invited to the project`);
-			closeInviteModal();
-			
 
-			searchEmail = '';
-			searchResults = [];
+			projectUsers = [...projectUsers, newProjectUser];
+			toast.success(`${newProjectUser.user.name} has been invited to the project`);
+			closeAddUserModal();
 		} catch (error: any) {
 			toast.error('Failed to invite user: ' + error.message);
 		} finally {
-			isInviting = false;
+			isAdding = false;
 		}
 	}
 
@@ -155,7 +118,7 @@
 			await consoleApi.delete({
 				endpoint: `project-users/${projectUser.id}`
 			});
-			
+
 			projectUsers = projectUsers.filter(pu => pu.id !== projectUser.id);
 			toast.success(`${projectUser.user.name} has been removed from the project`);
 		} catch (error: any) {
@@ -169,21 +132,13 @@
 <ScopeMask scope="project.write">
 	<SettingsBody>
 		<div class="user-management">
-			<div class="section">
-				<h2>Invite Users</h2>
-				<p class="section-description">
-					Search for users by email address and invite them to collaborate on this project.
-				</p>
 
-				<UserSearch
-					bind:searchEmail
-					{searchResults}
-					{isSearching}
-					{hasSearched}
-					{projectUsers}
-					onSearchEnter={handleSearchEnter}
-					onInviteUser={openInviteModal}
-				/>
+			<div class="section">
+				<h2>Add Users</h2>
+				<p class="section-description">
+					Search for users and add them to collaborate on this project.
+				</p>
+				<OrganizationMemberSearch bind:selectedUserId={addingUserId} />
 			</div>
 
 			<div class="section">
@@ -203,15 +158,14 @@
 	</SettingsBody>
 </ScopeMask>
 
-<InviteUserModal
+<AddUserModal
 	bind:show={showInviteModal}
-	{selectedUser}
 	bind:selectedScopes
-	isInviting={isInviting}
+	isAdding={isAdding}
 	isEditing={false}
 	{availableScopes}
-	onCancel={closeInviteModal}
-	onConfirm={inviteUser}
+	onCancel={closeAddUserModal}
+	onConfirm={addUser}
 />
 
 <style>

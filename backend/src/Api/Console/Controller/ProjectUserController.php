@@ -5,16 +5,18 @@ namespace App\Api\Console\Controller;
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Authorization\ScopeRequired;
 use App\Api\Console\Input\ProjectUser\CreateProjectUserInput;
-use App\Api\Console\Object\ProjectUserMiniObject;
 use App\Api\Console\Object\ProjectUserObject;
 use App\Entity\Project;
 use App\Entity\ProjectUser;
 use App\Service\ProjectUser\ProjectUserService;
 use Hyvor\Internal\Auth\AuthInterface;
+use Hyvor\Internal\Bundle\Comms\CommsInterface;
+use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\VerifyMember;
+use Hyvor\Internal\Bundle\Comms\Exception\CommsApiFailedException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -22,24 +24,9 @@ class ProjectUserController extends AbstractController
 {
     public function __construct(
         private ProjectUserService $projectUserService,
-        private AuthInterface $auth,
+		private AuthInterface $auth,
+		private CommsInterface $comms,
     ) {
-    }
-
-    #[Route('/search-users', methods: 'GET')]
-    #[ScopeRequired(Scope::PROJECT_WRITE)]
-    public function searchUsers(Request $request): JsonResponse
-    {
-        $emailSearch = $request->query->getString('email', '');
-        $authUsers = $this->auth->fromEmail($emailSearch);
-
-        return $this->json(array_map(
-            fn($authUser) => new ProjectUserMiniObject(
-                $authUser,
-                true
-            ),
-            $authUsers
-        ));
     }
 
     #[Route('/project-users', methods: 'GET')]
@@ -73,7 +60,30 @@ class ProjectUserController extends AbstractController
         $authUser = $this->auth->fromId($input->user_id);
         if ($authUser === null) {
             throw new NotFoundHttpException('User with id ' . $input->user_id . ' not found.');
-        }
+		}
+
+		$organizationId = $project->getOrganizationId();
+		assert($organizationId !== null);
+
+		/* try { */
+		/* 	$verification = $this->comms->send( */
+		/* 		new VerifyMember( */
+		/* 			$organizationId, */
+		/* 			$authUser->id */
+		/* 		), */
+		/* 	); */
+		/* } catch (CommsApiFailedException) { */
+		/* 	throw new BadRequestHttpException('Unable to verify the user.'); */
+		/* } */
+		/**/
+		/* if (!$verification->isMember()) { */
+		/*           throw new BadRequestHttpException('Unable to find the user in the organization'); */
+		/* } */
+
+		if ($this->projectUserService->getProjectUser($project, $authUser->id) !== null) {
+            throw new BadRequestHttpException('User is already added to the project');
+		};
+
         $projectUser = $this->projectUserService->createProjectUser($project, $authUser->id, $input->scopes);
 
         return $this->json(new ProjectUserObject($projectUser, $authUser));

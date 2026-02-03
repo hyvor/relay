@@ -14,6 +14,18 @@ class ProjectUserRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, ProjectUser::class);
-    }
+	}
+
+	public function findByUserAndOrganization(int $userId, int $orgId): array
+	{
+		return $this->createQueryBuilder('pu')
+			->innerJoin('pu.project', 'p')
+			->andWhere('pu.user_id = :userId')
+			->andWhere('p.organization_id = :orgId')
+			->setParameter('userId', $userId)
+			->setParameter('orgId', $orgId)
+			->getQuery()
+			->getResult();
+	}
 
 }

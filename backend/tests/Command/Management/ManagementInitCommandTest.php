@@ -61,7 +61,7 @@ class ManagementInitCommandTest extends KernelTestCase
         // SYSTEM PROJECT
         $systemProject = $instance->getSystemProject();
         $this->assertSame('System', $systemProject->getName());
-        $this->assertSame(0, $systemProject->getUserId());
+        $this->assertSame(0, $systemProject->getCreatedByUserId());
         $this->assertSame(ProjectSendType::TRANSACTIONAL, $systemProject->getSendType());
 
         // SYSTEM PROJECT DOMAIN

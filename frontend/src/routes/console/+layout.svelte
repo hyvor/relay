@@ -3,10 +3,10 @@
 	import { onMount } from 'svelte';
 	import type { AppConfig, ProjectUser } from './types';
 	import consoleApi from './lib/consoleApi.svelte';
-	import { getAppConfig, setAppConfig } from './lib/stores/consoleStore';
+	import { authUserOrganizationStore, getAppConfig, setAppConfig } from './lib/stores/consoleStore';
 	import { setCurrentProjectUser, setProjectUsers } from './lib/stores/projectStore.svelte';
 	import { page } from '$app/state';
-	import { CloudContext, type CloudContextOrganization, HyvorBar } from '@hyvor/design/cloud';
+	import { CloudContext, type CloudContextOrganization, type CloudContextUser, HyvorBar } from '@hyvor/design/cloud';
 	import { goto } from '$app/navigation';
 
 	interface Props {
@@ -23,7 +23,7 @@
 
 	let isLoading = $state(true);
 
-	let organization = $state(null as null | CloudContextOrganization);
+    let organization: CloudContextOrganization | null = $state(null);
 
 	function startConsole(switchingOrg = false) {
 		isLoading = true;
@@ -39,6 +39,8 @@
 
 				organization = res.organization;
 
+				authUserOrganizationStore.set(res.organization);
+
 				function getProjectId(): number | undefined {
 					const projectId = page.params.id;
 					return projectId ? Number(projectId) : res.project_users[0]?.project.id;
@@ -49,6 +51,8 @@
 
 				if (userProject) {
 					setCurrentProjectUser(userProject);
+				} else {
+					goto('/console/new');
 				}
 
 				if (switchingOrg && !page.url.pathname.startsWith('/console/new')) {
@@ -88,14 +92,14 @@
 				component: "relay",
 				deployment: "cloud",
 				instance: getAppConfig().hyvor.instance,
-				user: getAppConfig().user,
 				license: {
 					type: 'none',
 					subscription: null,
 					license: null,
 					trial_ends_at: null
-				},
+				}, // TODO
 				organization,
+				user: getAppConfig().user,
 				callbacks: {
 					onOrganizationSwitch: (switcher) => {
 						isLoading = true;

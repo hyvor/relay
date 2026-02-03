@@ -4,6 +4,7 @@ namespace App\Service\ProjectUser;
 
 use App\Entity\Project;
 use App\Entity\ProjectUser;
+use App\Repository\ProjectUserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 
@@ -13,17 +14,18 @@ class ProjectUserService
     use ClockAwareTrait;
 
     public function __construct(
-        private EntityManagerInterface $em
+		private EntityManagerInterface $em,
+		private ProjectUserRepository $puRepo
     ) {
     }
 
     /**
      * @return ProjectUser[]
      */
-    public function getProjectsOfUser(int $userId): array
+    public function getProjectsOfUserInOrg(int $userId, int $orgId): array
     {
-        return $this->em->getRepository(ProjectUser::class)->findBy(['user_id' => $userId]);
-    }
+        return $this->puRepo->findByUserAndOrganization($userId, $orgId);
+	}
 
     /**
      * @return ProjectUser[]

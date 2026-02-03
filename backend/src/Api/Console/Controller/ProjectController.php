@@ -33,9 +33,11 @@ class ProjectController extends AbstractController
     public function createProject(#[MapRequestPayload] CreateProjectInput $input, Request $request): JsonResponse
     {
         $user = AuthorizationListener::getUser($request);
+        $org = AuthorizationListener::getOrganization($request);
 
         $newProject = $this->projectService->createProject(
             $user->id,
+            $org->id,
             $input->name,
             $input->send_type
         );

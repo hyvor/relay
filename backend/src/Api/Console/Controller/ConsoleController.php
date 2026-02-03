@@ -37,10 +37,11 @@ class ConsoleController extends AbstractController
     #[UserLevelEndpoint]
     public function initConsole(Request $request): JsonResponse
     {
-        $user = AuthorizationListener::getUser($request);
+		$user = AuthorizationListener::getUser($request);
+		$org = AuthorizationListener::getOrganization($request);
         $instance = $this->instanceService->getInstance();
 
-        $projectUsers = $this->projectUserService->getProjectsOfUser($user->id);
+        $projectUsers = $this->projectUserService->getProjectsOfUserInOrg($user->id, $org->id);
         $projectUsers = array_map(
             fn($project) => new ProjectUserObject($project, $user),
             $projectUsers
@@ -53,7 +54,7 @@ class ConsoleController extends AbstractController
         ]);
 
         return new JsonResponse([
-            'project_users' => $projectUsers,
+			'project_users' => $projectUsers,
             'config' => [
                 'hosting' => $this->appConfig->getHosting(),
                 'hyvor' => [
@@ -77,7 +78,8 @@ class ConsoleController extends AbstractController
                         'rates' => Compliance::getRates(),
                     ],
                 ],
-            ],
+			],
+			'organization' => $org
         ]);
     }
 

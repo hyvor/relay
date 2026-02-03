@@ -31,7 +31,6 @@ final class Version20250407093657 extends AbstractMigration
         '
         );
         $this->addSql('CREATE INDEX idx_projects_user_id ON projects (user_id)');
-        $this->addSql('CREATE INDEX idx_projects_organization_id ON projects (organization_id)');
     }
 
     public function down(Schema $schema): void

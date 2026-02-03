@@ -28,7 +28,13 @@ class Project
     private \DateTimeImmutable $updated_at;
 
     #[ORM\Column(type: 'string', enumType: ProjectSendType::class)]
-    private ProjectSendType $send_type;
+	private ProjectSendType $send_type;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $organization_id = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $created_by_user_id = null;
 
     public function __construct()
     {
@@ -100,4 +106,25 @@ class Project
         return $this;
     }
 
+    public function getOrganizationId(): ?int
+    {
+        return $this->organization_id;
+    }
+
+    public function setOrganizationId(?int $organization_id): static
+    {
+        $this->organization_id = $organization_id;
+        return $this;
+    }
+
+    public function getCreatedByUserId(): ?int
+    {
+        return $this->created_by_user_id;
+    }
+
+    public function setCreatedByUserId(?int $created_by_user_id): static
+    {
+        $this->created_by_user_id = $created_by_user_id;
+        return $this;
+    }
 }
