@@ -24,7 +24,6 @@ final class Version20250407093657 extends AbstractMigration
             created_at TIMESTAMPTZ NOT NULL,
             updated_at TIMESTAMPTZ NOT NULL,
             user_id INTEGER NOT NULL,
-            organization_id INTEGER NOT NULL,
             name VARCHAR(255) NOT NULL,
             send_type project_send_type NOT NULL
         )
