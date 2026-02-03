@@ -81,10 +81,10 @@ class ProjectService
             $this->em->flush();
 		}
 
-		/* $this->comms->send(new ResourceCreated( */
-		/* 	Component::RELAY, */
-		/* 	$organizationId */
-		/* )); */
+		$this->comms->send(new ResourceCreated(
+			Component::RELAY,
+			$organizationId
+		));
 
         return [
             'project' => $project,

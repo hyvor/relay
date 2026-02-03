@@ -65,20 +65,20 @@ class ProjectUserController extends AbstractController
 		$organizationId = $project->getOrganizationId();
 		assert($organizationId !== null);
 
-		/* try { */
-		/* 	$verification = $this->comms->send( */
-		/* 		new VerifyMember( */
-		/* 			$organizationId, */
-		/* 			$authUser->id */
-		/* 		), */
-		/* 	); */
-		/* } catch (CommsApiFailedException) { */
-		/* 	throw new BadRequestHttpException('Unable to verify the user.'); */
-		/* } */
-		/**/
-		/* if (!$verification->isMember()) { */
-		/*           throw new BadRequestHttpException('Unable to find the user in the organization'); */
-		/* } */
+		try {
+			$verification = $this->comms->send(
+				new VerifyMember(
+					$organizationId,
+					$authUser->id
+				),
+			);
+		} catch (CommsApiFailedException $e) {
+			throw new BadRequestHttpException('Unable to verify the user.');
+		}
+
+		if (!$verification->isMember()) {
+			  throw new BadRequestHttpException('Unable to find the user in the organization');
+		}
 
 		if ($this->projectUserService->getProjectUser($project, $authUser->id) !== null) {
             throw new BadRequestHttpException('User is already added to the project');
