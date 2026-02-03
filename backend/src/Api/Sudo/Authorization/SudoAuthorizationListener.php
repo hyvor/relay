@@ -31,8 +31,9 @@ class SudoAuthorizationListener
             return;
         }
 
-        $request = $event->getRequest();
-        $user = $this->auth->check($request);
+		$request = $event->getRequest();
+		$me = $this->auth->me();
+		$user = $me->getUser();
 
         if ($user === false) {
             throw new DataCarryingHttpException(

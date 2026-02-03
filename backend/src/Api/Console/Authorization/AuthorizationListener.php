@@ -98,7 +98,8 @@ class AuthorizationListener
         $projectId = $request->headers->get('x-project-id');
         $isUserLevelEndpoint = count($event->getAttributes(UserLevelEndpoint::class)) > 0;
 
-        $user = $this->auth->check($request);
+		$me = $this->auth->me($request);
+		$user = $me->getUser();
 
         if ($user === false) {
             throw new DataCarryingHttpException(
