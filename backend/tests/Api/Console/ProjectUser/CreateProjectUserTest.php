@@ -9,6 +9,10 @@ use App\Service\ProjectUser\ProjectUserService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use Hyvor\Internal\Auth\AuthFake;
+use Hyvor\Internal\Bundle\Comms\Comms;
+use Hyvor\Internal\Bundle\Comms\CommsInterface;
+use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\VerifyMember;
+use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\VerifyMemberResponse;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ProjectUserController::class)]
@@ -26,7 +30,9 @@ class CreateProjectUserTest extends WebTestCase
             'email' => 'supun@hyvor.com'
         ]);
 
-        $project = ProjectFactory::createOne();
+		$project = ProjectFactory::createOne([
+			'organization_id' => 1
+		]);
 
         $this->consoleApi(
             $project,
@@ -44,15 +50,21 @@ class CreateProjectUserTest extends WebTestCase
     }
 
     public function test_creates_project_user(): void
-    {
-        $project = ProjectFactory::createOne();
+	{
+        $this->getComms()->addResponse(VerifyMember::class, function () {
+            return new VerifyMemberResponse(true, 'admin');
+        });
+
+		$project = ProjectFactory::createOne([
+			'organization_id' => 1
+		]);
 
         AuthFake::databaseAdd([
             'id' => 1,
             'username' => 'supun',
             'name' => 'Supun Wimalasena',
             'email' => 'supun@hyvor.com'
-        ]);
+		]);
 
         $this->consoleApi(
             $project,

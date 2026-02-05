@@ -13,6 +13,7 @@ use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
 use Hyvor\Internal\Auth\AuthFake;
 use Hyvor\Internal\Auth\AuthUser;
+use Hyvor\Internal\Auth\AuthUserOrganization;
 use Hyvor\Internal\Sudo\SudoUserFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\BrowserKit\Cookie;
@@ -88,7 +89,16 @@ class AuthorizationTest extends WebTestCase
 
     public function test_invalid_project_id(): void
     {
-        AuthFake::enableForSymfony($this->container, ['id' => 1]);
+		AuthFake::enableForSymfony(
+			$this->container,
+			['id' => 1],
+			new AuthUserOrganization(
+				id: 1,
+				name: 'Fake Organization',
+				role: 'member'
+			)
+		);
+
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
         $this->client->request(
             "GET",
@@ -103,7 +113,7 @@ class AuthorizationTest extends WebTestCase
 
     public function test_invalid_session(): void
     {
-        AuthFake::enableForSymfony($this->container, null);
+        AuthFake::enableForSymfony($this->container, null, null);
 
         $project = ProjectFactory::createOne();
 
@@ -121,7 +131,15 @@ class AuthorizationTest extends WebTestCase
 
     public function test_fails_when_xprojectid_header_is_not_set(): void
     {
-        AuthFake::enableForSymfony($this->container, ['id' => 1]);
+		AuthFake::enableForSymfony(
+			$this->container,
+			['id' => 1],
+			new AuthUserOrganization(
+				id: 1,
+				name: 'Fake Organization',
+				role: 'member'
+			)
+		);
 
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
         $this->client->request(
@@ -134,7 +152,15 @@ class AuthorizationTest extends WebTestCase
 
     public function test_user_not_authorized_for_project(): void
     {
-        AuthFake::enableForSymfony($this->container, ['id' => 1]);
+		AuthFake::enableForSymfony(
+			$this->container,
+			['id' => 1],
+			new AuthUserOrganization(
+				id: 1,
+				name: 'Fake Organization',
+				role: 'member'
+			)
+		);
 
         $project = ProjectFactory::createOne();
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
@@ -154,7 +180,15 @@ class AuthorizationTest extends WebTestCase
 
     public function test_verifies_scopes_for_user(): void
     {
-        AuthFake::enableForSymfony($this->container, ['id' => 1]);
+		AuthFake::enableForSymfony(
+			$this->container,
+			['id' => 1],
+			new AuthUserOrganization(
+				id: 1,
+				name: 'Fake Organization',
+				role: 'member'
+			)
+		);
 
         $project = ProjectFactory::createOne();
         ProjectUserFactory::createOne([
@@ -225,7 +259,15 @@ class AuthorizationTest extends WebTestCase
 
     public function test_authorizes_via_session(): void
     {
-        AuthFake::enableForSymfony($this->container, ['id' => 1]);
+		AuthFake::enableForSymfony(
+			$this->container,
+			['id' => 1],
+			new AuthUserOrganization(
+				id: 1,
+				name: 'Fake Organization',
+				role: 'member'
+			)
+		);
 
         $project = ProjectFactory::createOne();
         ProjectUserFactory::createOne([
@@ -257,7 +299,16 @@ class AuthorizationTest extends WebTestCase
 
     public function test_user_level_endpoint_works(): void
     {
-        AuthFake::enableForSymfony($this->container, ['id' => 1]);
+		AuthFake::enableForSymfony(
+			$this->container,
+			['id' => 1],
+			new AuthUserOrganization(
+				id: 1,
+				name: 'Fake Organization',
+				role: 'member'
+			)
+		);
+
         SudoUserFactory::createOne(['user_id' => 1]);
 
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));

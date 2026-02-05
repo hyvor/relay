@@ -15,7 +15,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.7.0",
         "doctrine/orm": "^3.6.2",
         "egulias/email-validator": "^4.0.4",
-        "hyvor/internal": "^4.0.1",
+        "hyvor/internal": "^4.0.2-beta.1",
         "mlocati/spf-lib": "^3.3",
         "phpdocumentor/reflection-docblock": "^5.6.6",
         "phpmailer/phpmailer": "^6.12",
@@ -89,11 +89,11 @@
     "require-dev": {
         "dama/doctrine-test-bundle": "^8.6",
         "phpstan/phpstan": "^2.1.38",
-        "phpunit/phpunit": "^12.5.8",
+        "phpunit/phpunit": "^12.5.9",
         "symfony/browser-kit": "7.3.*",
         "symfony/css-selector": "7.3.*",
         "symfony/maker-bundle": "^1.65.1",
-        "zenstruck/foundry": "^2.8.6",
+        "zenstruck/foundry": "^2.9.0",
         "zenstruck/messenger-test": "^1.13.0"
     }
 }

@@ -29,6 +29,7 @@ final class ProjectFactory extends PersistentProxyObjectFactory
     {
         return [
             'user_id' => self::faker()->numberBetween(1, 10000),
+            'organization_id' => self::faker()->numberBetween(1, 10000),
             'name' => self::faker()->words(2, true),
             'created_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'updated_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),

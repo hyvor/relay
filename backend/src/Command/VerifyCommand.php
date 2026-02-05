@@ -37,7 +37,7 @@ class VerifyCommand extends Command
             ['App Version', $this->appConfig->getAppVersion()],
             ['Environment', $this->appConfig->getEnv()],
             ['Component', $this->internalConfig->getComponent()->value],
-            ['Auth Method', $this->internalConfig->getAuthMethod()->value],
+            ['Deployment', $this->internalConfig->getDeployment()->value],
         ]);
         $table->render();
 
@@ -86,10 +86,6 @@ class VerifyCommand extends Command
 
     private function oidcWellKnown(): string
     {
-        if ($this->internalConfig->getAuthMethod() !== AuthMethod::OIDC) {
-            return 'SKIPPED'; // @codeCoverageIgnore
-        }
-
         try {
             $this->oidcApiService->getWellKnownConfig();
             return 'OK'; // @codeCoverageIgnore

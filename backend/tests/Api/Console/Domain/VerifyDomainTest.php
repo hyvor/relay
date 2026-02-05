@@ -15,7 +15,7 @@ use App\Service\Domain\Exception\DkimVerificationFailedException;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
-use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
+use Hyvor\Internal\Bundle\EventDispatcher\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\MockObject\MockObject;

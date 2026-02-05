@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\User\Comms;
+namespace App\Service\Cloud\Comms;
 
 use App\Entity\ProjectUser;
 use App\Repository\ProjectUserRepository;

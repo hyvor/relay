@@ -7,6 +7,7 @@ use App\Entity\Project;
 use App\Tests\Factory\ApiKeyFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Auth\AuthFake;
+use Hyvor\Internal\Auth\AuthUserOrganization;
 use Hyvor\Internal\Bundle\Testing\ApiTestingTrait;
 use Hyvor\Internal\Sudo\SudoUserFactory;
 use Prometheus\Storage\Adapter;
@@ -22,7 +23,6 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
 {
 
     use ApiTestingTrait;
-    use TestSharedTrait;
 
     protected KernelBrowser $client;
     protected EntityManagerInterface $em;
@@ -36,7 +36,15 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         $this->container = static::getContainer();
 
         if ($this->shouldEnableAuthFake()) {
-            AuthFake::enableForSymfony($this->container, ['id' => 1]);
+			AuthFake::enableForSymfony(
+				$this->container,
+				['id' => 1],
+				new AuthUserOrganization(
+					id: 1,
+					name: 'Fake Organization',
+					role: 'admin'
+				)
+			);
         }
 
         /** @var EntityManagerInterface $em */

@@ -10,6 +10,7 @@ use App\Service\Project\Event\ProjectCreatingEvent;
 use App\Service\Project\ProjectService;
 use App\Tests\Case\WebTestCase;
 use Hyvor\Internal\Auth\AuthFake;
+use Hyvor\Internal\Auth\AuthUserOrganization;
 use Hyvor\Internal\Sudo\SudoUserFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\BrowserKit\Cookie;
@@ -27,7 +28,16 @@ class CreateProjectTest extends WebTestCase
 
     public function test_create_project_valid(): void
     {
-        AuthFake::enableForSymfony($this->container, ['id' => 1]);
+		AuthFake::enableForSymfony(
+			$this->container,
+			['id' => 1],
+			new AuthUserOrganization(
+				id: 1,
+				name: 'Fake Organization',
+				role: 'member'
+			)
+		);
+
         SudoUserFactory::createOne(['user_id' => 1]);
 
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
@@ -65,7 +75,16 @@ class CreateProjectTest extends WebTestCase
 
     public function test_disallow_project_creation_for_non_sudo_users(): void
     {
-        AuthFake::enableForSymfony($this->container, ['id' => 99]);
+		AuthFake::enableForSymfony(
+			$this->container,
+			['id' => 99],
+			new AuthUserOrganization(
+				id: 1,
+				name: 'Fake Organization',
+				role: 'member'
+			)
+		);
+
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
 
         $this->client->request(
