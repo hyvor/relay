@@ -16,56 +16,51 @@ use App\Command\OrganizationsMigrateCommand;
 #[CoversClass(OrganizationsMigrateCommand::class)]
 class OrganizationsMigrateCommandTest extends KernelTestCase
 {
-    public function test_organization_migration(): void
+	public function test_organization_migration(): void
     {
         $projects = ProjectFactory::createMany(3, [
             'organization_id' => null,
         ]);
 
         $this->getComms()->addResponse(InitOrg::class, function () {
-            return new InitOrgResponse(rand());
+            return new InitOrgResponse(rand(1000, 9999));
         });
 
-		$expectedEvents = [];
-
+        $expectedEvents = [];
         foreach ($projects as $project) {
-            $user1 = ProjectUserFactory::createOne([
-                'project' => $project,
-                'user_id' => $project->getUserId(),
-			]);
+            $user1 = ProjectUserFactory::createOne(['project' => $project, 'user_id' => $project->getUserId()]);
+            $user2 = ProjectUserFactory::createOne(['project' => $project]);
 
-            $user2 = ProjectUserFactory::createOne([
-                'project' => $project,
-			]);
+            $ids = [$user1->getUserId(), $user2->getUserId()];
+            sort($ids);
 
-			$expectedEvents[] = [
-				'project' => $project,
-				'userIds' =>[$user1->getUserId(), $user2->getUserId()]
-			];
+            $expectedEvents[] = [
+                'projectId' => $project->getId(),
+                'userIds' => $ids
+            ];
         }
 
         $this->assertSame(0, $this->commandTester('organizations:migrate')->execute([]));
+        $this->getEm()->clear();
 
-        $this->getComms()->assertSent(InitOrg::class, Component::CORE);
-		$this->getComms()->assertSent(
-			EnsureMembers::class,
-			Component::CORE,
-			eventValidator: function($sent) use ($expectedEvents) {
-				$this->assertTrue(array_any(
-					$expectedEvents,
-					fn($expected) =>
-						$sent->orgId === $expected['project']->getOrganizationId()
-						&& $sent->userIds == $expected['userIds']
-				));
-			}
-		);
+		$this->getComms()->assertSent(InitOrg::class, Component::CORE);
+        $this->getComms()->assertSent(
+            EnsureMembers::class,
+            Component::CORE,
+            eventValidator: function($sent) use ($expectedEvents) {
+                $userIds = $sent->userIds;
+                sort($userIds);
 
-        $pendingProjects = $this->getEm()->getRepository(Project::class)->findBy([
-            'organization_id' => null,
-		]);
+                foreach ($expectedEvents as $expected) {
+                    $project = $this->getEm()->find(Project::class, $expected['projectId']);
+                    if ($sent->orgId === $project->getOrganizationId() && $userIds === $expected['userIds']) {
+						return;
+                    }
+				}
 
-        $this->assertCount(0, $pendingProjects);
-
+				$this->assertTrue(false, "should not be reachable");
+            }
+        );
     }
 
     public function test_does_not_update_migrated_organizations(): void
@@ -105,11 +100,18 @@ class OrganizationsMigrateCommandTest extends KernelTestCase
         }
 
         $this->assertSame(0, $this->commandTester('organizations:migrate')->execute([]));
+        $this->getEm()->clear();
 
         $availProjects = $this->getEm()->getRepository(Project::class)->findBy([
             'organization_id' => 4321,
 		]);
 
-        $this->assertCount(2, $availProjects);
+		$this->assertCount(2, $availProjects);
+
+        $availMigratedProjects = $this->getEm()->getRepository(Project::class)->findBy([
+            'organization_id' => 1234,
+		]);
+
+		$this->assertCount(3, $availMigratedProjects);
     }
 }
