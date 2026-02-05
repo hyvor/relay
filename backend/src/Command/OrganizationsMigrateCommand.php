@@ -3,8 +3,6 @@
 namespace App\Command;
 
 use App\Entity\Project;
-use App\Repository\ProjectRepository;
-use App\Repository\ProjectUserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Bundle\Comms\CommsInterface;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\OrgMigration\EnsureMembers;
@@ -28,8 +26,6 @@ class OrganizationsMigrateCommand extends Command
 
 	public function __construct(
 		private EntityManagerInterface $em,
-		private ProjectRepository $projectRepo,
-		private ProjectUserRepository $puRepo,
 		private CommsInterface $comms,
 		private KernelInterface $kernel
 	)
@@ -92,6 +88,7 @@ class OrganizationsMigrateCommand extends Command
 		/* } */
 
 		while (true) {
+			/** @var int[] $ownerIds */
             $ownerIds = $this->em->createQueryBuilder()
                 ->select('DISTINCT p.user_id')
                 ->from(Project::class, 'p')
@@ -109,7 +106,7 @@ class OrganizationsMigrateCommand extends Command
 
             foreach ($ownerIds as $ownerId) {
 				try {
-					$this->em->wrapInTransaction(function () use ($ownerId, $output, &$count) {
+					$this->em->wrapInTransaction(function () use ($ownerId, &$count) {
 						/** @var InitOrgResponse $org */
 						$org = $this->comms->send(new InitOrg($ownerId));
 
@@ -132,9 +129,14 @@ class OrganizationsMigrateCommand extends Command
 						);
 
 						if (count($memberIds) > 0) {
+							$memberIds = array_map(function ($id) {
+								/** @var int|string $id */
+								return intval($id);
+							}, $memberIds);
+
 							$this->comms->send(new EnsureMembers(
 								$org->orgId,
-								array_map('intval', $memberIds)
+								$memberIds
 							));
 						}
 

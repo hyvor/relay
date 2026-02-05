@@ -52,12 +52,14 @@ class OrganizationsMigrateCommandTest extends KernelTestCase
                 sort($userIds);
 
                 foreach ($expectedEvents as $expected) {
-                    $project = $this->getEm()->find(Project::class, $expected['projectId']);
+					$project = $this->getEm()->find(Project::class, $expected['projectId']);
+					$this->assertNotNull($project);
                     if ($sent->orgId === $project->getOrganizationId() && $userIds === $expected['userIds']) {
 						return;
                     }
 				}
 
+				// @phpstan-ignore-next-line
 				$this->assertTrue(false, "should not be reachable");
             }
         );
