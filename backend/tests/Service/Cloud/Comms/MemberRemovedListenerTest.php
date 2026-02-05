@@ -1,15 +1,12 @@
 <?php
 
-namespace App\Tests\Service\User\Comms;
+namespace App\Tests\Service\Cloud\Comms;
 
 use App\Entity\ProjectUser;
-use App\Entity\User;
-use App\Service\User\Comms\MemberRemovedListener;
+use App\Service\Cloud\Comms\MemberRemovedListener;
 use App\Tests\Case\WebTestCase;
-use App\Tests\Factory\NewsletterFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
-use App\Tests\Factory\UserFactory;
 use Hyvor\Internal\Bundle\Comms\Event\FromCore\Member\MemberRemoved;
 use PHPUnit\Framework\Attributes\CoversClass;
 

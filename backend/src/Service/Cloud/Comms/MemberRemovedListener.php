@@ -2,10 +2,8 @@
 
 namespace App\Service\Cloud\Comms;
 
-use App\Entity\ProjectUser;
 use App\Repository\ProjectUserRepository;
 use App\Service\ProjectUser\ProjectUserService;
-use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Bundle\Comms\Event\FromCore\Member\MemberRemoved;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 

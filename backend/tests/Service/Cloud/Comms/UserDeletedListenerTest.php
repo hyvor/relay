@@ -3,7 +3,7 @@
 namespace App\Tests\Service\Cloud\Comms;
 
 use App\Entity\ProjectUser;
-use App\Service\User\Comms\UserDeletedListener;
+use App\Service\Cloud\Comms\UserDeletedListener;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
