@@ -12,7 +12,6 @@ use Hyvor\Internal\Auth\AuthUserOrganization;
 use Hyvor\Internal\Bundle\Api\DataCarryingHttpException;
 use Hyvor\Internal\Auth\AuthInterface;
 use Hyvor\Internal\Auth\AuthUser;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\Request;
@@ -36,7 +35,6 @@ class AuthorizationListener
         private ProjectUserService $projectUserService,
         private ApiKeyService $apiKeyService,
 		private AuthInterface $auth,
-		private LoggerInterface $logger
     ) {
     }
 

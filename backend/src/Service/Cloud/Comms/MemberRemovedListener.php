@@ -29,7 +29,5 @@ class MemberRemovedListener
 		foreach($proj_users as $proj_user) {
 			$this->puService->deleteProjectUser($proj_user);
 		}
-
-		$this->em->flush();
     }
 }

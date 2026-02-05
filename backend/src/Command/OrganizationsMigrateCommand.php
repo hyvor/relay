@@ -14,6 +14,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 #[AsCommand(
     name: 'organizations:migrate',
@@ -26,6 +27,7 @@ class OrganizationsMigrateCommand extends Command
 		private ProjectRepository $projectRepo,
 		private ProjectUserRepository $puRepo,
 		private CommsInterface $comms,
+		private KernelInterface $kernel
 	)
     {
         parent::__construct();
@@ -36,6 +38,12 @@ class OrganizationsMigrateCommand extends Command
 		while (true) {
 			/** @var Project[] $projects */
 			$all_projects = $this->projectRepo->findBy(['organization_id' => null]);
+
+			if ($this->kernel->getEnvironment() === 'test' && count($all_projects) === 0) {
+				$output->writeln(date('H:i:s') . ": No more users to update");
+                break;
+            }
+
 			$project_owner_map = [];
 
 			foreach($all_projects as $project) {

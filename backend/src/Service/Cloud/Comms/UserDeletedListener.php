@@ -10,7 +10,7 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 #[AsEventListener]
 class UserDeletedListener
 {
-    public function __construct(
+	public function __construct(
         private ProjectUserRepository $puRepo,
         private ProjectUserService $puService,
     )
@@ -27,7 +27,5 @@ class UserDeletedListener
 		foreach($proj_users as $proj_user) {
 			$this->puService->deleteProjectUser($proj_user);
 		}
-
-		$this->em->flush();
     }
 }

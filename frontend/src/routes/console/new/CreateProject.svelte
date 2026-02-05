@@ -88,7 +88,7 @@
 				bind:value={name}
 				on:input={handleNameInput}
 				on:keydown={(e) => e.key === 'Enter' && handleCreate(cloudContext.organization!)}
-				maxlength="255"
+				maxlength={255}
 				state={nameError ? 'error' : undefined}
 				autofocus
 			/>

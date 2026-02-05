@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { Base, HyvorBar, Loader, NavLink, toast } from '@hyvor/design/components';
+	import { Base, Loader, NavLink, toast } from '@hyvor/design/components';
 	import IconHdd from '@hyvor/icons/IconHdd';
 	import IconSegmentedNav from '@hyvor/icons/IconSegmentedNav';
 	import IconActivity from '@hyvor/icons/IconActivity';
@@ -57,17 +57,17 @@
 		</div>
 	{:else}
 		<main>
-			<HyvorBar
-				product="core"
-				logo="https://hyvor.com/api/public/logo/relay.svg"
-				instance={$sudoConfigStore.instance}
-				cloud={$sudoConfigStore.hosting === 'cloud'}
-				config={{ name: 'Hyvor Relay', chat: false }}
-				authOverride={{
-					user: $sudoConfigStore.user,
-					logoutUrl: '/api/oidc/logout'
-				}}
-			/>
+			<!-- <HyvorBar -->
+			<!-- 	product="core" -->
+			<!-- 	logo="https://hyvor.com/api/public/logo/relay.svg" -->
+			<!-- 	instance={$sudoConfigStore.instance} -->
+			<!-- 	cloud={$sudoConfigStore.hosting === 'cloud'} -->
+			<!-- 	config={{ name: 'Hyvor Relay', chat: false }} -->
+			<!-- 	authOverride={{ -->
+			<!-- 		user: $sudoConfigStore.user, -->
+			<!-- 		logoutUrl: '/api/oidc/logout' -->
+			<!-- 	}} -->
+			<!-- /> -->
 
 			<div id="wrap">
 				<nav>
