@@ -14,6 +14,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Bundle\Comms\CommsInterface;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\Resource\ResourceCreated;
 use Hyvor\Internal\Component\Component;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -81,10 +82,12 @@ class ProjectService
             $this->em->flush();
 		}
 
-		$this->comms->send(new ResourceCreated(
-			Component::RELAY,
-			$organizationId
-		));
+		if ($userId !== 0 && $organizationId !== 0) {
+			$this->comms->send(new ResourceCreated(
+				Component::RELAY,
+				$organizationId
+			));
+		}
 
         return [
             'project' => $project,

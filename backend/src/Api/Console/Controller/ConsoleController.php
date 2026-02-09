@@ -49,15 +49,16 @@ class ConsoleController extends AbstractController
 
 		if ($org !== null) {
 			$projectUsers = $this->projectUserService->getProjectsOfUserInOrg($user->id, $org->id);
+
+			$systemProjectUser = $this->projectUserService->getProjectUser($instance->getSystemProject(), 0);
+			if ($systemProjectUser !== null) {
+				$projectUsers = [$systemProjectUser, ...$projectUsers];
+			}
+
 			$projectUsers = array_map(
 				fn($project) => new ProjectUserObject($project, $user),
 				$projectUsers
 			);
-		}
-
-		if ($this->sudoUserService->exists($user->id)) {
-			$systemProjectUsers = $this->projectUserService->getProjectsOfUserInOrg(0, 0);
-			$projectsUsers = [...$systemProjectUsers, ...$projectUsers];
 		}
 
         return new JsonResponse([

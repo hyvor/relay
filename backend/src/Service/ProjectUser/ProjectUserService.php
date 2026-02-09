@@ -39,7 +39,7 @@ class ProjectUserService
     {
         return $this->em->getRepository(ProjectUser::class)
             ->findOneBy(['project' => $project, 'user_id' => $userId]);
-    }
+	}
 
     /**
      * @param string[] $scopes
