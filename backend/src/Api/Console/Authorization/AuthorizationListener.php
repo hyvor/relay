@@ -117,7 +117,7 @@ class AuthorizationListener
 
 
 		if ($org !== null) {
-			$orgFromReq = (int)$request->headers->get('X-Organization-ID', -1);
+			$orgFromReq = (int)$request->headers->get('X-Organization-ID', '-1');
 
 			if ($orgFromReq !== -1 && $orgFromReq !== $org->id) {
 				throw new AccessDeniedHttpException('Organization mismatch');

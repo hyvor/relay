@@ -14,7 +14,6 @@ use App\Service\ProjectUser\ProjectUserService;
 use App\Service\Send\Compliance;
 use Hyvor\Internal\InternalConfig;
 use Hyvor\Internal\Sudo\SudoUserService;
-use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,7 +28,6 @@ class ConsoleController extends AbstractController
         private ProjectUserService $projectUserService,
         private InternalConfig $internalConfig,
         private Config $appConfig,
-        private LoggerInterface $logger,
         private InstanceService $instanceService,
         private SudoUserService $sudoUserService,
     ) {
@@ -50,8 +48,8 @@ class ConsoleController extends AbstractController
 		if ($org !== null) {
 			$projectUsers = $this->projectUserService->getProjectsOfUserInOrg($user->id, $org->id);
 
-			$systemProjectUser = $this->projectUserService->getProjectUser($instance->getSystemProject(), 0);
-			if ($systemProjectUser !== null) {
+			if ($this->sudoUserService->exists($user->id)) {
+				$systemProjectUser = $this->projectUserService->getProjectUser($instance->getSystemProject(), 0);
 				$projectUsers = [$systemProjectUser, ...$projectUsers];
 			}
 
