@@ -42,7 +42,8 @@ class ConsoleController extends AbstractController
 					? AuthorizationListener::getOrganization($request)
 					: null;
 
-        $instance = $this->instanceService->getInstance();
+		$instance = $this->instanceService->getInstance();
+
 		$projectUsers = [];
 
 		if ($org !== null) {
@@ -50,6 +51,7 @@ class ConsoleController extends AbstractController
 
 			if ($this->sudoUserService->exists($user->id)) {
 				$systemProjectUser = $this->projectUserService->getProjectUser($instance->getSystemProject(), 0);
+				assert($systemProjectUser !== null);
 				$projectUsers = [$systemProjectUser, ...$projectUsers];
 			}
 
