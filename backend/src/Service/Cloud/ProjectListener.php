@@ -7,6 +7,7 @@ use App\Service\App\Config;
 use App\Service\App\HostingEnum;
 use App\Service\Project\Event\ProjectCreatingEvent;
 use Hyvor\Internal\Sudo\SudoUserService;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -22,6 +23,7 @@ class ProjectListener
     public function __construct(
         private RequestStack $requestStack,
         private SudoUserService $sudoUserService,
+        private LoggerInterface $logger,
         private Config $config,
     ) {
     }
@@ -47,7 +49,7 @@ class ProjectListener
         }
 
         $user = AuthorizationListener::getUser($request);
-        $isSudo = $this->sudoUserService->exists($user->id);
+		$isSudo = $this->sudoUserService->exists($user->id);
 
         if (!$isSudo) {
             throw new BadRequestHttpException('Currently not available for public usage.');

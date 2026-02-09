@@ -4,7 +4,7 @@ namespace App\Api\Console\Controller;
 
 use App\Api\Console\Authorization\ScopeRequired;
 use App\Api\Console\Authorization\AuthorizationListener;
-use App\Api\Console\Authorization\UserLevelEndpoint;
+use App\Api\Console\Authorization\OrganizationLevelEndpoint;
 use App\Api\Console\Object\ProjectObject;
 use App\Api\Console\Object\ProjectUserObject;
 use App\Entity\Project;
@@ -13,6 +13,7 @@ use App\Service\Instance\InstanceService;
 use App\Service\ProjectUser\ProjectUserService;
 use App\Service\Send\Compliance;
 use Hyvor\Internal\InternalConfig;
+use Hyvor\Internal\Sudo\SudoUserService;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -30,28 +31,34 @@ class ConsoleController extends AbstractController
         private Config $appConfig,
         private LoggerInterface $logger,
         private InstanceService $instanceService,
+        private SudoUserService $sudoUserService,
     ) {
     }
 
     #[Route('/init', methods: 'GET')]
-    #[UserLevelEndpoint]
+    #[OrganizationLevelEndpoint]
     public function initConsole(Request $request): JsonResponse
     {
 		$user = AuthorizationListener::getUser($request);
-		$org = AuthorizationListener::getOrganization($request);
+		$org = AuthorizationListener::hasOrganization($request)
+					? AuthorizationListener::getOrganization($request)
+					: null;
+
         $instance = $this->instanceService->getInstance();
+		$projectUsers = [];
 
-        $projectUsers = $this->projectUserService->getProjectsOfUserInOrg($user->id, $org->id);
-        $projectUsers = array_map(
-            fn($project) => new ProjectUserObject($project, $user),
-            $projectUsers
-        );
+		if ($org !== null) {
+			$projectUsers = $this->projectUserService->getProjectsOfUserInOrg($user->id, $org->id);
+			$projectUsers = array_map(
+				fn($project) => new ProjectUserObject($project, $user),
+				$projectUsers
+			);
+		}
 
-        $this->logger->info('Console initialized', [
-            'user_id' => $user->id,
-            'user_name' => $user->name ?? $user->username,
-            'project_count' => count($projectUsers),
-        ]);
+		if ($this->sudoUserService->exists($user->id)) {
+			$systemProjectUsers = $this->projectUserService->getProjectsOfUserInOrg(0, 0);
+			$projectsUsers = [...$systemProjectUsers, ...$projectUsers];
+		}
 
         return new JsonResponse([
 			'project_users' => $projectUsers,

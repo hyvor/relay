@@ -5,7 +5,7 @@ namespace App\Api\Console\Controller;
 use App\Api\Console\Authorization\AuthorizationListener;
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Authorization\ScopeRequired;
-use App\Api\Console\Authorization\UserLevelEndpoint;
+use App\Api\Console\Authorization\OrganizationLevelEndpoint;
 use App\Api\Console\Input\CreateProjectInput;
 use App\Api\Console\Input\UpdateProjectInput;
 use App\Api\Console\Object\ProjectObject;
@@ -29,7 +29,7 @@ class ProjectController extends AbstractController
     }
 
     #[Route('/project', methods: 'POST')]
-    #[UserLevelEndpoint]
+    #[OrganizationLevelEndpoint]
     public function createProject(#[MapRequestPayload] CreateProjectInput $input, Request $request): JsonResponse
     {
         $user = AuthorizationListener::getUser($request);
