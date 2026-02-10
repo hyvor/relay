@@ -49,6 +49,9 @@ class CreateProjectTest extends WebTestCase
                 'name' => 'Valid Project Name',
                 'send_type' => 'transactional',
             ],
+            server: [
+                'HTTP_X_ORGANIZATION_ID' => '1',
+            ]
         );
 
         $this->assertResponseStatusCodeSame(200);
@@ -94,6 +97,9 @@ class CreateProjectTest extends WebTestCase
                 'name' => 'Valid Project Name',
                 'send_type' => 'transactional',
             ],
+            server: [
+                'HTTP_X_ORGANIZATION_ID' => '1',
+            ]
         );
 
         $this->assertResponseStatusCodeSame(400);

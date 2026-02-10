@@ -105,6 +105,7 @@ class AuthorizationTest extends WebTestCase
             "/api/console/sends",
             server: [
                 "HTTP_X_PROJECT_ID" => "999",
+                "HTTP_X_ORGANIZATION_ID" => "1",
             ],
         );
         $this->assertResponseStatusCodeSame(403);
@@ -145,6 +146,9 @@ class AuthorizationTest extends WebTestCase
         $this->client->request(
             "GET",
             "/api/console/sends",
+            server: [
+                "HTTP_X_ORGANIZATION_ID" => "1",
+            ],
         );
         $this->assertResponseStatusCodeSame(403);
         $this->assertSame("X-Project-ID is required for this endpoint.", $this->getJson()["message"]);
@@ -169,6 +173,7 @@ class AuthorizationTest extends WebTestCase
             "/api/console/sends",
             server: [
                 "HTTP_X_PROJECT_ID" => $project->getId(),
+                "HTTP_X_ORGANIZATION_ID" => "1",
             ]
         );
         $this->assertResponseStatusCodeSame(403);
@@ -203,6 +208,7 @@ class AuthorizationTest extends WebTestCase
             "/api/console/sends",
             server: [
                 "HTTP_X_PROJECT_ID" => $project->getId(),
+                "HTTP_X_ORGANIZATION_ID" => "1",
             ]
         );
         $this->assertResponseStatusCodeSame(403);
@@ -281,6 +287,7 @@ class AuthorizationTest extends WebTestCase
             "/api/console/sends",
             server: [
                 "HTTP_X_PROJECT_ID" => $project->getId(),
+                "HTTP_X_ORGANIZATION_ID" => "1",
             ]
         );
         $this->assertResponseStatusCodeSame(200);
