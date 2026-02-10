@@ -137,7 +137,7 @@ class AuthorizationListener
                 throw new AccessDeniedHttpException('Invalid project ID.');
 			}
 
-			if ($project->getOrganizationId() !== $org->id) {
+			if ($project->getOrganizationId() !== 0 && $project->getOrganizationId() !== $org->id) {
 				throw new AccessDeniedHttpException('This project does not belong to your current organization.');
 			}
 
