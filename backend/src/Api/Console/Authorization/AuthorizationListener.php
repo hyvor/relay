@@ -115,7 +115,6 @@ class AuthorizationListener
 		$user = $me->getUser();
 		$org = $me->getOrganization();
 
-
 		if ($org !== null) {
 			$orgFromReq = (int)$request->headers->get('X-Organization-ID', '-1');
 
@@ -138,9 +137,9 @@ class AuthorizationListener
                 throw new AccessDeniedHttpException('Invalid project ID.');
 			}
 
-			/* if ($project->getOrganizationId() !== $user->current_organization_id) { */
-			/*              throw new AccessDeniedHttpException('This project does not belong to your current organization.'); */
-			/*          } */
+			if ($project->getOrganizationId() !== $org->id) {
+				throw new AccessDeniedHttpException('This project does not belong to your current organization.');
+			}
 
             $projectUser = $this->projectUserService->getProjectUser($project, $user->id);
 
