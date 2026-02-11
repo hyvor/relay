@@ -6,6 +6,7 @@ use App\Entity\Domain;
 use App\Entity\Project;
 use App\Entity\Queue;
 use App\Entity\Send;
+use App\Entity\SendRecipient;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
 use App\Repository\SendRepository;
@@ -180,6 +181,29 @@ class SendService
         return $send;
     }
 
+
+    /**
+     * @return int Number of re-queued recipients
+     */
+    public function retrySend(Send $send, ?\DateTimeImmutable $sendAfter): int
+    {
+        $failedRecipients = $send->getRecipients()->filter(
+            fn(SendRecipient $r) => $r->getStatus() === SendRecipientStatus::FAILED
+        );
+
+        foreach ($failedRecipients as $recipient) {
+            $recipient->setStatus(SendRecipientStatus::QUEUED);
+            $recipient->setTryCount(0);
+        }
+
+        $send->setQueued(true);
+        $send->setSendAfter($sendAfter ?? $this->now());
+        $send->setUpdatedAt($this->now());
+
+        $this->em->flush();
+
+        return $failedRecipients->count();
+    }
 
     /**
      * @return array{sends_24h_count: int, recipients_24h_count: int, recipients_24h_accepted_count: int, recipients_24h_bounced_count: int, recipients_24h_complained_count: int, recipients_24h_failed_count: int, recipients_24h_suppressed_count: int}

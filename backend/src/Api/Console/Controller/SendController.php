@@ -5,6 +5,7 @@ namespace App\Api\Console\Controller;
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Authorization\ScopeRequired;
 use App\Api\Console\Idempotency\IdempotencySupported;
+use App\Api\Console\Input\RetrySendInput;
 use App\Api\Console\Input\SendEmail\SendEmailInput;
 use App\Api\Console\Input\SendEmail\UnableToDecodeAttachmentBase64Exception;
 use App\Api\Console\Object\SendObject;
@@ -29,9 +30,12 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Clock\ClockAwareTrait;
 
 class SendController extends AbstractController
 {
+    use ClockAwareTrait;
+
     public function __construct(
         private SendService $sendService,
         private SendAttemptService $sendAttemptService,
@@ -191,6 +195,38 @@ class SendController extends AbstractController
                 content: true
             )
         );
+    }
+
+    #[Route("/sends/{id}/retry", methods: "POST")]
+    #[ScopeRequired(Scope::SENDS_SEND)]
+    public function retrySend(
+        Send $send,
+        #[MapRequestPayload] RetrySendInput $input
+    ): JsonResponse {
+        if ($send->getQueued()) {
+            throw new BadRequestException('This send is already queued');
+        }
+
+        $hasFailedRecipients = $send->getRecipients()->exists(
+            fn(int $key, \App\Entity\SendRecipient $r) => $r->getStatus() === SendRecipientStatus::FAILED
+        );
+        if (!$hasFailedRecipients) {
+            throw new BadRequestException('No failed recipients to retry');
+        }
+
+        $sendAfter = null;
+        if ($input->send_after !== null) {
+            if ($input->send_after <= $this->now()->getTimestamp()) {
+                throw new BadRequestException('You cannot schedule a retry in the past');
+            }
+            $sendAfter = $this->now()->setTimestamp($input->send_after);
+        }
+
+        $retriedCount = $this->sendService->retrySend($send, $sendAfter);
+
+        return new JsonResponse([
+            'retried_recipients' => $retriedCount,
+        ]);
     }
 
     #[Route("/sends/uuid/{uuid}", requirements: ['uuid' => Requirement::UUID], methods: "GET")]
