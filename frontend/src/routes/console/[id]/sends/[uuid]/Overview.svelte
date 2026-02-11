@@ -84,7 +84,7 @@
 				<div class="retry-actions">
 					<Button
 						size="small"
-						color="warning"
+						color="orange"
 						on:click={handleRetryNow}
 						loading={retryLoading}
 					>
@@ -92,7 +92,7 @@
 					</Button>
 					<Button
 						size="small"
-						color="input"
+						color="gray"
 						on:click={() => (showScheduleModal = true)}
 					>
 						Schedule Retry
