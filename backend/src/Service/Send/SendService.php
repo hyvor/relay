@@ -154,6 +154,7 @@ class SendService
         $send->setSizeBytes(strlen($rawEmail));
 
         $this->em->persist($send);
+        $this->em->flush();
 
         $shouldQueue = $this->recipientFactory->create(
             $send,
