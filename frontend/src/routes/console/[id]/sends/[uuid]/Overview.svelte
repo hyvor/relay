@@ -91,8 +91,9 @@
 						Retry Now
 					</Button>
 					<Button
-						size="small"
-						color="gray"
+						size="small",
+						variant="outline"
+						color="orange"
 						on:click={() => (showScheduleModal = true)}
 					>
 						Schedule Retry
