@@ -45,7 +45,7 @@ class OrganizationsMigrateCommand extends Command
                 ->getSingleColumnResult();
 
             if ($this->kernel->getEnvironment() === 'test' && count($ownerIds) === 0) {
-                $output->writeln("{$this->clock->now()}: No more projects to migrate.");
+                $output->writeln("{$this->clock->now()->format('Y-m-d H:i:s')}: No more projects to migrate.");
                 break;
             }
 
@@ -92,11 +92,11 @@ class OrganizationsMigrateCommand extends Command
 						throw $e;
 					}
 
-					$output->writeln("{$this->clock->now()}: Error updating owner $ownerId: " . $e->getMessage());
+					$output->writeln("{$this->clock->now()->format('Y-m-d H:i:s')}: Error updating owner $ownerId: " . $e->getMessage());
 				}
             }
 
-            $output->writeln("{$this->clock->now()}: Updated $count owners");
+            $output->writeln("{$this->clock->now()->format('Y-m-d H:i:s')}: Updated $count owners");
             $this->clock->sleep(2);
         }
 

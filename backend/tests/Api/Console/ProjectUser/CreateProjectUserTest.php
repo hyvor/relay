@@ -14,6 +14,7 @@ use Hyvor\Internal\Bundle\Comms\Comms;
 use Hyvor\Internal\Bundle\Comms\CommsInterface;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\VerifyMember;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\VerifyMemberResponse;
+use Hyvor\Internal\Bundle\Comms\Exception\CommsApiFailedException;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ProjectUserController::class)]
