@@ -2,7 +2,7 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\NoOrganizationRequired;
+use App\Api\Console\Authorization\OrganizationOptional;
 use App\Api\Console\Authorization\ScopeRequired;
 use App\Api\Console\Authorization\AuthorizationListener;
 use App\Api\Console\Authorization\OrganizationLevelEndpoint;
@@ -36,7 +36,7 @@ class ConsoleController extends AbstractController
 
     #[Route('/init', methods: 'GET')]
     #[OrganizationLevelEndpoint]
-    #[NoOrganizationRequired]
+    #[OrganizationOptional]
     public function initConsole(Request $request): JsonResponse
     {
 		$user = AuthorizationListener::getUser($request);

@@ -22,8 +22,7 @@ final class Version20260203080259 extends AbstractMigration
         $this->addSql(
             <<<SQL
 			ALTER TABLE projects
-				ADD COLUMN organization_id BIGINT DEFAULT NULL,
-				ADD COLUMN created_by_user_id BIGINT DEFAULT NULL;
+				ADD COLUMN organization_id BIGINT DEFAULT NULL;
 			SQL
         );
 

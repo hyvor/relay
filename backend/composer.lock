@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "48092a9ea80eecf0099e2faa3d5f48a8",
+    "content-hash": "40ab3bec2a5622c553fb4c0c99943c6a",
     "packages": [
         {
             "name": "carbonphp/carbon-doctrine-types",
@@ -1715,16 +1715,16 @@
         },
         {
             "name": "hyvor/internal",
-            "version": "4.0.2-beta.1",
+            "version": "4.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/hyvor/internal.git",
-                "reference": "f01752f7889a25f464a7d04ad05399bfef7ff53b"
+                "reference": "60a732982de61eb37afe04ef1163a0d82e6d4af0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/hyvor/internal/zipball/f01752f7889a25f464a7d04ad05399bfef7ff53b",
-                "reference": "f01752f7889a25f464a7d04ad05399bfef7ff53b",
+                "url": "https://api.github.com/repos/hyvor/internal/zipball/60a732982de61eb37afe04ef1163a0d82e6d4af0",
+                "reference": "60a732982de61eb37afe04ef1163a0d82e6d4af0",
                 "shasum": ""
             },
             "require": {
@@ -1784,9 +1784,9 @@
             "description": "Internal Package for HYVOR Applications",
             "support": {
                 "issues": "https://github.com/hyvor/internal/issues",
-                "source": "https://github.com/hyvor/internal/tree/4.0.2-beta.1"
+                "source": "https://github.com/hyvor/internal/tree/4.0.4"
             },
-            "time": "2026-02-04T17:01:17+00:00"
+            "time": "2026-02-13T11:51:53+00:00"
         },
         {
             "name": "illuminate/collections",
@@ -11271,9 +11271,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "hyvor/internal": 10
-    },
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
@@ -11285,5 +11283,5 @@
         "ext-pdo_pgsql": "*"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.6.0"
 }

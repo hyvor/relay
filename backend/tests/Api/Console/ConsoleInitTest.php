@@ -11,8 +11,8 @@ use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
 use Hyvor\Internal\Auth\AuthFake;
+use Hyvor\Internal\Auth\AuthUserOrganization;
 use Hyvor\Internal\Sudo\SudoUserFactory;
-use Hyvor\Internal\Sudo\SudoUserService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\BrowserKit\Cookie;
 
@@ -23,8 +23,23 @@ use Symfony\Component\BrowserKit\Cookie;
 #[CoversClass(Compliance::class)]
 class ConsoleInitTest extends WebTestCase
 {
+    protected function shouldEnableAuthFake(): bool
+    {
+        return false;
+    }
+
     public function test_init_console(): void
     {
+        AuthFake::enableForSymfony(
+            $this->container,
+            ['id' => 1],
+            new AuthUserOrganization(
+                id: 1,
+                name: 'Fake Organization',
+                role: 'admin'
+            )
+        );
+
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
 		SudoUserFactory::createOne(['user_id' => 1]);
 
@@ -54,5 +69,26 @@ class ConsoleInitTest extends WebTestCase
         $this->assertArrayHasKey('config', $json);
         $this->assertIsArray($json['project_users']);
         $this->assertCount(6, $json['project_users']); // 6 with the system project
+    }
+
+    public function test_init_console_without_org(): void
+    {
+        AuthFake::enableForSymfony($this->container, ['id' => 1]);
+
+        $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
+        SudoUserFactory::createOne(['user_id' => 1]);
+
+        $this->client->request(
+            "GET",
+            "/api/console/init",
+        );
+
+        $this->assertResponseStatusCodeSame(200);
+
+        $json = $this->getJson();
+        $this->assertArrayHasKey('project_users', $json);
+        $this->assertArrayHasKey('config', $json);
+        $this->assertIsArray($json['project_users']);
+        $this->assertCount(0, $json['project_users']);
     }
 }

@@ -59,7 +59,6 @@ class ProjectService
 
         $project = new Project();
 		$project
-			->setCreatedByUserId($userId)
 			->setOrganizationId($organizationId)
             ->setUserId($userId)
             ->setName($name)

@@ -12,12 +12,17 @@ use Hyvor\Internal\Bundle\Comms\Event\ToCore\OrgMigration\InitOrgResponse;
 use Hyvor\Internal\Component\Component;
 use PHPUnit\Framework\Attributes\CoversClass;
 use App\Command\OrganizationsMigrateCommand;
+use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 
 #[CoversClass(OrganizationsMigrateCommand::class)]
 class OrganizationsMigrateCommandTest extends KernelTestCase
 {
+    use ClockSensitiveTrait;
+
 	public function test_organization_migration(): void
     {
+        $this->mockTime();
+
         $projects = ProjectFactory::createMany(3, [
             'organization_id' => null,
         ]);
@@ -63,10 +68,44 @@ class OrganizationsMigrateCommandTest extends KernelTestCase
 				$this->assertTrue(false, "should not be reachable");
             }
         );
+
+        $updatedProjects = $this->getEm()->getRepository(Project::class)->findBy([
+            'organization_id' => null,
+        ]);
+        $this->assertCount(0, $updatedProjects);
+    }
+
+    public function test_updates_organization_id(): void
+    {
+        $this->mockTime();
+
+        $project = ProjectFactory::createOne([
+            'organization_id' => null,
+        ]);
+
+        $orgId = rand(1000, 9999);
+        $this->getComms()->addResponse(InitOrg::class, function () use ($orgId) {
+            return new InitOrgResponse($orgId);
+        });
+
+        ProjectUserFactory::createOne(['project' => $project, 'user_id' => $project->getUserId()]);
+
+        $this->assertSame(0, $this->commandTester('organizations:migrate')->execute([]));
+        $this->getEm()->clear();
+
+        $this->getComms()->assertSent(InitOrg::class, Component::CORE);
+        $this->getComms()->assertSent(EnsureMembers::class, Component::CORE);
+
+        $updatedProject = $this->getEm()->getRepository(Project::class)->findOneBy([
+            'organization_id' => $orgId,
+        ]);
+        $this->assertNotNull($updatedProject);
     }
 
     public function test_does_not_update_migrated_organizations(): void
 	{
+        $this->mockTime();
+
         $projects = ProjectFactory::createMany(3, [
             'organization_id' => null,
         ]);

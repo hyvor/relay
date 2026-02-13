@@ -99,7 +99,7 @@ class AuthorizationListener
         $request = $event->getRequest();
         $projectId = $request->headers->get('x-project-id');
         $isOrgLevelEndpoint = count($event->getAttributes(OrganizationLevelEndpoint::class)) > 0;
-        $noOrganizationRequired = count($event->getAttributes(NoOrganizationRequired::class)) > 0;
+        $noOrganizationRequired = count($event->getAttributes(OrganizationOptional::class)) > 0;
 
 		$me = $this->auth->me($request);
         if ($me === null) {
@@ -117,12 +117,10 @@ class AuthorizationListener
 		$org = $me->getOrganization();
 
 		$request->attributes->set(self::RESOLVED_USER_ATTRIBUTE_KEY, $user);
+        $request->attributes->set(self::RESOLVED_ORGANIZATION_ATTRIBUTE_KEY, $org);
 
 		if ($noOrganizationRequired) {
-			if ($org !== null) {
-				$request->attributes->set(self::RESOLVED_ORGANIZATION_ATTRIBUTE_KEY, $org);
-			}
-
+            assert($isOrgLevelEndpoint === true);
 			return;
 		}
 
@@ -136,7 +134,6 @@ class AuthorizationListener
 			throw new AccessDeniedHttpException('Organization mismatch');
 		}
 
-		$request->attributes->set(self::RESOLVED_ORGANIZATION_ATTRIBUTE_KEY, $org);
 
         // user-level endpoints do not have a project ID
         if ($isOrgLevelEndpoint === false) {
@@ -203,7 +200,8 @@ class AuthorizationListener
 
     public static function hasOrganization(Request $request): bool
     {
-        return $request->attributes->has(self::RESOLVED_ORGANIZATION_ATTRIBUTE_KEY);
+        return $request->attributes->has(self::RESOLVED_ORGANIZATION_ATTRIBUTE_KEY)
+            && $request->attributes->get(self::RESOLVED_ORGANIZATION_ATTRIBUTE_KEY) instanceof AuthUserOrganization;
 	}
 
     // only call after hasOrganization()
