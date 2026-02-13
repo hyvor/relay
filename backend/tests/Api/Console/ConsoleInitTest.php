@@ -57,6 +57,13 @@ class ConsoleInitTest extends WebTestCase
 			])
         ]);
 
+        ProjectUserFactory::createMany(2, [
+            'user_id' => 1,
+            'project' => ProjectFactory::new([
+                'organization_id' => 2
+            ])
+        ]);
+
         $this->client->request(
             "GET",
             "/api/console/init",
@@ -68,7 +75,7 @@ class ConsoleInitTest extends WebTestCase
         $this->assertArrayHasKey('project_users', $json);
         $this->assertArrayHasKey('config', $json);
         $this->assertIsArray($json['project_users']);
-        $this->assertCount(6, $json['project_users']); // 6 with the system project
+        $this->assertCount(5, $json['project_users']); // system project not selected, because it has org ID 0
     }
 
     public function test_init_console_without_org(): void

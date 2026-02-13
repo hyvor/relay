@@ -44,15 +44,6 @@ services:
     healthcheck:
       test: ls
       disable: true
-    logging:
-      driver: loki
-      options:
-        loki-url: "http://loki.localhost/loki/api/v1/push"
-        loki-retries: "2"
-        loki-max-backoff: "800ms"
-        loki-timeout: "1s"
-        keep-file: "true"
-        mode: non-blocking
 
   worker:
     container_name: hyvor-relay-worker
@@ -71,15 +62,6 @@ services:
       hyvor-network:
         aliases:
           - relay.hyvor.localhost # so that simulator can reach the worker
-    logging:
-      driver: loki
-      options:
-        loki-url: "http://loki.localhost/loki/api/v1/push"
-        loki-retries: "2"
-        loki-max-backoff: "800ms"
-        loki-timeout: "1s"
-        keep-file: "true"
-        mode: non-blocking
 
   simulator:
     image: hyvor/smtp-simulator:latest

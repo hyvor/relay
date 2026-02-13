@@ -107,7 +107,7 @@ class OrganizationsMigrateCommandTest extends KernelTestCase
         $this->mockTime();
 
         $projects = ProjectFactory::createMany(3, [
-            'organization_id' => null,
+            'organization_id' => null, // TODO: fix
         ]);
 
         $this->getComms()->addResponse(InitOrg::class, function () {

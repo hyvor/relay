@@ -4,7 +4,6 @@ namespace App\Command;
 
 use App\Service\App\Config;
 use Doctrine\ORM\EntityManagerInterface;
-use Hyvor\Internal\Auth\AuthMethod;
 use Hyvor\Internal\Auth\Oidc\OidcApiService;
 use Hyvor\Internal\Deployment;
 use Hyvor\Internal\InternalConfig;

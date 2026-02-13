@@ -23,12 +23,13 @@ class ProjectUserService
      */
     public function getProjectsOfUserInOrg(int $userId, int $orgId): array
     {
+        /** @var ProjectUser[] */
         return $this->em->getRepository(ProjectUser::class)
             ->createQueryBuilder('pu')
             ->innerJoin('pu.project', 'p')
             ->addSelect('p')
-            ->andWhere('pu.user = :userId')
-            ->andWhere('p.organization = :orgId')
+            ->andWhere('pu.user_id = :userId')
+            ->andWhere('p.organization_id = :orgId')
             ->setParameter('userId', $userId)
             ->setParameter('orgId', $orgId)
             ->getQuery()
