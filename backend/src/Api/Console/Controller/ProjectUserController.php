@@ -62,6 +62,10 @@ class ProjectUserController extends AbstractController
             throw new NotFoundHttpException('User with id ' . $input->user_id . ' not found.');
 		}
 
+        if ($this->projectUserService->getProjectUser($project, $authUser->id) !== null) {
+            throw new BadRequestHttpException('User is already added to the project');
+        }
+
 		$organizationId = $project->getOrganizationId();
 		assert($organizationId !== null);
 
@@ -79,10 +83,6 @@ class ProjectUserController extends AbstractController
 		if (!$verification->isMember()) {
 			  throw new BadRequestHttpException('Unable to find the user in the organization');
 		}
-
-		if ($this->projectUserService->getProjectUser($project, $authUser->id) !== null) {
-            throw new BadRequestHttpException('User is already added to the project');
-		};
 
         $projectUser = $this->projectUserService->createProjectUser($project, $authUser->id, $input->scopes);
 

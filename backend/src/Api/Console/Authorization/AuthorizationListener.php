@@ -131,7 +131,7 @@ class AuthorizationListener
 		$orgFromReq = (int)$request->headers->get('X-Organization-ID');
 
 		if ($orgFromReq !== $org->id) {
-			throw new AccessDeniedHttpException('Organization mismatch');
+			throw new AccessDeniedHttpException('org_mismatch');
 		}
 
 
@@ -147,7 +147,7 @@ class AuthorizationListener
                 throw new AccessDeniedHttpException('Invalid project ID.');
 			}
 
-			if ($project->getOrganizationId() !== 0 && $project->getOrganizationId() !== $org->id) {
+			if ($project->getOrganizationId() !== $org->id) {
 				throw new AccessDeniedHttpException('This project does not belong to your current organization.');
 			}
 

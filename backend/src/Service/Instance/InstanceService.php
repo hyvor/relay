@@ -66,6 +66,7 @@ class InstanceService
 			0,
             'System',
             ProjectSendType::TRANSACTIONAL,
+            isSystemProject: true,
             flush: false
         );
         $systemProject = $newProject['project'];

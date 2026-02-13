@@ -14,7 +14,7 @@ use App\Service\Instance\InstanceService;
 use App\Service\ProjectUser\ProjectUserService;
 use App\Service\Send\Compliance;
 use Hyvor\Internal\InternalConfig;
-use Hyvor\Internal\Sudo\SudoUserService;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,8 +29,8 @@ class ConsoleController extends AbstractController
         private ProjectUserService $projectUserService,
         private InternalConfig $internalConfig,
         private Config $appConfig,
+        private LoggerInterface $logger,
         private InstanceService $instanceService,
-        private SudoUserService $sudoUserService,
     ) {
     }
 
@@ -43,25 +43,24 @@ class ConsoleController extends AbstractController
 		$org = AuthorizationListener::hasOrganization($request)
 					? AuthorizationListener::getOrganization($request)
 					: null;
-
 		$instance = $this->instanceService->getInstance();
 
 		$projectUsers = [];
 
-		if ($org !== null) {
+		if ($org) {
 			$projectUsers = $this->projectUserService->getProjectsOfUserInOrg($user->id, $org->id);
-
-			if ($this->sudoUserService->exists($user->id)) {
-				$systemProjectUser = $this->projectUserService->getProjectUser($instance->getSystemProject(), 0);
-				assert($systemProjectUser !== null);
-				$projectUsers = [$systemProjectUser, ...$projectUsers];
-			}
-
 			$projectUsers = array_map(
 				fn($project) => new ProjectUserObject($project, $user),
 				$projectUsers
 			);
 		}
+
+        $this->logger->info('Console initialized', [
+            'organization_id' => $org?->id,
+            'user_id' => $user->id,
+            'user_name' => $user->name ?? $user->username,
+            'project_count' => count($projectUsers),
+        ]);
 
         return new JsonResponse([
 			'project_users' => $projectUsers,

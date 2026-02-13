@@ -2,8 +2,9 @@
 
 namespace App\Service\Cloud\Comms;
 
-use App\Repository\ProjectUserRepository;
+use App\Entity\ProjectUser;
 use App\Service\ProjectUser\ProjectUserService;
+use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Bundle\Comms\Event\FromCore\User\UserDeleted;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 
@@ -11,7 +12,7 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 class UserDeletedListener
 {
 	public function __construct(
-        private ProjectUserRepository $puRepo,
+        private EntityManagerInterface $em,
         private ProjectUserService $puService,
     )
     {
@@ -19,12 +20,14 @@ class UserDeletedListener
 
     public function __invoke(UserDeleted $event): void
 	{
-		$proj_users = $this->puRepo->findBy([
-			'user_id' => $event->getUserId()
-		]);
+		$proj_users = $this->em->getRepository(ProjectUser::class)->findBy([
+            'user_id' => $event->getUserId()
+        ]);
 
 		foreach($proj_users as $proj_user) {
-			$this->puService->deleteProjectUser($proj_user);
+			$this->puService->deleteProjectUser($proj_user, flush: false);
 		}
+
+        $this->em->flush();
     }
 }

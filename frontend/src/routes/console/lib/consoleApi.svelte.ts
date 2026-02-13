@@ -1,5 +1,5 @@
 import { get } from "svelte/store";
-import { authUserOrganizationStore } from "./stores/consoleStore";
+import { authOrganizationStore } from "./stores/consoleStore";
 import { getCurrentProjectUser } from "./stores/projectStore.svelte";
 
 export interface ConsoleApiOptions {
@@ -48,7 +48,7 @@ function getConsoleApi() {
             headers['X-Project-ID'] = projectId;
         }
 
-		const currentOrg = get(authUserOrganizationStore);
+		const currentOrg = get(authOrganizationStore);
 		if (currentOrg) {
 			headers['X-Organization-ID'] = currentOrg.id.toString();
 		}
@@ -78,7 +78,7 @@ function getConsoleApi() {
             /* toast({type: 'error', message: error});
             throw error; */
 
-			if (error === 'Organization mismatch') {
+			if (error === 'org_mismatch') {
 				location.href = '/console';
 				throw new Error('Current organization changed, redirecting...');
 			}

@@ -15,7 +15,6 @@ class ProjectUserService
 
     public function __construct(
 		private EntityManagerInterface $em,
-		private ProjectUserRepository $puRepo
     ) {
     }
 
@@ -24,7 +23,16 @@ class ProjectUserService
      */
     public function getProjectsOfUserInOrg(int $userId, int $orgId): array
     {
-        return $this->puRepo->findByUserAndOrganization($userId, $orgId);
+        return $this->em->getRepository(ProjectUser::class)
+            ->createQueryBuilder('pu')
+            ->innerJoin('pu.project', 'p')
+            ->addSelect('p')
+            ->andWhere('pu.user = :userId')
+            ->andWhere('p.organization = :orgId')
+            ->setParameter('userId', $userId)
+            ->setParameter('orgId', $orgId)
+            ->getQuery()
+            ->getResult();
 	}
 
     /**
@@ -75,9 +83,15 @@ class ProjectUserService
         $query->execute();
     }
 
-    public function deleteProjectUser(ProjectUser $projectUser): void
+    public function deleteProjectUser(
+        ProjectUser $projectUser,
+        bool $flush = true
+    ): void
     {
         $this->em->remove($projectUser);
-        $this->em->flush();
+
+        if ($flush) {
+            $this->em->flush();
+        }
     }
 }

@@ -164,7 +164,7 @@ class AuthorizationTest extends WebTestCase
             ],
         );
         $this->assertResponseStatusCodeSame(403);
-        $this->assertSame("Organization mismatch", $this->getJson()["message"]);
+        $this->assertSame("org_mismatch", $this->getJson()["message"]);
     }
 
     public function test_fails_when_xprojectid_header_is_not_set(): void

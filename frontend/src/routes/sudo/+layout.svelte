@@ -57,18 +57,6 @@
 		</div>
 	{:else}
 		<main>
-			<!-- <HyvorBar -->
-			<!-- 	product="core" -->
-			<!-- 	logo="https://hyvor.com/api/public/logo/relay.svg" -->
-			<!-- 	instance={$sudoConfigStore.instance} -->
-			<!-- 	cloud={$sudoConfigStore.hosting === 'cloud'} -->
-			<!-- 	config={{ name: 'Hyvor Relay', chat: false }} -->
-			<!-- 	authOverride={{ -->
-			<!-- 		user: $sudoConfigStore.user, -->
-			<!-- 		logoutUrl: '/api/oidc/logout' -->
-			<!-- 	}} -->
-			<!-- /> -->
-
 			<div id="wrap">
 				<nav>
 					<div class="hds-box nav-inner">

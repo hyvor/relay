@@ -53,7 +53,9 @@ class OrganizationsMigrateCommand extends Command
 
             foreach ($ownerIds as $ownerId) {
 				try {
-					$this->em->wrapInTransaction(function () use ($ownerId, &$count) {
+                    $output->writeln("{$this->clock->now()->format('Y-m-d H:i:s')}: Migrating owner ID: $ownerId");
+
+                    $this->em->wrapInTransaction(function () use ($ownerId, &$count) {
 						/** @var InitOrgResponse $org */
 						$org = $this->comms->send(new InitOrg($ownerId));
 

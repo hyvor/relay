@@ -14,6 +14,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Bundle\Comms\CommsInterface;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\Resource\ResourceCreated;
 use Hyvor\Internal\Component\Component;
+use Hyvor\Internal\Deployment;
+use Hyvor\Internal\InternalConfig;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -28,6 +30,7 @@ class ProjectService
         private EventDispatcherInterface $ed,
 		private ProjectUserService $projectUserService,
 		private CommsInterface $comms,
+        private InternalConfig $internalConfig
     ) {
     }
 
@@ -53,6 +56,7 @@ class ProjectService
         string $name,
         ProjectSendType $sendType,
         bool $createProjectUser = true,
+        bool $isSystemProject = false,
         bool $flush = true
     ): array {
         $this->ed->dispatch(new ProjectCreatingEvent($userId));
@@ -81,7 +85,7 @@ class ProjectService
             $this->em->flush();
 		}
 
-		if ($userId !== 0 && $organizationId !== 0) {
+		if ($this->internalConfig->getDeployment() === Deployment::CLOUD && !$isSystemProject) {
 			$this->comms->send(new ResourceCreated(
 				Component::RELAY,
 				$organizationId

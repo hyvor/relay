@@ -1,8 +1,9 @@
 import { writable } from "svelte/store";
-import type { AppConfig, Organization } from "../../types";
+import type { AppConfig } from "../../types";
+import type { CloudContextOrganization } from '@hyvor/design/cloud';
 
 export const selectingProject = writable(false);
-export const authUserOrganizationStore = writable<Organization | null>();
+export const authOrganizationStore = writable<CloudContextOrganization>();
 
 let appConfig = {} as AppConfig;
 
