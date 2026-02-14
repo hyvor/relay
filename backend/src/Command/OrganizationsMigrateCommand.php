@@ -64,7 +64,7 @@ class OrganizationsMigrateCommand extends Command
 							->update(Project::class, 'p')
 							->set('p.organization_id', ':orgId')
 							->where('p.user_id = :ownerId')
-							->andWhere('p.organization_id IS NULL')
+							->andWhere('p.organization_id = 0')
 							->setParameter('orgId', $org->orgId)
 							->setParameter('ownerId', $ownerId)
 							->getQuery()
