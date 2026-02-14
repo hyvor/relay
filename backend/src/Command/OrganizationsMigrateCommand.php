@@ -39,7 +39,8 @@ class OrganizationsMigrateCommand extends Command
             $ownerIds = $this->em->createQueryBuilder()
                 ->select('DISTINCT p.user_id')
                 ->from(Project::class, 'p')
-                ->where('p.organization_id IS NULL')
+                ->where('p.organization_id = 0')
+                ->andWhere('p.user_id != 0')
                 ->setMaxResults(50)
                 ->getQuery()
                 ->getSingleColumnResult();

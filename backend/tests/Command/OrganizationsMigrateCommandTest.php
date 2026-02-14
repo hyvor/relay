@@ -24,7 +24,7 @@ class OrganizationsMigrateCommandTest extends KernelTestCase
         $this->mockTime();
 
         $projects = ProjectFactory::createMany(3, [
-            'organization_id' => null,
+            'organization_id' => 0,
         ]);
 
         $this->getComms()->addResponse(InitOrg::class, function () {
@@ -70,7 +70,7 @@ class OrganizationsMigrateCommandTest extends KernelTestCase
         );
 
         $updatedProjects = $this->getEm()->getRepository(Project::class)->findBy([
-            'organization_id' => null,
+            'organization_id' => 0,
         ]);
         $this->assertCount(0, $updatedProjects);
     }
@@ -80,7 +80,7 @@ class OrganizationsMigrateCommandTest extends KernelTestCase
         $this->mockTime();
 
         $project = ProjectFactory::createOne([
-            'organization_id' => null,
+            'organization_id' => 0,
         ]);
 
         $orgId = rand(1000, 9999);
@@ -107,7 +107,7 @@ class OrganizationsMigrateCommandTest extends KernelTestCase
         $this->mockTime();
 
         $projects = ProjectFactory::createMany(3, [
-            'organization_id' => null, // TODO: fix
+            'organization_id' => 0,
         ]);
 
         $this->getComms()->addResponse(InitOrg::class, function () {
@@ -154,5 +154,50 @@ class OrganizationsMigrateCommandTest extends KernelTestCase
 		]);
 
 		$this->assertCount(3, $availMigratedProjects);
+	}
+
+	public function test_skips_system_projects(): void
+    {
+        $this->mockTime();
+
+        $systemProject = ProjectFactory::createOne([
+            'organization_id' => 0,
+            'user_id' => 0,
+        ]);
+
+        $normalProject = ProjectFactory::createOne([
+            'organization_id' => 0,
+            'user_id' => 123,
+        ]);
+
+        $this->getComms()->addResponse(InitOrg::class, function () {
+            return new InitOrgResponse(9999);
+        });
+
+        ProjectUserFactory::createOne(['project' => $systemProject, 'user_id' => 0]);
+        ProjectUserFactory::createOne(['project' => $normalProject, 'user_id' => 123]);
+
+        $this->assertSame(0, $this->commandTester('organizations:migrate')->execute([]));
+        $this->getEm()->clear();
+
+        $unchangedSystemProject = $this->getEm()->getRepository(Project::class)->findOneBy([
+            'id' => $systemProject->getId(),
+            'organization_id' => 0
+        ]);
+        $this->assertNotNull($unchangedSystemProject, 'System project should not have been migrated.');
+
+        $changedNormalProject = $this->getEm()->getRepository(Project::class)->findOneBy([
+            'id' => $normalProject->getId(),
+            'organization_id' => 9999
+        ]);
+        $this->assertNotNull($changedNormalProject, 'Normal project should have been migrated.');
+
+        $sentEvents = $this->getComms()->getSents();
+
+        $initOrgEvents = array_filter($sentEvents, function ($sent) {
+            return $sent['event'] instanceof InitOrg;
+        });
+
+        $this->assertCount(1, $initOrgEvents, 'System project should be skipped');
     }
 }
