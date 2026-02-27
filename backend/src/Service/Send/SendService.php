@@ -42,7 +42,7 @@ class SendService
         ?string $dateFromSearch,
         ?string $dateToSearch,
         int $limit,
-        int $offset
+        ?int $beforeId
     ): ArrayCollection {
         $qb = $this->sendRepository->createQueryBuilder('s');
 
@@ -51,8 +51,12 @@ class SendService
             ->where('s.project = :project')
             ->setParameter('project', $project)
             ->setMaxResults($limit)
-            ->setFirstResult($offset)
-            ->orderBy('s.created_at', 'DESC');
+            ->orderBy('s.id', 'DESC');
+
+        if ($beforeId !== null) {
+            $qb->andWhere('s.id < :beforeId')
+               ->setParameter('beforeId', $beforeId);
+        }
 
         if ($status !== null) {
             $qb->join('s.recipients', 'r')

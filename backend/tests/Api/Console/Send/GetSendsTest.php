@@ -67,7 +67,7 @@ class GetSendsTest extends WebTestCase
         $this->assertCount(0, $json);
     }
 
-    public function test_list_sends_with_limit_and_offset(): void
+    public function test_list_sends_with_limit(): void
     {
         $project = ProjectFactory::createOne();
 
@@ -84,7 +84,7 @@ class GetSendsTest extends WebTestCase
         $response = $this->consoleApi(
             $project,
             'GET',
-            '/sends?limit=5&offset=2'
+            '/sends?limit=5'
         );
 
         $this->assertSame(200, $response->getStatusCode());
@@ -92,6 +92,52 @@ class GetSendsTest extends WebTestCase
         $json = $this->getJson();
 
         $this->assertCount(5, $json);
+    }
+
+    public function test_list_sends_with_before_id(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $domain = DomainFactory::createOne();
+
+        $queue = QueueFactory::createOne();
+
+        SendFactory::createMany(10, [
+            'project' => $project,
+            'domain' => $domain,
+            'queue' => $queue,
+        ]);
+
+        // First page: 5 newest sends (IDs sorted DESC)
+        $response = $this->consoleApi(
+            $project,
+            'GET',
+            '/sends?limit=5'
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+        /** @var array<int, array<string, mixed>> $json */
+        $json = $this->getJson();
+        $this->assertCount(5, $json);
+
+        // Use the last ID on the first page as cursor
+        $cursor = $json[4]['id'];
+
+        // Second page: next 5 sends, all with IDs < cursor
+        $response = $this->consoleApi(
+            $project,
+            'GET',
+            "/sends?limit=5&before_id={$cursor}"
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+        /** @var array<int, array<string, mixed>> $json */
+        $json = $this->getJson();
+        $this->assertCount(5, $json);
+
+        foreach ($json as $send) {
+            $this->assertLessThan($cursor, $send['id']);
+        }
     }
 
     #[TestWith([SendRecipientStatus::QUEUED, SendRecipientStatus::ACCEPTED])]
