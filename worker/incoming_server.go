@@ -89,7 +89,7 @@ func (s *Session) Rcpt(to string, opts *smtp.RcptOptions) error {
 		}
 
 	}
-	
+
 	s.incomingMail.RcptTo = parsed.Address
 
 	return nil
@@ -221,8 +221,8 @@ func (server *IncomingMailServer) StartSmtpServer(
 
 	smtpServer.Addr = "0.0.0.0" + port
 	smtpServer.Domain = instanceDomain
-	smtpServer.WriteTimeout = 10 * time.Second
-	smtpServer.ReadTimeout = 10 * time.Second
+	smtpServer.WriteTimeout = 60 * time.Second
+	smtpServer.ReadTimeout = 60 * time.Second
 	smtpServer.MaxMessageBytes = 1024 * 1024
 	smtpServer.MaxRecipients = 10
 	smtpServer.AllowInsecureAuth = true
@@ -238,8 +238,8 @@ func (server *IncomingMailServer) StartSmtpServer(
 		}
 
 		smtpServer.TLSConfig = &tls.Config{
-			MinVersion: tls.VersionTLS12,
-			Certificates:  []tls.Certificate{cert},
+			MinVersion:   tls.VersionTLS12,
+			Certificates: []tls.Certificate{cert},
 		}
 	}
 
