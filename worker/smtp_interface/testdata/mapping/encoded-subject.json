@@ -1,0 +1,6 @@
+{
+  "from": { "email": "sender@example.com" },
+  "to": [{ "email": "recipient@example.com" }],
+  "subject": "Réservation confirmée : Café de Flore",
+  "body_text": "Body text here.\n"
+}

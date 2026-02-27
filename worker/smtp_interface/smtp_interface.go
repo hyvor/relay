@@ -66,7 +66,7 @@ func MimeToApiRequest(mimeMessage []byte) (*ApiRequest, error) {
 		To:      parseAddressList(message.Header.Get("To")),
 		Cc:      parseAddressList(message.Header.Get("Cc")),
 		Bcc:     parseAddressList(message.Header.Get("Bcc")),
-		Subject: message.Header.Get("Subject"),
+		Subject: decodeHeader(message.Header.Get("Subject")),
 		Headers: make(map[string]string),
 	}
 
@@ -248,6 +248,14 @@ func decodeMessageBody(part *multipart.Part) ([]byte, error) {
     return decoded, nil
 
 
+}
+
+func decodeHeader(s string) string {
+	decoded, err := new(mime.WordDecoder).DecodeHeader(s)
+	if err != nil {
+		return s
+	}
+	return decoded
 }
 
 func parseAddressList(raw string) []Address {
