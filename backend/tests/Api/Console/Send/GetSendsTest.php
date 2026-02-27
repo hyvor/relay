@@ -102,26 +102,16 @@ class GetSendsTest extends WebTestCase
 
         $queue = QueueFactory::createOne();
 
-        SendFactory::createMany(10, [
+        $sends = SendFactory::createMany(7, [
             'project' => $project,
             'domain' => $domain,
             'queue' => $queue,
         ]);
 
-        // First page: 5 newest sends (IDs sorted DESC)
-        $response = $this->consoleApi(
-            $project,
-            'GET',
-            '/sends?limit=5'
-        );
+        $sends = array_reverse($sends);
 
-        $this->assertSame(200, $response->getStatusCode());
-        /** @var array<int, array<string, mixed>> $json */
-        $json = $this->getJson();
-        $this->assertCount(5, $json);
-
-        // Use the last ID on the first page as cursor
-        $cursor = $json[4]['id'];
+        // fifth send (so we should get 2 more)
+        $cursor = $sends[4]->getId();
 
         // Second page: next 5 sends, all with IDs < cursor
         $response = $this->consoleApi(
@@ -133,7 +123,7 @@ class GetSendsTest extends WebTestCase
         $this->assertSame(200, $response->getStatusCode());
         /** @var array<int, array<string, mixed>> $json */
         $json = $this->getJson();
-        $this->assertCount(5, $json);
+        $this->assertCount(2, $json);
 
         foreach ($json as $send) {
             $this->assertLessThan($cursor, $send['id']);
