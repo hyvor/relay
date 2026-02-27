@@ -9,7 +9,7 @@ export function getSends(
 	date_from_search: string | null,
 	date_to_search: string | null,
 	limit: number,
-	offset: number
+	before_id: number | null
 ) {
 	return consoleApi.get<Send[]>({
 		endpoint: 'sends',
@@ -21,7 +21,7 @@ export function getSends(
 			date_from_search,
 			date_to_search,
 			limit,
-			offset
+			before_id: before_id
 		}
 	});
 }

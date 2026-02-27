@@ -125,7 +125,9 @@ class SendController extends AbstractController
     public function getSends(Request $request, Project $project): JsonResponse
     {
         $limit = $request->query->getInt("limit", 50);
-        $offset = $request->query->getInt("offset", 0);
+        $beforeId = $request->query->has("before_id")
+            ? $request->query->getInt("before_id")
+            : null;
 
         $status = null;
         if ($request->query->has("status")) {
@@ -167,7 +169,7 @@ class SendController extends AbstractController
                 $dateFromSearch,
                 $dateToSearch,
                 $limit,
-                $offset
+                $beforeId
             )
             ->map(fn($send) => new SendObject($send));
 

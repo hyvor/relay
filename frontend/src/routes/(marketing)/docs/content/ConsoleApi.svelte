@@ -216,7 +216,7 @@ type Response = {
 	code={`
     type Request = {
         limit?: number, // Optional. Default is 50
-        offset?: number, // Optional. Default is 0
+        before_id?: number, // Optional. For pagination: pass the id of the last send in the current list
         status?: 'queued' | 'processing' | 'accepted' | 'bounced' | 'complained', // Optional. Filter by status
         from_search?: string, // Optional. Search from address
         to_search?: string // Optional. Search to address

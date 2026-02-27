@@ -29,7 +29,7 @@
 	function load(more = false) {
 		more ? (loadingMore = true) : (loading = true);
 
-		getSends(status, from_search, to_search, subject_search, date_from_search, date_to_search, EMAILS_PER_PAGE, more ? emails.length : 0)
+		getSends(status, from_search, to_search, subject_search, date_from_search, date_to_search, EMAILS_PER_PAGE, more ? emails[emails.length - 1].id : null)
 			.then((data) => {
 				emails = more ? [...emails, ...data] : data;
 				emailStore.set(emails);
