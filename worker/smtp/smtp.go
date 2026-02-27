@@ -136,7 +136,7 @@ func (c *Client) ehlo() CommandResult {
 	if commandResult.CodeValid(250) {
 		// set extensions
 		ext := make(map[string]string)
-		extList := strings.Split(commandResult.Reply.Message, "\n")
+		extList := strings.Split(commandResult.Reply.RawMessage, "\n")
 		if len(extList) > 1 {
 			extList = extList[1:]
 			for _, line := range extList {

@@ -47,43 +47,47 @@ func IsSmtpCode(code int, expectCode int) bool {
 }
 
 type CommandReply struct {
-	Code    int
-	EnhancedCode [3]int
-	Message string
+	Code       int
+	RawMessage string
 }
 
 func NewCommandReply(code int, message string) *CommandReply {
-	
-	reply := &CommandReply{
-		Code:    code,
-		Message: message,
+	return &CommandReply{
+		Code:       code,
+		RawMessage: message,
 	}
+}
 
-	
-	// EnhancedCode string // RFC 3463
-	// https://github.com/emersion/go-smtp/blob/master/client.go#L917
-
-	parts := strings.SplitN(message, " ", 2)
+// Message returns the reply text with the enhanced code prefix stripped.
+func (r *CommandReply) Message() string {
+	parts := strings.SplitN(r.RawMessage, " ", 2)
 	if len(parts) != 2 {
-		return reply
+		return r.RawMessage
 	}
-
-	enchCode, err := parseEnhancedCode(parts[0])
+	_, err := parseEnhancedCode(parts[0])
 	if err != nil {
-		return reply
+		return r.RawMessage
 	}
 
 	// Per RFC 2034, enhanced code should be prepended to each line.
 	msg := parts[1]
 	msg = strings.ReplaceAll(msg, "\n"+parts[0]+" ", "\n")
-
-	reply.EnhancedCode = enchCode
-	reply.Message = msg
-	
-	return reply
-
+	return msg
 }
 
+// EnhancedCode string // RFC 3463
+// https://github.com/emersion/go-smtp/blob/master/client.go#L917
+func (r *CommandReply) EnhancedCode() [3]int {
+	parts := strings.SplitN(r.RawMessage, " ", 2)
+	if len(parts) != 2 {
+		return [3]int{}
+	}
+	enchCode, err := parseEnhancedCode(parts[0])
+	if err != nil {
+		return [3]int{}
+	}
+	return enchCode
+}
 
 func parseEnhancedCode(s string) ([3]int, error) {
 	parts := strings.Split(s, ".")
