@@ -311,13 +311,15 @@ type Response = {
 <CodeBlock
 	code={`
 type Request = {
+    // domain to add
+    // unique within the project
 	domain: string
-	
-	// optional custom DKIM selector. 
+
+	// optional custom DKIM selector.
 	// auto-generated if not provided.
 	dkim_selector?: string
-	
-	// optional custom RSA private key (PEM format). 
+
+	// optional custom RSA private key (PEM format).
 	// min bits: 1024
 	// auto-generated if not provided.
 	dkim_private_key?: string
@@ -326,6 +328,14 @@ type Response = Domain
 `}
 	language="ts"
 />
+
+<p>
+	If you set a custom <code>dkim_selector</code>, consider this: one domain can only have one TXT
+	record per selector in DNS. To avoid first come first serve problem, Hyvor Relay does not check
+	for the global uniqueness of the selector; it is your responsibility. If you are a platform
+	provider, it is recommended to use a unique prefix (e.g. <code>myplatform-</code>) or a
+	timestamp to minimize the risk of conflicts.
+</p>
 
 <h4 id="verify-domain">Verify Domain</h4>
 

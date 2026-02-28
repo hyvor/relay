@@ -1,5 +1,14 @@
 <script lang="ts">
-	import { Modal, TextInput, Textarea, SplitControl, Button, toast } from '@hyvor/design/components';
+	import {
+		Modal,
+		TextInput,
+		Textarea,
+		SplitControl,
+		Button,
+		Validation,
+		toast,
+		FormControl
+	} from '@hyvor/design/components';
 	import { createDomain } from '../../lib/actions/domainActions';
 	import type { Domain } from '../../types';
 	import IconCaretDown from '@hyvor/icons/IconCaretDown';
@@ -19,6 +28,26 @@
 	let loading = $state(false);
 	let errors = $state<Record<string, string>>({});
 	let input: HTMLInputElement | null = $state(null);
+
+	const selectorValidation = $derived.by(() => {
+		const trimmed = dkimSelector.trim();
+		if (!trimmed) return null;
+		if (trimmed.includes('._domainkey')) {
+			return {
+				type: 'warning' as const,
+				message:
+					"Omit ._domainkey. We'll append this for you automatically when generating your DNS records."
+			};
+		}
+		if (!/^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?$/.test(trimmed)) {
+			return {
+				type: 'error' as const,
+				message:
+					'Invalid selector. Only letters, numbers, and hyphens are allowed (max 63 chars, cannot start or end with a hyphen).'
+			};
+		}
+		return null;
+	});
 
 	function resetForm() {
 		domain = '';
@@ -52,7 +81,11 @@
 
 		loading = true;
 
-		createDomain(domain.trim(), dkimSelector.trim() || undefined, dkimPrivateKey.trim() || undefined)
+		createDomain(
+			domain.trim(),
+			dkimSelector.trim() || undefined,
+			dkimPrivateKey.trim() || undefined
+		)
 			.then((newDomain) => {
 				onDomainCreated(newDomain);
 				toast.success('Domain created successfully');
@@ -136,14 +169,20 @@
 			<SplitControl
 				label="DKIM Selector"
 				caption="Custom DKIM selector. Auto-generated if not provided."
-				error={errors.dkim_selector}
 			>
-				<TextInput
-					bind:value={dkimSelector}
-					placeholder="dkim-selector"
-					block
-					disabled={loading}
-				/>
+				<FormControl>
+					<TextInput
+						bind:value={dkimSelector}
+						placeholder="dkim-selector"
+						block
+						disabled={loading}
+					/>
+					{#if selectorValidation}
+						<Validation state={selectorValidation.type}>
+							{selectorValidation.message}
+						</Validation>
+					{/if}
+				</FormControl>
 			</SplitControl>
 			<SplitControl
 				label="DKIM Private Key"
@@ -166,6 +205,9 @@
 		padding: 20px 0;
 	}
 	.advanced-toggle {
+		margin-top: 8px;
+	}
+	:global(.selector-validation) {
 		margin-top: 8px;
 	}
 </style>
