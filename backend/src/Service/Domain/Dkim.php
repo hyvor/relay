@@ -15,10 +15,18 @@ class Dkim
     /**
      * @return array{public: string, private: string}
      */
-    public static function generateDkimKeys(): array
+    public static function generateDkimKeys(
+
+        /**
+         * 2048 is the standard
+         * only use a different one for tests
+         */
+        int $bits = 2048,
+
+    ): array
     {
         $privateKey = \openssl_pkey_new([
-            'private_key_bits' => 2048,
+            'private_key_bits' => $bits,
             'private_key_type' => \OPENSSL_KEYTYPE_RSA
         ]);
         assert($privateKey !== false);

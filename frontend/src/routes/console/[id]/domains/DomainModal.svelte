@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { Modal, TextInput, SplitControl, toast } from '@hyvor/design/components';
+	import { Modal, TextInput, Textarea, SplitControl, Button, toast } from '@hyvor/design/components';
 	import { createDomain } from '../../lib/actions/domainActions';
 	import type { Domain } from '../../types';
+	import IconCaretDown from '@hyvor/icons/IconCaretDown';
+	import IconCaretRight from '@hyvor/icons/IconCaretRight';
 
 	interface Props {
 		show: boolean;
@@ -11,12 +13,18 @@
 	let { show = $bindable(), onDomainCreated = () => {} }: Props = $props();
 
 	let domain = $state('');
+	let dkimSelector = $state('');
+	let dkimPrivateKey = $state('');
+	let showAdvanced = $state(false);
 	let loading = $state(false);
 	let errors = $state<Record<string, string>>({});
 	let input: HTMLInputElement | null = $state(null);
 
 	function resetForm() {
 		domain = '';
+		dkimSelector = '';
+		dkimPrivateKey = '';
+		showAdvanced = false;
 		errors = {};
 	}
 
@@ -44,7 +52,7 @@
 
 		loading = true;
 
-		createDomain(domain.trim())
+		createDomain(domain.trim(), dkimSelector.trim() || undefined, dkimPrivateKey.trim() || undefined)
 			.then((newDomain) => {
 				onDomainCreated(newDomain);
 				toast.success('Domain created successfully');
@@ -107,11 +115,57 @@
 				}}
 			/>
 		</SplitControl>
+		<div class="advanced-toggle">
+			<Button
+				variant="invisible"
+				size="small"
+				on:click={() => (showAdvanced = !showAdvanced)}
+			>
+				{showAdvanced ? 'Hide Advanced' : 'Advanced'}
+
+				{#snippet end()}
+					{#if showAdvanced}
+						<IconCaretDown size={12} />
+					{:else}
+						<IconCaretRight size={12} />
+					{/if}
+				{/snippet}
+			</Button>
+		</div>
+		{#if showAdvanced}
+			<SplitControl
+				label="DKIM Selector"
+				caption="Custom DKIM selector. Auto-generated if not provided."
+				error={errors.dkim_selector}
+			>
+				<TextInput
+					bind:value={dkimSelector}
+					placeholder="dkim-selector"
+					block
+					disabled={loading}
+				/>
+			</SplitControl>
+			<SplitControl
+				label="DKIM Private Key"
+				caption="Custom RSA private key in PEM format. Auto-generated if not provided."
+			>
+				<Textarea
+					bind:value={dkimPrivateKey}
+					placeholder="-----BEGIN PRIVATE KEY-----"
+					block
+					disabled={loading}
+					rows={5}
+				/>
+			</SplitControl>
+		{/if}
 	</div>
 </Modal>
 
 <style>
 	.modal-content {
 		padding: 20px 0;
+	}
+	.advanced-toggle {
+		margin-top: 8px;
 	}
 </style>

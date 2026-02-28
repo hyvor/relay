@@ -124,8 +124,8 @@
 
 		deleteDomain(domainId)
 			.then(() => {
-				loadDomains(true);
 				toast.success('Domain deleted');
+				domains = domains.filter((d) => d.id !== domainId);
 			})
 			.catch((error) => {
 				console.error('Failed to delete domain:', error);

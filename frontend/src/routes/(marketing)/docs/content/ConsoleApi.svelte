@@ -310,10 +310,19 @@ type Response = {
 
 <CodeBlock
 	code={`
-    type Request = {
-        domain: string
-    }
-    type Response = Domain
+type Request = {
+	domain: string
+	
+	// optional custom DKIM selector. 
+	// auto-generated if not provided.
+	dkim_selector?: string
+	
+	// optional custom RSA private key (PEM format). 
+	// min bits: 1024
+	// auto-generated if not provided.
+	dkim_private_key?: string
+}
+type Response = Domain
 `}
 	language="ts"
 />
