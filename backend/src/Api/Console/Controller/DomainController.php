@@ -65,7 +65,9 @@ class DomainController extends AbstractController
 
         $domain = $this->domainService->createDomain(
             $project,
-            $createInput->domain
+            $createInput->domain,
+            $createInput->dkim_selector,
+            customDkimPrivateKey: $createInput->dkim_private_key,
         );
 
         return new JsonResponse(new DomainObject($domain));

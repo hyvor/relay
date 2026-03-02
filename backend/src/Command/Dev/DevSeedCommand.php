@@ -37,7 +37,7 @@ use Hyvor\Internal\Sudo\SudoUserFactory;
  * @codeCoverageIgnore
  */
 #[AsCommand(
-    name: 'app:dev:seed',
+    name: 'dev:seed',
     description: 'Seeds the database with test data for development purposes.'
 )]
 class DevSeedCommand extends Command

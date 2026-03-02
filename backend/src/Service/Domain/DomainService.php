@@ -60,9 +60,16 @@ class DomainService
         $dkimSelector = $dkimSelector ?? Dkim::generateDkimSelector();
         $domain->setDkimSelector($dkimSelector);
 
-        if ($customDkimPublicKey) {
-            // both must be provided
-            assert(is_string($customDkimPrivateKey));
+        if ($customDkimPrivateKey) {
+            if ($customDkimPublicKey === null) {
+                // derive the public key from the private key
+                $privateKeyResource = openssl_pkey_get_private($customDkimPrivateKey);
+                assert($privateKeyResource !== false);
+                $details = openssl_pkey_get_details($privateKeyResource);
+                assert($details !== false);
+                $customDkimPublicKey = $details['key'];
+                assert(is_string($customDkimPublicKey));
+            }
 
             $domain->setDkimPublicKey($customDkimPublicKey);
             $domain->setDkimPrivateKeyEncrypted($this->encryption->encryptString($customDkimPrivateKey));

@@ -17,12 +17,13 @@ export function getDomains(search?: string, limit: number = 50, offset: number =
 	});
 }
 
-export function createDomain(domain: string) {
+export function createDomain(domain: string, dkimSelector?: string, dkimPrivateKey?: string) {
+	const data: Record<string, any> = { domain };
+	if (dkimSelector) data.dkim_selector = dkimSelector;
+	if (dkimPrivateKey) data.dkim_private_key = dkimPrivateKey;
 	return consoleApi.post<Domain>({
 		endpoint: 'domains',
-		data: {
-			domain
-		}
+		data
 	});
 }
 
