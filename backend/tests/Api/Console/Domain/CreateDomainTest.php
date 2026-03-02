@@ -12,6 +12,7 @@ use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\TestWith;
 
 #[CoversClass(DomainController::class)]
 #[CoversClass(DomainService::class)]
@@ -126,6 +127,7 @@ class CreateDomainTest extends WebTestCase
         $json = $this->getJson();
         $this->assertSame('example.com', $json['domain']);
         $this->assertSame($publicKey, $json['dkim_public_key']);
+        $this->assertIsString($json['dkim_txt_value']);
         $this->assertStringStartsWith('v=DKIM1; k=rsa; p=', $json['dkim_txt_value']);
     }
 
@@ -146,7 +148,8 @@ class CreateDomainTest extends WebTestCase
         $this->assertResponseFailed(422, 'DKIM selector must be a valid DNS label');
     }
 
-    public function test_fails_with_invalid_private_key(): void
+    #[TestWith(['invalid private key!'])]
+    public function test_fails_with_invalid_private_key(mixed $key): void
     {
         $project = ProjectFactory::createOne();
 
@@ -156,7 +159,7 @@ class CreateDomainTest extends WebTestCase
             '/domains',
             [
                 'domain' => 'example.com',
-                'dkim_private_key' => 'invalid private key!',
+                'dkim_private_key' => $key,
             ],
         );
 

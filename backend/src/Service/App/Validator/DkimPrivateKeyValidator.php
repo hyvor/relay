@@ -19,6 +19,12 @@ class DkimPrivateKeyValidator extends ConstraintValidator
         if (null === $value || '' === $value) {
             return;
         }
+
+        if (!is_string($value)) {
+            $this->context->buildViolation($constraint->message)
+                ->addViolation();
+            return;
+        }
         // @codeCoverageIgnoreEnd
 
         // 1. Attempt to load the key
@@ -33,9 +39,12 @@ class DkimPrivateKeyValidator extends ConstraintValidator
         // 2. Check key strength and type
         $details = openssl_pkey_get_details($res);
 
-        if ($details['bits'] < $constraint::MIN_BITS) {
+        /** @var int $bits */
+        $bits = is_array($details) ? $details['bits'] ?? 0 : 0;
+
+        if ($bits < $constraint::MIN_BITS) {
             $this->context->buildViolation($constraint->weakKeyMessage)
-                ->setParameter('{{ bits }}', (string) $details['bits'])
+                ->setParameter('{{ bits }}', (string) $bits)
                 ->addViolation();
         }
     }
