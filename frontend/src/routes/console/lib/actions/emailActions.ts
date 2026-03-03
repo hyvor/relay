@@ -33,7 +33,7 @@ export function getEmailByUuid(uuid: string) {
 }
 
 export function retrySend(sendId: number, sendAfter?: number) {
-	return consoleApi.post<{ retried_recipients: number }>({
+	return consoleApi.post<{ retried_recipients: number; send: Send }>({
 		endpoint: `sends/${sendId}/retry`,
 		data: sendAfter !== undefined ? { send_after: sendAfter } : {}
 	});

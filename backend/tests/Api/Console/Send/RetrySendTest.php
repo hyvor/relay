@@ -51,7 +51,7 @@ class RetrySendTest extends WebTestCase
             scopes: [Scope::SENDS_SEND]
         );
 
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertResponseStatusCodeSame(200);
         $json = $this->getJson();
         $this->assertSame(2, $json['retried_recipients']);
 
@@ -94,10 +94,95 @@ class RetrySendTest extends WebTestCase
             scopes: [Scope::SENDS_SEND]
         );
 
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertResponseStatusCodeSame(200);
 
         $this->em->refresh($send->_real());
         $this->assertSame($sendAfter, $send->getSendAfter()->getTimestamp());
+    }
+
+    public function test_retry_fails_when_send_is_already_queued(): void
+    {
+        $project = ProjectFactory::createOne();
+        $domain = DomainFactory::createOne();
+        $queue = QueueFactory::createOne();
+
+        $send = SendFactory::createOne([
+            'project' => $project,
+            'domain' => $domain,
+            'queue' => $queue,
+            'queued' => true,
+        ]);
+
+        SendRecipientFactory::createOne([
+            'send' => $send,
+            'status' => SendRecipientStatus::FAILED,
+        ]);
+
+        $this->consoleApi(
+            $project,
+            'POST',
+            '/sends/' . $send->getId() . '/retry',
+            scopes: [Scope::SENDS_SEND]
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+    }
+
+    public function test_retry_fails_when_no_failed_recipients(): void
+    {
+        $project = ProjectFactory::createOne();
+        $domain = DomainFactory::createOne();
+        $queue = QueueFactory::createOne();
+
+        $send = SendFactory::createOne([
+            'project' => $project,
+            'domain' => $domain,
+            'queue' => $queue,
+            'queued' => false,
+        ]);
+
+        SendRecipientFactory::createOne([
+            'send' => $send,
+            'status' => SendRecipientStatus::ACCEPTED,
+        ]);
+
+        $this->consoleApi(
+            $project,
+            'POST',
+            '/sends/' . $send->getId() . '/retry',
+            scopes: [Scope::SENDS_SEND]
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+    }
+
+    public function test_retry_fails_when_send_after_is_in_the_past(): void
+    {
+        $project = ProjectFactory::createOne();
+        $domain = DomainFactory::createOne();
+        $queue = QueueFactory::createOne();
+
+        $send = SendFactory::createOne([
+            'project' => $project,
+            'domain' => $domain,
+            'queue' => $queue,
+            'queued' => false,
+        ]);
+
+        SendRecipientFactory::createOne([
+            'send' => $send,
+            'status' => SendRecipientStatus::FAILED,
+        ]);
+
+        $this->consoleApi(
+            $project,
+            'POST',
+            '/sends/' . $send->getId() . '/retry',
+            data: ['send_after' => time() - 3600],
+            scopes: [Scope::SENDS_SEND]
+        );
+
+        $this->assertResponseStatusCodeSame(400);
     }
 
 }

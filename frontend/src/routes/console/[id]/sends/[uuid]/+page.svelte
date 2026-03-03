@@ -28,14 +28,6 @@
 		return getEmailByUuid(emailUuid);
 	}
 
-	async function refreshSend() {
-		try {
-			send = await fetchSend();
-		} catch (err: any) {
-			toast.error(err.message || 'Failed to refresh email');
-		}
-	}
-
 	onMount(() => {
 		fetchSend()
 			.then((result) => {
@@ -79,7 +71,7 @@
 				</div>
 
 				{#if activeTab === 'overview'}
-					<Overview {send} {refreshSend} />
+					<Overview {send} onSendUpdate={(updated) => send = updated} />
 				{/if}
 
 				{#if activeTab === 'preview'}

@@ -11,7 +11,7 @@
 	import IconArrowClockwise from '@hyvor/icons/IconArrowClockwise';
 	import { retrySend } from '../../../lib/actions/emailActions';
 
-	let { send, refreshSend }: { send: Send; refreshSend: () => Promise<void> } = $props();
+	let { send, onSendUpdate }: { send: Send; onSendUpdate: (send: Send) => void } = $props();
 
 	function formatTimestamp(timestamp: number | undefined): string {
 		if (!timestamp) return 'N/A';
@@ -38,7 +38,7 @@
 		try {
 			const result = await retrySend(send.id);
 			toast.success(`${result.retried_recipients} recipient(s) re-queued for retry`);
-			await refreshSend();
+			onSendUpdate(result.send);
 		} catch (err: any) {
 			toast.error(err.message || 'Failed to retry send');
 		} finally {
@@ -60,7 +60,7 @@
 			toast.success(`${result.retried_recipients} recipient(s) scheduled for retry`);
 			showScheduleModal = false;
 			scheduledDate = '';
-			await refreshSend();
+			onSendUpdate(result.send);
 		} catch (err: any) {
 			toast.error(err.message || 'Failed to schedule retry');
 		} finally {

@@ -9,7 +9,6 @@ use App\Api\Console\Input\RetrySendInput;
 use App\Api\Console\Input\SendEmail\SendEmailInput;
 use App\Api\Console\Input\SendEmail\UnableToDecodeAttachmentBase64Exception;
 use App\Api\Console\Object\SendObject;
-use App\Api\Console\Resolver\ProjectResolver;
 use App\Entity\Project;
 use App\Entity\Send;
 use App\Entity\Type\ProjectSendType;
@@ -24,6 +23,7 @@ use App\Service\SendAttempt\SendAttemptService;
 use App\Service\SendFeedback\SendFeedbackService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -204,28 +204,37 @@ class SendController extends AbstractController
         #[MapRequestPayload] RetrySendInput $input
     ): JsonResponse {
         if ($send->getQueued()) {
-            throw new BadRequestException('This send is already queued');
+            throw new BadRequestHttpException('This send is already queued');
         }
 
         $hasFailedRecipients = $send->getRecipients()->exists(
             fn(int $key, \App\Entity\SendRecipient $r) => $r->getStatus() === SendRecipientStatus::FAILED
         );
         if (!$hasFailedRecipients) {
-            throw new BadRequestException('No failed recipients to retry');
+            throw new BadRequestHttpException('No failed recipients to retry');
         }
 
         $sendAfter = null;
         if ($input->send_after !== null) {
             if ($input->send_after <= $this->now()->getTimestamp()) {
-                throw new BadRequestException('You cannot schedule a retry in the past');
+                throw new BadRequestHttpException('You cannot schedule a retry in the past');
             }
             $sendAfter = $this->now()->setTimestamp($input->send_after);
         }
 
         $retriedCount = $this->sendService->retrySend($send, $sendAfter);
 
-        return new JsonResponse([
+        $attempts = $this->sendAttemptService->getSendAttemptsOfSend($send);
+        $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
+
+        return $this->json([
             'retried_recipients' => $retriedCount,
+            'send' => new SendObject(
+                $send,
+                attempts: $attempts,
+                feedback: $feedback,
+                content: true
+            ),
         ]);
     }
 
