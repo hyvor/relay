@@ -13,6 +13,8 @@ use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\SendFactory;
 use App\Tests\Factory\SendRecipientFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use Symfony\Component\Clock\Clock;
+use Symfony\Component\Clock\MockClock;
 
 #[CoversClass(SendController::class)]
 #[CoversClass(SendService::class)]
@@ -84,7 +86,10 @@ class RetrySendTest extends WebTestCase
             'status' => SendRecipientStatus::FAILED,
         ]);
 
-        $sendAfter = time() + 3600;
+        $mockClock = new MockClock('2024-01-01T12:00:00Z');
+        Clock::set($mockClock);
+
+        $sendAfter = $mockClock->now()->getTimestamp() + 3600;
 
         $response = $this->consoleApi(
             $project,
@@ -174,11 +179,14 @@ class RetrySendTest extends WebTestCase
             'status' => SendRecipientStatus::FAILED,
         ]);
 
+        $mockClock = new MockClock('2024-01-01T12:00:00Z');
+        Clock::set($mockClock);
+
         $this->consoleApi(
             $project,
             'POST',
             '/sends/' . $send->getId() . '/retry',
-            data: ['send_after' => time() - 3600],
+            data: ['send_after' => $mockClock->now()->getTimestamp() - 3600],
             scopes: [Scope::SENDS_SEND]
         );
 
