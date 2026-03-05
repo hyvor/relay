@@ -156,6 +156,9 @@ Authorization: Bearer <your_api_key>
 	<li>
 		<a href="#get-send-uuid">GET /sends/uuid/:uuid</a> - Get a send by UUID
 	</li>
+	<li>
+		<a href="#retry-send">POST /sends/:id/retry</a> - Retry a failed send
+	</li>
 </ul>
 
 <p>Objects:</p>
@@ -250,6 +253,29 @@ type Response = {
 	code={`
     type Request = {}
     type Response = Send // includes attempts array
+`}
+	language="ts"
+/>
+
+<h4 id="retry-send">Retry Send</h4>
+
+<p>
+	<code>POST /sends/:id/retry</code> (scope: <strong>sends.send</strong>)
+</p>
+
+<p>
+	Re-queues failed recipients of a send for retry. The send must not already be queued. Only
+	recipients with a <code>failed</code> status will be retried.
+</p>
+
+<CodeBlock
+	code={`
+type Request = {
+    send_after?: number // Optional unix timestamp. Defaults to now.
+}
+type Response = {
+    retried_recipients: number // Count of re-queued recipients
+}
 `}
 	language="ts"
 />
