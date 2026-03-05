@@ -39,7 +39,6 @@ RUN install-php-extensions zip intl pdo_pgsql opcache apcu
 RUN apt update  && apt install -y supervisor
 
 FROM backend-base AS backend-dev
-RUN curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh' | bash && apt install -y symfony-cli
 RUN install-php-extensions pcov
 COPY backend/composer.json backend/composer.lock /app/backend/
 RUN composer install

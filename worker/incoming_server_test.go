@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"net/smtp"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/hyvor/relay/worker/smtp_interface"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -76,5 +78,40 @@ func TestIncomingServer(t *testing.T) {
 
 	err = conn.Auth(smtp.PlainAuth("", "user", "password", "localhost"))
 	assert.NoError(t, err)
+
+}
+
+func TestIncomingServer_HandlesApiKeyCallsSynchronously(t *testing.T) {
+
+	session := &Session{
+		logger: slogDiscard(),
+		incomingMail: IncomingMail{
+			ApiKey: "test-api-key",
+		},
+		metrics: newMetrics(),
+	}
+
+	var calledApiKey string
+	var calledApiRequest *smtp_interface.ApiRequest
+
+	CallConsoleSendApi = func(
+		ctx context.Context,
+		apiKey string,
+		body *smtp_interface.ApiRequest,
+	) error {
+		calledApiKey = apiKey
+		calledApiRequest = body
+		return nil
+	}
+
+	reader := strings.NewReader("Subject: Test email\r\nFrom: sender@example.com\r\n\r\nThis is a test email.")
+
+	err := session.Data(reader)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "test-api-key", calledApiKey)
+	assert.NotNil(t, calledApiRequest)
+	assert.Equal(t, "Test email", calledApiRequest.Subject)
+	assert.Equal(t, "This is a test email.", calledApiRequest.BodyText)
 
 }

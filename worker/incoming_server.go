@@ -22,27 +22,33 @@ import (
 
 // The IncomingBackend implements SMTP server methods.
 type IncomingBackend struct {
+	ctx context.Context
+	metrics *Metrics
 	logger         *slog.Logger
 	instanceDomain string
 	mailChannel    chan *IncomingMail
 }
 
+// A Session is returned after successful login.
+type Session struct {
+	ctx          context.Context
+	logger       *slog.Logger
+	metrics      *Metrics
+	incomingMail IncomingMail
+	mailChannel  chan *IncomingMail
+}
+
 // NewSession is called after client greeting (EHLO, HELO).
 func (bkd *IncomingBackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 	return &Session{
+		ctx:          bkd.ctx,
 		logger:      bkd.logger,
+		metrics: bkd.metrics,
 		mailChannel: bkd.mailChannel,
 		incomingMail: IncomingMail{
 			InstanceDomain: bkd.instanceDomain,
 		},
 	}, nil
-}
-
-// A Session is returned after successful login.
-type Session struct {
-	logger       *slog.Logger
-	incomingMail IncomingMail
-	mailChannel  chan *IncomingMail
 }
 
 // AuthMechanisms returns a slice of available auth mechanisms; only PLAIN is
@@ -109,7 +115,13 @@ func (s *Session) Data(r io.Reader) error {
 	)
 
 	s.incomingMail.Data = b
-	s.mailChannel <- &s.incomingMail
+
+	if s.incomingMail.HasApiKey() {
+		return forwardEmailToApi(s.ctx, s.logger, s.metrics, &s.incomingMail)
+	} else {
+		s.mailChannel <- &s.incomingMail
+	}
+	
 	return nil
 }
 
@@ -212,9 +224,11 @@ func (server *IncomingMailServer) StartSmtpServer(
 ) {
 
 	be := &IncomingBackend{
+		ctx: server.ctx,
 		logger:         server.logger,
 		instanceDomain: instanceDomain,
 		mailChannel:    mailChannel,
+		metrics: server.metrics,
 	}
 
 	smtpServer := smtp.NewServer(be)

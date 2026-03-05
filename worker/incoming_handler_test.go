@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIncomingMail_HandleForwardToApi(t *testing.T) {
+func TestIncomingMail_ReturnsWhenApiKey(t *testing.T) {
 
 	m := &IncomingMail{
 		Data: []byte(`From: sender@example.com

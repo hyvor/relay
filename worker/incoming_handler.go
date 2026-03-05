@@ -31,9 +31,8 @@ func (m *IncomingMail) HasApiKey() bool {
 // call after the data is read
 func (m *IncomingMail) Handle(ctx context.Context, logger *slog.Logger, metrics *Metrics) {
 
-
 	if m.HasApiKey() {
-		forwardEmailToApi(ctx, logger, metrics, m)
+		// this should be handled syncronously
 		return
 	}
 
@@ -165,13 +164,13 @@ func forwardEmailToApi(
 	logger *slog.Logger,
 	metrics *Metrics,
 	m *IncomingMail,
-) {
+) error {
 
 	payload, err := smtp_interface.MimeToApiRequest(m.Data)
 
 	if err != nil {
 		logger.Error("Unable to convert mime to API request", "error", err.Error())
-		return
+		return err
 	}
 
 	err = CallConsoleSendApi(
@@ -182,7 +181,7 @@ func forwardEmailToApi(
 
 	if err != nil {
 		logger.Error("Unable to forward incoming email to API", "error", err.Error())
-		return
+		return err
 	}
 
 	metrics.incomingEmailsTotal.WithLabelValues("send").Inc()
@@ -192,5 +191,7 @@ func forwardEmailToApi(
 		"MAIL", m.MailFrom,
 		"RCPT", m.RcptTo,
 	)
+
+	return nil
 
 }
