@@ -79,7 +79,7 @@ func callSymfonyApi(
 		return fmt.Errorf("%w: %s %s %d %s",
 			ErrUnexpectedStatusCode,
 			method,
-			url,
+			req.URL.Path,
 			resp.StatusCode,
 			bodyFirst200Bytes,
 		)
