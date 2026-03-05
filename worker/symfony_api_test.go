@@ -73,7 +73,7 @@ func TestHandleInvalidStatusCode(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(
 		t,
-		"unexpected status code: GET "+server.URL+"/api/local/test-endpoint 400 Bad Request",
+		"unexpected status code: GET /api/local/test-endpoint 400 Bad Request",
 		strings.TrimSpace(err.Error()),
 	)
 }
