@@ -56,7 +56,7 @@
 	title="Retry Failed Recipients"
 	footer={{
 		cancel: { text: 'Cancel' },
-		confirm: { text: mode === 'now' ? 'Retry Now' : 'Schedule Retry', disabled: noneSelected }
+		confirm: { text: mode === 'now' ? 'Retry Now' : 'Schedule Retry', props: { disabled: noneSelected } }
 	}}
 	on:confirm={handleConfirm}
 >

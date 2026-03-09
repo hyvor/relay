@@ -236,7 +236,9 @@ class SendController extends AbstractController
             $sendAfter = $this->now()->setTimestamp($input->send_after);
         }
 
-        $retriedCount = $this->sendService->retrySend($send, $sendAfter, $input->recipient_ids);
+        /** @var int[]|null $recipientIds */
+        $recipientIds = $input->recipient_ids;
+        $retriedCount = $this->sendService->retrySend($send, $sendAfter, $recipientIds);
 
         if ($input->recipient_ids !== null && $retriedCount === 0) {
             throw new BadRequestHttpException('No matching failed recipients found for the provided IDs');

@@ -8,6 +8,9 @@ class RetrySendInput
 {
     public ?int $send_after = null;
 
+    /**
+     * @var int[]|null
+     */
     #[Assert\Type('array')]
     #[Assert\All([
         new Assert\Type('int'),
