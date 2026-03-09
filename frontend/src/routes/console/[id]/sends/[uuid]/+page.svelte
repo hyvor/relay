@@ -23,11 +23,13 @@
 	let error: string | null = $state(null);
 	let activeTab: 'overview' | 'preview' | 'raw' = $state('overview');
 
-	onMount(() => {
+	function fetchSend() {
 		const emailUuid = page.params.uuid ?? '';
+		return getEmailByUuid(emailUuid);
+	}
 
-		// get the send to fetch raw data and attempts
-		getEmailByUuid(emailUuid)
+	onMount(() => {
+		fetchSend()
 			.then((result) => {
 				send = result;
 			})
@@ -69,7 +71,7 @@
 				</div>
 
 				{#if activeTab === 'overview'}
-					<Overview {send} />
+					<Overview {send} onSendUpdate={(updated) => send = updated} />
 				{/if}
 
 				{#if activeTab === 'preview'}
