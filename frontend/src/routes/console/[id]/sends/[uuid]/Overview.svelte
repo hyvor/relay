@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Callout, DetailCard, Modal, Tag, TextInput, toast } from '@hyvor/design/components';
+	import { DetailCard, Tag, toast } from '@hyvor/design/components';
 	import type { Send } from '../../../types';
 	import RelativeTime from '../../../@components/content/RelativeTime.svelte';
 	import RecipientStatus from '../RecipientStatus.svelte';
@@ -8,7 +8,8 @@
 	import Events from './Events/Events.svelte';
 	import Attempts from './Attempts/Attempts.svelte';
 	import QueuedCallout from './QueuedCallout.svelte';
-	import IconArrowClockwise from '@hyvor/icons/IconArrowClockwise';
+	import FailedCallout from './FailedCallout.svelte';
+	import RetryModal from './RetryModal.svelte';
 	import { retrySend } from '../../../lib/actions/emailActions';
 
 	let { send, onSendUpdate }: { send: Send; onSendUpdate: (send: Send) => void } = $props();
@@ -27,17 +28,31 @@
 	}
 
 	const recipients = $derived(getSortedRecipients(send.recipients));
-	const hasFailedRecipients = $derived(recipients.some((r) => r.status === 'failed'));
+	const failedRecipients = $derived(recipients.filter((r) => r.status === 'failed'));
+	const hasFailedRecipients = $derived(failedRecipients.length > 0);
 
 	let retryLoading = $state(false);
-	let showScheduleModal = $state(false);
-	let scheduledDate = $state('');
+	let showRetryModal = $state(false);
+	let tryNowLoading = $state(false);
 
-	async function handleRetryNow() {
+	async function handleRetryConfirm(recipientIds: number[], mode: 'now' | 'schedule', scheduledDate?: string) {
+		let sendAfter: number | undefined;
+		if (mode === 'schedule') {
+			if (!scheduledDate) {
+				toast.error('Please select a date and time');
+				return;
+			}
+			sendAfter = Math.floor(new Date(scheduledDate).getTime() / 1000);
+		}
+
 		retryLoading = true;
 		try {
-			const result = await retrySend(send.id);
-			toast.success(`${result.retried_recipients} recipient(s) re-queued for retry`);
+			const result = await retrySend(send.id, sendAfter, recipientIds);
+			const msg = mode === 'now'
+				? `${result.retried_recipients} recipient(s) re-queued for retry`
+				: `${result.retried_recipients} recipient(s) scheduled for retry`;
+			toast.success(msg);
+			showRetryModal = false;
 			onSendUpdate(result.send);
 		} catch (err: any) {
 			toast.error(err.message || 'Failed to retry send');
@@ -46,61 +61,27 @@
 		}
 	}
 
-	async function handleScheduleRetry() {
-		if (!scheduledDate) {
-			toast.error('Please select a date and time');
-			return;
-		}
-
-		const timestamp = Math.floor(new Date(scheduledDate).getTime() / 1000);
-
-		retryLoading = true;
+	async function handleTryNow() {
+		tryNowLoading = true;
 		try {
-			const result = await retrySend(send.id, timestamp);
-			toast.success(`${result.retried_recipients} recipient(s) scheduled for retry`);
-			showScheduleModal = false;
-			scheduledDate = '';
+			const result = await retrySend(send.id);
+			toast.success('Send triggered for immediate delivery');
 			onSendUpdate(result.send);
 		} catch (err: any) {
-			toast.error(err.message || 'Failed to schedule retry');
+			toast.error(err.message || 'Failed to trigger send');
 		} finally {
-			retryLoading = false;
+			tryNowLoading = false;
 		}
 	}
 </script>
 
 <div class="basics">
 	{#if send.queued}
-		<QueuedCallout after={send.send_after} {recipients} />
+		<QueuedCallout after={send.send_after} {recipients} onTryNow={handleTryNow} {tryNowLoading} />
 	{/if}
 
 	{#if hasFailedRecipients && !send.queued}
-		<div class="retry-callout">
-			<Callout type="warning">
-				{#snippet icon()}
-					<IconArrowClockwise />
-				{/snippet}
-				Some recipients failed to receive this email. You can retry sending to the failed recipients.
-				<div class="retry-actions">
-					<Button
-						size="small"
-						color="orange"
-						on:click={handleRetryNow}
-						loading={retryLoading}
-					>
-						Retry Now
-					</Button>
-					<Button
-						size="small",
-						variant="outline"
-						color="orange"
-						on:click={() => (showScheduleModal = true)}
-					>
-						Schedule Retry
-					</Button>
-				</div>
-			</Callout>
-		</div>
+		<FailedCallout onRetryClick={() => (showRetryModal = true)} />
 	{/if}
 
 	<div class="grid">
@@ -150,16 +131,12 @@
 	<Attempts {send} />
 </div>
 
-<Modal
-	bind:show={showScheduleModal}
-	title="Schedule Retry"
-	footer={{ confirm: { text: 'Schedule' } }}
-	on:confirm={handleScheduleRetry}
+<RetryModal
+	bind:show={showRetryModal}
+	{failedRecipients}
 	loading={retryLoading}
->
-	<p>Choose when to retry sending to failed recipients.</p>
-	<TextInput type="datetime-local" bind:value={scheduledDate} block />
-</Modal>
+	onConfirm={handleRetryConfirm}
+/>
 
 <style>
 	.grid {
@@ -205,13 +182,5 @@
 		font-size: 12px;
 		color: var(--text-light);
 		margin-top: 4px;
-	}
-	.retry-callout {
-		margin-bottom: 20px;
-	}
-	.retry-actions {
-		display: flex;
-		gap: 8px;
-		margin-top: 10px;
 	}
 </style>

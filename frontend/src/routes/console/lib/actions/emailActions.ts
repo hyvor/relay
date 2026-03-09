@@ -32,9 +32,12 @@ export function getEmailByUuid(uuid: string) {
 	});
 }
 
-export function retrySend(sendId: number, sendAfter?: number) {
+export function retrySend(sendId: number, sendAfter?: number, recipientIds?: number[]) {
+	const data: Record<string, any> = {};
+	if (sendAfter !== undefined) data.send_after = sendAfter;
+	if (recipientIds !== undefined) data.recipient_ids = recipientIds;
 	return consoleApi.post<{ retried_recipients: number; send: Send }>({
 		endpoint: `sends/${sendId}/retry`,
-		data: sendAfter !== undefined ? { send_after: sendAfter } : {}
+		data
 	});
 }

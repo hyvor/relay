@@ -183,13 +183,20 @@ class SendService
 
 
     /**
+     * @param int[]|null $recipientIds If provided, only retry these recipient IDs
      * @return int Number of re-queued recipients
      */
-    public function retrySend(Send $send, ?\DateTimeImmutable $sendAfter): int
+    public function retrySend(Send $send, ?\DateTimeImmutable $sendAfter, ?array $recipientIds = null): int
     {
         $failedRecipients = $send->getRecipients()->filter(
             fn(SendRecipient $r) => $r->getStatus() === SendRecipientStatus::FAILED
         );
+
+        if ($recipientIds !== null) {
+            $failedRecipients = $failedRecipients->filter(
+                fn(SendRecipient $r) => in_array($r->getId(), $recipientIds, true)
+            );
+        }
 
         foreach ($failedRecipients as $recipient) {
             $recipient->setStatus(SendRecipientStatus::QUEUED);
@@ -203,6 +210,14 @@ class SendService
         $this->em->flush();
 
         return $failedRecipients->count();
+    }
+
+    public function sendNow(Send $send): void
+    {
+        $send->setSendAfter($this->now());
+        $send->setUpdatedAt($this->now());
+
+        $this->em->flush();
     }
 
     /**

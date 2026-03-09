@@ -204,7 +204,21 @@ class SendController extends AbstractController
         #[MapRequestPayload] RetrySendInput $input
     ): JsonResponse {
         if ($send->getQueued()) {
-            throw new BadRequestHttpException('This send is already queued');
+            // Send is already queued, update send_after to now
+            $this->sendService->sendNow($send);
+
+            $attempts = $this->sendAttemptService->getSendAttemptsOfSend($send);
+            $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
+
+            return $this->json([
+                'retried_recipients' => 0,
+                'send' => new SendObject(
+                    $send,
+                    attempts: $attempts,
+                    feedback: $feedback,
+                    content: true
+                ),
+            ]);
         }
 
         $hasFailedRecipients = $send->getRecipients()->exists(
@@ -222,7 +236,11 @@ class SendController extends AbstractController
             $sendAfter = $this->now()->setTimestamp($input->send_after);
         }
 
-        $retriedCount = $this->sendService->retrySend($send, $sendAfter);
+        $retriedCount = $this->sendService->retrySend($send, $sendAfter, $input->recipient_ids);
+
+        if ($input->recipient_ids !== null && $retriedCount === 0) {
+            throw new BadRequestHttpException('No matching failed recipients found for the provided IDs');
+        }
 
         $attempts = $this->sendAttemptService->getSendAttemptsOfSend($send);
         $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
