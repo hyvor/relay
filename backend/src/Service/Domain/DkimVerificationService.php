@@ -69,7 +69,7 @@ class DkimVerificationService
 
             if (preg_match('/(?:^|;\s*)p=([^;]+)/i', $answer->getCleanedTxt(), $matches)) {
 
-                $dnsKey = preg_replace('/\s+/', '', trim($matches[1]));
+                $dnsKey = trim($matches[1]);
                 $expectedKey = Dkim::cleanKey($publicKey);
 
                 if ($dnsKey === $expectedKey) {
