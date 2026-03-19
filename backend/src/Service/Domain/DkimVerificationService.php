@@ -66,15 +66,14 @@ class DkimVerificationService
         }
 
         foreach ($result->answers as $answer) {
-            $txtValue = $answer->getCleanedTxt();
 
-            if (str_starts_with($txtValue, 'v=DKIM1;')) {
-                $txtValueExpected = Dkim::dkimTxtValue($publicKey);
+            if (preg_match('/(?:^|;\s*)p=([^;]+)/i', $answer->getCleanedTxt(), $matches)) {
 
-                if ($txtValue === $txtValueExpected) {
+                $dnsKey = preg_replace('/\s+/', '', trim($matches[1]));
+                $expectedKey = Dkim::cleanKey($publicKey);
+
+                if ($dnsKey === $expectedKey) {
                     return true;
-                } else {
-                    return 'DKIM public key does not match';
                 }
             }
         }

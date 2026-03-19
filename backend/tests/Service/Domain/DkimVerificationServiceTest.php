@@ -73,9 +73,8 @@ class DkimVerificationServiceTest extends KernelTestCase
 
         $this->doTest(
             $exampleDomain,
-            new ResolveResult(0, [new ResolveAnswer('example.com', 'v=DKIM1; k=rsa; p=wrong_public_key')]),
-            false,
-            'DKIM public key does not match'
+            new ResolveResult(0, [new ResolveAnswer('example.com', 'p=test_public_key')]),
+            true
         );
 
         $this->doTest(
