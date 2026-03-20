@@ -73,8 +73,11 @@ class Dkim
         ], '', $key);
     }
 
-    public static function isDkimRecord(string $txtRecord, &$matches): bool
+    /**
+     * @param string[] $matches
+     */
+    public static function isDkimRecord(string $txtRecord, array &$matches): bool
     {
-        return preg_match('/(?:^|;\s*)p=([^;]+)/i', $txtRecord, $matches);
+        return (bool)preg_match('/(?:^|;\s*)p=([^;]+)/i', $txtRecord, $matches);
     }
 }
