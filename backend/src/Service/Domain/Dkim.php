@@ -73,11 +73,11 @@ class Dkim
         ], '', $key);
     }
 
-    /**
-     * @param string[] $matches
-     */
-    public static function isDkimRecord(string $txtRecord, array &$matches): bool
+    public static function extractPublicKey(string $txtRecord): ?string
     {
-        return (bool)preg_match('/(?:^|;\s*)p=([^;]+)/i', $txtRecord, $matches);
+        if (preg_match('/(?:^|;\s*)p=([^;]+)/i', $txtRecord, $matches)) {
+            return trim($matches[1]);
+        }
+        return null;
     }
 }

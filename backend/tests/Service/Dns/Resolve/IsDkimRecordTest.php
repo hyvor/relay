@@ -9,13 +9,10 @@ class IsDkimRecordTest extends KernelTestCase
 {
     private function do_test(string $txtRecord, string $publicKey): void
     {
-        $this->assertTrue(Dkim::isDkimRecord(
-            $txtRecord,
-            $matches
-        ));
-
-        $this->assertSame($publicKey, $matches[1]);
+        $extractedPublicKey = Dkim::extractPublicKey($txtRecord);
+        $this->assertSame($publicKey, $extractedPublicKey);
     }
+
     public function test_is_dkim_record(): void
     {
         $publicKey = 'test_public_key';

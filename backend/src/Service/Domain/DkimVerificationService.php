@@ -68,12 +68,12 @@ class DkimVerificationService
         // TODO: verify with different providers if they check for multiple TXT records or only the first one
         foreach ($result->answers as $answer) {
 
-            if (Dkim::isDkimRecord($answer->getCleanedTxt(), $matches)) {
+            $publicKeyFromDns = Dkim::extractPublicKey($answer->getCleanedTxt());
 
-                $dnsKey = trim($matches[1]);
-                $expectedKey = Dkim::cleanKey($publicKey);
+            if ($publicKeyFromDns) {
+                $expectedPublicKey = Dkim::cleanKey($publicKey);
 
-                if ($dnsKey === $expectedKey) {
+                if ($publicKeyFromDns === $expectedPublicKey) {
                     return true;
                 }
             }
