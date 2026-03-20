@@ -2,6 +2,8 @@
 
 namespace App\Service\Domain;
 
+use App\Service\Dns\Resolve\ResolveAnswer;
+
 class Dkim
 {
 
@@ -71,4 +73,8 @@ class Dkim
         ], '', $key);
     }
 
+    public static function isDkimRecord(string $txtRecord, &$matches): bool
+    {
+        return preg_match('/(?:^|;\s*)p=([^;]+)/i', $txtRecord, $matches);
+    }
 }

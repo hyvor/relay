@@ -65,9 +65,10 @@ class DkimVerificationService
             return 'No TXT records found for DKIM host';
         }
 
+        // TODO: verify with different providers if they check for multiple TXT records or only the first one
         foreach ($result->answers as $answer) {
 
-            if (preg_match('/(?:^|;\s*)p=([^;]+)/i', $answer->getCleanedTxt(), $matches)) {
+            if (Dkim::isDkimRecord($answer->getCleanedTxt(), $matches)) {
 
                 $dnsKey = trim($matches[1]);
                 $expectedKey = Dkim::cleanKey($publicKey);
