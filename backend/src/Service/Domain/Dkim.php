@@ -2,8 +2,6 @@
 
 namespace App\Service\Domain;
 
-use App\Service\Dns\Resolve\ResolveAnswer;
-
 class Dkim
 {
 
@@ -73,7 +71,7 @@ class Dkim
         ], '', $key);
     }
 
-    public static function extractPublicKey(string $txtRecord): ?string
+    public static function extractPublicKeyFromTxtRecord(string $txtRecord): ?string
     {
         if (preg_match('/(?:^|;\s*)p=([^;]+)/i', $txtRecord, $matches)) {
             return trim($matches[1]);

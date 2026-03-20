@@ -68,7 +68,7 @@ class DkimVerificationService
         // TODO: verify with different providers if they check for multiple TXT records or only the first one
         foreach ($result->answers as $answer) {
 
-            $publicKeyFromDns = Dkim::extractPublicKey($answer->getCleanedTxt());
+            $publicKeyFromDns = Dkim::extractPublicKeyFromTxtRecord($answer->getCleanedTxt());
 
             if ($publicKeyFromDns) {
                 $expectedPublicKey = Dkim::cleanKey($publicKey);
@@ -81,5 +81,4 @@ class DkimVerificationService
 
         return 'No valid DKIM record found';
     }
-
 }

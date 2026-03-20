@@ -4,12 +4,14 @@ namespace App\Tests\Service\Dns\Resolve;
 
 use App\Service\Domain\Dkim;
 use App\Tests\Case\KernelTestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 
-class IsDkimRecordTest extends KernelTestCase
+#[CoversClass(Dkim::class)]
+class ExtractPublicKeyFromTxtRecordTest extends KernelTestCase
 {
     private function do_test(string $txtRecord, string $publicKey): void
     {
-        $extractedPublicKey = Dkim::extractPublicKey($txtRecord);
+        $extractedPublicKey = Dkim::extractPublicKeyFromTxtRecord($txtRecord);
         $this->assertSame($publicKey, $extractedPublicKey);
     }
 
@@ -42,5 +44,4 @@ class IsDkimRecordTest extends KernelTestCase
             $publicKey
         );
     }
-
 }
