@@ -65,21 +65,20 @@ class DkimVerificationService
             return 'No TXT records found for DKIM host';
         }
 
+        // TODO: verify with different providers if they check for multiple TXT records or only the first one
         foreach ($result->answers as $answer) {
-            $txtValue = $answer->getCleanedTxt();
 
-            if (str_starts_with($txtValue, 'v=DKIM1;')) {
-                $txtValueExpected = Dkim::dkimTxtValue($publicKey);
+            $publicKeyFromDns = Dkim::extractPublicKeyFromTxtRecord($answer->getCleanedTxt());
 
-                if ($txtValue === $txtValueExpected) {
+            if ($publicKeyFromDns) {
+                $expectedPublicKey = Dkim::cleanKey($publicKey);
+
+                if ($publicKeyFromDns === $expectedPublicKey) {
                     return true;
-                } else {
-                    return 'DKIM public key does not match';
                 }
             }
         }
 
         return 'No valid DKIM record found';
     }
-
 }
