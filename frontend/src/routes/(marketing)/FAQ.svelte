@@ -72,7 +72,7 @@
 			</ul>
 
 			<p>
-				In addition, Hyvor Relay has an extensive documentation that teaches you many
+				In addition, Hyvor Relay has extensive documentation that teaches you many
 				underlying concepts of SMTP and email deliverability.
 			</p>
 
@@ -125,7 +125,7 @@
 			Hyvor Relay Cloud will only onboard customers sending <strong
 				>transactional emails</strong
 			>
-			as a start. We plan to work with developers, indiehackers, small businesses, and enterprises
+			as a start. We plan to work with developers, indie hackers, small businesses, and enterprises
 			for transactional emails. Distributional (marketing) email support may be added in the future
 			based on demand.
 		</Accordion>

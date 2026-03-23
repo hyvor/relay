@@ -36,7 +36,7 @@
 
 <h3 id="ptr">1. All active IPs have valid PTR records</h3>
 
-<p>This checks ensures that for each sending IP address, there is</p>
+<p>This check ensures that for each sending IP address, there is</p>
 
 <ul>
 	<li>
@@ -81,8 +81,8 @@
 
 <p>
 	This check ensures that the DKIM record for the instance domain is correctly set up. DKIM
-	records are also managed on your DNS Server. You can view your Instnaec DKIM settings at
-	<strong>Sudo &rarr; Setttings &rarr; Instance &rarr; Instance DKIM</strong>.
+	records are also managed on your DNS Server. You can view your Instance DKIM settings at
+	<strong>Sudo &rarr; Settings &rarr; Instance &rarr; Instance DKIM</strong>.
 </p>
 
 <h3 id="instance-domain-pointed-dns">5. Instance domain pointed to DNS server</h3>
