@@ -13,6 +13,8 @@ use Hyvor\Internal\Auth\AuthInterface;
 use Hyvor\Internal\Bundle\Comms\CommsInterface;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\VerifyMember;
 use Hyvor\Internal\Bundle\Comms\Exception\CommsApiFailedException;
+use Hyvor\Internal\Deployment;
+use Hyvor\Internal\InternalConfig;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -26,6 +28,7 @@ class ProjectUserController extends AbstractController
         private ProjectUserService $projectUserService,
 		private AuthInterface $auth,
 		private CommsInterface $comms,
+        private InternalConfig $internalConfig,
     ) {
     }
 
@@ -66,22 +69,24 @@ class ProjectUserController extends AbstractController
             throw new BadRequestHttpException('User is already added to the project');
         }
 
-		$organizationId = $project->getOrganizationId();
-		assert($organizationId !== null);
+		if ($this->internalConfig->getDeployment() === Deployment::CLOUD) {
+			$organizationId = $project->getOrganizationId();
+			assert($organizationId !== null);
 
-		try {
-			$verification = $this->comms->send(
-				new VerifyMember(
-					$organizationId,
-					$authUser->id
-				),
-			);
-		} catch (CommsApiFailedException $e) {
-			throw new BadRequestHttpException('Unable to verify the user.');
-		}
+			try {
+				$verification = $this->comms->send(
+					new VerifyMember(
+						$organizationId,
+						$authUser->id
+					),
+				);
+			} catch (CommsApiFailedException $e) {
+				throw new BadRequestHttpException('Unable to verify the user.');
+			}
 
-		if (!$verification->isMember()) {
-			  throw new BadRequestHttpException('Unable to find the user in the organization');
+			if (!$verification->isMember()) {
+				throw new BadRequestHttpException('Unable to find the user in the organization');
+			}
 		}
 
         $projectUser = $this->projectUserService->createProjectUser($project, $authUser->id, $input->scopes);

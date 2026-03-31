@@ -86,8 +86,8 @@
 		<CloudContext
 			context={{
 				component: "relay",
-				deployment: "cloud",
-				instance: getAppConfig().hyvor.instance,
+				deployment: getAppConfig().deployment,
+				instance: getAppConfig().deployment === 'cloud' ? getAppConfig().hyvor.instance : '',
 				license: {
 					type: 'none',
 					subscription: null,
