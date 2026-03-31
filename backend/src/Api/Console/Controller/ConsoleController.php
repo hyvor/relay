@@ -65,7 +65,7 @@ class ConsoleController extends AbstractController
         return new JsonResponse([
 			'project_users' => $projectUsers,
             'config' => [
-                'hosting' => $this->appConfig->getHosting(),
+                'deployment' => $this->internalConfig->getDeployment()->value,
                 'hyvor' => [
                     'instance' => $this->internalConfig->getInstance(),
                 ],
