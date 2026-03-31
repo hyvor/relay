@@ -104,7 +104,7 @@
 	</li>
 	<li>For instance DKIM signing (useful for feedback loops).</li>
 	<li>
-		For the <code>MX</code> records of the incoming mail server that is repsonsible for bounces,
+		For the <code>MX</code> records of the incoming mail server that is responsible for bounces,
 		complaints, and <a href="/docs/send-emails-smtp">sending via SMTP</a>.
 	</li>
 </ul>
@@ -165,7 +165,7 @@
 	On Hyvor Relay Cloud, the instance domain is <strong>mail.hyvor-relay.com</strong>.
 </Callout>
 
-<h2 id="ptr">(3) PTR Records</h2>
+<h2 id="ptr">(4) PTR Records</h2>
 
 <p>
 	PTR, also known as reverse DNS, is a DNS record that maps an IP address to a domain name. SMTP
@@ -203,7 +203,7 @@
 	</li>
 </ul>
 
-<h2 id="health-checks">(4) Health Checks</h2>
+<h2 id="health-checks">(5) Health Checks</h2>
 
 <p>
 	After the above steps are completed, run a full health check at <strong
@@ -212,7 +212,7 @@
 	to pass due to DNS caching.
 </p>
 
-<p>If everthing is passing, your Hyvor Relay instance is ready to send emails!</p>
+<p>If everything is passing, your Hyvor Relay instance is ready to send emails!</p>
 
 <Divider color="var(--gray-light)" margin={30} />
 

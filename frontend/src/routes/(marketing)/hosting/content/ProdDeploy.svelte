@@ -102,7 +102,7 @@ host    hyvor_relay    relay_servers xx.xx.xx.xx/yy    scram-sha-256`}
 </Table>
 
 <p>
-    See the <a href="/hosting/scaling">Scaling</a> page has more details on other factors that affect
+    See the <a href="/hosting/scaling">Scaling</a> page for more details on other factors that affect
     the number of servers you need.
 </p>
 
@@ -130,7 +130,7 @@ host    hyvor_relay    relay_servers xx.xx.xx.xx/yy    scram-sha-256`}
 <h3 id="oidc">OpenID Connect (OIDC) Provider</h3>
 
 <p>
-    Hyvor Relay relies on OIDC for authentication. Create an application for Hyvor Relay in our OIDC
+    Hyvor Relay relies on OIDC for authentication. Create an application for Hyvor Relay in your OIDC
     provider. Make sure to allow the following URLs in your OIDC provider:
 </p>
 

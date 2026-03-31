@@ -35,7 +35,7 @@
 				{#snippet start()}
 					<IconGithub size={14} />
 				{/snippet}
-				Github
+				GitHub
 				{#snippet end()}
 					<IconBoxArrowUpRight size={11} />
 				{/snippet}

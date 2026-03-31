@@ -116,7 +116,7 @@
 		workers.
 	</li>
 	<li>
-		<strong> Industry-grade Monitoring </strong>: Prometheus, Grafana, Altermanager integrations
+		<strong> Industry-grade Monitoring </strong>: Prometheus, Grafana, Alertmanager integrations
 		are built-in for observability.
 	</li>
 </ul>
