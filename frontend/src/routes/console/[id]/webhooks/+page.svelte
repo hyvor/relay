@@ -110,9 +110,9 @@
 <SingleBox>
 	<div class="top">
 		<div class="tabs">
-			<TabNav bind:active={activeTab}>
-				<TabNavItem name="configure">Configure</TabNavItem>
-				<TabNavItem name="deliveries">Deliveries</TabNavItem>
+			<TabNav>
+				<TabNavItem name="configure" active={activeTab === 'configure'} onclick={() => activeTab = 'configure'}>Configure</TabNavItem>
+				<TabNavItem name="deliveries" active={activeTab === 'deliveries'} onclick={() => activeTab = 'deliveries'}>Deliveries</TabNavItem>
 			</TabNav>
 		</div>
 		{#if activeTab === 'configure'}
