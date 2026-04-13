@@ -23,11 +23,6 @@ return static function (RoutingConfigurator $routes): void {
         ->prefix('/api/oidc')
         ->namePrefix('api_oidc_');
 
-    // OIDC user search on-prem only
-    $routes->import('@InternalBundle/src/Controller/OidcMembersController.php', 'attribute')
-        ->prefix('/api/oidc')
-        ->namePrefix('api_oidc_search_');
-
     // root API
     $routes->import('../../src/Api/Root', 'attribute')
         ->prefix('/api')
