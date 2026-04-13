@@ -5,23 +5,24 @@ namespace App\Api\Sudo\Controller;
 use App\Api\Sudo\Object\TlsCertificateObject;
 use App\Entity\Type\TlsCertificateType;
 use App\Service\Instance\InstanceService;
+use App\Service\Sudo\SudoPermission;
 use App\Service\Tls\Exception\AnotherTlsGenerationRequestInProgressException;
 use App\Service\Tls\MailTlsGenerator;
 use App\Service\Tls\TlsCertificateService;
+use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
+#[SudoPermissionRequired(SudoPermission::ACCESS_SUDO)]
 class TlsController extends AbstractController
 {
 
     public function __construct(
         private InstanceService $instanceService,
         private TlsCertificateService $tlsCertificateService,
-    ) {
-    }
+    ) {}
 
     #[Route('/tls/mail-certs', methods: 'GET')]
     public function getMailTlsCertificates(): JsonResponse
@@ -58,5 +59,4 @@ class TlsController extends AbstractController
         }
         return new JsonResponse(new TlsCertificateObject($cert));
     }
-
 }

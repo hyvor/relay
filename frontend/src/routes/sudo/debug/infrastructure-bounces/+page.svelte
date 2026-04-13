@@ -81,10 +81,10 @@
 <div class="infrastructure-bounces">
 	<div class="header">
 		<div class="header-left">
-			<TabNav bind:active={filter}>
-				<TabNavItem name="all">All</TabNavItem>
-				<TabNavItem name="unread">Unread</TabNavItem>
-				<TabNavItem name="read">Read</TabNavItem>
+			<TabNav>
+				<TabNavItem name="all"  active={filter === 'all'} onclick={() => filter = 'all'}>All</TabNavItem>
+				<TabNavItem name="unread"  active={filter === 'unread'} onclick={() => filter = 'unread'}>Unread</TabNavItem>
+				<TabNavItem name="read"  active={filter === 'read'} onclick={() => filter = 'read'}>Read</TabNavItem>
 			</TabNav>
 		</div>
 		<Button color="accent" size="small" onclick={handleMarkAllAsRead} disabled={markingAll}>

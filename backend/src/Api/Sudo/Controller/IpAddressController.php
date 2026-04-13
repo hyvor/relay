@@ -8,12 +8,15 @@ use App\Service\App\Config;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
 use App\Service\Ip\IpAddressService;
 use App\Service\Queue\QueueService;
+use App\Service\Sudo\SudoPermission;
+use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
+#[SudoPermissionRequired(SudoPermission::ACCESS_SUDO)]
 class IpAddressController extends AbstractController
 {
 
@@ -21,8 +24,7 @@ class IpAddressController extends AbstractController
         private IpAddressService $ipAddressService,
         private QueueService $queueService,
         private Config $appConfig,
-    ) {
-    }
+    ) {}
 
     #[Route('/ip-addresses', methods: 'GET')]
     public function getIpAddresses(): JsonResponse

@@ -30,8 +30,7 @@ services:
       target: backend-dev
     volumes:
       - ./backend:/app/backend
-      # - ../internal:/app/backend/vendor/hyvor/internal:ro
-      # - ./shared:/app/shared
+      #- ../internal:/app/backend/vendor/hyvor/internal:ro
     labels:
       traefik.enable: true
       traefik.http.routers.hyvor-relay-backend.rule: Host(`relay.hyvor.localhost`) && PathPrefix(`/api`)

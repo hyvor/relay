@@ -51,9 +51,9 @@
 	</div>
 
 	<div class="tabs">
-		<TabNav bind:active={activeTab}>
-			<TabNavItem name="ips">Ip Addresses</TabNavItem>
-			<TabNavItem name="settings">Settings</TabNavItem>
+		<TabNav>
+			<TabNavItem name="ips" active={activeTab === 'ips'} onclick={() => activeTab= 'ips'}>Ip Addresses</TabNavItem>
+			<TabNavItem name="settings" active={activeTab === 'settings'} onclick={() => activeTab= 'settings'}>Settings</TabNavItem>
 		</TabNav>
 	</div>
 

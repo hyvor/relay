@@ -1,5 +1,5 @@
 export interface AppConfig {
-	hosting: 'self' | 'cloud';
+	deployment: 'cloud' | 'on-prem';
 
 	hyvor: {
 		instance: string;

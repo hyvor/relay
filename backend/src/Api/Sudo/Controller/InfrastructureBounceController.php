@@ -4,25 +4,27 @@ namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Object\InfrastructureBounceObject;
 use App\Service\InfrastructureBounce\InfrastructureBounceService;
+use App\Service\Sudo\SudoPermission;
+use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
+#[SudoPermissionRequired(SudoPermission::ACCESS_SUDO)]
 class InfrastructureBounceController extends AbstractController
 {
     public function __construct(
         private InfrastructureBounceService $infrastructureBounceService,
-    ) {
-    }
+    ) {}
 
     #[Route('/infrastructure-bounces', methods: 'GET')]
     public function getInfrastructureBounces(Request $request): JsonResponse
     {
         $limit = $request->query->getInt('limit', 20);
         $offset = $request->query->getInt('offset', 0);
-        
+
         $isRead = null;
         if ($request->query->has('is_read')) {
             $isRead = $request->query->getBoolean('is_read');
@@ -61,4 +63,3 @@ class InfrastructureBounceController extends AbstractController
         ]);
     }
 }
-

@@ -36,15 +36,15 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         $this->container = static::getContainer();
 
         if ($this->shouldEnableAuthFake()) {
-			AuthFake::enableForSymfony(
-				$this->container,
-				['id' => 1],
-				new AuthUserOrganization(
-					id: 1,
-					name: 'Fake Organization',
-					role: 'admin'
-				)
-			);
+            AuthFake::enableForSymfony(
+                $this->container,
+                ['id' => 1],
+                new AuthUserOrganization(
+                    id: 1,
+                    name: 'Fake Organization',
+                    role: 'admin'
+                )
+            );
         }
 
         /** @var EntityManagerInterface $em */
@@ -53,7 +53,6 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
 
         // metrics in memory
         $this->container->set(Adapter::class, new InMemory());
-
     }
 
     protected function shouldEnableAuthFake(): bool
@@ -83,7 +82,7 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         if ($response->getStatusCode() === 500) {
             throw new \Exception(
                 'API call failed with status code 500. ' .
-                'Response: ' . $response->getContent()
+                    'Response: ' . $response->getContent()
             );
         }
 
@@ -174,7 +173,7 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         if ($response->getStatusCode() === 500) {
             throw new \Exception(
                 'API call failed with status code 500. ' .
-                'Response: ' . $response->getContent()
+                    'Response: ' . $response->getContent()
             );
         }
 
@@ -190,12 +189,15 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         string $uri,
         array $data = [],
         array $server = [],
+        bool $createSudoUser = true,
     ): Response {
         $this->client->getCookieJar()->set(new Cookie('authsess', 'test-session'));
 
-        SudoUserFactory::createOne([
-            'user_id' => 1,
-        ]);
+        if ($createSudoUser) {
+            SudoUserFactory::createOne([
+                'user_id' => 1,
+            ]);
+        }
 
         $this->client->request(
             $method,
@@ -211,11 +213,10 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         if ($response->getStatusCode() === 500) {
             throw new \Exception(
                 'API call failed with status code 500. ' .
-                'Response: ' . $response->getContent()
+                    'Response: ' . $response->getContent()
             );
         }
 
         return $response;
     }
-
 }

@@ -11,20 +11,22 @@ use App\Service\Dns\Dto\UpdateDnsRecordDto;
 use App\Service\Dns\DnsRecordService;
 use App\Service\Instance\InstanceService;
 use App\Service\Management\GoState\GoStateDnsRecordsService;
+use App\Service\Sudo\SudoPermission;
+use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
+#[SudoPermissionRequired(SudoPermission::ACCESS_SUDO)]
 class DnsRecordController extends AbstractController
 {
     public function __construct(
         private DnsRecordService $dnsRecordService,
         private InstanceService $instanceService,
         private GoStateDnsRecordsService $goStateDnsRecordsService
-    ) {
-    }
+    ) {}
 
     #[Route('/dns-records/default', methods: 'GET')]
     public function getDefaultDns(): JsonResponse

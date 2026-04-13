@@ -45,9 +45,9 @@
 
 <p>Then, use the following SMTP configuration:</p>
 
-<TabNav bind:active>
-	<TabNavItem name="cloud">Cloud</TabNavItem>
-	<TabNavItem name="self-hosted">Self-Hosted</TabNavItem>
+<TabNav>
+	<TabNavItem name="cloud" active={active === 'cloud'} onclick={() => active = 'cloud'}>Cloud</TabNavItem>
+	<TabNavItem name="self-hosted" active={active === 'self-hosted'} onclick={() => active = 'self-hosted'}>Self-Hosted</TabNavItem>
 </TabNav>
 
 <ul>

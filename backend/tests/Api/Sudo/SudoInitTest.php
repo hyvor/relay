@@ -2,7 +2,6 @@
 
 namespace App\Tests\Api\Sudo;
 
-use App\Api\Sudo\Authorization\SudoAuthorizationListener;
 use App\Api\Sudo\Controller\SudoController;
 use App\Api\Sudo\Object\InstanceObject;
 use App\Service\Blacklist\IpBlacklist;
@@ -12,7 +11,6 @@ use App\Tests\Case\WebTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(SudoController::class)]
-#[CoversClass(SudoAuthorizationListener::class)]
 #[CoversClass(IpBlacklists::class)]
 #[CoversClass(IpBlacklist::class)]
 #[CoversClass(InstanceObject::class)]
@@ -28,4 +26,9 @@ class SudoInitTest extends WebTestCase
         // add more tests if needed
     }
 
+    public function test_fails_when_not_sudo(): void
+    {
+        $this->sudoApi('POST', '/init', createSudoUser: false);
+        $this->assertResponseStatusCodeSame(403);
+    }
 }

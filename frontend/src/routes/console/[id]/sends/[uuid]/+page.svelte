@@ -61,10 +61,10 @@
 
 			<div class="content">
 				<div class="tabs">
-					<TabNav bind:active={activeTab}>
-						<TabNavItem name="overview">Overview</TabNavItem>
-						<TabNavItem name="preview">Preview</TabNavItem>
-						<TabNavItem name="raw">Raw</TabNavItem>
+					<TabNav>
+						<TabNavItem name="overview" active={activeTab === 'overview'} onclick={() => activeTab = 'overview'}>Overview</TabNavItem>
+						<TabNavItem name="preview" active={activeTab === 'preview'} onclick={() => activeTab = 'preview'}>Preview</TabNavItem>
+						<TabNavItem name="raw" active={activeTab === 'raw'} onclick={() => activeTab = 'raw'}>Raw</TabNavItem>
 					</TabNav>
 				</div>
 

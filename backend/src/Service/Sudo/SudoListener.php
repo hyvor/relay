@@ -16,8 +16,7 @@ class SudoListener
         private InstanceService $instanceService,
         private SudoUserService $sudoUserService,
         private EntityManagerInterface $em,
-    ) {
-    }
+    ) {}
 
     public function onUserSignedUp(UserSignedUpEvent $event): void
     {
@@ -32,8 +31,7 @@ class SudoListener
             // currently sudoUserService does not support not flushing
             // so, two transactions are used
             // To be safe, we first update sudo_initialized in the instance
-            $this->sudoUserService->create($user->id);
+            $this->sudoUserService->create($user->id, 'sudo');
         }
     }
-
 }
