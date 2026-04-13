@@ -10,8 +10,7 @@ class CurrentServerIp
          * @var callable $netGetInterfacesFunction
          */
         private mixed $netGetInterfacesFunction = '\net_get_interfaces',
-    )
-    {}
+    ) {}
 
     /**
      * Gets all IP addresses of the server.
@@ -33,7 +32,10 @@ class CurrentServerIp
             $unicast = $interface['unicast'];
 
             foreach ($unicast as $address) {
-                if (empty($address['address'])) {
+                if (
+                    empty($address['address']) ||
+                    !is_string($address['address'])
+                ) {
                     continue;
                 }
 
@@ -42,7 +44,6 @@ class CurrentServerIp
         }
 
         // Remove duplicates
-        /** @var string[] $ips */
         $ips = array_unique($ips);
 
         // Sort the IPs
@@ -68,5 +69,4 @@ class CurrentServerIp
 
         return $publicIps;
     }
-
 }
