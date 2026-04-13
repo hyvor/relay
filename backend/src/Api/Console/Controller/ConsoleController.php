@@ -28,32 +28,30 @@ class ConsoleController extends AbstractController
     public function __construct(
         private ProjectUserService $projectUserService,
         private InternalConfig $internalConfig,
-        private Config $appConfig,
         private LoggerInterface $logger,
         private InstanceService $instanceService,
-    ) {
-    }
+    ) {}
 
     #[Route('/init', methods: 'GET')]
     #[OrganizationLevelEndpoint]
     #[OrganizationOptional]
     public function initConsole(Request $request): JsonResponse
     {
-		$user = AuthorizationListener::getUser($request);
-		$org = AuthorizationListener::hasOrganization($request)
-					? AuthorizationListener::getOrganization($request)
-					: null;
-		$instance = $this->instanceService->getInstance();
+        $user = AuthorizationListener::getUser($request);
+        $org = AuthorizationListener::hasOrganization($request)
+            ? AuthorizationListener::getOrganization($request)
+            : null;
+        $instance = $this->instanceService->getInstance();
 
-		$projectUsers = [];
+        $projectUsers = [];
 
-		if ($org) {
-			$projectUsers = $this->projectUserService->getProjectsOfUserInOrg($user->id, $org->id);
-			$projectUsers = array_map(
-				fn($project) => new ProjectUserObject($project, $user),
-				$projectUsers
-			);
-		}
+        if ($org) {
+            $projectUsers = $this->projectUserService->getProjectsOfUserInOrg($user->id, $org->id);
+            $projectUsers = array_map(
+                fn($project) => new ProjectUserObject($project, $user),
+                $projectUsers
+            );
+        }
 
         $this->logger->info('Console initialized', [
             'organization_id' => $org?->id,
@@ -63,7 +61,7 @@ class ConsoleController extends AbstractController
         ]);
 
         return new JsonResponse([
-			'project_users' => $projectUsers,
+            'project_users' => $projectUsers,
             'config' => [
                 'deployment' => $this->internalConfig->getDeployment()->value,
                 'hyvor' => [
@@ -87,8 +85,8 @@ class ConsoleController extends AbstractController
                         'rates' => Compliance::getRates(),
                     ],
                 ],
-			],
-			'organization' => $org
+            ],
+            'organization' => $org
         ]);
     }
 

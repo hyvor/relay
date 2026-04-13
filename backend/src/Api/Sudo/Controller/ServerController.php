@@ -6,26 +6,27 @@ use App\Api\Sudo\Input\UpdateServerInput;
 use App\Api\Sudo\Object\ServerObject;
 use App\Service\Server\Dto\UpdateServerDto;
 use App\Service\Server\ServerService;
+use App\Service\Sudo\SudoPermission;
+use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
+#[SudoPermissionRequired(SudoPermission::ACCESS_SUDO)]
 class ServerController extends AbstractController
 {
 
     public function __construct(
         private ServerService $serverService,
-    )
-    {
-    }
+    ) {}
 
     #[Route('/servers', methods: 'GET')]
     public function getServers(): JsonResponse
     {
         $servers = $this->serverService->getServers();
-        
+
         $serverObjects = array_map(
             fn($server) => new ServerObject($server),
             $servers
@@ -38,8 +39,7 @@ class ServerController extends AbstractController
     public function updateServer(
         int $id,
         #[MapRequestPayload] UpdateServerInput $input
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $server = $this->serverService->getServerById($id);
 
         if (!$server) {
@@ -65,5 +65,4 @@ class ServerController extends AbstractController
 
         return $this->json(new ServerObject($server));
     }
-
 }

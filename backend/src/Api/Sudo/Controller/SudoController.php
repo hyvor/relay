@@ -7,13 +7,15 @@ use App\Api\Sudo\Object\InstanceObject;
 use App\Service\App\Config;
 use App\Service\Blacklist\IpBlacklists;
 use App\Service\Instance\InstanceService;
-use App\Service\Tls\TlsCertificateService;
+use App\Service\Sudo\SudoPermission;
+use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
 use Hyvor\Internal\InternalConfig;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 
+#[SudoPermissionRequired(SudoPermission::ACCESS_SUDO)]
 class SudoController extends AbstractController
 {
 
@@ -21,8 +23,7 @@ class SudoController extends AbstractController
         private Config $config,
         private InternalConfig $internalConfig,
         private InstanceService $instanceService
-    ) {
-    }
+    ) {}
 
     #[Route('/init', methods: 'POST')]
     public function initSudo(Request $request): JsonResponse
@@ -46,5 +47,4 @@ class SudoController extends AbstractController
             'instance' => new InstanceObject($instance, $this->config->getInstanceDomain())
         ]);
     }
-
 }

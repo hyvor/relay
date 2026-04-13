@@ -10,8 +10,6 @@ use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
 use Hyvor\Internal\Auth\AuthFake;
-use Hyvor\Internal\Bundle\Comms\Comms;
-use Hyvor\Internal\Bundle\Comms\CommsInterface;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\VerifyMember;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\VerifyMemberResponse;
 use Hyvor\Internal\Bundle\Comms\Exception\CommsApiFailedException;
@@ -23,6 +21,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 class CreateProjectUserTest extends WebTestCase
 {
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $_ENV['DEPLOYMENT'] = 'cloud';
+    }
+
     public function test_fails_when_user_not_found(): void
     {
         AuthFake::databaseAdd([
@@ -32,9 +36,9 @@ class CreateProjectUserTest extends WebTestCase
             'email' => 'supun@hyvor.com'
         ]);
 
-		$project = ProjectFactory::createOne([
-			'organization_id' => 1
-		]);
+        $project = ProjectFactory::createOne([
+            'organization_id' => 1
+        ]);
 
         $this->consoleApi(
             $project,
@@ -52,21 +56,21 @@ class CreateProjectUserTest extends WebTestCase
     }
 
     public function test_creates_project_user(): void
-	{
+    {
         $this->getComms()->addResponse(VerifyMember::class, function () {
             return new VerifyMemberResponse(true, 'admin');
         });
 
-		$project = ProjectFactory::createOne([
-			'organization_id' => 1
-		]);
+        $project = ProjectFactory::createOne([
+            'organization_id' => 1
+        ]);
 
         AuthFake::databaseAdd([
             'id' => 1,
             'username' => 'supun',
             'name' => 'Supun Wimalasena',
             'email' => 'supun@hyvor.com'
-		]);
+        ]);
 
         $this->consoleApi(
             $project,
