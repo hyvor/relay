@@ -1,14 +1,16 @@
 <script lang="ts">
-	import { Callout } from '@hyvor/design/components';
+	import { Button, Callout } from '@hyvor/design/components';
 	import IconHourglassSplit from '@hyvor/icons/IconHourglassSplit';
 	import type { SendRecipient } from '../../../types';
 
 	interface Props {
 		after: number;
 		recipients: SendRecipient[];
+		onTryNow?: () => void;
+		tryNowLoading?: boolean;
 	}
 
-	let { after, recipients }: Props = $props();
+	let { after, recipients, onTryNow, tryNowLoading = false }: Props = $props();
 	const hasDeferredRecipients = $derived(recipients.some((r) => r.status === 'deferred'));
 
 	function getIn(): string {
@@ -39,11 +41,21 @@
 		{/snippet}
 		This send will be {hasDeferredRecipients ? 'retried' : 'sent'}
 		{getIn()}.
+		{#if onTryNow}
+			<div class="try-now-actions">
+				<Button size="small" on:click={onTryNow} loading={tryNowLoading}>
+					Try Now
+				</Button>
+			</div>
+		{/if}
 	</Callout>
 </div>
 
 <style>
 	.wrap {
 		margin-bottom: 20px;
+	}
+	.try-now-actions {
+		margin-top: 10px;
 	}
 </style>
