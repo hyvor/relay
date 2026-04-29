@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Modal, Checkbox, TextInput } from '@hyvor/design/components';
+	import { Modal, Checkbox, TextInput, Radio } from '@hyvor/design/components';
 	import type { SendRecipient } from '../../../types';
 
 	interface Props {
@@ -62,15 +62,12 @@
 >
 	<div class="modal-content">
 		<div class="mode-section">
-			<label class="radio-label">
-				<input type="radio" bind:group={mode} value="now" />
+			<Radio bind:group={mode} value="now" name="retry-mode">
 				Retry now
-			</label>
-			<label class="radio-label">
-				<input type="radio" bind:group={mode} value="schedule" />
-				Schedule retry
-			</label>
-
+			</Radio>
+			<Radio bind:group={mode} value="schedule" name="retry-mode">
+				Schedule for later
+			</Radio>
 			{#if mode === 'schedule'}
 				<div class="schedule-input">
 					<TextInput type="datetime-local" bind:value={scheduledDate} block />

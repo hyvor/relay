@@ -42,8 +42,7 @@ class SendController extends AbstractController
         private SendFeedbackService $sendFeedbackService,
         private DomainService $domainService,
         private QueueService $queueService,
-    ) {
-    }
+    ) {}
 
     #[Route("/sends", methods: "POST")]
     #[ScopeRequired(Scope::SENDS_SEND)]
@@ -236,9 +235,7 @@ class SendController extends AbstractController
             $sendAfter = $this->now()->setTimestamp($input->send_after);
         }
 
-        /** @var int[]|null $recipientIds */
-        $recipientIds = $input->recipient_ids;
-        $retriedCount = $this->sendService->retrySend($send, $sendAfter, $recipientIds);
+        $retriedCount = $this->sendService->retrySend($send, $sendAfter, $input->recipient_ids);
 
         if ($input->recipient_ids !== null && $retriedCount === 0) {
             throw new BadRequestHttpException('No matching failed recipients found for the provided IDs');
@@ -286,5 +283,4 @@ class SendController extends AbstractController
             )
         );
     }
-
 }

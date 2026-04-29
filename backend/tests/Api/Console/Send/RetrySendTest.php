@@ -13,13 +13,14 @@ use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\SendFactory;
 use App\Tests\Factory\SendRecipientFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
-use Symfony\Component\Clock\Clock;
-use Symfony\Component\Clock\MockClock;
+use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 
 #[CoversClass(SendController::class)]
 #[CoversClass(SendService::class)]
 class RetrySendTest extends WebTestCase
 {
+
+    use ClockSensitiveTrait;
 
     public function test_retry_failed_recipients(): void
     {
@@ -86,9 +87,7 @@ class RetrySendTest extends WebTestCase
             'status' => SendRecipientStatus::FAILED,
         ]);
 
-        $mockClock = new MockClock('2024-01-01T12:00:00Z');
-        Clock::set($mockClock);
-
+        $mockClock = $this->mockTime('2024-01-01T12:00:00Z');
         $sendAfter = $mockClock->now()->getTimestamp() + 3600;
 
         $response = $this->consoleApi(
@@ -197,8 +196,7 @@ class RetrySendTest extends WebTestCase
         $domain = DomainFactory::createOne();
         $queue = QueueFactory::createOne();
 
-        $mockClock = new MockClock('2024-01-01T12:00:00Z');
-        Clock::set($mockClock);
+        $mockClock = $this->mockTime('2024-01-01T12:00:00Z');
 
         $futureTime = $mockClock->now()->modify('+2 hours');
 
@@ -274,8 +272,7 @@ class RetrySendTest extends WebTestCase
             'status' => SendRecipientStatus::FAILED,
         ]);
 
-        $mockClock = new MockClock('2024-01-01T12:00:00Z');
-        Clock::set($mockClock);
+        $mockClock = $this->mockTime('2024-01-01T12:00:00Z');
 
         $this->consoleApi(
             $project,
@@ -287,5 +284,4 @@ class RetrySendTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(400);
     }
-
 }

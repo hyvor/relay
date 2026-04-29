@@ -32,6 +32,12 @@
 			return 'in a few seconds';
 		}
 	}
+
+	const canTryNow = $derived.by(() => {
+		const now = Math.floor(Date.now() / 1000);
+		const diff = after - now;
+		return diff > 10; // Allow "Try Now" if the scheduled time is more than 10 seconds in the future
+	});
 </script>
 
 <div class="wrap">
@@ -43,7 +49,7 @@
 		{getIn()}.
 		{#if onTryNow}
 			<div class="try-now-actions">
-				<Button size="small" on:click={onTryNow} loading={tryNowLoading}>
+				<Button size="small" on:click={onTryNow} loading={tryNowLoading} disabled={tryNowLoading || !canTryNow}>
 					Try Now
 				</Button>
 			</div>

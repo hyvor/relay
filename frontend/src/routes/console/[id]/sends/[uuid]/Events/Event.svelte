@@ -69,7 +69,7 @@
 			} else {
 				return {
 					message: `Failed to deliver: <strong>${recipient.address}</strong>`,
-					description: getAttemptDescription(),
+					description: getAttemptDescription() || getAttemptRecipientMessage(),
 					color: 'var(--red)'
 				};
 			}
@@ -94,6 +94,18 @@
 				const lastStep = smtpConvo.steps[smtpConvo.steps.length - 1];
 
 				return `${lastStep.reply_code} ${lastStep.reply_text}`;
+			}
+
+			function getAttemptRecipientMessage(): string | null {
+				const attemptRecipient = attempt.recipients.find(
+					(r) => r.recipient_id === recipient.id
+				);
+
+				if (!attemptRecipient) {
+					return null;
+				}
+
+				return attemptRecipient.smtp_message;
 			}
 
 			function getRcptError(smtpConvo: SmtpConversation): string {
