@@ -479,6 +479,138 @@ func TestSendEmailToHost_OneRecipientFails(t *testing.T) {
 	assert.Equal(t, "No such user here", rcptResult2.Message)
 }
 
+// A DATACLOSE failure should replace the prior RCPT TO 250 entry with a bounced entry.
+func TestSendEmailToHost_DataCloseFails_ReplacesRcptResult(t *testing.T) {
+
+	server := `220 somedomain.com at your service
+250 Go ahead
+250 Sender OK
+250 Recipient OK
+250 Recipient OK
+354 Body
+550 5.0.0 Message rejected
+221 Closing connection
+`
+	var wrote bytes.Buffer
+	var fake fakeConn
+	fake.ReadWriter = struct {
+		io.Reader
+		io.Writer
+	}{
+		strings.NewReader(server),
+		&wrote,
+	}
+
+	var createSmtpClientBackup = createSmtpClient
+	createSmtpClient = func(host string, _ string) (*smtp.Client, error) {
+		return smtp.NewClient(fake, host)
+	}
+	defer func() { createSmtpClient = createSmtpClientBackup }()
+
+	send := &SendRow{
+		Id:        1,
+		Uuid:      "test-uuid",
+		From:      "test@hyvor.com",
+		RawEmail:  "Subject: Test Email",
+		QueueName: "default",
+	}
+
+	recipient1 := &RecipientRow{Id: 1, Type: "to", Address: "a@somedomain.com"}
+	recipient2 := &RecipientRow{Id: 2, Type: "to", Address: "b@somedomain.com"}
+
+	convo := sendEmailToHost(
+		send,
+		[]*RecipientRow{recipient1, recipient2},
+		"localhost",
+		"relay.com",
+		"127.0.0.1",
+		"smtp.relay.com",
+	)
+
+	assert.NoError(t, convo.NetworkError)
+	// exactly one entry per recipient (no duplicates)
+	assert.Equal(t, 2, len(convo.RcptResults))
+
+	r1 := convo.RcptResults[0]
+	assert.Equal(t, 1, r1.RecipientId)
+	assert.Equal(t, 550, r1.Code)
+	assert.Equal(t, RecipientStatusBounced, r1.ToRecipientStatus())
+
+	r2 := convo.RcptResults[1]
+	assert.Equal(t, 2, r2.RecipientId)
+	assert.Equal(t, 550, r2.Code)
+	assert.Equal(t, RecipientStatusBounced, r2.ToRecipientStatus())
+}
+
+// When DATACLOSE fails after a mixed RCPT TO outcome, the recipient rejected
+// at RCPT TO must keep its specific rejection reason; only the recipient
+// accepted at RCPT TO gets overridden by the DATACLOSE failure.
+func TestSendEmailToHost_DataCloseFails_PreservesRcptRejection(t *testing.T) {
+
+	server := `220 somedomain.com at your service
+250 Go ahead
+250 Sender OK
+250 Recipient OK
+550 5.1.1 No such user here
+354 Body
+550 5.0.0 Message rejected
+221 Closing connection
+`
+	var wrote bytes.Buffer
+	var fake fakeConn
+	fake.ReadWriter = struct {
+		io.Reader
+		io.Writer
+	}{
+		strings.NewReader(server),
+		&wrote,
+	}
+
+	var createSmtpClientBackup = createSmtpClient
+	createSmtpClient = func(host string, _ string) (*smtp.Client, error) {
+		return smtp.NewClient(fake, host)
+	}
+	defer func() { createSmtpClient = createSmtpClientBackup }()
+
+	send := &SendRow{
+		Id:        1,
+		Uuid:      "test-uuid",
+		From:      "test@hyvor.com",
+		RawEmail:  "Subject: Test Email",
+		QueueName: "default",
+	}
+
+	recipient1 := &RecipientRow{Id: 1, Type: "to", Address: "accept@somedomain.com"}
+	recipient2 := &RecipientRow{Id: 2, Type: "to", Address: "fail@somedomain.com"}
+
+	convo := sendEmailToHost(
+		send,
+		[]*RecipientRow{recipient1, recipient2},
+		"localhost",
+		"relay.com",
+		"127.0.0.1",
+		"smtp.relay.com",
+	)
+
+	assert.NoError(t, convo.NetworkError)
+	assert.Equal(t, 2, len(convo.RcptResults))
+
+	// recipient1 was accepted at RCPT TO, then DATACLOSE failed -> overridden
+	r1 := convo.RcptResults[0]
+	assert.Equal(t, 1, r1.RecipientId)
+	assert.Equal(t, 550, r1.Code)
+	assert.Equal(t, "Message rejected", r1.Message)
+	assert.Equal(t, RecipientStatusBounced, r1.ToRecipientStatus())
+
+	// recipient2 was rejected at RCPT TO -> keeps its specific reason
+	r2 := convo.RcptResults[1]
+	assert.Equal(t, 2, r2.RecipientId)
+	assert.Equal(t, 550, r2.Code)
+	assert.Equal(t, [3]int{5, 1, 1}, r2.EnhancedCode)
+	assert.Equal(t, "No such user here", r2.Message)
+	assert.Equal(t, RecipientStatusBounced, r2.ToRecipientStatus())
+}
+
 func TestSendEmailFailedSmtpStatus(t *testing.T) {
 
 	// using our own incoming server for testing
