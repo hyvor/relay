@@ -43,6 +43,10 @@ class Send
     #[ORM\JoinColumn]
     private Queue $queue;
 
+    #[ORM\ManyToOne(targetEntity: IpAddress::class)]
+    #[ORM\JoinColumn(onDelete: "SET NULL")]
+    private ?IpAddress $ip_address = null;
+
     #[ORM\Column()]
     private string $queue_name; // denormalized for easier access
 
@@ -184,6 +188,17 @@ class Send
     public function setQueue(Queue $queue): static
     {
         $this->queue = $queue;
+        return $this;
+    }
+
+    public function getIpAddress(): ?IpAddress
+    {
+        return $this->ip_address;
+    }
+
+    public function setIpAddress(?IpAddress $ipAddress): static
+    {
+        $this->ip_address = $ipAddress;
         return $this;
     }
 
