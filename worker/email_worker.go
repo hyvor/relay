@@ -194,7 +194,7 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 		return err
 	}
 
-	send, recipients, err := sendTx.FetchSend(worker.ip.QueueId)
+	send, recipients, err := sendTx.FetchSend(worker.ip.Id)
 
 	if err != nil {
 

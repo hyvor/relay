@@ -9,6 +9,7 @@ use App\Entity\Send;
 use App\Entity\SendRecipient;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
+use App\Repository\IpAddressRepository;
 use App\Repository\SendRepository;
 use App\Service\Send\Dto\SendingAttachment;
 use App\Service\Send\Exception\EmailTooLargeException;
@@ -28,6 +29,7 @@ class SendService
         private EmailBuilder $emailBuilder,
         private SendRepository $sendRepository,
         private RecipientFactory $recipientFactory,
+        private IpAddressRepository $ipAddressRepository,
     ) {
     }
 
@@ -150,6 +152,7 @@ class SendService
         $send->setDomain($domain);
         $send->setQueue($queue);
         $send->setQueueName($queue->getName());
+        $send->setIpAddress($this->ipAddressRepository->getRandomIpForQueue($queue));
         $send->setFromAddress($from->getAddress());
         $send->setFromName($from->getName());
         $send->setSubject($subject);
