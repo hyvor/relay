@@ -168,6 +168,7 @@ type FactorySend struct {
 	ProjectId   int
 	DomainId    int
 	QueueId     int
+	IpAddressId int
 	Queued      bool
 	SendAfter   time.Time
 	FromAddress string
@@ -203,24 +204,30 @@ func (m *TestFactory) Send(send *FactorySend) (*FactorySend, error) {
 		return nil, err
 	}
 
+	ipId, err := m.IpAddress()
+	if err != nil {
+		return nil, err
+	}
+
 	send.ProjectId = projectId
 	send.DomainId = domainId
 	send.QueueId = queueId
+	send.IpAddressId = ipId
 
 	now := time.Now()
 	err = m.conn.QueryRow(`
 		INSERT INTO sends (
-			created_at, updated_at, send_after, project_id, domain_id, queue_id,
+			created_at, updated_at, send_after, project_id, domain_id, queue_id, ip_address_id,
 			queue_name, from_address, subject, body_html, body_text,
 			headers, message_id, raw,
 			size_bytes, queued
 		) VALUES (
-			$1, $2, $3, $4, $5, $6,
-			$7, $8, $9, $10, $11,
-			$12, $13, $14,
-			0, $15
+			$1, $2, $3, $4, $5, $6, $7,
+			$8, $9, $10, $11, $12,
+			$13, $14, $15,
+			0, $16
 		) RETURNING id, uuid
-	`, now, now, send.SendAfter, projectId, send.DomainId, queueId,
+	`, now, now, send.SendAfter, projectId, send.DomainId, queueId, ipId,
 		"test-queue", send.FromAddress, send.Subject,
 		send.BodyHtml, send.BodyText, nil, "test-message-id", "raw-email-content",
 		send.Queued,
@@ -239,7 +246,7 @@ func (f *TestFactory) GetSendById(id int) (*FactorySend, error) {
 	var send FactorySend
 	row := f.conn.QueryRow(`
 		SELECT 
-			id, uuid, project_id, domain_id, queue_id, queued, send_after,
+			id, uuid, project_id, domain_id, queue_id, ip_address_id, queued, send_after,
 			from_address, subject, body_html, body_text
 		FROM sends WHERE id = $1
 	`, id)
@@ -250,6 +257,7 @@ func (f *TestFactory) GetSendById(id int) (*FactorySend, error) {
 		&send.ProjectId,
 		&send.DomainId,
 		&send.QueueId,
+		&send.IpAddressId,
 		&send.Queued,
 		&send.SendAfter,
 		&send.FromAddress,
