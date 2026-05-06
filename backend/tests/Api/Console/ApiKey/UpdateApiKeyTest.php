@@ -7,16 +7,22 @@ use App\Api\Console\Controller\ApiKeyController;
 use App\Api\Console\Input\UpdateApiKeyInput;
 use App\Api\Console\Object\ApiKeyObject;
 use App\Entity\ApiKey;
+use App\Service\ApiKey\AllowedIp;
 use App\Service\ApiKey\ApiKeyService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ApiKeyFactory;
 use App\Tests\Factory\ProjectFactory;
+use App\Validator\AllowedIpsConstraint;
+use App\Validator\AllowedIpsConstraintValidator;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ApiKeyController::class)]
 #[CoversClass(ApiKeyService::class)]
 #[CoversClass(ApiKeyObject::class)]
 #[CoversClass(UpdateApiKeyInput::class)]
+#[CoversClass(AllowedIp::class)]
+#[CoversClass(AllowedIpsConstraint::class)]
+#[CoversClass(AllowedIpsConstraintValidator::class)]
 class UpdateApiKeyTest extends WebTestCase
 {
     public function test_update_api_key(): void

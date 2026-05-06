@@ -7,10 +7,13 @@ use App\Api\Console\Controller\ApiKeyController;
 use App\Api\Console\Input\CreateApiKeyInput;
 use App\Api\Console\Object\ApiKeyObject;
 use App\Entity\ApiKey;
+use App\Service\ApiKey\AllowedIp;
 use App\Service\ApiKey\ApiKeyService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ApiKeyFactory;
 use App\Tests\Factory\ProjectFactory;
+use App\Validator\AllowedIpsConstraint;
+use App\Validator\AllowedIpsConstraintValidator;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ApiKeyController::class)]
@@ -18,6 +21,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(Scope::class)]
 #[CoversClass(CreateApiKeyInput::class)]
 #[CoversClass(ApiKeyObject::class)]
+#[CoversClass(AllowedIp::class)]
+#[CoversClass(AllowedIpsConstraint::class)]
+#[CoversClass(AllowedIpsConstraintValidator::class)]
 class CreateApiKeyTest extends WebTestCase
 {
     public function test_create_api_key(): void
