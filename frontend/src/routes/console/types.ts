@@ -154,6 +154,7 @@ export type ApiKey = {
 	id: number;
 	name: string;
 	scopes: string[];
+	allowed_ips: string[];
 	key?: string;
 	created_at: number;
 	is_enabled: boolean;

@@ -21,7 +21,8 @@ type IncomingMail struct {
 	RcptTo         string
 	Data           []byte
 	InstanceDomain string
-	ApiKey string // using the auth password
+	ApiKey         string // using the auth password
+	ClientIp       string // remote address of the SMTP client
 }
 
 func (m *IncomingMail) HasApiKey() bool {
@@ -177,6 +178,7 @@ func forwardEmailToApi(
 		ctx,
 		m.ApiKey,
 		payload,
+		m.ClientIp,
 	)
 
 	if err != nil {

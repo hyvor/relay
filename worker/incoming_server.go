@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"net"
 	"net/mail"
 	"strings"
 	"time"
@@ -41,14 +42,35 @@ type Session struct {
 // NewSession is called after client greeting (EHLO, HELO).
 func (bkd *IncomingBackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 	return &Session{
-		ctx:          bkd.ctx,
+		ctx:         bkd.ctx,
 		logger:      bkd.logger,
-		metrics: bkd.metrics,
+		metrics:     bkd.metrics,
 		mailChannel: bkd.mailChannel,
 		incomingMail: IncomingMail{
 			InstanceDomain: bkd.instanceDomain,
+			ClientIp:       extractClientIp(c),
 		},
 	}, nil
+}
+
+// extractClientIp returns the IP portion of the SMTP client's remote address,
+// or an empty string if the address can't be determined.
+func extractClientIp(c *smtp.Conn) string {
+	if c == nil || c.Conn() == nil {
+		return ""
+	}
+	addr := c.Conn().RemoteAddr()
+	if addr == nil {
+		return ""
+	}
+	if tcp, ok := addr.(*net.TCPAddr); ok {
+		return tcp.IP.String()
+	}
+	host, _, err := net.SplitHostPort(addr.String())
+	if err != nil {
+		return addr.String()
+	}
+	return host
 }
 
 // AuthMechanisms returns a slice of available auth mechanisms; only PLAIN is

@@ -42,7 +42,10 @@ class ApiKey
     #[ORM\Column(type: "datetime_immutable")]
     private ?\DateTimeImmutable $last_accessed_at = null;
 
-    #[ORM\Column(type: "text[]")]
+    /**
+     * @var string[]
+     */
+    #[ORM\Column(type: "json")]
     private array $allowed_ips = [];
 
 
@@ -151,11 +154,17 @@ class ApiKey
         return $this;
     }
 
+    /**
+     * @return string[]
+     */
     public function getAllowedIps(): array
     {
         return $this->allowed_ips;
     }
 
+    /**
+     * @param string[] $allowed_ips
+     */
     public function setAllowedIps(array $allowed_ips): self
     {
         $this->allowed_ips = $allowed_ips;

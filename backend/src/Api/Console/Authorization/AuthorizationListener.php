@@ -4,6 +4,7 @@ namespace App\Api\Console\Authorization;
 
 use App\Entity\ApiKey;
 use App\Entity\Project;
+use App\Service\ApiKey\AllowedIp;
 use App\Service\ApiKey\ApiKeyService;
 use App\Service\ApiKey\Dto\UpdateApiKeyDto;
 use App\Service\Project\ProjectService;
@@ -79,6 +80,14 @@ class AuthorizationListener
 
         if ($apiKeyModel === null) {
             throw new AccessDeniedHttpException('Invalid API key.');
+        }
+
+        $allowedIps = $apiKeyModel->getAllowedIps();
+        if (count($allowedIps) > 0) {
+            $clientIp = $request->getClientIp();
+            if ($clientIp === null || !AllowedIp::matches($clientIp, $allowedIps)) {
+                throw new AccessDeniedHttpException('Client IP is not allowed for this API key.');
+            }
         }
 
         $scopes = $apiKeyModel->getScopes();

@@ -33,7 +33,12 @@ class ApiKeyController extends AbstractController
             throw new BadRequestHttpException("You have reached the maximum number of API keys for this project.");
         }
 
-        $creation = $this->apiKeyService->createApiKey($project, $input->name, $input->scopes);
+        $creation = $this->apiKeyService->createApiKey(
+            $project,
+            $input->name,
+            $input->scopes,
+            $input->allowed_ips,
+        );
 
         return $this->json(new ApiKeyObject($creation['apiKey'], $creation['rawKey']));
     }
@@ -61,6 +66,9 @@ class ApiKeyController extends AbstractController
         }
         if ($input->hasProperty('name')) {
             $updates->name = $input->name;
+        }
+        if ($input->hasProperty('allowed_ips')) {
+            $updates->allowedIps = $input->allowed_ips;
         }
 
         $updatedApiKey = $this->apiKeyService->updateApiKey($apiKey, $updates);

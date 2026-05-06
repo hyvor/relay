@@ -19,8 +19,11 @@ final class Version20260504093617 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql("ALTER TABLE api_keys ADD COLUMN allowed_ips TEXT[] NOT NULL DEFAULT '[]'");
+        $this->addSql("ALTER TABLE api_keys ADD COLUMN allowed_ips JSON NOT NULL DEFAULT '[]'");
     }
 
-    public function down(Schema $schema): void {}
+    public function down(Schema $schema): void
+    {
+        $this->addSql("ALTER TABLE api_keys DROP COLUMN allowed_ips");
+    }
 }
