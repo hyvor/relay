@@ -59,8 +59,11 @@ class ApiKeyService
             $apiKey->setIsEnabled($updates->enabled);
         }
 
+        $touchesInvariant = false;
+
         if ($updates->hasProperty('scopes')) {
             $apiKey->setScopes($updates->scopes);
+            $touchesInvariant = true;
         }
 
         if ($updates->hasProperty('name')) {
@@ -69,6 +72,7 @@ class ApiKeyService
 
         if ($updates->hasProperty('allowedIps')) {
             $apiKey->setAllowedIps($this->normalizeAllowedIps($updates->allowedIps));
+            $touchesInvariant = true;
         }
 
         if ($updates->hasProperty('lastAccessedAt')) {
@@ -76,7 +80,8 @@ class ApiKeyService
         }
 
         if (
-            in_array(Scope::SENDS_SEND->value, $apiKey->getScopes(), true)
+            $touchesInvariant
+            && in_array(Scope::SENDS_SEND->value, $apiKey->getScopes(), true)
             && count($apiKey->getAllowedIps()) === 0
         ) {
             throw new BadRequestHttpException('At least one allowed IP is required when the "sends.send" scope is enabled.');

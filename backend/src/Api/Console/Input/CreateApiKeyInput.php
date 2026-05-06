@@ -44,7 +44,7 @@ class CreateApiKeyInput
     #[Assert\Callback]
     public function validateAllowedIpsRequiredForSendsSend(ExecutionContextInterface $context): void
     {
-        if (!isset($this->scopes) || !is_array($this->scopes)) {
+        if (!isset($this->scopes)) {
             return;
         }
 

@@ -27,6 +27,7 @@ class UpdateApiKeyTest extends WebTestCase
             [
                 'project' => $project,
                 'is_enabled' => true,
+                'allowed_ips' => ['203.0.113.5'],
             ]
         );
 
@@ -60,5 +61,102 @@ class UpdateApiKeyTest extends WebTestCase
         $this->assertContains('sends.send', $apiKeyDb->getScopes());
         $this->assertContains('webhooks.read', $apiKeyDb->getScopes());
         $this->assertSame('Updated API Key', $apiKeyDb->getName());
+    }
+
+    public function test_update_allowed_ips(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $apiKey = ApiKeyFactory::createOne([
+            'project' => $project,
+            'scopes' => ['sends.send'],
+            'allowed_ips' => ['203.0.113.5'],
+        ]);
+
+        $response = $this->consoleApi(
+            $project,
+            'PATCH',
+            '/api-keys/' . $apiKey->getId(),
+            [
+                'allowed_ips' => ['198.51.100.0/24', '2001:db8::/64'],
+            ]
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+
+        $apiKeyDb = $this->em->getRepository(ApiKey::class)->find($apiKey->getId());
+        $this->assertNotNull($apiKeyDb);
+        $this->assertSame(['198.51.100.0/24', '2001:db8::/64'], $apiKeyDb->getAllowedIps());
+    }
+
+    public function test_update_rejects_clearing_ips_when_sends_send_active(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $apiKey = ApiKeyFactory::createOne([
+            'project' => $project,
+            'scopes' => ['sends.send'],
+            'allowed_ips' => ['203.0.113.5'],
+        ]);
+
+        $response = $this->consoleApi(
+            $project,
+            'PATCH',
+            '/api-keys/' . $apiKey->getId(),
+            [
+                'allowed_ips' => [],
+            ]
+        );
+
+        $this->assertSame(400, $response->getStatusCode());
+        $this->assertSame(
+            'At least one allowed IP is required when the "sends.send" scope is enabled.',
+            $this->getJson()['message']
+        );
+    }
+
+    public function test_update_rejects_adding_sends_send_without_ips(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $apiKey = ApiKeyFactory::createOne([
+            'project' => $project,
+            'scopes' => ['sends.read'],
+            'allowed_ips' => [],
+        ]);
+
+        $response = $this->consoleApi(
+            $project,
+            'PATCH',
+            '/api-keys/' . $apiKey->getId(),
+            [
+                'scopes' => ['sends.send'],
+            ]
+        );
+
+        $this->assertSame(400, $response->getStatusCode());
+    }
+
+    public function test_update_rejects_invalid_ip(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $apiKey = ApiKeyFactory::createOne([
+            'project' => $project,
+            'scopes' => ['sends.send'],
+            'allowed_ips' => ['203.0.113.5'],
+        ]);
+
+        $response = $this->consoleApi(
+            $project,
+            'PATCH',
+            '/api-keys/' . $apiKey->getId(),
+            [
+                'allowed_ips' => ['not-an-ip'],
+            ]
+        );
+
+        $this->assertSame(422, $response->getStatusCode());
+        $this->assertHasViolation('allowed_ips[0]');
     }
 }
