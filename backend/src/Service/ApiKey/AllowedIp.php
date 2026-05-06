@@ -100,9 +100,6 @@ class AllowedIp
             return $entry;
         }
         $normalizedIp = inet_ntop($packed);
-        if ($normalizedIp === false) {
-            return $entry;
-        }
 
         return $normalizedIp . $suffix;
     }
