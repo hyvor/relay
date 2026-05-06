@@ -59,7 +59,10 @@ func extractClientIp(c *smtp.Conn) string {
 	if c == nil || c.Conn() == nil {
 		return ""
 	}
-	addr := c.Conn().RemoteAddr()
+	return clientIpFromAddr(c.Conn().RemoteAddr())
+}
+
+func clientIpFromAddr(addr net.Addr) string {
 	if addr == nil {
 		return ""
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"net"
 	"net/smtp"
 	"strings"
 	"testing"
@@ -10,6 +11,14 @@ import (
 	"github.com/hyvor/relay/worker/smtp_interface"
 	"github.com/stretchr/testify/assert"
 )
+
+type fakeAddr struct {
+	network string
+	addr    string
+}
+
+func (f fakeAddr) Network() string { return f.network }
+func (f fakeAddr) String() string  { return f.addr }
 
 func TestIncomingServer(t *testing.T) {
 
@@ -124,6 +133,18 @@ func TestIncomingServer_HandlesApiKeyCallsSynchronously(t *testing.T) {
 func TestExtractClientIp(t *testing.T) {
 
 	assert.Equal(t, "", extractClientIp(nil))
+}
+
+func TestClientIpFromAddr(t *testing.T) {
+
+	assert.Equal(t, "", clientIpFromAddr(nil))
+
+	tcp := &net.TCPAddr{IP: net.ParseIP("203.0.113.5"), Port: 1234}
+	assert.Equal(t, "203.0.113.5", clientIpFromAddr(tcp))
+
+	assert.Equal(t, "203.0.113.7", clientIpFromAddr(fakeAddr{network: "tcp", addr: "203.0.113.7:25"}))
+
+	assert.Equal(t, "/tmp/socket", clientIpFromAddr(fakeAddr{network: "unix", addr: "/tmp/socket"}))
 }
 
 func TestIncomingServer_CapturesClientIp(t *testing.T) {
