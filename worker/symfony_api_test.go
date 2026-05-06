@@ -81,12 +81,15 @@ func TestHandleInvalidStatusCode(t *testing.T) {
 
 func TestHandleCallSendEmailApi(t *testing.T) {
 
+	var capturedForwardedFor string
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		authHeader := r.Header.Get("Authorization")
 		expectedAuthHeader := "Bearer my-api-key"
 		assert.Equal(t, expectedAuthHeader, authHeader)
+
+		capturedForwardedFor = r.Header.Get("X-Forwarded-For")
 
 		body, err := io.ReadAll(r.Body)
 		assert.NoError(t, err)
@@ -132,7 +135,34 @@ func TestHandleCallSendEmailApi(t *testing.T) {
 		ctx,
 		"my-api-key",
 		apiRequest,
+		"203.0.113.5",
 	)
 	assert.NoError(t, err)
+	assert.Equal(t, "203.0.113.5", capturedForwardedFor)
+}
 
+func TestHandleCallSendEmailApi_NoClientIp(t *testing.T) {
+
+	var capturedForwardedFor string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedForwardedFor = r.Header.Get("X-Forwarded-For")
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"status":"ok"}`))
+	}))
+
+	os.Setenv("GO_SYMFONY_URL", server.URL)
+	defer os.Unsetenv("GO_SYMFONY_URL")
+	defer server.Close()
+
+	err := handleCallSendEmailApi(
+		context.Background(),
+		"my-api-key",
+		&smtp_interface.ApiRequest{
+			From: smtp_interface.Address{Email: "sender@example.com"},
+			To:   []smtp_interface.Address{{Email: "recipient@example.com"}},
+		},
+		"",
+	)
+	assert.NoError(t, err)
+	assert.Equal(t, "", capturedForwardedFor)
 }

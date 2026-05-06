@@ -6,11 +6,13 @@ use App\Api\Console\Authorization\AuthorizationListener;
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Authorization\ScopeRequired;
 use App\Entity\ApiKey;
+use App\Service\ApiKey\AllowedIp;
 use App\Service\Project\ProjectService;
 use App\Service\ProjectUser\ProjectUserService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
+use App\Tests\Factory\ApiKeyFactory;
 use Hyvor\Internal\Auth\AuthFake;
 use Hyvor\Internal\Auth\AuthUser;
 use Hyvor\Internal\Auth\AuthUserOrganization;
@@ -24,6 +26,7 @@ use Symfony\Component\Clock\MockClock;
 #[CoversClass(ScopeRequired::class)]
 #[CoversClass(ProjectService::class)]
 #[CoversClass(ProjectUserService::class)]
+#[CoversClass(AllowedIp::class)]
 class AuthorizationTest extends WebTestCase
 {
 
@@ -329,6 +332,73 @@ class AuthorizationTest extends WebTestCase
             '2025-06-01 00:00:00',
             $apiKey->getLastAccessedAt()?->format('Y-m-d H:i:s')
         );
+    }
+
+    public function test_api_key_with_allowed_ips_accepts_matching_ip(): void
+    {
+        $project = ProjectFactory::createOne();
+        $apiKey = bin2hex(random_bytes(16));
+        ApiKeyFactory::createOne([
+            'project' => $project,
+            'key_hashed' => hash('sha256', $apiKey),
+            'scopes' => [Scope::SENDS_READ->value],
+            'allowed_ips' => ['203.0.113.5', '198.51.100.0/24'],
+        ]);
+
+        $this->client->request(
+            'GET',
+            '/api/console/sends',
+            server: [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $apiKey,
+                'HTTP_X_FORWARDED_FOR' => '198.51.100.42',
+            ]
+        );
+        $this->assertResponseStatusCodeSame(200);
+    }
+
+    public function test_api_key_with_allowed_ips_rejects_non_matching_ip(): void
+    {
+        $project = ProjectFactory::createOne();
+        $apiKey = bin2hex(random_bytes(16));
+        \App\Tests\Factory\ApiKeyFactory::createOne([
+            'project' => $project,
+            'key_hashed' => hash('sha256', $apiKey),
+            'scopes' => [Scope::SENDS_READ->value],
+            'allowed_ips' => ['203.0.113.5'],
+        ]);
+
+        $this->client->request(
+            'GET',
+            '/api/console/sends',
+            server: [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $apiKey,
+                'HTTP_X_FORWARDED_FOR' => '198.51.100.42',
+            ]
+        );
+        $this->assertResponseStatusCodeSame(403);
+        $this->assertSame('Client IP is not allowed for this API key.', $this->getJson()['message']);
+    }
+
+    public function test_api_key_without_allowed_ips_skips_check(): void
+    {
+        $project = ProjectFactory::createOne();
+        $apiKey = bin2hex(random_bytes(16));
+        ApiKeyFactory::createOne([
+            'project' => $project,
+            'key_hashed' => hash('sha256', $apiKey),
+            'scopes' => [Scope::SENDS_READ->value],
+            'allowed_ips' => [],
+        ]);
+
+        $this->client->request(
+            'GET',
+            '/api/console/sends',
+            server: [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $apiKey,
+                'HTTP_X_FORWARDED_FOR' => '198.51.100.42',
+            ]
+        );
+        $this->assertResponseStatusCodeSame(200);
     }
 
     public function test_authorizes_via_session(): void

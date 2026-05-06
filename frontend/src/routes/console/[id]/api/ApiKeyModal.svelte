@@ -5,11 +5,16 @@
 		SplitControl,
 		toast,
 		Checkbox,
-		Switch
+		Switch,
+		Button,
+		IconButton,
+		Tag
 	} from '@hyvor/design/components';
+	import IconX from '@hyvor/icons/IconX';
 	import { createApiKey, updateApiKey } from '../../lib/actions/apiKeyActions';
 	import type { ApiKey } from '../../types';
 	import { getAppConfig } from '../../lib/stores/consoleStore';
+	import { validateAllowedIpEntry } from './allowedIp';
 
 	interface Props {
 		show: boolean;
@@ -28,18 +33,21 @@
 	let name = $state('');
 	let selectedScopes = $state<string[]>(['sends.send']);
 	let isEnabled = $state(true);
+	let allowedIps = $state<string[]>([]);
+	let ipInput = $state('');
+	let ipError = $state<string | undefined>();
 	let loading = $state(false);
 	let errors = $state<Record<string, string>>({});
 
 	const appConfig = getAppConfig();
 	const scopes = appConfig.app?.api_keys?.scopes || [];
 
-	// Watch for editingApiKey changes to populate form
 	$effect(() => {
 		if (editingApiKey) {
 			name = editingApiKey.name;
 			selectedScopes = [...editingApiKey.scopes];
 			isEnabled = editingApiKey.is_enabled;
+			allowedIps = [...(editingApiKey.allowed_ips ?? [])];
 		} else {
 			resetForm();
 		}
@@ -56,6 +64,9 @@
 		name = '';
 		selectedScopes = ['sends.send'];
 		isEnabled = true;
+		allowedIps = [];
+		ipInput = '';
+		ipError = undefined;
 		errors = {};
 	}
 
@@ -72,7 +83,45 @@
 			errors.scopes = 'At least one scope is required';
 		}
 
+		if (selectedScopes.includes('sends.send') && allowedIps.length === 0) {
+			errors.allowed_ips =
+				'At least one allowed IP is required when "sends.send" scope is enabled.';
+		}
+
 		return Object.keys(errors).length === 0;
+	}
+
+	function handleAddIp() {
+		const entry = ipInput.trim();
+		if (entry === '') return;
+		const error = validateAllowedIpEntry(entry);
+		if (error) {
+			ipError = error;
+			return;
+		}
+		if (allowedIps.includes(entry)) {
+			ipError = 'This entry is already in the list.';
+			return;
+		}
+		allowedIps = [...allowedIps, entry];
+		ipInput = '';
+		ipError = undefined;
+		if (errors.allowed_ips) {
+			const next = { ...errors };
+			delete next.allowed_ips;
+			errors = next;
+		}
+	}
+
+	function handleRemoveIp(entry: string) {
+		allowedIps = allowedIps.filter((e) => e !== entry);
+	}
+
+	function handleIpKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			handleAddIp();
+		}
 	}
 
 	function handleSubmit() {
@@ -86,9 +135,10 @@
 			? updateApiKey(editingApiKey.id, {
 					name: name.trim(),
 					scopes: selectedScopes,
-					is_enabled: isEnabled
+					is_enabled: isEnabled,
+					allowed_ips: allowedIps
 				})
-			: createApiKey(name.trim(), selectedScopes);
+			: createApiKey(name.trim(), selectedScopes, allowedIps);
 
 		promise
 			.then((apiKey) => {
@@ -127,6 +177,7 @@
 	const isEditing = $derived(!!editingApiKey);
 	const modalTitle = $derived(isEditing ? 'Edit API Key' : 'Create API Key');
 	const confirmText = $derived(isEditing ? 'Update API Key' : 'Create API Key');
+	const sendsSendSelected = $derived(selectedScopes.includes('sends.send'));
 </script>
 
 <Modal
@@ -206,6 +257,56 @@
 			</div>
 		</SplitControl>
 
+		<SplitControl
+			label={sendsSendSelected ? 'Allowed IPs (required)' : 'Allowed IPs'}
+			caption="Restrict this key to specific client IPs."
+			error={errors.allowed_ips}
+		>
+			<div class="ip-help">
+				<div>Accepts a single IPv4 or IPv6 address, or a CIDR range (max <code>/24</code> for IPv4, <code>/48</code> for IPv6).</div>
+				<div>Private and CGNAT ranges are rejected.</div>
+				{#if sendsSendSelected}
+					<div>At least one entry is required when <code>sends.send</code> is selected.</div>
+				{/if}
+			</div>
+			<div class="ip-input-row">
+				<TextInput
+					bind:value={ipInput}
+					placeholder="e.g. 203.0.113.5 or 2001:db8::/64"
+					block
+					disabled={loading}
+					on:keydown={handleIpKeydown}
+				/>
+				<Button
+					variant="outline"
+					on:click={handleAddIp}
+					disabled={loading || ipInput.trim() === ''}
+				>
+					Add
+				</Button>
+			</div>
+			{#if ipError}
+				<div class="ip-error">{ipError}</div>
+			{/if}
+			{#if allowedIps.length > 0}
+				<div class="ip-list">
+					{#each allowedIps as entry (entry)}
+						<div class="ip-chip">
+							<Tag size="small">{entry}</Tag>
+							<IconButton
+								size="small"
+								color="input"
+								on:click={() => handleRemoveIp(entry)}
+								disabled={loading}
+							>
+								<IconX size={10} />
+							</IconButton>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</SplitControl>
+
 		{#if isEditing}
 			<SplitControl label="Status" caption="Enable or disable this API key">
 				<Switch bind:checked={isEnabled} disabled={loading}>
@@ -278,5 +379,46 @@
 	.scope-description {
 		font-size: 12px;
 		color: var(--text-light);
+	}
+
+	.ip-help {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		margin-bottom: 10px;
+		font-size: 12px;
+		color: var(--text-light);
+	}
+
+	.ip-help code {
+		font-size: 11px;
+		padding: 1px 4px;
+		border-radius: 3px;
+		background: var(--hover);
+	}
+
+	.ip-input-row {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+	}
+
+	.ip-error {
+		margin-top: 6px;
+		font-size: 12px;
+		color: var(--red);
+	}
+
+	.ip-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		margin-top: 10px;
+	}
+
+	.ip-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
 	}
 </style>

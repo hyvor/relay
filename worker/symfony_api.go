@@ -119,16 +119,22 @@ func handleCallSendEmailApi(
 	ctx context.Context,
 	apiKey string,
 	body *smtp_interface.ApiRequest,
+	clientIp string,
 ) error {
+
+	headers := map[string]string{
+		"Authorization": "Bearer " + apiKey,
+	}
+	if clientIp != "" {
+		headers["X-Forwarded-For"] = clientIp
+	}
 
 	return callSymfonyApi(
 		ctx,
 		"POST",
 		"/api/console/sends",
 		body,
-		map[string]string{
-			"Authorization": "Bearer " + apiKey,
-		},
+		headers,
 		nil,
 	)
 
