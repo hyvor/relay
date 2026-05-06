@@ -259,9 +259,16 @@
 
 		<SplitControl
 			label={sendsSendSelected ? 'Allowed IPs (required)' : 'Allowed IPs'}
-			caption="Restrict this key to specific clients. Accepts a single IPv4 / IPv6, or an IPv4 CIDR (/24 or smaller) / IPv6 CIDR (/48 or smaller). Private and CGNAT ranges are rejected. Leave empty for no restriction (not allowed when sends.send is selected)."
+			caption="Restrict this key to specific client IPs."
 			error={errors.allowed_ips}
 		>
+			<div class="ip-help">
+				<div>Accepts a single IPv4 or IPv6 address, or a CIDR range (max <code>/24</code> for IPv4, <code>/48</code> for IPv6).</div>
+				<div>Private and CGNAT ranges are rejected.</div>
+				{#if sendsSendSelected}
+					<div>At least one entry is required when <code>sends.send</code> is selected.</div>
+				{/if}
+			</div>
 			<div class="ip-input-row">
 				<TextInput
 					bind:value={ipInput}
@@ -372,6 +379,22 @@
 	.scope-description {
 		font-size: 12px;
 		color: var(--text-light);
+	}
+
+	.ip-help {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		margin-bottom: 10px;
+		font-size: 12px;
+		color: var(--text-light);
+	}
+
+	.ip-help code {
+		font-size: 11px;
+		padding: 1px 4px;
+		border-radius: 3px;
+		background: var(--hover);
 	}
 
 	.ip-input-row {
