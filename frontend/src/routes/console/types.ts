@@ -78,6 +78,7 @@ export type Send = {
 	size_bytes: number;
 	queued: boolean;
 	send_after: number;
+	ip_address: string | null;
 
 	recipients: SendRecipient[];
 	attempts: SendAttempt[];

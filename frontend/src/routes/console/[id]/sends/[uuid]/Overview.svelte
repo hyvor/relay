@@ -120,6 +120,8 @@
 		</div>
 
 		<DetailCard label="Size" content={byteFormatter(send.size_bytes)} />
+
+		<DetailCard label="IP Address" content={send.ip_address ?? 'Not assigned'} />
 	</div>
 </div>
 
