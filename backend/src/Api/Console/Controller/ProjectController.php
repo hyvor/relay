@@ -72,7 +72,7 @@ class ProjectController extends AbstractController
     public function deleteProject(Project $project): JsonResponse
     {
         $this->projectService->deleteProject($project);
-
+        
         return new JsonResponse(null, 204);
     }
 }
