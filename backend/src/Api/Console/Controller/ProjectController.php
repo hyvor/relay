@@ -66,4 +66,13 @@ class ProjectController extends AbstractController
 
         return $this->json(new ProjectObject($updatedProject));
     }
+
+    #[Route('/project', methods: 'DELETE')]
+    #[ScopeRequired(Scope::PROJECT_WRITE)]
+    public function deleteProject(Project $project): JsonResponse
+    {
+        $this->projectService->deleteProject($project);
+
+        return new JsonResponse(null, 204);
+    }
 }

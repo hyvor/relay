@@ -41,6 +41,7 @@ class OrganizationsMigrateCommand extends Command
                 ->from(Project::class, 'p')
                 ->where('p.organization_id = 0')
                 ->andWhere('p.user_id != 0')
+                ->andWhere('p.deleted_at IS NULL')
                 ->setMaxResults(50)
                 ->getQuery()
                 ->getSingleColumnResult();

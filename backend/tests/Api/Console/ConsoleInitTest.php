@@ -15,6 +15,7 @@ use Hyvor\Internal\Auth\AuthUserOrganization;
 use Hyvor\Internal\Sudo\SudoUserFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\BrowserKit\Cookie;
+use Symfony\Component\Clock\ClockAwareTrait;
 
 #[CoversClass(ConsoleController::class)]
 #[CoversClass(ProjectService::class)]
@@ -23,6 +24,8 @@ use Symfony\Component\BrowserKit\Cookie;
 #[CoversClass(Compliance::class)]
 class ConsoleInitTest extends WebTestCase
 {
+    use ClockAwareTrait;
+
     protected function shouldEnableAuthFake(): bool
     {
         return false;
@@ -76,6 +79,45 @@ class ConsoleInitTest extends WebTestCase
         $this->assertArrayHasKey('config', $json);
         $this->assertIsArray($json['project_users']);
         $this->assertCount(5, $json['project_users']); // system project not selected, because it has org ID 0
+    }
+
+    public function test_init_console_excludes_soft_deleted_projects(): void
+    {
+        AuthFake::enableForSymfony(
+            $this->container,
+            ['id' => 1],
+            new AuthUserOrganization(
+                id: 1,
+                name: 'Fake Organization',
+                role: 'admin'
+            )
+        );
+
+        $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
+        SudoUserFactory::createOne(['user_id' => 1]);
+
+        ProjectUserFactory::createMany(3, [
+            'user_id' => 1,
+            'project' => ProjectFactory::new([
+                'organization_id' => 1,
+            ]),
+        ]);
+
+        ProjectUserFactory::createMany(2, [
+            'user_id' => 1,
+            'project' => ProjectFactory::new([
+                'organization_id' => 1,
+                'deleted_at' => $this->now(),
+            ]),
+        ]);
+
+        $this->client->request('GET', '/api/console/init');
+
+        $this->assertResponseStatusCodeSame(200);
+
+        $json = $this->getJson();
+        $this->assertIsArray($json['project_users']);
+        $this->assertCount(3, $json['project_users']);
     }
 
     public function test_init_console_without_org(): void
