@@ -178,9 +178,6 @@ class ProjectService
 
         $this->em->flush();
 
-        // TODO(email): notify each affected owner with a single email listing all deleted projects;
-        // mention the 30-day grace period before hard delete. Out of scope for this PR.
-
         $this->ed->dispatch(new ProjectsDeletedEvent($deleted));
     }
 

@@ -12,6 +12,8 @@ class HardDeleteSoftDeletedProjectsMessageHandler
 {
     use ClockAwareTrait;
 
+    public const int GRACE_PERIOD_DAYS = 30;
+
     public function __construct(
         private ProjectService $projectService,
     ) {
@@ -20,7 +22,7 @@ class HardDeleteSoftDeletedProjectsMessageHandler
     public function __invoke(HardDeleteSoftDeletedProjectsMessage $message): void
     {
         $this->projectService->hardDeleteSoftDeletedBefore(
-            $this->now()->modify('-30 days')
+            $this->now()->modify('-' . self::GRACE_PERIOD_DAYS . ' days')
         );
     }
 }

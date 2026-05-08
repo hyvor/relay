@@ -3,7 +3,11 @@
 	import { goto } from '$app/navigation';
 	import SettingsBody from '../../@components/content/SettingsBody.svelte';
 	import ProjectSaveDiscard from './ProjectSaveDiscard.svelte';
-	import { getCurrentProject, getCurrentProjectEditing } from '../../lib/stores/projectStore.svelte';
+	import {
+		getCurrentProject,
+		getCurrentProjectEditing,
+		removeProjectUser
+	} from '../../lib/stores/projectStore.svelte';
 	import ScopeMask from '../../@components/Scope/ScopeMask.svelte';
 	import { deleteProject } from '../../lib/actions/projectActions';
 	import { consoleUrl } from '../../lib/consoleUrl';
@@ -27,6 +31,7 @@
 
 		try {
 			await deleteProject();
+			removeProjectUser(project.id);
 			toast.success(`"${project.name}" has been deleted`);
 			goto(consoleUrl(''));
 		} catch (error: any) {
