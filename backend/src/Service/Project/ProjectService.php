@@ -183,6 +183,7 @@ class ProjectService
      */
     public function hardDeleteSoftDeletedBefore(\DateTimeImmutable $cutoff): void
     {
+        /** @var Project[] $projects */
         $projects = $this->em->getRepository(Project::class)
             ->createQueryBuilder('p')
             ->andWhere('p.deleted_at IS NOT NULL')
