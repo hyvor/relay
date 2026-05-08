@@ -60,6 +60,24 @@ class ProjectService
     }
 
     /**
+     * @return Project[]
+     */
+    public function getSoftDeletedProjects(int $limit, int $offset): array
+    {
+        /** @var Project[] $projects */
+        $projects = $this->em->getRepository(Project::class)
+            ->createQueryBuilder('p')
+            ->andWhere('p.deleted_at IS NOT NULL')
+            ->orderBy('p.deleted_at', 'ASC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset)
+            ->getQuery()
+            ->getResult();
+
+        return $projects;
+    }
+
+    /**
      * @return array{
      *     project: Project,
      *     projectUser: ($createProjectUser is true ? ProjectUser : null)

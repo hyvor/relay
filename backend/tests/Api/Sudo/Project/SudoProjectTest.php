@@ -72,4 +72,59 @@ class SudoProjectTest extends WebTestCase
         );
         $this->assertResponseStatusCodeSame(403);
     }
+
+    public function test_list_soft_deleted_returns_only_deleted_projects(): void
+    {
+        ProjectFactory::createOne(['deleted_at' => null]);
+        $deleted1 = ProjectFactory::createOne(['deleted_at' => $this->now()->modify('-2 days')]);
+        $deleted2 = ProjectFactory::createOne(['deleted_at' => $this->now()->modify('-1 day')]);
+
+        $this->sudoApi('GET', '/project/soft-deleted');
+
+        $this->assertResponseStatusCodeSame(200);
+        /** @var array<array<string, mixed>> $json */
+        $json = $this->getJson();
+        $this->assertCount(2, $json);
+        $ids = array_column($json, 'id');
+        $this->assertContains($deleted1->getId(), $ids);
+        $this->assertContains($deleted2->getId(), $ids);
+    }
+
+    public function test_list_soft_deleted_orders_by_deleted_at_asc(): void
+    {
+        $newer = ProjectFactory::createOne(['deleted_at' => $this->now()->modify('-1 day')]);
+        $older = ProjectFactory::createOne(['deleted_at' => $this->now()->modify('-5 days')]);
+
+        $this->sudoApi('GET', '/project/soft-deleted');
+
+        $this->assertResponseStatusCodeSame(200);
+        /** @var array<array<string, mixed>> $json */
+        $json = $this->getJson();
+        $this->assertSame($older->getId(), $json[0]['id']);
+        $this->assertSame($newer->getId(), $json[1]['id']);
+    }
+
+    public function test_list_soft_deleted_respects_limit_and_offset(): void
+    {
+        ProjectFactory::createOne(['deleted_at' => $this->now()->modify('-3 days')]);
+        $second = ProjectFactory::createOne(['deleted_at' => $this->now()->modify('-2 days')]);
+        ProjectFactory::createOne(['deleted_at' => $this->now()->modify('-1 day')]);
+
+        $this->sudoApi('GET', '/project/soft-deleted?limit=1&offset=1');
+
+        $this->assertResponseStatusCodeSame(200);
+        /** @var array<array<string, mixed>> $json */
+        $json = $this->getJson();
+        $this->assertCount(1, $json);
+        $this->assertSame($second->getId(), $json[0]['id']);
+    }
+
+    public function test_list_soft_deleted_requires_sudo(): void
+    {
+        ProjectFactory::createOne(['deleted_at' => $this->now()->modify('-1 day')]);
+
+        $this->sudoApi('GET', '/project/soft-deleted', createSudoUser: false);
+
+        $this->assertResponseStatusCodeSame(403);
+    }
 }

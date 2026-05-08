@@ -159,6 +159,19 @@ export interface InfrastructureBounce {
 	send_recipient_id: number;
 }
 
+export interface Project {
+	id: number;
+	user_id: number;
+	organization_id: number | null;
+	name: string;
+	send_type: string;
+	created_at: number;
+	updated_at: number;
+	deleted_at: number | null;
+}
+
+export const SOFT_DELETE_TTL_DAYS = 30;
+
 export interface TlsCertificate {
 	id: number;
 	created_at: number;
