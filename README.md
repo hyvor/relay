@@ -44,6 +44,25 @@ enough to send millions of daily emails.
 
 <!-- - **Dedicated IPs**: Support for dedicated IPs users. (coming soon) -->
 
+## SDK
+
+The following SDKs are available or planned:
+
+| Language / Framework | Repository                                                    | Status |
+|----------------------|---------------------------------------------------------------|--------|
+| JavaScript*          | [hyvor/relay-js](https://github.com/hyvor/relay-js)           | WIP    |
+| PHP                  | [hyvor/relay-php](https://github.com/hyvor/relay-php)         | N/A    |
+| └── Symfony (Mailer) | [hyvor/relay-symfony](https://github.com/hyvor/relay-symfony) | N/A    |
+| └── Laravel          | [hyvor/relay-laravel](https://github.com/hyvor/relay-laravel) | N/A    |
+| Go                   | [hyvor/relay-go](https://github.com/hyvor/relay-go)           | N/A    |
+| Ruby                 | [hyvor/relay-ruby](https://github.com/hyvor/relay-ruby)       | N/A    |
+| Python               | [hyvor/relay-python](https://github.com/hyvor/relay-python)   | N/A    |
+| Rust                 | [hyvor/relay-rust](https://github.com/hyvor/relay-rust)       | N/A    |
+| Java                 | [hyvor/relay-java](https://github.com/hyvor/relay-java)       | N/A    |
+| Dotnet               | [hyvor/relay-dotnet](https://github.com/hyvor/relay-dotnet)   | N/A    |
+
+*JavaScript SDK is the primary implementation that other SDKs follow. See [sdk.md](./meta/playbooks/sdk.md) for rules for creating an official library.
+
 ## Screenshots
 
 The sudo dashboard for admins:
