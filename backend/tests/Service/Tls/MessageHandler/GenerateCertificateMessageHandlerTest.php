@@ -21,7 +21,6 @@ use Hyvor\Internal\Util\Crypt\Encryption;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\Clock\Clock;
 use Symfony\Component\Clock\MockClock;
-use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\LockFactory;
 
 #[CoversClass(GenerateCertificateMessageHandler::class)]
@@ -33,36 +32,37 @@ class GenerateCertificateMessageHandlerTest extends KernelTestCase
 
     public function test_when_lock_is_acquired(): void
     {
-        $logger = $this->getTestLogger();
+        try {
+            $logger = $this->getTestLogger();
 
-        // first acquire lock
-        $lockKey = new Key('mail_tls_certificate_generation_lock');
-        $lock = $this->getService(LockFactory::class)->createLockFromKey($lockKey);
-        $acquired = $lock->acquire();
-        $this->assertTrue($acquired);
+            // first acquire lock
+            $lock = $this->getService(LockFactory::class)->createLock('mail_tls_certificate_generation_lock');
+            $acquired = $lock->acquire();
+            $this->assertTrue($acquired);
 
-        // second key
-        $lockKey2 = new Key('mail_tls_certificate_generation_lock');
+            // second key
 
-        $message = new GenerateCertificateMessage(
-            tlsCertificateId: 1,
-            lockKey: $lockKey2
-        );
-        $transport = $this->transport(MessageTransport::ASYNC);
-        $transport->send($message);
-        $transport->processOrFail();
+            $message = new GenerateCertificateMessage(
+                tlsCertificateId: 1,
+            );
+            $transport = $this->transport(MessageTransport::ASYNC);
+            $transport->send($message);
+            $transport->processOrFail();
 
-        $this->assertTrue(
-            $logger->hasErrorThatContains("Could not acquire lock for TLS certificate generation, aborting")
-        );
+            $this->assertTrue(
+                $logger->hasErrorThatContains("Could not acquire lock for TLS certificate generation, aborting")
+            );
+        } finally {
+            if (isset($lock)) {
+                $lock->release();
+            }
+        }
     }
 
     public function test_when_cert_not_found(): void
     {
-        $lockKey = new Key('mail_tls_certificate_generation_lock');
         $message = new GenerateCertificateMessage(
             tlsCertificateId: 1,
-            lockKey: $lockKey
         );
         $transport = $this->transport(MessageTransport::ASYNC);
         $transport->send($message);
@@ -75,7 +75,6 @@ class GenerateCertificateMessageHandlerTest extends KernelTestCase
 
     public function test_when_acme_client_fails(): void
     {
-        $lockKey = new Key('mail_tls_certificate_generation_lock');
         $encryption = $this->getService(Encryption::class);
         $tlsCert = TlsCertificateFactory::createOne([
             'private_key_encrypted' => $encryption->encryptString(PrivateKey::generatePrivateKeyPem())
@@ -88,7 +87,6 @@ class GenerateCertificateMessageHandlerTest extends KernelTestCase
 
         $message = new GenerateCertificateMessage(
             tlsCertificateId: $tlsCert->getId(),
-            lockKey: $lockKey
         );
         $transport = $this->transport(MessageTransport::ASYNC);
         $transport->send($message);
@@ -100,15 +98,6 @@ class GenerateCertificateMessageHandlerTest extends KernelTestCase
         Clock::set(new MockClock());
 
         $instance = InstanceFactory::createOne();
-
-        // previously acquired lock
-        $lockKey = new Key('mail_tls_certificate_generation_lock');
-        $lock = $this->getService(LockFactory::class)
-            ->createLockFromKey($lockKey, ttl: 300, autoRelease: false);
-        $acquired = $lock->acquire();
-
-        $this->assertTrue($acquired);
-
         $encryption = $this->getService(Encryption::class);
         $privateKeyPem = PrivateKey::generatePrivateKeyPem();
         $tlsCert = TlsCertificateFactory::createOne([
@@ -163,7 +152,6 @@ class GenerateCertificateMessageHandlerTest extends KernelTestCase
         // dispatch generation
         $message = new GenerateCertificateMessage(
             tlsCertificateId: $tlsCert->getId(),
-            lockKey: $lockKey
         );
         $transport = $this->transport(MessageTransport::ASYNC);
         $transport->send($message);
@@ -173,11 +161,9 @@ class GenerateCertificateMessageHandlerTest extends KernelTestCase
         $this->assertSame(TlsCertificateStatus::ACTIVE, $tlsCert->getStatus());
         $this->assertInstanceOf(\DateTimeImmutable::class, $tlsCert->getValidFrom());
         $this->assertInstanceOf(\DateTimeImmutable::class, $tlsCert->getValidTo());
-
         $this->assertSame(
             $tlsCert->getId(),
             $instance->getMailTlsCertificateId()
         );
     }
-
 }

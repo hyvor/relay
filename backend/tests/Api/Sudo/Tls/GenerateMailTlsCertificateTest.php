@@ -12,7 +12,6 @@ use App\Service\Tls\Message\GenerateCertificateMessage;
 use App\Service\Tls\TlsCertificateService;
 use App\Tests\Case\WebTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
-use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\LockFactory;
 
 #[CoversClass(TlsController::class)]
@@ -39,21 +38,25 @@ class GenerateMailTlsCertificateTest extends WebTestCase
 
     public function test_when_lock_already_acquired(): void
     {
-        $lockKey = new Key('mail_tls_certificate_generation_lock');
-        $lock = $this->getService(LockFactory::class)
-            ->createLockFromKey($lockKey, ttl: 300, autoRelease: false);
-        $lock->acquire();
+        try {
+            $lock = $this->getService(LockFactory::class)
+                ->createLock('mail_tls_certificate_generation_lock', ttl: 300, autoRelease: false);
+            $lock->acquire();
 
-        $this->sudoApi('POST', '/tls/mail-certs/generate');
-        $this->assertResponseStatusCodeSame(400);
+            $this->sudoApi('POST', '/tls/mail-certs/generate');
+            $this->assertResponseStatusCodeSame(400);
 
-        $responseData = $this->getJson();
-        $this->assertSame(
-            'Another TLS certificate generation request is already in progress.',
-            $responseData['message']
-        );
+            $responseData = $this->getJson();
+            $this->assertSame(
+                'Another TLS certificate generation request is already in progress.',
+                $responseData['message']
+            );
 
-        $lock->release();
+            $lock->release();
+        } finally {
+            if (isset($lock)) {
+                $lock->release();
+            }
+        }
     }
-
 }
