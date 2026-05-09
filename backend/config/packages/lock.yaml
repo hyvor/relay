@@ -1,6 +1,4 @@
 framework:
-  lock: '%env(DATABASE_URL)%'
-
-when@test:
-  framework:
-    lock: 'in-memory'
+  # replaces postgresql:// with postgresql+advisory://
+  # see AdvisoryProcessor
+  lock: "%env(advisory:DATABASE_URL)%"

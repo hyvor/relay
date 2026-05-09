@@ -11,19 +11,11 @@ readonly class GenerateCertificateMessage
 {
 
     public function __construct(
-        private int $tlsCertificateId,
-        private Key $lockKey,
-    ) {
-    }
+        private int $tlsCertificateId
+    ) {}
 
     public function getTlsCertificateId(): int
     {
         return $this->tlsCertificateId;
     }
-
-    public function getLockKey(): Key
-    {
-        return $this->lockKey;
-    }
-
 }
