@@ -11,7 +11,10 @@ import type {
 	DnsRecordType,
 	DebugIncomingEmail,
 	InfrastructureBounce,
-	TlsCertificate
+	TlsCertificate,
+	SudoSend,
+	SudoSendRecipientStatus,
+	SudoProject
 } from './sudoTypes';
 
 export function initSudo() {
@@ -169,5 +172,33 @@ export function getTlsMailCerts() {
 export function generateMailCert() {
 	return sudoApi.post<TlsCertificate>({
 		endpoint: '/tls/mail-certs/generate'
+	});
+}
+
+export function getSends(opts: {
+	project_id: number | null;
+	status: SudoSendRecipientStatus | null;
+	from_search: string | null;
+	to_search: string | null;
+	subject_search: string | null;
+	date_from_search: string | null;
+	date_to_search: string | null;
+	limit: number;
+	before_id: number | null;
+}) {
+	return sudoApi.get<SudoSend[]>({
+		endpoint: '/sends',
+		data: opts
+	});
+}
+
+export function getProjects(
+	search: string | null,
+	limit: number,
+	before_id: number | null
+) {
+	return sudoApi.get<SudoProject[]>({
+		endpoint: '/projects',
+		data: { search, limit, before_id }
 	});
 }
