@@ -168,3 +168,102 @@ export interface TlsCertificate {
 	valid_from: number | null;
 	valid_to: number | null;
 }
+
+// Sends
+
+export type SudoSendRecipientStatus =
+	| 'queued'
+	| 'accepted'
+	| 'deferred'
+	| 'bounced'
+	| 'complained'
+	| 'suppressed'
+	| 'failed';
+
+export interface SudoSendRecipient {
+	id: number;
+	address: string;
+	status: SudoSendRecipientStatus;
+}
+
+export interface SudoSend {
+	id: number;
+	uuid: string;
+	created_at: number;
+	from_address: string;
+	from_name: string | null;
+	subject: string | null;
+	queued: boolean;
+	recipients: SudoSendRecipient[];
+	project: {
+		id: number;
+		name: string;
+	};
+}
+
+export type SendAttemptStatus =
+	| 'accepted'
+	| 'deferred'
+	| 'bounced'
+	| 'partial'
+	| 'failed';
+
+export interface SudoSendAttemptRecipient {
+	id: number;
+	created_at: number;
+	recipient_id: number;
+	recipient_status: SudoSendRecipientStatus;
+	smtp_code: number;
+	smtp_enhanced_code: string | null;
+	smtp_message: string;
+	is_suppressed: boolean;
+}
+
+export interface SudoSendAttempt {
+	id: number;
+	created_at: number;
+	status: SendAttemptStatus;
+	try_count: number;
+	domain: string;
+	resolved_mx_hosts: string[];
+	responded_mx_host: string | null;
+	smtp_conversations: Record<string, unknown>;
+	duration_ms: number;
+	recipients: SudoSendAttemptRecipient[];
+}
+
+export type SendFeedbackType = 'bounce' | 'complaint';
+
+export interface SudoSendFeedback {
+	id: number;
+	created_at: number;
+	type: SendFeedbackType;
+	recipient_id: number;
+	debug_incoming_email_id: number;
+}
+
+export interface SudoSendDetail extends SudoSend {
+	body_html: string | null;
+	body_text: string | null;
+	headers: Record<string, string>;
+	raw: string;
+	size_bytes: number;
+	send_after: number;
+	attempts: SudoSendAttempt[];
+	feedback: SudoSendFeedback[];
+}
+
+export interface SudoProject {
+	id: number;
+	name: string;
+	created_at: number;
+	organization_id: number | null;
+	send_type: 'transactional' | 'distributional';
+}
+
+export type SudoSendsDateFilterPreset =
+	| 'today'
+	| 'yesterday'
+	| 'this_week'
+	| 'custom'
+	| null;
