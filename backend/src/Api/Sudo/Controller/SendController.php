@@ -6,6 +6,8 @@ use App\Api\Sudo\Object\SendObject;
 use App\Entity\Type\SendRecipientStatus;
 use App\Repository\ProjectRepository;
 use App\Service\Send\SendService;
+use App\Service\SendAttempt\SendAttemptService;
+use App\Service\SendFeedback\SendFeedbackService;
 use App\Service\Sudo\SudoPermission;
 use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -13,6 +15,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 
 #[SudoPermissionRequired(SudoPermission::ACCESS_SUDO)]
 class SendController extends AbstractController
@@ -20,6 +23,8 @@ class SendController extends AbstractController
     public function __construct(
         private SendService $sendService,
         private ProjectRepository $projectRepository,
+        private SendAttemptService $sendAttemptService,
+        private SendFeedbackService $sendFeedbackService,
     ) {}
 
     #[Route('/sends', methods: 'GET')]
@@ -84,5 +89,27 @@ class SendController extends AbstractController
             ->map(fn($send) => new SendObject($send));
 
         return $this->json($sends);
+    }
+
+    #[Route('/sends/uuid/{uuid}', requirements: ['uuid' => Requirement::UUID], methods: 'GET')]
+    public function getByUuid(string $uuid): JsonResponse
+    {
+        $send = $this->sendService->getSendByUuid($uuid);
+
+        if ($send === null) {
+            throw new NotFoundHttpException("Send with UUID $uuid not found");
+        }
+
+        $attempts = $this->sendAttemptService->getSendAttemptsOfSend($send);
+        $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
+
+        return $this->json(
+            new SendObject(
+                $send,
+                attempts: $attempts,
+                feedback: $feedback,
+                content: true
+            )
+        );
     }
 }
