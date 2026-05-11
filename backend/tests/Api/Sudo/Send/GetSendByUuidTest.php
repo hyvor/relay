@@ -4,6 +4,7 @@ namespace App\Tests\Api\Sudo\Send;
 
 use App\Api\Sudo\Controller\SendController;
 use App\Api\Sudo\Object\SendAttemptObject;
+use App\Api\Sudo\Object\SendAttemptRecipientObject;
 use App\Api\Sudo\Object\SendFeedbackObject;
 use App\Api\Sudo\Object\SendObject;
 use App\Api\Sudo\Object\SudoSendRecipientObject;
@@ -13,6 +14,7 @@ use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\SendAttemptFactory;
+use App\Tests\Factory\SendAttemptRecipientFactory;
 use App\Tests\Factory\SendFactory;
 use App\Tests\Factory\SendFeedbackFactory;
 use App\Tests\Factory\SendRecipientFactory;
@@ -23,6 +25,7 @@ use Symfony\Component\Uid\Uuid;
 #[CoversClass(SendService::class)]
 #[CoversClass(SendObject::class)]
 #[CoversClass(SendAttemptObject::class)]
+#[CoversClass(SendAttemptRecipientObject::class)]
 #[CoversClass(SendFeedbackObject::class)]
 #[CoversClass(SudoSendRecipientObject::class)]
 class GetSendByUuidTest extends WebTestCase
@@ -43,8 +46,13 @@ class GetSendByUuidTest extends WebTestCase
             'send' => $send,
         ]);
 
-        SendAttemptFactory::createOne([
+        $attempt = SendAttemptFactory::createOne([
             'send' => $send,
+        ]);
+
+        SendAttemptRecipientFactory::createOne([
+            'send_attempt' => $attempt,
+            'send_recipient_id' => $recipient->getId(),
         ]);
 
         SendFeedbackFactory::createOne([
@@ -70,6 +78,13 @@ class GetSendByUuidTest extends WebTestCase
 
         $this->assertIsArray($json['attempts']);
         $this->assertCount(1, $json['attempts']);
+        /** @var array<string, mixed> $firstAttempt */
+        $firstAttempt = $json['attempts'][0];
+        $this->assertIsArray($firstAttempt['recipients']);
+        $this->assertCount(1, $firstAttempt['recipients']);
+        /** @var array<string, mixed> $attemptRecipient */
+        $attemptRecipient = $firstAttempt['recipients'][0];
+        $this->assertSame($recipient->getId(), $attemptRecipient['recipient_id']);
 
         $this->assertIsArray($json['feedback']);
         $this->assertCount(1, $json['feedback']);
