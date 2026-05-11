@@ -13,6 +13,7 @@ import type {
 	InfrastructureBounce,
 	TlsCertificate,
 	SudoSend,
+	SudoSendDetail,
 	SudoSendRecipientStatus,
 	SudoProject
 } from './sudoTypes';
@@ -189,6 +190,12 @@ export function getSends(opts: {
 	return sudoApi.get<SudoSend[]>({
 		endpoint: '/sends',
 		data: opts
+	});
+}
+
+export function getSendByUuid(uuid: string) {
+	return sudoApi.get<SudoSendDetail>({
+		endpoint: `/sends/uuid/${uuid}`
 	});
 }
 

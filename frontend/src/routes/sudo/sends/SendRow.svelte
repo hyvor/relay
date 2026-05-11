@@ -35,7 +35,7 @@
 	}
 </script>
 
-<a class="row" href={`/console/${send.project.id}/sends/${send.uuid}`}>
+<a class="row" href={`/sudo/sends/${send.uuid}`}>
 	<div class="project">
 		<div class="project-name">{send.project.name}</div>
 		<div class="project-id">#{send.project.id}</div>
