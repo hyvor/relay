@@ -4,6 +4,7 @@
 	import IconHdd from '@hyvor/icons/IconHdd';
 	import IconSegmentedNav from '@hyvor/icons/IconSegmentedNav';
 	import IconActivity from '@hyvor/icons/IconActivity';
+	import IconEnvelope from '@hyvor/icons/IconEnvelope';
 	import relativeTime from 'dayjs/plugin/relativeTime';
 	import dayjs from 'dayjs';
 	import InstanceDomain from './InstanceDomain.svelte';
@@ -85,6 +86,15 @@
 								<IconSegmentedNav />
 							{/snippet}
 							Queues
+						</NavLink>
+						<NavLink
+							href="/sudo/sends"
+							active={page.url.pathname.startsWith('/sudo/sends')}
+						>
+							{#snippet start()}
+								<IconEnvelope />
+							{/snippet}
+							Sends
 						</NavLink>
 						<NavLink
 							href="/sudo/settings"

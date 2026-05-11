@@ -168,3 +168,50 @@ export interface TlsCertificate {
 	valid_from: number | null;
 	valid_to: number | null;
 }
+
+// Sends
+
+export type SudoSendRecipientStatus =
+	| 'queued'
+	| 'accepted'
+	| 'deferred'
+	| 'bounced'
+	| 'complained'
+	| 'suppressed'
+	| 'failed';
+
+export interface SudoSendRecipient {
+	id: number;
+	address: string;
+	status: SudoSendRecipientStatus;
+}
+
+export interface SudoSend {
+	id: number;
+	uuid: string;
+	created_at: number;
+	from_address: string;
+	from_name: string | null;
+	subject: string | null;
+	queued: boolean;
+	recipients: SudoSendRecipient[];
+	project: {
+		id: number;
+		name: string;
+	};
+}
+
+export interface SudoProject {
+	id: number;
+	name: string;
+	created_at: number;
+	organization_id: number | null;
+	send_type: 'transactional' | 'distributional';
+}
+
+export type SudoSendsDateFilterPreset =
+	| 'today'
+	| 'yesterday'
+	| 'this_week'
+	| 'custom'
+	| null;
