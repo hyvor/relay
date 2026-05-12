@@ -8,6 +8,7 @@ use App\Entity\Project;
 use App\Entity\ProjectUser;
 use App\Service\Project\Message\HardDeleteSoftDeletedProjectsMessage;
 use App\Service\Project\MessageHandler\HardDeleteSoftDeletedProjectsMessageHandler;
+use App\Service\Project\ProjectService;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\ApiKeyFactory;
 use App\Tests\Factory\DomainFactory;
@@ -16,6 +17,7 @@ use App\Tests\Factory\ProjectUserFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(HardDeleteSoftDeletedProjectsMessageHandler::class)]
+#[CoversClass(ProjectService::class)]
 class HardDeleteSoftDeletedProjectsMessageHandlerTest extends KernelTestCase
 {
     public function test_hard_deletes_projects_soft_deleted_more_than_30_days_ago(): void

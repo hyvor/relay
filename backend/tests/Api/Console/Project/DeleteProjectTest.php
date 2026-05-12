@@ -2,6 +2,7 @@
 
 namespace App\Tests\Api\Console\Project;
 
+use App\Api\Console\Authorization\AuthorizationListener;
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\ProjectController;
 use App\Entity\Project;
@@ -16,6 +17,7 @@ use Symfony\Component\Clock\ClockAwareTrait;
 #[CoversClass(ProjectController::class)]
 #[CoversClass(ProjectService::class)]
 #[CoversClass(ProjectsDeletedEvent::class)]
+#[CoversClass(AuthorizationListener::class)]
 class DeleteProjectTest extends WebTestCase
 {
     use ClockAwareTrait;
