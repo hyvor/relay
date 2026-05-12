@@ -153,10 +153,6 @@ class ProjectService
      */
     public function deleteProjects(array $projects): void
     {
-        if ($projects === []) {
-            return;
-        }
-
         $instance = $this->instanceRepository->findFirst();
         $systemProjectId = $instance?->getSystemProject()?->getId();
 
