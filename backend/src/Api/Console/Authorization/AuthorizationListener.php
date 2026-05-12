@@ -86,6 +86,10 @@ class AuthorizationListener
 
         $project = $apiKeyModel->getProject();
 
+        if ($project->getDeletedAt() !== null) {
+            throw new AccessDeniedHttpException('This project has been deleted.');
+        }
+
         $request->attributes->set(self::RESOLVED_API_KEY_ATTRIBUTE_KEY, $apiKeyModel);
         $request->attributes->set(self::RESOLVED_PROJECT_ATTRIBUTE_KEY, $project);
 

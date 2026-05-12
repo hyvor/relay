@@ -96,6 +96,10 @@ function getConsoleApi() {
             throw toThrow;
         }
 
+        if (response.status === 204) {
+            return undefined as T;
+        }
+
         const json = await response.json();
         return json as T;
 

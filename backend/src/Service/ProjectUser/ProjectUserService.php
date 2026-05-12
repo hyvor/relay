@@ -30,6 +30,7 @@ class ProjectUserService
             ->addSelect('p')
             ->andWhere('pu.user_id = :userId')
             ->andWhere('p.organization_id = :orgId')
+            ->andWhere('p.deleted_at IS NULL')
             ->setParameter('userId', $userId)
             ->setParameter('orgId', $orgId)
             ->getQuery()

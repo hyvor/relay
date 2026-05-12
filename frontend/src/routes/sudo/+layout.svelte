@@ -12,6 +12,7 @@
 	import { instanceStore, sudoConfigStore } from './sudoStore';
 	import IconGear from '@hyvor/icons/IconGear';
 	import IconBug from '@hyvor/icons/IconBug';
+	import IconCardList from '@hyvor/icons/IconCardList';
 
 	dayjs.extend(relativeTime);
 
@@ -108,16 +109,19 @@
 							Debug
 						</NavLink>
 
-						<!-- <div class="nav-title">Users</div>
+						<div class="nav-title">Users</div>
 
-					<NavLink href="/sudo/projects" active={page.url.pathname === '/sudo/projects'}>
-						{#snippet start()}
-							<IconCardList />
-						{/snippet}
-						Projects
-					</NavLink>
+						<NavLink
+							href="/sudo/projects"
+							active={page.url.pathname === '/sudo/projects'}
+						>
+							{#snippet start()}
+								<IconCardList />
+							{/snippet}
+							Projects
+						</NavLink>
 
-					<NavLink href="/sudo/domains" active={page.url.pathname === '/sudo/domains'}>
+						<!-- <NavLink href="/sudo/domains" active={page.url.pathname === '/sudo/domains'}>
 						{#snippet start()}
 							<IconDatabase />
 						{/snippet}

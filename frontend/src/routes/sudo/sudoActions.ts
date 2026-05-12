@@ -11,6 +11,7 @@ import type {
 	DnsRecordType,
 	DebugIncomingEmail,
 	InfrastructureBounce,
+	Project,
 	TlsCertificate
 } from './sudoTypes';
 
@@ -157,6 +158,19 @@ export function markInfrastructureBounceAsRead(id: number) {
 export function markAllInfrastructureBouncesAsRead() {
 	return sudoApi.post<{ marked_count: number }>({
 		endpoint: '/infrastructure-bounces/mark-all-as-read'
+	});
+}
+
+export function getSoftDeletedProjects(limit: number = 20, offset: number = 0) {
+	return sudoApi.get<Project[]>({
+		endpoint: '/project/soft-deleted',
+		data: { limit, offset }
+	});
+}
+
+export function undeleteProject(projectId: number) {
+	return sudoApi.post<Project>({
+		endpoint: `/project/${projectId}/undelete`
 	});
 }
 

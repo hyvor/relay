@@ -20,3 +20,9 @@ export function updateProject(name: string) {
         },
     });
 }
+
+export function deleteProject() {
+    return consoleApi.delete({
+        endpoint: 'project',
+    });
+}
