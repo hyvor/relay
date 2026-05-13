@@ -7,6 +7,7 @@ use App\Entity\Server;
 use App\Service\Ip\Dto\PtrValidationDto;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
 use App\Service\Ip\Event\IpAddressUpdatedEvent;
+use App\Service\Ip\Event\IpRemovedEvent;
 use App\Service\Queue\QueueService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -103,6 +104,8 @@ class IpAddressService
 
     public function deleteIpAddress(IpAddress $ipAddress): void
     {
+        $this->ed->dispatch(new IpRemovedEvent($ipAddress));
+
         $this->em->remove($ipAddress);
         $this->em->flush();
     }

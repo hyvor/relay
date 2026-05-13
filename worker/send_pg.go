@@ -44,13 +44,13 @@ func NewSendTransaction(
 	}, nil
 }
 
-func (b *SendTransaction) FetchSend(queueId int) (*SendRow, []*RecipientRow, error) {
+func (b *SendTransaction) FetchSend(ipId int) (*SendRow, []*RecipientRow, error) {
 
 	row := b.tx.QueryRowContext(b.ctx, `
 		WITH ids AS MATERIALIZED (
 			SELECT id, uuid, from_address, raw, queue_name
 			FROM sends
-			WHERE queued = true AND queue_id = $1 AND send_after < NOW()
+			WHERE queued = true AND ip_address_id = $1 AND send_after < NOW()
 			FOR UPDATE SKIP LOCKED
 			LIMIT 1
 		)
@@ -58,7 +58,7 @@ func (b *SendTransaction) FetchSend(queueId int) (*SendRow, []*RecipientRow, err
 		SET queued = false, updated_at = NOW()
 		WHERE id = ANY(SELECT id FROM ids)
 		RETURNING id, uuid, from_address, raw, queue_name
-    `, queueId)
+    `, ipId)
 
 	var send SendRow
 
