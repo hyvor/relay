@@ -13,6 +13,7 @@ use App\Tests\Factory\SendFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(RouteNullIpsMessageHandler::class)]
+#[CoversClass(RouteNullIpsMessage::class)]
 class RouteNullIpsMessageHandlerTest extends KernelTestCase
 {
 
@@ -94,5 +95,4 @@ class RouteNullIpsMessageHandlerTest extends KernelTestCase
         $this->assertNotNull($updatedSend->getIpAddress());
         $this->assertSame($ip1->getId(), $updatedSend->getIpAddress()->getId());
     }
-
 }
