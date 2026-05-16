@@ -163,14 +163,21 @@ func (c *SmtpConversation) SetRcptResults(recipients []*RecipientRow, result *sm
 	}
 }
 
-// for each RCPT TO command
+// for each RCPT TO command — replaces an existing entry for the same recipient instead of appending.
 func (c *SmtpConversation) SetRcptResult(rcptId int, result *smtp.CommandResult) {
-	c.RcptResults = append(c.RcptResults, &RcptResult{
+	newResult := &RcptResult{
 		RecipientId:  rcptId,
 		Code:         result.Reply.Code,
 		EnhancedCode: result.Reply.EnhancedCode(),
 		Message:      result.Reply.Message(),
-	})
+	}
+	for i, existing := range c.RcptResults {
+		if existing.RecipientId == rcptId {
+			c.RcptResults[i] = newResult
+			return
+		}
+	}
+	c.RcptResults = append(c.RcptResults, newResult)
 }
 
 type RecipientStatusCode int
@@ -480,7 +487,10 @@ func sendEmailToHostHandler(
 	// STEP 4: RCPT TO
 	// We continue to the next step if at least one recipient is accepted
 	// ===============
-	var rcptAcceptedAny bool // if at least one RCPT TO was accepted, so we can continue to DATA
+	// recipients accepted at RCPT TO; only these get their result overridden by a
+	// later DATA/DATACLOSE failure. Recipients rejected at RCPT TO keep their
+	// (more specific) original rejection result.
+	acceptedRecipients := make([]*RecipientRow, 0, len(recipients))
 
 	for _, rcpt := range recipients {
 		rcptResult := c.Rcpt(rcpt.Address)
@@ -494,12 +504,12 @@ func sendEmailToHostHandler(
 		conversation.SetRcptResult(rcpt.Id, &rcptResult)
 
 		if rcptResult.Reply.Code == 250 {
-			rcptAcceptedAny = true
+			acceptedRecipients = append(acceptedRecipients, rcpt)
 		}
 	}
 
 	// if no recipients were accepted, we consider it a failure and stop here
-	if !rcptAcceptedAny {
+	if len(acceptedRecipients) == 0 {
 		return conversation
 	}
 
@@ -512,7 +522,7 @@ func sendEmailToHostHandler(
 	}
 	conversation.AddStepFromResult(SmtpStepData, &dataResult)
 	if !dataResult.CodeValid(354) {
-		conversation.SetRcptResults(recipients, &dataResult)
+		conversation.SetRcptResults(acceptedRecipients, &dataResult)
 		return conversation
 	}
 	_, err = w.Write([]byte(send.RawEmail))
@@ -530,7 +540,7 @@ func sendEmailToHostHandler(
 	}
 	conversation.AddStepFromResult(SmtpStepDataClose, &closeResult)
 	if !closeResult.CodeValid(250) {
-		conversation.SetRcptResults(recipients, &closeResult)
+		conversation.SetRcptResults(acceptedRecipients, &closeResult)
 		return conversation
 	}
 
