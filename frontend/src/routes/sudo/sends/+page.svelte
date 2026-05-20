@@ -3,12 +3,9 @@
 		ActionList,
 		ActionListItem,
 		TextInput,
-		IconButton,
-		Button
+		IconButton
 	} from '@hyvor/design/components';
 	import IconX from '@hyvor/icons/IconX';
-	import IconCaretDown from '@hyvor/icons/IconCaretDown';
-	import IconFolder from '@hyvor/icons/IconFolder';
 	import SingleBox from '../SingleBox.svelte';
 	import Selector from '../../console/@components/content/Selector.svelte';
 	import type {
@@ -17,7 +14,7 @@
 		SudoSendsDateFilterPreset
 	} from '../sudoTypes';
 	import SendsList from './SendsList.svelte';
-	import ProjectSelectModal from './ProjectSelectModal.svelte';
+	import ProjectSelectDropdown from './ProjectSelectDropdown.svelte';
 
 	const STATUS_OPTIONS: { value: SudoSendRecipientStatus | null; label: string }[] = [
 		{ value: null, label: 'All' },
@@ -33,7 +30,6 @@
 	let key = $state(1);
 
 	let selectedProject: SudoProject | null = $state(null);
-	let showProjectModal = $state(false);
 
 	let status: SudoSendRecipientStatus | null = $state(null);
 	let showStatus = $state(false);
@@ -172,42 +168,12 @@
 	const fromSearchActions = createSearchActions('from');
 	const toSearchActions = createSearchActions('to');
 	const subjectSearchActions = createSearchActions('subject');
-
-	function handleProjectSelect(project: SudoProject | null) {
-		selectedProject = project;
-	}
 </script>
 
 <SingleBox>
 	<div class="top">
 		<div class="filters">
-			<Button
-				size="small"
-				color="input"
-				on:click={() => (showProjectModal = true)}
-			>
-				<span class="trigger">
-					<IconFolder size={14} />
-					<span class="trigger-name">Project</span>
-					<span class="trigger-value">
-						{selectedProject ? selectedProject.name : 'All'}
-					</span>
-					{#if selectedProject}
-						<IconButton
-							size={14}
-							style="margin-left:4px;"
-							color="gray"
-							on:click={(e) => {
-								e.stopPropagation();
-								selectedProject = null;
-							}}
-						>
-							<IconX size={10} />
-						</IconButton>
-					{/if}
-					<IconCaretDown size={12} />
-				</span>
-			</Button>
+			<ProjectSelectDropdown bind:value={selectedProject} />
 
 			<Selector name="Status" bind:show={showStatus} value={statusLabel} width={200}>
 				<ActionList selection="single" selectionAlign="end">
@@ -381,14 +347,6 @@
 	/>
 </SingleBox>
 
-{#if showProjectModal}
-	<ProjectSelectModal
-		bind:show={showProjectModal}
-		onClose={() => (showProjectModal = false)}
-		onSelect={handleProjectSelect}
-	/>
-{/if}
-
 <style>
 	.top {
 		display: flex;
@@ -401,18 +359,6 @@
 		flex-wrap: wrap;
 		gap: 10px;
 		align-items: center;
-	}
-	.trigger {
-		display: inline-flex;
-		align-items: center;
-		gap: 4px;
-	}
-	.trigger-name {
-		margin-right: 4px;
-	}
-	.trigger-value {
-		font-weight: normal;
-		font-size: 13px;
 	}
 	.search-wrap {
 		display: flex;
