@@ -2,7 +2,7 @@
 
 namespace App\Api\Sudo\Controller;
 
-use App\Api\Sudo\Object\SendObject;
+use App\Api\Console\Object\SendObject;
 use App\Entity\Type\SendRecipientStatus;
 use App\Repository\ProjectRepository;
 use App\Service\Send\SendService;

@@ -59,6 +59,11 @@ class GetSendByUuidTest extends WebTestCase
         $attempts = $json['attempts'];
         $this->assertIsArray($attempts);
         $this->assertCount(1, $attempts);
+
+        /** @var array<string, mixed> $jsonProject */
+        $jsonProject = $json['project'];
+        $this->assertSame($project->getId(), $jsonProject['id']);
+        $this->assertSame($project->getName(), $jsonProject['name']);
     }
 
     public function test_get_specific_email_not_found(): void

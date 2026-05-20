@@ -1,5 +1,6 @@
 import sudoApi from './sudoApi';
 import { serversStore } from './sudoStore';
+import type { Send, SendRecipientStatus } from '$lib/sends/types';
 import type {
 	IpAddress,
 	Queue,
@@ -12,9 +13,6 @@ import type {
 	DebugIncomingEmail,
 	InfrastructureBounce,
 	TlsCertificate,
-	SudoSend,
-	SudoSendDetail,
-	SudoSendRecipientStatus,
 	SudoProject
 } from './sudoTypes';
 
@@ -178,7 +176,7 @@ export function generateMailCert() {
 
 export function getSends(opts: {
 	project_id: number | null;
-	status: SudoSendRecipientStatus | null;
+	status: SendRecipientStatus | null;
 	from_search: string | null;
 	to_search: string | null;
 	subject_search: string | null;
@@ -187,14 +185,14 @@ export function getSends(opts: {
 	limit: number;
 	before_id: number | null;
 }) {
-	return sudoApi.get<SudoSend[]>({
+	return sudoApi.get<Send[]>({
 		endpoint: '/sends',
 		data: opts
 	});
 }
 
 export function getSendByUuid(uuid: string) {
-	return sudoApi.get<SudoSendDetail>({
+	return sudoApi.get<Send>({
 		endpoint: `/sends/uuid/${uuid}`
 	});
 }

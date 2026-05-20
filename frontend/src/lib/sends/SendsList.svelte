@@ -1,56 +1,42 @@
 <script lang="ts">
 	import { IconMessage, LoadButton, Loader } from '@hyvor/design/components';
-	import type { SudoSend, SudoSendRecipientStatus } from '../sudoTypes';
-	import { getSends } from '../sudoActions';
+	import type { Send } from './types';
 	import SendRow from './SendRow.svelte';
 
 	interface Props {
-		project_id: number | null;
-		status: SudoSendRecipientStatus | null;
-		from_search?: string | null;
-		to_search?: string | null;
-		subject_search?: string | null;
-		date_from_search?: string | null;
-		date_to_search?: string | null;
-		key: number;
+		fetchSends: (beforeId: number | null) => Promise<Send[]>;
+		hrefBuilder: (send: Send) => string;
+		showProject?: boolean;
+		/**
+		 * Changes whenever a reload is required. Parent encodes filter
+		 * state (and any nonce for forced refreshes) into this value.
+		 */
+		queryKey: string | number;
+		perPage?: number;
 	}
 
 	let {
-		project_id,
-		status,
-		from_search = null,
-		to_search = null,
-		subject_search = null,
-		date_from_search = null,
-		date_to_search = null,
-		key = $bindable()
+		fetchSends,
+		hrefBuilder,
+		showProject = false,
+		queryKey,
+		perPage = 25
 	}: Props = $props();
 
-	const PER_PAGE = 25;
-
 	let loading = $state(true);
-	let loadingMore = $state(false);
 	let hasMore = $state(true);
-	let error: string | null = $state(null);
-	let sends: SudoSend[] = $state([]);
+	let loadingMore = $state(false);
+	let error: null | string = $state(null);
+
+	let sends: Send[] = $state([]);
 
 	function load(more = false) {
 		more ? (loadingMore = true) : (loading = true);
 
-		getSends({
-			project_id,
-			status,
-			from_search,
-			to_search,
-			subject_search,
-			date_from_search,
-			date_to_search,
-			limit: PER_PAGE,
-			before_id: more && sends.length > 0 ? sends[sends.length - 1].id : null
-		})
+		fetchSends(more && sends.length > 0 ? sends[sends.length - 1].id : null)
 			.then((data) => {
 				sends = more ? [...sends, ...data] : data;
-				hasMore = data.length === PER_PAGE;
+				hasMore = data.length === perPage;
 			})
 			.catch((e) => {
 				error = e.message;
@@ -62,14 +48,7 @@
 	}
 
 	$effect(() => {
-		project_id;
-		status;
-		key;
-		from_search;
-		to_search;
-		subject_search;
-		date_from_search;
-		date_to_search;
+		queryKey;
 		load();
 	});
 </script>
@@ -82,17 +61,18 @@
 	<IconMessage empty message="No sends found" />
 {:else}
 	<div class="list">
-		<div class="header">
-			<div>Project</div>
+		<div class="header" class:with-project={showProject}>
+			{#if showProject}
+				<div>Project</div>
+			{/if}
 			<div>From</div>
 			<div>Recipients</div>
 			<div>Subject</div>
 		</div>
 
 		{#each sends as send (send.id)}
-			<SendRow {send} />
+			<SendRow {send} {hrefBuilder} {showProject} />
 		{/each}
-
 		<LoadButton
 			text="Load More"
 			loading={loadingMore}
@@ -111,11 +91,15 @@
 
 	.header {
 		display: grid;
-		grid-template-columns: 1.5fr 2fr 3fr 2fr;
+		grid-template-columns: 2fr 3fr 2fr;
 		font-size: 14px;
 		font-weight: 600;
 		color: var(--text-light);
 		gap: 15px;
 		padding: 5px 30px 15px;
+	}
+
+	.header.with-project {
+		grid-template-columns: 1.5fr 2fr 3fr 2fr;
 	}
 </style>

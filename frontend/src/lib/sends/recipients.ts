@@ -1,4 +1,4 @@
-import type { SendRecipient } from "../../../types";
+import type { SendRecipient } from './types';
 
 export function getSortedRecipients(recipients: SendRecipient[]) {
 

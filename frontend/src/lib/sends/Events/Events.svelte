@@ -1,11 +1,5 @@
 <script lang="ts">
-	import type {
-		Send,
-		SendAttempt,
-		SendAttemptRecipient,
-		SendAttemptStatus,
-		SendRecipientStatus
-	} from '../../../../types';
+	import type { Send } from '../types';
 	import { default as EventComponent } from './Event.svelte';
 	import type { Event } from './events';
 
