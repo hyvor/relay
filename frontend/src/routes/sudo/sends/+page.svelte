@@ -175,7 +175,14 @@
 		<div class="filters">
 			<ProjectSelectDropdown bind:value={selectedProject} />
 
-			<Selector name="Status" bind:show={showStatus} value={statusLabel} width={200}>
+			<Selector
+				name="Status"
+				bind:show={showStatus}
+				value={statusLabel}
+				width={200}
+				isSelected={status !== null}
+				handleDeselectClick={() => selectStatus(null)}
+			>
 				<ActionList selection="single" selectionAlign="end">
 					{#each STATUS_OPTIONS as opt}
 						<ActionListItem
@@ -193,6 +200,8 @@
 				bind:show={showDateFilter}
 				value={dateFilterDisplayValue}
 				width={280}
+				isSelected={dateFilterPreset !== null}
+				handleDeselectClick={() => selectDateFilter(null)}
 			>
 				<ActionList selection="single" selectionAlign="end">
 					<ActionListItem
