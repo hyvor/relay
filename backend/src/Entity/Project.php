@@ -33,6 +33,9 @@ class Project
     #[ORM\Column(nullable: true)]
     private ?int $organization_id = null;
 
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $deleted_at = null;
+
     public function __construct()
     {
     }
@@ -111,6 +114,17 @@ class Project
     public function setOrganizationId(?int $organization_id): static
     {
         $this->organization_id = $organization_id;
+        return $this;
+    }
+
+    public function getDeletedAt(): ?\DateTimeImmutable
+    {
+        return $this->deleted_at;
+    }
+
+    public function setDeletedAt(?\DateTimeImmutable $deletedAt): static
+    {
+        $this->deleted_at = $deletedAt;
         return $this;
     }
 }

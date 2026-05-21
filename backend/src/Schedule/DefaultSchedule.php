@@ -8,6 +8,7 @@ use App\Service\Domain\Message\ReverifyDomainsMessage;
 use App\Service\Idempotency\Message\ClearExpiredIdempotencyRecordsMessage;
 use App\Service\InfrastructureBounce\Message\ClearOldInfrastructureBouncesMessage;
 use App\Service\Management\Message\RunHealthChecksMessage;
+use App\Service\Project\Message\HardDeleteSoftDeletedProjectsMessage;
 use App\Service\Send\Message\ClearExpiredSendsMessage;
 use App\Service\Tls\Message\CheckMailCertificateValidityMessage;
 use App\Service\Webhook\Message\ClearOldWebhookDeliveriesMessage;
@@ -44,6 +45,9 @@ class DefaultSchedule implements ScheduleProviderInterface
 
             // sends
             ->add(RecurringMessage::every('1 day', new ClearExpiredSendsMessage))
+
+            // hard-delete projects soft-deleted more than 30 days ago
+            ->add(RecurringMessage::every('1 day', new HardDeleteSoftDeletedProjectsMessage))
 
             // infrastructure bounces
             ->add(RecurringMessage::every('1 day', new ClearOldInfrastructureBouncesMessage))

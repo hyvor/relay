@@ -1,0 +1,26 @@
+{% extends '@Internal/mail/mail.html.twig' %}
+
+{% block title %}
+    Your projects have been deleted
+{% endblock %}
+
+{% block heading %}
+    Your projects have been deleted
+{% endblock %}
+
+{% block content %}
+    <p>Hi {{ auth_user.name }},</p>
+
+    <p>The following project{{ projects|length > 1 ? 's' : '' }} {{ projects|length > 1 ? 'have' : 'has' }} been deleted from your account:</p>
+
+    <ul>
+        {% for project in projects %}
+            <li><strong>{{ project.name }}</strong> (ID: {{ project.id }})</li>
+        {% endfor %}
+    </ul>
+
+    <p>
+        These projects will be <strong>permanently deleted in {{ grace_period_days }} days</strong>.
+        If this was a mistake, please contact support before then to restore them.
+    </p>
+{% endblock %}

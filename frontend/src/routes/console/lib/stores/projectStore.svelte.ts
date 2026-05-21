@@ -21,6 +21,10 @@ export function addProjectUser(projectUser: ProjectUser) {
 	}
 }
 
+export function removeProjectUser(projectId: number) {
+	projectUsers = projectUsers.filter((pu) => pu.project.id !== projectId);
+}
+
 export function getCurrentProjectUser() {
 	return currentProjectUser;
 }
