@@ -13,6 +13,7 @@ class IpAddressObject
     public int $created_at;
     public int $server_id;
     public string $ip_address;
+    public ?string $private_ip_address;
     public string $ptr;
     public ?QueueObject $queue = null;
     public bool $is_ptr_forward_valid = false;
@@ -24,6 +25,7 @@ class IpAddressObject
         $this->created_at = $ipAddress->getCreatedAt()->getTimestamp();
         $this->server_id = $ipAddress->getServer()->getId();
         $this->ip_address = $ipAddress->getIpAddress();
+        $this->private_ip_address = $ipAddress->getPrivateIpAddress();
         $this->ptr = Ptr::getPtrDomain($ipAddress, $instanceDomain);
         $queue = $ipAddress->getQueue();
         $this->queue = $queue ? new QueueObject($queue) : null;

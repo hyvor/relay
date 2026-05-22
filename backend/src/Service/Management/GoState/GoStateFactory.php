@@ -48,6 +48,7 @@ class GoStateFactory
             $ips[] = new GoStateIp(
                 id: $ip->getId(),
                 ip: $ip->getIpAddress(),
+                privateIp: $ip->getPrivateIpAddress(),
                 ptr: Ptr::getPtrDomain($ip, $this->config->getInstanceDomain()),
                 queueId: $queue->getId(),
                 queueName: $queue->getName(),

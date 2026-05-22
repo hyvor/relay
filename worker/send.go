@@ -264,11 +264,19 @@ func sendEmailHandler(
 	instanceDomain string,
 	ipId int,
 	ip string,
+	privateIp string, // private IP for binding (empty string if no NAT)
 	ptr string,
 ) *SendResult {
 
 	startTime := time.Now()
 	tryCount := recipients[0].TryCount // all recipients of this domain should have the same try count
+
+	// When NAT is configured, bind to the private IP so the traffic egresses
+	// through the correct NAT interface and appears as the expected public IP.
+	bindIp := ip
+	if privateIp != "" {
+		bindIp = privateIp
+	}
 
 	result := &SendResult{
 		SentFromIpId: ipId,
@@ -305,7 +313,7 @@ func sendEmailHandler(
 			recipients,
 			host,
 			instanceDomain,
-			ip,
+			bindIp,
 			ptr,
 		)
 
