@@ -19,8 +19,7 @@ class GoStateFactory
         private Config $config,
         private GoStateDnsRecordsService $goStateService,
         private TlsCertificateService $tlsCertificateService
-    ) {
-    }
+    ) {}
 
     public function create(): GoState
     {
@@ -89,5 +88,4 @@ class GoStateFactory
             version: $this->config->getAppVersion(),
         );
     }
-
 }
