@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Switch, Tag, Tooltip } from '@hyvor/design/components';
+	import { Button, Tooltip } from '@hyvor/design/components';
 	import type { IpAddress } from '../sudoTypes';
 	import IconExclamationCircle from '@hyvor/icons/IconExclamationCircle';
 	import QueueSelectModal from '../queues/QueueSelectModal.svelte';
@@ -32,6 +32,11 @@
 	</td>
 	<td class="ip-address">
 		{ip.ip_address}
+		{#if ip.private_ip_address}
+			<span class="private-ip">
+				{ip.private_ip_address}
+			</span>
+		{/if}
 	</td>
 	<td class="queue-name">
 		{#if ip.queue}
@@ -95,5 +100,11 @@
 
 	.ptr-tags {
 		margin-top: 5px;
+	}
+
+	.private-ip {
+		font-size: 12px;
+		color: var(--text-light);
+		margin-left: 3px;
 	}
 </style>

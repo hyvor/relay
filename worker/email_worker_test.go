@@ -478,6 +478,7 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 		instanceDomain string,
 		ipId int,
 		ip string,
+		privateIp string,
 		ptr string,
 	) *SendResult {
 		return &SendResult{

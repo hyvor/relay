@@ -253,6 +253,11 @@ compose.yaml			# Docker Compose file
         <code>OIDC_ISSUER_URL</code>, <code>OIDC_CLIENT_ID</code>, <code>OIDC_CLIENT_SECRET</code>:
         Set these variables based on your OIDC provider configuration.
     </li>
+    <li>
+        <code>PRIVATE_NETWORK</code> (optional): Set this if your servers are behind 1:1 NAT (e.g., a
+        cloud VPC where each server has a private IP mapped to a public IP). See
+        <a href="/hosting/setup#nat">Setup &rarr; NAT Configuration</a> for details.
+    </li>
 </ul>
 
 <Callout type="info">

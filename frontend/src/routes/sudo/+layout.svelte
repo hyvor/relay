@@ -46,7 +46,7 @@
 </script>
 
 <svelte:head>
-	<title>Sudo | Hyvor Relay</title>
+	<title>sudo | Hyvor Relay</title>
 	<meta name="robots" content="nofollow, noindex" />
 </svelte:head>
 

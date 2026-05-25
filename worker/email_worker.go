@@ -324,6 +324,7 @@ func (worker *EmailWorker) attemptSendToDomain(
 		worker.instanceDomain,
 		worker.ip.Id,
 		worker.ip.Ip,
+		worker.ip.PrivateIp,
 		worker.ip.Ptr,
 	)
 
