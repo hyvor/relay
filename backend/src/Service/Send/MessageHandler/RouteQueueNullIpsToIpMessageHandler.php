@@ -2,9 +2,9 @@
 
 namespace App\Service\Send\MessageHandler;
 
-use App\Repository\IpAddressRepository;
-use App\Repository\SendRepository;
+use App\Service\Ip\IpAddressService;
 use App\Service\Send\Message\RouteQueueNullIpsToIpMessage;
+use App\Service\Send\SendService;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
@@ -12,14 +12,14 @@ class RouteQueueNullIpsToIpMessageHandler
 {
 
     public function __construct(
-        private SendRepository $sendRepository,
-        private IpAddressRepository $ipAddressRepository,
+        private SendService $sendService,
+        private IpAddressService $ipAddressService,
     ) {
     }
 
     public function __invoke(RouteQueueNullIpsToIpMessage $message): void
     {
-        $ipAddress = $this->ipAddressRepository->find($message->ipAddressId);
+        $ipAddress = $this->ipAddressService->getIpAddressById($message->ipAddressId);
 
         if ($ipAddress === null) {
             return;
@@ -31,7 +31,7 @@ class RouteQueueNullIpsToIpMessageHandler
             return;
         }
 
-        $this->sendRepository->updateNullIpSendsForQueue(
+        $this->sendService->updateNullIpSendsForQueue(
             $message->queueId,
             $message->ipAddressId
         );

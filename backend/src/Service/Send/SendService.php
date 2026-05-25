@@ -9,8 +9,8 @@ use App\Entity\Send;
 use App\Entity\SendRecipient;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
-use App\Repository\IpAddressRepository;
 use App\Repository\SendRepository;
+use App\Service\Ip\IpAddressService;
 use App\Service\Send\Dto\SendingAttachment;
 use App\Service\Send\Exception\EmailTooLargeException;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -29,7 +29,7 @@ class SendService
         private EmailBuilder $emailBuilder,
         private SendRepository $sendRepository,
         private RecipientFactory $recipientFactory,
-        private IpAddressRepository $ipAddressRepository,
+        private IpAddressService $ipAddressService,
     ) {
     }
 
@@ -152,7 +152,7 @@ class SendService
         $send->setDomain($domain);
         $send->setQueue($queue);
         $send->setQueueName($queue->getName());
-        $send->setIpAddress($this->ipAddressRepository->getRandomIpForQueue($queue));
+        $send->setIpAddress($this->ipAddressService->getRandomIpForQueue($queue));
         $send->setFromAddress($from->getAddress());
         $send->setFromName($from->getName());
         $send->setSubject($subject);
@@ -221,6 +221,16 @@ class SendService
         $send->setUpdatedAt($this->now());
 
         $this->em->flush();
+    }
+
+    public function updateNullIpSendsForQueue(int $queueId, ?int $ipAddressId): int
+    {
+        $conn = $this->em->getConnection();
+        $sql = 'UPDATE sends SET ip_address_id = :ip_id, updated_at = NOW() WHERE queue_id = :queue_id AND ip_address_id IS NULL';
+        return (int) $conn->executeStatement($sql, [
+            'ip_id' => $ipAddressId,
+            'queue_id' => $queueId,
+        ]);
     }
 
     /**

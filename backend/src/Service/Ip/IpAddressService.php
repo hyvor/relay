@@ -3,6 +3,7 @@
 namespace App\Service\Ip;
 
 use App\Entity\IpAddress;
+use App\Entity\Queue;
 use App\Entity\Server;
 use App\Service\Ip\Dto\PtrValidationDto;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
@@ -10,6 +11,7 @@ use App\Service\Ip\Event\IpAddressUpdatedEvent;
 use App\Service\Ip\Event\IpRemovedEvent;
 use App\Service\Queue\QueueService;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Query\ResultSetMappingBuilder;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -59,6 +61,23 @@ class IpAddressService
         );
     }
 
+    public function getRandomIpForQueue(Queue $queue): ?IpAddress
+    {
+        $rsm = new ResultSetMappingBuilder($this->em);
+        $rsm->addRootEntityFromClassMetadata(IpAddress::class, 'ia');
+
+        $query = $this->em->createNativeQuery(
+            'SELECT ia.* FROM ip_addresses ia WHERE ia.queue_id = :queue_id ORDER BY RANDOM() LIMIT 1',
+            $rsm
+        );
+        $query->setParameter('queue_id', $queue->getId());
+
+        /** @var IpAddress[] $results */
+        $results = $query->getResult();
+
+        return $results[0] ?? null;
+    }
+
     /**
      * Creates IP address records if not already present.
      * Deletes IP address records that are not present in the server's current IP addresses.
@@ -104,10 +123,10 @@ class IpAddressService
 
     public function deleteIpAddress(IpAddress $ipAddress): void
     {
-        $this->ed->dispatch(new IpRemovedEvent($ipAddress));
-
         $this->em->remove($ipAddress);
         $this->em->flush();
+
+        $this->ed->dispatch(new IpRemovedEvent($ipAddress));
     }
 
     public function updateIpAddress(
