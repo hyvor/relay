@@ -105,6 +105,7 @@ class DevSeedCommand extends Command
 
             if ($serverHostname === 'orion') {
                 $ipData['ip_address'] = '0.0.0.0';
+                $ipData['private_ip_address'] = '10.10.0.86'; // local compose worker IP in docker
             }
 
             IpAddressFactory::createOne($ipData);
@@ -203,5 +204,4 @@ class DevSeedCommand extends Command
 
         return Command::SUCCESS;
     }
-
 }

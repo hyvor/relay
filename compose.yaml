@@ -61,6 +61,7 @@ services:
       hyvor-network:
         aliases:
           - relay.hyvor.localhost # so that simulator can reach the worker
+        ipv4_address: 10.10.0.86
 
   simulator:
     image: hyvor/smtp-simulator:latest
