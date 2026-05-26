@@ -72,7 +72,9 @@
 				},
 				organization: null,
 				user: $sudoConfigStore.user,
-				callbacks: {}
+				callbacks: {
+					onOrganizationSwitch: () => {}
+				}
 			}}
 		>
 			<HyvorBar />
