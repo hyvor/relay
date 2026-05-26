@@ -14,6 +14,7 @@
 	import IconGear from '@hyvor/icons/IconGear';
 	import IconBug from '@hyvor/icons/IconBug';
 	import IconHouse from '@hyvor/icons/IconHouse';
+	import IconShieldLock from '@hyvor/icons/IconShieldLock';
 
 	dayjs.extend(relativeTime);
 
@@ -79,11 +80,23 @@
 				<div id="wrap">
 					<nav>
 						<div class="hds-box console-nav">
-							<NavLink href="/console">
+							<NavLink
+								href="/console"
+								active={page.url.pathname.startsWith('/console')}
+							>
 								{#snippet start()}
 									<IconHouse />
 								{/snippet}
 								Console
+							</NavLink>
+							<NavLink
+								href="/sudo"
+								active={page.url.pathname.startsWith('/sudo')}
+							>
+								{#snippet start()}
+									<IconShieldLock />
+								{/snippet}
+								Sudo
 							</NavLink>
 						</div>
 
