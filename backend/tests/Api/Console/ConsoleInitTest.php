@@ -8,6 +8,7 @@ use App\Service\Project\ProjectService;
 use App\Service\ProjectUser\ProjectUserService;
 use App\Service\Send\Compliance;
 use App\Tests\Case\WebTestCase;
+use App\Tests\Factory\InstanceFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
 use Hyvor\Internal\Auth\AuthFake;
@@ -76,6 +77,8 @@ class ConsoleInitTest extends WebTestCase
         $this->assertArrayHasKey('config', $json);
         $this->assertIsArray($json['project_users']);
         $this->assertCount(5, $json['project_users']); // system project not selected, because it has org ID 0
+        $this->assertIsArray($json['config']);
+        $this->assertIsArray($json['config']['user']);
         $this->assertTrue($json['config']['user']['is_sudo']);
     }
 
@@ -98,6 +101,8 @@ class ConsoleInitTest extends WebTestCase
         $this->assertArrayHasKey('config', $json);
         $this->assertIsArray($json['project_users']);
         $this->assertCount(0, $json['project_users']);
+        $this->assertIsArray($json['config']);
+        $this->assertIsArray($json['config']['user']);
         $this->assertTrue($json['config']['user']['is_sudo']);
     }
 
@@ -106,6 +111,9 @@ class ConsoleInitTest extends WebTestCase
         AuthFake::enableForSymfony($this->container, ['id' => 1]);
 
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
+        // Pre-create an Instance so getInstance() in init doesn't lazily create one
+        // (which would dispatch ProjectCreatingEvent and trip the cloud non-sudo guard).
+        InstanceFactory::createOne();
 
         $this->client->request(
             "GET",
@@ -115,6 +123,8 @@ class ConsoleInitTest extends WebTestCase
         $this->assertResponseStatusCodeSame(200);
 
         $json = $this->getJson();
+        $this->assertIsArray($json['config']);
+        $this->assertIsArray($json['config']['user']);
         $this->assertFalse($json['config']['user']['is_sudo']);
     }
 }
