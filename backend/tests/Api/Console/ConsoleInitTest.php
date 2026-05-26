@@ -76,6 +76,7 @@ class ConsoleInitTest extends WebTestCase
         $this->assertArrayHasKey('config', $json);
         $this->assertIsArray($json['project_users']);
         $this->assertCount(5, $json['project_users']); // system project not selected, because it has org ID 0
+        $this->assertTrue($json['config']['user']['is_sudo']);
     }
 
     public function test_init_console_without_org(): void
@@ -97,5 +98,23 @@ class ConsoleInitTest extends WebTestCase
         $this->assertArrayHasKey('config', $json);
         $this->assertIsArray($json['project_users']);
         $this->assertCount(0, $json['project_users']);
+        $this->assertTrue($json['config']['user']['is_sudo']);
+    }
+
+    public function test_init_console_non_sudo_user(): void
+    {
+        AuthFake::enableForSymfony($this->container, ['id' => 1]);
+
+        $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
+
+        $this->client->request(
+            "GET",
+            "/api/console/init",
+        );
+
+        $this->assertResponseStatusCodeSame(200);
+
+        $json = $this->getJson();
+        $this->assertFalse($json['config']['user']['is_sudo']);
     }
 }

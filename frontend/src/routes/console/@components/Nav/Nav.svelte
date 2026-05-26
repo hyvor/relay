@@ -1,9 +1,11 @@
 <script>
+	import AccountNav from './AccountNav.svelte';
 	import ProjectNav from './ProjectNav.svelte';
 </script>
 
 <div id="nav">
 	<div id="nav-wrap">
+		<AccountNav />
 		<div class="project-nav">
 			<ProjectNav />
 		</div>

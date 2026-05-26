@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { Base, Loader, NavLink, toast } from '@hyvor/design/components';
+	import { CloudContext, HyvorBar } from '@hyvor/design/cloud';
 	import IconHdd from '@hyvor/icons/IconHdd';
 	import IconSegmentedNav from '@hyvor/icons/IconSegmentedNav';
 	import IconActivity from '@hyvor/icons/IconActivity';
@@ -12,6 +13,7 @@
 	import { instanceStore, sudoConfigStore } from './sudoStore';
 	import IconGear from '@hyvor/icons/IconGear';
 	import IconBug from '@hyvor/icons/IconBug';
+	import IconArrowRight from '@hyvor/icons/IconArrowRight';
 
 	dayjs.extend(relativeTime);
 
@@ -56,93 +58,120 @@
 			<Loader size="large" full />
 		</div>
 	{:else}
-		<main>
-			<div id="wrap">
-				<nav>
-					<div class="hds-box nav-inner">
-						<InstanceDomain />
+		<CloudContext
+			context={{
+				component: 'relay',
+				deployment: $sudoConfigStore.hosting === 'cloud' ? 'cloud' : 'on-prem',
+				instance: $sudoConfigStore.hosting === 'cloud' ? $sudoConfigStore.instance : '',
+				license: {
+					type: 'none',
+					subscription: null,
+					license: null,
+					trial_ends_at: null
+				},
+				organization: null,
+				user: $sudoConfigStore.user,
+				callbacks: {}
+			}}
+		>
+			<HyvorBar />
+			<main>
+				<div id="wrap">
+					<nav>
+						<div class="hds-box console-nav">
+							<NavLink href="/console">
+								{#snippet end()}
+									<IconArrowRight />
+								{/snippet}
+								Console
+							</NavLink>
+						</div>
 
-						<div class="nav-title">Infrastructure</div>
+						<div class="hds-box nav-inner">
+							<InstanceDomain />
 
-						<NavLink href="/sudo/health" active={page.url.pathname === '/sudo/health'}>
+							<div class="nav-title">Infrastructure</div>
+
+							<NavLink href="/sudo/health" active={page.url.pathname === '/sudo/health'}>
+								{#snippet start()}
+									<IconActivity />
+								{/snippet}
+								Health
+							</NavLink>
+
+							<NavLink
+								href="/sudo/servers"
+								active={page.url.pathname === '/sudo/servers'}
+							>
+								{#snippet start()}
+									<IconHdd />
+								{/snippet}
+								Servers
+							</NavLink>
+							<NavLink href="/sudo/queues" active={page.url.pathname === '/sudo/queues'}>
+								{#snippet start()}
+									<IconSegmentedNav />
+								{/snippet}
+								Queues
+							</NavLink>
+							<NavLink
+								href="/sudo/settings"
+								active={page.url.pathname.startsWith('/sudo/settings')}
+							>
+								{#snippet start()}
+									<IconGear />
+								{/snippet}
+								Settings
+							</NavLink>
+
+							<div class="section-div"></div>
+
+							<NavLink
+								href="/sudo/debug"
+								active={page.url.pathname.startsWith('/sudo/debug')}
+							>
+								{#snippet start()}
+									<IconBug />
+								{/snippet}
+								Debug
+							</NavLink>
+
+							<!-- <div class="nav-title">Users</div>
+
+						<NavLink href="/sudo/projects" active={page.url.pathname === '/sudo/projects'}>
 							{#snippet start()}
-								<IconActivity />
+								<IconCardList />
 							{/snippet}
-							Health
+							Projects
 						</NavLink>
 
-						<NavLink
-							href="/sudo/servers"
-							active={page.url.pathname === '/sudo/servers'}
-						>
+						<NavLink href="/sudo/domains" active={page.url.pathname === '/sudo/domains'}>
 							{#snippet start()}
-								<IconHdd />
+								<IconDatabase />
 							{/snippet}
-							Servers
-						</NavLink>
-						<NavLink href="/sudo/queues" active={page.url.pathname === '/sudo/queues'}>
-							{#snippet start()}
-								<IconSegmentedNav />
-							{/snippet}
-							Queues
-						</NavLink>
-						<NavLink
-							href="/sudo/settings"
-							active={page.url.pathname.startsWith('/sudo/settings')}
-						>
-							{#snippet start()}
-								<IconGear />
-							{/snippet}
-							Settings
+							Domains
 						</NavLink>
 
-						<div class="section-div"></div>
-
-						<NavLink
-							href="/sudo/debug"
-							active={page.url.pathname.startsWith('/sudo/debug')}
-						>
+						<NavLink href="/sudo/emails" active={page.url.pathname === '/sudo/emails'}>
 							{#snippet start()}
-								<IconBug />
+								<IconEnvelope />
 							{/snippet}
-							Debug
-						</NavLink>
+							Emails
+						</NavLink> -->
+						</div>
 
-						<!-- <div class="nav-title">Users</div>
+						<div class="version">
+							v{$sudoConfigStore.app_version}
+						</div>
+					</nav>
 
-					<NavLink href="/sudo/projects" active={page.url.pathname === '/sudo/projects'}>
-						{#snippet start()}
-							<IconCardList />
-						{/snippet}
-						Projects
-					</NavLink>
-
-					<NavLink href="/sudo/domains" active={page.url.pathname === '/sudo/domains'}>
-						{#snippet start()}
-							<IconDatabase />
-						{/snippet}
-						Domains
-					</NavLink>
-
-					<NavLink href="/sudo/emails" active={page.url.pathname === '/sudo/emails'}>
-						{#snippet start()}
-							<IconEnvelope />
-						{/snippet}
-						Emails
-					</NavLink> -->
+					<div class="content">
+						{@render children?.()}
+						<div class="content-inner hds-box"></div>
 					</div>
-
-					<div class="version">
-						v{$sudoConfigStore.app_version}
-					</div>
-				</nav>
-
-				<div class="content">
-					{@render children?.()}
-					<div class="content-inner hds-box"></div>
 				</div>
-			</div>
-		</main>
+			</main>
+		</CloudContext>
 	{/if}
 </Base>
 
@@ -167,6 +196,10 @@
 	}
 	.nav-inner {
 		padding: 15px 0;
+	}
+	.console-nav {
+		margin-bottom: 15px;
+		padding: 10px 0;
 	}
 	.nav-title {
 		padding: 15px 30px;
