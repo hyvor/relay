@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { NavLink } from '@hyvor/design/components';
-	import IconArrowRight from '@hyvor/icons/IconArrowRight';
+	import IconShieldLock from '@hyvor/icons/IconShieldLock';
 	import { getAppConfig } from '../../lib/stores/consoleStore';
 
 	let isSudo = $derived(getAppConfig().user.is_sudo);
@@ -10,8 +10,8 @@
 	<div class="wrap hds-box">
 		<div class="nav-links">
 			<NavLink href="/sudo">
-				{#snippet end()}
-					<IconArrowRight />
+				{#snippet start()}
+					<IconShieldLock />
 				{/snippet}
 				Sudo
 			</NavLink>

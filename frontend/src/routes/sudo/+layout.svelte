@@ -13,7 +13,7 @@
 	import { instanceStore, sudoConfigStore } from './sudoStore';
 	import IconGear from '@hyvor/icons/IconGear';
 	import IconBug from '@hyvor/icons/IconBug';
-	import IconArrowRight from '@hyvor/icons/IconArrowRight';
+	import IconHouse from '@hyvor/icons/IconHouse';
 
 	dayjs.extend(relativeTime);
 
@@ -80,8 +80,8 @@
 					<nav>
 						<div class="hds-box console-nav">
 							<NavLink href="/console">
-								{#snippet end()}
-									<IconArrowRight />
+								{#snippet start()}
+									<IconHouse />
 								{/snippet}
 								Console
 							</NavLink>
