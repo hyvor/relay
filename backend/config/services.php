@@ -8,6 +8,7 @@ use App\Service\App\Lock\LockDoctrineFactory;
 use App\Service\App\Lock\LockDoctrineStoreFactory;
 use App\Service\Dns\Resolve\DnsOverHttp;
 use App\Service\Dns\Resolve\DnsResolveInterface;
+use App\Service\SelfHosted\RelayTelemetryProvider;
 use Hyvor\Internal\Bundle\EventDispatcher\TestEventDispatcher;
 use Prometheus\Storage\Adapter;
 use Prometheus\Storage\APCng;
@@ -62,4 +63,9 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // metrics
     $services->set(APCng::class);
     $services->alias(Adapter::class, APCng::class);
+
+    // RelayTelemetryProvider is intentionally not bound to TelemetryProviderInterface,
+    // but kept as a public service so its test can fetch it. The class is preserved
+    // for upcoming Enterprise license logic.
+    $services->set(RelayTelemetryProvider::class)->public();
 };
