@@ -262,14 +262,6 @@ compose.yaml			# Docker Compose file
     >)
 </Callout>
 
-<Callout type="info" style="margin-top: 20px;">
-    {#snippet icon()}
-        💡
-    {/snippet}
-    Hyvor Relay collects <a href="/hosting/telemetry">anonymous telemetry</a> by default to
-    monitor usage. Set <code>TELEMETRY=false</code> in the <code>.env</code> file to disable it.
-</Callout>
-
 <p>Then, run the following command to verify that the configuration is correct:</p>
 
 <CodeBlock code="docker compose run --rm relay bin/console verify"/>

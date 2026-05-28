@@ -1,6 +1,5 @@
 <script>
     import {CodeBlock, Divider} from '@hyvor/design/components';
-    import {Callout} from "@hyvor/design/components";
 </script>
 
 <h1>Easy Deploy</h1>
@@ -152,14 +151,6 @@ compose.yaml			# Docker Compose file
 <p>
     See the <a href="/hosting/env">Environment Variables</a> page for all available variables.
 </p>
-
-<Callout type="info">
-    {#snippet icon()}
-        💡
-    {/snippet}
-    Hyvor Relay collects <a href="/hosting/telemetry">anonymous telemetry</a> by default to
-    monitor usage. Set <code>TELEMETRY=false</code> in the <code>.env</code> file to disable it.
-</Callout>
 
 <h3 id="docker-compose">3. Start Docker Compose</h3>
 
