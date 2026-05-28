@@ -9,7 +9,6 @@ import Deliverability from './content/deliverability/Deliverability.svelte';
 import Dns from './content/Dns.svelte';
 import Scaling from './content/Scaling.svelte';
 import EmailProviders from './content/EmailProviders.svelte';
-import Telemetry from './content/Telemetry.svelte';
 import HealthChecks from './content/HealthChecks.svelte';
 
 export const categories: Category[] = [
@@ -80,11 +79,6 @@ export const categories: Category[] = [
 				slug: 'env',
 				name: 'Environment Variables',
 				component: Env
-			},
-			{
-				slug: 'telemetry',
-				name: 'Telemetry',
-				component: Telemetry
 			}
 		]
 	}
