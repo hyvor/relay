@@ -14,7 +14,7 @@
 	import IconGear from '@hyvor/icons/IconGear';
 	import IconBug from '@hyvor/icons/IconBug';
 	import IconHouse from '@hyvor/icons/IconHouse';
-	import IconShieldLock from '@hyvor/icons/IconShieldLock';
+	import IconArrowRightShort from '@hyvor/icons/IconArrowRightShort';
 
 	dayjs.extend(relativeTime);
 
@@ -81,27 +81,6 @@
 			<main>
 				<div id="wrap">
 					<nav>
-						<div class="hds-box console-nav">
-							<NavLink
-								href="/console"
-								active={page.url.pathname.startsWith('/console')}
-							>
-								{#snippet start()}
-									<IconHouse />
-								{/snippet}
-								Console
-							</NavLink>
-							<NavLink
-								href="/sudo"
-								active={page.url.pathname.startsWith('/sudo')}
-							>
-								{#snippet start()}
-									<IconShieldLock />
-								{/snippet}
-								Sudo
-							</NavLink>
-						</div>
-
 						<div class="hds-box nav-inner">
 							<InstanceDomain />
 
@@ -149,6 +128,18 @@
 									<IconBug />
 								{/snippet}
 								Debug
+							</NavLink>
+
+							<div class="section-div"></div>
+
+							<NavLink href="/console">
+								{#snippet start()}
+									<IconHouse />
+								{/snippet}
+								{#snippet end()}
+									<IconArrowRightShort />
+								{/snippet}
+								Console
 							</NavLink>
 
 							<!-- <div class="nav-title">Users</div>
@@ -211,10 +202,6 @@
 	}
 	.nav-inner {
 		padding: 15px 0;
-	}
-	.console-nav {
-		margin-bottom: 15px;
-		padding: 10px 0;
 	}
 	.nav-title {
 		padding: 15px 30px;
