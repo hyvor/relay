@@ -10,6 +10,7 @@ export interface AppConfig {
 		name: string;
 		email: string;
 		picture_url: string | null;
+		is_sudo: boolean;
 	};
 
 	app: {

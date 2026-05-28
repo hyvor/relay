@@ -14,6 +14,7 @@ use App\Service\Instance\InstanceService;
 use App\Service\ProjectUser\ProjectUserService;
 use App\Service\Send\Compliance;
 use Hyvor\Internal\InternalConfig;
+use Hyvor\Internal\Sudo\SudoUserService;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -30,6 +31,7 @@ class ConsoleController extends AbstractController
         private InternalConfig $internalConfig,
         private LoggerInterface $logger,
         private InstanceService $instanceService,
+        private SudoUserService $sudoUserService,
     ) {}
 
     #[Route('/init', methods: 'GET')]
@@ -72,6 +74,7 @@ class ConsoleController extends AbstractController
                     'name' => $user->name ?? $user->username,
                     'email' => $user->email,
                     'picture_url' => $user->picture_url,
+                    'is_sudo' => $this->sudoUserService->exists($user->id),
                 ],
                 'app' => [
                     'system_project_id' => $instance->getSystemProject()->getId(),
