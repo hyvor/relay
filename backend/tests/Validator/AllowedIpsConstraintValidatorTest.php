@@ -51,8 +51,7 @@ class AllowedIpsConstraintValidatorTest extends ConstraintValidatorTestCase
             ['203.0.113.5', '10.0.0.1'],
             new AllowedIpsConstraint()
         );
-        $this->buildViolation('{{ error }}')
-            ->setParameter('{{ error }}', "'10.0.0.1' is in a private, CGNAT, or otherwise reserved range.")
+        $this->buildViolation("'10.0.0.1' is in a private, CGNAT, or otherwise reserved range.")
             ->atPath('property.path[1]')
             ->assertRaised();
     }

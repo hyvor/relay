@@ -34,8 +34,7 @@ class AllowedIpsConstraintValidator extends ConstraintValidator
 
             $error = AllowedIp::validateEntry($entry);
             if ($error !== null) {
-                $this->context->buildViolation($constraint->message)
-                    ->setParameter('{{ error }}', $error)
+                $this->context->buildViolation($error)
                     ->atPath("[$i]")
                     ->addViolation();
             }
