@@ -48,10 +48,10 @@ class AllowedIpsConstraintValidatorTest extends ConstraintValidatorTestCase
     public function test_invalid_entry_emits_violation_with_index_path(): void
     {
         $this->validator->validate(
-            ['203.0.113.5', '10.0.0.1'],
+            ['203.0.113.5', '10.0.0.0/8'],
             new AllowedIpsConstraint()
         );
-        $this->buildViolation("'10.0.0.1' is in a private, CGNAT, or otherwise reserved range.")
+        $this->buildViolation("IPv4 CIDR prefix must be between /24 and /32 (got '10.0.0.0/8').")
             ->atPath('property.path[1]')
             ->assertRaised();
     }

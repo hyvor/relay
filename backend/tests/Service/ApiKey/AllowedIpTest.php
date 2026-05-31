@@ -22,19 +22,7 @@ class AllowedIpTest extends TestCase
         yield 'ipv6 /48' => ['2001:db8::/48'];
         yield 'ipv6 /64' => ['2001:db8::/64'];
         yield 'ipv6 /128' => ['2001:db8::1/128'];
-    }
-
-    /**
-     * @return iterable<string, array{string}>
-     */
-    public static function invalidEntries(): iterable
-    {
-        yield 'empty' => [''];
-        yield 'gibberish' => ['not-an-ip'];
-        yield 'ipv4 too broad' => ['203.0.113.0/16'];
-        yield 'ipv4 prefix too high' => ['203.0.113.5/33'];
-        yield 'ipv6 too broad' => ['2001:db8::/32'];
-        yield 'ipv6 prefix too high' => ['2001:db8::/129'];
+        // private / reserved ranges are allowed for self-hosted instances
         yield 'private 10/8' => ['10.0.0.5'];
         yield 'private 10 cidr' => ['10.1.2.0/24'];
         yield 'private 172.16/12' => ['172.16.5.5'];
@@ -48,6 +36,19 @@ class AllowedIpTest extends TestCase
         yield 'ipv6 unique local' => ['fc00::1/64'];
         yield 'ipv6 link-local' => ['fe80::1/64'];
         yield 'ipv6 multicast' => ['ff02::1/128'];
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function invalidEntries(): iterable
+    {
+        yield 'empty' => [''];
+        yield 'gibberish' => ['not-an-ip'];
+        yield 'ipv4 too broad' => ['203.0.113.0/16'];
+        yield 'ipv4 prefix too high' => ['203.0.113.5/33'];
+        yield 'ipv6 too broad' => ['2001:db8::/32'];
+        yield 'ipv6 prefix too high' => ['2001:db8::/129'];
         yield 'invalid prefix non-numeric' => ['203.0.113.5/abc'];
         yield 'empty prefix' => ['203.0.113.5/'];
     }

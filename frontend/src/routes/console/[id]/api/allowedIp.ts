@@ -4,26 +4,6 @@
 const IPV4_MIN_PREFIX = 24;
 const IPV6_MIN_PREFIX = 48;
 
-const IPV4_RESERVED_RANGES: { base: string; bits: number }[] = [
-	{ base: '0.0.0.0', bits: 8 },
-	{ base: '10.0.0.0', bits: 8 },
-	{ base: '100.64.0.0', bits: 10 },
-	{ base: '127.0.0.0', bits: 8 },
-	{ base: '169.254.0.0', bits: 16 },
-	{ base: '172.16.0.0', bits: 12 },
-	{ base: '192.168.0.0', bits: 16 },
-	{ base: '224.0.0.0', bits: 4 },
-	{ base: '240.0.0.0', bits: 4 }
-];
-
-const IPV6_RESERVED_RANGES: { base: string; bits: number }[] = [
-	{ base: '::', bits: 128 },
-	{ base: '::1', bits: 128 },
-	{ base: 'fc00::', bits: 7 },
-	{ base: 'fe80::', bits: 10 },
-	{ base: 'ff00::', bits: 8 }
-];
-
 function ipv4ToBytes(ip: string): number[] | null {
 	const parts = ip.split('.');
 	if (parts.length !== 4) return null;
@@ -90,17 +70,6 @@ function ipv6ToBytes(ip: string): number[] | null {
 	return bytes;
 }
 
-function inRange(addrBytes: number[], baseBytes: number[], bits: number): boolean {
-	let remaining = bits;
-	for (let i = 0; i < addrBytes.length && remaining > 0; i++) {
-		const take = Math.min(8, remaining);
-		const mask = (0xff << (8 - take)) & 0xff;
-		if ((addrBytes[i] & mask) !== (baseBytes[i] & mask)) return false;
-		remaining -= take;
-	}
-	return true;
-}
-
 export function validateAllowedIpEntry(entry: string): string | null {
 	const trimmed = entry.trim();
 	if (trimmed === '') return 'Allowed IP entry must not be empty.';
@@ -125,22 +94,10 @@ export function validateAllowedIpEntry(entry: string): string | null {
 		if (eff < IPV4_MIN_PREFIX || eff > 32) {
 			return `IPv4 CIDR prefix must be between /${IPV4_MIN_PREFIX} and /32 (got '${trimmed}').`;
 		}
-		for (const r of IPV4_RESERVED_RANGES) {
-			const baseBytes = ipv4ToBytes(r.base)!;
-			if (inRange(v4, baseBytes, r.bits)) {
-				return `'${trimmed}' is in a private, CGNAT, or otherwise reserved range.`;
-			}
-		}
 	} else if (v6) {
 		const eff = prefix ?? 128;
 		if (eff < IPV6_MIN_PREFIX || eff > 128) {
 			return `IPv6 CIDR prefix must be between /${IPV6_MIN_PREFIX} and /128 (got '${trimmed}').`;
-		}
-		for (const r of IPV6_RESERVED_RANGES) {
-			const baseBytes = ipv6ToBytes(r.base)!;
-			if (inRange(v6, baseBytes, r.bits)) {
-				return `'${trimmed}' is in a private, CGNAT, or otherwise reserved range.`;
-			}
 		}
 	}
 

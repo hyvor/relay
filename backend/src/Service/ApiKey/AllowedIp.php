@@ -10,32 +10,6 @@ class AllowedIp
     public const int IPV6_MIN_PREFIX = 48;
 
     /**
-     * @var string[]
-     */
-    private const array RESERVED_IPV4_RANGES = [
-        '0.0.0.0/8',          // unspecified / current network
-        '10.0.0.0/8',         // private
-        '100.64.0.0/10',      // CGNAT
-        '127.0.0.0/8',        // loopback
-        '169.254.0.0/16',     // link-local
-        '172.16.0.0/12',      // private
-        '192.168.0.0/16',     // private
-        '224.0.0.0/4',        // multicast
-        '240.0.0.0/4',        // reserved (includes 255.255.255.255)
-    ];
-
-    /**
-     * @var string[]
-     */
-    private const array RESERVED_IPV6_RANGES = [
-        '::/128',             // unspecified
-        '::1/128',            // loopback
-        'fc00::/7',           // unique local
-        'fe80::/10',          // link-local
-        'ff00::/8',           // multicast
-    ];
-
-    /**
      * Validates a single allow-list entry. Returns null on success, an error
      * message describing the failure otherwise.
      */
@@ -75,11 +49,6 @@ class AllowedIp
             if ($effectivePrefix < self::IPV6_MIN_PREFIX || $effectivePrefix > 128) {
                 return "IPv6 CIDR prefix must be between /" . self::IPV6_MIN_PREFIX . " and /128 (got '$entry').";
             }
-        }
-
-        $reserved = $isV4 ? self::RESERVED_IPV4_RANGES : self::RESERVED_IPV6_RANGES;
-        if (IpUtils::checkIp($ip, $reserved)) {
-            return "'$entry' is in a private, CGNAT, or otherwise reserved range.";
         }
 
         return null;

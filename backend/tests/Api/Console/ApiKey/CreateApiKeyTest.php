@@ -100,7 +100,7 @@ class CreateApiKeyTest extends WebTestCase
         $this->assertSame([], $content['allowed_ips']);
     }
 
-    public function test_create_api_key_rejects_private_ip(): void
+    public function test_create_api_key_rejects_too_broad_private_cidr(): void
     {
         $project = ProjectFactory::createOne();
 
@@ -111,12 +111,12 @@ class CreateApiKeyTest extends WebTestCase
             [
                 'name' => 'Private',
                 'scopes' => ['sends.send'],
-                'allowed_ips' => ['10.0.0.5'],
+                'allowed_ips' => ['10.0.0.0/8'],
             ]
         );
 
         $this->assertSame(422, $response->getStatusCode());
-        $this->assertHasViolation('allowed_ips[0]', 'reserved range');
+        $this->assertHasViolation('allowed_ips[0]', 'IPv4 CIDR prefix must be between');
     }
 
     public function test_create_api_key_rejects_too_broad_cidr(): void

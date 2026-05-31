@@ -264,7 +264,6 @@
 		>
 			<div class="ip-help">
 				<div>Accepts a single IPv4 or IPv6 address, or a CIDR range (max <code>/24</code> for IPv4, <code>/48</code> for IPv6).</div>
-				<div>Private and CGNAT ranges are rejected.</div>
 				{#if sendsSendSelected}
 					<div>At least one entry is required when <code>sends.send</code> is selected.</div>
 				{/if}
