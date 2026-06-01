@@ -12,7 +12,6 @@ use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
 use Hyvor\Internal\InternalConfig;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[SudoPermissionRequired(SudoPermission::ACCESS_SUDO)]

@@ -6,7 +6,7 @@ use App\Api\Console\Object\SendObject;
 use App\Api\Sudo\Object\SendProjectSummaryObject;
 use App\Api\Sudo\Object\SudoSendObject;
 use App\Entity\Type\SendRecipientStatus;
-use App\Repository\ProjectRepository;
+use App\Service\Project\ProjectService;
 use App\Service\Send\SendService;
 use App\Service\SendAttempt\SendAttemptService;
 use App\Service\SendFeedback\SendFeedbackService;
@@ -24,7 +24,7 @@ class SendController extends AbstractController
 {
     public function __construct(
         private SendService $sendService,
-        private ProjectRepository $projectRepository,
+        private ProjectService $projectService,
         private SendAttemptService $sendAttemptService,
         private SendFeedbackService $sendFeedbackService,
     ) {}
@@ -40,7 +40,7 @@ class SendController extends AbstractController
         $project = null;
         if ($request->query->has('project_id')) {
             $projectId = $request->query->getInt('project_id');
-            $project = $this->projectRepository->find($projectId);
+            $project = $this->projectService->getProjectById($projectId);
             if ($project === null) {
                 throw new NotFoundHttpException('Project not found');
             }
