@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Send } from './types';
+	import type { Send } from '../../routes/console/types';
 
 	interface Props {
 		send: Send;

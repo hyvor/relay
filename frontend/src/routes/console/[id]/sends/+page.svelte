@@ -2,7 +2,7 @@
 	import SingleBox from '../../@components/content/SingleBox.svelte';
 	import Filters from '$lib/sends/Filters.svelte';
 	import SendsList from '$lib/sends/SendsList.svelte';
-	import type { Send, SendRecipientStatus, StatusOption } from '$lib/sends/types';
+	import type { Send, SendRecipientStatus, StatusOption } from '../../types';
 	import { getSends } from '../../lib/actions/emailActions';
 	import { emailStore } from '../../lib/stores/projectStore.svelte';
 	import { consoleUrlProject } from '../../lib/consoleUrl';

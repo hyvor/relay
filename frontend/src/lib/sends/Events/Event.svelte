@@ -7,7 +7,7 @@
 		SendAttemptRecipient,
 		SendFeedback,
 		SmtpConversation
-	} from '../types';
+	} from '../../../routes/console/types';
 	import IconHourglass from '@hyvor/icons/IconHourglass';
 	import IconSend from '@hyvor/icons/IconSend';
 	import IconChat from '@hyvor/icons/IconChat';

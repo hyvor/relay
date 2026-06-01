@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Send } from './types';
+	import type { Send } from '../../routes/console/types';
 	import RelativeTime from '../../routes/console/@components/content/RelativeTime.svelte';
 	import { Tag } from '@hyvor/design/components';
 	import { getSortedRecipients } from './recipients';

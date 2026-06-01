@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Send } from '../types';
+	import type { Send } from '../../../routes/console/types';
 	import { default as EventComponent } from './Event.svelte';
 	import type { Event } from './events';
 

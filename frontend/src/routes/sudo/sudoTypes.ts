@@ -1,4 +1,4 @@
-import type { Send } from '$lib/sends/types';
+import type { Send } from '../console/types';
 
 export interface SudoInitResponse {
 	config: SudoConfig;

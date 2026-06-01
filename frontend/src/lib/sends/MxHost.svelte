@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Tooltip } from '@hyvor/design/components';
-	import type { SmtpConversation } from './types';
+	import type { SmtpConversation } from '../../routes/console/types';
 
 	interface Props {
 		host: string;

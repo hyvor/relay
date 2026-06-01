@@ -4,7 +4,7 @@
 	import SendsList from '$lib/sends/SendsList.svelte';
 	import ProjectSelectDropdown from './ProjectSelectDropdown.svelte';
 	import { getSends } from '../sudoActions';
-	import type { Send, SendRecipientStatus, StatusOption } from '$lib/sends/types';
+	import type { Send, SendRecipientStatus, StatusOption } from '../../console/types';
 	import type { SudoProject } from '../sudoTypes';
 
 	const STATUS_OPTIONS: StatusOption[] = [

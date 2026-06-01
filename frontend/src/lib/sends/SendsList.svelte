@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { IconMessage, LoadButton, Loader } from '@hyvor/design/components';
-	import type { Send } from './types';
+	import type { Send } from '../../routes/console/types';
 	import SendRow from './SendRow.svelte';
 
 	interface Props {

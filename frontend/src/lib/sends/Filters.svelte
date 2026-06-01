@@ -2,7 +2,7 @@
 	import { ActionList, ActionListItem, TextInput, IconButton } from '@hyvor/design/components';
 	import IconX from '@hyvor/icons/IconX';
 	import Selector from '../../routes/console/@components/content/Selector.svelte';
-	import type { DateFilterPreset, SendRecipientStatus, StatusOption } from './types';
+	import type { DateFilterPreset, SendRecipientStatus, StatusOption } from '../../routes/console/types';
 
 	interface Props {
 		statusOptions: StatusOption[];

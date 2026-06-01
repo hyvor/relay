@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { DetailCard, Tag, toast } from '@hyvor/design/components';
-	import type { RetrySendFn, Send } from './types';
+	import type { RetrySendFn, Send } from '../../routes/console/types';
 	import RelativeTime from '../../routes/console/@components/content/RelativeTime.svelte';
 	import RecipientStatus from './RecipientStatus.svelte';
 	import { getSortedRecipients } from './recipients';

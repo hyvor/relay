@@ -3,7 +3,7 @@
 	import SingleBox from '../../SingleBox.svelte';
 	import SendDetail from '$lib/sends/SendDetail.svelte';
 	import { getSendByUuid } from '../../sudoActions';
-	import type { Send } from '$lib/sends/types';
+	import type { Send } from '../../../console/types';
 </script>
 
 <SingleBox>

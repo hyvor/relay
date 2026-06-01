@@ -1,6 +1,6 @@
 import sudoApi from './sudoApi';
 import { serversStore } from './sudoStore';
-import type { Send, SendRecipientStatus } from '$lib/sends/types';
+import type { Send, SendRecipientStatus } from '../console/types';
 import type {
 	IpAddress,
 	Queue,
