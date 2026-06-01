@@ -3,7 +3,7 @@
 namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Object\ProjectObject;
-use App\Repository\ProjectRepository;
+use App\Service\Project\ProjectService;
 use App\Service\Sudo\SudoPermission;
 use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -15,7 +15,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class ProjectController extends AbstractController
 {
     public function __construct(
-        private ProjectRepository $projectRepository,
+        private ProjectService $projectService,
     ) {}
 
     #[Route('/projects', methods: 'GET')]
@@ -34,22 +34,7 @@ class ProjectController extends AbstractController
             }
         }
 
-        $qb = $this->projectRepository->createQueryBuilder('p')
-            ->orderBy('p.id', 'DESC')
-            ->setMaxResults($limit);
-
-        if ($beforeId !== null) {
-            $qb->andWhere('p.id < :beforeId')
-                ->setParameter('beforeId', $beforeId);
-        }
-
-        if ($search !== null) {
-            $qb->andWhere('LOWER(p.name) LIKE LOWER(:search)')
-                ->setParameter('search', '%' . $search . '%');
-        }
-
-        /** @var \App\Entity\Project[] $projects */
-        $projects = $qb->getQuery()->getResult();
+        $projects = $this->projectService->getProjects($limit, $beforeId, $search);
 
         $objects = array_map(
             fn($project) => new ProjectObject($project),

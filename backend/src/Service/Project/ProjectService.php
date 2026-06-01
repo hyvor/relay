@@ -45,6 +45,29 @@ class ProjectService
     }
 
     /**
+     * @return Project[]
+     */
+    public function getProjects(int $limit, ?int $beforeId = null, ?string $search = null): array
+    {
+        $qb = $this->em->getRepository(Project::class)->createQueryBuilder('p')
+            ->orderBy('p.id', 'DESC')
+            ->setMaxResults($limit);
+
+        if ($beforeId !== null) {
+            $qb->andWhere('p.id < :beforeId')
+                ->setParameter('beforeId', $beforeId);
+        }
+
+        if ($search !== null) {
+            $qb->andWhere('LOWER(p.name) LIKE LOWER(:search)')
+                ->setParameter('search', '%' . $search . '%');
+        }
+
+        /** @var Project[] */
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
      * @return array{
      *     project: Project,
      *     projectUser: ($createProjectUser is true ? ProjectUser : null)
