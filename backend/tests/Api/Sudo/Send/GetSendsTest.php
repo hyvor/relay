@@ -42,16 +42,23 @@ class GetSendsTest extends WebTestCase
         $response = $this->sudoApi('GET', '/sends');
 
         $this->assertSame(200, $response->getStatusCode());
-        /** @var array<int, array<string, mixed>> $json */
+        /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertCount(5, $json);
+        /** @var array<int, array<string, mixed>> $sends */
+        $sends = $json['sends'];
+        /** @var array<int, array<string, mixed>> $projects */
+        $projects = $json['projects'];
+        $this->assertCount(5, $sends);
+        $this->assertCount(2, $projects);
 
-        foreach ($json as $send) {
+        foreach ($sends as $send) {
             $this->assertArrayHasKey('id', $send);
             $this->assertArrayHasKey('uuid', $send);
-            $this->assertArrayHasKey('project', $send);
-            /** @var array<string, mixed> $project */
-            $project = $send['project'];
+            $this->assertArrayHasKey('project_id', $send);
+            $this->assertArrayNotHasKey('project', $send);
+        }
+
+        foreach ($projects as $project) {
             $this->assertArrayHasKey('id', $project);
             $this->assertArrayHasKey('name', $project);
         }
@@ -78,14 +85,14 @@ class GetSendsTest extends WebTestCase
         $response = $this->sudoApi('GET', '/sends?project_id=' . $projectA->getId());
 
         $this->assertSame(200, $response->getStatusCode());
-        /** @var array<int, array<string, mixed>> $json */
+        /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertCount(3, $json);
+        /** @var array<int, array<string, mixed>> $sends */
+        $sends = $json['sends'];
+        $this->assertCount(3, $sends);
 
-        foreach ($json as $send) {
-            /** @var array<string, mixed> $project */
-            $project = $send['project'];
-            $this->assertSame($projectA->getId(), $project['id']);
+        foreach ($sends as $send) {
+            $this->assertSame($projectA->getId(), $send['project_id']);
         }
     }
 
@@ -112,11 +119,13 @@ class GetSendsTest extends WebTestCase
 
         $response = $this->sudoApi('GET', "/sends?limit=5&before_id={$cursor}");
         $this->assertSame(200, $response->getStatusCode());
-        /** @var array<int, array<string, mixed>> $json */
+        /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertCount(2, $json);
+        /** @var array<int, array<string, mixed>> $sends */
+        $sends = $json['sends'];
+        $this->assertCount(2, $sends);
 
-        foreach ($json as $send) {
+        foreach ($sends as $send) {
             $this->assertLessThan($cursor, $send['id']);
         }
     }
@@ -149,10 +158,12 @@ class GetSendsTest extends WebTestCase
 
         $response = $this->sudoApi('GET', '/sends?status=bounced');
         $this->assertSame(200, $response->getStatusCode());
-        /** @var array<int, array<string, mixed>> $json */
+        /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertCount(1, $json);
-        $this->assertSame($sendBounced->getId(), $json[0]['id']);
+        /** @var array<int, array<string, mixed>> $sends */
+        $sends = $json['sends'];
+        $this->assertCount(1, $sends);
+        $this->assertSame($sendBounced->getId(), $sends[0]['id']);
     }
 
     public function test_filter_by_from_search(): void
@@ -176,9 +187,11 @@ class GetSendsTest extends WebTestCase
 
         $response = $this->sudoApi('GET', '/sends?from_search=thibault');
         $this->assertSame(200, $response->getStatusCode());
-        /** @var array<int, array<string, mixed>> $json */
+        /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertCount(2, $json);
+        /** @var array<int, array<string, mixed>> $sends */
+        $sends = $json['sends'];
+        $this->assertCount(2, $sends);
     }
 
     public function test_filter_by_subject_search(): void
@@ -202,9 +215,11 @@ class GetSendsTest extends WebTestCase
 
         $response = $this->sudoApi('GET', '/sends?subject_search=Hello');
         $this->assertSame(200, $response->getStatusCode());
-        /** @var array<int, array<string, mixed>> $json */
+        /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertCount(2, $json);
+        /** @var array<int, array<string, mixed>> $sends */
+        $sends = $json['sends'];
+        $this->assertCount(2, $sends);
     }
 
     public function test_filter_by_to_search(): void
@@ -235,10 +250,12 @@ class GetSendsTest extends WebTestCase
 
         $response = $this->sudoApi('GET', '/sends?to_search=thibault');
         $this->assertSame(200, $response->getStatusCode());
-        /** @var array<int, array<string, mixed>> $json */
+        /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertCount(1, $json);
-        $this->assertSame($matchingSend->getId(), $json[0]['id']);
+        /** @var array<int, array<string, mixed>> $sends */
+        $sends = $json['sends'];
+        $this->assertCount(1, $sends);
+        $this->assertSame($matchingSend->getId(), $sends[0]['id']);
     }
 
     public function test_filter_by_date_range(): void
@@ -265,9 +282,11 @@ class GetSendsTest extends WebTestCase
             '/sends?date_from_search=2025-01-01&date_to_search=2025-01-01'
         );
         $this->assertSame(200, $response->getStatusCode());
-        /** @var array<int, array<string, mixed>> $json */
+        /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertCount(3, $json);
+        /** @var array<int, array<string, mixed>> $sends */
+        $sends = $json['sends'];
+        $this->assertCount(3, $sends);
     }
 
     public function test_fails_when_not_sudo(): void

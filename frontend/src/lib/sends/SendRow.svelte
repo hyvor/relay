@@ -20,7 +20,7 @@
 </script>
 
 <a class="email" class:with-project={showProject} href={hrefBuilder(send)}>
-	{#if showProject}
+	{#if showProject && send.project}
 		<div class="project">
 			<div class="project-name">{send.project.name}</div>
 			<div class="project-id">#{send.project.id}</div>

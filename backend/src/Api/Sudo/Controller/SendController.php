@@ -3,6 +3,8 @@
 namespace App\Api\Sudo\Controller;
 
 use App\Api\Console\Object\SendObject;
+use App\Api\Sudo\Object\SendProjectSummaryObject;
+use App\Api\Sudo\Object\SudoSendObject;
 use App\Entity\Type\SendRecipientStatus;
 use App\Repository\ProjectRepository;
 use App\Service\Send\SendService;
@@ -74,21 +76,33 @@ class SendController extends AbstractController
             $dateToSearch = $request->query->getString('date_to_search');
         }
 
-        $sends = $this->sendService
-            ->getSends(
-                $project,
-                $status,
-                $fromSearch,
-                $toSearch,
-                $subjectSearch,
-                $dateFromSearch,
-                $dateToSearch,
-                $limit,
-                $beforeId
-            )
-            ->map(fn($send) => new SendObject($send));
+        $sendEntities = $this->sendService->getSends(
+            $project,
+            $status,
+            $fromSearch,
+            $toSearch,
+            $subjectSearch,
+            $dateFromSearch,
+            $dateToSearch,
+            $limit,
+            $beforeId
+        );
 
-        return $this->json($sends);
+        $sends = [];
+        /** @var array<int, SendProjectSummaryObject> $projectsById */
+        $projectsById = [];
+
+        foreach ($sendEntities as $send) {
+            $sends[] = new SudoSendObject($send);
+
+            $sendProject = $send->getProject();
+            $projectsById[$sendProject->getId()] = new SendProjectSummaryObject($sendProject);
+        }
+
+        return $this->json([
+            'sends' => $sends,
+            'projects' => array_values($projectsById),
+        ]);
     }
 
     #[Route('/sends/uuid/{uuid}', requirements: ['uuid' => Requirement::UUID], methods: 'GET')]
@@ -103,13 +117,14 @@ class SendController extends AbstractController
         $attempts = $this->sendAttemptService->getSendAttemptsOfSend($send);
         $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
 
-        return $this->json(
-            new SendObject(
+        return $this->json([
+            'send' => new SendObject(
                 $send,
                 attempts: $attempts,
                 feedback: $feedback,
                 content: true
-            )
-        );
+            ),
+            'project' => new SendProjectSummaryObject($send->getProject()),
+        ]);
     }
 }

@@ -36,18 +36,18 @@ class GetSendByUuidTest extends WebTestCase
         $domain = DomainFactory::createOne();
         $queue = QueueFactory::createOne();
 
-        $send = SendFactory::createOne([
+        $sendEntity = SendFactory::createOne([
             'project' => $project,
             'domain' => $domain,
             'queue' => $queue,
         ]);
 
         $recipient = SendRecipientFactory::createOne([
-            'send' => $send,
+            'send' => $sendEntity,
         ]);
 
         $attempt = SendAttemptFactory::createOne([
-            'send' => $send,
+            'send' => $sendEntity,
         ]);
 
         SendAttemptRecipientFactory::createOne([
@@ -59,39 +59,43 @@ class GetSendByUuidTest extends WebTestCase
             'sendRecipient' => $recipient,
         ]);
 
-        $response = $this->sudoApi('GET', '/sends/uuid/' . $send->getUuid());
+        $response = $this->sudoApi('GET', '/sends/uuid/' . $sendEntity->getUuid());
 
         $this->assertSame(200, $response->getStatusCode());
 
         /** @var array<string, mixed> $json */
         $json = $this->getJson();
 
-        $this->assertSame($send->getId(), $json['id']);
-        $this->assertSame($send->getUuid(), $json['uuid']);
+        /** @var array<string, mixed> $jsonSend */
+        $jsonSend = $json['send'];
+        /** @var array<string, mixed> $jsonProject */
+        $jsonProject = $json['project'];
 
-        $this->assertArrayHasKey('body_html', $json);
-        $this->assertArrayHasKey('body_text', $json);
-        $this->assertArrayHasKey('raw', $json);
-        $this->assertArrayHasKey('headers', $json);
-        $this->assertArrayHasKey('size_bytes', $json);
-        $this->assertArrayHasKey('send_after', $json);
+        $this->assertSame($sendEntity->getId(), $jsonSend['id']);
+        $this->assertSame($sendEntity->getUuid(), $jsonSend['uuid']);
 
-        $this->assertIsArray($json['attempts']);
-        $this->assertCount(1, $json['attempts']);
+        $this->assertArrayHasKey('body_html', $jsonSend);
+        $this->assertArrayHasKey('body_text', $jsonSend);
+        $this->assertArrayHasKey('raw', $jsonSend);
+        $this->assertArrayHasKey('headers', $jsonSend);
+        $this->assertArrayHasKey('size_bytes', $jsonSend);
+        $this->assertArrayHasKey('send_after', $jsonSend);
+
+        $this->assertIsArray($jsonSend['attempts']);
+        $this->assertCount(1, $jsonSend['attempts']);
         /** @var array<string, mixed> $firstAttempt */
-        $firstAttempt = $json['attempts'][0];
+        $firstAttempt = $jsonSend['attempts'][0];
         $this->assertIsArray($firstAttempt['recipients']);
         $this->assertCount(1, $firstAttempt['recipients']);
         /** @var array<string, mixed> $attemptRecipient */
         $attemptRecipient = $firstAttempt['recipients'][0];
         $this->assertSame($recipient->getId(), $attemptRecipient['recipient_id']);
 
-        $this->assertIsArray($json['feedback']);
-        $this->assertCount(1, $json['feedback']);
+        $this->assertIsArray($jsonSend['feedback']);
+        $this->assertCount(1, $jsonSend['feedback']);
 
-        /** @var array<string, mixed> $jsonProject */
-        $jsonProject = $json['project'];
         $this->assertSame($project->getId(), $jsonProject['id']);
+        $this->assertSame($project->getName(), $jsonProject['name']);
     }
 
     public function test_returns_404_when_uuid_unknown(): void
@@ -127,6 +131,10 @@ class GetSendByUuidTest extends WebTestCase
         /** @var array<string, mixed> $jsonProject */
         $jsonProject = $json['project'];
         $this->assertSame($owningProject->getId(), $jsonProject['id']);
+        $this->assertArrayHasKey('send', $json);
+        /** @var array<string, mixed> $jsonSend */
+        $jsonSend = $json['send'];
+        $this->assertArrayNotHasKey('project_id', $jsonSend);
     }
 
     public function test_fails_when_not_sudo(): void

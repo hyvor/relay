@@ -1,3 +1,5 @@
+import type { Send } from '$lib/sends/types';
+
 export interface SudoInitResponse {
 	config: SudoConfig;
 	instance: Instance;
@@ -170,6 +172,25 @@ export interface TlsCertificate {
 }
 
 // Sends
+
+export interface SendProjectSummary {
+	id: number;
+	name: string;
+}
+
+export interface SudoSend extends Send {
+	project_id: number;
+}
+
+export interface SudoSendsResponse {
+	sends: SudoSend[];
+	projects: SendProjectSummary[];
+}
+
+export interface SudoSendResponse {
+	send: Send;
+	project: SendProjectSummary;
+}
 
 export interface SudoProject {
 	id: number;

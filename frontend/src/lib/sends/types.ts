@@ -16,7 +16,7 @@ export type Send = {
 	attempts: SendAttempt[];
 	feedback: SendFeedback[];
 
-	project: {
+	project?: {
 		id: number;
 		name: string;
 	};

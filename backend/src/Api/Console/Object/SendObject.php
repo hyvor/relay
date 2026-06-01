@@ -39,11 +39,6 @@ class SendObject
     public array $feedback = [];
 
     /**
-     * @var array{id: int, name: string}
-     */
-    public array $project;
-
-    /**
      * @param SendAttempt[] $attempts
      * @param SendFeedback[] $feedback
      */
@@ -71,11 +66,5 @@ class SendObject
             $send->getRecipients()->toArray());
         $this->attempts = array_map(fn(SendAttempt $attempt) => new SendAttemptObject($attempt), $attempts);
         $this->feedback = array_map(fn(SendFeedback $fb) => new SendFeedbackObject($fb), $feedback);
-
-        $project = $send->getProject();
-        $this->project = [
-            'id' => $project->getId(),
-            'name' => $project->getName(),
-        ];
     }
 }

@@ -15,10 +15,12 @@
 </SingleBox>
 
 {#snippet headerExtra(send: Send)}
-	<a class="project-link" href="/sudo/sends?project_id={send.project.id}">
-		{send.project.name}
-		<span class="muted">#{send.project.id}</span>
-	</a>
+	{#if send.project}
+		<a class="project-link" href="/sudo/sends?project_id={send.project.id}">
+			{send.project.name}
+			<span class="muted">#{send.project.id}</span>
+		</a>
+	{/if}
 {/snippet}
 
 <style>

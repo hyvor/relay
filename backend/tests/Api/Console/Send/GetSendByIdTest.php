@@ -94,11 +94,6 @@ class GetSendByIdTest extends WebTestCase
         $attempts = $json['attempts'];
         $this->assertIsArray($attempts);
         $this->assertCount(1, $attempts);
-
-        /** @var array<string, mixed> $jsonProject */
-        $jsonProject = $json['project'];
-        $this->assertSame($project->getId(), $jsonProject['id']);
-        $this->assertSame($project->getName(), $jsonProject['name']);
     }
 
 }

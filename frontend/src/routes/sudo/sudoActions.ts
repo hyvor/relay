@@ -13,7 +13,9 @@ import type {
 	DebugIncomingEmail,
 	InfrastructureBounce,
 	TlsCertificate,
-	SudoProject
+	SudoProject,
+	SudoSendsResponse,
+	SudoSendResponse
 } from './sudoTypes';
 
 export function initSudo() {
@@ -185,16 +187,30 @@ export function getSends(opts: {
 	limit: number;
 	before_id: number | null;
 }) {
-	return sudoApi.get<Send[]>({
-		endpoint: '/sends',
-		data: opts
-	});
+	return sudoApi
+		.get<SudoSendsResponse>({
+			endpoint: '/sends',
+			data: opts
+		})
+		.then(({ sends, projects }) => {
+			const projectsById = new Map(projects.map((project) => [project.id, project]));
+
+			return sends.map(({ project_id, ...send }) => ({
+				...send,
+				project: projectsById.get(project_id) ?? { id: project_id, name: 'Unknown project' }
+			}));
+		});
 }
 
 export function getSendByUuid(uuid: string) {
-	return sudoApi.get<Send>({
-		endpoint: `/sends/uuid/${uuid}`
-	});
+	return sudoApi
+		.get<SudoSendResponse>({
+			endpoint: `/sends/uuid/${uuid}`
+		})
+		.then(({ send, project }) => ({
+			...send,
+			project
+		}));
 }
 
 export function getProjects(
