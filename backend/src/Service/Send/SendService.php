@@ -55,6 +55,9 @@ class SendService
         if ($project !== null) {
             $qb->andWhere('s.project = :project')
                 ->setParameter('project', $project);
+        } else {
+            $qb->innerJoin('s.project', 'project')
+                ->addSelect('project');
         }
 
         if ($beforeId !== null) {
