@@ -249,6 +249,7 @@
 		on:keydown={fromSearchActions.onKeydown}
 		on:blur={fromSearchActions.onBlur}
 		size="small"
+		block={false}
 	>
 		{#snippet end()}
 			{#if fromSearchVal.trim() !== ''}
@@ -275,6 +276,7 @@
 		on:keydown={toSearchActions.onKeydown}
 		on:blur={toSearchActions.onBlur}
 		size="small"
+		block={false}
 	>
 		{#snippet end()}
 			{#if toSearchVal.trim() !== ''}
@@ -301,6 +303,7 @@
 		on:keydown={subjectSearchActions.onKeydown}
 		on:blur={subjectSearchActions.onBlur}
 		size="small"
+		block={false}
 	>
 		{#snippet end()}
 			{#if subjectSearchVal.trim() !== ''}
