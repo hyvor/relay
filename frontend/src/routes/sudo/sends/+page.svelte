@@ -2,21 +2,11 @@
 	import SingleBox from '../SingleBox.svelte';
 	import Filters from '$lib/sends/Filters.svelte';
 	import SendsList from '$lib/sends/SendsList.svelte';
+	import { SEND_STATUS_OPTIONS } from '$lib/sends/statusOptions';
 	import ProjectSelectDropdown from './ProjectSelectDropdown.svelte';
 	import { getSends } from '../sudoActions';
-	import type { Send, SendRecipientStatus, StatusOption } from '../../console/types';
+	import type { Send, SendRecipientStatus } from '../../console/types';
 	import type { SudoProject } from '../sudoTypes';
-
-	const STATUS_OPTIONS: StatusOption[] = [
-		{ value: null, label: 'All' },
-		{ value: 'queued', label: 'Queued' },
-		{ value: 'accepted', label: 'Accepted' },
-		{ value: 'deferred', label: 'Deferred' },
-		{ value: 'bounced', label: 'Bounced' },
-		{ value: 'complained', label: 'Complained' },
-		{ value: 'suppressed', label: 'Suppressed' },
-		{ value: 'failed', label: 'Failed' }
-	];
 
 	const PER_PAGE = 25;
 
@@ -60,7 +50,7 @@
 		<div class="filters">
 			<ProjectSelectDropdown bind:value={selectedProject} />
 			<Filters
-				statusOptions={STATUS_OPTIONS}
+				statusOptions={SEND_STATUS_OPTIONS}
 				bind:status
 				bind:fromSearch
 				bind:toSearch

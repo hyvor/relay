@@ -1,5 +1,12 @@
 <script lang="ts">
-	import { Button, Dropdown, IconButton, Loader, TextInput, toast } from '@hyvor/design/components';
+	import {
+		Button,
+		Dropdown,
+		IconButton,
+		Loader,
+		TextInput,
+		toast
+	} from '@hyvor/design/components';
 	import IconCaretDown from '@hyvor/icons/IconCaretDown';
 	import IconX from '@hyvor/icons/IconX';
 	import { flagByCountryCode } from '$lib/helpers/countryCode';
@@ -25,8 +32,7 @@
 		const q = input.trim().toLowerCase();
 		if (q === '') return organizations;
 		return organizations.filter(
-			(org) =>
-				org.name.toLowerCase().includes(q) || String(org.id).includes(q)
+			(org) => org.name.toLowerCase().includes(q) || String(org.id).includes(q)
 		);
 	});
 

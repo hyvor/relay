@@ -1,5 +1,11 @@
 <script lang="ts">
-	import { IconButton, IconMessage, LoadButton, Loader, TextInput } from '@hyvor/design/components';
+	import {
+		IconButton,
+		IconMessage,
+		LoadButton,
+		Loader,
+		TextInput
+	} from '@hyvor/design/components';
 	import IconX from '@hyvor/icons/IconX';
 	import SingleBox from '../SingleBox.svelte';
 	import ProjectRow from './ProjectRow.svelte';

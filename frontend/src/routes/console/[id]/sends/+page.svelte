@@ -2,17 +2,11 @@
 	import SingleBox from '../../@components/content/SingleBox.svelte';
 	import Filters from '$lib/sends/Filters.svelte';
 	import SendsList from '$lib/sends/SendsList.svelte';
-	import type { Send, SendRecipientStatus, StatusOption } from '../../types';
+	import { SEND_STATUS_OPTIONS } from '$lib/sends/statusOptions';
+	import type { Send, SendRecipientStatus } from '../../types';
 	import { getSends } from '../../lib/actions/emailActions';
 	import { emailStore } from '../../lib/stores/projectStore.svelte';
 	import { consoleUrlProject } from '../../lib/consoleUrl';
-
-	const STATUS_OPTIONS: StatusOption[] = [
-		{ value: null, label: 'All' },
-		{ value: 'queued', label: 'Queued' },
-		{ value: 'accepted', label: 'Accepted' },
-		{ value: 'bounced', label: 'Bounced' }
-	];
 
 	const PER_PAGE = 25;
 
@@ -48,7 +42,7 @@
 	<div class="top">
 		<div class="left">
 			<Filters
-				statusOptions={STATUS_OPTIONS}
+				statusOptions={SEND_STATUS_OPTIONS}
 				bind:status
 				bind:fromSearch
 				bind:toSearch

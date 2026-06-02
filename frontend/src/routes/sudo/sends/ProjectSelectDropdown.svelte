@@ -105,12 +105,7 @@
 			</span>
 
 			{#if value}
-				<IconButton
-					size={14}
-					style="margin-left:4px;"
-					color="gray"
-					on:click={clear}
-				>
+				<IconButton size={14} style="margin-left:4px;" color="gray" on:click={clear}>
 					<IconX size={10} />
 				</IconButton>
 			{/if}
