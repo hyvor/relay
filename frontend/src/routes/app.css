@@ -1,6 +1,13 @@
 :root {
-	--accent: #5772ae !important;
-	--accent-light-mid: #c0d1f4 !important;
-	--accent-light: #f0f5ff !important;
-	--accent-lightest: #f8faff !important;
+	/* Neogrid brand palette */
+	--color-primary: #ff5a00; /* Laranja Neogrid */
+	--color-primary-hover: #e04f00;
+	--color-bg-dark: #001e3c; /* Azul Escuro Neogrid */
+	--color-text-on-dark: #ffffff;
+
+	/* Hyvor design token overrides — map accent family to Neogrid orange */
+	--accent: #ff5a00 !important;
+	--accent-light-mid: #ffd0b3 !important;
+	--accent-light: #fff1e8 !important;
+	--accent-lightest: #fff8f3 !important;
 }

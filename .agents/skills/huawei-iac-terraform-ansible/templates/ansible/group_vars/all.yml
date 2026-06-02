@@ -1,0 +1,32 @@
+---
+# group_vars/all.yml
+# Variáveis globais Ansible para Huawei Cloud
+
+# Huawei Cloud
+hw_region: "la-south-2"
+hw_dns_private:
+  - 100.125.0.250
+  - 100.125.1.250
+
+# Python
+ansible_python_interpreter: /usr/bin/python3
+
+# SSH
+ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+
+# Docker
+docker_edition: "ce"
+docker_version: "24.0"
+docker_compose_version: "2.24.0"
+
+# Monitoring
+node_exporter_version: "1.7.0"
+node_exporter_port: 9100
+
+# OBS Backup (set via --extra-vars or ansible-vault)
+# obs_ak: "CHANGEME"
+# obs_sk: "CHANGEME"
+# obs_backup_bucket: "bucket-oem-shared-backup-01"
+
+# Backup cron jobs
+backup_cron_jobs: []

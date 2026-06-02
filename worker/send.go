@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	smtp "github.com/hyvor/relay/worker/smtp"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var ErrSendEmailFailed = errors.New("failed to send email")
@@ -270,6 +272,19 @@ func sendEmailHandler(
 	startTime := time.Now()
 	tryCount := recipients[0].TryCount // all recipients of this domain should have the same try count
 
+	ctx, span := Tracer().Start(context.Background(), "smtp.send")
+	span.SetAttributes(
+		attribute.String("smtp.rcpt_domain", rcptDomain),
+		attribute.String("smtp.instance_domain", instanceDomain),
+		attribute.Int("smtp.ip_id", ipId),
+		attribute.String("smtp.ip", ip),
+		attribute.String("smtp.queue", send.QueueName),
+		attribute.Int("smtp.try_count", tryCount),
+		attribute.Int("smtp.recipient_count", len(recipients)),
+	)
+	defer span.End()
+	_ = ctx
+
 	result := &SendResult{
 		SentFromIpId: ipId,
 		SentFromIp:   ip,
@@ -300,6 +315,9 @@ func sendEmailHandler(
 
 	for _, host := range mxHosts {
 
+		_, hostSpan := Tracer().Start(ctx, "smtp.send_to_host")
+		hostSpan.SetAttributes(attribute.String("smtp.mx_host", host))
+
 		conversation := sendEmailToHost(
 			send,
 			recipients,
@@ -308,6 +326,11 @@ func sendEmailHandler(
 			ip,
 			ptr,
 		)
+
+		if conversation.NetworkError != nil {
+			hostSpan.SetAttributes(attribute.String("smtp.network_error", conversation.NetworkError.Error()))
+		}
+		hostSpan.End()
 
 		result.SmtpConversations[host] = conversation
 

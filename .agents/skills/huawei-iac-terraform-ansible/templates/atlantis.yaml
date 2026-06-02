@@ -1,0 +1,57 @@
+version: 3
+projects:
+- name: oem
+  dir: ./terraform
+  workflow: oem
+  workspace: oem
+  autoplan:
+    when_modified: ["e-oem.tfvars"]
+    enabled: true
+  terraform_version: v1.9.6
+workflows:
+  oem:
+   plan:
+     steps:
+     - multienv:
+         command: /home/atlantis/load-env.sh
+         output: hide
+     - env:
+         name: PRODUCT
+         value: cloud-services
+     - env:
+         name: CLOUD
+         value: huawei
+     - env:
+         name: ACCOUNT
+         value: oem
+     - env:
+         name: TF_VAR_subscription_id
+         command: echo ${subscription_id_prd}
+     - env:
+         name: ARM_CLIENT_ID
+         command: echo ${arm_client_id_prd}
+     - env:
+         name: ARM_CLIENT_SECRET
+         command: echo ${arm_client_secret_prd}
+     - env:
+          name: TF_VAR_hw_access_key
+          command: echo ${management_access_key_oem}
+     - env:
+          name: TF_VAR_hw_secret_key
+          command: echo ${management_secret_key_oem}
+     - run: terraform${ATLANTIS_TERRAFORM_VERSION} init -input=false -backend-config storage_account_name=$AZURE_STORAGE_NAME -backend-config container_name=$AZURE_STORAGE_CONTAINER -backend-config key=${CLOUD}/${ACCOUNT}/iac-shared-$PRODUCT-tfstate
+     - run: terraform${ATLANTIS_TERRAFORM_VERSION} workspace new "${WORKSPACE}" || true
+     - run: terraform${ATLANTIS_TERRAFORM_VERSION} workspace select $WORKSPACE
+     - run: terraform${ATLANTIS_TERRAFORM_VERSION} plan -input=false -refresh -out $PLANFILE -var-file=e-$WORKSPACE.tfvars
+   apply:
+     steps:
+     - multienv:
+         command: /home/atlantis/load-env.sh
+         output: hide
+     - env:
+         name: ARM_CLIENT_ID
+         command: echo ${arm_client_id_prd}
+     - env:
+         name: ARM_CLIENT_SECRET
+         command: echo ${arm_client_secret_prd}
+     - run: terraform${ATLANTIS_TERRAFORM_VERSION} apply -input=false $PLANFILE

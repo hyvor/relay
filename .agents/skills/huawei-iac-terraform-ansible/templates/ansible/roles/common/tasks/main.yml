@@ -1,0 +1,21 @@
+---
+# roles/common/tasks/main.yml
+# Configuração base para todas as instâncias ECS Huawei Cloud
+
+- name: Include package installation
+  include_tasks: packages.yml
+
+- name: Include hostname configuration
+  include_tasks: hostname.yml
+
+- name: Include DNS configuration
+  include_tasks: dns.yml
+
+- name: Include NTP configuration
+  include_tasks: ntp.yml
+
+- name: Include SSH hardening
+  include_tasks: sshd.yml
+
+- name: Include user management
+  include_tasks: users.yml

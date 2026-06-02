@@ -1,0 +1,16 @@
+---
+# roles/common/defaults/main.yml
+
+ssh_port: 22
+ssh_permit_root: "prohibit-password"
+ssh_password_auth: "no"
+ssh_agent_forwarding: "no"
+
+hw_dns_private:
+  - 100.125.0.250
+  - 100.125.1.250
+
+hw_dns_search: []
+
+system_users: []
+ssh_authorized_keys: []

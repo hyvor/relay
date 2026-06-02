@@ -1,0 +1,8 @@
+---
+# roles/monitoring/handlers/main.yml
+
+- name: restart node_exporter
+  systemd:
+    name: node_exporter
+    state: restarted
+    daemon_reload: true

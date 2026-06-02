@@ -19,6 +19,8 @@ type GoState struct {
 
 	MailTls GoStateMailTls `json:"mailTls"`
 
+	Security GoStateSecurity `json:"security"`
+
 	DnsIp      string             `json:"dnsIp"`
 	DnsRecords []GoStateDnsRecord `json:"dnsRecords"`
 
@@ -31,6 +33,14 @@ type GoStateMailTls struct {
 	Enabled    bool   `json:"enabled"`
 	PrivateKey string `json:"privateKey"`
 	Certificate string `json:"certificate"`
+}
+
+// GoStateSecurity carries anti-open-relay policy pulled from Symfony.
+// Empty slices mean "no restriction" (preserves existing behavior).
+type GoStateSecurity struct {
+	AllowedSourceIPs      []string `json:"allowedSourceIps"`
+	AllowedSenderDomains  []string `json:"allowedSenderDomains"`
+	SmtpAuthViaSymfony    bool     `json:"smtpAuthViaSymfony"`
 }
 
 func (g GoState) IpAddresses() []string {
@@ -115,7 +125,7 @@ func (s *ServiceState) Set(goState GoState) {
 
 	s.EmailWorkersPool.Set(goState.Ips, goState.EmailWorkersPerIp, goState.InstanceDomain)
 	s.WebhookWorkersPool.Set(goState.WebhookWorkers)
-	s.IncomingMailServer.Set(goState.InstanceDomain, goState.IncomingWorkers, goState.MailTls)
+	s.IncomingMailServer.Set(goState.InstanceDomain, goState.IncomingWorkers, goState.MailTls, goState.Security)
 	s.DnsServer.Set(goState.DnsIp, goState.DnsRecords)
 	s.MetricsServer.Set(goState)
 

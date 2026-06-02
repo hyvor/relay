@@ -1,0 +1,30 @@
+---
+# site.yml — Master Playbook para Huawei Cloud ECS
+# Executar: ansible-playbook -i inventory/hosts.yml playbooks/site.yml
+
+- name: Configuração base para todas as instâncias ECS
+  hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - common
+
+- name: Hardening de segurança
+  hosts: all
+  become: true
+  roles:
+    - security
+
+- name: Servidores de aplicação
+  hosts: ecs_app
+  become: true
+  roles:
+    - docker
+    - monitoring
+
+- name: Servidores de banco de dados
+  hosts: ecs_db
+  become: true
+  roles:
+    - monitoring
+    - backup

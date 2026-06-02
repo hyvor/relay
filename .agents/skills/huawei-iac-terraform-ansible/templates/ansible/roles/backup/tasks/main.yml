@@ -1,0 +1,42 @@
+---
+# roles/backup/tasks/main.yml
+# OBS Backup Agent for Huawei Cloud ECS
+
+- name: Install s3fs for OBS mounting
+  yum:
+    name: s3fs-fuse
+    state: present
+
+- name: Create backup directory
+  file:
+    path: /mnt/obs-backup
+    state: directory
+    mode: '0750'
+    owner: root
+    group: root
+
+- name: Configure OBS credentials
+  copy:
+    content: "{{ obs_ak }}:{{ obs_sk }}"
+    dest: /etc/passwd-s3fs
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Mount OBS bucket
+  mount:
+    path: /mnt/obs-backup
+    src: "s3fs#{{ obs_backup_bucket }}"
+    fstype: fuse.s3fs
+    opts: "_netdev,passwd_file=/etc/passwd-s3fs,url=https://obs.{{ hw_region }}.myhuaweicloud.com,endpoint={{ hw_region }},use_path_request_style,allow_other"
+    state: mounted
+  when: obs_backup_mount | default(true)
+
+- name: Create backup cron job
+  cron:
+    name: "Backup to OBS - {{ item.name }}"
+    minute: "{{ item.minute | default('0') }}"
+    hour: "{{ item.hour | default('2') }}"
+    job: "{{ item.command }}"
+    user: root
+  loop: "{{ backup_cron_jobs | default([]) }}"

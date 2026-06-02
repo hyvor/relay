@@ -1,0 +1,9 @@
+# templates/chrony.conf.j2
+# Managed by Ansible — do not edit manually
+# Huawei Cloud NTP servers
+server ntp.myhuaweicloud.com iburst
+
+driftfile /var/lib/chrony/drift
+makestep 1.0 3
+rtcsync
+logdir /var/log/chrony

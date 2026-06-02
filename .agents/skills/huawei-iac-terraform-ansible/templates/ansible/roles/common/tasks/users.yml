@@ -1,0 +1,33 @@
+---
+# roles/common/tasks/users.yml
+# Gerenciamento de usuários
+
+- name: Create admin group
+  group:
+    name: admins
+    state: present
+
+- name: Create service users
+  user:
+    name: "{{ item.name }}"
+    groups: "{{ item.groups | default('admins') }}"
+    shell: "{{ item.shell | default('/bin/bash') }}"
+    create_home: true
+    state: present
+  loop: "{{ system_users | default([]) }}"
+
+- name: Deploy SSH authorized keys
+  authorized_key:
+    user: "{{ item.user }}"
+    key: "{{ item.key }}"
+    state: present
+  loop: "{{ ssh_authorized_keys | default([]) }}"
+
+- name: Configure sudo for admins
+  copy:
+    content: "%admins ALL=(ALL) NOPASSWD: ALL"
+    dest: /etc/sudoers.d/admins
+    owner: root
+    group: root
+    mode: '0440'
+    validate: "visudo -cf %s"

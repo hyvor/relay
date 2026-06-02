@@ -1,0 +1,25 @@
+---
+# roles/common/tasks/ntp.yml
+# Configuração NTP/Chrony para Huawei Cloud
+
+- name: Install chrony
+  yum:
+    name: chrony
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Configure chrony
+  template:
+    src: chrony.conf.j2
+    dest: /etc/chrony.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  notify: restart chrony
+
+- name: Enable and start chrony
+  systemd:
+    name: chronyd
+    state: started
+    enabled: true

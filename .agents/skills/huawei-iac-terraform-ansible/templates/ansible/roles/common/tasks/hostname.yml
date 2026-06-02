@@ -1,0 +1,13 @@
+---
+# roles/common/tasks/hostname.yml
+
+- name: Set hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: Set hostname in /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    regexp: "^127\\.0\\.0\\.1"
+    line: "127.0.0.1   {{ inventory_hostname }} localhost"
+    state: present

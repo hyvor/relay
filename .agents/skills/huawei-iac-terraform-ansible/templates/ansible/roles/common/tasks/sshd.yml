@@ -1,0 +1,26 @@
+---
+# roles/common/tasks/sshd.yml
+# Hardening SSH para Huawei Cloud ECS
+
+- name: Configure SSH daemon
+  template:
+    src: sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: '0600'
+    backup: true
+    validate: "sshd -t -f %s"
+  notify: restart sshd
+
+- name: Set SSH login banner
+  copy:
+    content: |
+      ============================================================
+      Authorized access only. All activity is monitored.
+      Huawei Cloud ECS Instance - {{ inventory_hostname }}
+      ============================================================
+    dest: /etc/ssh/banner
+    owner: root
+    group: root
+    mode: '0644'

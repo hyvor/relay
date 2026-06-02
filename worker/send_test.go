@@ -355,7 +355,7 @@ func TestSendEmailToHost(t *testing.T) {
 	defer cancel()
 
 	incomingServer := NewIncomingMailServer(ctx, slogDiscard(), newMetrics())
-	go incomingServer.Set("hyvorrelay.io", 2, GoStateMailTls{Enabled: false})
+	go incomingServer.Set("hyvorrelay.io", 2, GoStateMailTls{Enabled: false}, GoStateSecurity{})
 	time.Sleep(100 * time.Millisecond)
 
 	send := &SendRow{
@@ -624,7 +624,7 @@ func TestSendEmailFailedSmtpStatus(t *testing.T) {
 	defer cancel()
 
 	incomingServer := NewIncomingMailServer(ctx, slogDiscard(), newMetrics())
-	go incomingServer.Set("hyvorrelay.io", 2, GoStateMailTls{Enabled: false})
+	go incomingServer.Set("hyvorrelay.io", 2, GoStateMailTls{Enabled: false}, GoStateSecurity{})
 	time.Sleep(100 * time.Millisecond)
 
 	send := &SendRow{

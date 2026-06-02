@@ -1,0 +1,16 @@
+---
+# roles/common/tasks/dns.yml
+# Configuração DNS Huawei Cloud
+
+- name: Configure Huawei Cloud DNS resolvers
+  template:
+    src: resolv.conf.j2
+    dest: /etc/resolv.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  vars:
+    dns_servers: "{{ hw_dns_private | default(['100.125.0.250', '100.125.1.250']) }}"
+    dns_search: "{{ hw_dns_search | default([]) }}"
+  notify: restart network

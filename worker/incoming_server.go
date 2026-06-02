@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"net"
 	"net/mail"
 	"strings"
 	"time"
@@ -27,6 +28,7 @@ type IncomingBackend struct {
 	logger         *slog.Logger
 	instanceDomain string
 	mailChannel    chan *IncomingMail
+	security       GoStateSecurity
 }
 
 // A Session is returned after successful login.
@@ -36,19 +38,77 @@ type Session struct {
 	metrics      *Metrics
 	incomingMail IncomingMail
 	mailChannel  chan *IncomingMail
+	security     GoStateSecurity
+	remoteIP     string
 }
 
 // NewSession is called after client greeting (EHLO, HELO).
 func (bkd *IncomingBackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
+
+	remoteIP := remoteIPFromConn(c)
+
+	// Anti-open-relay: source-IP allowlist (skip when empty = no policy).
+	if len(bkd.security.AllowedSourceIPs) > 0 && !ipInAllowlist(remoteIP, bkd.security.AllowedSourceIPs) {
+		bkd.logger.Warn("Rejected connection: source IP not allowed", "remote_ip", remoteIP)
+		return nil, errors.New("source IP not allowed")
+	}
+
 	return &Session{
 		ctx:          bkd.ctx,
 		logger:      bkd.logger,
 		metrics: bkd.metrics,
 		mailChannel: bkd.mailChannel,
+		security:    bkd.security,
+		remoteIP:    remoteIP,
 		incomingMail: IncomingMail{
 			InstanceDomain: bkd.instanceDomain,
 		},
 	}, nil
+}
+
+func remoteIPFromConn(c *smtp.Conn) string {
+	if c == nil {
+		return ""
+	}
+	conn := c.Conn()
+	if conn == nil {
+		return ""
+	}
+	host, _, err := net.SplitHostPort(conn.RemoteAddr().String())
+	if err != nil {
+		return conn.RemoteAddr().String()
+	}
+	return host
+}
+
+func ipInAllowlist(ip string, allowed []string) bool {
+	if ip == "" {
+		return false
+	}
+	parsed := net.ParseIP(ip)
+	for _, entry := range allowed {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			continue
+		}
+		if entry == ip {
+			return true
+		}
+		if _, cidr, err := net.ParseCIDR(entry); err == nil && parsed != nil && cidr.Contains(parsed) {
+			return true
+		}
+	}
+	return false
+}
+
+func domainInAllowlist(domain string, allowed []string) bool {
+	domain = strings.ToLower(strings.TrimSpace(domain))
+	for _, entry := range allowed {
+		if strings.EqualFold(strings.TrimSpace(entry), domain) {
+			return true
+		}
+	}
+	return false
 }
 
 // AuthMechanisms returns a slice of available auth mechanisms; only PLAIN is
@@ -57,9 +117,49 @@ func (s *Session) AuthMechanisms() []string {
 	return []string{sasl.Plain}
 }
 
+// SmtpAuthRequest/Response — Symfony local /api/local/auth/smtp contract.
+type SmtpAuthRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	RemoteIP string `json:"remoteIp,omitempty"`
+}
+
+type SmtpAuthResponse struct {
+	Authenticated bool   `json:"authenticated"`
+	ApiKey        string `json:"apiKey,omitempty"`
+	Reason        string `json:"reason,omitempty"`
+}
+
 // Auth is the handler for supported authenticators.
+// When SmtpAuthViaSymfony is enabled the credentials are delegated to the
+// Symfony backend (which may, in turn, validate against Active Directory/LDAP).
+// Otherwise the legacy behavior applies: password is treated as an API key.
 func (s *Session) Auth(mech string) (sasl.Server, error) {
 	return sasl.NewPlainServer(func(identity, username, password string) error {
+
+		if s.security.SmtpAuthViaSymfony {
+			var resp SmtpAuthResponse
+			err := CallLocalApi(s.ctx, "POST", "/auth/smtp", SmtpAuthRequest{
+				Username: username,
+				Password: password,
+				RemoteIP: s.remoteIP,
+			}, &resp)
+
+			if err != nil {
+				s.logger.Warn("SMTP AUTH delegation to Symfony failed", "error", err, "username", username)
+				return errors.New("authentication failed")
+			}
+
+			if !resp.Authenticated {
+				s.logger.Info("SMTP AUTH rejected by Symfony", "username", username, "reason", resp.Reason)
+				return errors.New("authentication failed")
+			}
+
+			// Symfony returns the effective API key to use for /api/console/sends.
+			s.incomingMail.ApiKey = resp.ApiKey
+			return nil
+		}
+
 		s.incomingMail.ApiKey = password
 		return nil
 	}), nil
@@ -67,6 +167,24 @@ func (s *Session) Auth(mech string) (sasl.Server, error) {
 }
 
 func (s *Session) Mail(from string, opts *smtp.MailOptions) error {
+
+	// Sender-domain allowlist applies only to unauthenticated/non-API submissions.
+	if !s.incomingMail.HasApiKey() && len(s.security.AllowedSenderDomains) > 0 {
+		parsed, err := mail.ParseAddress(from)
+		if err != nil {
+			return errors.New("invalid sender address: " + err.Error())
+		}
+		at := strings.LastIndex(parsed.Address, "@")
+		if at == -1 || at == len(parsed.Address)-1 {
+			return errors.New("invalid sender address: missing domain part")
+		}
+		domain := parsed.Address[at+1:]
+		if !domainInAllowlist(domain, s.security.AllowedSenderDomains) {
+			s.logger.Warn("Rejected MAIL FROM: sender domain not allowed", "domain", domain, "remote_ip", s.remoteIP)
+			return errors.New("sender domain not allowed")
+		}
+	}
+
 	s.incomingMail.MailFrom = from
 	return nil
 }
@@ -121,7 +239,7 @@ func (s *Session) Data(r io.Reader) error {
 	} else {
 		s.mailChannel <- &s.incomingMail
 	}
-	
+
 	return nil
 }
 
@@ -150,9 +268,9 @@ func NewIncomingMailServer(ctx context.Context, logger *slog.Logger, metrics *Me
 	}
 }
 
-func (server *IncomingMailServer) Set(instanceDomain string, numWorkers int, mailTls GoStateMailTls) {
+func (server *IncomingMailServer) Set(instanceDomain string, numWorkers int, mailTls GoStateMailTls, security GoStateSecurity) {
 	server.Shutdown()
-	server.StartChannelAndSmtpServers(instanceDomain, numWorkers, mailTls)
+	server.StartChannelAndSmtpServers(instanceDomain, numWorkers, mailTls, security)
 
 	go func() {
 		<-server.ctx.Done()
@@ -191,7 +309,7 @@ func (server *IncomingMailServer) Shutdown() {
 var smtpServerPort1 = ":25"
 var smtpServerPort2 = ":587"
 
-func (server *IncomingMailServer) StartChannelAndSmtpServers(instanceDomain string, numWorkers int, mailTls GoStateMailTls) {
+func (server *IncomingMailServer) StartChannelAndSmtpServers(instanceDomain string, numWorkers int, mailTls GoStateMailTls, security GoStateSecurity) {
 
 	// channel
 	mailChannel := make(chan *IncomingMail)
@@ -210,8 +328,8 @@ func (server *IncomingMailServer) StartChannelAndSmtpServers(instanceDomain stri
 		)
 	}
 
-	go server.StartSmtpServer(smtpServerPort1, instanceDomain, mailTls, mailChannel, 1)
-	go server.StartSmtpServer(smtpServerPort2, instanceDomain, mailTls, mailChannel, 2)
+	go server.StartSmtpServer(smtpServerPort1, instanceDomain, mailTls, security, mailChannel, 1)
+	go server.StartSmtpServer(smtpServerPort2, instanceDomain, mailTls, security, mailChannel, 2)
 
 }
 
@@ -219,6 +337,7 @@ func (server *IncomingMailServer) StartSmtpServer(
 	port string,
 	instanceDomain string,
 	mailTls GoStateMailTls,
+	security GoStateSecurity,
 	mailChannel chan *IncomingMail,
 	serverNumber int,
 ) {
@@ -229,6 +348,7 @@ func (server *IncomingMailServer) StartSmtpServer(
 		instanceDomain: instanceDomain,
 		mailChannel:    mailChannel,
 		metrics: server.metrics,
+		security: security,
 	}
 
 	smtpServer := smtp.NewServer(be)

@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -23,6 +24,19 @@ func main() {
 
 	// logger
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+	// OTEL tracer provider (no-op when OTEL_EXPORTER_OTLP_ENDPOINT is unset).
+	shutdownTracing, err := InitTracing(ctx, logger)
+	if err != nil {
+		logger.Error("Failed to initialize OTEL tracing", "error", err)
+	}
+	defer func() {
+		if shutdownTracing != nil {
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = shutdownTracing(shutdownCtx)
+		}
+	}()
 
 	// serviceState holds the state of the services (ex: email workers, etc.)
 	serviceState := NewServiceState(ctx, logger)

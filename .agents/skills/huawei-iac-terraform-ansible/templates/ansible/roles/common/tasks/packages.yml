@@ -1,0 +1,38 @@
+---
+# roles/common/tasks/packages.yml
+
+- name: Update all packages (Rocky/RHEL)
+  yum:
+    name: "*"
+    state: latest
+    update_cache: true
+  when: ansible_os_family == "RedHat"
+
+- name: Install base packages
+  yum:
+    name:
+      - vim
+      - curl
+      - wget
+      - htop
+      - net-tools
+      - bind-utils
+      - python3
+      - python3-pip
+      - jq
+      - tmux
+      - unzip
+      - git
+      - rsync
+      - lsof
+      - strace
+      - tcpdump
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Install pip packages
+  pip:
+    name:
+      - requests
+      - pyyaml
+    executable: pip3

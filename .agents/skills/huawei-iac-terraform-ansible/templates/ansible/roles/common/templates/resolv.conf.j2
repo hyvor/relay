@@ -1,0 +1,9 @@
+# templates/resolv.conf.j2
+# Managed by Ansible — do not edit manually
+{% for server in dns_servers %}
+nameserver {{ server }}
+{% endfor %}
+{% for domain in dns_search %}
+search {{ domain }}
+{% endfor %}
+options timeout:2 attempts:3

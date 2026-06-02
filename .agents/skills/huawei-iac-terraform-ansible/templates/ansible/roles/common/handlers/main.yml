@@ -1,0 +1,17 @@
+---
+# roles/common/handlers/main.yml
+
+- name: restart sshd
+  systemd:
+    name: sshd
+    state: restarted
+
+- name: restart chrony
+  systemd:
+    name: chronyd
+    state: restarted
+
+- name: restart network
+  systemd:
+    name: NetworkManager
+    state: restarted

@@ -1,0 +1,75 @@
+---
+# roles/security/tasks/main.yml
+# CIS Benchmark hardening for Huawei Cloud ECS
+
+- name: Disable unused filesystems
+  lineinfile:
+    path: /etc/modprobe.d/cis-hardening.conf
+    line: "install {{ item }} /bin/true"
+    create: true
+  loop:
+    - cramfs
+    - freevxfs
+    - jffs2
+    - hfs
+    - hfsplus
+    - squashfs
+    - udf
+
+- name: Set kernel parameters
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: true
+    sysctl_file: /etc/sysctl.d/99-cis.conf
+  loop:
+    - { key: "net.ipv4.ip_forward", value: "0" }
+    - { key: "net.ipv4.conf.all.send_redirects", value: "0" }
+    - { key: "net.ipv4.conf.default.send_redirects", value: "0" }
+    - { key: "net.ipv4.conf.all.accept_redirects", value: "0" }
+    - { key: "net.ipv4.conf.default.accept_redirects", value: "0" }
+    - { key: "net.ipv4.conf.all.secure_redirects", value: "0" }
+    - { key: "net.ipv4.conf.default.secure_redirects", value: "0" }
+    - { key: "net.ipv4.conf.all.log_martians", value: "1" }
+    - { key: "net.ipv4.icmp_echo_ignore_broadcasts", value: "1" }
+    - { key: "net.ipv4.icmp_ignore_bogus_error_responses", value: "1" }
+    - { key: "net.ipv4.tcp_syncookies", value: "1" }
+
+- name: Configure firewall (iptables)
+  iptables:
+    chain: INPUT
+    policy: DROP
+  when: enable_firewall | default(false)
+
+- name: Allow established connections
+  iptables:
+    chain: INPUT
+    ctstate: ESTABLISHED,RELATED
+    jump: ACCEPT
+  when: enable_firewall | default(false)
+
+- name: Allow SSH
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "{{ ssh_port | default(22) }}"
+    jump: ACCEPT
+  when: enable_firewall | default(false)
+
+- name: Install fail2ban
+  yum:
+    name: fail2ban
+    state: present
+
+- name: Configure fail2ban for SSH
+  template:
+    src: jail.local.j2
+    dest: /etc/fail2ban/jail.local
+  notify: restart fail2ban
+
+- name: Enable fail2ban
+  systemd:
+    name: fail2ban
+    state: started
+    enabled: true

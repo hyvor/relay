@@ -1,0 +1,9 @@
+---
+# base.yml — Playbook standalone para configuração base
+- name: Configuração base Huawei Cloud ECS
+  hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - common
+    - security

@@ -1,0 +1,39 @@
+---
+# roles/monitoring/tasks/main.yml
+# Prometheus Node Exporter for Huawei Cloud ECS
+
+- name: Create node_exporter user
+  user:
+    name: node_exporter
+    shell: /sbin/nologin
+    system: true
+    create_home: false
+
+- name: Download node_exporter
+  get_url:
+    url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+    dest: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+  register: download_result
+
+- name: Extract node_exporter
+  unarchive:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+    dest: /usr/local/bin/
+    remote_src: true
+    extra_opts:
+      - "--strip-components=1"
+      - "node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+  when: download_result is changed
+
+- name: Create systemd service
+  template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+  notify: restart node_exporter
+
+- name: Start and enable node_exporter
+  systemd:
+    name: node_exporter
+    state: started
+    enabled: true
+    daemon_reload: true
