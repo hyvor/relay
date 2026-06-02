@@ -45,10 +45,31 @@ class ProjectService
     }
 
     /**
+     * Distinct, non-null organization ids referenced by projects.
+     *
+     * @return int[]
+     */
+    public function getDistinctOrganizationIds(): array
+    {
+        /** @var array<int, array{organization_id: int}> $rows */
+        $rows = $this->em->getRepository(Project::class)->createQueryBuilder('p')
+            ->select('DISTINCT p.organization_id AS organization_id')
+            ->where('p.organization_id IS NOT NULL')
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_map(fn(array $row) => (int) $row['organization_id'], $rows);
+    }
+
+    /**
      * @return Project[]
      */
-    public function getProjects(int $limit, ?int $beforeId = null, ?string $search = null): array
-    {
+    public function getProjects(
+        int $limit,
+        ?int $beforeId = null,
+        ?string $search = null,
+        ?int $organizationId = null
+    ): array {
         $qb = $this->em->getRepository(Project::class)->createQueryBuilder('p')
             ->orderBy('p.id', 'DESC')
             ->setMaxResults($limit);
@@ -61,6 +82,11 @@ class ProjectService
         if ($search !== null) {
             $qb->andWhere('LOWER(p.name) LIKE LOWER(:search)')
                 ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($organizationId !== null) {
+            $qb->andWhere('p.organization_id = :orgId')
+                ->setParameter('orgId', $organizationId);
         }
 
         /** @var Project[] */

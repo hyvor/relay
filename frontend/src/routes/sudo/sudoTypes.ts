@@ -194,8 +194,29 @@ export interface SudoSendResponse {
 
 export interface SudoProject {
 	id: number;
+	user_id: number;
 	name: string;
 	created_at: number;
+	updated_at: number;
 	organization_id: number | null;
 	send_type: 'transactional' | 'distributional';
+}
+
+export interface Organization {
+	id: number;
+	name: string;
+	billing_email: string | null;
+	billing_address: {
+		country: string | null;
+	} | null;
+}
+
+export interface SudoProjectsResponse {
+	projects: SudoProject[];
+	orgs: Organization[];
+}
+
+export interface SudoProjectResponse {
+	project: SudoProject;
+	org: Organization | null;
 }

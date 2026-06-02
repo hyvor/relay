@@ -13,7 +13,9 @@ import type {
 	DebugIncomingEmail,
 	InfrastructureBounce,
 	TlsCertificate,
-	SudoProject,
+	Organization,
+	SudoProjectsResponse,
+	SudoProjectResponse,
 	SudoSendsResponse,
 	SudoSendResponse
 } from './sudoTypes';
@@ -216,10 +218,23 @@ export function getSendByUuid(uuid: string) {
 export function getProjects(
 	search: string | null,
 	limit: number,
-	before_id: number | null
+	before_id: number | null,
+	organization_id: number | null = null
 ) {
-	return sudoApi.get<SudoProject[]>({
+	return sudoApi.get<SudoProjectsResponse>({
 		endpoint: '/projects',
-		data: { search, limit, before_id }
+		data: { search, limit, before_id, organization_id }
+	});
+}
+
+export function getProjectOrganizations() {
+	return sudoApi.get<Organization[]>({
+		endpoint: '/projects/organizations'
+	});
+}
+
+export function getProjectById(id: number) {
+	return sudoApi.get<SudoProjectResponse>({
+		endpoint: `/projects/${id}`
 	});
 }

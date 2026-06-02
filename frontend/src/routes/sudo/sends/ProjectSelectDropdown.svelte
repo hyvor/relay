@@ -11,7 +11,7 @@
 	import IconX from '@hyvor/icons/IconX';
 	import { tick } from 'svelte';
 	import { getProjects } from '../sudoActions';
-	import type { SudoProject } from '../sudoTypes';
+	import type { Organization, SudoProject } from '../sudoTypes';
 
 	interface Props {
 		value?: SudoProject | null;
@@ -24,6 +24,7 @@
 
 	let input = $state('');
 	let results: SudoProject[] = $state([]);
+	let orgsMap: Map<number, Organization> = $state(new Map());
 	let loading = $state(false);
 	let searched = $state(false);
 
@@ -60,9 +61,15 @@
 		if (!q) return;
 		loading = true;
 		try {
-			results = await getProjects(q, LIMIT, null);
-		} catch (error: any) {
-			toast.error('Failed to load projects: ' + error.message);
+			const res = await getProjects(q, LIMIT, null);
+			results = res.projects;
+			const newMap = new Map<number, Organization>();
+			for (const org of res.orgs) {
+				newMap.set(org.id, org);
+			}
+			orgsMap = newMap;
+		} catch (error) {
+			toast.error('Failed to load projects: ' + (error as Error).message);
 			results = [];
 			searched = false;
 		} finally {
@@ -139,7 +146,9 @@
 							<div class="project-name">{project.name}</div>
 							<div class="project-meta">
 								#{project.id}
-								{#if project.organization_id !== null}
+								{#if project.organization_id !== null && orgsMap.get(project.organization_id)}
+									· {orgsMap.get(project.organization_id)?.name}
+								{:else if project.organization_id !== null}
 									· org {project.organization_id}
 								{/if}
 								· {project.send_type}
