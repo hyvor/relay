@@ -195,12 +195,14 @@
 	title={modalTitle}
 	on:cancel={handleClose}
 	on:confirm={handleSubmit}
+	closeOnOutsideClick={false}
 >
 	<div class="modal-content">
 		<SplitControl
 			label="Name"
 			caption="A descriptive name to identify this API key"
 			error={errors.name}
+			column
 		>
 			<TextInput
 				bind:value={name}
@@ -214,6 +216,7 @@
 			label="Scopes"
 			caption="Select what actions this API key can perform"
 			error={errors.scopes}
+			column
 		>
 			<div class="scopes-header">
 				<div class="scopes-actions">
@@ -236,22 +239,26 @@
 				</div>
 			</div>
 			<div class="scopes-container">
-				{#each scopes as scope}
-					<div class="scope-item">
-						<Checkbox
-							checked={selectedScopes.includes(scope)}
-							disabled={loading}
-							on:change={() => handleScopeToggle(scope)}
-						>
-							<div class="scope-content">
-								<span class="scope-name">{scope}</span>
-								{#if getScopeDescription(scope)}
-									<span class="scope-description"
-										>{getScopeDescription(scope)}</span
-									>
-								{/if}
+				{#each [scopes.slice(0, Math.floor(scopes.length / 2)), scopes.slice(Math.floor(scopes.length / 2))] as scopeCol}
+					<div class="scope-column">
+						{#each scopeCol as scope}
+							<div class="scope-item">
+								<Checkbox
+									checked={selectedScopes.includes(scope)}
+									disabled={loading}
+									on:change={() => handleScopeToggle(scope)}
+								>
+									<div class="scope-content">
+										<span class="scope-name">{scope}</span>
+										{#if getScopeDescription(scope)}
+											<span class="scope-description"
+												>{getScopeDescription(scope)}</span
+											>
+										{/if}
+									</div>
+								</Checkbox>
 							</div>
-						</Checkbox>
+						{/each}
 					</div>
 				{/each}
 			</div>
@@ -259,13 +266,19 @@
 
 		<SplitControl
 			label={sendsSendSelected ? 'Allowed IPs (required)' : 'Allowed IPs'}
-			caption="Restrict this key to specific client IPs."
+			caption="Choose which IP addresses are allowed to use this API key (HTTP and SMTP)."
 			error={errors.allowed_ips}
+			column
 		>
 			<div class="ip-help">
-				<div>Accepts a single IPv4 or IPv6 address, or a CIDR range (max <code>/24</code> for IPv4, <code>/48</code> for IPv6).</div>
+				<div>
+					Accepts a single IPv4 or IPv6 address, or a CIDR range (max <code>/24</code> for
+					IPv4, <code>/48</code> for IPv6).
+				</div>
 				{#if sendsSendSelected}
-					<div>At least one entry is required when <code>sends.send</code> is selected.</div>
+					<div>
+						At least one entry is required when <code>sends.send</code> is selected.
+					</div>
 				{/if}
 			</div>
 			<div class="ip-input-row">
@@ -318,9 +331,8 @@
 
 <style>
 	.modal-content {
-		padding: 20px 0;
-        max-height: 70vh;
-        overflow-y: auto;
+		max-height: 70vh;
+		overflow-y: auto;
 	}
 
 	.scopes-header {
@@ -354,6 +366,11 @@
 	}
 
 	.scopes-container {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+	}
+
+	.scope-column {
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
