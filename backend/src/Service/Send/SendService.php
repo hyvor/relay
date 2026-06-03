@@ -152,7 +152,7 @@ class SendService
         $send->setDomain($domain);
         $send->setQueue($queue);
         $send->setQueueName($queue->getName());
-        $send->setIpAddress($this->ipAddressService->getRandomIpForQueue($queue));
+        $send->setIpAddress($this->ipAddressService->getIpForQueue($queue));
         $send->setFromAddress($from->getAddress());
         $send->setFromName($from->getName());
         $send->setSubject($subject);

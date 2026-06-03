@@ -27,7 +27,7 @@ class RouteNullIpsMessageHandler
             return;
         }
 
-        $newIp = $this->ipAddressService->getRandomIpForQueue($queue);
+        $newIp = $this->ipAddressService->getIpForQueue($queue);
 
         $this->sendService->updateNullIpSendsForQueue(
             $queue->getId(),
