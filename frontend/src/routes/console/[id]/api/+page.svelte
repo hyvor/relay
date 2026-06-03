@@ -141,11 +141,12 @@
 			},
 			confirm: false
 		}}
+		closeOnOutsideClick={false}
 	>
 		<div class="modal-content">
 			<div class="warning-box">
-				<strong>Important:</strong> This is the only time you'll see this API key. Make sure
-				to copy it and store it securely.
+				<strong>Important:</strong> This is the only time you'll see this API key. Make sure to
+				copy it and store it securely.
 			</div>
 
 			<SplitControl label="API Key">
@@ -187,7 +188,7 @@
 	}
 
 	.content {
-		padding: 30px;
+		padding: 15px 0;
 		flex: 1;
 		display: flex;
 		flex-direction: column;
