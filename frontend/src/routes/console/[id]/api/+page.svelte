@@ -141,11 +141,12 @@
 			},
 			confirm: false
 		}}
+		closeOnOutsideClick={false}
 	>
 		<div class="modal-content">
 			<div class="warning-box">
-				<strong>Important:</strong> This is the only time you'll see this API key. Make sure
-				to copy it and store it securely.
+				<strong>Important:</strong> This is the only time you'll see this API key. Make sure to
+				copy it and store it securely.
 			</div>
 
 			<SplitControl label="API Key">
@@ -175,6 +176,18 @@
 					{/each}
 				</div>
 			</SplitControl>
+
+			<SplitControl label="Allowed IPs">
+				{#if newApiKey.allowed_ips && newApiKey.allowed_ips.length > 0}
+					<div class="ips-display">
+						{#each newApiKey.allowed_ips as ip}
+							<Tag size="small" color="blue">{ip}</Tag>
+						{/each}
+					</div>
+				{:else}
+					<span class="no-restriction">No IP restriction</span>
+				{/if}
+			</SplitControl>
 		</div>
 	</Modal>
 {/if}
@@ -187,7 +200,7 @@
 	}
 
 	.content {
-		padding: 30px;
+		padding: 15px 0;
 		flex: 1;
 		display: flex;
 		flex-direction: column;
@@ -224,5 +237,16 @@
 		display: flex;
 		gap: 8px;
 		flex-wrap: wrap;
+	}
+
+	.ips-display {
+		display: flex;
+		gap: 8px;
+		flex-wrap: wrap;
+	}
+
+	.no-restriction {
+		font-size: 14px;
+		color: var(--text-light);
 	}
 </style>

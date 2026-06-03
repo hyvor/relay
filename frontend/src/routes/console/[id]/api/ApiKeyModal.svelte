@@ -7,14 +7,12 @@
 		toast,
 		Checkbox,
 		Switch,
-		Button,
-		IconButton
+		Button
 	} from '@hyvor/design/components';
-	import IconX from '@hyvor/icons/IconX';
 	import { createApiKey, updateApiKey } from '../../lib/actions/apiKeyActions';
 	import type { ApiKey } from '../../types';
 	import { getAppConfig } from '../../lib/stores/consoleStore';
-	import { validateAllowedIpEntry, cidrAddressCount } from './allowedIp';
+	import { validateAllowedIpEntry } from './allowedIp';
 	import AddedIpRow from './AddedIpRow.svelte';
 
 	interface Props {
@@ -34,7 +32,7 @@
 	let name = $state('');
 	let selectedScopes = $state<string[]>(['sends.send']);
 	let isEnabled = $state(true);
-	let allowedIps = $state<string[]>(['10.0.0.1/2']);
+	let allowedIps = $state<string[]>([]);
 	let ipInput = $state('');
 	let ipInputEl: HTMLInputElement | undefined = $state();
 	let ipError = $state<string | undefined>();
@@ -67,7 +65,7 @@
 		name = '';
 		selectedScopes = ['sends.send'];
 		isEnabled = true;
-		//allowedIps = [];
+		allowedIps = [];
 		ipInput = '';
 		ipError = undefined;
 		errors = {};
@@ -284,7 +282,8 @@
 
 		<SplitControl
 			label={sendsSendSelected ? 'Allowed IPs (required)' : 'Allowed IPs'}
-			caption="Choose which IP addresses are allowed to use this API key (HTTP and SMTP). CIDR ranges are supported (max /24 for IPv4, /48 for IPv6)."
+			caption={'Choose which IP addresses are allowed to use this API key (HTTP and SMTP). CIDR ranges are supported (max /24 for IPv4, /48 for IPv6).' +
+				(sendsSendSelected ? ' This is required when "sends.send" scope is enabled.' : '')}
 			error={errors.allowed_ips}
 			column
 		>

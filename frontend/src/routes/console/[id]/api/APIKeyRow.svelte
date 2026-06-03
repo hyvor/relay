@@ -14,17 +14,20 @@
 
 	let { apiKey, onDelete, onEdit }: Props = $props();
 
+	const MAX_VISIBLE_SCOPES = 4;
+
 	function getDisplayScopes(scopes: string[]): { visible: string[]; remaining: string[] } {
-		if (scopes.length <= 2) {
+		if (scopes.length <= MAX_VISIBLE_SCOPES) {
 			return { visible: scopes, remaining: [] };
 		}
 		return {
-			visible: scopes.slice(0, 2),
-			remaining: scopes.slice(2)
+			visible: scopes.slice(0, MAX_VISIBLE_SCOPES),
+			remaining: scopes.slice(MAX_VISIBLE_SCOPES)
 		};
 	}
 
 	const displayScopes = $derived(getDisplayScopes(apiKey.scopes));
+	const hasIpRestrictions = $derived(apiKey.allowed_ips && apiKey.allowed_ips.length > 0);
 </script>
 
 <div class="api-key-item">
@@ -35,26 +38,15 @@
 				<Tag size="small" color={apiKey.is_enabled ? 'green' : 'red'}>
 					{apiKey.is_enabled ? 'Enabled' : 'Disabled'}
 				</Tag>
-				<div class="scopes-tags">
-					{#if apiKey.scopes.length === 0}
-						<Tag size="small" variant="gray">No scopes</Tag>
-					{:else}
-						{#each displayScopes.visible as scope}
-							<Tag size="small">
-								{scope}
-							</Tag>
-						{/each}
-						{#if displayScopes.remaining.length > 0}
-							<Tooltip text={displayScopes.remaining.join(', ')}>
-								<Tag size="small">+{displayScopes.remaining.length} more</Tag>
-							</Tooltip>
-						{/if}
-					{/if}
-				</div>
+				{#if hasIpRestrictions}
+					<Tag size="small" color="blue">IP restricted</Tag>
+				{:else}
+					<Tag size="small" color="orange">No IP restriction</Tag>
+				{/if}
 			</div>
 		</div>
 		<div class="api-key-meta">
-			<span>Created: <RelativeTime unix={apiKey.created_at} /></span>
+			<span>Created <RelativeTime unix={apiKey.created_at} /></span>
 			{#if apiKey.last_accessed_at}
 				<span>Last used: <RelativeTime unix={apiKey.last_accessed_at} /></span>
 			{:else}
@@ -62,6 +54,24 @@
 			{/if}
 		</div>
 	</div>
+
+	<div class="scopes-tags">
+		{#if apiKey.scopes.length === 0}
+			<Tag size="small" variant="gray">No scopes</Tag>
+		{:else}
+			{#each displayScopes.visible as scope}
+				<Tag size="small">
+					{scope}
+				</Tag>
+			{/each}
+			{#if displayScopes.remaining.length > 0}
+				<Tooltip text={displayScopes.remaining.join(', ')}>
+					<Tag size="small">+{displayScopes.remaining.length} more</Tag>
+				</Tooltip>
+			{/if}
+		{/if}
+	</div>
+
 	<div class="api-key-actions">
 		<IconButton
 			color="input"
@@ -85,21 +95,24 @@
 
 <style>
 	.api-key-item {
-		display: flex;
+		display: grid;
 		justify-content: space-between;
-		align-items: center;
-		padding: 20px;
+		align-items: flex-start;
+		border-radius: 8px;
+		background-color: var(--bg-light);
+		word-break: break-all;
+		padding: 15px 30px;
+		grid-template-columns: 1fr 1fr auto;
 	}
 
 	.api-key-info {
-		flex: 1;
 	}
 
 	.api-key-header {
 		display: flex;
 		align-items: center;
 		gap: 12px;
-		margin-bottom: 8px;
+		margin-bottom: 3px;
 	}
 
 	.api-key-badges {
