@@ -36,6 +36,7 @@
 	let isEnabled = $state(true);
 	let allowedIps = $state<string[]>(['10.0.0.1/2']);
 	let ipInput = $state('');
+	let ipInputEl: HTMLInputElement | undefined = $state();
 	let ipError = $state<string | undefined>();
 	let loading = $state(false);
 	let errors = $state<Record<string, string>>({});
@@ -113,10 +114,12 @@
 			delete next.allowed_ips;
 			errors = next;
 		}
+		ipInputEl?.focus();
 	}
 
 	function handleRemoveIp(entry: string) {
 		allowedIps = allowedIps.filter((e) => e !== entry);
+		ipInputEl?.focus();
 	}
 
 	function handleIpKeydown(event: KeyboardEvent) {
@@ -288,6 +291,7 @@
 			<div class="ip-input-row">
 				<TextInput
 					bind:value={ipInput}
+					bind:input={ipInputEl}
 					placeholder="e.g. 203.0.113.5 or 2001:db8::/64"
 					block
 					disabled={loading}
