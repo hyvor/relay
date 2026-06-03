@@ -23,8 +23,8 @@ import (
 
 // The IncomingBackend implements SMTP server methods.
 type IncomingBackend struct {
-	ctx context.Context
-	metrics *Metrics
+	ctx            context.Context
+	metrics        *Metrics
 	logger         *slog.Logger
 	instanceDomain string
 	mailChannel    chan *IncomingMail
@@ -48,20 +48,13 @@ func (bkd *IncomingBackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 		mailChannel: bkd.mailChannel,
 		incomingMail: IncomingMail{
 			InstanceDomain: bkd.instanceDomain,
-			ClientIp:       extractClientIp(c),
+			ClientIp:       clientIpFromAddr(c.Conn().RemoteAddr()),
 		},
 	}, nil
 }
 
 // extractClientIp returns the IP portion of the SMTP client's remote address,
 // or an empty string if the address can't be determined.
-func extractClientIp(c *smtp.Conn) string {
-	if c == nil || c.Conn() == nil {
-		return ""
-	}
-	return clientIpFromAddr(c.Conn().RemoteAddr())
-}
-
 func clientIpFromAddr(addr net.Addr) string {
 	if addr == nil {
 		return ""
@@ -146,7 +139,7 @@ func (s *Session) Data(r io.Reader) error {
 	} else {
 		s.mailChannel <- &s.incomingMail
 	}
-	
+
 	return nil
 }
 
@@ -249,11 +242,11 @@ func (server *IncomingMailServer) StartSmtpServer(
 ) {
 
 	be := &IncomingBackend{
-		ctx: server.ctx,
+		ctx:            server.ctx,
 		logger:         server.logger,
 		instanceDomain: instanceDomain,
 		mailChannel:    mailChannel,
-		metrics: server.metrics,
+		metrics:        server.metrics,
 	}
 
 	smtpServer := smtp.NewServer(be)

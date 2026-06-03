@@ -130,11 +130,6 @@ func TestIncomingServer_HandlesApiKeyCallsSynchronously(t *testing.T) {
 
 }
 
-func TestExtractClientIp(t *testing.T) {
-
-	assert.Equal(t, "", extractClientIp(nil))
-}
-
 func TestClientIpFromAddr(t *testing.T) {
 
 	assert.Equal(t, "", clientIpFromAddr(nil))
