@@ -5,6 +5,7 @@ namespace App\Service\Ip;
 use App\Entity\IpAddress;
 use App\Entity\Queue;
 use App\Entity\Server;
+use App\Entity\Type\WarmupStatus;
 use App\Service\Ip\Dto\PtrValidationDto;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
 use App\Service\Ip\Event\IpAddressUpdatedEvent;
@@ -61,7 +62,7 @@ class IpAddressService
         );
     }
 
-    public function getIpForQueue(Queue $queue): ?IpAddress
+    public function getIpForQueue(Queue $queue, int $recipientCount = 1): ?IpAddress
     {
         /** @var IpAddress[] $ips */
         $ips = $this->em->getRepository(IpAddress::class)->findBy([
@@ -80,9 +81,23 @@ class IpAddressService
             }
         }
 
+        $conn = $this->em->getConnection();
+        $warmupStatus = WarmupStatus::WARMING->value;
+
         foreach ($ips as $ip) {
-            if ($ip->isWarmingUp() && $ip->getWarmupSentToday() < $ip->getWarmupMaxToday()) {
-                return $ip;
+            if ($ip->isWarmingUp()) {
+                $rows = $conn->executeStatement(
+                    'UPDATE ip_addresses SET warmup_sent_today = warmup_sent_today + :count WHERE id = :id AND warmup_status = :status AND warmup_sent_today + :count <= warmup_max_today',
+                    [
+                        'count' => $recipientCount,
+                        'id' => $ip->getId(),
+                        'status' => $warmupStatus,
+                    ]
+                );
+
+                if ($rows > 0) {
+                    return $ip;
+                }
             }
         }
 

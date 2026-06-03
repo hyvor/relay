@@ -2,10 +2,13 @@
 
 namespace App\Service\Send\MessageHandler;
 
+use App\Entity\Send;
+use App\Entity\SendRecipient;
+use App\Entity\Type\SendRecipientStatus;
 use App\Service\Ip\IpAddressService;
 use App\Service\Queue\QueueService;
 use App\Service\Send\Message\RouteNullIpsMessage;
-use App\Service\Send\SendService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
@@ -13,9 +16,9 @@ class RouteNullIpsMessageHandler
 {
 
     public function __construct(
-        private SendService $sendService,
         private IpAddressService $ipAddressService,
         private QueueService $queueService,
+        private EntityManagerInterface $em,
     ) {
     }
 
@@ -27,12 +30,28 @@ class RouteNullIpsMessageHandler
             return;
         }
 
-        $newIp = $this->ipAddressService->getIpForQueue($queue);
+        $sends = $this->em->getRepository(Send::class)->findBy([
+            'queue' => $queue,
+            'ipAddress' => null,
+            'queued' => true,
+        ]);
 
-        $this->sendService->updateNullIpSendsForQueue(
-            $queue->getId(),
-            $newIp?->getId()
-        );
+        foreach ($sends as $send) {
+            $recipientCount = $send->getRecipients()->filter(
+                fn(SendRecipient $r) => $r->getStatus() === SendRecipientStatus::QUEUED
+            )->count();
+
+            if ($recipientCount === 0) {
+                continue;
+            }
+
+            $ip = $this->ipAddressService->getIpForQueue($queue, $recipientCount);
+            if ($ip !== null) {
+                $send->setIpAddress($ip);
+            }
+        }
+
+        $this->em->flush();
     }
 
 }

@@ -88,6 +88,38 @@ class IpAddressServiceTest extends KernelTestCase
         $this->assertNull($ip);
     }
 
+    public function test_get_ip_skips_warming_ip_without_enough_capacity(): void
+    {
+        $queue = QueueFactory::createOne();
+
+        $fullIp = IpAddressFactory::createOne([
+            'queue' => $queue,
+            'warmup_status' => WarmupStatus::WARMING,
+            'warmup_started_date' => new \DateTimeImmutable('2026-06-01'),
+            'warmup_schedule' => array_fill(0, 30, 1000),
+            'warmup_max_today' => 1000,
+            'warmup_sent_today' => 1000,
+        ]);
+
+        $availableIp = IpAddressFactory::createOne([
+            'queue' => $queue,
+            'warmup_status' => WarmupStatus::WARMING,
+            'warmup_started_date' => new \DateTimeImmutable('2026-06-01'),
+            'warmup_schedule' => array_fill(0, 30, 1000),
+            'warmup_max_today' => 1000,
+            'warmup_sent_today' => 500,
+        ]);
+
+        $service = $this->container->get(IpAddressService::class);
+
+        // With recipientCount=10, full IP has 1000+10=1010 > 1000, so skipped
+        // available IP has 500+10=510 <= 1000, so selected
+        $ip = $service->getIpForQueue($queue->_real(), 10);
+
+        $this->assertNotNull($ip);
+        $this->assertSame($availableIp->getId(), $ip->getId());
+    }
+
     public function test_warming_ip_without_schedule_not_considered_warming(): void
     {
         $queue = QueueFactory::createOne();
