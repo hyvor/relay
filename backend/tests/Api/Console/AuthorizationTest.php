@@ -335,6 +335,9 @@ class AuthorizationTest extends WebTestCase
         );
     }
 
+    /**
+     * @param string[] $allowedIps
+     */
     #[TestWith([['203.0.113.5', '198.51.100.0/24'], '198.51.100.42'])]
     #[TestWith([['2001:db8::1', '2001:db8::/32'], '2001:db8::1234'])]
     public function test_api_key_with_allowed_ips_accepts_matching_ip(
