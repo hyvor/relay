@@ -4,6 +4,7 @@ namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Input\UpdateIpAddressInput;
 use App\Api\Sudo\Object\IpAddressObject;
+use App\Entity\Type\WarmupStatus;
 use App\Service\App\Config;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
 use App\Service\Ip\IpAddressService;
@@ -58,6 +59,28 @@ class IpAddressController extends AbstractController
                     throw new BadRequestHttpException("Queue with ID '{$input->queue_id}' does not exist.");
                 }
                 $updates->queue = $queue;
+            }
+        }
+
+        if ($input->hasProperty('warmup_schedule')) {
+            $schedule = $input->warmup_schedule;
+            if ($schedule !== null) {
+                if (count($schedule) !== 30) {
+                    throw new BadRequestHttpException('Warmup schedule must have exactly 30 values.');
+                }
+                for ($i = 1; $i < 30; $i++) {
+                    if ($schedule[$i] < $schedule[$i - 1]) {
+                        throw new BadRequestHttpException('Warmup schedule values must not decrease.');
+                    }
+                }
+            }
+            $updates->warmup_schedule = $schedule;
+        }
+
+        if ($input->hasProperty('warmup_status')) {
+            $updates->warmup_status = WarmupStatus::tryFrom($input->warmup_status);
+            if ($updates->warmup_status === null) {
+                throw new BadRequestHttpException("Invalid warmup status '{$input->warmup_status}'.");
             }
         }
 

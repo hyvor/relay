@@ -11,4 +11,16 @@ class UpdateIpAddressInput
 
     #[Assert\Type('int')]
     public ?int $queue_id;
+
+    #[Assert\Choice(choices: ['warming', 'warmed'])]
+    public ?string $warmup_status;
+
+    /**
+     * @var array<int>|null
+     */
+    #[Assert\Type('array')]
+    #[Assert\All(
+        new Assert\Type('integer')
+    )]
+    public ?array $warmup_schedule;
 }
