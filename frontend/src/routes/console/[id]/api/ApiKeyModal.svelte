@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import {
 		Modal,
 		TextInput,
@@ -7,14 +8,14 @@
 		Checkbox,
 		Switch,
 		Button,
-		IconButton,
-		Tag
+		IconButton
 	} from '@hyvor/design/components';
 	import IconX from '@hyvor/icons/IconX';
 	import { createApiKey, updateApiKey } from '../../lib/actions/apiKeyActions';
 	import type { ApiKey } from '../../types';
 	import { getAppConfig } from '../../lib/stores/consoleStore';
-	import { validateAllowedIpEntry } from './allowedIp';
+	import { validateAllowedIpEntry, cidrAddressCount } from './allowedIp';
+	import AddedIpRow from './AddedIpRow.svelte';
 
 	interface Props {
 		show: boolean;
@@ -33,11 +34,12 @@
 	let name = $state('');
 	let selectedScopes = $state<string[]>(['sends.send']);
 	let isEnabled = $state(true);
-	let allowedIps = $state<string[]>([]);
+	let allowedIps = $state<string[]>(['10.0.0.1/2']);
 	let ipInput = $state('');
 	let ipError = $state<string | undefined>();
 	let loading = $state(false);
 	let errors = $state<Record<string, string>>({});
+	let nameInputWrapper: HTMLElement;
 
 	const appConfig = getAppConfig();
 	const scopes = appConfig.app?.api_keys?.scopes || [];
@@ -64,7 +66,7 @@
 		name = '';
 		selectedScopes = ['sends.send'];
 		isEnabled = true;
-		allowedIps = [];
+		//allowedIps = [];
 		ipInput = '';
 		ipError = undefined;
 		errors = {};
@@ -178,6 +180,16 @@
 	const modalTitle = $derived(isEditing ? 'Edit API Key' : 'Create API Key');
 	const confirmText = $derived(isEditing ? 'Update API Key' : 'Create API Key');
 	const sendsSendSelected = $derived(selectedScopes.includes('sends.send'));
+	const confirmDisabled = $derived(
+		loading ||
+			!name.trim() ||
+			selectedScopes.length === 0 ||
+			(sendsSendSelected && allowedIps.length === 0)
+	);
+
+	onMount(() => {
+		nameInputWrapper?.querySelector('input')?.focus();
+	});
 </script>
 
 <Modal
@@ -189,7 +201,8 @@
 			text: 'Cancel'
 		},
 		confirm: {
-			text: confirmText
+			text: confirmText,
+			disabled: confirmDisabled
 		}
 	}}
 	title={modalTitle}
@@ -204,12 +217,14 @@
 			error={errors.name}
 			column
 		>
-			<TextInput
-				bind:value={name}
-				placeholder="Enter API key name"
-				block
-				disabled={loading}
-			/>
+			<div bind:this={nameInputWrapper}>
+				<TextInput
+					bind:value={name}
+					placeholder="Enter API key name"
+					block
+					disabled={loading}
+				/>
+			</div>
 		</SplitControl>
 
 		<SplitControl
@@ -266,21 +281,10 @@
 
 		<SplitControl
 			label={sendsSendSelected ? 'Allowed IPs (required)' : 'Allowed IPs'}
-			caption="Choose which IP addresses are allowed to use this API key (HTTP and SMTP)."
+			caption="Choose which IP addresses are allowed to use this API key (HTTP and SMTP). CIDR ranges are supported (max /24 for IPv4, /48 for IPv6)."
 			error={errors.allowed_ips}
 			column
 		>
-			<div class="ip-help">
-				<div>
-					Accepts a single IPv4 or IPv6 address, or a CIDR range (max <code>/24</code> for
-					IPv4, <code>/48</code> for IPv6).
-				</div>
-				{#if sendsSendSelected}
-					<div>
-						At least one entry is required when <code>sends.send</code> is selected.
-					</div>
-				{/if}
-			</div>
 			<div class="ip-input-row">
 				<TextInput
 					bind:value={ipInput}
@@ -302,18 +306,8 @@
 			{/if}
 			{#if allowedIps.length > 0}
 				<div class="ip-list">
-					{#each allowedIps as entry (entry)}
-						<div class="ip-chip">
-							<Tag size="small">{entry}</Tag>
-							<IconButton
-								size="small"
-								color="input"
-								on:click={() => handleRemoveIp(entry)}
-								disabled={loading}
-							>
-								<IconX size={10} />
-							</IconButton>
-						</div>
+					{#each allowedIps as entry, i (entry)}
+						<AddedIpRow index={i + 1} {entry} onremove={handleRemoveIp} />
 					{/each}
 				</div>
 			{/if}
@@ -397,22 +391,6 @@
 		color: var(--text-light);
 	}
 
-	.ip-help {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-		margin-bottom: 10px;
-		font-size: 12px;
-		color: var(--text-light);
-	}
-
-	.ip-help code {
-		font-size: 11px;
-		padding: 1px 4px;
-		border-radius: 3px;
-		background: var(--hover);
-	}
-
 	.ip-input-row {
 		display: flex;
 		gap: 8px;
@@ -427,14 +405,8 @@
 
 	.ip-list {
 		display: flex;
-		flex-wrap: wrap;
-		gap: 6px;
-		margin-top: 10px;
-	}
-
-	.ip-chip {
-		display: inline-flex;
-		align-items: center;
+		flex-direction: column;
 		gap: 4px;
+		margin-top: 10px;
 	}
 </style>

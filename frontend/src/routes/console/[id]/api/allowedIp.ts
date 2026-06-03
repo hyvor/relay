@@ -70,6 +70,19 @@ function ipv6ToBytes(ip: string): number[] | null {
 	return bytes;
 }
 
+export function cidrAddressCount(entry: string): number {
+	const slash = entry.indexOf('/');
+	if (slash === -1) return 1;
+
+	const ip = entry.slice(0, slash);
+	const prefix = Number(entry.slice(slash + 1));
+	const isV4 = ipv4ToBytes(ip) !== null;
+	const bits = (isV4 ? 32 : 128) - prefix;
+
+	if (bits <= 0) return 1;
+	return Math.pow(2, bits);
+}
+
 export function validateAllowedIpEntry(entry: string): string | null {
 	const trimmed = entry.trim();
 	if (trimmed === '') return 'Allowed IP entry must not be empty.';
@@ -92,12 +105,12 @@ export function validateAllowedIpEntry(entry: string): string | null {
 	if (v4) {
 		const eff = prefix ?? 32;
 		if (eff < IPV4_MIN_PREFIX || eff > 32) {
-			return `IPv4 CIDR prefix must be between /${IPV4_MIN_PREFIX} and /32 (got '${trimmed}').`;
+			return `IPv4 CIDR prefix must be between /${IPV4_MIN_PREFIX} and /32 (got /${eff}).`;
 		}
 	} else if (v6) {
 		const eff = prefix ?? 128;
 		if (eff < IPV6_MIN_PREFIX || eff > 128) {
-			return `IPv6 CIDR prefix must be between /${IPV6_MIN_PREFIX} and /128 (got '${trimmed}').`;
+			return `IPv6 CIDR prefix must be between /${IPV6_MIN_PREFIX} and /128 (got /${eff}).`;
 		}
 	}
 
