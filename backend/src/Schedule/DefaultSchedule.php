@@ -10,6 +10,7 @@ use App\Service\InfrastructureBounce\Message\ClearOldInfrastructureBouncesMessag
 use App\Service\Management\Message\RunHealthChecksMessage;
 use App\Service\Send\Message\ClearExpiredSendsMessage;
 use App\Service\Tls\Message\CheckMailCertificateValidityMessage;
+use App\Service\Ip\Message\ResetIpWarmupMessage;
 use App\Service\Webhook\Message\ClearOldWebhookDeliveriesMessage;
 use Symfony\Component\Console\Messenger\RunCommandMessage;
 use Symfony\Component\Lock\LockFactory;
@@ -71,6 +72,9 @@ class DefaultSchedule implements ScheduleProviderInterface
 
             // tls certificate renewal
             ->add(RecurringMessage::every('1 day', new CheckMailCertificateValidityMessage))
+
+            // ip warmup daily reset
+            ->add(RecurringMessage::cron('0 0 * * *', new ResetIpWarmupMessage))
 
             // telemetry
             ->add(RecurringMessage::every('24 hours', new RunCommandMessage('self-hosted:record-telemetry')))
