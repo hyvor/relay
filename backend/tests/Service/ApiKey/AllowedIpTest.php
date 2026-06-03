@@ -22,7 +22,6 @@ class AllowedIpTest extends TestCase
         yield 'ipv6 /48' => ['2001:db8::/48'];
         yield 'ipv6 /64' => ['2001:db8::/64'];
         yield 'ipv6 /128' => ['2001:db8::1/128'];
-        // private / reserved ranges are allowed for self-hosted instances
         yield 'private 10/8' => ['10.0.0.5'];
         yield 'private 10 cidr' => ['10.1.2.0/24'];
         yield 'private 172.16/12' => ['172.16.5.5'];

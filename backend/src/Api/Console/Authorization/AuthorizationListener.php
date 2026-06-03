@@ -35,7 +35,7 @@ class AuthorizationListener
         private ProjectService $projectService,
         private ProjectUserService $projectUserService,
         private ApiKeyService $apiKeyService,
-		private AuthInterface $auth,
+        private AuthInterface $auth,
     ) {
     }
 
@@ -83,6 +83,10 @@ class AuthorizationListener
         }
 
         $allowedIps = $apiKeyModel->getAllowedIps();
+        /**
+         * note: here we do not check if allowed IPs are set if sends.send is set
+         * it is only validated at the time of creating an API key
+         */
         if (count($allowedIps) > 0) {
             $clientIp = $request->getClientIp();
             if ($clientIp === null || !AllowedIp::matches($clientIp, $allowedIps)) {
@@ -110,7 +114,7 @@ class AuthorizationListener
         $isOrgLevelEndpoint = count($event->getAttributes(OrganizationLevelEndpoint::class)) > 0;
         $noOrganizationRequired = count($event->getAttributes(OrganizationOptional::class)) > 0;
 
-		$me = $this->auth->me($request);
+        $me = $this->auth->me($request);
         if ($me === null) {
             throw new DataCarryingHttpException(
                 401,
@@ -120,28 +124,28 @@ class AuthorizationListener
                 ],
                 'Unauthorized'
             );
-		}
+        }
 
-		$user = $me->getUser();
-		$org = $me->getOrganization();
+        $user = $me->getUser();
+        $org = $me->getOrganization();
 
-		$request->attributes->set(self::RESOLVED_USER_ATTRIBUTE_KEY, $user);
+        $request->attributes->set(self::RESOLVED_USER_ATTRIBUTE_KEY, $user);
         $request->attributes->set(self::RESOLVED_ORGANIZATION_ATTRIBUTE_KEY, $org);
 
-		if ($noOrganizationRequired) {
+        if ($noOrganizationRequired) {
             assert($isOrgLevelEndpoint === true);
-			return;
-		}
+            return;
+        }
 
-		if ($org === null) {
-			throw new AccessDeniedHttpException('Organization is required');
-		}
+        if ($org === null) {
+            throw new AccessDeniedHttpException('Organization is required');
+        }
 
-		$orgFromReq = (int)$request->headers->get('X-Organization-ID');
+        $orgFromReq = (int) $request->headers->get('X-Organization-ID');
 
-		if ($orgFromReq !== $org->id) {
-			throw new AccessDeniedHttpException('org_mismatch');
-		}
+        if ($orgFromReq !== $org->id) {
+            throw new AccessDeniedHttpException('org_mismatch');
+        }
 
 
         // user-level endpoints do not have a project ID
@@ -150,21 +154,21 @@ class AuthorizationListener
                 throw new AccessDeniedHttpException('X-Project-ID is required for this endpoint.');
             }
 
-            $project = $this->projectService->getProjectById((int)$projectId);
+            $project = $this->projectService->getProjectById((int) $projectId);
 
             if ($project === null) {
                 throw new AccessDeniedHttpException('Invalid project ID.');
-			}
+            }
 
-			if ($project->getOrganizationId() !== $org->id) {
-				throw new AccessDeniedHttpException('This project does not belong to your current organization.');
-			}
+            if ($project->getOrganizationId() !== $org->id) {
+                throw new AccessDeniedHttpException('This project does not belong to your current organization.');
+            }
 
             $projectUser = $this->projectUserService->getProjectUser($project, $user->id);
 
             if ($projectUser === null) {
                 throw new AccessDeniedHttpException('You do not have access to this project.');
-			}
+            }
 
             $this->verifyScopes($projectUser->getScopes(), $event);
 
@@ -205,13 +209,13 @@ class AuthorizationListener
         $user = $request->attributes->get(self::RESOLVED_USER_ATTRIBUTE_KEY);
         assert($user instanceof AuthUser, 'User must be an instance of AuthUser');
         return $user;
-	}
+    }
 
     public static function hasOrganization(Request $request): bool
     {
         return $request->attributes->has(self::RESOLVED_ORGANIZATION_ATTRIBUTE_KEY)
             && $request->attributes->get(self::RESOLVED_ORGANIZATION_ATTRIBUTE_KEY) instanceof AuthUserOrganization;
-	}
+    }
 
     // only call after hasOrganization()
     public static function getOrganization(Request $request): AuthUserOrganization
