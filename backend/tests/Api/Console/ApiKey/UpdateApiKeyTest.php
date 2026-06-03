@@ -2,7 +2,6 @@
 
 namespace App\Tests\Api\Console\ApiKey;
 
-use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\ApiKeyController;
 use App\Api\Console\Input\UpdateApiKeyInput;
 use App\Api\Console\Object\ApiKeyObject;
@@ -140,7 +139,7 @@ class UpdateApiKeyTest extends WebTestCase
             ]
         );
 
-        $this->assertSame(400, $response->getStatusCode());
+        $this->assertResponseFailed(400, 'At least one allowed IP is required when the "sends.send" scope is enabled.');
     }
 
     public function test_update_rejects_invalid_ip(): void
