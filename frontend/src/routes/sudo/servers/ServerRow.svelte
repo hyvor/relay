@@ -65,15 +65,15 @@
 						<th>ID</th>
 						<th>IP Address</th>
 						<th>Queue</th>
-					<th>
-						PTR
-						<a class="hds-link ptr-learn-more" href="/hosting" target="_blank">
-							Learn more
-							<IconBoxArrowUpRight size={12} />
-						</a>
-					</th>
-					<th>Warmup</th>
-				</tr>
+						<th>
+							PTR
+							<a class="hds-link ptr-learn-more" href="/hosting" target="_blank">
+								Learn more
+								<IconBoxArrowUpRight size={12} />
+							</a>
+						</th>
+						<th>Warmup</th>
+					</tr>
 				</thead>
 				<tbody>
 					{#each ips as ip}

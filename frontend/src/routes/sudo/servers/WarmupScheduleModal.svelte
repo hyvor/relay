@@ -103,9 +103,10 @@
 	title={ip ? `Warmup Schedule for IP ${ip.ip_address}` : 'Warmup Schedule'}
 	footer={{
 		cancel: { text: 'Cancel' },
-		confirm: { text: 'Start Warmup', callback: handleSave }
+		confirm: { text: 'Start Warmup' }
 	}}
 	on:cancel={handleClose}
+	on:confirm={handleSave}
 	loading={loading}
 >
 	<div class="modal-content">
@@ -118,10 +119,11 @@
 		<div class="schedule-grid">
 			{#each schedule as value, i (i)}
 				<div class="day-input">
-					<label class="day-label">Day {i + 1}</label>
+					<label class="day-label" for="day-{i}">Day {i + 1}</label>
 					<TextInput
+						id="day-{i}"
 						type="number"
-						value={value.toString()}
+						value={value}
 						on:input={(e) => handleInputChange(i, e.currentTarget.value)}
 						block
 						disabled={loading}
