@@ -42,7 +42,7 @@ class IpAddress
     #[ORM\Column(type: 'string', enumType: WarmupStatus::class)]
     private WarmupStatus $warmup_status = WarmupStatus::WARMING;
 
-    #[ORM\Column(type: 'date', nullable: true)]
+    #[ORM\Column(type: 'date_immutable', nullable: true)]
     private ?\DateTimeImmutable $warmup_started_date = null;
 
     #[ORM\Column(type: 'integer', options: ['default' => 0])]

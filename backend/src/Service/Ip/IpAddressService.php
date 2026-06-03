@@ -170,6 +170,9 @@ class IpAddressService
         }
 
         if ($updates->warmupStatusSet) {
+            if ($updates->warmup_status === null) {
+                throw new \InvalidArgumentException('warmup_status cannot be null when warmupStatusSet is true');
+            }
             $ipAddress->setWarmupStatus($updates->warmup_status);
         }
 

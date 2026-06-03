@@ -74,7 +74,7 @@ class DefaultSchedule implements ScheduleProviderInterface
             ->add(RecurringMessage::every('1 day', new CheckMailCertificateValidityMessage))
 
             // ip warmup daily reset
-            ->add(RecurringMessage::cron('0 0 * * *', new ResetIpWarmupMessage))
+            ->add(RecurringMessage::every('1 day', new ResetIpWarmupMessage))
 
             // telemetry
             ->add(RecurringMessage::every('24 hours', new RunCommandMessage('self-hosted:record-telemetry')))

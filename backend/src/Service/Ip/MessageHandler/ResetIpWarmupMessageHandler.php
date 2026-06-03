@@ -36,7 +36,7 @@ class ResetIpWarmupMessageHandler
 
             $ip->setWarmupSentToday(0);
 
-            $dayIndex = (int) $startedDate->diff($now)->days;
+            $dayIndex = (int) $startedDate->setTime(0, 0)->diff($now)->days;
 
             if ($dayIndex >= 30) {
                 $ip->setWarmupStatus(WarmupStatus::WARMED);

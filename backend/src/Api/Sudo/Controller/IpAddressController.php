@@ -78,6 +78,9 @@ class IpAddressController extends AbstractController
         }
 
         if ($input->hasProperty('warmup_status')) {
+            if ($input->warmup_status === null) {
+                throw new BadRequestHttpException("Warmup status cannot be null.");
+            }
             $updates->warmup_status = WarmupStatus::tryFrom($input->warmup_status);
             if ($updates->warmup_status === null) {
                 throw new BadRequestHttpException("Invalid warmup status '{$input->warmup_status}'.");
