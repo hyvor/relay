@@ -39,6 +39,7 @@ final class ApiKeyFactory extends PersistentProxyObjectFactory
             ],
             'is_enabled' => true,
             'last_accessed_at' => null,
+            'allowed_ips' => [],
         ];
     }
 

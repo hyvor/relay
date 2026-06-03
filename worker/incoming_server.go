@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"net"
 	"net/mail"
 	"strings"
 	"time"
@@ -22,8 +23,8 @@ import (
 
 // The IncomingBackend implements SMTP server methods.
 type IncomingBackend struct {
-	ctx context.Context
-	metrics *Metrics
+	ctx            context.Context
+	metrics        *Metrics
 	logger         *slog.Logger
 	instanceDomain string
 	mailChannel    chan *IncomingMail
@@ -41,14 +42,31 @@ type Session struct {
 // NewSession is called after client greeting (EHLO, HELO).
 func (bkd *IncomingBackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 	return &Session{
-		ctx:          bkd.ctx,
+		ctx:         bkd.ctx,
 		logger:      bkd.logger,
-		metrics: bkd.metrics,
+		metrics:     bkd.metrics,
 		mailChannel: bkd.mailChannel,
 		incomingMail: IncomingMail{
 			InstanceDomain: bkd.instanceDomain,
+			ClientIp:       clientIpFromAddr(c.Conn().RemoteAddr()),
 		},
 	}, nil
+}
+
+// extractClientIp returns the IP portion of the SMTP client's remote address,
+// or an empty string if the address can't be determined.
+func clientIpFromAddr(addr net.Addr) string {
+	if addr == nil {
+		return ""
+	}
+	if tcp, ok := addr.(*net.TCPAddr); ok {
+		return tcp.IP.String()
+	}
+	host, _, err := net.SplitHostPort(addr.String())
+	if err != nil {
+		return addr.String()
+	}
+	return host
 }
 
 // AuthMechanisms returns a slice of available auth mechanisms; only PLAIN is
@@ -121,7 +139,7 @@ func (s *Session) Data(r io.Reader) error {
 	} else {
 		s.mailChannel <- &s.incomingMail
 	}
-	
+
 	return nil
 }
 
@@ -224,11 +242,11 @@ func (server *IncomingMailServer) StartSmtpServer(
 ) {
 
 	be := &IncomingBackend{
-		ctx: server.ctx,
+		ctx:            server.ctx,
 		logger:         server.logger,
 		instanceDomain: instanceDomain,
 		mailChannel:    mailChannel,
-		metrics: server.metrics,
+		metrics:        server.metrics,
 	}
 
 	smtpServer := smtp.NewServer(be)
