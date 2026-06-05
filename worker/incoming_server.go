@@ -24,8 +24,8 @@ import (
 
 // The IncomingBackend implements SMTP server methods.
 type IncomingBackend struct {
-	ctx context.Context
-	metrics *Metrics
+	ctx            context.Context
+	metrics        *Metrics
 	logger         *slog.Logger
 	instanceDomain string
 	mailChannel    chan *IncomingMail
@@ -57,15 +57,16 @@ func (bkd *IncomingBackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 	}
 
 	return &Session{
-		ctx:          bkd.ctx,
+		ctx:         bkd.ctx,
 		logger:      bkd.logger,
-		metrics: bkd.metrics,
+		metrics:     bkd.metrics,
 		mailChannel: bkd.mailChannel,
 		security:    bkd.security,
 		remoteIP:    remoteIP,
 		systemApiKey: bkd.systemApiKey,
 		incomingMail: IncomingMail{
 			InstanceDomain: bkd.instanceDomain,
+			ClientIp:       clientIpFromAddr(c.Conn().RemoteAddr()),
 		},
 	}, nil
 }
@@ -367,7 +368,7 @@ func (server *IncomingMailServer) StartSmtpServer(
 ) {
 
 	be := &IncomingBackend{
-		ctx: server.ctx,
+		ctx:            server.ctx,
 		logger:         server.logger,
 		instanceDomain: instanceDomain,
 		mailChannel:    mailChannel,

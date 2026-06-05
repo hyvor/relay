@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"net"
 	"net/smtp"
 	"strings"
 	"testing"
@@ -10,6 +11,14 @@ import (
 	"github.com/hyvor/relay/worker/smtp_interface"
 	"github.com/stretchr/testify/assert"
 )
+
+type fakeAddr struct {
+	network string
+	addr    string
+}
+
+func (f fakeAddr) Network() string { return f.network }
+func (f fakeAddr) String() string  { return f.addr }
 
 func TestIncomingServer(t *testing.T) {
 
@@ -86,21 +95,25 @@ func TestIncomingServer_HandlesApiKeyCallsSynchronously(t *testing.T) {
 	session := &Session{
 		logger: slogDiscard(),
 		incomingMail: IncomingMail{
-			ApiKey: "test-api-key",
+			ApiKey:   "test-api-key",
+			ClientIp: "203.0.113.5",
 		},
 		metrics: newMetrics(),
 	}
 
 	var calledApiKey string
 	var calledApiRequest *smtp_interface.ApiRequest
+	var calledClientIp string
 
 	CallConsoleSendApi = func(
 		ctx context.Context,
 		apiKey string,
 		body *smtp_interface.ApiRequest,
+		clientIp string,
 	) error {
 		calledApiKey = apiKey
 		calledApiRequest = body
+		calledClientIp = clientIp
 		return nil
 	}
 
@@ -113,6 +126,16 @@ func TestIncomingServer_HandlesApiKeyCallsSynchronously(t *testing.T) {
 	assert.NotNil(t, calledApiRequest)
 	assert.Equal(t, "Test email", calledApiRequest.Subject)
 	assert.Equal(t, "This is a test email.", calledApiRequest.BodyText)
+	assert.Equal(t, "203.0.113.5", calledClientIp)
+
+}
+
+func TestClientIpFromAddr(t *testing.T) {
+
+	assert.Equal(t, "", clientIpFromAddr(nil))
+
+	tcp := &net.TCPAddr{IP: net.ParseIP("203.0.113.5"), Port: 1234}
+	assert.Equal(t, "203.0.113.5", clientIpFromAddr(tcp))
 
 }
 
