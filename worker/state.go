@@ -38,9 +38,10 @@ type GoStateMailTls struct {
 // GoStateSecurity carries anti-open-relay policy pulled from Symfony.
 // Empty slices mean "no restriction" (preserves existing behavior).
 type GoStateSecurity struct {
-	AllowedSourceIPs      []string `json:"allowedSourceIps"`
-	AllowedSenderDomains  []string `json:"allowedSenderDomains"`
-	SmtpAuthViaSymfony    bool     `json:"smtpAuthViaSymfony"`
+	AllowedSourceIPs           []string `json:"allowedSourceIps"`
+	AllowedSenderDomains       []string `json:"allowedSenderDomains"`
+	SmtpAuthViaSymfony         bool     `json:"smtpAuthViaSymfony"`
+	AllowUnauthenticatedSending bool    `json:"allowUnauthenticatedSending"`
 }
 
 func (g GoState) IpAddresses() []string {

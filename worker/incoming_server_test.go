@@ -115,3 +115,153 @@ func TestIncomingServer_HandlesApiKeyCallsSynchronously(t *testing.T) {
 	assert.Equal(t, "This is a test email.", calledApiRequest.BodyText)
 
 }
+
+func TestIncomingServer_UnauthenticatedSending(t *testing.T) {
+
+	t.Run("forwards to API with system API key when AllowUnauthenticatedSending is true", func(t *testing.T) {
+		session := &Session{
+			logger:  slogDiscard(),
+			metrics: newMetrics(),
+			security: GoStateSecurity{
+				AllowUnauthenticatedSending: true,
+			},
+			systemApiKey: "test-system-api-key",
+			incomingMail: IncomingMail{
+				RcptTo:         "recipient@other-domain.com",
+				MailFrom:       "sender@example.com",
+				InstanceDomain: "example.com",
+			},
+		}
+
+		var calledApiKey string
+		var calledApiRequest *smtp_interface.ApiRequest
+
+		CallConsoleSendApi = func(
+			ctx context.Context,
+			apiKey string,
+			body *smtp_interface.ApiRequest,
+		) error {
+			calledApiKey = apiKey
+			calledApiRequest = body
+			return nil
+		}
+
+		reader := strings.NewReader("Subject: Test email\r\nFrom: sender@example.com\r\n\r\nThis is a test email.")
+
+		err := session.Data(reader)
+		assert.NoError(t, err)
+
+		assert.Equal(t, "test-system-api-key", calledApiKey)
+		assert.NotNil(t, calledApiRequest)
+		assert.Equal(t, "Test email", calledApiRequest.Subject)
+	})
+
+	t.Run("does not forward instance-domain emails (bounce/FBL path preserved)", func(t *testing.T) {
+		session := &Session{
+			logger:  slogDiscard(),
+			metrics: newMetrics(),
+			security: GoStateSecurity{
+				AllowUnauthenticatedSending: true,
+			},
+			systemApiKey: "test-system-api-key",
+			mailChannel:  make(chan *IncomingMail, 1),
+			incomingMail: IncomingMail{
+				RcptTo:         "bounce+abc123@example.com",
+				MailFrom:       "sender@external.com",
+				InstanceDomain: "example.com",
+			},
+		}
+
+		var called bool
+		CallConsoleSendApi = func(
+			ctx context.Context,
+			apiKey string,
+			body *smtp_interface.ApiRequest,
+		) error {
+			called = true
+			return nil
+		}
+
+		reader := strings.NewReader("Subject: Bounce\r\n\r\nBounce body.")
+
+		err := session.Data(reader)
+		assert.NoError(t, err)
+
+		assert.False(t, called, "should not call send API for instance-domain emails")
+		select {
+		case mail := <-session.mailChannel:
+			assert.NotNil(t, mail)
+		default:
+			t.Error("expected mail to be sent to mailChannel")
+		}
+	})
+
+	t.Run("does not forward when systemApiKey is empty", func(t *testing.T) {
+		session := &Session{
+			logger:  slogDiscard(),
+			metrics: newMetrics(),
+			security: GoStateSecurity{
+				AllowUnauthenticatedSending: true,
+			},
+			systemApiKey: "",
+			mailChannel:  make(chan *IncomingMail, 1),
+			incomingMail: IncomingMail{
+				RcptTo:         "recipient@other-domain.com",
+				MailFrom:       "sender@example.com",
+				InstanceDomain: "example.com",
+			},
+		}
+
+		var called bool
+		CallConsoleSendApi = func(
+			ctx context.Context,
+			apiKey string,
+			body *smtp_interface.ApiRequest,
+		) error {
+			called = true
+			return nil
+		}
+
+		reader := strings.NewReader("Subject: Test\r\n\r\nBody.")
+
+		err := session.Data(reader)
+		assert.NoError(t, err)
+
+		assert.False(t, called, "should not call send API when systemApiKey is empty")
+	})
+
+	t.Run("rejects non-instance-domain RCPT when AllowUnauthenticatedSending is false", func(t *testing.T) {
+		session := &Session{
+			logger:  slogDiscard(),
+			metrics: newMetrics(),
+			security: GoStateSecurity{
+				AllowUnauthenticatedSending: false,
+			},
+			incomingMail: IncomingMail{
+				InstanceDomain: "example.com",
+			},
+		}
+
+		err := session.Rcpt("recipient@other-domain.com", nil)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "only accepts emails for example.com")
+	})
+
+	t.Run("accepts non-instance-domain RCPT when AllowUnauthenticatedSending is true", func(t *testing.T) {
+		session := &Session{
+			logger:  slogDiscard(),
+			metrics: newMetrics(),
+			security: GoStateSecurity{
+				AllowUnauthenticatedSending: true,
+			},
+			incomingMail: IncomingMail{
+				InstanceDomain: "example.com",
+			},
+		}
+
+		err := session.Rcpt("recipient@other-domain.com", nil)
+		assert.NoError(t, err)
+		assert.Equal(t, "recipient@other-domain.com", session.incomingMail.RcptTo)
+	})
+
+}

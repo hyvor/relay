@@ -72,6 +72,12 @@ class GoState
         public int $serversCount,
         public string $env,
         public string $version,
+
+        // SECURITY ==================
+        /**
+         * Security configuration for incoming SMTP server.
+         */
+        public GoStateSecurity $security = new GoStateSecurity(),
     ) {
     }
 

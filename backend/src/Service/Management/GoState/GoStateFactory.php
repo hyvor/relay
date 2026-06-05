@@ -86,6 +86,14 @@ class GoStateFactory
             serversCount: $this->serverService->getServersCount(),
             env: $this->config->getEnv(),
             version: $this->config->getAppVersion(),
+
+            // security config
+            security: new GoStateSecurity(
+                allowedSourceIps: $this->config->getAllowedSourceIps(),
+                allowedSenderDomains: $this->config->getAllowedSenderDomains(),
+                smtpAuthViaSymfony: $this->config->getSmtpAuthViaSymfony(),
+                allowUnauthenticatedSending: $this->config->getAllowUnauthenticatedSending(),
+            ),
         );
     }
 

@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net"
 	"net/mail"
+	"os"
 	"strings"
 	"time"
 
@@ -29,6 +30,7 @@ type IncomingBackend struct {
 	instanceDomain string
 	mailChannel    chan *IncomingMail
 	security       GoStateSecurity
+	systemApiKey   string // api key for unauthenticated SMTP sends
 }
 
 // A Session is returned after successful login.
@@ -40,6 +42,7 @@ type Session struct {
 	mailChannel  chan *IncomingMail
 	security     GoStateSecurity
 	remoteIP     string
+	systemApiKey string // api key for unauthenticated SMTP sends
 }
 
 // NewSession is called after client greeting (EHLO, HELO).
@@ -60,6 +63,7 @@ func (bkd *IncomingBackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 		mailChannel: bkd.mailChannel,
 		security:    bkd.security,
 		remoteIP:    remoteIP,
+		systemApiKey: bkd.systemApiKey,
 		incomingMail: IncomingMail{
 			InstanceDomain: bkd.instanceDomain,
 		},
@@ -208,7 +212,11 @@ func (s *Session) Rcpt(to string, opts *smtp.RcptOptions) error {
 
 		domain := parsed.Address[atIndex+1:]
 
-		if domain != s.incomingMail.InstanceDomain {
+		// when unauthenticated sending is allowed, accept any domain
+		if s.security.AllowUnauthenticatedSending && domain != s.incomingMail.InstanceDomain {
+			s.logger.Debug("Unauthenticated SMTP send accepted",
+				"domain", domain, "source_ip", s.remoteIP)
+		} else if domain != s.incomingMail.InstanceDomain {
 			return errors.New("this SMTP server only accepts emails for " + s.incomingMail.InstanceDomain)
 		}
 
@@ -236,9 +244,25 @@ func (s *Session) Data(r io.Reader) error {
 
 	if s.incomingMail.HasApiKey() {
 		return forwardEmailToApi(s.ctx, s.logger, s.metrics, &s.incomingMail)
-	} else {
-		s.mailChannel <- &s.incomingMail
 	}
+
+	// unauthenticated send — use system API key if feature is enabled
+	if s.security.AllowUnauthenticatedSending && s.systemApiKey != "" {
+		// check if this is a send (not bounce/FBL to instance domain)
+		atIndex := strings.LastIndex(s.incomingMail.RcptTo, "@")
+		if atIndex > 0 && atIndex < len(s.incomingMail.RcptTo)-1 {
+			domain := s.incomingMail.RcptTo[atIndex+1:]
+			if domain != s.incomingMail.InstanceDomain {
+				s.incomingMail.ApiKey = s.systemApiKey
+				return forwardEmailToApi(s.ctx, s.logger, s.metrics, &s.incomingMail)
+			}
+		}
+	} else if s.security.AllowUnauthenticatedSending && s.systemApiKey == "" {
+		s.logger.Warn("UNAUTHENTICATED_SEND_API_KEY not set — unauthenticated SMTP send dropped",
+			"MAIL", s.incomingMail.MailFrom, "RCPT", s.incomingMail.RcptTo, "source_ip", s.remoteIP)
+	}
+
+	s.mailChannel <- &s.incomingMail
 
 	return nil
 }
@@ -349,6 +373,7 @@ func (server *IncomingMailServer) StartSmtpServer(
 		mailChannel:    mailChannel,
 		metrics: server.metrics,
 		security: security,
+		systemApiKey: os.Getenv("UNAUTHENTICATED_SEND_API_KEY"),
 	}
 
 	smtpServer := smtp.NewServer(be)
