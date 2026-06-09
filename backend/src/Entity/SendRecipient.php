@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Type\BounceReason;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
 use App\Repository\SendRecipientRepository;
@@ -35,6 +36,9 @@ class SendRecipient
 
     #[ORM\Column(type: "integer")]
     private int $try_count = 0;
+
+    #[ORM\Column(type: "string", enumType: BounceReason::class, nullable: true)]
+    private ?BounceReason $bounced_reason = null;
 
     public function getId(): int
     {
@@ -110,6 +114,17 @@ class SendRecipient
     public function setTryCount(int $try_count): static
     {
         $this->try_count = $try_count;
+        return $this;
+    }
+
+    public function getBouncedReason(): ?BounceReason
+    {
+        return $this->bounced_reason;
+    }
+
+    public function setBouncedReason(?BounceReason $bounced_reason): static
+    {
+        $this->bounced_reason = $bounced_reason;
         return $this;
     }
 
