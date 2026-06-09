@@ -60,6 +60,7 @@ type RcptResult struct {
 	Code         int
 	EnhancedCode [3]int
 	Message      string
+	BounceReason BounceReason
 }
 
 func (r RcptResult) MarshalJSON() ([]byte, error) {
@@ -70,6 +71,7 @@ func (r RcptResult) MarshalJSON() ([]byte, error) {
 		EnhancedCode string `json:"enhanced_code"`
 		Message      string `json:"message"`
 		Status       string `json:"status"`
+		BounceReason string `json:"bounce_reason"`
 	}
 
 	var jsonObj = RcptResultJson{
@@ -78,6 +80,7 @@ func (r RcptResult) MarshalJSON() ([]byte, error) {
 		EnhancedCode: fmt.Sprintf("%d.%d.%d", r.EnhancedCode[0], r.EnhancedCode[1], r.EnhancedCode[2]),
 		Message:      r.Message,
 		Status:       r.ToRecipientStatus().ToString(),
+		BounceReason: string(r.BounceReason),
 	}
 
 	return json.Marshal(jsonObj)
@@ -177,11 +180,13 @@ func (c *SmtpConversation) SetRcptResults(recipients []*RecipientRow, result *sm
 
 // for each RCPT TO command — replaces an existing entry for the same recipient instead of appending.
 func (c *SmtpConversation) SetRcptResult(rcptId int, result *smtp.CommandResult) {
+	parser := NewSmtpResponseParser(result.Reply.Code, result.Reply.EnhancedCode(), result.Reply.Message())
 	newResult := &RcptResult{
 		RecipientId:  rcptId,
 		Code:         result.Reply.Code,
 		EnhancedCode: result.Reply.EnhancedCode(),
 		Message:      result.Reply.Message(),
+		BounceReason: parser.BounceReason(),
 	}
 	for i, existing := range c.RcptResults {
 		if existing.RecipientId == rcptId {
@@ -257,12 +262,14 @@ func (r *SendResult) SetAllRcptResultsFailed(recipients []*RecipientRow, message
 
 func (r *SendResult) SetAllRcptResults(recipients []*RecipientRow, code int, enhancedCode [3]int, message string) {
 	r.RcptResults = make([]*RcptResult, 0)
+	parser := NewSmtpResponseParser(code, enhancedCode, message)
 	for _, rcpt := range recipients {
 		r.RcptResults = append(r.RcptResults, &RcptResult{
 			RecipientId:  rcpt.Id,
 			Code:         code,
 			EnhancedCode: enhancedCode,
 			Message:      message,
+			BounceReason: parser.BounceReason(),
 		})
 	}
 }
