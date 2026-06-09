@@ -3,6 +3,7 @@
 namespace App\Tests\Factory;
 
 use App\Entity\SendAttemptRecipient;
+use App\Entity\Type\BounceReason;
 use App\Entity\Type\SendRecipientStatus;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
@@ -36,6 +37,7 @@ final class SendAttemptRecipientFactory extends PersistentProxyObjectFactory
             'smtp_message' => self::faker()->sentence(),
             'recipient_status' => SendRecipientStatus::ACCEPTED,
             'is_suppressed' => false,
+            'bounced_reason' => null,
         ];
     }
 }
