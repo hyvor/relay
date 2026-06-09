@@ -9,6 +9,7 @@ use App\Api\Local\Input\IncomingInput;
 use App\Entity\DebugIncomingEmail;
 use App\Entity\InfrastructureBounce;
 use App\Entity\Suppression;
+use App\Entity\Type\BounceReason;
 use App\Entity\Type\DebugIncomingEmailStatus;
 use App\Entity\Type\DebugIncomingEmailType;
 use App\Entity\Type\SendRecipientStatus;
@@ -99,7 +100,9 @@ class IncomingBounceTest extends WebTestCase
         $this->assertNull($debugIncomingEmail->getErrorMessage());
 
         $this->assertSame(SendRecipientStatus::BOUNCED, $recipient1->getStatus());
+        $this->assertSame(BounceReason::RECIPIENT, $recipient1->getBouncedReason());
         $this->assertSame(SendRecipientStatus::BOUNCED, $recipient2->getStatus());
+        $this->assertSame(BounceReason::RECIPIENT, $recipient2->getBouncedReason());
     }
 
     public function test_incoming_bounce_dsn_missing(): void
@@ -379,6 +382,9 @@ class IncomingBounceTest extends WebTestCase
         $this->assertSame('5.7.1', $infrastructureBounce->getSmtpEnhancedCode());
         $this->assertSame('Message rejected due to security policy', $infrastructureBounce->getSmtpMessage());
         $this->assertFalse($infrastructureBounce->isRead());
+
+        $this->assertSame(SendRecipientStatus::BOUNCED, $sendRecipient->getStatus());
+        $this->assertSame(BounceReason::INFRASTRUCTURE, $sendRecipient->getBouncedReason());
 
         $debugIncomingEmail = $this->em->getRepository(DebugIncomingEmail::class)->findOneBy([
             'type' => DebugIncomingEmailType::BOUNCE,
