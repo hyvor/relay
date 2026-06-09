@@ -9,6 +9,10 @@ use App\Service\Idempotency\Message\ClearExpiredIdempotencyRecordsMessage;
 use App\Service\InfrastructureBounce\Message\ClearOldInfrastructureBouncesMessage;
 use App\Service\Management\Message\RunHealthChecksMessage;
 use App\Service\Send\Message\ClearExpiredSendsMessage;
+use App\Service\Stats\Message\UpdateStatsDeliveryDomainMessage;
+use App\Service\Stats\Message\UpdateStatsIpMessage;
+use App\Service\Stats\Message\UpdateStatsIpProjectMessage;
+use App\Service\Stats\Message\UpdateStatsProjectMessage;
 use App\Service\Tls\Message\CheckMailCertificateValidityMessage;
 use App\Service\Ip\Message\ResetIpWarmupMessage;
 use App\Service\Webhook\Message\ClearOldWebhookDeliveriesMessage;
@@ -74,6 +78,12 @@ class DefaultSchedule implements ScheduleProviderInterface
 
             // ip warmup daily reset
             ->add(RecurringMessage::cron('0 0 * * *', new ResetIpWarmupMessage))
+
+            // stats rollup
+            ->add(RecurringMessage::every('1 hour', new UpdateStatsProjectMessage))
+            ->add(RecurringMessage::every('1 hour', new UpdateStatsIpMessage))
+            ->add(RecurringMessage::every('1 hour', new UpdateStatsIpProjectMessage))
+            ->add(RecurringMessage::every('1 hour', new UpdateStatsDeliveryDomainMessage))
 
             // global lock
             ->lock($this->lockFactory->createLock('global-schedule', 20))
