@@ -87,6 +87,7 @@ class StatsUpdateHandlersTest extends WebTestCase
             'created_at' => new \DateTimeImmutable(),
         ]);
 
+        /** @var UpdateStatsProjectMessageHandler $handler */
         $handler = self::getContainer()->get(UpdateStatsProjectMessageHandler::class);
         $handler(new UpdateStatsProjectMessage());
 
@@ -95,7 +96,7 @@ class StatsUpdateHandlersTest extends WebTestCase
             [$project->getId()]
         );
 
-        $this->assertNotFalse($row);
+        $this->assertIsArray($row);
         $this->assertSame(1, (int)$row['sends']);
         $this->assertSame(6, (int)$row['send_recipients']);
         $this->assertSame(1, (int)$row['send_attempts']);
@@ -130,6 +131,7 @@ class StatsUpdateHandlersTest extends WebTestCase
             'created_at' => new \DateTimeImmutable(),
         ]);
 
+        /** @var UpdateStatsIpMessageHandler $handler */
         $handler = self::getContainer()->get(UpdateStatsIpMessageHandler::class);
         $handler(new UpdateStatsIpMessage());
 
@@ -138,7 +140,7 @@ class StatsUpdateHandlersTest extends WebTestCase
             [$ipAddress->getIpAddress()]
         );
 
-        $this->assertNotFalse($row);
+        $this->assertIsArray($row);
         $this->assertSame(1, (int)$row['sends']);
         $this->assertSame(1, (int)$row['send_recipients']);
         $this->assertSame(1, (int)$row['send_attempts']);
@@ -166,6 +168,7 @@ class StatsUpdateHandlersTest extends WebTestCase
             'created_at' => new \DateTimeImmutable(),
         ]);
 
+        /** @var UpdateStatsIpProjectMessageHandler $handler */
         $handler = self::getContainer()->get(UpdateStatsIpProjectMessageHandler::class);
         $handler(new UpdateStatsIpProjectMessage());
 
@@ -174,7 +177,7 @@ class StatsUpdateHandlersTest extends WebTestCase
             [$ipAddress->getIpAddress(), $project->getId()]
         );
 
-        $this->assertNotFalse($row);
+        $this->assertIsArray($row);
         $this->assertSame(1, (int)$row['sent']);
     }
 
@@ -200,6 +203,7 @@ class StatsUpdateHandlersTest extends WebTestCase
             'created_at' => new \DateTimeImmutable(),
         ]);
 
+        /** @var UpdateStatsDeliveryDomainMessageHandler $handler */
         $handler = self::getContainer()->get(UpdateStatsDeliveryDomainMessageHandler::class);
         $handler(new UpdateStatsDeliveryDomainMessage());
 
@@ -208,7 +212,7 @@ class StatsUpdateHandlersTest extends WebTestCase
             [$project->getId(), $ipAddress->getIpAddress(), 'example.com']
         );
 
-        $this->assertNotFalse($row);
+        $this->assertIsArray($row);
         $this->assertSame(1, (int)$row['sent']);
         $this->assertSame(1, (int)$row['accepted']);
         $this->assertNull($row['provider']);
