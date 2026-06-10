@@ -542,3 +542,214 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 	assert.Equal(t, 1, updatedRecipient.TryCount)
 
 }
+
+func TestEmailWorker_AttemptSendToDomain_BounceReason(t *testing.T) {
+
+	truncateTestDb()
+
+	factory, err := NewTestFactory()
+	assert.NoError(t, err)
+
+	send, err := factory.Send(&FactorySend{
+		Queued:    true,
+		SendAfter: time.Now().Add(-10 * time.Hour),
+	})
+	assert.NoError(t, err)
+
+	recipientId, err := factory.SendRecipient(send, &FactorySendRecipient{
+		Address: "supun@hyvor.com",
+		Type:    "to",
+		Status:  "queued",
+	})
+	assert.NoError(t, err)
+
+	wg := &sync.WaitGroup{}
+	mx := &sync.Mutex{}
+	attemptCh := make(chan AttemptData, 1)
+	defer close(attemptCh)
+
+	sendRow := &SendRow{
+		Id:   send.Id,
+		Uuid: send.Uuid,
+		From: send.FromAddress,
+	}
+	domain := "hyvor.com"
+	recipients := []*RecipientRow{
+		{
+			Id:       recipientId,
+			Type:     "to",
+			Address:  "supun@hyvor.com",
+			TryCount: 0,
+		},
+	}
+	sendTx, err := NewSendTransaction(context.Background(), factory.conn)
+	assert.NoError(t, err)
+
+	ipAddressId, err := factory.IpAddress()
+	assert.NoError(t, err)
+
+	worker := &EmailWorker{
+		ctx:    context.Background(),
+		logger: slogDiscard(),
+		ip: GoStateIp{
+			Id:      ipAddressId,
+			QueueId: send.QueueId,
+		},
+		metrics: newMetrics(),
+	}
+
+	// Test recipient bounce (5.1.1)
+	sendEmail = func(
+		send *SendRow,
+		recipients []*RecipientRow,
+		rcptDomain string,
+		instanceDomain string,
+		ipId int,
+		ip string,
+		ptr string,
+	) *SendResult {
+		return &SendResult{
+			SentFromIpId:    ipId,
+			NewTryCount:     1,
+			Domain:          "hyvor.com",
+			ResolvedMxHosts: []string{"mx1.hyvor.com"},
+			RcptResults: []*RcptResult{
+				{
+					RecipientId:  recipientId,
+					Code:         550,
+					EnhancedCode: [3]int{5, 1, 1},
+					Message:      "User unknown",
+				},
+			},
+		}
+	}
+
+	wg.Add(1)
+	worker.attemptSendToDomain(
+		wg,
+		mx,
+		attemptCh,
+		sendRow,
+		domain,
+		recipients,
+		sendTx,
+	)
+	wg.Wait()
+
+	chData := <-attemptCh
+	sendTx.Commit()
+
+	updatedSendAttempt, err := factory.GetSendAttemptById(chData.SendAttemptId)
+	assert.NoError(t, err)
+	assert.Equal(t, "bounced", updatedSendAttempt.Status)
+
+	assert.Equal(t, 1, len(updatedSendAttempt.Recipients))
+	assert.Equal(t, 550, updatedSendAttempt.Recipients[0].SmtpCode)
+	assert.Equal(t, "recipient", updatedSendAttempt.Recipients[0].BounceReason)
+
+	updatedRecipient, err := factory.GetSendRecipientById(recipientId)
+	assert.NoError(t, err)
+	assert.Equal(t, "bounced", updatedRecipient.Status)
+
+	// Test infrastructure bounce (5.7.1)
+	truncateTestDb()
+
+	factory2, err := NewTestFactory()
+	assert.NoError(t, err)
+
+	send2, err := factory2.Send(&FactorySend{
+		Queued:    true,
+		SendAfter: time.Now().Add(-10 * time.Hour),
+	})
+	assert.NoError(t, err)
+
+	recipientId2, err := factory2.SendRecipient(send2, &FactorySendRecipient{
+		Address: "test@example.com",
+		Type:    "to",
+		Status:  "queued",
+	})
+	assert.NoError(t, err)
+
+	sendRow2 := &SendRow{
+		Id:   send2.Id,
+		Uuid: send2.Uuid,
+		From: send2.FromAddress,
+	}
+	recipients2 := []*RecipientRow{
+		{
+			Id:       recipientId2,
+			Type:     "to",
+			Address:  "test@example.com",
+			TryCount: 0,
+		},
+	}
+	sendTx2, err := NewSendTransaction(context.Background(), factory2.conn)
+	assert.NoError(t, err)
+
+	ipAddressId2, err := factory2.IpAddress()
+	assert.NoError(t, err)
+
+	worker2 := &EmailWorker{
+		ctx:    context.Background(),
+		logger: slogDiscard(),
+		ip: GoStateIp{
+			Id:      ipAddressId2,
+			QueueId: send2.QueueId,
+		},
+		metrics: newMetrics(),
+	}
+
+	sendEmail = func(
+		send *SendRow,
+		recipients []*RecipientRow,
+		rcptDomain string,
+		instanceDomain string,
+		ipId int,
+		ip string,
+		ptr string,
+	) *SendResult {
+		return &SendResult{
+			SentFromIpId:    ipId,
+			NewTryCount:     1,
+			Domain:          "example.com",
+			ResolvedMxHosts: []string{"mx1.example.com"},
+			RcptResults: []*RcptResult{
+				{
+					RecipientId:  recipientId2,
+					Code:         550,
+					EnhancedCode: [3]int{5, 7, 1},
+					Message:      "Message rejected due to security policy",
+				},
+			},
+		}
+	}
+
+	attemptCh2 := make(chan AttemptData, 1)
+	wg2 := &sync.WaitGroup{}
+	wg2.Add(1)
+	worker2.attemptSendToDomain(
+		wg2,
+		mx,
+		attemptCh2,
+		sendRow2,
+		"example.com",
+		recipients2,
+		sendTx2,
+	)
+	wg2.Wait()
+
+	chData2 := <-attemptCh2
+	sendTx2.Commit()
+
+	updatedSendAttempt2, err := factory2.GetSendAttemptById(chData2.SendAttemptId)
+	assert.NoError(t, err)
+	assert.Equal(t, "bounced", updatedSendAttempt2.Status)
+
+	assert.Equal(t, 1, len(updatedSendAttempt2.Recipients))
+	assert.Equal(t, 550, updatedSendAttempt2.Recipients[0].SmtpCode)
+	assert.Equal(t, "infrastructure", updatedSendAttempt2.Recipients[0].BounceReason)
+
+	updatedRecipient2, err := factory2.GetSendRecipientById(recipientId2)
+	assert.NoError(t, err)
+	assert.Equal(t, "bounced", updatedRecipient2.Status)
+}
