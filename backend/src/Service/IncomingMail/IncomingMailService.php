@@ -18,6 +18,7 @@ use App\Service\Send\SendService;
 use App\Service\SendFeedback\SendFeedbackService;
 use App\Service\SendRecipient\SendRecipientService;
 use App\Service\Suppression\SuppressionService;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -30,7 +31,8 @@ class IncomingMailService
         private SendFeedbackService $sendFeedbackService,
         private InfrastructureBounceService $infrastructureBounceService,
         private LoggerInterface $logger,
-        private EventDispatcherInterface $ed
+        private EventDispatcherInterface $ed,
+        private EntityManagerInterface $em,
     ) {
     }
 

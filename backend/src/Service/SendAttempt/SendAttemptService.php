@@ -51,11 +51,17 @@ class SendAttemptService
             );
 
             if ($attemptRecipient->getBouncedReason() === BounceReason::RECIPIENT) {
+                $description = $attemptRecipient->getSmtpMessage();
+                $code = $attemptRecipient->getSmtpCode();
+                $enhancedCode = $attemptRecipient->getSmtpEnhancedCode();
+                if ($code !== 0) {
+                    $description = $code . ($enhancedCode ? ' ' . $enhancedCode : '') . ' ' . $description;
+                }
                 $this->suppressionService->createSuppression(
                     $sendAttempt->getSend()->getProject(),
                     $sendRecipient->getAddress(),
                     SuppressionReason::BOUNCE,
-                    $attemptRecipient->getSmtpMessage()
+                    $description
                 );
 
                 $attemptRecipient->setIsSuppressed(true);
