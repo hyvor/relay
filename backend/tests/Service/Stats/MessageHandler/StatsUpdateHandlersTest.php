@@ -97,6 +97,7 @@ class StatsUpdateHandlersTest extends WebTestCase
         );
 
         $this->assertIsArray($row);
+        /** @var array<string, int|string|null> $row */
         $this->assertSame(1, (int)$row['sends']);
         $this->assertSame(6, (int)$row['send_recipients']);
         $this->assertSame(1, (int)$row['send_attempts']);
@@ -141,6 +142,7 @@ class StatsUpdateHandlersTest extends WebTestCase
         );
 
         $this->assertIsArray($row);
+        /** @var array<string, int|string|null> $row */
         $this->assertSame(1, (int)$row['sends']);
         $this->assertSame(1, (int)$row['send_recipients']);
         $this->assertSame(1, (int)$row['send_attempts']);
@@ -178,6 +180,7 @@ class StatsUpdateHandlersTest extends WebTestCase
         );
 
         $this->assertIsArray($row);
+        /** @var array<string, int|string|null> $row */
         $this->assertSame(1, (int)$row['sent']);
     }
 
@@ -213,6 +216,7 @@ class StatsUpdateHandlersTest extends WebTestCase
         );
 
         $this->assertIsArray($row);
+        /** @var array<string, int|string|null> $row */
         $this->assertSame(1, (int)$row['sent']);
         $this->assertSame(1, (int)$row['accepted']);
         $this->assertNull($row['provider']);
