@@ -22,7 +22,7 @@ class UpdateStatsIpProjectMessageHandler
                 bounced_recipient_rate, bounced_infrastructure_rate, complained_rate
             )
             SELECT
-                sa.ip_address,
+                ia.ip_address::inet,
                 s.project_id,
                 CURRENT_DATE AS stat_date,
                 COUNT(*) FILTER (WHERE sr.status IN ('accepted', 'deferred', 'bounced', 'failed', 'suppressed')) AS sent,
@@ -44,8 +44,9 @@ class UpdateStatsIpProjectMessageHandler
             FROM sends s
             JOIN send_recipients sr ON sr.send_id = s.id
             JOIN send_attempts sa ON sa.send_id = s.id
+            JOIN ip_addresses ia ON ia.id = sa.ip_address_id
             WHERE sa.created_at::DATE = CURRENT_DATE
-            GROUP BY sa.ip_address, s.project_id, CURRENT_DATE
+            GROUP BY ia.ip_address, s.project_id, CURRENT_DATE
             ON CONFLICT (ip_address, project_id, stat_date) DO UPDATE SET
                 sent = EXCLUDED.sent,
                 bounced_recipient = EXCLUDED.bounced_recipient,

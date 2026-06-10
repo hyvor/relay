@@ -24,7 +24,7 @@ class UpdateStatsIpMessageHandler
                 complained_rate, suppressed_rate, failed_rate
             )
             SELECT
-                sa.ip_address,
+                ia.ip_address::inet,
                 CURRENT_DATE AS stat_date,
                 COUNT(DISTINCT s.id) AS sends,
                 COUNT(DISTINCT sr.id) AS send_recipients,
@@ -67,8 +67,9 @@ class UpdateStatsIpMessageHandler
             FROM sends s
             JOIN send_recipients sr ON sr.send_id = s.id
             JOIN send_attempts sa ON sa.send_id = s.id
+            JOIN ip_addresses ia ON ia.id = sa.ip_address_id
             WHERE sa.created_at::DATE = CURRENT_DATE
-            GROUP BY sa.ip_address, CURRENT_DATE
+            GROUP BY ia.ip_address, CURRENT_DATE
             ON CONFLICT (ip_address, stat_date) DO UPDATE SET
                 sends = EXCLUDED.sends,
                 send_recipients = EXCLUDED.send_recipients,
