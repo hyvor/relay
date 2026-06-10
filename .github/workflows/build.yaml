@@ -3,9 +3,6 @@ name: Build
 on:
   release:
     types: [ published ]
-  push: # TODO: remove before merging, for testing arm64 build only
-    branches:
-      - arm
 
 env:
   REGISTRY_IMAGE: ${{ secrets.HYVOR_ORG_DOCKERHUB_USERNAME }}/relay
@@ -97,7 +94,6 @@ jobs:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
             type=semver,pattern={{version}}
-            type=raw,value=arm64-test,enable=${{ github.event_name == 'push' }}
 
       - name: Create manifest list and push
         working-directory: ${{ runner.temp }}/digests
