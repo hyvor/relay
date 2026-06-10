@@ -619,6 +619,7 @@ func TestEmailWorker_AttemptSendToDomain_BounceReason(t *testing.T) {
 					Code:         550,
 					EnhancedCode: [3]int{5, 1, 1},
 					Message:      "User unknown",
+					BounceReason: BounceReasonRecipient,
 				},
 			},
 		}
@@ -719,6 +720,7 @@ func TestEmailWorker_AttemptSendToDomain_BounceReason(t *testing.T) {
 					Code:         550,
 					EnhancedCode: [3]int{5, 7, 1},
 					Message:      "Message rejected due to security policy",
+					BounceReason: BounceReasonInfrastructure,
 				},
 			},
 		}

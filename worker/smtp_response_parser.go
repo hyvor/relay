@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 )
 
 // SmtpResponseParser classifies SMTP bounce responses into recipient or infrastructure reasons.
@@ -62,23 +63,21 @@ func (p *SmtpResponseParser) IsInfrastructureError() bool {
 }
 
 func (p *SmtpResponseParser) GetFullMessage() string {
-	code := ""
+	parts := []string{}
 	if p.Code != 0 {
-		code = fmt.Sprintf("%d", p.Code)
+		parts = append(parts, fmt.Sprintf("%d", p.Code))
 	}
-	enhancedCode := ""
 	if p.EnhancedCode != [3]int{0, 0, 0} {
-		enhancedCode = fmt.Sprintf(" %s", p.enhancedCodeString())
+		parts = append(parts, p.enhancedCodeString())
 	}
-	message := ""
 	if p.Message != "" {
 		msg := p.Message
 		if len(msg) > 255 {
 			msg = msg[:255]
 		}
-		message = fmt.Sprintf(" %s", msg)
+		parts = append(parts, msg)
 	}
-	return fmt.Sprintf("%s%s%s", code, enhancedCode, message)
+	return strings.Join(parts, " ")
 }
 
 func (p *SmtpResponseParser) enhancedCodeString() string {

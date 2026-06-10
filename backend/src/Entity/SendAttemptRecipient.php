@@ -44,7 +44,7 @@ class SendAttemptRecipient
     #[ORM\Column()]
     private bool $is_suppressed;
 
-    #[ORM\Column(type: "string", enumType: BounceReason::class, nullable: true)]
+    #[ORM\Column(type: "string", enumType: BounceReason::class, nullable: true, name: "bounce_reason")]
     private ?BounceReason $bounced_reason = null;
 
     public function __construct()
