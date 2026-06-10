@@ -31,7 +31,10 @@ class StatsUpdateHandlersTest extends WebTestCase
     public function test_update_stats_project(): void
     {
         $project = ProjectFactory::createOne();
-        $send = SendFactory::createOne(['project' => $project]);
+        $send = SendFactory::createOne([
+            'project' => $project,
+            'created_at' => new \DateTimeImmutable(),
+        ]);
 
         // accepted recipient
         SendRecipientFactory::createOne([
@@ -44,7 +47,7 @@ class StatsUpdateHandlersTest extends WebTestCase
         SendRecipientFactory::createOne([
             'send' => $send,
             'status' => SendRecipientStatus::BOUNCED,
-            'bounce_reason' => BounceReason::RECIPIENT,
+            'bounced_reason' => BounceReason::RECIPIENT,
             'address' => 'b@example.com',
         ]);
 
@@ -52,7 +55,7 @@ class StatsUpdateHandlersTest extends WebTestCase
         SendRecipientFactory::createOne([
             'send' => $send,
             'status' => SendRecipientStatus::BOUNCED,
-            'bounce_reason' => BounceReason::INFRASTRUCTURE,
+            'bounced_reason' => BounceReason::INFRASTRUCTURE,
             'address' => 'c@example.com',
         ]);
 
@@ -81,6 +84,7 @@ class StatsUpdateHandlersTest extends WebTestCase
         SendAttemptFactory::createOne([
             'send' => $send,
             'status' => SendAttemptStatus::ACCEPTED,
+            'created_at' => new \DateTimeImmutable(),
         ]);
 
         $handler = self::getContainer()->get(UpdateStatsProjectMessageHandler::class);
@@ -108,7 +112,10 @@ class StatsUpdateHandlersTest extends WebTestCase
     public function test_update_stats_ip(): void
     {
         $project = ProjectFactory::createOne();
-        $send = SendFactory::createOne(['project' => $send]);
+        $send = SendFactory::createOne([
+            'project' => $project,
+            'created_at' => new \DateTimeImmutable(),
+        ]);
         $ipAddress = IpAddressFactory::createOne();
 
         SendRecipientFactory::createOne([
@@ -120,6 +127,7 @@ class StatsUpdateHandlersTest extends WebTestCase
             'send' => $send,
             'status' => SendAttemptStatus::ACCEPTED,
             'ip_address' => $ipAddress,
+            'created_at' => new \DateTimeImmutable(),
         ]);
 
         $handler = self::getContainer()->get(UpdateStatsIpMessageHandler::class);
@@ -140,7 +148,10 @@ class StatsUpdateHandlersTest extends WebTestCase
     public function test_update_stats_ip_project(): void
     {
         $project = ProjectFactory::createOne();
-        $send = SendFactory::createOne(['project' => $project]);
+        $send = SendFactory::createOne([
+            'project' => $project,
+            'created_at' => new \DateTimeImmutable(),
+        ]);
         $ipAddress = IpAddressFactory::createOne();
 
         SendRecipientFactory::createOne([
@@ -152,6 +163,7 @@ class StatsUpdateHandlersTest extends WebTestCase
             'send' => $send,
             'status' => SendAttemptStatus::ACCEPTED,
             'ip_address' => $ipAddress,
+            'created_at' => new \DateTimeImmutable(),
         ]);
 
         $handler = self::getContainer()->get(UpdateStatsIpProjectMessageHandler::class);
@@ -169,7 +181,10 @@ class StatsUpdateHandlersTest extends WebTestCase
     public function test_update_stats_delivery_domain(): void
     {
         $project = ProjectFactory::createOne();
-        $send = SendFactory::createOne(['project' => $project]);
+        $send = SendFactory::createOne([
+            'project' => $project,
+            'created_at' => new \DateTimeImmutable(),
+        ]);
         $ipAddress = IpAddressFactory::createOne();
 
         SendRecipientFactory::createOne([
@@ -182,6 +197,7 @@ class StatsUpdateHandlersTest extends WebTestCase
             'status' => SendAttemptStatus::ACCEPTED,
             'ip_address' => $ipAddress,
             'domain' => 'example.com',
+            'created_at' => new \DateTimeImmutable(),
         ]);
 
         $handler = self::getContainer()->get(UpdateStatsDeliveryDomainMessageHandler::class);
