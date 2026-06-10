@@ -128,10 +128,6 @@ class IncomingMailService
         }
     }
 
-    /**
-     * Classify a DSN status code into a BounceReason.
-     * Returns null if not a bounce we care about.
-     */
     private function classifyBounceReason(?string $status): ?BounceReason
     {
         if ($status === null) {
