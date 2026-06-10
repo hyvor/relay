@@ -22,7 +22,7 @@ class UpdateStatsDeliveryDomainMessageHandler
             )
             SELECT
                 s.project_id,
-                sa.ip_address,
+                ia.ip_address::inet,
                 sa.domain AS recipient_domain,
                 NULL AS provider,
                 CURRENT_DATE AS stat_date,
@@ -34,8 +34,9 @@ class UpdateStatsDeliveryDomainMessageHandler
             FROM sends s
             JOIN send_recipients sr ON sr.send_id = s.id
             JOIN send_attempts sa ON sa.send_id = s.id
+            JOIN ip_addresses ia ON ia.id = sa.ip_address_id
             WHERE sa.created_at::DATE = CURRENT_DATE
-            GROUP BY s.project_id, sa.ip_address, sa.domain, CURRENT_DATE
+            GROUP BY s.project_id, ia.ip_address, sa.domain, CURRENT_DATE
             ON CONFLICT (project_id, ip_address, recipient_domain, stat_date) DO UPDATE SET
                 sent = EXCLUDED.sent,
                 accepted = EXCLUDED.accepted,
