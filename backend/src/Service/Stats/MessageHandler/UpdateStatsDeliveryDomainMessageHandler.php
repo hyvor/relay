@@ -26,11 +26,11 @@ class UpdateStatsDeliveryDomainMessageHandler
                 sa.domain AS recipient_domain,
                 NULL AS provider,
                 CURRENT_DATE AS stat_date,
-                COUNT(*) AS sent,
-                COUNT(*) FILTER (WHERE sr.status = 'accepted') AS accepted,
-                COUNT(*) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'recipient') AS bounced_recipient,
-                COUNT(*) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'infrastructure') AS bounced_infrastructure,
-                COUNT(*) FILTER (WHERE sr.status = 'complained') AS complained
+                COUNT(DISTINCT sr.id) AS sent,
+                COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'accepted') AS accepted,
+                COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'recipient') AS bounced_recipient,
+                COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'infrastructure') AS bounced_infrastructure,
+                COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'complained') AS complained
             FROM sends s
             JOIN send_recipients sr ON sr.send_id = s.id
             JOIN send_attempts sa ON sa.send_id = s.id

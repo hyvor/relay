@@ -25,21 +25,21 @@ class UpdateStatsIpProjectMessageHandler
                 ia.ip_address::inet,
                 s.project_id,
                 CURRENT_DATE AS stat_date,
-                COUNT(*) FILTER (WHERE sr.status IN ('accepted', 'deferred', 'bounced', 'failed', 'suppressed')) AS sent,
-                COUNT(*) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'recipient') AS bounced_recipient,
-                COUNT(*) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'infrastructure') AS bounced_infrastructure,
-                COUNT(*) FILTER (WHERE sr.status = 'complained') AS complained,
+                COUNT(DISTINCT sr.id) FILTER (WHERE sr.status IN ('accepted', 'deferred', 'bounced', 'failed', 'suppressed')) AS sent,
+                COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'recipient') AS bounced_recipient,
+                COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'infrastructure') AS bounced_infrastructure,
+                COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'complained') AS complained,
                 ROUND(
-                    COUNT(*) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'recipient')::NUMERIC
-                    / NULLIF(COUNT(*), 0), 4
+                    COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'recipient')::NUMERIC
+                    / NULLIF(COUNT(DISTINCT sr.id), 0), 4
                 ) AS bounced_recipient_rate,
                 ROUND(
-                    COUNT(*) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'infrastructure')::NUMERIC
-                    / NULLIF(COUNT(*), 0), 4
+                    COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'infrastructure')::NUMERIC
+                    / NULLIF(COUNT(DISTINCT sr.id), 0), 4
                 ) AS bounced_infrastructure_rate,
                 ROUND(
-                    COUNT(*) FILTER (WHERE sr.status = 'complained')::NUMERIC
-                    / NULLIF(COUNT(*), 0), 4
+                    COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'complained')::NUMERIC
+                    / NULLIF(COUNT(DISTINCT sr.id), 0), 4
                 ) AS complained_rate
             FROM sends s
             JOIN send_recipients sr ON sr.send_id = s.id

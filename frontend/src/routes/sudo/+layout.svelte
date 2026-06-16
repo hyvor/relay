@@ -25,6 +25,7 @@
 	import IconArrowRightShort from '@hyvor/icons/IconArrowRightShort';
 	import IconCardList from '@hyvor/icons/IconCardList';
 	import IconPersonBadge from '@hyvor/icons/IconPersonBadge';
+	import IconGraphUp from '@hyvor/icons/IconGraphUp';
 
 	dayjs.extend(relativeTime);
 
@@ -96,7 +97,16 @@
 							<div class="hds-box nav-inner">
 								<InstanceDomain />
 
-								<NavLinkGroup activeBackground="var(--accent-light)">
+<NavLinkGroup activeBackground="var(--accent-light)">
+									<NavLink
+										href="/sudo/stats"
+										active={page.url.pathname === '/sudo/stats'}
+									>
+										{#snippet start()}
+											<IconGraphUp />
+										{/snippet}
+										Stats
+									</NavLink>
 									<NavLink
 										href="/sudo/health"
 										active={page.url.pathname === '/sudo/health'}
