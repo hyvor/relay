@@ -15,6 +15,7 @@
 	import IconBug from '@hyvor/icons/IconBug';
 	import IconHouse from '@hyvor/icons/IconHouse';
 	import IconArrowRightShort from '@hyvor/icons/IconArrowRightShort';
+	import IconGraphUp from '@hyvor/icons/IconGraphUp';
 
 	dayjs.extend(relativeTime);
 
@@ -83,6 +84,13 @@
 					<nav>
 						<div class="hds-box nav-inner">
 							<InstanceDomain />
+
+							<NavLink href="/sudo/stats" active={page.url.pathname === '/sudo/stats'}>
+								{#snippet start()}
+									<IconGraphUp />
+								{/snippet}
+								Stats
+							</NavLink>
 
 							<div class="nav-title">Infrastructure</div>
 
