@@ -241,3 +241,10 @@ export interface WarmupSchedule {
 	updated_at: number;
 	ip_address_id: number;
 }
+
+export interface SudoStats {
+	project_count: number;
+	sends: number;
+	bounce_rate: number;
+	complaint_rate: number;
+}

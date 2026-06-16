@@ -29,40 +29,40 @@ class UpdateStatsIpMessageHandler
                 COUNT(DISTINCT s.id) AS sends,
                 COUNT(DISTINCT sr.id) AS send_recipients,
                 COUNT(DISTINCT sa.id) AS send_attempts,
-                COUNT(*) FILTER (WHERE sr.status = 'accepted') AS accepted,
-                COUNT(*) FILTER (WHERE sr.status = 'deferred') AS deferred,
-                COUNT(*) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'recipient') AS bounced_recipient,
-                COUNT(*) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'infrastructure') AS bounced_infrastructure,
-                COUNT(*) FILTER (WHERE sr.status = 'complained') AS complained,
-                COUNT(*) FILTER (WHERE sr.status = 'suppressed') AS suppressed,
-                COUNT(*) FILTER (WHERE sr.status = 'failed') AS failed,
+                COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'accepted') AS accepted,
+                COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'deferred') AS deferred,
+                COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'recipient') AS bounced_recipient,
+                COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'infrastructure') AS bounced_infrastructure,
+                COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'complained') AS complained,
+                COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'suppressed') AS suppressed,
+                COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'failed') AS failed,
                 ROUND(
-                    COUNT(*) FILTER (WHERE sr.status = 'accepted')::NUMERIC
-                    / NULLIF(COUNT(*), 0), 4
+                    COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'accepted')::NUMERIC
+                    / NULLIF(COUNT(DISTINCT sr.id), 0), 4
                 ) AS accepted_rate,
                 ROUND(
-                    COUNT(*) FILTER (WHERE sr.status = 'deferred')::NUMERIC
-                    / NULLIF(COUNT(*), 0), 4
+                    COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'deferred')::NUMERIC
+                    / NULLIF(COUNT(DISTINCT sr.id), 0), 4
                 ) AS deferred_rate,
                 ROUND(
-                    COUNT(*) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'recipient')::NUMERIC
-                    / NULLIF(COUNT(*), 0), 4
+                    COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'recipient')::NUMERIC
+                    / NULLIF(COUNT(DISTINCT sr.id), 0), 4
                 ) AS bounced_recipient_rate,
                 ROUND(
-                    COUNT(*) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'infrastructure')::NUMERIC
-                    / NULLIF(COUNT(*), 0), 4
+                    COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'infrastructure')::NUMERIC
+                    / NULLIF(COUNT(DISTINCT sr.id), 0), 4
                 ) AS bounced_infrastructure_rate,
                 ROUND(
-                    COUNT(*) FILTER (WHERE sr.status = 'complained')::NUMERIC
-                    / NULLIF(COUNT(*), 0), 4
+                    COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'complained')::NUMERIC
+                    / NULLIF(COUNT(DISTINCT sr.id), 0), 4
                 ) AS complained_rate,
                 ROUND(
-                    COUNT(*) FILTER (WHERE sr.status = 'suppressed')::NUMERIC
-                    / NULLIF(COUNT(*), 0), 4
+                    COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'suppressed')::NUMERIC
+                    / NULLIF(COUNT(DISTINCT sr.id), 0), 4
                 ) AS suppressed_rate,
                 ROUND(
-                    COUNT(*) FILTER (WHERE sr.status = 'failed')::NUMERIC
-                    / NULLIF(COUNT(*), 0), 4
+                    COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'failed')::NUMERIC
+                    / NULLIF(COUNT(DISTINCT sr.id), 0), 4
                 ) AS failed_rate
             FROM sends s
             JOIN send_recipients sr ON sr.send_id = s.id
