@@ -11,7 +11,8 @@ import type {
 	DnsRecordType,
 	DebugIncomingEmail,
 	InfrastructureBounce,
-	TlsCertificate
+	TlsCertificate,
+	SudoStats
 } from './sudoTypes';
 
 export function initSudo() {
@@ -169,5 +170,12 @@ export function getTlsMailCerts() {
 export function generateMailCert() {
 	return sudoApi.post<TlsCertificate>({
 		endpoint: '/tls/mail-certs/generate'
+	});
+}
+
+export function getSudoStats(period: '30d' | '7d' | '24h' = '24h') {
+	return sudoApi.get<SudoStats>({
+		endpoint: '/stats',
+		data: { period }
 	});
 }

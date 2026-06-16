@@ -168,3 +168,10 @@ export interface TlsCertificate {
 	valid_from: number | null;
 	valid_to: number | null;
 }
+
+export interface SudoStats {
+	project_count: number;
+	sends: number;
+	bounce_rate: number;
+	complaint_rate: number;
+}
