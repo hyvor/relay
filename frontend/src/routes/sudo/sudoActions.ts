@@ -51,7 +51,11 @@ export function getQueues() {
 	});
 }
 
-export function updateIpAddress(ipId: number, data: { queue_id?: number | null }) {
+export function updateIpAddress(ipId: number, data: {
+	queue_id?: number | null;
+	warmup_status?: 'warming' | 'warmed';
+	warmup_schedule?: number[] | null;
+}) {
 	return sudoApi.patch<IpAddress>({
 		endpoint: `/ip-addresses/${ipId}`,
 		data

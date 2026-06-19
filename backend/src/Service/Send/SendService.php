@@ -152,7 +152,6 @@ class SendService
         $send->setDomain($domain);
         $send->setQueue($queue);
         $send->setQueueName($queue->getName());
-        $send->setIpAddress($this->ipAddressService->getRandomIpForQueue($queue));
         $send->setFromAddress($from->getAddress());
         $send->setFromName($from->getName());
         $send->setSubject($subject);
@@ -174,6 +173,12 @@ class SendService
             ],
         );
         $send->setQueued($shouldQueue);
+
+        $recipientCount = $send->getRecipients()->filter(
+            fn(SendRecipient $r) => $r->getStatus() === SendRecipientStatus::QUEUED
+        )->count();
+
+        $send->setIpAddress($this->ipAddressService->getIpForQueue($queue, $recipientCount));
 
         $this->em->flush();
 
@@ -221,16 +226,6 @@ class SendService
         $send->setUpdatedAt($this->now());
 
         $this->em->flush();
-    }
-
-    public function updateNullIpSendsForQueue(int $queueId, ?int $ipAddressId): int
-    {
-        $conn = $this->em->getConnection();
-        $sql = 'UPDATE sends SET ip_address_id = :ip_id, updated_at = NOW() WHERE queue_id = :queue_id AND ip_address_id IS NULL';
-        return (int) $conn->executeStatement($sql, [
-            'ip_id' => $ipAddressId,
-            'queue_id' => $queueId,
-        ]);
     }
 
     /**
