@@ -4,6 +4,7 @@ namespace App\Api\Console\Input;
 
 use App\Api\Console\Authorization\Scope;
 use App\Util\OptionalPropertyTrait;
+use App\Validator\AllowedIpsConstraint;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class UpdateApiKeyInput
@@ -23,6 +24,16 @@ class UpdateApiKeyInput
         new Assert\Choice(callback: 'getScopeValues'),
     ])]
     public array $scopes;
+
+    /**
+     * @var string[]
+     */
+    #[Assert\Type('array')]
+    #[Assert\All([
+        new Assert\Type('string'),
+    ])]
+    #[AllowedIpsConstraint]
+    public array $allowed_ips;
 
     /**
      * @return string[]

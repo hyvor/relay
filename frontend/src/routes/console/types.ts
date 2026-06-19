@@ -10,6 +10,7 @@ export interface AppConfig {
 		name: string;
 		email: string;
 		picture_url: string | null;
+		is_sudo: boolean;
 	};
 
 	app: {
@@ -155,6 +156,7 @@ export type ApiKey = {
 	id: number;
 	name: string;
 	scopes: string[];
+	allowed_ips: string[];
 	key?: string;
 	created_at: number;
 	is_enabled: boolean;

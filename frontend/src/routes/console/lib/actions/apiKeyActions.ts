@@ -7,17 +7,18 @@ export function getApiKeys() {
 	});
 }
 
-export function createApiKey(name: string, scopes: string[]) {
+export function createApiKey(name: string, scopes: string[], allowed_ips: string[]) {
 	return consoleApi.post<ApiKey>({
 		endpoint: 'api-keys',
 		data: {
 			name,
-			scopes
+			scopes,
+			allowed_ips
 		}
 	});
 }
 
-export function updateApiKey(id: number, data: { name?: string; scopes?: string[]; is_enabled?: boolean }) {
+export function updateApiKey(id: number, data: { name?: string; scopes?: string[]; is_enabled?: boolean; allowed_ips?: string[] }) {
 	return consoleApi.patch<ApiKey>({
 		endpoint: `api-keys/${id}`,
 		data

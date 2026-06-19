@@ -115,6 +115,59 @@ Authorization: Bearer <your_api_key>
 	</li>
 </ul>
 
+<h2 id="errors">Errors</h2>
+
+<p>
+	When a request fails, the Console API responds with a non-2xx HTTP status code and a JSON body
+	describing the error:
+</p>
+
+<CodeBlock
+	code={`
+type ErrorResponse = {
+	message: string, // human-readable error message
+	status: number, // matches the HTTP response status code
+	violations?: { property: string, message: string }[] // present on 422 validation errors
+}
+`}
+	language="ts"
+/>
+
+<p>Examples:</p>
+
+<CodeBlock
+	code={`
+// 401 Unauthorized
+{ message: "Invalid API key.", status: 401 }
+
+// 403 Forbidden
+{ message: "Client IP is not allowed for this API key.", status: 403 }
+
+// 404 Not Found
+{ message: "Domain not found", status: 404 }
+
+// 422 Unprocessable Entity
+{
+	message: "domain: This value is not a valid domain.",
+	status: 422,
+	violations: [
+		{ property: "domain", message: "This value is not a valid domain." }
+	]
+}
+
+// 429 Too Many Requests
+{ message: "Rate limit exceeded. Please try again later in 42 seconds.", status: 429 }
+
+// 500 Internal Server Error
+{ message: "Internal Server Error. Our team has been notified.", status: 500 }
+`}
+	language="ts"
+/>
+
+<p>
+	See <a href="#rate-limit">Rate Limiting</a> for more about <code>429 Too Many Requests</code> responses.
+</p>
+
 <h2 id="endpoints">Endpoints</h2>
 
 <ul>

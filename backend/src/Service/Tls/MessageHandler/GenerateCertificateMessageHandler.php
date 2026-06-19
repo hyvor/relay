@@ -9,6 +9,7 @@ use App\Service\Dns\DnsRecordService;
 use App\Service\Dns\Dto\CreateDnsRecordDto;
 use App\Service\Tls\Acme\AcmeClient;
 use App\Service\Tls\Acme\Exception\AcmeException;
+use App\Service\Tls\MailTlsGenerator;
 use App\Service\Tls\Message\GenerateCertificateMessage;
 use App\Service\Tls\TlsCertificateService;
 use Hyvor\Internal\Bundle\Log\ContextualLogger;
@@ -37,10 +38,9 @@ class GenerateCertificateMessageHandler
 
     public function __invoke(GenerateCertificateMessage $message): void
     {
-        $lock = $this->lockFactory->createLockFromKey(
-            $message->getLockKey(),
-            300,
-            false
+        $lock = $this->lockFactory->createLock(
+            MailTlsGenerator::LOCK_NAME,
+            ttl: 300,  // 5 minutes
         );
 
         if (!$lock->acquire()) {
@@ -134,5 +134,4 @@ class GenerateCertificateMessageHandler
             return '_acme-challenge'; // @codeCoverageIgnore
         }
     }
-
 }

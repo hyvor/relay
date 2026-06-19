@@ -14,7 +14,6 @@ use Prometheus\Storage\Adapter;
 use Prometheus\Storage\APCng;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
-use Hyvor\Internal\SelfHosted\Provider\TelemetryProviderInterface;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     $containerConfigurator->parameters()
@@ -65,6 +64,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->set(APCng::class);
     $services->alias(Adapter::class, APCng::class);
 
-    // telemetry
-    $services->alias(TelemetryProviderInterface::class, RelayTelemetryProvider::class);
+    // RelayTelemetryProvider is intentionally not bound to TelemetryProviderInterface,
+    // but kept as a public service so its test can fetch it. The class is preserved
+    // for upcoming Enterprise license logic.
+    $services->set(RelayTelemetryProvider::class)->public();
 };

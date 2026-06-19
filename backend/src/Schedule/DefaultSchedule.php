@@ -12,7 +12,6 @@ use App\Service\Send\Message\ClearExpiredSendsMessage;
 use App\Service\Tls\Message\CheckMailCertificateValidityMessage;
 use App\Service\Ip\Message\ResetIpWarmupMessage;
 use App\Service\Webhook\Message\ClearOldWebhookDeliveriesMessage;
-use Symfony\Component\Console\Messenger\RunCommandMessage;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
 use Symfony\Component\Scheduler\RecurringMessage;
@@ -75,9 +74,6 @@ class DefaultSchedule implements ScheduleProviderInterface
 
             // ip warmup daily reset
             ->add(RecurringMessage::every('1 day', new ResetIpWarmupMessage))
-
-            // telemetry
-            ->add(RecurringMessage::every('24 hours', new RunCommandMessage('self-hosted:record-telemetry')))
 
             // global lock
             ->lock($this->lockFactory->createLock('global-schedule', 20))

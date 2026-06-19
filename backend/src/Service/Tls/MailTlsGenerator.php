@@ -16,46 +16,42 @@ use Symfony\Component\Messenger\Stamp\TransportNamesStamp;
 class MailTlsGenerator
 {
 
-    private const LOCK_NAME = 'mail_tls_certificate_generation_lock';
+    public const LOCK_NAME = 'mail_tls_certificate_generation_lock';
 
     public function __construct(
         private LockFactory $lockFactory,
         private MxServer $mxServer,
         private TlsCertificateService $tlsCertificateService,
         private MessageBusInterface $bus,
-    ) {
-    }
+    ) {}
 
     /**
      * @throws AnotherTlsGenerationRequestInProgressException
      */
     public function dispatchToGenerate(string $transport = MessageTransport::ASYNC): TlsCertificate
     {
-        $key = new Key(self::LOCK_NAME);
-        $lock = $this->lockFactory->createLockFromKey(
-            $key,
+        $lock = $this->lockFactory->createLock(
+            self::LOCK_NAME,
             ttl: 300,  // 5 minutes
-            autoRelease: false, // since the generation is handled asynchronously
         );
 
         if (!$lock->acquire()) {
             throw new AnotherTlsGenerationRequestInProgressException();
         }
 
-
         $domain = $this->mxServer->getMxHostname();
         $cert = $this->tlsCertificateService->createCertificate(
             TlsCertificateType::MAIL,
             $domain
         );
-       
-        $message = new GenerateCertificateMessage($cert->getId(), $key);
+
+        $message = new GenerateCertificateMessage($cert->getId());
         $this->bus->dispatch($message, [
             new TransportNamesStamp($transport)
         ]);
-        
+
+        $lock->release();
+
         return $cert;
     }
-
-
 }
