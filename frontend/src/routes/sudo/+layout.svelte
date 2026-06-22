@@ -64,8 +64,8 @@
 		<CloudContext
 			context={{
 				component: 'relay',
-				deployment: $sudoConfigStore.hosting === 'cloud' ? 'cloud' : 'on-prem',
-				instance: $sudoConfigStore.hosting === 'cloud' ? $sudoConfigStore.instance : '',
+				deployment: $sudoConfigStore.deployment,
+				instance: $sudoConfigStore.deployment === 'cloud' ? $sudoConfigStore.instance : '',
 				license: {
 					type: 'none',
 					subscription: null,

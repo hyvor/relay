@@ -11,6 +11,7 @@
 	import ProjectRow from './ProjectRow.svelte';
 	import OrganizationSelectDropdown from './OrganizationSelectDropdown.svelte';
 	import { getProjects } from '../sudoActions';
+	import { sudoConfigStore } from '../sudoStore';
 	import type { Organization, SudoProject } from '../sudoTypes';
 
 	const PER_PAGE = 25;
@@ -101,7 +102,9 @@
 				<span class="press-enter">⏎</span>
 			{/if}
 
-			<OrganizationSelectDropdown bind:value={selectedOrg} />
+			{#if $sudoConfigStore.deployment === 'cloud'}
+				<OrganizationSelectDropdown bind:value={selectedOrg} />
+			{/if}
 		</div>
 	</div>
 
@@ -114,11 +117,10 @@
 	{:else}
 		<div class="list">
 			<div class="header">
-				<div>Name</div>
 				<div>ID</div>
+				<div>Name</div>
 				<div>Organization</div>
 				<div>Type</div>
-				<div>Created</div>
 			</div>
 
 			{#each projects as project (project.id)}
@@ -166,7 +168,7 @@
 	}
 	.header {
 		display: grid;
-		grid-template-columns: 3fr 1fr 2fr 1.5fr 1.5fr;
+		grid-template-columns: 0.5fr 3fr 2fr 1.5fr;
 		font-size: 14px;
 		font-weight: 600;
 		color: var(--text-light);

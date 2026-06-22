@@ -4,13 +4,34 @@
 	import SendsList from '$lib/sends/SendsList.svelte';
 	import { SEND_STATUS_OPTIONS } from '$lib/sends/statusOptions';
 	import ProjectSelectDropdown from './ProjectSelectDropdown.svelte';
-	import { getSends } from '../sudoActions';
+	import { getSends, getProjectById } from '../sudoActions';
+	import { page } from '$app/state';
+	import { onMount } from 'svelte';
 	import type { Send, SendRecipientStatus } from '../../console/types';
 	import type { SudoProject } from '../sudoTypes';
 
 	const PER_PAGE = 25;
 
-	let selectedProject = $state<SudoProject | null>(null);
+	// Seed the project filter from ?project_id=N so links into this page
+	// (e.g. from a send detail) load already filtered. Use a lightweight
+	// placeholder synchronously so the first fetch carries the id, then
+	// enrich the dropdown's display name.
+	const initialProjectId = page.url.searchParams.get('project_id');
+	let selectedProject = $state<SudoProject | null>(
+		initialProjectId
+			? ({ id: Number(initialProjectId), name: `#${initialProjectId}` } as SudoProject)
+			: null
+	);
+
+	onMount(() => {
+		if (initialProjectId) {
+			getProjectById(Number(initialProjectId))
+				.then((res) => {
+					selectedProject = res.project;
+				})
+				.catch(() => {});
+		}
+	});
 	let status: SendRecipientStatus | null = $state(null);
 	let fromSearch: string = $state('');
 	let toSearch: string = $state('');

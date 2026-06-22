@@ -7,7 +7,7 @@ export interface SudoInitResponse {
 
 export interface SudoConfig {
 	app_version: string;
-	hosting: 'self' | 'cloud';
+	deployment: 'cloud' | 'on-prem';
 	instance: string;
 	blacklists: Blacklist[];
 	user: {

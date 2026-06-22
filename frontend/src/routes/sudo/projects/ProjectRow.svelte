@@ -13,8 +13,11 @@
 </script>
 
 <a class="row" href="/sudo/projects/{project.id}">
-	<div class="name">{project.name}</div>
 	<div class="muted">#{project.id}</div>
+	<div class="name">
+		{project.name}
+		<div class="created"><RelativeTime unix={project.created_at} /></div>
+	</div>
 	<div class="org">
 		{#if org}
 			<div class="org-name">
@@ -48,15 +51,12 @@
 	<div>
 		<Tag size="x-small">{project.send_type}</Tag>
 	</div>
-	<div class="muted">
-		<RelativeTime unix={project.created_at} />
-	</div>
 </a>
 
 <style>
 	.row {
 		display: grid;
-		grid-template-columns: 3fr 1fr 2fr 1.5fr 1.5fr;
+		grid-template-columns: 0.5fr 3fr 2fr 1.5fr;
 		gap: 15px;
 		align-items: start;
 		padding: 15px 30px;
@@ -70,6 +70,12 @@
 	}
 	.name {
 		font-weight: 600;
+	}
+	.created {
+		font-weight: 400;
+		color: var(--text-light);
+		font-size: 13px;
+		margin-top: 2px;
 	}
 	.muted {
 		color: var(--text-light);

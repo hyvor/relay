@@ -33,7 +33,7 @@ class SudoController extends AbstractController
 
         return new JsonResponse([
             'config' => [
-                'hosting' => $this->config->getHosting(),
+                'deployment' => $this->internalConfig->getDeployment()->value,
                 'app_version' => $this->config->getAppVersion(),
                 'instance' => $this->internalConfig->getInstance(),
                 'blacklists' => IpBlacklists::getBlacklists(),
