@@ -78,6 +78,9 @@ class CreateProjectTest extends WebTestCase
 
     public function test_disallow_project_creation_for_non_sudo_users(): void
     {
+        // The non-sudo restriction only applies on cloud deployments.
+        $_ENV['DEPLOYMENT'] = 'cloud';
+
 		AuthFake::enableForSymfony(
 			$this->container,
 			['id' => 99],
