@@ -3,6 +3,7 @@
 		Button,
 		Dropdown,
 		IconButton,
+		LoadButton,
 		Loader,
 		TextInput,
 		toast
@@ -20,14 +21,20 @@
 
 	let { value = $bindable(null) }: Props = $props();
 
+	const PER_PAGE = 50;
+
 	let input = $state('');
 	let organizations: Organization[] = $state([]);
 	let loaded = $state(false);
 	let loading = $state(false);
+	let loadingMore = $state(false);
+	let hasMore = $state(true);
 
 	let show = $state(false);
 	let inputEl: HTMLInputElement;
 
+	// Search filters only the already-loaded page(s): organization names live in
+	// the auth service and cannot be searched server-side.
 	let results = $derived.by(() => {
 		const q = input.trim().toLowerCase();
 		if (q === '') return organizations;
@@ -46,15 +53,25 @@
 		}
 	}
 
-	async function loadOrganizations() {
-		loading = true;
+	async function loadOrganizations(more = false) {
+		if (more) {
+			loadingMore = true;
+		} else {
+			loading = true;
+		}
+
+		const beforeId = more && organizations.length > 0 ? organizations[organizations.length - 1].id : null;
+
 		try {
-			organizations = await getProjectOrganizations();
+			const page = await getProjectOrganizations(PER_PAGE, beforeId);
+			organizations = more ? [...organizations, ...page] : page;
+			hasMore = page.length === PER_PAGE;
 			loaded = true;
 		} catch (error) {
 			toast.error('Failed to load organizations: ' + (error as Error).message);
 		} finally {
 			loading = false;
+			loadingMore = false;
 		}
 	}
 
@@ -129,6 +146,13 @@
 						</button>
 					{/each}
 				{/if}
+
+				<LoadButton
+					text="Load More"
+					loading={loadingMore}
+					show={hasMore}
+					on:click={() => loadOrganizations(true)}
+				/>
 			</div>
 		{/if}
 	{/snippet}

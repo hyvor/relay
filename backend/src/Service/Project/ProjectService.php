@@ -45,18 +45,27 @@ class ProjectService
     }
 
     /**
-     * Distinct, non-null organization ids referenced by projects.
+     * Distinct, non-null organization ids referenced by projects, ordered by
+     * id descending. Paginated via a cursor ($beforeId) since there could be
+     * thousands of distinct organizations.
      *
      * @return int[]
      */
-    public function getDistinctOrganizationIds(): array
+    public function getDistinctOrganizationIds(int $limit, ?int $beforeId = null): array
     {
-        /** @var array<int, array{organization_id: int}> $rows */
-        $rows = $this->em->getRepository(Project::class)->createQueryBuilder('p')
+        $qb = $this->em->getRepository(Project::class)->createQueryBuilder('p')
             ->select('DISTINCT p.organization_id AS organization_id')
             ->where('p.organization_id IS NOT NULL')
-            ->getQuery()
-            ->getScalarResult();
+            ->orderBy('p.organization_id', 'DESC')
+            ->setMaxResults($limit);
+
+        if ($beforeId !== null) {
+            $qb->andWhere('p.organization_id < :beforeId')
+                ->setParameter('beforeId', $beforeId);
+        }
+
+        /** @var array<int, array{organization_id: int}> $rows */
+        $rows = $qb->getQuery()->getScalarResult();
 
         return array_map(fn(array $row) => (int) $row['organization_id'], $rows);
     }

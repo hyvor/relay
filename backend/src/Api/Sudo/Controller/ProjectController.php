@@ -63,11 +63,22 @@ class ProjectController extends AbstractController
 
     /**
      * Distinct organizations referenced by projects, for the filter dropdown.
+     *
+     * Paginated by organization id (descending) via a `before_id` cursor:
+     * organization names live in the auth service and can only be resolved by
+     * id, so we cannot load every organization at once.
      */
     #[Route('/projects/organizations', methods: 'GET')]
-    public function getProjectOrganizations(): JsonResponse
+    public function getProjectOrganizations(Request $request): JsonResponse
     {
-        $orgIds = $this->projectService->getDistinctOrganizationIds();
+        $limit = $request->query->getInt('limit', 50);
+        $limit = max(1, min($limit, 100));
+
+        $beforeId = $request->query->has('before_id')
+            ? $request->query->getInt('before_id')
+            : null;
+
+        $orgIds = $this->projectService->getDistinctOrganizationIds($limit, $beforeId);
 
         if ($orgIds === []) {
             return $this->json([]);
@@ -75,10 +86,16 @@ class ProjectController extends AbstractController
 
         $organizations = $this->auth->organizations($orgIds, includeBillingInfo: true);
 
-        return $this->json(array_values(array_map(
-            fn(Organization $org) => new OrganizationObject($org),
-            $organizations
-        )));
+        // Preserve the id-descending order so the client can use the last id
+        // as the cursor for the next page.
+        $result = [];
+        foreach ($orgIds as $orgId) {
+            if (isset($organizations[$orgId])) {
+                $result[] = new OrganizationObject($organizations[$orgId]);
+            }
+        }
+
+        return $this->json($result);
     }
 
     #[Route('/projects/{id}', requirements: ['id' => Requirement::DIGITS], methods: 'GET')]

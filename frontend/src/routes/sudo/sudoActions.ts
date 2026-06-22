@@ -227,9 +227,10 @@ export function getProjects(
 	});
 }
 
-export function getProjectOrganizations() {
+export function getProjectOrganizations(limit: number, before_id: number | null = null) {
 	return sudoApi.get<Organization[]>({
-		endpoint: '/projects/organizations'
+		endpoint: '/projects/organizations',
+		data: { limit, before_id }
 	});
 }
 

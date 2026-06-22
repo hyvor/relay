@@ -60,6 +60,48 @@ class GetProjectOrganizationsTest extends WebTestCase
         $this->assertContains('Globex', $names);
     }
 
+    public function test_limits_results_and_orders_by_id_descending(): void
+    {
+        $this->fakeAuth(
+            AuthFake::generateOrganization(['id' => 100, 'name' => 'Acme Inc']),
+            AuthFake::generateOrganization(['id' => 200, 'name' => 'Globex']),
+            AuthFake::generateOrganization(['id' => 300, 'name' => 'Initech']),
+        );
+
+        ProjectFactory::createOne(['organization_id' => 100]);
+        ProjectFactory::createOne(['organization_id' => 200]);
+        ProjectFactory::createOne(['organization_id' => 300]);
+
+        $response = $this->sudoApi('GET', '/projects/organizations?limit=2');
+        $this->assertSame(200, $response->getStatusCode());
+
+        /** @var array<int, array<string, mixed>> $json */
+        $json = $this->getJson();
+        $this->assertCount(2, $json);
+        $this->assertSame([300, 200], array_column($json, 'id'));
+    }
+
+    public function test_paginates_with_before_id_cursor(): void
+    {
+        $this->fakeAuth(
+            AuthFake::generateOrganization(['id' => 100, 'name' => 'Acme Inc']),
+            AuthFake::generateOrganization(['id' => 200, 'name' => 'Globex']),
+            AuthFake::generateOrganization(['id' => 300, 'name' => 'Initech']),
+        );
+
+        ProjectFactory::createOne(['organization_id' => 100]);
+        ProjectFactory::createOne(['organization_id' => 200]);
+        ProjectFactory::createOne(['organization_id' => 300]);
+
+        $response = $this->sudoApi('GET', '/projects/organizations?limit=2&before_id=200');
+        $this->assertSame(200, $response->getStatusCode());
+
+        /** @var array<int, array<string, mixed>> $json */
+        $json = $this->getJson();
+        $this->assertCount(1, $json);
+        $this->assertSame([100], array_column($json, 'id'));
+    }
+
     public function test_returns_empty_when_no_projects(): void
     {
         $this->fakeAuth();
