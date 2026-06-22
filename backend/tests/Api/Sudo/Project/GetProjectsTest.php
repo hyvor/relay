@@ -5,6 +5,7 @@ namespace App\Tests\Api\Sudo\Project;
 use App\Api\Sudo\Controller\ProjectController;
 use App\Api\Sudo\Object\OrganizationObject;
 use App\Api\Sudo\Object\ProjectObject;
+use App\Service\Project\ProjectService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use Hyvor\Internal\Auth\AuthFake;
@@ -15,6 +16,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(ProjectController::class)]
 #[CoversClass(ProjectObject::class)]
 #[CoversClass(OrganizationObject::class)]
+#[CoversClass(ProjectService::class)]
 class GetProjectsTest extends WebTestCase
 {
     protected function shouldEnableAuthFake(): bool
@@ -95,6 +97,19 @@ class GetProjectsTest extends WebTestCase
         $json = $this->getJson();
         $this->assertCount(1, $json['projects']);
         $this->assertSame('Marketing Campaigns', $json['projects'][0]['name']);
+    }
+
+    public function test_returns_empty_orgs_when_no_projects_match(): void
+    {
+        $this->fakeAuth();
+        ProjectFactory::createOne(['name' => 'Marketing Campaigns']);
+
+        $response = $this->sudoApi('GET', '/projects?search=nonexistentterm');
+        $this->assertSame(200, $response->getStatusCode());
+        /** @var array{projects: array<int, mixed>, orgs: array<int, mixed>} $json */
+        $json = $this->getJson();
+        $this->assertCount(0, $json['projects']);
+        $this->assertCount(0, $json['orgs']);
     }
 
     public function test_filters_by_organization_id(): void

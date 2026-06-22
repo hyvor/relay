@@ -8,6 +8,7 @@ use App\Api\Console\Object\SendFeedbackObject;
 use App\Api\Console\Object\SendObject;
 use App\Api\Console\Object\SendRecipientObject;
 use App\Api\Sudo\Controller\SendController;
+use App\Api\Sudo\Object\SendProjectSummaryObject;
 use App\Service\Send\SendService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
@@ -28,6 +29,7 @@ use Symfony\Component\Uid\Uuid;
 #[CoversClass(SendAttemptRecipientObject::class)]
 #[CoversClass(SendFeedbackObject::class)]
 #[CoversClass(SendRecipientObject::class)]
+#[CoversClass(SendProjectSummaryObject::class)]
 class GetSendByUuidTest extends WebTestCase
 {
     public function test_returns_send_with_full_detail(): void

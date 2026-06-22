@@ -5,6 +5,8 @@ namespace App\Tests\Api\Sudo\Send;
 use App\Api\Console\Object\SendObject;
 use App\Api\Console\Object\SendRecipientObject;
 use App\Api\Sudo\Controller\SendController;
+use App\Api\Sudo\Object\SendProjectSummaryObject;
+use App\Api\Sudo\Object\SudoSendObject;
 use App\Entity\Type\SendRecipientStatus;
 use App\Service\Send\SendService;
 use App\Tests\Case\WebTestCase;
@@ -19,6 +21,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(SendService::class)]
 #[CoversClass(SendObject::class)]
 #[CoversClass(SendRecipientObject::class)]
+#[CoversClass(SudoSendObject::class)]
+#[CoversClass(SendProjectSummaryObject::class)]
 class GetSendsTest extends WebTestCase
 {
     public function test_lists_sends_across_all_projects(): void
