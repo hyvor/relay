@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { DetailCard, Tag, toast } from '@hyvor/design/components';
-	import type { Send } from '../../../types';
-	import RelativeTime from '../../../@components/content/RelativeTime.svelte';
-	import RecipientStatus from '../RecipientStatus.svelte';
+	import type { RetrySendFn, Send } from '../../routes/console/types';
+	import RelativeTime from '../../routes/console/@components/content/RelativeTime.svelte';
+	import RecipientStatus from './RecipientStatus.svelte';
 	import { getSortedRecipients } from './recipients';
 	import byteFormatter from '$lib/byteFormatter';
 	import Events from './Events/Events.svelte';
@@ -10,9 +10,14 @@
 	import QueuedCallout from './QueuedCallout.svelte';
 	import FailedCallout from './FailedCallout.svelte';
 	import RetryModal from './RetryModal.svelte';
-	import { retrySend } from '../../../lib/actions/emailActions';
 
-	let { send, onSendUpdate }: { send: Send; onSendUpdate: (send: Send) => void } = $props();
+	interface Props {
+		send: Send;
+		onSendUpdate: (send: Send) => void;
+		onRetry?: RetrySendFn;
+	}
+
+	let { send, onSendUpdate, onRetry }: Props = $props();
 
 	function formatTimestamp(timestamp: number | undefined): string {
 		if (!timestamp) return 'N/A';
@@ -36,6 +41,8 @@
 	let tryNowLoading = $state(false);
 
 	async function handleRetryConfirm(recipientIds: number[], mode: 'now' | 'schedule', scheduledDate?: string) {
+		if (!onRetry) return;
+
 		let sendAfter: number | undefined;
 		if (mode === 'schedule') {
 			if (!scheduledDate) {
@@ -47,7 +54,7 @@
 
 		retryLoading = true;
 		try {
-			const result = await retrySend(send.id, sendAfter, recipientIds);
+			const result = await onRetry(send.id, sendAfter, recipientIds);
 			const msg = mode === 'now'
 				? `${result.retried_recipients} recipient(s) re-queued for retry`
 				: `${result.retried_recipients} recipient(s) scheduled for retry`;
@@ -62,9 +69,10 @@
 	}
 
 	async function handleTryNow() {
+		if (!onRetry) return;
 		tryNowLoading = true;
 		try {
-			const result = await retrySend(send.id);
+			const result = await onRetry(send.id);
 			toast.success('Send triggered for immediate delivery');
 			onSendUpdate(result.send);
 		} catch (err: any) {
@@ -77,10 +85,15 @@
 
 <div class="basics">
 	{#if send.queued}
-		<QueuedCallout after={send.send_after} {recipients} onTryNow={handleTryNow} {tryNowLoading} />
+		<QueuedCallout
+			after={send.send_after}
+			{recipients}
+			onTryNow={onRetry ? handleTryNow : undefined}
+			{tryNowLoading}
+		/>
 	{/if}
 
-	{#if hasFailedRecipients && !send.queued}
+	{#if hasFailedRecipients && !send.queued && onRetry}
 		<FailedCallout onRetryClick={() => (showRetryModal = true)} />
 	{/if}
 
@@ -131,12 +144,14 @@
 	<Attempts {send} />
 </div>
 
-<RetryModal
-	bind:show={showRetryModal}
-	{failedRecipients}
-	loading={retryLoading}
-	onConfirm={handleRetryConfirm}
-/>
+{#if onRetry}
+	<RetryModal
+		bind:show={showRetryModal}
+		{failedRecipients}
+		loading={retryLoading}
+		onConfirm={handleRetryConfirm}
+	/>
+{/if}
 
 <style>
 	.grid {

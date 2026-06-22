@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Button, Callout } from '@hyvor/design/components';
 	import IconHourglassSplit from '@hyvor/icons/IconHourglassSplit';
-	import type { SendRecipient } from '../../../types';
+	import type { SendRecipient } from '../../routes/console/types';
 
 	interface Props {
 		after: number;

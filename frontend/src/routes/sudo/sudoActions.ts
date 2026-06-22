@@ -1,5 +1,6 @@
 import sudoApi from './sudoApi';
 import { serversStore } from './sudoStore';
+import type { Send, SendRecipientStatus } from '../console/types';
 import type {
 	IpAddress,
 	Queue,
@@ -11,7 +12,12 @@ import type {
 	DnsRecordType,
 	DebugIncomingEmail,
 	InfrastructureBounce,
-	TlsCertificate
+	TlsCertificate,
+	Organization,
+	SudoProjectsResponse,
+	SudoProjectResponse,
+	SudoSendsResponse,
+	SudoSendResponse
 } from './sudoTypes';
 
 export function initSudo() {
@@ -169,5 +175,67 @@ export function getTlsMailCerts() {
 export function generateMailCert() {
 	return sudoApi.post<TlsCertificate>({
 		endpoint: '/tls/mail-certs/generate'
+	});
+}
+
+export function getSends(opts: {
+	project_id: number | null;
+	status: SendRecipientStatus | null;
+	from_search: string | null;
+	to_search: string | null;
+	subject_search: string | null;
+	date_from_search: string | null;
+	date_to_search: string | null;
+	limit: number;
+	before_id: number | null;
+}) {
+	return sudoApi
+		.get<SudoSendsResponse>({
+			endpoint: '/sends',
+			data: opts
+		})
+		.then(({ sends, projects }) => {
+			const projectsById = new Map(projects.map((project) => [project.id, project]));
+
+			return sends.map(({ project_id, ...send }) => ({
+				...send,
+				project: projectsById.get(project_id) ?? { id: project_id, name: 'Unknown project' }
+			}));
+		});
+}
+
+export function getSendByUuid(uuid: string) {
+	return sudoApi
+		.get<SudoSendResponse>({
+			endpoint: `/sends/uuid/${uuid}`
+		})
+		.then(({ send, project }) => ({
+			...send,
+			project
+		}));
+}
+
+export function getProjects(
+	search: string | null,
+	limit: number,
+	before_id: number | null,
+	organization_id: number | null = null
+) {
+	return sudoApi.get<SudoProjectsResponse>({
+		endpoint: '/projects',
+		data: { search, limit, before_id, organization_id }
+	});
+}
+
+export function getProjectOrganizations(limit: number, before_id: number | null = null) {
+	return sudoApi.get<Organization[]>({
+		endpoint: '/projects/organizations',
+		data: { limit, before_id }
+	});
+}
+
+export function getProjectById(id: number) {
+	return sudoApi.get<SudoProjectResponse>({
+		endpoint: `/projects/${id}`
 	});
 }

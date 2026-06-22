@@ -12,7 +12,6 @@ use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
 use Hyvor\Internal\InternalConfig;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[SudoPermissionRequired(SudoPermission::ACCESS_SUDO)]
@@ -34,7 +33,7 @@ class SudoController extends AbstractController
 
         return new JsonResponse([
             'config' => [
-                'hosting' => $this->config->getHosting(),
+                'deployment' => $this->internalConfig->getDeployment()->value,
                 'app_version' => $this->config->getAppVersion(),
                 'instance' => $this->internalConfig->getInstance(),
                 'blacklists' => IpBlacklists::getBlacklists(),

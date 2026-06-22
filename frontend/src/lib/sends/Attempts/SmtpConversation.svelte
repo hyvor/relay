@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { SmtpConversation } from '../../../../types';
+	import type { SmtpConversation } from '../../../routes/console/types';
 
 	interface Props {
 		conversation: SmtpConversation;

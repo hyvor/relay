@@ -5,6 +5,7 @@
 	import IconHdd from '@hyvor/icons/IconHdd';
 	import IconSegmentedNav from '@hyvor/icons/IconSegmentedNav';
 	import IconActivity from '@hyvor/icons/IconActivity';
+	import IconEnvelope from '@hyvor/icons/IconEnvelope';
 	import relativeTime from 'dayjs/plugin/relativeTime';
 	import dayjs from 'dayjs';
 	import InstanceDomain from './InstanceDomain.svelte';
@@ -15,6 +16,7 @@
 	import IconBug from '@hyvor/icons/IconBug';
 	import IconHouse from '@hyvor/icons/IconHouse';
 	import IconArrowRightShort from '@hyvor/icons/IconArrowRightShort';
+	import IconCardList from '@hyvor/icons/IconCardList';
 
 	dayjs.extend(relativeTime);
 
@@ -62,8 +64,8 @@
 		<CloudContext
 			context={{
 				component: 'relay',
-				deployment: $sudoConfigStore.hosting === 'cloud' ? 'cloud' : 'on-prem',
-				instance: $sudoConfigStore.hosting === 'cloud' ? $sudoConfigStore.instance : '',
+				deployment: $sudoConfigStore.deployment,
+				instance: $sudoConfigStore.deployment === 'cloud' ? $sudoConfigStore.instance : '',
 				license: {
 					type: 'none',
 					subscription: null,
@@ -83,8 +85,6 @@
 					<nav>
 						<div class="hds-box nav-inner">
 							<InstanceDomain />
-
-							<div class="nav-title">Infrastructure</div>
 
 							<NavLink href="/sudo/health" active={page.url.pathname === '/sudo/health'}>
 								{#snippet start()}
@@ -121,6 +121,27 @@
 							<div class="section-div"></div>
 
 							<NavLink
+								href="/sudo/projects"
+								active={page.url.pathname.startsWith('/sudo/projects')}
+							>
+								{#snippet start()}
+									<IconCardList />
+								{/snippet}
+								Projects
+							</NavLink>
+							<NavLink
+								href="/sudo/sends"
+								active={page.url.pathname.startsWith('/sudo/sends')}
+							>
+								{#snippet start()}
+									<IconEnvelope />
+								{/snippet}
+								Sends
+							</NavLink>
+
+							<div class="section-div"></div>
+
+							<NavLink
 								href="/sudo/debug"
 								active={page.url.pathname.startsWith('/sudo/debug')}
 							>
@@ -141,29 +162,6 @@
 								{/snippet}
 								Console
 							</NavLink>
-
-							<!-- <div class="nav-title">Users</div>
-
-						<NavLink href="/sudo/projects" active={page.url.pathname === '/sudo/projects'}>
-							{#snippet start()}
-								<IconCardList />
-							{/snippet}
-							Projects
-						</NavLink>
-
-						<NavLink href="/sudo/domains" active={page.url.pathname === '/sudo/domains'}>
-							{#snippet start()}
-								<IconDatabase />
-							{/snippet}
-							Domains
-						</NavLink>
-
-						<NavLink href="/sudo/emails" active={page.url.pathname === '/sudo/emails'}>
-							{#snippet start()}
-								<IconEnvelope />
-							{/snippet}
-							Emails
-						</NavLink> -->
 						</div>
 
 						<div class="version">
@@ -202,13 +200,6 @@
 	}
 	.nav-inner {
 		padding: 15px 0;
-	}
-	.nav-title {
-		padding: 15px 30px;
-		font-size: 14px;
-		margin-top: 5px;
-		color: var(--text-light);
-		display: none;
 	}
 	.content {
 		flex: 1;

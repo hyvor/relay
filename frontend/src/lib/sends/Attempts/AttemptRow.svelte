@@ -1,6 +1,6 @@
 <script lang="ts">
 	import dayjs from 'dayjs';
-	import type { SendAttempt } from '../../../../types';
+	import type { SendAttempt } from '../../../routes/console/types';
 	import { Tag } from '@hyvor/design/components';
 	import SmtpConversation from './SmtpConversation.svelte';
 	import MxHost from '../MxHost.svelte';

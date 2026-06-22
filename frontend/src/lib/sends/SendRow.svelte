@@ -1,17 +1,17 @@
 <script lang="ts">
-	import type { Send } from '../../types';
-	import RelativeTime from '../../@components/content/RelativeTime.svelte';
-	import { consoleUrlProject } from '../../lib/consoleUrl';
+	import type { Send } from '../../routes/console/types';
+	import RelativeTime from '../../routes/console/@components/content/RelativeTime.svelte';
 	import { Tag } from '@hyvor/design/components';
-	import { getSortedRecipients } from './[uuid]/recipients';
+	import { getSortedRecipients } from './recipients';
 	import RecipientStatus from './RecipientStatus.svelte';
 
 	interface Props {
 		send: Send;
-		refreshList: () => void;
+		hrefBuilder: (send: Send) => string;
+		showProject?: boolean;
 	}
 
-	let { send, refreshList }: Props = $props();
+	let { send, hrefBuilder, showProject = false }: Props = $props();
 
 	let recipients = $derived(getSortedRecipients(send.recipients));
 	let showAllRecipients = $state(false);
@@ -19,7 +19,14 @@
 	let hasMoreRecipients = $derived(recipients.length > 4);
 </script>
 
-<a class="email" href={consoleUrlProject(`sends/${send.uuid}`)}>
+<a class="email" class:with-project={showProject} href={hrefBuilder(send)}>
+	{#if showProject && send.project}
+		<div class="project">
+			<div class="project-name">{send.project.name}</div>
+			<div class="project-id">#{send.project.id}</div>
+		</div>
+	{/if}
+
 	<div class="from">
 		<div class="from-email">{send.from_address}</div>
 		{#if send.from_name}
@@ -83,8 +90,20 @@
 		gap: 15px;
 		word-break: break-all;
 	}
+	.email.with-project {
+		grid-template-columns: 1.5fr 2fr 3fr 2fr;
+	}
 	.email:hover {
 		background: var(--hover);
+	}
+
+	.project-name {
+		font-weight: 600;
+	}
+	.project-id {
+		color: var(--text-light);
+		font-size: 12px;
+		margin-top: 2px;
 	}
 
 	.from-name,

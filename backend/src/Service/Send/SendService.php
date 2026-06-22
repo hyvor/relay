@@ -35,7 +35,7 @@ class SendService
      * @return ArrayCollection<int, Send>
      */
     public function getSends(
-        Project $project,
+        ?Project $project,
         ?SendRecipientStatus $status,
         ?string $fromSearch,
         ?string $toSearch,
@@ -49,10 +49,16 @@ class SendService
 
         $qb
             ->distinct()
-            ->where('s.project = :project')
-            ->setParameter('project', $project)
             ->setMaxResults($limit)
             ->orderBy('s.id', 'DESC');
+
+        if ($project !== null) {
+            $qb->andWhere('s.project = :project')
+                ->setParameter('project', $project);
+        } else {
+            $qb->innerJoin('s.project', 'project')
+                ->addSelect('project');
+        }
 
         if ($beforeId !== null) {
             $qb->andWhere('s.id < :beforeId')

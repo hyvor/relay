@@ -1,3 +1,5 @@
+import type { Send } from '../console/types';
+
 export interface SudoInitResponse {
 	config: SudoConfig;
 	instance: Instance;
@@ -5,7 +7,7 @@ export interface SudoInitResponse {
 
 export interface SudoConfig {
 	app_version: string;
-	hosting: 'self' | 'cloud';
+	deployment: 'cloud' | 'on-prem';
 	instance: string;
 	blacklists: Blacklist[];
 	user: {
@@ -167,4 +169,54 @@ export interface TlsCertificate {
 	status: 'pending' | 'failed' | 'active' | 'expired' | 'revoked';
 	valid_from: number | null;
 	valid_to: number | null;
+}
+
+// Sends
+
+export interface SendProjectSummary {
+	id: number;
+	name: string;
+}
+
+export interface SudoSend extends Send {
+	project_id: number;
+}
+
+export interface SudoSendsResponse {
+	sends: SudoSend[];
+	projects: SendProjectSummary[];
+}
+
+export interface SudoSendResponse {
+	send: Send;
+	project: SendProjectSummary;
+}
+
+export interface SudoProject {
+	id: number;
+	user_id: number;
+	name: string;
+	created_at: number;
+	updated_at: number;
+	organization_id: number | null;
+	send_type: 'transactional' | 'distributional';
+}
+
+export interface Organization {
+	id: number;
+	name: string;
+	billing_email: string | null;
+	billing_address: {
+		country: string | null;
+	} | null;
+}
+
+export interface SudoProjectsResponse {
+	projects: SudoProject[];
+	orgs: Organization[];
+}
+
+export interface SudoProjectResponse {
+	project: SudoProject;
+	org: Organization | null;
 }

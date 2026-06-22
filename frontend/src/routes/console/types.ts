@@ -83,6 +83,11 @@ export type Send = {
 	recipients: SendRecipient[];
 	attempts: SendAttempt[];
 	feedback: SendFeedback[];
+
+	project?: {
+		id: number;
+		name: string;
+	};
 };
 
 export type SendRecipientStatus =
@@ -150,6 +155,19 @@ export interface SmtpStep {
 	reply_code: number;
 	reply_text: string;
 }
+
+export type DateFilterPreset = 'today' | 'yesterday' | 'this_week' | 'custom' | null;
+
+export interface StatusOption {
+	value: SendRecipientStatus | null;
+	label: string;
+}
+
+export type RetrySendFn = (
+	sendId: number,
+	sendAfter?: number,
+	recipientIds?: number[]
+) => Promise<{ retried_recipients: number; send: Send }>;
 
 export type ApiKey = {
 	id: number;
@@ -222,4 +240,3 @@ export interface ProjectUserMiniObject {
 	oidc_sub: string | null;
 }
 
-export type DateFilterPreset = 'today' | 'yesterday' | 'this_week' | 'custom' | null;

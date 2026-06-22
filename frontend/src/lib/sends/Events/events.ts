@@ -1,4 +1,4 @@
-import type { SendAttempt, SendAttemptRecipient, SendFeedback } from "../../../../types";
+import type { SendAttempt, SendAttemptRecipient, SendFeedback } from '../../../routes/console/types';
 
 
 export type Event = {

@@ -48,6 +48,7 @@ class GetSendsTest extends WebTestCase
         $this->assertCount(10, $json);
         $send = $json[4];
         $this->assertArrayHasKey('id', $send);
+        $this->assertArrayHasKey('uuid', $send);
     }
 
     public function test_list_sends_empty(): void

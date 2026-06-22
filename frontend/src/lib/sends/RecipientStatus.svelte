@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Tag } from '@hyvor/design/components';
-	import type { SendRecipient } from '../../types';
+	import type { SendRecipient } from '../../routes/console/types';
 
 	interface Props {
 		recipient: SendRecipient;

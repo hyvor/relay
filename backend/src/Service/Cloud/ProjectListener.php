@@ -3,9 +3,8 @@
 namespace App\Service\Cloud;
 
 use App\Api\Console\Authorization\AuthorizationListener;
-use App\Service\App\Config;
-use App\Service\App\HostingEnum;
 use App\Service\Project\Event\ProjectCreatingEvent;
+use Hyvor\Internal\InternalConfig;
 use Hyvor\Internal\Sudo\SudoUserService;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -22,13 +21,13 @@ class ProjectListener
     public function __construct(
         private RequestStack $requestStack,
         private SudoUserService $sudoUserService,
-        private Config $config,
+        private InternalConfig $internalConfig,
     ) {
     }
 
     public function onProjectCreation(ProjectCreatingEvent $event): void
     {
-        if ($this->config->getHosting() !== HostingEnum::CLOUD) {
+        if (!$this->internalConfig->getDeployment()->isCloud()) {
             return;
         }
 

@@ -17,8 +17,6 @@ class Config
         private string $envHostname,
         #[Autowire('%kernel.environment%')]
         private string $env,
-        #[Autowire('%env(string:HOSTING)%')]
-        private string $hosting,
         #[Autowire('%env(string:WEB_URL)%')]
         private string $webUrl,
         #[Autowire('%env(string:INSTANCE_DOMAIN)%')]
@@ -49,11 +47,6 @@ class Config
     public function getEnv(): string
     {
         return $this->env;
-    }
-
-    public function getHosting(): HostingEnum
-    {
-        return HostingEnum::tryFrom($this->hosting) ?? HostingEnum::SELF;
     }
 
     public function getWebUrl(): string

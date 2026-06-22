@@ -45,6 +45,64 @@ class ProjectService
     }
 
     /**
+     * Distinct, non-null organization ids referenced by projects, ordered by
+     * id descending. Paginated via a cursor ($beforeId) since there could be
+     * thousands of distinct organizations.
+     *
+     * @return int[]
+     */
+    public function getDistinctOrganizationIds(int $limit, ?int $beforeId = null): array
+    {
+        $qb = $this->em->getRepository(Project::class)->createQueryBuilder('p')
+            ->select('DISTINCT p.organization_id AS organization_id')
+            ->where('p.organization_id IS NOT NULL')
+            ->orderBy('p.organization_id', 'DESC')
+            ->setMaxResults($limit);
+
+        if ($beforeId !== null) {
+            $qb->andWhere('p.organization_id < :beforeId')
+                ->setParameter('beforeId', $beforeId);
+        }
+
+        /** @var array<int, array{organization_id: int}> $rows */
+        $rows = $qb->getQuery()->getScalarResult();
+
+        return array_map(fn(array $row) => (int) $row['organization_id'], $rows);
+    }
+
+    /**
+     * @return Project[]
+     */
+    public function getProjects(
+        int $limit,
+        ?int $beforeId = null,
+        ?string $search = null,
+        ?int $organizationId = null
+    ): array {
+        $qb = $this->em->getRepository(Project::class)->createQueryBuilder('p')
+            ->orderBy('p.id', 'DESC')
+            ->setMaxResults($limit);
+
+        if ($beforeId !== null) {
+            $qb->andWhere('p.id < :beforeId')
+                ->setParameter('beforeId', $beforeId);
+        }
+
+        if ($search !== null) {
+            $qb->andWhere('LOWER(p.name) LIKE LOWER(:search)')
+                ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($organizationId !== null) {
+            $qb->andWhere('p.organization_id = :orgId')
+                ->setParameter('orgId', $organizationId);
+        }
+
+        /** @var Project[] */
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
      * @return array{
      *     project: Project,
      *     projectUser: ($createProjectUser is true ? ProjectUser : null)
