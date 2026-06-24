@@ -29,8 +29,9 @@ class IpAddressServiceTest extends KernelTestCase
         $warmedIp = IpAddressFactory::createOne([
             'queue' => $queue,
             'warmup_status' => WarmupStatus::WARMED,
-        ]);
+		]);
 
+		/** @var IpAddressService $service */
         $service = $this->container->get(IpAddressService::class);
 
         for ($i = 0; $i < 20; $i++) {
@@ -53,6 +54,7 @@ class IpAddressServiceTest extends KernelTestCase
             'warmup_sent_today' => 500,
         ]);
 
+		/** @var IpAddressService $service */
         $service = $this->container->get(IpAddressService::class);
         $ip = $service->getIpForQueue($queue->_real());
 
@@ -73,6 +75,7 @@ class IpAddressServiceTest extends KernelTestCase
             'warmup_sent_today' => 1000,
         ]);
 
+		/** @var IpAddressService $service */
         $service = $this->container->get(IpAddressService::class);
         $ip = $service->getIpForQueue($queue->_real());
 
@@ -81,7 +84,9 @@ class IpAddressServiceTest extends KernelTestCase
 
     public function test_get_ip_returns_null_when_no_ips(): void
     {
-        $queue = QueueFactory::createOne();
+		$queue = QueueFactory::createOne();
+
+		/** @var IpAddressService $service */
         $service = $this->container->get(IpAddressService::class);
         $ip = $service->getIpForQueue($queue->_real());
 
@@ -110,6 +115,7 @@ class IpAddressServiceTest extends KernelTestCase
             'warmup_sent_today' => 500,
         ]);
 
+		/** @var IpAddressService $service */
         $service = $this->container->get(IpAddressService::class);
 
         // With recipientCount=10, full IP has 1000+10=1010 > 1000, so skipped
@@ -132,6 +138,7 @@ class IpAddressServiceTest extends KernelTestCase
             'warmup_schedule' => null,
         ]);
 
+		/** @var IpAddressService $service */
         $service = $this->container->get(IpAddressService::class);
         $ip = $service->getIpForQueue($queue->_real());
 

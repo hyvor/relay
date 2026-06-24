@@ -3,11 +3,14 @@
 namespace App\Tests\Service\Ip\MessageHandler;
 
 use App\Entity\Type\WarmupStatus;
+use App\Service\App\MessageTransport;
 use App\Service\Ip\Message\ResetIpWarmupMessage;
 use App\Service\Ip\MessageHandler\ResetIpWarmupMessageHandler;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\IpAddressFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
+
+use function Zenstruck\Foundry\Persistence\refresh;
 
 #[CoversClass(ResetIpWarmupMessageHandler::class)]
 class ResetIpWarmupMessageHandlerTest extends KernelTestCase
@@ -27,11 +30,11 @@ class ResetIpWarmupMessageHandlerTest extends KernelTestCase
             'warmup_max_today' => 100,
         ]);
 
-        $handler = $this->container->get(ResetIpWarmupMessageHandler::class);
-        $handler(new ResetIpWarmupMessage());
+		$transport = $this->transport(MessageTransport::ASYNC);
+		$transport->send(new ResetIpWarmupMessage());
+		$transport->throwExceptions()->process();
 
-        $this->em->refresh($ip->_real());
-        $ip = $ip->_real();
+		refresh($ip);
 
         $this->assertSame(0, $ip->getWarmupSentToday());
         $this->assertSame(200, $ip->getWarmupMaxToday());
@@ -50,11 +53,11 @@ class ResetIpWarmupMessageHandlerTest extends KernelTestCase
             'warmup_max_today' => 100,
         ]);
 
-        $handler = $this->container->get(ResetIpWarmupMessageHandler::class);
-        $handler(new ResetIpWarmupMessage());
+		$transport = $this->transport(MessageTransport::ASYNC);
+		$transport->send(new ResetIpWarmupMessage());
+		$transport->throwExceptions()->process();
 
-        $this->em->refresh($ip->_real());
-        $ip = $ip->_real();
+		refresh($ip);
 
         $this->assertSame(WarmupStatus::WARMED, $ip->getWarmupStatus());
         $this->assertSame(0, $ip->getWarmupMaxToday());
@@ -74,11 +77,11 @@ class ResetIpWarmupMessageHandlerTest extends KernelTestCase
             'warmup_max_today' => 0,
         ]);
 
-        $handler = $this->container->get(ResetIpWarmupMessageHandler::class);
-        $handler(new ResetIpWarmupMessage());
+		$transport = $this->transport(MessageTransport::ASYNC);
+		$transport->send(new ResetIpWarmupMessage());
+		$transport->throwExceptions()->process();
 
-        $this->em->refresh($ip->_real());
-        $ip = $ip->_real();
+		refresh($ip);
 
         $this->assertSame(0, $ip->getWarmupSentToday());
         $this->assertSame(50, $ip->getWarmupMaxToday());
@@ -93,13 +96,30 @@ class ResetIpWarmupMessageHandlerTest extends KernelTestCase
             'warmup_sent_today' => 50,
         ]);
 
-        $handler = $this->container->get(ResetIpWarmupMessageHandler::class);
-        $handler(new ResetIpWarmupMessage());
+		$transport = $this->transport(MessageTransport::ASYNC);
+		$transport->send(new ResetIpWarmupMessage());
+		$transport->throwExceptions()->process();
 
-        $this->em->refresh($ip->_real());
-        $ip = $ip->_real();
+		refresh($ip);
 
         $this->assertSame(50, $ip->getWarmupSentToday());
     }
 
+    public function test_ignores_warmed_ips(): void
+    {
+        $ip = IpAddressFactory::createOne([
+            'warmup_status' => WarmupStatus::WARMED,
+            'warmup_started_date' => null,
+            'warmup_schedule' => null,
+            'warmup_sent_today' => 50,
+        ]);
+
+		$transport = $this->transport(MessageTransport::ASYNC);
+		$transport->send(new ResetIpWarmupMessage());
+		$transport->throwExceptions()->process();
+
+		refresh($ip);
+
+        $this->assertSame(50, $ip->getWarmupSentToday());
+    }
 }

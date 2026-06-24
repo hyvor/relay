@@ -2,8 +2,8 @@
 
 namespace App\Api\Sudo\Object;
 
-use App\Entity\Instance;
 use App\Entity\IpAddress;
+use App\Entity\Type\WarmupStatus;
 use App\Service\Ip\Ptr;
 
 class IpAddressObject
@@ -17,7 +17,7 @@ class IpAddressObject
     public ?QueueObject $queue = null;
     public bool $is_ptr_forward_valid = false;
     public bool $is_ptr_reverse_valid = false;
-    public string $warmup_status;
+    public WarmupStatus $warmup_status;
     public ?int $warmup_started_date;
     public int $warmup_sent_today;
     public int $warmup_max_today;
@@ -36,7 +36,7 @@ class IpAddressObject
         $this->queue = $queue ? new QueueObject($queue) : null;
         $this->is_ptr_forward_valid = $ipAddress->getIsPtrForwardValid();
         $this->is_ptr_reverse_valid = $ipAddress->getIsPtrReverseValid();
-        $this->warmup_status = $ipAddress->getWarmupStatus()->value;
+        $this->warmup_status = $ipAddress->getWarmupStatus();
         $startedDate = $ipAddress->getWarmupStartedDate();
         $this->warmup_started_date = $startedDate ? $startedDate->getTimestamp() : null;
         $this->warmup_sent_today = $ipAddress->getWarmupSentToday();

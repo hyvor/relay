@@ -32,7 +32,7 @@ class RouteNullIpsMessageHandler
 
         $sends = $this->em->getRepository(Send::class)->findBy([
             'queue' => $queue,
-            'ipAddress' => null,
+            'ip_address' => null,
             'queued' => true,
         ]);
 

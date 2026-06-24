@@ -3,6 +3,7 @@
 namespace App\Tests\Service\Send\MessageHandler;
 
 use App\Entity\Send;
+use App\Entity\Type\SendRecipientStatus;
 use App\Repository\SendRepository;
 use App\Service\Send\Message\RouteNullIpsMessage;
 use App\Service\Send\MessageHandler\RouteNullIpsMessageHandler;
@@ -10,6 +11,7 @@ use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\SendFactory;
+use App\Tests\Factory\SendRecipientFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(RouteNullIpsMessageHandler::class)]
@@ -26,7 +28,12 @@ class RouteNullIpsMessageHandlerTest extends KernelTestCase
         $send = SendFactory::createOne([
             'queue' => $queue,
             'ip_address' => $ip1,
-        ]);
+		]);
+
+		SendRecipientFactory::createOne([
+			'send' => $send,
+			'status' => SendRecipientStatus::QUEUED,
+		]);
 
         // Simulate IP removal (delete IP and nullify sends)
         $this->em->remove($ip1->_real());

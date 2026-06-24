@@ -63,28 +63,11 @@ class IpAddressController extends AbstractController
         }
 
         if ($input->hasProperty('warmup_schedule')) {
-            $schedule = $input->warmup_schedule;
-            if ($schedule !== null) {
-                if (count($schedule) !== 30) {
-                    throw new BadRequestHttpException('Warmup schedule must have exactly 30 values.');
-                }
-                for ($i = 1; $i < 30; $i++) {
-                    if ($schedule[$i] < $schedule[$i - 1]) {
-                        throw new BadRequestHttpException('Warmup schedule values must not decrease.');
-                    }
-                }
-            }
-            $updates->warmup_schedule = $schedule;
+            $updates->warmup_schedule = $input->warmup_schedule;
         }
 
         if ($input->hasProperty('warmup_status')) {
-            if ($input->warmup_status === null) {
-                throw new BadRequestHttpException("Warmup status cannot be null.");
-            }
-            $updates->warmup_status = WarmupStatus::tryFrom($input->warmup_status);
-            if ($updates->warmup_status === null) {
-                throw new BadRequestHttpException("Invalid warmup status '{$input->warmup_status}'.");
-            }
+            $updates->warmup_status = $input->warmup_status;
         }
 
         $ipAddress = $this->ipAddressService->updateIpAddress($ipAddress, $updates);
