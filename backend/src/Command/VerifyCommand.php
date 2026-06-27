@@ -57,7 +57,7 @@ class VerifyCommand extends Command
     private function dbConnection(): string
     {
         try {
-            $this->em->getConnection()->connect();
+            $this->em->getConnection()->executeQuery('SELECT 1');
             return 'OK';
             // @codeCoverageIgnoreStart
         } catch (\Exception $e) {
