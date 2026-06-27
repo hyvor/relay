@@ -35,7 +35,9 @@ jobs:
 
       - name: Run PHPStan
         run: |
-          docker run backend-dev sh -c "./vendor/bin/phpstan analyse --memory-limit=1G --ansi"
+          docker run backend-dev sh -c "
+            php bin/console cache:warmup &&
+            ./vendor/bin/phpstan analyse --memory-limit=1G --ansi"
 
   php-tests:
     name: "PHP Tests"
