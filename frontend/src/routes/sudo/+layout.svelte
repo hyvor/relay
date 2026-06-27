@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { Base, Loader, NavLink, toast } from '@hyvor/design/components';
+	import { Base, Loader, NavLink, NavLinkGroup, toast } from '@hyvor/design/components';
 	import { CloudContext, HyvorBar } from '@hyvor/design/cloud';
 	import IconHdd from '@hyvor/icons/IconHdd';
 	import IconSegmentedNav from '@hyvor/icons/IconSegmentedNav';
@@ -84,86 +84,71 @@
 						<div class="hds-box nav-inner">
 							<InstanceDomain />
 
-							<div class="nav-title">Infrastructure</div>
+							<NavLinkGroup activeBackground="var(--accent-light)">
+								<div class="nav-title">Infrastructure</div>
 
-							<NavLink href="/sudo/health" active={page.url.pathname === '/sudo/health'}>
-								{#snippet start()}
-									<IconActivity />
-								{/snippet}
-								Health
-							</NavLink>
+								<NavLink
+									href="/sudo/health"
+									active={page.url.pathname === '/sudo/health'}
+								>
+									{#snippet start()}
+										<IconActivity />
+									{/snippet}
+									Health
+								</NavLink>
 
-							<NavLink
-								href="/sudo/servers"
-								active={page.url.pathname === '/sudo/servers'}
-							>
-								{#snippet start()}
-									<IconHdd />
-								{/snippet}
-								Servers
-							</NavLink>
-							<NavLink href="/sudo/queues" active={page.url.pathname === '/sudo/queues'}>
-								{#snippet start()}
-									<IconSegmentedNav />
-								{/snippet}
-								Queues
-							</NavLink>
-							<NavLink
-								href="/sudo/settings"
-								active={page.url.pathname.startsWith('/sudo/settings')}
-							>
-								{#snippet start()}
-									<IconGear />
-								{/snippet}
-								Settings
-							</NavLink>
+								<NavLink
+									href="/sudo/servers"
+									active={page.url.pathname === '/sudo/servers'}
+								>
+									{#snippet start()}
+										<IconHdd />
+									{/snippet}
+									Servers
+								</NavLink>
+								<NavLink
+									href="/sudo/queues"
+									active={page.url.pathname === '/sudo/queues'}
+								>
+									{#snippet start()}
+										<IconSegmentedNav />
+									{/snippet}
+									Queues
+								</NavLink>
+								<NavLink
+									href="/sudo/settings"
+									active={page.url.pathname.startsWith('/sudo/settings')}
+								>
+									{#snippet start()}
+										<IconGear />
+									{/snippet}
+									Settings
+								</NavLink>
 
-							<div class="section-div"></div>
+								<div class="section-div"></div>
 
-							<NavLink
-								href="/sudo/debug"
-								active={page.url.pathname.startsWith('/sudo/debug')}
-							>
-								{#snippet start()}
-									<IconBug />
-								{/snippet}
-								Debug
-							</NavLink>
+								<NavLink
+									href="/sudo/debug"
+									active={page.url.pathname.startsWith('/sudo/debug')}
+								>
+									{#snippet start()}
+										<IconBug />
+									{/snippet}
+									Debug
+								</NavLink>
 
-							<div class="section-div"></div>
+								<div class="section-div"></div>
 
-							<NavLink href="/console">
-								{#snippet start()}
-									<IconHouse />
-								{/snippet}
-								{#snippet end()}
-									<IconArrowRightShort />
-								{/snippet}
-								Console
-							</NavLink>
-
-							<!-- <div class="nav-title">Users</div>
-
-						<NavLink href="/sudo/projects" active={page.url.pathname === '/sudo/projects'}>
-							{#snippet start()}
-								<IconCardList />
-							{/snippet}
-							Projects
-						</NavLink>
-
-						<NavLink href="/sudo/domains" active={page.url.pathname === '/sudo/domains'}>
-							{#snippet start()}
-								<IconDatabase />
-							{/snippet}
-							Domains
-						</NavLink>
-
-						<NavLink href="/sudo/emails" active={page.url.pathname === '/sudo/emails'}>
-							{#snippet start()}
-								<IconEnvelope />
-							{/snippet}
-							Emails
-						</NavLink> -->
+								<NavLink href="/console">
+									{#snippet start()}
+										<IconHouse />
+									{/snippet}
+									{#snippet end()}
+										<IconArrowRightShort />
+									{/snippet}
+									Console
+								</NavLink>
+							</NavLinkGroup>
 						</div>
 
 						<div class="version">
