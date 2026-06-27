@@ -1,10 +1,5 @@
 parameters:
     level: max
     paths:
-        - bin/
-        - config/
-        - public/
         - src/
         - tests/
-    scanDirectories:
-        - var/cache/dev/Symfony/Config/
