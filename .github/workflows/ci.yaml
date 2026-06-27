@@ -8,7 +8,6 @@ on:
       - main
 
 jobs:
-
   frontend-check:
     name: "Frontend Check"
     runs-on: ubuntu-latest
@@ -36,9 +35,7 @@ jobs:
 
       - name: Run PHPStan
         run: |
-          docker run backend-dev sh -c "
-            php bin/console cache:warmup &&
-            ./vendor/bin/phpstan analyse --memory-limit=1G --ansi"
+          docker run backend-dev sh -c "./vendor/bin/phpstan analyse --memory-limit=1G --ansi"
 
   php-tests:
     name: "PHP Tests"
@@ -60,7 +57,7 @@ jobs:
         run: |
           docker run \
           --network ci \
-          -e DATABASE_URL=postgresql://postgres:postgres@hyvor-service-pgsql:5432/hyvor_relay_testing \
+          -e DATABASE_URL=postgresql://postgres:postgres@hyvor-service-pgsql:5432/hyvor_relay_testing?serverVersion=16 \
           backend-dev sh -c "php bin/console doctrine:migrations:migrate --no-interaction"
 
       - name: Run PHP Tests
@@ -99,7 +96,7 @@ jobs:
         run: |
           docker run \
           --network ci \
-          -e DATABASE_URL=postgresql://postgres:postgres@hyvor-service-pgsql:5432/hyvor_relay_testing \
+          -e DATABASE_URL=postgresql://postgres:postgres@hyvor-service-pgsql:5432/hyvor_relay_testing?serverVersion=16 \
           backend-dev sh -c "php bin/console doctrine:migrations:migrate --no-interaction"
 
       - name: Build Docker image (Worker)
@@ -132,7 +129,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23.4'
+          go-version: "1.23.4"
 
       - name: Install staticcheck
         run: go install honnef.co/go/tools/cmd/staticcheck@2025.1.1
