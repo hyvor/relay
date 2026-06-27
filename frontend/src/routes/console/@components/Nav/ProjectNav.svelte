@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { NavLink } from '@hyvor/design/components';
+	import { NavLink, NavLinkGroup } from '@hyvor/design/components';
 	import IconChevronExpand from '@hyvor/icons/IconChevronExpand';
 	import IconSend from '@hyvor/icons/IconSend';
 	import IconGear from '@hyvor/icons/IconGear';
@@ -43,7 +43,7 @@
 		</div>
 	{/if}
 
-	<div class="nav-links">
+	<NavLinkGroup activeBackground="var(--accent-light)">
 		<NavLink
 			href={'/console/' + project.id.toString()}
 			active={page.url.pathname === `/console/${project.id}`}
@@ -120,7 +120,7 @@
 				<span slot="text">Settings</span>
 			</NavItem>
 		</NavLink>
-	</div>
+	</NavLinkGroup>
 </div>
 
 <style lang="scss">
@@ -172,10 +172,6 @@
 		margin-bottom: 10px;
 		font-size: 12px;
 		color: var(--text-light);
-	}
-
-	.nav-links :global(a.active) {
-		background-color: var(--accent-light) !important;
 	}
 
 	@media (max-width: 992px) {

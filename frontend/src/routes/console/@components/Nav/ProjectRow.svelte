@@ -3,7 +3,6 @@
 	import { Tag } from '@hyvor/design/components';
 	import type { Project, ProjectUser } from '../../types';
 	import { selectingProject } from '../../lib/stores/consoleStore';
-	import { loadProject } from '../../lib/projectLoader';
 	import ProjectSendTypeTag from './ProjectSendTypeTag.svelte';
 	import { setCurrentProjectUser } from '../../lib/stores/projectStore.svelte';
 
@@ -17,7 +16,6 @@
 	function onClick() {
 		setCurrentProjectUser(projectUser);
 		goto(`/console/${project.id}`);
-		loadProject(String(project.id));
 		selectingProject.set(false);
 	}
 </script>
