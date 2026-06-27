@@ -55,7 +55,6 @@ RUN go build -o ./worker .
 FROM frankenphp AS backend-base
 ARG APP_VERSION=0.0.0
 ENV APP_VERSION=${APP_VERSION}
-ENV APP_RUNTIME="Runtime\FrankenPhpSymfony\Runtime"
 WORKDIR /app/backend
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 RUN install-php-extensions zip intl pdo_pgsql opcache apcu \
@@ -87,6 +86,7 @@ RUN useradd -m -s /bin/sh chef \
     && apt-get install -y --no-install-recommends libcap2-bin \
     && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp \
     && chown -R chef:chef /app \
+    && mkdir -p /data/caddy && chown -R chef:chef /data/caddy \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 USER chef
