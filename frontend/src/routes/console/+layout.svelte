@@ -1,14 +1,19 @@
 <script lang="ts">
-	import { Loader, toast } from '@hyvor/design/components';
+	import { ConsoleLoader, toast } from '@hyvor/design/components';
 	import { onMount } from 'svelte';
 	import type { AppConfig, ProjectUser } from './types';
 	import consoleApi from './lib/consoleApi.svelte';
 	import { authOrganizationStore, getAppConfig, setAppConfig } from './lib/stores/consoleStore';
 	import { setCurrentProjectUser, setProjectUsers } from './lib/stores/projectStore.svelte';
 	import { page } from '$app/state';
-	import { CloudContext, type CloudContextOrganization, type CloudContextUser, HyvorBar } from '@hyvor/design/cloud';
+	import {
+		CloudContext,
+		type CloudContextOrganization,
+		type CloudContextUser,
+		HyvorBar
+	} from '@hyvor/design/cloud';
 	import { goto } from '$app/navigation';
-	import {get} from "svelte/store";
+	import { get } from 'svelte/store';
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -30,11 +35,11 @@
 		consoleApi
 			.get<InitResponse>({
 				userApi: true,
-				endpoint: 'init',
+				endpoint: 'init'
 			})
 			.then((res) => {
 				setAppConfig(res.config);
-	 			setProjectUsers(res.project_users);
+				setProjectUsers(res.project_users);
 				authOrganizationStore.set(res.organization);
 
 				function getProjectId(): number | undefined {
@@ -79,15 +84,14 @@
 
 <main>
 	{#if isLoading}
-		<div class="full-loader">
-			<Loader size="large"></Loader>
-		</div>
+		<ConsoleLoader logo="/img/logo.svg" size={80} />
 	{:else}
 		<CloudContext
 			context={{
-				component: "relay",
+				component: 'relay',
 				deployment: getAppConfig().deployment,
-				instance: getAppConfig().deployment === 'cloud' ? getAppConfig().hyvor.instance : '',
+				instance:
+					getAppConfig().deployment === 'cloud' ? getAppConfig().hyvor.instance : '',
 				license: {
 					type: 'none',
 					subscription: null,

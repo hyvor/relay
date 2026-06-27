@@ -61,7 +61,7 @@
 
 	.full-loader {
 		width: 100%;
-		height: 100%;
+		height: calc(100vh - var(--hyvor-bar-height));
 		display: flex;
 		justify-content: center;
 		align-items: center;

@@ -1,6 +1,13 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { Base, Loader, NavLink, NavLinkGroup, toast } from '@hyvor/design/components';
+	import {
+		Base,
+		ConsoleLoader,
+		Loader,
+		NavLink,
+		NavLinkGroup,
+		toast
+	} from '@hyvor/design/components';
 	import { CloudContext, HyvorBar } from '@hyvor/design/cloud';
 	import IconHdd from '@hyvor/icons/IconHdd';
 	import IconSegmentedNav from '@hyvor/icons/IconSegmentedNav';
@@ -13,8 +20,6 @@
 	import { instanceStore, sudoConfigStore } from './sudoStore';
 	import IconGear from '@hyvor/icons/IconGear';
 	import IconBug from '@hyvor/icons/IconBug';
-	import IconHouse from '@hyvor/icons/IconHouse';
-	import IconArrowRightShort from '@hyvor/icons/IconArrowRightShort';
 
 	dayjs.extend(relativeTime);
 
@@ -49,15 +54,13 @@
 </script>
 
 <svelte:head>
-	<title>Sudo | Hyvor Relay</title>
+	<title>sudo | Hyvor Relay</title>
 	<meta name="robots" content="nofollow, noindex" />
 </svelte:head>
 
 <Base>
 	{#if loading}
-		<div style="height: 100vh;">
-			<Loader size="large" full />
-		</div>
+		<ConsoleLoader logo="/img/logo.svg" size={80} />
 	{:else}
 		<CloudContext
 			context={{
