@@ -81,78 +81,69 @@
 			<main>
 				<div id="wrap">
 					<nav>
-						<div class="hds-box nav-inner">
-							<InstanceDomain />
+						<div class="nav-outer">
+							<div class="hds-box nav-inner">
+								<InstanceDomain />
 
-							<NavLinkGroup activeBackground="var(--accent-light)">
-								<div class="nav-title">Infrastructure</div>
+								<NavLinkGroup activeBackground="var(--accent-light)">
+									<div class="nav-title">Infrastructure</div>
 
-								<NavLink
-									href="/sudo/health"
-									active={page.url.pathname === '/sudo/health'}
-								>
-									{#snippet start()}
-										<IconActivity />
-									{/snippet}
-									Health
-								</NavLink>
+									<NavLink
+										href="/sudo/health"
+										active={page.url.pathname === '/sudo/health'}
+									>
+										{#snippet start()}
+											<IconActivity />
+										{/snippet}
+										Health
+									</NavLink>
 
-								<NavLink
-									href="/sudo/servers"
-									active={page.url.pathname === '/sudo/servers'}
-								>
-									{#snippet start()}
-										<IconHdd />
-									{/snippet}
-									Servers
-								</NavLink>
-								<NavLink
-									href="/sudo/queues"
-									active={page.url.pathname === '/sudo/queues'}
-								>
-									{#snippet start()}
-										<IconSegmentedNav />
-									{/snippet}
-									Queues
-								</NavLink>
-								<NavLink
-									href="/sudo/settings"
-									active={page.url.pathname.startsWith('/sudo/settings')}
-								>
-									{#snippet start()}
-										<IconGear />
-									{/snippet}
-									Settings
-								</NavLink>
+									<NavLink
+										href="/sudo/servers"
+										active={page.url.pathname === '/sudo/servers'}
+									>
+										{#snippet start()}
+											<IconHdd />
+										{/snippet}
+										Servers
+									</NavLink>
+									<NavLink
+										href="/sudo/queues"
+										active={page.url.pathname === '/sudo/queues'}
+									>
+										{#snippet start()}
+											<IconSegmentedNav />
+										{/snippet}
+										Queues
+									</NavLink>
+									<NavLink
+										href="/sudo/settings"
+										active={page.url.pathname.startsWith('/sudo/settings')}
+									>
+										{#snippet start()}
+											<IconGear />
+										{/snippet}
+										Settings
+									</NavLink>
 
-								<div class="section-div"></div>
+									<div class="section-div"></div>
 
-								<NavLink
-									href="/sudo/debug"
-									active={page.url.pathname.startsWith('/sudo/debug')}
-								>
-									{#snippet start()}
-										<IconBug />
-									{/snippet}
-									Debug
-								</NavLink>
-
-								<div class="section-div"></div>
-
-								<NavLink href="/console">
-									{#snippet start()}
-										<IconHouse />
-									{/snippet}
-									{#snippet end()}
-										<IconArrowRightShort />
-									{/snippet}
-									Console
-								</NavLink>
-							</NavLinkGroup>
+									<NavLink
+										href="/sudo/debug"
+										active={page.url.pathname.startsWith('/sudo/debug')}
+									>
+										{#snippet start()}
+											<IconBug />
+										{/snippet}
+										Debug
+									</NavLink>
+								</NavLinkGroup>
+							</div>
 						</div>
 
-						<div class="version">
-							v{$sudoConfigStore.app_version}
+						<div class="footer">
+							v{$sudoConfigStore.app_version} &nbsp;&middot;&nbsp;
+							<a href="/console" class="console-link">console</a>
 						</div>
 					</nav>
 
@@ -177,13 +168,18 @@
 	main {
 		display: flex;
 		flex-direction: column;
-		height: 100vh;
+		height: calc(100vh - var(--hyvor-bar-height));
 	}
 	nav {
 		width: 280px;
 		padding: 15px;
 		padding-right: 0;
 		height: 100%;
+		flex-direction: column;
+		display: flex;
+	}
+	.nav-outer {
+		flex: 1;
 	}
 	.nav-inner {
 		padding: 15px 0;
@@ -201,7 +197,7 @@
 		padding: 15px;
 	}
 
-	.version {
+	.footer {
 		padding: 15px;
 		font-size: 12px;
 		color: var(--text-light);
@@ -211,5 +207,9 @@
 	.section-div {
 		height: 25px;
 		flex-shrink: 0;
+	}
+
+	.console-link:hover {
+		text-decoration: underline;
 	}
 </style>

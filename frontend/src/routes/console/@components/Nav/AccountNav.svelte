@@ -3,10 +3,9 @@
 	import IconShieldLock from '@hyvor/icons/IconShieldLock';
 	import IconArrowRightShort from '@hyvor/icons/IconArrowRightShort';
 	import { getAppConfig } from '../../lib/stores/consoleStore';
-
-	let isSudo = $derived(getAppConfig().user.is_sudo);
 </script>
 
+<!-- 
 {#if isSudo}
 	<div class="wrap hds-box">
 		<div class="nav-links">
@@ -21,7 +20,7 @@
 			</NavLink>
 		</div>
 	</div>
-{/if}
+{/if} -->
 
 <style lang="scss">
 	.wrap {

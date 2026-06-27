@@ -45,7 +45,7 @@
 		display: flex;
 		flex: 1;
 		width: 100%;
-		height: 100%;
+		height: calc(100vh - var(--hyvor-bar-height));
 		min-height: 0;
 	}
 
