@@ -1,0 +1,46 @@
+services:
+  hyvor-relay-build:
+    container_name: hyvor-relay-build
+    build:
+      context: ../../
+      target: final
+    env_file:
+      - .env.build
+    labels:
+      traefik.enable: true
+      traefik.http.routers.hyvor-relay-build.rule: Host(`relay.build.hyvor.localhost`)
+      traefik.http.routers.hyvor-relay-build.entrypoints: https
+      traefik.http.routers.hyvor-relay-build.tls: true
+      traefik.http.services.hyvor-relay-build.loadbalancer.server.port: 80
+    ports:
+      - "12025:25" # SMTP (test with: swaks --to user@example.com --server localhost:12025)
+      - "12587:587" # SMTP Submission
+      - "12053:53/udp" # DNS
+    # user: root
+    #command: sh /app/run
+    networks:
+      hyvor-network:
+        aliases:
+          - relay.build.hyvor.internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    container_name: hyvor-relay-build-postgres
+    image: postgres:16.6
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: hyvor_relay
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hyvor-network
+
+networks:
+  hyvor-network:
+    external: true
