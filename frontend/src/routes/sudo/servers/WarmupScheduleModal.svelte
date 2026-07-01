@@ -26,8 +26,8 @@
 	let loading = $state(false);
 
 	function initSchedule() {
-		if (ip?.warmup_schedule && ip.warmup_schedule.length === 30) {
-			schedule = [...ip.warmup_schedule];
+		if (ip?.currentWarmupSchedule?.warmup_schedule?.length === 30) {
+			schedule = [...ip.currentWarmupSchedule.warmup_schedule];
 		} else {
 			schedule = Array(30).fill(0);
 		}

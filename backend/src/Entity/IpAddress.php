@@ -2,8 +2,9 @@
 
 namespace App\Entity;
 
-use App\Entity\Type\WarmupStatus;
 use App\Repository\IpAddressRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: IpAddressRepository::class)]
@@ -39,26 +40,15 @@ class IpAddress
     #[ORM\Column(type: 'boolean')]
     private bool $is_ptr_reverse_valid = true;
 
-    #[ORM\Column(type: 'string', enumType: WarmupStatus::class)]
-    private WarmupStatus $warmup_status = WarmupStatus::WARMING;
-
-    #[ORM\Column(type: 'date_immutable', nullable: true)]
-    private ?\DateTimeImmutable $warmup_started_date = null;
-
-    #[ORM\Column(type: 'integer', options: ['default' => 0])]
-    private int $warmup_sent_today = 0;
-
-    #[ORM\Column(type: 'integer', options: ['default' => 0])]
-    private int $warmup_max_today = 0;
-
     /**
-     * @var array<int>|null
+     * @var Collection<int, WarmupSchedule>
      */
-    #[ORM\Column(type: 'json', nullable: true)]
-    private ?array $warmup_schedule = null;
+    #[ORM\OneToMany(targetEntity: WarmupSchedule::class, mappedBy: 'ip_address', cascade: ['persist'])]
+    private Collection $warmupSchedules;
 
     public function __construct()
     {
+        $this->warmupSchedules = new ArrayCollection();
     }
 
     public function getCreatedAt(): \DateTimeImmutable
@@ -149,72 +139,15 @@ class IpAddress
         return $this;
     }
 
-    public function getWarmupStatus(): WarmupStatus
+    /** @return Collection<int, WarmupSchedule> */
+    public function getWarmupSchedules(): Collection
     {
-        return $this->warmup_status;
+        return $this->warmupSchedules;
     }
 
-    public function setWarmupStatus(WarmupStatus $warmupStatus): static
+    public function getCurrentWarmupSchedule(): ?WarmupSchedule
     {
-        $this->warmup_status = $warmupStatus;
-        return $this;
+        $latest = $this->warmupSchedules->last();
+        return $latest !== false ? $latest : null;
     }
-
-    public function getWarmupStartedDate(): ?\DateTimeImmutable
-    {
-        return $this->warmup_started_date;
-    }
-
-    public function setWarmupStartedDate(?\DateTimeImmutable $warmupStartedDate): static
-    {
-        $this->warmup_started_date = $warmupStartedDate;
-        return $this;
-    }
-
-    public function getWarmupSentToday(): int
-    {
-        return $this->warmup_sent_today;
-    }
-
-    public function setWarmupSentToday(int $warmupSentToday): static
-    {
-        $this->warmup_sent_today = $warmupSentToday;
-        return $this;
-    }
-
-    public function getWarmupMaxToday(): int
-    {
-        return $this->warmup_max_today;
-    }
-
-    public function setWarmupMaxToday(int $warmupMaxToday): static
-    {
-        $this->warmup_max_today = $warmupMaxToday;
-        return $this;
-    }
-
-    /**
-     * @return array<int>|null
-     */
-    public function getWarmupSchedule(): ?array
-    {
-        return $this->warmup_schedule;
-    }
-
-    /**
-     * @param array<int>|null $warmupSchedule
-     */
-    public function setWarmupSchedule(?array $warmupSchedule): static
-    {
-        $this->warmup_schedule = $warmupSchedule;
-        return $this;
-    }
-
-    public function isWarmingUp(): bool
-    {
-        return $this->warmup_status === WarmupStatus::WARMING
-            && $this->warmup_started_date !== null
-            && $this->warmup_schedule !== null;
-    }
-
 }

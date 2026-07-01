@@ -2,15 +2,15 @@
 
 namespace App\Tests\Service\Ip;
 
-use App\Entity\IpAddress;
 use App\Entity\Type\WarmupStatus;
-use App\Service\Ip\IpAddressService;
+use App\Service\Ip\IpSelector;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\QueueFactory;
+use App\Tests\Factory\WarmupScheduleFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(IpAddressService::class)]
+#[CoversClass(IpSelector::class)]
 class IpAddressServiceTest extends KernelTestCase
 {
 
@@ -20,6 +20,10 @@ class IpAddressServiceTest extends KernelTestCase
 
         $warmingIp = IpAddressFactory::createOne([
             'queue' => $queue,
+        ]);
+
+        WarmupScheduleFactory::createOne([
+            'ipAddress' => $warmingIp,
             'warmup_status' => WarmupStatus::WARMING,
             'warmup_started_date' => new \DateTimeImmutable('2026-06-01'),
             'warmup_schedule' => array_fill(0, 30, 1000),
@@ -28,14 +32,13 @@ class IpAddressServiceTest extends KernelTestCase
 
         $warmedIp = IpAddressFactory::createOne([
             'queue' => $queue,
-            'warmup_status' => WarmupStatus::WARMED,
-		]);
+        ]);
 
-		/** @var IpAddressService $service */
-        $service = $this->container->get(IpAddressService::class);
+        /** @var IpSelector $selector */
+        $selector = $this->container->get(IpSelector::class);
 
         for ($i = 0; $i < 20; $i++) {
-            $ip = $service->getIpForQueue($queue->_real());
+            $ip = $selector->selectForQueue($queue->_real());
             $this->assertNotNull($ip);
             $this->assertSame($warmedIp->getId(), $ip->getId());
         }
@@ -47,6 +50,10 @@ class IpAddressServiceTest extends KernelTestCase
 
         $warmingIp = IpAddressFactory::createOne([
             'queue' => $queue,
+        ]);
+
+        WarmupScheduleFactory::createOne([
+            'ipAddress' => $warmingIp,
             'warmup_status' => WarmupStatus::WARMING,
             'warmup_started_date' => new \DateTimeImmutable('2026-06-01'),
             'warmup_schedule' => array_fill(0, 30, 1000),
@@ -54,9 +61,9 @@ class IpAddressServiceTest extends KernelTestCase
             'warmup_sent_today' => 500,
         ]);
 
-		/** @var IpAddressService $service */
-        $service = $this->container->get(IpAddressService::class);
-        $ip = $service->getIpForQueue($queue->_real());
+        /** @var IpSelector $selector */
+        $selector = $this->container->get(IpSelector::class);
+        $ip = $selector->selectForQueue($queue->_real());
 
         $this->assertNotNull($ip);
         $this->assertSame($warmingIp->getId(), $ip->getId());
@@ -66,8 +73,12 @@ class IpAddressServiceTest extends KernelTestCase
     {
         $queue = QueueFactory::createOne();
 
-        IpAddressFactory::createOne([
+        $ip = IpAddressFactory::createOne([
             'queue' => $queue,
+        ]);
+
+        WarmupScheduleFactory::createOne([
+            'ipAddress' => $ip,
             'warmup_status' => WarmupStatus::WARMING,
             'warmup_started_date' => new \DateTimeImmutable('2026-06-01'),
             'warmup_schedule' => array_fill(0, 30, 1000),
@@ -75,20 +86,20 @@ class IpAddressServiceTest extends KernelTestCase
             'warmup_sent_today' => 1000,
         ]);
 
-		/** @var IpAddressService $service */
-        $service = $this->container->get(IpAddressService::class);
-        $ip = $service->getIpForQueue($queue->_real());
+        /** @var IpSelector $selector */
+        $selector = $this->container->get(IpSelector::class);
+        $result = $selector->selectForQueue($queue->_real());
 
-        $this->assertNull($ip);
+        $this->assertNull($result);
     }
 
     public function test_get_ip_returns_null_when_no_ips(): void
     {
-		$queue = QueueFactory::createOne();
+        $queue = QueueFactory::createOne();
 
-		/** @var IpAddressService $service */
-        $service = $this->container->get(IpAddressService::class);
-        $ip = $service->getIpForQueue($queue->_real());
+        /** @var IpSelector $selector */
+        $selector = $this->container->get(IpSelector::class);
+        $ip = $selector->selectForQueue($queue->_real());
 
         $this->assertNull($ip);
     }
@@ -99,6 +110,10 @@ class IpAddressServiceTest extends KernelTestCase
 
         $fullIp = IpAddressFactory::createOne([
             'queue' => $queue,
+        ]);
+
+        WarmupScheduleFactory::createOne([
+            'ipAddress' => $fullIp,
             'warmup_status' => WarmupStatus::WARMING,
             'warmup_started_date' => new \DateTimeImmutable('2026-06-01'),
             'warmup_schedule' => array_fill(0, 30, 1000),
@@ -108,6 +123,10 @@ class IpAddressServiceTest extends KernelTestCase
 
         $availableIp = IpAddressFactory::createOne([
             'queue' => $queue,
+        ]);
+
+        WarmupScheduleFactory::createOne([
+            'ipAddress' => $availableIp,
             'warmup_status' => WarmupStatus::WARMING,
             'warmup_started_date' => new \DateTimeImmutable('2026-06-01'),
             'warmup_schedule' => array_fill(0, 30, 1000),
@@ -115,12 +134,10 @@ class IpAddressServiceTest extends KernelTestCase
             'warmup_sent_today' => 500,
         ]);
 
-		/** @var IpAddressService $service */
-        $service = $this->container->get(IpAddressService::class);
+        /** @var IpSelector $selector */
+        $selector = $this->container->get(IpSelector::class);
 
-        // With recipientCount=10, full IP has 1000+10=1010 > 1000, so skipped
-        // available IP has 500+10=510 <= 1000, so selected
-        $ip = $service->getIpForQueue($queue->_real(), 10);
+        $ip = $selector->selectForQueue($queue->_real(), 10);
 
         $this->assertNotNull($ip);
         $this->assertSame($availableIp->getId(), $ip->getId());
@@ -130,20 +147,23 @@ class IpAddressServiceTest extends KernelTestCase
     {
         $queue = QueueFactory::createOne();
 
-        // Status is WARMING but no schedule, so isWarmingUp() returns false
-        IpAddressFactory::createOne([
+        $ip = IpAddressFactory::createOne([
             'queue' => $queue,
+        ]);
+
+        WarmupScheduleFactory::createOne([
+            'ipAddress' => $ip,
             'warmup_status' => WarmupStatus::WARMING,
             'warmup_started_date' => null,
             'warmup_schedule' => null,
         ]);
 
-		/** @var IpAddressService $service */
-        $service = $this->container->get(IpAddressService::class);
-        $ip = $service->getIpForQueue($queue->_real());
+        /** @var IpSelector $selector */
+        $selector = $this->container->get(IpSelector::class);
+        $result = $selector->selectForQueue($queue->_real());
 
-        $this->assertNotNull($ip);
-        $this->assertFalse($ip->isWarmingUp());
+        $this->assertNotNull($result);
+        $this->assertSame($ip->getId(), $result->getId());
     }
 
 }

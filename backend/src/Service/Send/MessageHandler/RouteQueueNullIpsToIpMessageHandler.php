@@ -35,6 +35,8 @@ class RouteQueueNullIpsToIpMessageHandler
             return;
         }
 
+        $warmup = $ipAddress->getCurrentWarmupSchedule();
+
         $sends = $this->em->getRepository(Send::class)->findBy([
             'queue' => $queue,
             'ip_address' => null,
@@ -50,14 +52,14 @@ class RouteQueueNullIpsToIpMessageHandler
                 continue;
             }
 
-            if (!$ipAddress->isWarmingUp()) {
+            if ($warmup === null || !$warmup->isWarmingUp()) {
                 $send->setIpAddress($ipAddress);
                 continue;
             }
 
             $conn = $this->em->getConnection();
             $rows = $conn->executeStatement(
-                'UPDATE ip_addresses SET warmup_sent_today = warmup_sent_today + :count WHERE id = :id AND warmup_status = :status AND warmup_sent_today + :count <= warmup_max_today',
+                'UPDATE warmup_schedules SET warmup_sent_today = warmup_sent_today + :count WHERE ip_address_id = :id AND warmup_status = :status AND warmup_sent_today + :count <= warmup_max_today',
                 [
                     'count' => $recipientCount,
                     'id' => $ipAddress->getId(),

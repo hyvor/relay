@@ -6,6 +6,7 @@ use App\Entity\IpAddress;
 use App\Entity\Queue;
 use App\Entity\Server;
 use App\Entity\Type\WarmupStatus;
+use App\Entity\WarmupSchedule;
 use App\Service\Ip\Dto\PtrValidationDto;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
 use App\Service\Ip\Event\IpAddressUpdatedEvent;
@@ -27,8 +28,7 @@ class IpAddressService
         private EventDispatcherInterface $ed,
         private Ptr $ptr,
         private QueueService $queueService,
-    ) {
-    }
+    ) {}
 
     /**
      * @return IpAddress[]
@@ -60,48 +60,6 @@ class IpAddressService
             ['server' => $server],
             ['id' => 'ASC']
         );
-    }
-
-    public function getIpForQueue(Queue $queue, int $recipientCount = 1): ?IpAddress
-    {
-        /** @var IpAddress[] $ips */
-        $ips = $this->em->getRepository(IpAddress::class)->findBy([
-            'queue' => $queue,
-        ]);
-
-        if (empty($ips)) {
-            return null;
-        }
-
-        shuffle($ips);
-
-        foreach ($ips as $ip) {
-            if (!$ip->isWarmingUp()) {
-                return $ip;
-            }
-        }
-
-        $conn = $this->em->getConnection();
-        $warmupStatus = WarmupStatus::WARMING->value;
-
-        foreach ($ips as $ip) {
-            if ($ip->isWarmingUp()) {
-                $rows = $conn->executeStatement(
-                    'UPDATE ip_addresses SET warmup_sent_today = warmup_sent_today + :count WHERE id = :id AND warmup_status = :status AND warmup_sent_today + :count <= warmup_max_today',
-                    [
-                        'count' => $recipientCount,
-                        'id' => $ip->getId(),
-                        'status' => $warmupStatus,
-                    ]
-                );
-
-                if ($rows > 0) {
-                    return $ip;
-                }
-            }
-        }
-
-        return null;
     }
 
     /**
@@ -165,44 +123,45 @@ class IpAddressService
             $ipAddress->setQueue($updates->queue);
         }
 
+        $warmup = $ipAddress->getCurrentWarmupSchedule();
+
+        if ($warmup == null || ($updates->warmupStatusSet && $updates->warmup_status === WarmupStatus::WARMING)) {
+            $warmup = new WarmupSchedule($ipAddress);
+            $warmup->setCreatedAt($this->now());
+            $this->em->persist($warmup);
+            $ipAddress->getWarmupSchedules()->add($warmup);
+        }
+
         if ($updates->warmupScheduleSet) {
-            $ipAddress->setWarmupSchedule($updates->warmup_schedule);
+            $warmup->setWarmupSchedule($updates->warmup_schedule);
         }
 
         if ($updates->warmupStatusSet) {
-            if ($updates->warmup_status === null) {
-                throw new \InvalidArgumentException('warmup_status cannot be null when warmupStatusSet is true');
+            $status = $updates->warmup_status;
+            if ($status === null) {
+                throw new \InvalidArgumentException("warmup_status cannot be null when warmupStatusSet is true");
             }
-            $ipAddress->setWarmupStatus($updates->warmup_status);
-        }
+            $warmup->setWarmupStatus($status);
 
-        if (
-            $ipAddress->getWarmupStatus() === \App\Entity\Type\WarmupStatus::WARMING
-            && $ipAddress->getWarmupSchedule() !== null
-        ) {
-            $ipAddress->setWarmupStartedDate($this->now()->setTime(0, 0));
-            $ipAddress->setWarmupSentToday(0);
-            $schedule = $ipAddress->getWarmupSchedule();
-            if (count($schedule) > 0) {
-                $ipAddress->setWarmupMaxToday($schedule[0]);
+            if ($status === WarmupStatus::WARMING && $warmup->getWarmupSchedule() !== null) {
+                $warmup->setWarmupStartedDate($this->now()->setTime(0, 0));
+                $warmup->setWarmupSentToday(0);
+
+                $schedule = $warmup->getWarmupSchedule();
+                if (count($schedule) > 0) {
+                    $warmup->setWarmupMaxToday($schedule[0]);
+                }
+            } elseif ($status === WarmupStatus::WARMED) {
+                $warmup->setWarmupSentToday(0);
+                $warmup->setWarmupMaxToday(0);
             }
-        }
-
-        if (
-            $updates->warmupStatusSet
-            && $ipAddress->getWarmupStatus() === \App\Entity\Type\WarmupStatus::WARMED
-        ) {
-            $ipAddress->setWarmupSentToday(0);
-            $ipAddress->setWarmupMaxToday(0);
         }
 
         $ipAddress->setUpdatedAt($this->now());
-
         $this->em->persist($ipAddress);
         $this->em->flush();
 
-        $event = new IpAddressUpdatedEvent($ipAddressOld, $ipAddress, $updates);
-        $this->ed->dispatch($event);
+        $this->ed->dispatch(new IpAddressUpdatedEvent($ipAddressOld, $ipAddress, $updates));
 
         return $ipAddress;
     }
@@ -222,5 +181,4 @@ class IpAddressService
 
         return $validity;
     }
-
 }

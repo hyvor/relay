@@ -4,6 +4,7 @@
 	import IconExclamationCircle from '@hyvor/icons/IconExclamationCircle';
 	import QueueSelectModal from '../queues/QueueSelectModal.svelte';
 	import WarmupScheduleModal from './WarmupScheduleModal.svelte';
+	import WarmupScheduleHistoryModal from './WarmupScheduleHistoryModal.svelte';
 	import IpPtrStatus from './IpPtrStatus.svelte';
 	import { updateIpAddress } from '../sudoActions';
 	import { ipAddressesStore } from '../sudoStore';
@@ -17,6 +18,7 @@
 
 	let showQueueModal = $state(false);
 	let showWarmupModal = $state(false);
+	let showHistoryModal = $state(false);
 
 	function handleQueueButtonClick() {
 		showQueueModal = true;
@@ -28,6 +30,10 @@
 
 	function handleWarmupModalClose() {
 		showWarmupModal = false;
+	}
+
+	function handleHistoryModalClose() {
+		showHistoryModal = false;
 	}
 
 	function handleIpUpdate(updatedIp: IpAddress) {
@@ -92,32 +98,54 @@
 		</div>
 	</td>
 	<td class="warmup">
-		{#if ip.is_warming_up}
+		{#if ip.currentWarmupSchedule?.is_warming_up}
 			<div class="warmup-info">
 				<Tag color="orange" size="small">Warming</Tag>
 				<span class="warmup-progress">
-					{ip.warmup_sent_today.toLocaleString()} / {ip.warmup_max_today.toLocaleString()}
+					{ip.currentWarmupSchedule.warmup_sent_today.toLocaleString()} / {ip.currentWarmupSchedule.warmup_max_today.toLocaleString()}
 				</span>
 			</div>
-			<Button
-				size="x-small"
-				color="red"
-				variant="outline"
-				on:click={handleCancelWarmup}
-			>
-				Cancel
-			</Button>
+			<div class="warmup-actions">
+				<Button
+					size="x-small"
+					color="red"
+					variant="outline"
+					on:click={handleCancelWarmup}
+				>
+					Cancel
+				</Button>
+				<Button
+					size="x-small"
+					color="input"
+					variant="outline"
+					on:click={() => (showHistoryModal = true)}
+				>
+					History
+				</Button>
+			</div>
 		{:else}
-			<Tag color="green" size="small">Warmed</Tag>
-			<Button
-				size="x-small"
-				color="input"
-				variant="outline"
-				on:click={() => (showWarmupModal = true)}
-				style="margin-left: 5px;"
-			>
-				Create Schedule
-			</Button>
+			<div class="warmup-info">
+				<Tag color="green" size="small">Warmed</Tag>
+				<Button
+					size="x-small"
+					color="input"
+					variant="outline"
+					on:click={() => (showWarmupModal = true)}
+					style="margin-left: 5px;"
+				>
+					Create Schedule
+				</Button>
+			</div>
+			<div class="warmup-actions">
+				<Button
+					size="x-small"
+					color="input"
+					variant="outline"
+					on:click={() => (showHistoryModal = true)}
+				>
+					History
+				</Button>
+			</div>
 		{/if}
 	</td>
 </tr>
@@ -137,6 +165,14 @@
 		{ip}
 		onClose={handleWarmupModalClose}
 		onUpdate={handleIpUpdate}
+	/>
+{/if}
+
+{#if showHistoryModal}
+	<WarmupScheduleHistoryModal
+		bind:show={showHistoryModal}
+		{ip}
+		onClose={handleHistoryModalClose}
 	/>
 {/if}
 
@@ -170,6 +206,11 @@
 		align-items: center;
 		gap: 8px;
 		margin-bottom: 5px;
+	}
+
+	.warmup-actions {
+		display: flex;
+		gap: 4px;
 	}
 
 	.warmup-progress {

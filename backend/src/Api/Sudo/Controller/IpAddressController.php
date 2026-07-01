@@ -4,7 +4,7 @@ namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Input\UpdateIpAddressInput;
 use App\Api\Sudo\Object\IpAddressObject;
-use App\Entity\Type\WarmupStatus;
+use App\Api\Sudo\Object\WarmupScheduleObject;
 use App\Service\App\Config;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
 use App\Service\Ip\IpAddressService;
@@ -73,5 +73,22 @@ class IpAddressController extends AbstractController
         $ipAddress = $this->ipAddressService->updateIpAddress($ipAddress, $updates);
 
         return $this->json(new IpAddressObject($ipAddress, $this->appConfig->getInstanceDomain()));
+    }
+
+    #[Route('/ip-addresses/{id}/warmup-schedules', methods: 'GET')]
+    public function getWarmupSchedules(int $id): JsonResponse
+    {
+        $ipAddress = $this->ipAddressService->getIpAddressById($id);
+
+        if (!$ipAddress) {
+            throw new BadRequestHttpException("IP address with ID '$id' does not exist.");
+        }
+
+        $scheduleObjects = array_map(
+            fn($schedule) => new WarmupScheduleObject($schedule),
+            $ipAddress->getWarmupSchedules()->toArray()
+        );
+
+        return $this->json($scheduleObjects);
     }
 }
