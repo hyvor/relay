@@ -10,6 +10,7 @@ use App\Entity\SendRecipient;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
 use App\Repository\SendRepository;
+use App\Service\Ip\IpSelector;
 use App\Service\Send\Dto\SendingAttachment;
 use App\Service\Send\Exception\EmailTooLargeException;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -28,6 +29,7 @@ class SendService
         private EmailBuilder $emailBuilder,
         private SendRepository $sendRepository,
         private RecipientFactory $recipientFactory,
+        private IpSelector $ipSelector,
     ) {
     }
 
@@ -172,6 +174,12 @@ class SendService
         );
         $send->setQueued($shouldQueue);
 
+        $recipientCount = $send->getRecipients()->filter(
+            fn(SendRecipient $r) => $r->getStatus() === SendRecipientStatus::QUEUED
+        )->count();
+
+        $send->setIpAddress($this->ipSelector->selectForQueue($queue, $recipientCount));
+
         $this->em->flush();
 
         foreach ($events as $event) {
@@ -230,7 +238,7 @@ class SendService
         SELECT
             -- Sends in last 24h
             COUNT(DISTINCT s.id) AS sends_24h_count,
-            
+
             -- Recipients by status in last 24h
             COUNT(r.id) AS recipients_24h_count,
             COUNT(CASE WHEN r.status = 'accepted'   THEN 1 END) AS recipients_24h_accepted_count,

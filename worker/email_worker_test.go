@@ -243,6 +243,7 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 		ctx:    context.Background(),
 		logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 		ip: GoStateIp{
+			Id:      send.IpAddressId,
 			QueueId: send.QueueId,
 		},
 		AttemptSendToDomainFunc: func(
@@ -370,6 +371,7 @@ func TestEmailWorker_ProcessSend_Requeuing(t *testing.T) {
 		ctx:    context.Background(),
 		logger: slogDiscard(),
 		ip: GoStateIp{
+			Id:      send.IpAddressId,
 			QueueId: send.QueueId,
 		},
 		AttemptSendToDomainFunc: func(

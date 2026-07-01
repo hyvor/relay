@@ -72,6 +72,7 @@
 								<IconBoxArrowUpRight size={12} />
 							</a>
 						</th>
+						<th>Warmup</th>
 					</tr>
 				</thead>
 				<tbody>

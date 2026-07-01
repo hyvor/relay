@@ -2,7 +2,6 @@
 
 namespace App\Api\Sudo\Object;
 
-use App\Entity\Instance;
 use App\Entity\IpAddress;
 use App\Service\Ip\Ptr;
 
@@ -17,6 +16,7 @@ class IpAddressObject
     public ?QueueObject $queue = null;
     public bool $is_ptr_forward_valid = false;
     public bool $is_ptr_reverse_valid = false;
+    public ?WarmupScheduleObject $currentWarmupSchedule = null;
 
     public function __construct(IpAddress $ipAddress, string $instanceDomain)
     {
@@ -29,6 +29,9 @@ class IpAddressObject
         $this->queue = $queue ? new QueueObject($queue) : null;
         $this->is_ptr_forward_valid = $ipAddress->getIsPtrForwardValid();
         $this->is_ptr_reverse_valid = $ipAddress->getIsPtrReverseValid();
+
+        $warmup = $ipAddress->getCurrentWarmupSchedule();
+        $this->currentWarmupSchedule = $warmup ? new WarmupScheduleObject($warmup) : null;
     }
 
 }

@@ -11,7 +11,8 @@ import type {
 	DnsRecordType,
 	DebugIncomingEmail,
 	InfrastructureBounce,
-	TlsCertificate
+	TlsCertificate,
+	WarmupSchedule
 } from './sudoTypes';
 
 export function initSudo() {
@@ -51,7 +52,11 @@ export function getQueues() {
 	});
 }
 
-export function updateIpAddress(ipId: number, data: { queue_id?: number | null }) {
+export function updateIpAddress(ipId: number, data: {
+	queue_id?: number | null;
+	warmup_status?: 'warming' | 'warmed';
+	warmup_schedule?: number[] | null;
+}) {
 	return sudoApi.patch<IpAddress>({
 		endpoint: `/ip-addresses/${ipId}`,
 		data
@@ -169,5 +174,11 @@ export function getTlsMailCerts() {
 export function generateMailCert() {
 	return sudoApi.post<TlsCertificate>({
 		endpoint: '/tls/mail-certs/generate'
+	});
+}
+
+export function getWarmupSchedules(ipId: number) {
+	return sudoApi.get<WarmupSchedule[]>({
+		endpoint: `/ip-addresses/${ipId}/warmup-schedules`
 	});
 }

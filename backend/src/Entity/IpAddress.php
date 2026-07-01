@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\IpAddressRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: IpAddressRepository::class)]
@@ -38,8 +40,15 @@ class IpAddress
     #[ORM\Column(type: 'boolean')]
     private bool $is_ptr_reverse_valid = true;
 
+    /**
+     * @var Collection<int, WarmupSchedule>
+     */
+    #[ORM\OneToMany(targetEntity: WarmupSchedule::class, mappedBy: 'ip_address', cascade: ['persist'])]
+    private Collection $warmupSchedules;
+
     public function __construct()
     {
+        $this->warmupSchedules = new ArrayCollection();
     }
 
     public function getCreatedAt(): \DateTimeImmutable
@@ -130,4 +139,15 @@ class IpAddress
         return $this;
     }
 
+    /** @return Collection<int, WarmupSchedule> */
+    public function getWarmupSchedules(): Collection
+    {
+        return $this->warmupSchedules;
+    }
+
+    public function getCurrentWarmupSchedule(): ?WarmupSchedule
+    {
+        $latest = $this->warmupSchedules->last();
+        return $latest !== false ? $latest : null;
+    }
 }

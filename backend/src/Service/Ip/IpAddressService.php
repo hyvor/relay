@@ -3,12 +3,17 @@
 namespace App\Service\Ip;
 
 use App\Entity\IpAddress;
+use App\Entity\Queue;
 use App\Entity\Server;
+use App\Entity\Type\WarmupStatus;
+use App\Entity\WarmupSchedule;
 use App\Service\Ip\Dto\PtrValidationDto;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
 use App\Service\Ip\Event\IpAddressUpdatedEvent;
+use App\Service\Ip\Event\IpRemovedEvent;
 use App\Service\Queue\QueueService;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Query\ResultSetMappingBuilder;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -23,8 +28,7 @@ class IpAddressService
         private EventDispatcherInterface $ed,
         private Ptr $ptr,
         private QueueService $queueService,
-    ) {
-    }
+    ) {}
 
     /**
      * @return IpAddress[]
@@ -105,6 +109,8 @@ class IpAddressService
     {
         $this->em->remove($ipAddress);
         $this->em->flush();
+
+        $this->ed->dispatch(new IpRemovedEvent($ipAddress));
     }
 
     public function updateIpAddress(
@@ -117,13 +123,45 @@ class IpAddressService
             $ipAddress->setQueue($updates->queue);
         }
 
-        $ipAddress->setUpdatedAt($this->now());
+        $warmup = $ipAddress->getCurrentWarmupSchedule();
 
+        if ($warmup == null || ($updates->warmupStatusSet && $updates->warmup_status === WarmupStatus::WARMING)) {
+            $warmup = new WarmupSchedule($ipAddress);
+            $warmup->setCreatedAt($this->now());
+            $this->em->persist($warmup);
+            $ipAddress->getWarmupSchedules()->add($warmup);
+        }
+
+        if ($updates->warmupScheduleSet) {
+            $warmup->setWarmupSchedule($updates->warmup_schedule);
+        }
+
+        if ($updates->warmupStatusSet) {
+            $status = $updates->warmup_status;
+            if ($status === null) {
+                throw new \InvalidArgumentException("warmup_status cannot be null when warmupStatusSet is true");
+            }
+            $warmup->setWarmupStatus($status);
+
+            if ($status === WarmupStatus::WARMING && $warmup->getWarmupSchedule() !== null) {
+                $warmup->setWarmupStartedDate($this->now()->setTime(0, 0));
+                $warmup->setWarmupSentToday(0);
+
+                $schedule = $warmup->getWarmupSchedule();
+                if (count($schedule) > 0) {
+                    $warmup->setWarmupMaxToday($schedule[0]);
+                }
+            } elseif ($status === WarmupStatus::WARMED) {
+                $warmup->setWarmupSentToday(0);
+                $warmup->setWarmupMaxToday(0);
+            }
+        }
+
+        $ipAddress->setUpdatedAt($this->now());
         $this->em->persist($ipAddress);
         $this->em->flush();
 
-        $event = new IpAddressUpdatedEvent($ipAddressOld, $ipAddress, $updates);
-        $this->ed->dispatch($event);
+        $this->ed->dispatch(new IpAddressUpdatedEvent($ipAddressOld, $ipAddress, $updates));
 
         return $ipAddress;
     }
@@ -143,5 +181,4 @@ class IpAddressService
 
         return $validity;
     }
-
 }
