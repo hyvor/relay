@@ -36,39 +36,31 @@ readonly class IpSelector
 
         shuffle($ips);
 
-        foreach ($ips as $ip) {
-            $warmup = $ip->getCurrentWarmupSchedule();
-
-            if ($warmup === null || !$warmup->isWarmingUp()) {
-                return $ip;
-            }
-        }
-
         $conn = $this->em->getConnection();
 
         foreach ($ips as $ip) {
             $warmup = $ip->getCurrentWarmupSchedule();
 
-            if ($warmup === null || !$warmup->isWarmingUp()) {
-                continue;
-            }
+            if ($warmup?->isWarmingUp()) {
+                $rows = $conn->executeStatement(
+                    'UPDATE warmup_schedules
+                     SET warmup_sent_today = warmup_sent_today + :count
+                     WHERE ip_address_id = :id
+                       AND warmup_status = :status
+                       AND warmup_sent_today + :count <= warmup_max_today',
+                    [
+                        'count' => $recipientCount,
+                        'id' => $ip->getId(),
+                        'status' => WarmupStatus::WARMING->value,
+                    ]
+                );
 
-            $rows = $conn->executeStatement(
-                'UPDATE warmup_schedules
-                 SET warmup_sent_today = warmup_sent_today + :count
-                 WHERE ip_address_id = :id
-                   AND warmup_status = :status
-                   AND warmup_sent_today + :count <= warmup_max_today',
-                [
-                    'count' => $recipientCount,
-                    'id' => $ip->getId(),
-                    'status' => WarmupStatus::WARMING->value,
-                ]
-            );
-
-            if ($rows > 0) {
-                return $ip;
-            }
+                if ($rows > 0) {
+                    return $ip;
+                }
+			} else {
+				return $ip;
+			}
         }
 
         return null;

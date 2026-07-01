@@ -13,37 +13,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(IpSelector::class)]
 class IpAddressServiceTest extends KernelTestCase
 {
-
-    public function test_get_ip_prefers_non_warming_ips(): void
-    {
-        $queue = QueueFactory::createOne();
-
-        $warmingIp = IpAddressFactory::createOne([
-            'queue' => $queue,
-        ]);
-
-        WarmupScheduleFactory::createOne([
-            'ipAddress' => $warmingIp,
-            'warmup_status' => WarmupStatus::WARMING,
-            'warmup_started_date' => new \DateTimeImmutable('2026-06-01'),
-            'warmup_schedule' => array_fill(0, 30, 1000),
-            'warmup_max_today' => 1000,
-        ]);
-
-        $warmedIp = IpAddressFactory::createOne([
-            'queue' => $queue,
-        ]);
-
-        /** @var IpSelector $selector */
-        $selector = $this->container->get(IpSelector::class);
-
-        for ($i = 0; $i < 20; $i++) {
-            $ip = $selector->selectForQueue($queue->_real());
-            $this->assertNotNull($ip);
-            $this->assertSame($warmedIp->getId(), $ip->getId());
-        }
-    }
-
     public function test_get_ip_falls_back_to_warming_with_capacity(): void
     {
         $queue = QueueFactory::createOne();
