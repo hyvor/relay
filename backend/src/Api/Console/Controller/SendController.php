@@ -9,6 +9,7 @@ use App\Api\Console\Input\RetrySendInput;
 use App\Api\Console\Input\SendEmail\SendEmailInput;
 use App\Api\Console\Input\SendEmail\UnableToDecodeAttachmentBase64Exception;
 use App\Api\Console\Object\SendObject;
+use App\Api\Console\Object\SendContentObject;
 use App\Entity\Project;
 use App\Entity\Send;
 use App\Entity\Type\ProjectSendType;
@@ -16,6 +17,7 @@ use App\Entity\Type\SendRecipientStatus;
 use App\Service\Domain\DomainService;
 use App\Service\Send\EmailAddressFormat;
 use App\Service\Send\Exception\EmailTooLargeException;
+use App\Service\Send\SendContentStorage;
 use App\Service\Send\SendLimits;
 use App\Service\Send\SendService;
 use App\Service\Queue\QueueService;
@@ -38,6 +40,7 @@ class SendController extends AbstractController
 
     public function __construct(
         private SendService $sendService,
+        private SendContentStorage $sendContentStorage,
         private SendAttemptService $sendAttemptService,
         private SendFeedbackService $sendFeedbackService,
         private DomainService $domainService,
@@ -191,7 +194,6 @@ class SendController extends AbstractController
                 $send,
                 attempts: $attempts,
                 feedback: $feedback,
-                content: true
             )
         );
     }
@@ -215,7 +217,6 @@ class SendController extends AbstractController
                     $send,
                     attempts: $attempts,
                     feedback: $feedback,
-                    content: true
                 ),
             ]);
         }
@@ -250,7 +251,6 @@ class SendController extends AbstractController
                 $send,
                 attempts: $attempts,
                 feedback: $feedback,
-                content: true
             ),
         ]);
     }
@@ -279,8 +279,32 @@ class SendController extends AbstractController
                 $send,
                 attempts: $attempts,
                 feedback: $feedback,
-                content: true
             )
         );
+    }
+
+    #[Route("/sends/uuid/{uuid}/content", requirements: ['uuid' => Requirement::UUID], methods: "GET")]
+    #[ScopeRequired(Scope::SENDS_READ)]
+    public function getContentByUuid(Project $project, string $uuid): JsonResponse
+    {
+        $send = $this->sendService->getSendByUuid($uuid);
+
+        if ($send === null) {
+            throw new NotFoundHttpException("Send with UUID $uuid not found");
+        }
+
+        if ($send->getProject()->getId() !== $project->getId()) {
+            throw new BadRequestException(
+                "Send with UUID $uuid does not belong to project"
+            );
+        }
+
+        $content = $this->sendContentStorage->get($uuid);
+
+        if ($content === null) {
+            throw new NotFoundHttpException("Content for send with UUID $uuid not found");
+        }
+
+        return $this->json(new SendContentObject($content));
     }
 }

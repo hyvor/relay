@@ -10,6 +10,7 @@ use App\Entity\SendRecipient;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
 use App\Repository\SendRepository;
+use App\Service\Send\Dto\SendContent;
 use App\Service\Send\Dto\SendingAttachment;
 use App\Service\Send\Exception\EmailTooLargeException;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -28,6 +29,7 @@ class SendService
         private EmailBuilder $emailBuilder,
         private SendRepository $sendRepository,
         private RecipientFactory $recipientFactory,
+        private SendContentStorage $sendContentStorage,
     ) {
     }
 
@@ -159,12 +161,18 @@ class SendService
         $send->setFromAddress($from->getAddress());
         $send->setFromName($from->getName());
         $send->setSubject($subject);
-        $send->setBodyHtml($bodyHtml);
-        $send->setBodyText($bodyText);
-        $send->setHeaders($customHeaders);
         $send->setMessageId($messageId);
-        $send->setRaw($rawEmail);
         $send->setSizeBytes(strlen($rawEmail));
+
+        $this->sendContentStorage->store(
+            $uuid,
+            new SendContent(
+                raw: $rawEmail,
+                bodyHtml: $bodyHtml,
+                bodyText: $bodyText,
+                headers: $customHeaders,
+            )
+        );
 
         $this->em->persist($send);
 
