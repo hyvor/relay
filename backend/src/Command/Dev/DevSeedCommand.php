@@ -9,6 +9,8 @@ use App\Entity\Type\SendFeedbackType;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
 use App\Service\Instance\InstanceService;
+use App\Service\Send\Dto\SendContent;
+use App\Service\Send\SendContentStorage;
 use App\Tests\Factory\ApiKeyFactory;
 use App\Tests\Factory\DebugIncomingEmailFactory;
 use App\Tests\Factory\DnsRecordFactory;
@@ -45,7 +47,8 @@ class DevSeedCommand extends Command
 
     public function __construct(
         private KernelInterface $kernel,
-        private InstanceService $instanceService
+        private InstanceService $instanceService,
+        private SendContentStorage $sendContentStorage,
     ) {
         parent::__construct();
     }
@@ -152,6 +155,28 @@ class DevSeedCommand extends Command
 
         $allSends = array_merge($sendsQueued, $sendsSent);
         foreach ($allSends as $send) {
+            $bodyHtml = '<p>This is a test email.</p>';
+            $bodyText = 'This is a test email.';
+            $headers = ['X-Test' => 'true'];
+            $raw = implode("\r\n", [
+                'From: ' . $send->getFromAddress(),
+                'Subject: ' . ($send->getSubject() ?? 'Test Email'),
+                'Message-ID: <' . $send->getMessageId() . '>',
+                'Content-Type: text/html; charset=utf-8',
+                '',
+                $bodyHtml,
+            ]);
+
+            $this->sendContentStorage->store(
+                $send->getUuid(),
+                new SendContent(
+                    raw: $raw,
+                    bodyHtml: $bodyHtml,
+                    bodyText: $bodyText,
+                    headers: $headers,
+                )
+            );
+
             $types = SendRecipientType::cases();
             $typeKey = array_rand($types);
             $type = $types[$typeKey];
