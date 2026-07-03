@@ -101,9 +101,11 @@ type EmailWorker struct {
 	metrics        *Metrics
 	ip             GoStateIp
 	instanceDomain string
+	contentStore   *SendContentStore
 
 	// mocks
 	ProcessSendFunc         func(conn *sql.DB) error
+	FetchContentFunc        func(uuid string) (string, error)
 	AttemptSendToDomainFunc func(
 		domainWg *sync.WaitGroup,
 		domainQueryMutex *sync.Mutex,
@@ -127,6 +129,14 @@ func newEmailWorker(
 	ip GoStateIp,
 	instanceDomain string,
 ) *EmailWorker {
+	contentStore, err := NewSendContentStore()
+	if err != nil {
+		logger.Error(
+			"Failed to initialize send content store",
+			"error", err,
+		)
+	}
+
 	worker := &EmailWorker{
 		ctx:            ctx,
 		id:             id,
@@ -136,8 +146,10 @@ func newEmailWorker(
 		metrics:        metrics,
 		ip:             ip,
 		instanceDomain: instanceDomain,
+		contentStore:   contentStore,
 	}
 
+	worker.FetchContentFunc = worker.fetchContent
 	worker.ProcessSendFunc = worker.processSend
 	worker.AttemptSendToDomainFunc = worker.attemptSendToDomain
 
@@ -176,6 +188,15 @@ type AttemptData struct {
 	result        *SendResult
 	SendAttemptId int
 	Error         error
+}
+
+// Downloads the raw MIME message for a send from object storage.
+func (worker *EmailWorker) fetchContent(uuid string) (string, error) {
+	if worker.contentStore == nil {
+		return "", errors.New("send content store is not initialized")
+	}
+
+	return worker.contentStore.GetRaw(worker.ctx, uuid)
 }
 
 // This tries to handle one send within a transaction.
@@ -218,6 +239,20 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 	}
 
 	recipientsByDomain := getRecipientsGroupedByDomain(recipients)
+
+	rawEmail, err := worker.FetchContentFunc(send.Uuid)
+	if err != nil {
+		worker.logger.Error(
+			"Email worker failed to fetch send content from storage",
+			"error", err,
+			"send_uuid", send.Uuid,
+		)
+		time.Sleep(1 * time.Second)
+		sendTx.Rollback()
+		return err
+	}
+
+	send.RawEmail = rawEmail
 
 	var sendAttemptIds []int
 	attemptCh := make(chan AttemptData, len(recipients))

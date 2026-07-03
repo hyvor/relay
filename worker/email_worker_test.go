@@ -245,6 +245,9 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 		ip: GoStateIp{
 			QueueId: send.QueueId,
 		},
+		FetchContentFunc: func(uuid string) (string, error) {
+			return "raw-email-content", nil
+		},
 		AttemptSendToDomainFunc: func(
 			domainWg *sync.WaitGroup,
 			domainQueryMutex *sync.Mutex,
@@ -371,6 +374,9 @@ func TestEmailWorker_ProcessSend_Requeuing(t *testing.T) {
 		logger: slogDiscard(),
 		ip: GoStateIp{
 			QueueId: send.QueueId,
+		},
+		FetchContentFunc: func(uuid string) (string, error) {
+			return "raw-email-content", nil
 		},
 		AttemptSendToDomainFunc: func(
 			domainWg *sync.WaitGroup,
