@@ -9,13 +9,20 @@ use App\Service\App\Lock\LockDoctrineStoreFactory;
 use App\Service\Dns\Resolve\DnsOverHttp;
 use App\Service\Dns\Resolve\DnsResolveInterface;
 use App\Service\SelfHosted\RelayTelemetryProvider;
+use App\Service\Storage\FilesystemFactory;
+use AsyncAws\S3\S3Client;
 use Hyvor\Internal\Bundle\EventDispatcher\TestEventDispatcher;
+use League\Flysystem\Filesystem;
 use Prometheus\Storage\Adapter;
 use Prometheus\Storage\APCng;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
+    $containerConfigurator->parameters()
+        ->set('app.filesystem_default', 's3')
+    ;
     $services = $containerConfigurator->services();
 
     // ================ DEFAULTS =================
@@ -59,6 +66,27 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // metrics
     $services->set(APCng::class);
     $services->alias(Adapter::class, APCng::class);
+
+    // ================ STORAGE =================
+    $services->set(S3Client::class)
+        ->lazy()
+        ->args([
+            '$configuration' => [
+                'endpoint' => '%env(default::string:S3_ENDPOINT)%',
+                'accessKeyId' => '%env(default::string:S3_ACCESS_KEY_ID)%',
+                'accessKeySecret' => '%env(default::string:S3_SECRET_ACCESS_KEY)%',
+                'region' => '%env(default::string:S3_REGION)%',
+                'pathStyleEndpoint' => true,
+            ],
+        ]);
+
+    $services->set(Filesystem::class)
+        ->factory([FilesystemFactory::class, 'create'])
+        ->args([
+            '%env(default:app.filesystem_default:string:FILESYSTEM)%',
+            new Reference(S3Client::class),
+            '%env(default::string:S3_BUCKET)%',
+        ]);
 
     // RelayTelemetryProvider is intentionally not bound to TelemetryProviderInterface,
     // but kept as a public service so its test can fetch it. The class is preserved

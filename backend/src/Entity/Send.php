@@ -55,23 +55,8 @@ class Send
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $subject = null;
 
-    #[ORM\Column(type: "text", nullable: true)]
-    private ?string $body_html = null;
-
-    #[ORM\Column(type: "text", nullable: true)]
-    private ?string $body_text = null;
-
-    /**
-     * @var array<string, string>
-     */
-    #[ORM\Column(type: "json")]
-    private array $headers = [];
-
     #[ORM\Column(type: "text")]
     private string $message_id;
-
-    #[ORM\Column(type: "text")]
-    private string $raw;
 
     #[ORM\Column()]
     private int $size_bytes;
@@ -231,45 +216,6 @@ class Send
         return $this;
     }
 
-    public function getBodyHtml(): ?string
-    {
-        return $this->body_html;
-    }
-
-    public function setBodyHtml(?string $body_html): static
-    {
-        $this->body_html = $body_html;
-        return $this;
-    }
-
-    public function getBodyText(): ?string
-    {
-        return $this->body_text;
-    }
-
-    public function setBodyText(?string $body_text): static
-    {
-        $this->body_text = $body_text;
-        return $this;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public function getHeaders(): array
-    {
-        return $this->headers;
-    }
-
-    /**
-     * @param array<string, string> $headers
-     */
-    public function setHeaders(array $headers): static
-    {
-        $this->headers = $headers;
-        return $this;
-    }
-
     public function getMessageId(): string
     {
         return $this->message_id;
@@ -278,17 +224,6 @@ class Send
     public function setMessageId(string $message_id): static
     {
         $this->message_id = $message_id;
-        return $this;
-    }
-
-    public function getRaw(): string
-    {
-        return $this->raw;
-    }
-
-    public function setRaw(string $raw): static
-    {
-        $this->raw = $raw;
         return $this;
     }
 
