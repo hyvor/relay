@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { NavLink } from '@hyvor/design/components';
+	import { NavLink, NavLinkGroup } from '@hyvor/design/components';
 	import IconHandThumbsDown from '@hyvor/icons/IconHandThumbsDown';
 	import IconSearch from '@hyvor/icons/IconSearch';
 	import IconExclamationTriangle from '@hyvor/icons/IconExclamationTriangle';
@@ -10,36 +10,39 @@
 	}
 
 	let { children }: Props = $props();
-
-	const prefix = `/sudo/debug`;
 </script>
 
 <div class="debug">
 	<div class="nav hds-box">
-		<NavLink href="/sudo/debug/bounces" active={page.url.pathname === '/sudo/debug/bounces'}>
-			{#snippet start()}
-				<IconHandThumbsDown />
-			{/snippet}
-			Bounce/FBL Logs
-		</NavLink>
-		<NavLink
-			href="/sudo/debug/bounces-parser"
-			active={page.url.pathname === '/sudo/debug/bounces-parser'}
-		>
-			{#snippet start()}
-				<IconSearch />
-			{/snippet}
-			Parse Bounce/FBL
-		</NavLink>
-		<NavLink
-			href="/sudo/debug/infrastructure-bounces"
-			active={page.url.pathname === '/sudo/debug/infrastructure-bounces'}
-		>
-			{#snippet start()}
-				<IconExclamationTriangle />
-			{/snippet}
-			Infrastructure Bounces
-		</NavLink>
+		<NavLinkGroup activeBackground="var(--accent-light)">
+			<NavLink
+				href="/sudo/debug/bounces"
+				active={page.url.pathname === '/sudo/debug/bounces'}
+			>
+				{#snippet start()}
+					<IconHandThumbsDown />
+				{/snippet}
+				Bounce/FBL Logs
+			</NavLink>
+			<NavLink
+				href="/sudo/debug/bounces-parser"
+				active={page.url.pathname === '/sudo/debug/bounces-parser'}
+			>
+				{#snippet start()}
+					<IconSearch />
+				{/snippet}
+				Parse Bounce/FBL
+			</NavLink>
+			<NavLink
+				href="/sudo/debug/infrastructure-bounces"
+				active={page.url.pathname === '/sudo/debug/infrastructure-bounces'}
+			>
+				{#snippet start()}
+					<IconExclamationTriangle />
+				{/snippet}
+				Infrastructure Bounces
+			</NavLink>
+		</NavLinkGroup>
 	</div>
 
 	<div class="content hds-box">
@@ -61,9 +64,6 @@
 		height: 100%;
 		padding: 25px 0;
 		overflow: auto;
-	}
-	.nav :global(a.active) {
-		background-color: var(--accent-light-mid);
 	}
 	.content {
 		flex: 1;

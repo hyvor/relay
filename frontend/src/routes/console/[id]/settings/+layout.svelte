@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { NavLink } from '@hyvor/design/components';
+	import { NavLink, NavLinkGroup } from '@hyvor/design/components';
 	import IconCardText from '@hyvor/icons/IconCardText';
 	import IconPeople from '@hyvor/icons/IconPeople';
 	import { getCurrentProject } from '../../lib/stores/projectStore.svelte';
@@ -17,21 +17,23 @@
 
 <div class="settings">
 	<div class="nav hds-box">
-		<NavLink href={prefix} active={page.url.pathname === prefix}>
-			{#snippet start()}
-				<IconCardText />
-			{/snippet}
-			Project
-		</NavLink>
+		<NavLinkGroup activeBackground="var(--accent-light)">
+			<NavLink href={prefix} active={page.url.pathname === prefix}>
+				{#snippet start()}
+					<IconCardText />
+				{/snippet}
+				Project
+			</NavLink>
 
-		<NavLink href={`${prefix}/users`} active={page.url.pathname === `${prefix}/users`}>
-			{#snippet start()}
-				<IconPeople />
-			{/snippet}
-			Users
-		</NavLink>
+			<NavLink href={`${prefix}/users`} active={page.url.pathname === `${prefix}/users`}>
+				{#snippet start()}
+					<IconPeople />
+				{/snippet}
+				Users
+			</NavLink>
 
-		<div class="section-div"></div>
+			<div class="section-div"></div>
+		</NavLinkGroup>
 	</div>
 
 	<div class="content hds-box">
@@ -53,9 +55,6 @@
 		height: 100%;
 		padding: 25px 0;
 		overflow: auto;
-	}
-	.nav :global(a.active) {
-		background-color: var(--accent-light);
 	}
 	.content {
 		flex: 1;

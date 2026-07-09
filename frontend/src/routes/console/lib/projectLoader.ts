@@ -1,7 +1,6 @@
 import type { Project } from '../types';
 import consoleApi from './consoleApi.svelte';
 
-
 interface ProjectResponse {
 	project: Project;
 }
@@ -22,9 +21,7 @@ export function loadProject(projectId: string) {
 				projectId: projectId
 			})
 			.then((res) => {
-				/* set(res.project);
-				setProjectEditingStore(res.project); */
-				
+				// currently there is nothing to set here, but we will probably have soon
 				resolve(res);
 			})
 			.catch((err) => {

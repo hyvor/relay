@@ -6,16 +6,19 @@ use App\Api\Console\Authorization\AuthorizationListener;
 use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Authorization\ScopeRequired;
 use App\Entity\ApiKey;
+use App\Service\ApiKey\AllowedIp;
 use App\Service\Project\ProjectService;
 use App\Service\ProjectUser\ProjectUserService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
+use App\Tests\Factory\ApiKeyFactory;
 use Hyvor\Internal\Auth\AuthFake;
 use Hyvor\Internal\Auth\AuthUser;
 use Hyvor\Internal\Auth\AuthUserOrganization;
 use Hyvor\Internal\Sudo\SudoUserFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\TestWith;
 use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Component\Clock\Clock;
 use Symfony\Component\Clock\MockClock;
@@ -24,6 +27,7 @@ use Symfony\Component\Clock\MockClock;
 #[CoversClass(ScopeRequired::class)]
 #[CoversClass(ProjectService::class)]
 #[CoversClass(ProjectUserService::class)]
+#[CoversClass(AllowedIp::class)]
 class AuthorizationTest extends WebTestCase
 {
 
@@ -89,15 +93,15 @@ class AuthorizationTest extends WebTestCase
 
     public function test_invalid_project_id(): void
     {
-		AuthFake::enableForSymfony(
-			$this->container,
-			['id' => 1],
-			new AuthUserOrganization(
-				id: 1,
-				name: 'Fake Organization',
-				role: 'member'
-			)
-		);
+        AuthFake::enableForSymfony(
+            $this->container,
+            ['id' => 1],
+            new AuthUserOrganization(
+                id: 1,
+                name: 'Fake Organization',
+                role: 'member'
+            )
+        );
 
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
         $this->client->request(
@@ -169,15 +173,15 @@ class AuthorizationTest extends WebTestCase
 
     public function test_fails_when_xprojectid_header_is_not_set(): void
     {
-		AuthFake::enableForSymfony(
-			$this->container,
-			['id' => 1],
-			new AuthUserOrganization(
-				id: 1,
-				name: 'Fake Organization',
-				role: 'member'
-			)
-		);
+        AuthFake::enableForSymfony(
+            $this->container,
+            ['id' => 1],
+            new AuthUserOrganization(
+                id: 1,
+                name: 'Fake Organization',
+                role: 'member'
+            )
+        );
 
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
         $this->client->request(
@@ -224,15 +228,15 @@ class AuthorizationTest extends WebTestCase
 
     public function test_user_not_authorized_for_project(): void
     {
-		AuthFake::enableForSymfony(
-			$this->container,
-			['id' => 1],
-			new AuthUserOrganization(
-				id: 1,
-				name: 'Fake Organization',
-				role: 'member'
-			)
-		);
+        AuthFake::enableForSymfony(
+            $this->container,
+            ['id' => 1],
+            new AuthUserOrganization(
+                id: 1,
+                name: 'Fake Organization',
+                role: 'member'
+            )
+        );
 
         $project = ProjectFactory::createOne();
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
@@ -253,15 +257,15 @@ class AuthorizationTest extends WebTestCase
 
     public function test_verifies_scopes_for_user(): void
     {
-		AuthFake::enableForSymfony(
-			$this->container,
-			['id' => 1],
-			new AuthUserOrganization(
-				id: 1,
-				name: 'Fake Organization',
-				role: 'member'
-			)
-		);
+        AuthFake::enableForSymfony(
+            $this->container,
+            ['id' => 1],
+            new AuthUserOrganization(
+                id: 1,
+                name: 'Fake Organization',
+                role: 'member'
+            )
+        );
 
         $project = ProjectFactory::createOne();
         ProjectUserFactory::createOne([
@@ -331,17 +335,91 @@ class AuthorizationTest extends WebTestCase
         );
     }
 
+    /**
+     * @param string[] $allowedIps
+     */
+    #[TestWith([['203.0.113.5', '198.51.100.0/24'], '198.51.100.42'])]
+    #[TestWith([['2001:db8::1', '2001:db8::/32'], '2001:db8::1234'])]
+    public function test_api_key_with_allowed_ips_accepts_matching_ip(
+        array $allowedIps,
+        string $clientIp
+    ): void {
+        $project = ProjectFactory::createOne();
+        $apiKey = bin2hex(random_bytes(16));
+        ApiKeyFactory::createOne([
+            'project' => $project,
+            'key_hashed' => hash('sha256', $apiKey),
+            'scopes' => [Scope::SENDS_READ->value],
+            'allowed_ips' => $allowedIps,
+        ]);
+
+        $this->client->request(
+            'GET',
+            '/api/console/sends',
+            server: [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $apiKey,
+                'HTTP_X_FORWARDED_FOR' => $clientIp,
+            ]
+        );
+        $this->assertResponseStatusCodeSame(200);
+    }
+
+    public function test_api_key_with_allowed_ips_rejects_non_matching_ip(): void
+    {
+        $project = ProjectFactory::createOne();
+        $apiKey = bin2hex(random_bytes(16));
+        ApiKeyFactory::createOne([
+            'project' => $project,
+            'key_hashed' => hash('sha256', $apiKey),
+            'scopes' => [Scope::SENDS_READ->value],
+            'allowed_ips' => ['203.0.113.5'],
+        ]);
+
+        $this->client->request(
+            'GET',
+            '/api/console/sends',
+            server: [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $apiKey,
+                'HTTP_X_FORWARDED_FOR' => '198.51.100.42',
+            ]
+        );
+        $this->assertResponseStatusCodeSame(403);
+        $this->assertSame('Client IP is not allowed for this API key.', $this->getJson()['message']);
+    }
+
+    public function test_api_key_without_allowed_ips_skips_check(): void
+    {
+        $project = ProjectFactory::createOne();
+        $apiKey = bin2hex(random_bytes(16));
+        ApiKeyFactory::createOne([
+            'project' => $project,
+            'key_hashed' => hash('sha256', $apiKey),
+            'scopes' => [Scope::SENDS_READ->value],
+            'allowed_ips' => [],
+        ]);
+
+        $this->client->request(
+            'GET',
+            '/api/console/sends',
+            server: [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $apiKey,
+                'HTTP_X_FORWARDED_FOR' => '198.51.100.42',
+            ]
+        );
+        $this->assertResponseStatusCodeSame(200);
+    }
+
     public function test_authorizes_via_session(): void
     {
-		AuthFake::enableForSymfony(
-			$this->container,
-			['id' => 1],
-			new AuthUserOrganization(
-				id: 1,
-				name: 'Fake Organization',
-				role: 'member'
-			)
-		);
+        AuthFake::enableForSymfony(
+            $this->container,
+            ['id' => 1],
+            new AuthUserOrganization(
+                id: 1,
+                name: 'Fake Organization',
+                role: 'member'
+            )
+        );
 
         $project = ProjectFactory::createOne();
         ProjectUserFactory::createOne([
@@ -405,7 +483,7 @@ class AuthorizationTest extends WebTestCase
 
     public function test_org_level_endpoint_works_without_org(): void
     {
-		AuthFake::enableForSymfony($this->container, ['id' => 1]);
+        AuthFake::enableForSymfony($this->container, ['id' => 1]);
 
         SudoUserFactory::createOne(['user_id' => 1]);
 

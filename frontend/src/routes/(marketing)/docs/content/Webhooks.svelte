@@ -12,6 +12,9 @@
 
 <ul>
 	<li>
+		<a href="#request-format">Request Format</a>
+	</li>
+	<li>
 		<a href="#events">Events & Payloads</a>
 	</li>
 	<li>
@@ -22,7 +25,45 @@
 	</li>
 </ul>
 
+<h2 id="request-format">Request Format</h2>
+
+<p>
+	When an event occurs, Hyvor Relay sends an HTTP <code>POST</code> request to your webhook URL with
+	the following headers:
+</p>
+
+<ul>
+	<li>
+		<strong>Content-Type</strong>: <code>application/json</code>
+	</li>
+	<li>
+		<strong>X-Signature</strong>: A hex-encoded HMAC-SHA256 signature of the raw request body, signed
+		with your webhook's secret. See <a href="#validating">Validating Webhooks</a> for how to verify
+		it.
+	</li>
+</ul>
+
+<p>The JSON body of the request has the following structure:</p>
+
+<CodeBlock
+	code={`
+{
+	"event": "send.recipient.bounced",
+	// payload depends on the event
+	// see Events & Payloads below
+	"payload": {}
+}
+`}
+	language="json"
+/>
+
 <h2 id="events">Events & Payloads</h2>
+
+<p>
+	Each event below shows the shape of the <code>payload</code> field of the
+	<a href="#request-format">request body</a>. The <code>event</code> field is set to the event name
+	(e.g. <code>send.recipient.accepted</code>).
+</p>
 
 <ul>
 	<li>

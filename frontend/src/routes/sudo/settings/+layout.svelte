@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { NavLink } from '@hyvor/design/components';
+	import { NavLink, NavLinkGroup } from '@hyvor/design/components';
 	import IconCardText from '@hyvor/icons/IconCardText';
 	import IconGlobe2 from '@hyvor/icons/IconGlobe';
 
@@ -15,21 +15,23 @@
 
 <div class="settings">
 	<div class="nav hds-box">
-		<NavLink href={prefix} active={page.url.pathname === prefix}>
-			{#snippet start()}
-				<IconCardText />
-			{/snippet}
-			Instance
-		</NavLink>
+		<NavLinkGroup activeBackground="var(--accent-light)">
+			<NavLink href={prefix} active={page.url.pathname === prefix}>
+				{#snippet start()}
+					<IconCardText />
+				{/snippet}
+				Instance
+			</NavLink>
 
-		<NavLink href="/sudo/settings/dns" active={page.url.pathname === '/sudo/settings/dns'}>
-			{#snippet start()}
-				<IconGlobe2 />
-			{/snippet}
-			DNS
-		</NavLink>
+			<NavLink href="/sudo/settings/dns" active={page.url.pathname === '/sudo/settings/dns'}>
+				{#snippet start()}
+					<IconGlobe2 />
+				{/snippet}
+				DNS
+			</NavLink>
 
-		<div class="section-div"></div>
+			<div class="section-div"></div>
+		</NavLinkGroup>
 	</div>
 
 	<div class="content hds-box">
@@ -51,9 +53,6 @@
 		height: 100%;
 		padding: 25px 0;
 		overflow: auto;
-	}
-	.nav :global(a.active) {
-		background-color: var(--accent-light) !important;
 	}
 	.content {
 		flex: 1;

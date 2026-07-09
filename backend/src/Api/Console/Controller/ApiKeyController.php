@@ -33,7 +33,12 @@ class ApiKeyController extends AbstractController
             throw new BadRequestHttpException("You have reached the maximum number of API keys for this project.");
         }
 
-        $creation = $this->apiKeyService->createApiKey($project, $input->name, $input->scopes);
+        $creation = $this->apiKeyService->createApiKey(
+            $project,
+            $input->name,
+            $input->scopes,
+            $input->allowed_ips,
+        );
 
         return $this->json(new ApiKeyObject($creation['apiKey'], $creation['rawKey']));
     }
@@ -56,11 +61,27 @@ class ApiKeyController extends AbstractController
         if ($input->hasProperty('is_enabled')) {
             $updates->enabled = $input->is_enabled;
         }
-        if ($input->hasProperty('scopes')) {
-            $updates->scopes = $input->scopes;
-        }
         if ($input->hasProperty('name')) {
             $updates->name = $input->name;
+        }
+
+        $recheckAllowedIps = false;
+        if ($input->hasProperty('scopes')) {
+            $updates->scopes = $input->scopes;
+            $recheckAllowedIps = true;
+        }
+        if ($input->hasProperty('allowed_ips')) {
+            $updates->allowedIps = $input->allowed_ips;
+            $recheckAllowedIps = true;
+        }
+
+        if ($recheckAllowedIps) {
+            $scopes = $input->scopes ?? $apiKey->getScopes();
+            $allowedIps = $input->allowed_ips ?? $apiKey->getAllowedIps();
+
+            if (in_array(Scope::SENDS_SEND->value, $scopes, true) && count($allowedIps) === 0) {
+                throw new BadRequestHttpException('At least one allowed IP is required when the "sends.send" scope is enabled.');
+            }
         }
 
         $updatedApiKey = $this->apiKeyService->updateApiKey($apiKey, $updates);

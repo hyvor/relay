@@ -13,6 +13,9 @@ class ApiKeyObject
     /** @var string[] $scopes */
     public array $scopes;
 
+    /** @var string[] $allowed_ips */
+    public array $allowed_ips;
+
     public ?string $key;
 
     public int $created_at;
@@ -26,6 +29,7 @@ class ApiKeyObject
         $this->id = $apiKey->getId();
         $this->name = $apiKey->getName();
         $this->scopes = $apiKey->getScopes();
+        $this->allowed_ips = $apiKey->getAllowedIps();
         $this->key = $rawKey;
         $this->created_at = $apiKey->getCreatedAt()->getTimestamp();
         $this->is_enabled = $apiKey->getIsEnabled();

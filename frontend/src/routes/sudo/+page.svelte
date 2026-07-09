@@ -3,6 +3,6 @@
 	import { onMount } from 'svelte';
 
 	onMount(() => {
-		goto('/sudo/servers');
+		goto('/sudo/servers', { replaceState: true });
 	});
 </script>

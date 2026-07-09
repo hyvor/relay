@@ -17,5 +17,10 @@ class UpdateApiKeyDto
      */
     public array $scopes;
 
+    /**
+     * @var string[] $allowedIps
+     */
+    public array $allowedIps;
+
     public \DateTimeImmutable $lastAccessedAt;
 }

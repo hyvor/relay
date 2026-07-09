@@ -35,9 +35,7 @@
 		<Nav />
 		<ProjectSelector />
 		<div class="content">
-			{#key page.params.id}
-				{@render children?.()}
-			{/key}
+			{@render children?.()}
 		</div>
 	{/if}
 </div>
@@ -47,7 +45,7 @@
 		display: flex;
 		flex: 1;
 		width: 100%;
-		height: 100%;
+		height: calc(100vh - var(--hyvor-bar-height));
 		min-height: 0;
 	}
 
@@ -63,7 +61,7 @@
 
 	.full-loader {
 		width: 100%;
-		height: 100%;
+		height: calc(100vh - var(--hyvor-bar-height));
 		display: flex;
 		justify-content: center;
 		align-items: center;
