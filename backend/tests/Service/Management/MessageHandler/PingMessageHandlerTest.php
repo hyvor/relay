@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Management\MessageHandler;
 
 use App\Service\Management\Message\PingMessage;
@@ -14,7 +16,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(ServerService::class)]
 class PingMessageHandlerTest extends KernelTestCase
 {
-
     public function test_updates_last_ping(): void
     {
         $server = ServerFactory::createOne(['hostname' => 'hyvor-relay', 'lastPingAt' => null]);

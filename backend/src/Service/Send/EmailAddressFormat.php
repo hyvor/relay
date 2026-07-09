@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Send;
 
 use Symfony\Component\DependencyInjection\Attribute\Exclude;
@@ -12,7 +14,6 @@ use Symfony\Component\Mime\Address;
 #[Exclude]
 class EmailAddressFormat
 {
-
     /**
      * @param string $email must be a valid email address
      */

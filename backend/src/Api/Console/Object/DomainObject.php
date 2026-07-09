@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Object;
 
 use App\Entity\Domain;
@@ -8,7 +10,6 @@ use App\Service\Domain\Dkim;
 
 class DomainObject
 {
-
     public int $id;
     public int $created_at;
     public string $domain;

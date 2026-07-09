@@ -1,10 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Server\Dto;
 
 class UpdateServerDto
 {
-
     public \DateTimeImmutable $lastPingAt {
         set {
             $this->lastPingAtSet = true;
@@ -40,10 +41,10 @@ class UpdateServerDto
         }
     }
 
-    private(set) bool $lastPingAtSet = false;
-    private(set) bool $apiWorkersSet = false;
-    private(set) bool $emailWorkersSet = false;
-    private(set) bool $webhookWorkersSet = false;
-    private(set) bool $incomingWorkersSet = false;
+    public private(set) bool $lastPingAtSet = false;
+    public private(set) bool $apiWorkersSet = false;
+    public private(set) bool $emailWorkersSet = false;
+    public private(set) bool $webhookWorkersSet = false;
+    public private(set) bool $incomingWorkersSet = false;
 
 }

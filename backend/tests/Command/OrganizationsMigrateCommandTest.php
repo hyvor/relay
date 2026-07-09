@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Command;
 
 use App\Entity\Project;
@@ -19,7 +21,7 @@ class OrganizationsMigrateCommandTest extends KernelTestCase
 {
     use ClockSensitiveTrait;
 
-	public function test_organization_migration(): void
+    public function test_organization_migration(): void
     {
         $this->mockTime();
 
@@ -48,24 +50,24 @@ class OrganizationsMigrateCommandTest extends KernelTestCase
         $this->assertSame(0, $this->commandTester('organizations:migrate')->execute([]));
         $this->getEm()->clear();
 
-		$this->getComms()->assertSent(InitOrg::class, Component::CORE);
+        $this->getComms()->assertSent(InitOrg::class, Component::CORE);
         $this->getComms()->assertSent(
             EnsureMembers::class,
             Component::CORE,
-            eventValidator: function($sent) use ($expectedEvents) {
+            eventValidator: function ($sent) use ($expectedEvents) {
                 $userIds = $sent->userIds;
                 sort($userIds);
 
                 foreach ($expectedEvents as $expected) {
-					$project = $this->getEm()->find(Project::class, $expected['projectId']);
-					$this->assertNotNull($project);
+                    $project = $this->getEm()->find(Project::class, $expected['projectId']);
+                    $this->assertNotNull($project);
                     if ($sent->orgId === $project->getOrganizationId() && $userIds === $expected['userIds']) {
-						return;
+                        return;
                     }
-				}
+                }
 
-				// @phpstan-ignore-next-line
-				$this->assertTrue(false, "should not be reachable");
+                // @phpstan-ignore-next-line
+                $this->assertTrue(false, "should not be reachable");
             }
         );
 
@@ -103,7 +105,7 @@ class OrganizationsMigrateCommandTest extends KernelTestCase
     }
 
     public function test_does_not_update_migrated_organizations(): void
-	{
+    {
         $this->mockTime();
 
         $projects = ProjectFactory::createMany(3, [
@@ -118,26 +120,26 @@ class OrganizationsMigrateCommandTest extends KernelTestCase
             ProjectUserFactory::createOne([
                 'project' => $project,
                 'user_id' => $project->getUserId(),
-			]);
+            ]);
 
             ProjectUserFactory::createOne([
                 'project' => $project,
-			]);
+            ]);
         }
 
         $migratedProjects = ProjectFactory::createMany(2, [
             'organization_id' => 4321
-		]);
+        ]);
 
         foreach ($migratedProjects as $project) {
             ProjectUserFactory::createOne([
                 'project' => $project,
                 'user_id' => $project->getUserId(),
-			]);
+            ]);
 
             ProjectUserFactory::createOne([
                 'project' => $project,
-			]);
+            ]);
         }
 
         $this->assertSame(0, $this->commandTester('organizations:migrate')->execute([]));
@@ -145,18 +147,18 @@ class OrganizationsMigrateCommandTest extends KernelTestCase
 
         $availProjects = $this->getEm()->getRepository(Project::class)->findBy([
             'organization_id' => 4321,
-		]);
+        ]);
 
-		$this->assertCount(2, $availProjects);
+        $this->assertCount(2, $availProjects);
 
         $availMigratedProjects = $this->getEm()->getRepository(Project::class)->findBy([
             'organization_id' => 1234,
-		]);
+        ]);
 
-		$this->assertCount(3, $availMigratedProjects);
-	}
+        $this->assertCount(3, $availMigratedProjects);
+    }
 
-	public function test_skips_system_projects(): void
+    public function test_skips_system_projects(): void
     {
         $this->mockTime();
 

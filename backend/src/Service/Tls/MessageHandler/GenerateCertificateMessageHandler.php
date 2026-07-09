@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Tls\MessageHandler;
 
 use App\Entity\DnsRecord;
@@ -21,7 +23,6 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 #[AsMessageHandler]
 class GenerateCertificateMessageHandler
 {
-
     private LoggerInterface $logger;
 
     public function __construct(

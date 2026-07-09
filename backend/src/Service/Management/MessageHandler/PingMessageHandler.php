@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Management\MessageHandler;
 
 use App\Service\Management\Message\PingMessage;
@@ -12,7 +14,6 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 #[AsMessageHandler]
 class PingMessageHandler
 {
-
     private LoggerInterface $logger;
 
     public function __construct(

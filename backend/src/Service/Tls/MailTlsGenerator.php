@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Tls;
 
 use App\Entity\TlsCertificate;
@@ -15,7 +17,6 @@ use Symfony\Component\Messenger\Stamp\TransportNamesStamp;
 
 class MailTlsGenerator
 {
-
     public const LOCK_NAME = 'mail_tls_certificate_generation_lock';
 
     public function __construct(
@@ -23,7 +24,8 @@ class MailTlsGenerator
         private MxServer $mxServer,
         private TlsCertificateService $tlsCertificateService,
         private MessageBusInterface $bus,
-    ) {}
+    ) {
+    }
 
     /**
      * @throws AnotherTlsGenerationRequestInProgressException

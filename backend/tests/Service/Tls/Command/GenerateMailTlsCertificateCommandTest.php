@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Tls\Command;
 
 use App\Service\App\MessageTransport;
@@ -10,7 +12,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(GenerateMailTlsCertificateCommand::class)]
 class GenerateMailTlsCertificateCommandTest extends KernelTestCase
 {
-
     public function test_execute(): void
     {
         $command = $this->commandTester('tls:generate-mail-certificate');

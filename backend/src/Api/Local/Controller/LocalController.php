@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Local\Controller;
 
 use App\Api\Console\Metric\MetricsListener;
@@ -23,7 +25,6 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class LocalController extends AbstractController
 {
-
     use ClockAwareTrait;
 
     public function __construct(

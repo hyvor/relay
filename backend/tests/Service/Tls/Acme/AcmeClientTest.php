@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Tls\Acme;
 
 use App\Service\Dns\Resolve\DnsResolveInterface;
@@ -19,7 +21,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 #[CoversNamespace("App\Service\Tls\Acme")]
 class AcmeClientTest extends KernelTestCase
 {
-
     public function test_acme_client_happy_path(): void
     {
         Clock::set(new MockClock());
@@ -32,7 +33,7 @@ class AcmeClientTest extends KernelTestCase
             'keyChange' => 'https://acme.org/keyChange',
         ]);
 
-        $nonceResponse = fn(int $num) => new MockResponse(info: [
+        $nonceResponse = fn (int $num) => new MockResponse(info: [
             'response_headers' => [
                 'Replay-Nonce' => ['test-nonce-' . $num]
             ]
@@ -146,7 +147,7 @@ class AcmeClientTest extends KernelTestCase
         $dnsResolver->method('resolve')
             ->with('_acme-challenge.myinstance.com', DnsType::TXT)
             ->willReturnOnConsecutiveCalls(
-            // wrong records in the first call
+                // wrong records in the first call
                 new ResolveResult(0, [
                     new ResolveAnswer(
                         "_acme-challenge.myinstance.com",

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use App\Entity\Type\DnsRecordType;
@@ -36,7 +38,9 @@ class DnsRecord
     #[ORM\Column(type: "integer")]
     private int $priority = 0;
 
-    public function __construct() {}
+    public function __construct()
+    {
+    }
 
     public function getId(): int
     {

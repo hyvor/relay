@@ -1,8 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Domain\Exception;
 
 class DomainDeletionFailedException extends \Exception
 {
-
 }

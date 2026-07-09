@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Management\MessageHandler;
 
 use App\Entity\ServerTask;
@@ -17,7 +19,6 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 #[AsMessageHandler]
 class ServerTaskMessageHandler
 {
-
     private LoggerInterface $logger;
 
     public function __construct(

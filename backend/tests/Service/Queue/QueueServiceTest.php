@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Queue;
 
 use App\Service\Queue\QueueService;
@@ -11,7 +13,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(QueueService::class)]
 class QueueServiceTest extends KernelTestCase
 {
-
     public function test_get_a_queue_that_has_no_ip_address(): void
     {
         /** @var QueueService $queueService */

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Management\GoState;
 
 use App\Entity\Instance;
@@ -30,7 +32,7 @@ class GoStateDnsRecordsService
         /** @var GoStateDnsRecord[] $records */
         $records = [];
         $allIps = $this->ipAddressService->getAllIpAddresses();
-        $allIpsString = array_map(fn($ip) => $ip->getIpAddress(), $allIps);
+        $allIpsString = array_map(fn ($ip) => $ip->getIpAddress(), $allIps);
         $dnsMxIps = [];
         $dnsMxIpAddedServers = [];
 
@@ -47,7 +49,7 @@ class GoStateDnsRecordsService
 
             $serverId = $ip->getServer()->getId();
 
-            if (!in_array($serverId, $dnsMxIpAddedServers)) {
+            if (!in_array($serverId, $dnsMxIpAddedServers, true)) {
                 $dnsMxIps[] = $ip->getIpAddress();
                 $dnsMxIpAddedServers[] = $serverId;
             }

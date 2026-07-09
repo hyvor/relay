@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Go;
 
 use App\Entity\Type\DebugIncomingEmailType;
@@ -11,7 +13,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class GoHttpApi
 {
-
     public function __construct(
         private HttpClientInterface $httpClient,
         private Config $config,

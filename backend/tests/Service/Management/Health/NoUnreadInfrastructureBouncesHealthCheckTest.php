@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Management\Health;
 
 use App\Service\Management\Health\NoUnreadInfrastructureBouncesHealthCheck;
@@ -46,7 +48,6 @@ class NoUnreadInfrastructureBouncesHealthCheckTest extends KernelTestCase
         $this->assertFalse($result);
         $data = $this->healthCheck->getData();
         $this->assertArrayHasKey('unread_count', $data);
-        $this->assertEquals(2, $data['unread_count']);
+        $this->assertSame(2, $data['unread_count']);
     }
 }
-

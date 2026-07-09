@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Sudo;
 
 use App\Api\Sudo\Controller\SudoController;
@@ -17,7 +19,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(InstanceService::class)]
 class SudoInitTest extends WebTestCase
 {
-
     public function test_inits_sudo(): void
     {
         $this->sudoApi('POST', '/init');

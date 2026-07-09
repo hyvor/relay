@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\SendFeedback;
 
 use App\Entity\DebugIncomingEmail;

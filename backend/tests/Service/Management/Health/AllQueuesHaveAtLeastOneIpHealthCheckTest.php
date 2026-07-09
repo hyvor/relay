@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Management\Health;
 
 use App\Service\Management\Health\AllQueuesHaveAtLeastOneIpHealthCheck;

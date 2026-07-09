@@ -1,16 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Blacklist;
 
 readonly class IpBlacklist implements \JsonSerializable
 {
-
     public function __construct(
         private string $name,
         private string $dnsLookupDomain,
         private string $removalUrl, // if not applicable, use the website URL
-    )
-    {
+    ) {
     }
 
     public function getId(): string

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Console;
 
 use App\Api\Console\Controller\ConsoleController;
@@ -42,20 +44,20 @@ class ConsoleInitTest extends WebTestCase
         );
 
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
-		SudoUserFactory::createOne(['user_id' => 1]);
+        SudoUserFactory::createOne(['user_id' => 1]);
 
         ProjectUserFactory::createMany(5, [
-			'user_id' => 1,
-			'project' => ProjectFactory::new([
-				'organization_id' => 1
-			])
+            'user_id' => 1,
+            'project' => ProjectFactory::new([
+                'organization_id' => 1
+            ])
         ]);
 
         ProjectUserFactory::createMany(2, [
-			'user_id' => 2,
-			'project' => ProjectFactory::new([
-				'organization_id' => 1
-			])
+            'user_id' => 2,
+            'project' => ProjectFactory::new([
+                'organization_id' => 1
+            ])
         ]);
 
         ProjectUserFactory::createMany(2, [

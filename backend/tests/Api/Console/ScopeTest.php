@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Console;
 
 use App\Api\Console\Authorization\Scope;
@@ -9,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(Scope::class)]
 class ScopeTest extends TestCase
 {
-
     public function test_methods(): void
     {
         $all = Scope::all();

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Domain\MessageHandler;
 
 use App\Entity\Domain;
@@ -22,7 +24,6 @@ use Hyvor\Internal\Bundle\Log\ContextualLogger;
 #[AsMessageHandler]
 class ReverifyDomainsMessageHandler
 {
-
     private LoggerInterface $logger;
 
     public function __construct(

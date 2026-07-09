@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Management\Health;
 
 use App\Service\Blacklist\DnsblQuery;
@@ -9,7 +11,6 @@ use App\Service\Ip\IpAddressService;
 
 class NoneOfTheIpsAreOnKnownBlacklistsHealthCheck extends HealthCheckAbstract
 {
-
     public function __construct(
         private IpAddressService $ipAddressService,
         private DnsblQuery $dnsblQuery

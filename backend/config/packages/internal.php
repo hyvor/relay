@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Service\Sudo\SudoPermission;
 use App\Service\Sudo\SudoRole;
 use Symfony\Component\DependencyInjection\Loader\Configurator\App;

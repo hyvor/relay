@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Schedule;
 
 use App\Service\Management\Message\PingMessage;
@@ -16,7 +18,8 @@ use Symfony\Component\Scheduler\ScheduleProviderInterface;
 #[AsSchedule(name: 'server')]
 class ServerSchedule implements ScheduleProviderInterface
 {
-    public function __construct() {
+    public function __construct()
+    {
     }
 
     public function getSchedule(): SymfonySchedule

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Object;
 
 use App\Entity\SendFeedback;
@@ -7,7 +9,6 @@ use App\Entity\Type\SendFeedbackType;
 
 class SendFeedbackObject
 {
-
     public int $id;
     public int $created_at;
     public SendFeedbackType $type;

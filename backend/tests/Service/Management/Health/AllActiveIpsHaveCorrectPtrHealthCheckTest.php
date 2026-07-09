@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Management\Health;
 
 use App\Entity\IpAddress;
@@ -97,10 +99,10 @@ class AllActiveIpsHaveCorrectPtrHealthCheckTest extends KernelTestCase
         $invalidPtrs = $this->healthCheck->getData()['invalid_ptrs'];
         $this->assertIsArray($invalidPtrs);
         $this->assertIsArray($invalidPtrs[0]);
-        $this->assertEquals($ip1->getIpAddress(), $invalidPtrs[0]['ip']);
+        $this->assertSame($ip1->getIpAddress(), $invalidPtrs[0]['ip']);
         $this->assertFalse($invalidPtrs[0]['forward_valid']);
-        $this->assertEquals('Simulated forward PTR failure', $invalidPtrs[0]['forward_error']);
+        $this->assertSame('Simulated forward PTR failure', $invalidPtrs[0]['forward_error']);
         $this->assertFalse($invalidPtrs[0]['reverse_valid']);
-        $this->assertEquals('Simulated reverse PTR failure', $invalidPtrs[0]['reverse_error']);
+        $this->assertSame('Simulated reverse PTR failure', $invalidPtrs[0]['reverse_error']);
     }
-} 
+}

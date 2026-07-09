@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Sudo\Controller;
 
 use App\Service\Management\Health\HealthCheckService;
@@ -16,7 +18,8 @@ class HealthCheckController extends AbstractController
     public function __construct(
         private HealthCheckService $healthCheckService,
         private InstanceService $instanceService,
-    ) {}
+    ) {
+    }
 
     #[Route('/health-checks', methods: 'POST')]
     public function runHealthChecks(): JsonResponse

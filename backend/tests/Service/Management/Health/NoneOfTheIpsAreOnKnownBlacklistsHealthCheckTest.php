@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Management\Health;
 
 use App\Service\Blacklist\DnsblQuery;
@@ -29,7 +31,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(DnsblLookupException::class)]
 class NoneOfTheIpsAreOnKnownBlacklistsHealthCheckTest extends KernelTestCase
 {
-
     /**
      * @return array{0: bool, 1: array<mixed>}
      */
@@ -84,7 +85,7 @@ class NoneOfTheIpsAreOnKnownBlacklistsHealthCheckTest extends KernelTestCase
 
             foreach ([$ip1, $ip2, $ip3] as $ip) {
                 $this->assertIsArray($lists[$blacklist][$ip->getIpAddress()]);
-                $this->assertEquals('ok', $lists[$blacklist][$ip->getIpAddress()]['status']);
+                $this->assertSame('ok', $lists[$blacklist][$ip->getIpAddress()]['status']);
                 $this->assertIsInt($lists[$blacklist][$ip->getIpAddress()]['duration_ms']);
                 $this->assertArrayNotHasKey('resolved_ip', $lists[$blacklist][$ip->getIpAddress()]);
                 $this->assertArrayNotHasKey('error', $lists[$blacklist][$ip->getIpAddress()]);
@@ -123,12 +124,12 @@ class NoneOfTheIpsAreOnKnownBlacklistsHealthCheckTest extends KernelTestCase
 
         $ip1 = $baracudaList['10.0.0.0'];
         $this->assertIsArray($ip1);
-        $this->assertEquals('blocked', $ip1['status']);
-        $this->assertEquals('127.0.0.1', $ip1['resolved_ip']);
+        $this->assertSame('blocked', $ip1['status']);
+        $this->assertSame('127.0.0.1', $ip1['resolved_ip']);
 
         $ip2 = $baracudaList['10.0.0.1'];
         $this->assertIsArray($ip2);
-        $this->assertEquals('ok', $ip2['status']);
+        $this->assertSame('ok', $ip2['status']);
         $this->assertArrayNotHasKey('resolved_ip', $ip2);
     }
 
@@ -164,16 +165,16 @@ class NoneOfTheIpsAreOnKnownBlacklistsHealthCheckTest extends KernelTestCase
 
         $ip1 = $baracudaList['10.0.0.0'];
         $this->assertIsArray($ip1);
-        $this->assertEquals('error', $ip1['status']);
-        $this->assertEquals(
+        $this->assertSame('error', $ip1['status']);
+        $this->assertSame(
             'DNSBL lookup failed for Barracuda with query 0.0.0.10.b.barracudacentral.org (IP: 10.0.0.0): DNS lookup returned an error: Format error',
             $ip1['error']
         );
 
         $ip2 = $baracudaList['10.0.0.1'];
         $this->assertIsArray($ip2);
-        $this->assertEquals('error', $ip2['status']);
-        $this->assertEquals(
+        $this->assertSame('error', $ip2['status']);
+        $this->assertSame(
             'DNSBL lookup failed for Barracuda with query 1.0.0.10.b.barracudacentral.org (IP: 10.0.0.1): Simulated DNS resolving failure',
             $ip2['error']
         );

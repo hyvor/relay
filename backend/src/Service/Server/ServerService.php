@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Server;
 
 use App\Entity\Server;
@@ -12,7 +14,6 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ServerService
 {
-
     use ClockAwareTrait;
 
     public function __construct(

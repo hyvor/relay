@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Controller;
 
 use App\Api\Console\Authorization\Scope;
@@ -34,8 +36,8 @@ class WebhookController extends AbstractController
     public function getWebhooks(Project $project): JsonResponse
     {
         $webhooks = $this->webhookService->getWebhooksForProject($project)
-            ->map(fn($webhook) => new WebhookObject(
-                $webhook, 
+            ->map(fn ($webhook) => new WebhookObject(
+                $webhook,
                 $this->encryption->decryptString($webhook->getSecretEncrypted())
             ));
 
@@ -89,7 +91,7 @@ class WebhookController extends AbstractController
         }
 
         $deliveries = $this->webhookDeliveryService->getWebhookDeliveriesForProject($project, $webhookId);
-        $webhookDeliveryObjects = $deliveries->map(fn($delivery) => new WebhookDeliveryObject($delivery));
+        $webhookDeliveryObjects = $deliveries->map(fn ($delivery) => new WebhookDeliveryObject($delivery));
         return $this->json($webhookDeliveryObjects);
     }
 }

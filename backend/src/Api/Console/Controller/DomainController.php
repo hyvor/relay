@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Controller;
 
 use App\Api\Console\Authorization\Scope;
@@ -24,7 +26,6 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class DomainController extends AbstractController
 {
-
     public function __construct(
         private DomainService $domainService,
         private DomainStatusService $domainStatusService,
@@ -48,7 +49,7 @@ class DomainController extends AbstractController
             $search,
             $limit,
             $offset
-        )->map(fn(Domain $domain) => new DomainObject($domain));
+        )->map(fn (Domain $domain) => new DomainObject($domain));
 
         return $this->json($domains);
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Sudo\InfrastructureBounce;
 
 use App\Api\Sudo\Controller\InfrastructureBounceController;

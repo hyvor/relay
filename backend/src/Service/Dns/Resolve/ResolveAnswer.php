@@ -1,10 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Dns\Resolve;
 
 class ResolveAnswer
 {
-
     public function __construct(
         public string $name,
         public string $data,
@@ -20,7 +21,7 @@ class ResolveAnswer
         if ($parts === false) {
             return $data; // @codeCoverageIgnore
         }
-        $cleanedParts = array_map(fn($part) => trim($part, '"'), $parts);
+        $cleanedParts = array_map(fn ($part) => trim($part, '"'), $parts);
         return implode('', $cleanedParts);
     }
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repository;
 
 use App\Entity\SendFeedback;
@@ -16,4 +18,3 @@ class SendFeedbackRepository extends ServiceEntityRepository
         parent::__construct($registry, SendFeedback::class);
     }
 }
-

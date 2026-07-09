@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Management;
 
 use App\Entity\Instance;
@@ -17,7 +19,6 @@ use Symfony\Component\Lock\LockFactory;
 
 class ManagementService
 {
-
     private OutputInterface $output;
 
     public function __construct(

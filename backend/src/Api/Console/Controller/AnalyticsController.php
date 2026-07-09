@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Controller;
 
 use App\Api\Console\Authorization\Scope;
@@ -14,7 +16,6 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class AnalyticsController extends AbstractController
 {
-
     public function __construct(
         private SendAnalyticsService $sendAnalyticsService
     ) {

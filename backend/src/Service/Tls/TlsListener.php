@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Tls;
 
 use App\Service\Instance\InstanceService;
@@ -10,7 +12,6 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 #[AsEventListener(DnsServerCorrectlyPointedEvent::class, 'onDnsServerCorrectlyPointed')]
 class TlsListener
 {
-
     public function __construct(
         private InstanceService $instanceService,
         private MailTlsGenerator $mailTlsGenerator,

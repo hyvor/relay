@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Cloud\Comms;
 
 use App\Service\ProjectUser\ProjectUserService;
@@ -13,20 +15,19 @@ class MemberRemovedListener
     public function __construct(
         private EntityManagerInterface $em,
         private ProjectUserService $puService,
-    )
-    {
+    ) {
     }
 
     public function __invoke(MemberRemoved $event): void
-	{
-		$proj_users = $this->puService->getProjectsOfUserInOrg(
-			$event->getUserId(),
-			$event->getOrganizationId()
-		);
+    {
+        $proj_users = $this->puService->getProjectsOfUserInOrg(
+            $event->getUserId(),
+            $event->getOrganizationId()
+        );
 
-		foreach($proj_users as $proj_user) {
+        foreach ($proj_users as $proj_user) {
             $this->puService->deleteProjectUser($proj_user, flush: false);
-		}
+        }
 
         $this->em->flush();
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Input\Domain;
 
 use App\Service\App\Validator\DkimPrivateKey;
@@ -7,7 +9,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class DomainCreateInput
 {
-
     #[Assert\NotBlank]
     public string $domain;
 

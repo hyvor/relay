@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Input\CreateDnsRecordInput;
@@ -26,7 +28,8 @@ class DnsRecordController extends AbstractController
         private DnsRecordService $dnsRecordService,
         private InstanceService $instanceService,
         private GoStateDnsRecordsService $goStateDnsRecordsService
-    ) {}
+    ) {
+    }
 
     #[Route('/dns-records/default', methods: 'GET')]
     public function getDefaultDns(): JsonResponse
@@ -35,7 +38,7 @@ class DnsRecordController extends AbstractController
         $dnsRecords = $this->goStateDnsRecordsService->getDnsRecords($instance, custom: false);
 
         return new JsonResponse(
-            array_map(fn($record) => new DefaultDnsRecordObject($record), $dnsRecords)
+            array_map(fn ($record) => new DefaultDnsRecordObject($record), $dnsRecords)
         );
     }
 
@@ -45,7 +48,7 @@ class DnsRecordController extends AbstractController
         $dnsRecords = $this->dnsRecordService->getAllDnsRecords();
 
         return new JsonResponse(
-            array_map(fn($record) => new DnsRecordObject($record), $dnsRecords)
+            array_map(fn ($record) => new DnsRecordObject($record), $dnsRecords)
         );
     }
 

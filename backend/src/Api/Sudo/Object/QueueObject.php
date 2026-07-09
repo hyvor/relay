@@ -1,12 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Sudo\Object;
 
 use App\Entity\Queue;
 
 class QueueObject
 {
-
     public int $id;
     public int $created_at;
     public int $updated_at;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Command;
 
 use App\Command\VerifyCommand;
@@ -11,7 +13,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 #[CoversClass(VerifyCommand::class)]
 class VerifyCommandTest extends KernelTestCase
 {
-
     public function test_verify(): void
     {
         $this->container->set(HttpClientInterface::class, new MockHttpClient());

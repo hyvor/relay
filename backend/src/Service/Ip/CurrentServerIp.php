@@ -1,16 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Ip;
 
 class CurrentServerIp
 {
-
     public function __construct(
         /**
          * @var callable $netGetInterfacesFunction
          */
         private mixed $netGetInterfacesFunction = '\net_get_interfaces',
-    ) {}
+    ) {
+    }
 
     /**
      * Gets all IP addresses of the server.

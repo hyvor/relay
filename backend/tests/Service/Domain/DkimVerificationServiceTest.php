@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Domain;
 
 use App\Entity\Domain;
@@ -15,7 +17,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(DkimVerificationService::class)]
 class DkimVerificationServiceTest extends KernelTestCase
 {
-
     private function doTest(
         Domain $domain,
         ResolveResult|true $result,

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Idempotency;
 
 use App\Entity\ApiIdempotencyRecord;
@@ -12,7 +14,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(ClearExpiredIdempotencyRecordsMessageHandler::class)]
 class ClearExpiredIdempotencyRecordsMessageHandlerTest extends KernelTestCase
 {
-
     public function test_deletes_older_records(): void
     {
         $r1 = ApiIdempotencyRecordFactory::createOne([

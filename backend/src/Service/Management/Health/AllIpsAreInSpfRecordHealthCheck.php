@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Management\Health;
 
 use App\Service\App\Config;
@@ -10,7 +12,6 @@ use SPFLib\Checker;
 use SPFLib\Check\Environment;
 use SPFLib\DNS\Resolver;
 use SPFLib\Exception\InvalidIPAddressException;
-
 
 class AllIpsAreInSpfRecordHealthCheck extends HealthCheckAbstract
 {

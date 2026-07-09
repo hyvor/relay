@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Input;
 
 use App\Util\OptionalPropertyTrait;
@@ -11,4 +13,4 @@ class UpdateProjectInput
 
     #[Assert\Length(min: 1, max: 255)]
     public string $name;
-} 
+}

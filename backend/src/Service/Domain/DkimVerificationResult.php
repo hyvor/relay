@@ -1,10 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Domain;
 
 class DkimVerificationResult implements \JsonSerializable
 {
-
     public bool $verified;
     public \DateTimeImmutable $checkedAt;
     public ?string $errorMessage = null;

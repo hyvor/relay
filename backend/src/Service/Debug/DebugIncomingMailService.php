@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Debug;
 
 use App\Entity\DebugIncomingEmail;
@@ -7,11 +9,9 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class DebugIncomingMailService
 {
-
     public function __construct(
         private EntityManagerInterface $em
-    )
-    {
+    ) {
     }
 
     /**

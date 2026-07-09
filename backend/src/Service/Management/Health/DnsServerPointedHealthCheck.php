@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Management\Health;
 
 use App\Service\App\Config;
@@ -19,7 +21,6 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  */
 class DnsServerPointedHealthCheck extends HealthCheckAbstract
 {
-
     public function __construct(
         private InstanceService $instanceService,
         private Config $config,

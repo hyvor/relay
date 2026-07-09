@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Blacklist;
 
 use App\Service\Blacklist\Exception\DnsblLookupException;
@@ -9,7 +11,6 @@ use App\Service\Dns\Resolve\DnsType;
 
 class DnsblQuery
 {
-
     public function __construct(
         private DnsResolveInterface $dnsResolve
     ) {

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Input\SendEmail;
 
 use App\Api\Console\Validation\EmailAddress;

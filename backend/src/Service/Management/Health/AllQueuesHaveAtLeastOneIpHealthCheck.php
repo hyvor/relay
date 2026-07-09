@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Management\Health;
 
 use Doctrine\ORM\EntityManagerInterface;
@@ -8,7 +10,6 @@ use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
 class AllQueuesHaveAtLeastOneIpHealthCheck extends HealthCheckAbstract
 {
-
     public function __construct(
         private EntityManagerInterface $em
     ) {
@@ -39,7 +40,7 @@ class AllQueuesHaveAtLeastOneIpHealthCheck extends HealthCheckAbstract
         }
 
         $this->setData([
-            'queues_without_ip' => array_map(fn($queue) => $queue['name'], $queuesWithoutIp),
+            'queues_without_ip' => array_map(fn ($queue) => $queue['name'], $queuesWithoutIp),
         ]);
 
         return false;

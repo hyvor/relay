@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Tls;
 
 use App\Service\Management\Health\Event\DnsServerCorrectlyPointedEvent;
@@ -13,7 +15,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(TlsListener::class)]
 class TlsListenerTest extends KernelTestCase
 {
-
     public function test_calls_mail_tls_generator_on_dns_server_correctly_pointed_event(): void
     {
         $generator = $this->createMock(MailTlsGenerator::class);

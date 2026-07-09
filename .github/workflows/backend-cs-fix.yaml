@@ -1,0 +1,49 @@
+name: Backend CS Fix
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+
+permissions:
+  contents: write
+
+jobs:
+  cs-fix:
+    name: "PHP CS Fixer"
+    runs-on: ubuntu-latest
+    # skip draft PRs, and PRs from forks (GITHUB_TOKEN can't push to fork branches)
+    if: |
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: docker build -t backend-dev . --target backend-dev
+
+      - name: Run PHP CS Fixer
+        run: docker run --name cs-fixer backend-dev sh -c "vendor/bin/php-cs-fixer fix"
+
+      - name: Copy fixed files back to workspace
+        run: docker cp cs-fixer:/app/backend/. backend/
+
+      - name: Commit and push fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend
+          if git diff --cached --quiet; then
+            echo "No CS issues found."
+          else
+            git commit -m "style: fix code style issues (php-cs-fixer)"
+            git push origin HEAD:${{ github.head_ref }}
+          fi

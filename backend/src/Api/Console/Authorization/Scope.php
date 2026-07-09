@@ -1,10 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Authorization;
 
 enum Scope: string
 {
-
     // all users must have this scope (api keys may not)
     case PROJECT_READ = 'project.read';
     // to update project settings
@@ -32,7 +33,7 @@ enum Scope: string
      */
     public static function all(): array
     {
-        return array_map(fn($scope) => $scope->value, Scope::cases());
+        return array_map(fn ($scope) => $scope->value, Scope::cases());
     }
 
     /**
@@ -44,7 +45,7 @@ enum Scope: string
         return array_values(
             array_diff(
                 self::all(),
-                array_map(fn($scope) => $scope->value, $except)
+                array_map(fn ($scope) => $scope->value, $except)
             )
         );
     }

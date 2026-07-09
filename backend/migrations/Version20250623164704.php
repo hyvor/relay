@@ -17,7 +17,7 @@ final class Version20250623164704 extends AbstractMigration
     public function up(Schema $schema): void
     {
         $this->addSql(
-        <<<SQL
+            <<<SQL
             CREATE TABLE webhooks (
                 id SERIAL PRIMARY KEY,
                 created_at TIMESTAMPTZ NOT NULL,

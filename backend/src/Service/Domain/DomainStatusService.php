@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Domain;
 
 use App\Entity\Domain;
@@ -12,7 +14,6 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class DomainStatusService
 {
-
     use ClockAwareTrait;
 
     public function __construct(

@@ -9,7 +9,6 @@ use Doctrine\Migrations\AbstractMigration;
 
 final class Version20251119041929 extends AbstractMigration
 {
-
     public function getDescription(): string
     {
         return 'Create tls_certificates table';

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Management\Health;
 
 use App\Entity\InfrastructureBounce;
@@ -7,7 +9,6 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class NoUnreadInfrastructureBouncesHealthCheck extends HealthCheckAbstract
 {
-
     public function __construct(
         private EntityManagerInterface $em
     ) {
@@ -35,4 +36,3 @@ class NoUnreadInfrastructureBouncesHealthCheck extends HealthCheckAbstract
         return false;
     }
 }
-

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Tls\MessageHandler;
 
 use App\Entity\DnsRecord;
@@ -29,7 +31,6 @@ use Symfony\Component\Lock\LockFactory;
 #[CoversClass(GenerateCertificateMessage::class)]
 class GenerateCertificateMessageHandlerTest extends KernelTestCase
 {
-
     public function test_when_lock_is_acquired(): void
     {
         try {

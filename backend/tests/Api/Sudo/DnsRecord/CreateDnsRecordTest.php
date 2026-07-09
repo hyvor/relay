@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Sudo\DnsRecord;
 
 use App\Api\Sudo\Controller\DnsRecordController;
@@ -15,7 +17,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(DnsRecordService::class)]
 class CreateDnsRecordTest extends WebTestCase
 {
-
     public function test_creates_dns_record(): void
     {
         $this->sudoApi("POST", "/dns-records", [
@@ -28,10 +29,10 @@ class CreateDnsRecordTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(201);
         $json = $this->getJson();
-        $this->assertEquals('A', $json['type']);
-        $this->assertEquals('www', $json['subdomain']);
-        $this->assertEquals('1.1.1.1', $json['content']);
-        $this->assertEquals(600, $json['ttl']);
+        $this->assertSame('A', $json['type']);
+        $this->assertSame('www', $json['subdomain']);
+        $this->assertSame('1.1.1.1', $json['content']);
+        $this->assertSame(600, $json['ttl']);
 
         $this->getEd()->assertDispatched(CustomDnsRecordsChangedEvent::class);
     }

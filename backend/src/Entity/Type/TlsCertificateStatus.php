@@ -1,10 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity\Type;
 
 enum TlsCertificateStatus: string
 {
-
     case PENDING = 'pending'; // being issued
     case FAILED = 'failed'; // issuance failed
     case ACTIVE = 'active'; // issued and valid

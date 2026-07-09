@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Management\GoState;
 
 use App\Service\App\Config;
@@ -11,7 +13,6 @@ use App\Service\Tls\TlsCertificateService;
 
 class GoStateFactory
 {
-
     public function __construct(
         private ServerService $serverService,
         private IpAddressService $ipAddressService,
@@ -82,7 +83,6 @@ class GoStateFactory
             // data for the DNS server
             dnsIp: $dnsIp,
             dnsRecords: $this->goStateService->getDnsRecords($instance),
-
             serversCount: $this->serverService->getServersCount(),
             env: $this->config->getEnv(),
             version: $this->config->getAppVersion(),

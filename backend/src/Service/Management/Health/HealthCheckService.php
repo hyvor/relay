@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Management\Health;
 
 use App\Service\Instance\InstanceService;
@@ -28,9 +30,9 @@ class HealthCheckService
     public function runAllHealthChecks(): void
     {
         $instance = $this->instanceService->getInstance();
-        
+
         $results = [];
-        
+
         foreach ($this->healthChecks as $healthCheck) {
             $healthCheckType = $this->getHealthCheckName($healthCheck);
 
@@ -40,7 +42,7 @@ class HealthCheckService
             $durationMs = round(($endTime - $startTime) * 1000);
 
             $data = $healthCheck->getData();
-            
+
             $results[$healthCheckType] = [
                 'passed' => $passed,
                 'data' => $data,
@@ -48,11 +50,11 @@ class HealthCheckService
                 'duration_ms' => $durationMs,
             ];
         }
-        
+
         $instance->setHealthCheckResults($results);
         $instance->setLastHealthCheckAt($this->now());
         $instance->setUpdatedAt($this->now());
-        
+
         $this->em->persist($instance);
         $this->em->flush();
     }
@@ -66,4 +68,4 @@ class HealthCheckService
         $snake = new ByteString($healthCheckType)->snake();
         return str_replace('_health_check', '', $snake->toString());
     }
-} 
+}

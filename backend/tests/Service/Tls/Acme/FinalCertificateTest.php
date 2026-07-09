@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Tls\Acme;
 
 use App\Service\Tls\Acme\Dto\FinalCertificate;
@@ -9,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(FinalCertificate::class)]
 class FinalCertificateTest extends TestCase
 {
-
     public function test_pem_to_cert(): void
     {
         $cert = <<<EOT

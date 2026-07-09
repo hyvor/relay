@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Sudo\Server;
 
 use App\Api\Sudo\Controller\ServerController;
@@ -12,7 +14,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(ServerService::class)]
 class GetServersTest extends WebTestCase
 {
-
     public function test_get_servers(): void
     {
         // Create test servers
@@ -44,18 +45,18 @@ class GetServersTest extends WebTestCase
         $this->assertCount(3, $response);
 
         // Assert server 1 data
-        $this->assertEquals($server1->getId(), $response[0]['id']);
-        $this->assertEquals('server1.example.com', $response[0]['hostname']);
-        $this->assertEquals($server1->getCreatedAt()->getTimestamp(), $response[0]['created_at']);
+        $this->assertSame($server1->getId(), $response[0]['id']);
+        $this->assertSame('server1.example.com', $response[0]['hostname']);
+        $this->assertSame($server1->getCreatedAt()->getTimestamp(), $response[0]['created_at']);
 
         // Assert server 2 data
-        $this->assertEquals($server2->getId(), $response[1]['id']);
-        $this->assertEquals('server2.example.com', $response[1]['hostname']);
-        $this->assertEquals($server2->getCreatedAt()->getTimestamp(), $response[1]['created_at']);
+        $this->assertSame($server2->getId(), $response[1]['id']);
+        $this->assertSame('server2.example.com', $response[1]['hostname']);
+        $this->assertSame($server2->getCreatedAt()->getTimestamp(), $response[1]['created_at']);
 
         // Assert server 3 data
-        $this->assertEquals($server3->getId(), $response[2]['id']);
-        $this->assertEquals('server3.example.com', $response[2]['hostname']);
-        $this->assertEquals($server3->getCreatedAt()->getTimestamp(), $response[2]['created_at']);
+        $this->assertSame($server3->getId(), $response[2]['id']);
+        $this->assertSame('server3.example.com', $response[2]['hostname']);
+        $this->assertSame($server3->getCreatedAt()->getTimestamp(), $response[2]['created_at']);
     }
 }

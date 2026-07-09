@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Dns\Resolve;
 
 use Psr\Log\LoggerInterface;
@@ -11,7 +13,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 class DnsOverHttp implements DnsResolveInterface
 {
-
     public const CLOUDFLARE_DNS_QUERY_URL = "https://cloudflare-dns.com/dns-query";
 
     public function __construct(

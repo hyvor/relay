@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\DebugIncomingEmail;
 
 use App\Entity\DebugIncomingEmail;
@@ -28,8 +30,7 @@ class DebugIncomingEmailService
         string $rcptTo,
         ?array $parsedData = null,
         ?string $errorMessage = null
-    ): DebugIncomingEmail
-    {
+    ): DebugIncomingEmail {
         $debugIncomingEmail = new DebugIncomingEmail();
         $debugIncomingEmail->setCreatedAt($this->now());
         $debugIncomingEmail->setUpdatedAt($this->now());

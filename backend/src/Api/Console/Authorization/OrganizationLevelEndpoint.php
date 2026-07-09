@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Authorization;
 
 // use for user-level endpoints in the Console API (/console/init) that
@@ -7,5 +9,4 @@ namespace App\Api\Console\Authorization;
 #[\Attribute(\Attribute::TARGET_METHOD)]
 class OrganizationLevelEndpoint
 {
-
 }

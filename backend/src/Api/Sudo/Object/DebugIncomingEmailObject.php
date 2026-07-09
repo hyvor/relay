@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Sudo\Object;
 
 use App\Entity\DebugIncomingEmail;
@@ -8,7 +10,6 @@ use App\Entity\Type\DebugIncomingEmailType;
 
 class DebugIncomingEmailObject
 {
-
     public int $id;
     public int $created_at;
     public DebugIncomingEmailType $type;

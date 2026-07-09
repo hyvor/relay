@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\App;
 
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -9,7 +11,6 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  */
 class Config
 {
-
     public function __construct(
         #[Autowire('%env(string:APP_VERSION)%')]
         private string $appVersion,

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Send;
 
 use App\Entity\Domain;
@@ -16,7 +18,6 @@ use Symfony\Component\Uid\Uuid;
 
 class EmailBuilder
 {
-
     public function __construct(
         private Encryption $encryption,
         private InstanceService $instanceService,

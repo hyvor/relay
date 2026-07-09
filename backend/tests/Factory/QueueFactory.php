@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Factory;
 
 use App\Entity\Queue;
@@ -12,7 +14,6 @@ use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
  */
 final class QueueFactory extends PersistentProxyObjectFactory
 {
-
     public function __construct()
     {
         parent::__construct();

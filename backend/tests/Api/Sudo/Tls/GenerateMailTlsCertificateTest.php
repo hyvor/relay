@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Sudo\Tls;
 
 use App\Api\Sudo\Controller\TlsController;
@@ -20,7 +22,6 @@ use Symfony\Component\Lock\LockFactory;
 #[CoversClass(MxServer::class)]
 class GenerateMailTlsCertificateTest extends WebTestCase
 {
-
     public function test_creates_tls_certificate_and_pushes_job(): void
     {
         $this->sudoApi('POST', '/tls/mail-certs/generate');

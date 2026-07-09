@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Idempotency;
 
 use App\Api\Console\Authorization\AuthorizationListener;
@@ -16,13 +18,11 @@ use Symfony\Component\HttpKernel\KernelEvents;
 #[AsEventListener(event: KernelEvents::RESPONSE, method: 'onResponse')]
 class IdempotencyListener
 {
-
-    const IDEMPOTENCY_KEY_IN_REQUEST = 'idempotency_key_in_request';
+    public const IDEMPOTENCY_KEY_IN_REQUEST = 'idempotency_key_in_request';
 
     public function __construct(
         private IdempotencyService $idempotencyService
-    )
-    {
+    ) {
     }
 
     public function onController(ControllerEvent $event): void
@@ -30,13 +30,21 @@ class IdempotencyListener
         $request = $event->getRequest();
 
         $endpoint = $request->getPathInfo();
-        if (!str_starts_with($endpoint, '/api/console')) return;
-        if ($event->isMainRequest() === false) return;
+        if (!str_starts_with($endpoint, '/api/console')) {
+            return;
+        }
+        if ($event->isMainRequest() === false) {
+            return;
+        }
 
         $idempotencyKey = $request->headers->get('x-idempotency-key');
-        if ($idempotencyKey === null) return;
+        if ($idempotencyKey === null) {
+            return;
+        }
         $idempotencyKey = trim($idempotencyKey);
-        if ($idempotencyKey === '') return;
+        if ($idempotencyKey === '') {
+            return;
+        }
 
         $endpointHasIdempotencySupport = count($event->getControllerReflector()->getAttributes(IdempotencySupported::class)) > 0;
         if (!$endpointHasIdempotencySupport) {
@@ -72,7 +80,9 @@ class IdempotencyListener
     {
         $request = $event->getRequest();
         $idempotencyKey = $request->attributes->get(self::IDEMPOTENCY_KEY_IN_REQUEST);
-        if (!is_string($idempotencyKey)) return;
+        if (!is_string($idempotencyKey)) {
+            return;
+        }
 
         // If the request has idempotency support, we need to save the response
         $response = $event->getResponse();

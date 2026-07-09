@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Dns\Dto;
 
 use App\Entity\Type\DnsRecordType;
@@ -12,5 +14,6 @@ class CreateDnsRecordDto
         public readonly string $content,
         public readonly int $ttl = 3600,
         public readonly int $priority = 0,
-    ) {}
+    ) {
+    }
 }

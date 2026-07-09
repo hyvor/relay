@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Console\ProjectUser;
 
 use App\Api\Console\Controller\ProjectUserController;

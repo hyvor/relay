@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Console\Project;
 
 use App\Api\Console\Authorization\Scope;
@@ -109,4 +111,4 @@ class UpdateProjectTest extends WebTestCase
         $this->assertNotNull($projectDb);
         $this->assertSame('Original Project Name', $projectDb->getName());
     }
-} 
+}

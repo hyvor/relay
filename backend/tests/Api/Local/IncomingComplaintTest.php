@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Local;
 
 use App\Api\Local\Controller\LocalController;
@@ -69,8 +71,8 @@ class IncomingComplaintTest extends WebTestCase
         ]);
 
         $this->assertNotNull($suppression);
-        $this->assertEquals('spammer@example.net', $suppression->getEmail());
-        $this->assertEquals('This is a test ARF', $suppression->getDescription());
+        $this->assertSame('spammer@example.net', $suppression->getEmail());
+        $this->assertSame('This is a test ARF', $suppression->getDescription());
 
         $debugIncomingEmail = $this->em->getRepository(DebugIncomingEmail::class)->findOneBy([
             'type' => DebugIncomingEmailType::COMPLAINT,

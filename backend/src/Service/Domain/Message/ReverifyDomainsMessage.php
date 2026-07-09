@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Domain\Message;
 
 use App\Entity\Type\DomainStatus;
@@ -9,7 +11,6 @@ use Symfony\Component\Messenger\Attribute\AsMessage;
 #[AsMessage(MessageTransport::ASYNC)]
 readonly class ReverifyDomainsMessage
 {
-
     public function __construct(
         /**
          * @var DomainStatus[] $statuses
@@ -32,7 +33,7 @@ readonly class ReverifyDomainsMessage
      */
     public function getStatusNames(): array
     {
-        return array_map(fn(DomainStatus $status) => $status->value, $this->statuses);
+        return array_map(fn (DomainStatus $status) => $status->value, $this->statuses);
     }
 
     public function getBatchSize(): int

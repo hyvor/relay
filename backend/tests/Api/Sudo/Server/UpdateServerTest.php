@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Sudo\Server;
 
 use App\Api\Sudo\Controller\ServerController;
@@ -18,7 +20,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 #[CoversClass(ServerObject::class)]
 class UpdateServerTest extends WebTestCase
 {
-
     public function test_update_server_api_workers(): void
     {
         $mockResponse = new JsonMockResponse();
@@ -51,15 +52,16 @@ class UpdateServerTest extends WebTestCase
         $response = $this->getJson();
 
         // Assert server data
-        $this->assertEquals($server->getId(), $response['id']);
-        $this->assertEquals('test-server.example.com', $response['hostname']);
-        $this->assertEquals(10, $response['api_workers']);
-        $this->assertEquals(4, $response['email_workers']); // unchanged
-        $this->assertEquals(1, $response['webhook_workers']); // unchanged
-        $this->assertEquals(5, $response['incoming_workers']);
+        $this->assertSame($server->getId(), $response['id']);
+        $this->assertSame('test-server.example.com', $response['hostname']);
+        $this->assertSame(10, $response['api_workers']);
+        $this->assertSame(4, $response['email_workers']); // unchanged
+        $this->assertSame(1, $response['webhook_workers']); // unchanged
+        $this->assertSame(5, $response['incoming_workers']);
 
         // Assert task has been created into DB
-        $taskServer = $this->em->getRepository(ServerTask::class)->findOneBy(['server' => $server->_real()]
+        $taskServer = $this->em->getRepository(ServerTask::class)->findOneBy(
+            ['server' => $server->_real()]
         )?->getServer();
         $this->assertSame($server->getId(), $taskServer?->getId());
     }
@@ -80,7 +82,7 @@ class UpdateServerTest extends WebTestCase
 
         // Assert error message
         $this->assertArrayHasKey('message', $response);
-        $this->assertEquals('Server with ID 99999 does not exist.', $response['message']);
+        $this->assertSame('Server with ID 99999 does not exist.', $response['message']);
     }
 
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Cloud;
 
 use App\Api\Console\Authorization\AuthorizationListener;
@@ -47,7 +49,7 @@ class ProjectListener
         }
 
         $user = AuthorizationListener::getUser($request);
-		$isSudo = $this->sudoUserService->exists($user->id);
+        $isSudo = $this->sudoUserService->exists($user->id);
 
         if (!$isSudo) {
             throw new BadRequestHttpException('Currently not available for public usage.');

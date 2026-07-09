@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Webhook;
 
 use App\Entity\Project;
@@ -44,7 +46,6 @@ use PHPUnit\Framework\Attributes\TestWith;
 #[CoversClass(SendRecipientSuppressedEvent::class)]
 class WebhookEventListenerTest extends KernelTestCase
 {
-
     public function test_gets_webhooks_correctly(): void
     {
         $project = ProjectFactory::createOne();

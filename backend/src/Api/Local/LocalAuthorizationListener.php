@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Local;
 
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -11,19 +13,21 @@ use Symfony\Component\HttpKernel\KernelEvents;
 #[AsEventListener(event: KernelEvents::CONTROLLER)]
 class LocalAuthorizationListener
 {
-
     public function __construct(
         #[Autowire('%kernel.environment%')]
         private string $env,
-    )
-    {
+    ) {
     }
 
     public function __invoke(ControllerEvent $event): void
     {
         // only local API requests
-        if (!str_starts_with($event->getRequest()->getPathInfo(), '/api/local')) return;
-        if ($this->env === 'dev') return;
+        if (!str_starts_with($event->getRequest()->getPathInfo(), '/api/local')) {
+            return;
+        }
+        if ($this->env === 'dev') {
+            return;
+        }
 
         $ip = $event->getRequest()->getClientIp();
 
@@ -37,9 +41,15 @@ class LocalAuthorizationListener
     private function isIpAllowed(?string $ip): bool
     {
 
-        if ($ip === null) return false;
-        if ($ip === '127.0.0.1') return true;
-        if ($ip === '::1') return true; // IPv6 localhost
+        if ($ip === null) {
+            return false;
+        }
+        if ($ip === '127.0.0.1') {
+            return true;
+        }
+        if ($ip === '::1') {
+            return true;
+        } // IPv6 localhost
 
         return false;
     }

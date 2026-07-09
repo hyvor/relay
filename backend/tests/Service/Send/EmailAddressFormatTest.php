@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Send;
 
 use App\Service\Send\EmailAddressFormat;
@@ -9,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(EmailAddressFormat::class)]
 class EmailAddressFormatTest extends TestCase
 {
-
     public function test_domain(): void
     {
         $this->assertSame('example.com', EmailAddressFormat::getDomainFromEmail('supun@example.com'));

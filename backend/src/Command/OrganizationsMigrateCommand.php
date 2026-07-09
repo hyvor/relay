@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Command;
 
 use App\Entity\Project;
@@ -22,20 +24,19 @@ use Symfony\Component\HttpKernel\KernelInterface;
 )]
 class OrganizationsMigrateCommand extends Command
 {
-	public function __construct(
-		private EntityManagerInterface $em,
-		private CommsInterface $comms,
-		private KernelInterface $kernel,
+    public function __construct(
+        private EntityManagerInterface $em,
+        private CommsInterface $comms,
+        private KernelInterface $kernel,
         private ClockInterface $clock
-	)
-    {
+    ) {
         parent::__construct();
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
-	{
-		while (true) {
-			/** @var int[] $ownerIds */
+    {
+        while (true) {
+            /** @var int[] $ownerIds */
             $ownerIds = $this->em->createQueryBuilder()
                 ->select('DISTINCT p.user_id')
                 ->from(Project::class, 'p')
@@ -53,50 +54,50 @@ class OrganizationsMigrateCommand extends Command
             $count = 0;
 
             foreach ($ownerIds as $ownerId) {
-				try {
+                try {
                     $output->writeln("{$this->clock->now()->format('Y-m-d H:i:s')}: Migrating owner ID: $ownerId");
 
                     $this->em->wrapInTransaction(function () use ($ownerId, &$count) {
-						/** @var InitOrgResponse $org */
-						$org = $this->comms->send(new InitOrg($ownerId));
+                        /** @var InitOrgResponse $org */
+                        $org = $this->comms->send(new InitOrg($ownerId));
 
-						$this->em->createQueryBuilder()
-							->update(Project::class, 'p')
-							->set('p.organization_id', ':orgId')
-							->where('p.user_id = :ownerId')
-							->andWhere('p.organization_id = 0')
-							->setParameter('orgId', $org->orgId)
-							->setParameter('ownerId', $ownerId)
-							->getQuery()
-							->execute();
+                        $this->em->createQueryBuilder()
+                            ->update(Project::class, 'p')
+                            ->set('p.organization_id', ':orgId')
+                            ->where('p.user_id = :ownerId')
+                            ->andWhere('p.organization_id = 0')
+                            ->setParameter('orgId', $org->orgId)
+                            ->setParameter('ownerId', $ownerId)
+                            ->getQuery()
+                            ->execute();
 
-						$conn = $this->em->getConnection();
+                        $conn = $this->em->getConnection();
                         /** @var string[] $rawMemberIds */
                         $rawMemberIds = $conn->fetchFirstColumn(
-							'SELECT DISTINCT pu.user_id FROM project_users pu
+                            'SELECT DISTINCT pu.user_id FROM project_users pu
 							 JOIN projects p ON p.id = pu.project_id
 							 WHERE p.organization_id = :orgId',
-							['orgId' => $org->orgId]
-						);
+                            ['orgId' => $org->orgId]
+                        );
 
-						if (count($rawMemberIds) > 0) {
-							$memberIds = array_map('intval', $rawMemberIds);
+                        if (count($rawMemberIds) > 0) {
+                            $memberIds = array_map('intval', $rawMemberIds);
 
-							$this->comms->send(new EnsureMembers(
-								$org->orgId,
-								$memberIds
-							));
-						}
+                            $this->comms->send(new EnsureMembers(
+                                $org->orgId,
+                                $memberIds
+                            ));
+                        }
 
-						$count++;
-					});
-				} catch (\Exception $e) {
-					if ($this->kernel->getEnvironment() === 'test') {
-						throw $e;
-					}
+                        $count++;
+                    });
+                } catch (\Exception $e) {
+                    if ($this->kernel->getEnvironment() === 'test') {
+                        throw $e;
+                    }
 
-					$output->writeln("{$this->clock->now()->format('Y-m-d H:i:s')}: Error updating owner $ownerId: " . $e->getMessage());
-				}
+                    $output->writeln("{$this->clock->now()->format('Y-m-d H:i:s')}: Error updating owner $ownerId: " . $e->getMessage());
+                }
             }
 
             $output->writeln("{$this->clock->now()->format('Y-m-d H:i:s')}: Updated $count owners");

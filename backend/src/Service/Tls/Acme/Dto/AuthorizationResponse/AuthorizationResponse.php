@@ -1,13 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Tls\Acme\Dto\AuthorizationResponse;
 
 use App\Service\Tls\Acme\Exception\AcmeException;
 
 class AuthorizationResponse
 {
-
-
     public string $status;
     /**
      * @var Challenge[]

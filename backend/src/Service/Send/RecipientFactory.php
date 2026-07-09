@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Send;
 
 use App\Entity\Send;
@@ -13,7 +15,6 @@ use Symfony\Component\Mime\Address;
 
 class RecipientFactory
 {
-
     public function __construct(
         private EntityManagerInterface $em,
         private SuppressionService $suppressionService

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Sudo\DnsRecord;
 
 use App\Api\Sudo\Controller\DnsRecordController;
@@ -14,7 +16,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(DnsRecordObject::class)]
 class GetDnsRecordsTest extends WebTestCase
 {
-
     public function test_gets_dns_records(): void
     {
         $record1 = DnsRecordFactory::createOne();

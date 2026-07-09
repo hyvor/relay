@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\App;
 
 use App\Service\App\Config;
@@ -10,7 +12,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(Config::class)]
 class ConfigTest extends KernelTestCase
 {
-
     public function test_config(): void
     {
         $config = $this->getService(Config::class);

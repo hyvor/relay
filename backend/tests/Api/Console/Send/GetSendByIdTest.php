@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Console\Send;
 
 use App\Api\Console\Authorization\Scope;
@@ -32,7 +34,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(SendFeedbackService::class)]
 class GetSendByIdTest extends WebTestCase
 {
-
     public function test_fails_when_not_found(): void
     {
         $project = ProjectFactory::createOne();

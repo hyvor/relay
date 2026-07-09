@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Management\GoState;
 
 /**
@@ -7,7 +9,6 @@ namespace App\Service\Management\GoState;
  */
 class GoState
 {
-
     public function __construct(
         /**
          * The domain of the Hyvor Relay instance (a.k.a. Primary Domain)

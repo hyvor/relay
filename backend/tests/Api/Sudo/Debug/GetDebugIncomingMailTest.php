@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Sudo\Debug;
 
 use App\Api\Sudo\Controller\DebugController;
@@ -15,7 +17,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(DebugIncomingEmailObject::class)]
 class GetDebugIncomingMailTest extends WebTestCase
 {
-
     public function test_gets_incoming_mail(): void
     {
         $mail1 = DebugIncomingEmailFactory::createOne(['type' => DebugIncomingEmailType::BOUNCE]);

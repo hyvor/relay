@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\ServerTask;
 
 use App\Repository\ServerTaskRepository;
@@ -23,7 +25,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(CustomDnsRecordsChangedEvent::class)]
 class UpdateStateTaskListenerTest extends KernelTestCase
 {
-
     public function test_no_task_when_server_updated_without_create_task_flag(): void
     {
         $server = ServerFactory::createOne();

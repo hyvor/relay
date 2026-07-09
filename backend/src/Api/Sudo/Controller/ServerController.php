@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Input\UpdateServerInput;
@@ -17,10 +19,10 @@ use Symfony\Component\Routing\Attribute\Route;
 #[SudoPermissionRequired(SudoPermission::ACCESS_SUDO)]
 class ServerController extends AbstractController
 {
-
     public function __construct(
         private ServerService $serverService,
-    ) {}
+    ) {
+    }
 
     #[Route('/servers', methods: 'GET')]
     public function getServers(): JsonResponse
@@ -28,7 +30,7 @@ class ServerController extends AbstractController
         $servers = $this->serverService->getServers();
 
         $serverObjects = array_map(
-            fn($server) => new ServerObject($server),
+            fn ($server) => new ServerObject($server),
             $servers
         );
 

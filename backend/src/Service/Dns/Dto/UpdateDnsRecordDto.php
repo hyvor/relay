@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Dns\Dto;
 
 use App\Entity\Type\DnsRecordType;
@@ -13,7 +15,7 @@ class UpdateDnsRecordDto
         }
     }
 
-    private(set) bool $typeSet;
+    public private(set) bool $typeSet;
 
     public string $subdomain {
         set {
@@ -22,7 +24,7 @@ class UpdateDnsRecordDto
         }
     }
 
-    private(set) bool $subdomainSet;
+    public private(set) bool $subdomainSet;
 
     public string $content {
         set {
@@ -31,7 +33,7 @@ class UpdateDnsRecordDto
         }
     }
 
-    private(set) bool $contentSet;
+    public private(set) bool $contentSet;
 
     public int $ttl {
         set {
@@ -40,7 +42,7 @@ class UpdateDnsRecordDto
         }
     }
 
-    private(set) bool $ttlSet;
+    public private(set) bool $ttlSet;
 
     public int $priority {
         set {
@@ -49,5 +51,5 @@ class UpdateDnsRecordDto
         }
     }
 
-    private(set) bool $prioritySet;
+    public private(set) bool $prioritySet;
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Sudo\HealthCheck;
 
 use App\Api\Sudo\Controller\HealthCheckController;
@@ -44,11 +46,11 @@ class GetHealthChecksTest extends WebTestCase
 
         $this->assertArrayHasKey('results', $content);
         $this->assertArrayHasKey('last_checked_at', $content);
-        $this->assertEquals(
+        $this->assertSame(
             $instance->getHealthCheckResults(),
             $content['results']
         );
-        $this->assertEquals(
+        $this->assertSame(
             $instance->getLastHealthCheckAt()?->getTimestamp(),
             $content['last_checked_at']
         );

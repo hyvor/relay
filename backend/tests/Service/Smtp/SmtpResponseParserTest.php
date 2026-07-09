@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Smtp;
 
 use App\Entity\SendAttemptRecipient;
@@ -11,7 +13,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(SmtpResponseParser::class)]
 class SmtpResponseParserTest extends TestCase
 {
-
     // not a bounce
     #[TestWith([250, null, false])]
     #[TestWith([450, '4.2.0', false])]

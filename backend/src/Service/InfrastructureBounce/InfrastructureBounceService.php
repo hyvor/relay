@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\InfrastructureBounce;
 
 use App\Entity\InfrastructureBounce;
@@ -89,4 +91,3 @@ class InfrastructureBounceService
         return $result;
     }
 }
-

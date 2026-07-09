@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Server\Event;
 
 use App\Entity\Server;
@@ -7,7 +9,6 @@ use App\Service\Server\Dto\UpdateServerDto;
 
 class ServerUpdatedEvent
 {
-
     public function __construct(
         private Server $oldServer,
         private Server $server,

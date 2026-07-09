@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Console;
 
 use App\Api\Console\RateLimit\RateLimit;
@@ -15,7 +17,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(RateLimiterProvider::class)]
 class RateLimitTest extends WebTestCase
 {
-
     public function test_adds_rate_limit_headers(): void
     {
         $project = ProjectFactory::createOne();

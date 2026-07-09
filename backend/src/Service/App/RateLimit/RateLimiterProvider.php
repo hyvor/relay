@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\App\RateLimit;
 
 use Psr\Cache\CacheItemPoolInterface;
@@ -10,7 +12,6 @@ use Symfony\Component\RateLimiter\Storage\CacheStorage;
 
 class RateLimiterProvider
 {
-
     public function __construct(
         private LockFactory $lockFactory,
         private CacheItemPoolInterface $cacheItemPool,

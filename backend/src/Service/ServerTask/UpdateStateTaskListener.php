@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\ServerTask;
 
 use App\Service\Dns\Event\CustomDnsRecordsChangedEvent;
@@ -12,7 +14,6 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 #[AsEventListener(CustomDnsRecordsChangedEvent::class, 'onCustomDnsRecordsChanged')]
 class UpdateStateTaskListener
 {
-
     public function __construct(
         private ServerTaskService $serverTaskService,
     ) {

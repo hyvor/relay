@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Console\Domain;
 
 use App\Api\Console\Authorization\Scope;
@@ -14,7 +16,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(DomainObject::class)]
 class GetDomainTest extends WebTestCase
 {
-
     public function test_fails_when_domain_not_found(): void
     {
         $project = ProjectFactory::createOne();
@@ -97,8 +98,8 @@ class GetDomainTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
         $response = $this->getJson();
-        $this->assertEquals($domain->getId(), $response['id']);
-        $this->assertEquals($domain->getDomain(), $response['domain']);
+        $this->assertSame($domain->getId(), $response['id']);
+        $this->assertSame($domain->getDomain(), $response['domain']);
     }
 
 }

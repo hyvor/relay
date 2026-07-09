@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Console\Validation;
 
 use App\Api\Console\Validation\Headers;
@@ -17,7 +19,6 @@ use Symfony\Component\Validator\Test\ConstraintValidatorTestCase;
 #[CoversClass(Headers::class)]
 class HeadersValidationTest extends ConstraintValidatorTestCase
 {
-
     protected function createValidator(): HeadersValidator
     {
         return new HeadersValidator();

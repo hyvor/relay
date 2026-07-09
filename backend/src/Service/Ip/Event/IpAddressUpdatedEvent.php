@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Ip\Event;
 
 use App\Entity\IpAddress;
@@ -7,7 +9,6 @@ use App\Service\Ip\Dto\UpdateIpAddressDto;
 
 readonly class IpAddressUpdatedEvent
 {
-
     public function __construct(
         private IpAddress $ipAddressOld,
         private IpAddress $ipAddress,

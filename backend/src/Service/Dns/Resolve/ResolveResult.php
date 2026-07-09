@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Service\Dns\Resolve;
+declare(strict_types=1);
 
+namespace App\Service\Dns\Resolve;
 
 class ResolveResult
 {
-
     public function __construct(
         public int $status,
 
@@ -45,7 +45,7 @@ class ResolveResult
         /** @var array<array{name: string, data: string, type: int, TTL: int}> $answers */
         $answers = $data['Answer'] ?? [];
         $answers = array_map(
-            fn(array $answer) => new ResolveAnswer(
+            fn (array $answer) => new ResolveAnswer(
                 name: $answer['name'],
                 data: $answer['data'],
                 type: $answer['type'],

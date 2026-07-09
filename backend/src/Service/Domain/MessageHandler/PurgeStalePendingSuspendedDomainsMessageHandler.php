@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Domain\MessageHandler;
 
 use App\Service\Domain\Message\PurgeStalePendingSuspendedDomainsMessage;
@@ -14,7 +16,6 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 #[AsMessageHandler]
 class PurgeStalePendingSuspendedDomainsMessageHandler
 {
-
     public function __construct(
         private Connection $connection,
         private LoggerInterface $logger,

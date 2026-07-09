@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Webhook\MessageHandler;
 
 use App\Entity\WebhookDelivery;
@@ -12,8 +14,7 @@ class ClearOldWebhookDeliveriesMessageHandler
 {
     public function __construct(
         private EntityManagerInterface $em
-    )
-    {
+    ) {
     }
 
     public function __invoke(ClearOldWebhookDeliveriesMessage $message): void

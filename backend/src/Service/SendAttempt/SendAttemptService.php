@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\SendAttempt;
 
 use App\Entity\Send;
@@ -15,7 +17,6 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class SendAttemptService
 {
-
     public function __construct(
         private EntityManagerInterface $em,
         private EventDispatcherInterface $ed,

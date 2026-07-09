@@ -17,7 +17,7 @@ final class Version20250619104621 extends AbstractMigration
     public function up(Schema $schema): void
     {
         $this->addSql(
-        <<<SQL
+            <<<SQL
             CREATE TABLE api_keys (
                 id SERIAL PRIMARY KEY,
                 created_at TIMESTAMPTZ NOT NULL,

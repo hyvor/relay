@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Validation;
 
 use Symfony\Component\Validator\Constraint;
@@ -11,7 +13,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class EmailAddressValidator extends ConstraintValidator
 {
-
     public function __construct(private ValidatorInterface $validator)
     {
     }

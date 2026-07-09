@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Domain;
 
 use App\Entity\Domain;
@@ -10,7 +12,6 @@ use App\Service\Domain\Exception\DkimVerificationFailedException;
 
 class DkimVerificationService
 {
-
     public function __construct(
         private DnsResolveInterface $dnsResolve,
     ) {

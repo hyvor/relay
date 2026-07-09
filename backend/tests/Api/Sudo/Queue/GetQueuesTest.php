@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Sudo\Queue;
 
 use App\Api\Sudo\Controller\QueueController;
@@ -14,7 +16,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(QueueObject::class)]
 class GetQueuesTest extends WebTestCase
 {
-
     public function test_get_queues(): void
     {
         $queue1 = QueueFactory::createTransactional();

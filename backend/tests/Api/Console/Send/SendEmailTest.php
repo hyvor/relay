@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Console\Send;
 
 use App\Api\Console\Authorization\Scope;
@@ -39,7 +41,6 @@ use PHPUnit\Framework\Attributes\TestWith;
 #[CoversClass(SendRecipientSuppressedEvent::class)]
 class SendEmailTest extends WebTestCase
 {
-
     public function test_scope(): void
     {
         QueueFactory::createTransactional();

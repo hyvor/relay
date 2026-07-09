@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Domain;
 
 use App\Service\Domain\Dkim;
@@ -9,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(Dkim::class)]
 class DkimTest extends TestCase
 {
-
     public function test_generate_dkim_functions(): void
     {
         $selector = Dkim::generateDkimSelector();

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Queue;
 
 use App\Entity\Queue;
@@ -9,7 +11,6 @@ use Doctrine\ORM\Query\ResultSetMapping;
 
 class QueueService
 {
-
     public const string TRANSACTIONAL_QUEUE_NAME = 'transactional';
     public const string DISTRIBUTIONAL_QUEUE_NAME = 'distributional';
 

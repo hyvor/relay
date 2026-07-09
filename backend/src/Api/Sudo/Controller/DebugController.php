@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Input\Debug\ParseBounceOrFblInput;
@@ -19,11 +21,11 @@ use Symfony\Component\Routing\Attribute\Route;
 #[SudoPermissionRequired(SudoPermission::ACCESS_SUDO)]
 class DebugController extends AbstractController
 {
-
     public function __construct(
         private GoHttpApi $goHttpApi,
         private DebugIncomingMailService $debugIncomingMailService
-    ) {}
+    ) {
+    }
 
     #[Route('/debug/incoming-mails', methods: 'GET')]
     public function getDebugIncomingMails(Request $request): JsonResponse
@@ -34,7 +36,7 @@ class DebugController extends AbstractController
         $mails = $this->debugIncomingMailService->getIncomingMails($limit, $offset);
 
         return new JsonResponse(
-            array_map(fn($mail) => new DebugIncomingEmailObject($mail), $mails),
+            array_map(fn ($mail) => new DebugIncomingEmailObject($mail), $mails),
         );
     }
 

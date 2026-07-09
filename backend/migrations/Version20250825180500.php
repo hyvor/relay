@@ -37,4 +37,3 @@ final class Version20250825180500 extends AbstractMigration
         $this->addSql("DROP TABLE send_feedback");
     }
 }
-

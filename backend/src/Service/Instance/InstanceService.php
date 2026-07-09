@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Instance;
 
 use App\Entity\Instance;
@@ -62,8 +64,8 @@ class InstanceService
         ] = Dkim::generateDkimKeys();
 
         $newProject = $this->projectService->createProject(
-			0,
-			0,
+            0,
+            0,
             'System',
             ProjectSendType::TRANSACTIONAL,
             isSystemProject: true,

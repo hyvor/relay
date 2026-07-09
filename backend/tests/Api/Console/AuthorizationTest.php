@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Console;
 
 use App\Api\Console\Authorization\AuthorizationListener;
@@ -30,7 +32,6 @@ use Symfony\Component\Clock\MockClock;
 #[CoversClass(AllowedIp::class)]
 class AuthorizationTest extends WebTestCase
 {
-
     protected function shouldEnableAuthFake(): bool
     {
         return false;

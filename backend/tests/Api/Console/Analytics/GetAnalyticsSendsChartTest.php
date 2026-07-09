@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Console\Analytics;
 
 use App\Api\Console\Controller\AnalyticsController;
@@ -17,7 +19,6 @@ use Symfony\Component\Clock\MockClock;
 #[CoversClass(SendAnalyticsService::class)]
 class GetAnalyticsSendsChartTest extends WebTestCase
 {
-
     public function test_gets_sends_chart_data(): void
     {
         Clock::set(new MockClock('2025-07-14'));

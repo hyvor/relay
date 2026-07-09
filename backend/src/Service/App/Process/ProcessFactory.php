@@ -1,12 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\App\Process;
 
 use Symfony\Component\Process\Process;
 
 class ProcessFactory
 {
-
     /**
      * @param string[] $command
      * @param array<string, string>|null $env

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Sudo\Tls;
 
 use App\Api\Sudo\Controller\TlsController;
@@ -16,7 +18,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(TlsCertificateObject::class)]
 class GetMailTlsCertificatesTest extends WebTestCase
 {
-
     public function test_gets_mail_tls(): void
     {
         $current = TlsCertificateFactory::createOne(['type' => TlsCertificateType::MAIL]);

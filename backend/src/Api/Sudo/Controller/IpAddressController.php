@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Input\UpdateIpAddressInput;
@@ -19,12 +21,12 @@ use Symfony\Component\Routing\Attribute\Route;
 #[SudoPermissionRequired(SudoPermission::ACCESS_SUDO)]
 class IpAddressController extends AbstractController
 {
-
     public function __construct(
         private IpAddressService $ipAddressService,
         private QueueService $queueService,
         private Config $appConfig,
-    ) {}
+    ) {
+    }
 
     #[Route('/ip-addresses', methods: 'GET')]
     public function getIpAddresses(): JsonResponse
@@ -32,7 +34,7 @@ class IpAddressController extends AbstractController
         $ipAddresses = $this->ipAddressService->getAllIpAddresses();
 
         $ipAddressObjects = array_map(
-            fn($ipAddress) => new IpAddressObject($ipAddress, $this->appConfig->getInstanceDomain()),
+            fn ($ipAddress) => new IpAddressObject($ipAddress, $this->appConfig->getInstanceDomain()),
             $ipAddresses
         );
 

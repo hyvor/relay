@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Ip;
 
 use App\Service\Ip\CurrentServerIp;
@@ -9,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(CurrentServerIp::class)]
 class CurrentServerIpTest extends TestCase
 {
-
     public function test_get_public_ips(): void
     {
         $ipService = new CurrentServerIp();

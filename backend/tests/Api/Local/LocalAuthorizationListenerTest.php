@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Local;
 
 use App\Api\Local\LocalAuthorizationListener;
@@ -16,7 +18,6 @@ use Symfony\Component\HttpKernel\KernelInterface;
 #[CoversClass(LocalAuthorizationListener::class)]
 class LocalAuthorizationListenerTest extends KernelTestCase
 {
-
     private function getKernel(): KernelInterface
     {
         $kernel = self::$kernel;

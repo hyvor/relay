@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Sudo;
 
 use App\Service\Instance\InstanceService;
@@ -11,12 +13,12 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 #[AsEventListener(UserSignedUpEvent::class, method: 'onUserSignedUp')]
 class SudoListener
 {
-
     public function __construct(
         private InstanceService $instanceService,
         private SudoUserService $sudoUserService,
         private EntityManagerInterface $em,
-    ) {}
+    ) {
+    }
 
     public function onUserSignedUp(UserSignedUpEvent $event): void
     {

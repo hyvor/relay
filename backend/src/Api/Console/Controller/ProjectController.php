@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Controller;
 
 use App\Api\Console\Authorization\AuthorizationListener;
@@ -19,10 +21,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 
-
 class ProjectController extends AbstractController
 {
-
     public function __construct(
         private ProjectService $projectService
     ) {

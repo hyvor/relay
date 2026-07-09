@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Ip;
 
 use App\Entity\IpAddress;
@@ -20,7 +22,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(PtrValidationDto::class)]
 class PtrTest extends KernelTestCase
 {
-
     public function test_get_ptr_domain(): void
     {
         $ipAddress = new IpAddress();

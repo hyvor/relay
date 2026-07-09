@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Management\MessageHandler;
 
 use App\Service\Management\Health\HealthCheckService;
@@ -12,7 +14,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(RunHealthChecksMessageHandler::class)]
 class RunHealthChecksMessageHandlerTest extends KernelTestCase
 {
-
     public function test_calls_health_checks(): void
     {
         $logger = $this->getTestLogger();

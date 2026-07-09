@@ -24,7 +24,7 @@ final class Version20250626162153 extends AbstractMigration
 
         // Create suppressions table
         $this->addSql(
-        <<<SQL
+            <<<SQL
             CREATE TABLE suppressions (
                 id SERIAL PRIMARY KEY,
                 created_at TIMESTAMPTZ NOT NULL,

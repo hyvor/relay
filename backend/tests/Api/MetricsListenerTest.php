@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api;
 
 use App\Api\Console\Metric\MetricsListener;
@@ -13,7 +15,6 @@ use Prometheus\MetricFamilySamples;
 #[CoversClass(PrometheusFactory::class)]
 class MetricsListenerTest extends WebTestCase
 {
-
     protected function setUp(): void
     {
         parent::setUp();

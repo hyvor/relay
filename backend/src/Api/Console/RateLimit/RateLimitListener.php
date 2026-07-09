@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\RateLimit;
 
 use App\Api\Console\Authorization\AuthorizationListener;
@@ -18,7 +20,6 @@ use Symfony\Component\RateLimiter\LimiterInterface;
 #[AsEventListener(event: KernelEvents::RESPONSE, method: 'onResponse')]
 class RateLimitListener
 {
-
     public function __construct(
         private RateLimit $rateLimit,
         private RateLimiterProvider $rateLimiterProvider,

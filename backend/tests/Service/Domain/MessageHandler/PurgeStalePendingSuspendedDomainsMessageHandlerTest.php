@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Domain\MessageHandler;
 
 use App\Entity\Domain;
@@ -16,7 +18,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(PurgeStalePendingSuspendedDomainsMessageHandler::class)]
 class PurgeStalePendingSuspendedDomainsMessageHandlerTest extends KernelTestCase
 {
-
     public function test_purges(): void
     {
         // deleted
@@ -62,7 +63,7 @@ class PurgeStalePendingSuspendedDomainsMessageHandlerTest extends KernelTestCase
         $domains = $this->em->getRepository(Domain::class)->findAll();
         $this->assertCount(3, $domains);
 
-        $domainsIds = array_map(fn(Domain $domain) => $domain->getId(), $domains);
+        $domainsIds = array_map(fn (Domain $domain) => $domain->getId(), $domains);
 
         $this->assertNotContains($domain1->getId(), $domainsIds);
         $this->assertNotContains($domain2->getId(), $domainsIds);

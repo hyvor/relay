@@ -1,10 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Send;
 
 class Compliance
 {
-
     public const float BOUNCE_RATE_WARNING = 0.02; // 2%
     public const float BOUNCE_RATE_ERROR = 0.05; // 5%
 

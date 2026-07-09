@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Domain;
 
 use App\Entity\Domain;
@@ -19,7 +21,6 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class DomainService
 {
-
     use ClockAwareTrait;
 
     public function __construct(

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Domain\Message;
 
 use App\Service\App\MessageTransport;

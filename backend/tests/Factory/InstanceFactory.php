@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Factory;
 
 use App\Entity\Instance;
@@ -10,7 +12,6 @@ use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
  */
 final class InstanceFactory extends PersistentProxyObjectFactory
 {
-
     public function __construct()
     {
         parent::__construct();

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Sudo\Input;
 
 use App\Util\OptionalPropertyTrait;

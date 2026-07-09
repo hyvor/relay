@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\SelfHosted;
 
 use App\Service\App\Config;
@@ -16,7 +18,6 @@ use Hyvor\Internal\SelfHosted\Provider\TelemetryProviderInterface;
 
 class RelayTelemetryProvider implements TelemetryProviderInterface
 {
-
     private string $instanceUuid;
     private string $version;
 

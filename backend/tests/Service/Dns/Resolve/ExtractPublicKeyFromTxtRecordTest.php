@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Dns\Resolve;
 
 use App\Service\Domain\Dkim;

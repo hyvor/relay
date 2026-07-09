@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Local;
 
 use App\Api\Local\Controller\LocalController;
@@ -9,7 +11,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(LocalController::class)]
 class GetMetricsTest extends WebTestCase
 {
-
     public function test_prometheus_metrics(): void
     {
         $response = $this->localApi("GET", "/metrics");

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Idempotency;
 
 use App\Entity\ApiIdempotencyRecord;
@@ -11,19 +13,16 @@ use Symfony\Component\Serializer\Encoder\JsonEncoder;
 
 class IdempotencyService
 {
-
     public function __construct(
         private EntityManagerInterface $em,
-    )
-    {
+    ) {
     }
 
     public function getIdempotencyRecordByProjectEndpointAndKey(
         Project $project,
         string $endpoint,
         string $key
-    ): ?ApiIdempotencyRecord
-    {
+    ): ?ApiIdempotencyRecord {
         return $this->em->getRepository(ApiIdempotencyRecord::class)
             ->findOneBy([
                 'project' => $project,
@@ -37,8 +36,7 @@ class IdempotencyService
         string $endpoint,
         string $key,
         JsonResponse $jsonResponse
-    ): ApiIdempotencyRecord
-    {
+    ): ApiIdempotencyRecord {
 
         $jsonDecode = new JsonDecode();
         /** @var array<mixed> $data */

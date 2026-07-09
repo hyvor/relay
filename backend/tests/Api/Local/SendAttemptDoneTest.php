@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Local;
 
 use App\Api\Local\Controller\LocalController;
@@ -31,7 +33,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(SendAttemptCreatedEvent::class)]
 class SendAttemptDoneTest extends WebTestCase
 {
-
     public function test_dispatches_events(): void
     {
         $attempt1 = SendAttemptFactory::createOne();

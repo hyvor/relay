@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Tls\MessageHandler;
 
 use App\Service\App\MessageTransport;
@@ -14,7 +16,6 @@ use App\Service\Tls\MailTlsGenerator;
 use App\Service\Tls\Message\GenerateCertificateMessage;
 use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\LockFactory;
-
 
 #[CoversClass(CheckMailCertificateValidityMessageHandler::class)]
 #[CoversClass(TlsCertificateService::class)]

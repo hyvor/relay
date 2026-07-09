@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Sudo\Object;
 
 use App\Entity\InfrastructureBounce;
@@ -25,4 +27,3 @@ class InfrastructureBounceObject
         $this->send_recipient_id = $bounce->getSendRecipientId();
     }
 }
-

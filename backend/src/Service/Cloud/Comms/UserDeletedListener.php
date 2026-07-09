@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Cloud\Comms;
 
 use App\Entity\ProjectUser;
@@ -11,22 +13,21 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 #[AsEventListener]
 class UserDeletedListener
 {
-	public function __construct(
+    public function __construct(
         private EntityManagerInterface $em,
         private ProjectUserService $puService,
-    )
-    {
+    ) {
     }
 
     public function __invoke(UserDeleted $event): void
-	{
-		$proj_users = $this->em->getRepository(ProjectUser::class)->findBy([
+    {
+        $proj_users = $this->em->getRepository(ProjectUser::class)->findBy([
             'user_id' => $event->getUserId()
         ]);
 
-		foreach($proj_users as $proj_user) {
-			$this->puService->deleteProjectUser($proj_user, flush: false);
-		}
+        foreach ($proj_users as $proj_user) {
+            $this->puService->deleteProjectUser($proj_user, flush: false);
+        }
 
         $this->em->flush();
     }

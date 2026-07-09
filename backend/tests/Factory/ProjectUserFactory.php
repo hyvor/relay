@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Factory;
 
 use App\Api\Console\Authorization\Scope;
@@ -13,8 +15,6 @@ use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
  */
 class ProjectUserFactory extends PersistentProxyObjectFactory
 {
-
-
     public function __construct()
     {
         parent::__construct();

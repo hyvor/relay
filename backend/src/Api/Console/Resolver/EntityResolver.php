@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Resolver;
 
 use App\Api\Console\Authorization\AuthorizationListener;
@@ -20,7 +22,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class EntityResolver implements ValueResolverInterface
 {
-
     private const ENTITIES = [
         'sends' => Send::class,
         'domains' => Domain::class,

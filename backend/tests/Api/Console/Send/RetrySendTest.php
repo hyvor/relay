@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Console\Send;
 
 use App\Api\Console\Authorization\Scope;
@@ -19,7 +21,6 @@ use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 #[CoversClass(SendService::class)]
 class RetrySendTest extends WebTestCase
 {
-
     use ClockSensitiveTrait;
 
     public function test_retry_failed_recipients(): void

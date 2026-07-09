@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Console\Analytics;
 
 use App\Api\Console\Controller\AnalyticsController;
@@ -15,7 +17,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(SendAnalyticsService::class)]
 class GetAnalyticsStatsTest extends WebTestCase
 {
-
     public function test_gets_default_30d(): void
     {
         $project = ProjectFactory::createOne();
@@ -61,7 +62,7 @@ class GetAnalyticsStatsTest extends WebTestCase
         $json = $this->getJson();
         $this->assertSame(2, $json['sends']);
         $this->assertSame(0.5, $json['bounce_rate']);
-        $this->assertEquals(0.0, $json['complaint_rate']);
+        $this->assertSame(0.0, $json['complaint_rate']);
     }
 
     public function test_gets_24h(): void
@@ -80,8 +81,8 @@ class GetAnalyticsStatsTest extends WebTestCase
 
         $json = $this->getJson();
         $this->assertSame(1, $json['sends']);
-        $this->assertEquals(0.0, $json['bounce_rate']);
-        $this->assertEquals(0.0, $json['complaint_rate']);
+        $this->assertSame(0.0, $json['bounce_rate']);
+        $this->assertSame(0.0, $json['complaint_rate']);
     }
 
     public function test_invalid_period_fails(): void

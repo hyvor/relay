@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Console\Domain;
 
 use App\Api\Console\Controller\DomainController;
@@ -21,7 +23,6 @@ use PHPUnit\Framework\Attributes\TestWith;
 #[CoversClass(DkimPrivateKeyValidator::class)]
 class CreateDomainTest extends WebTestCase
 {
-
     public function test_fails_when_domain_already_exists(): void
     {
         $project = ProjectFactory::createOne();

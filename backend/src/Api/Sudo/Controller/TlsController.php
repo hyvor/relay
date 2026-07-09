@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Object\TlsCertificateObject;
@@ -18,11 +20,11 @@ use Symfony\Component\Routing\Attribute\Route;
 #[SudoPermissionRequired(SudoPermission::ACCESS_SUDO)]
 class TlsController extends AbstractController
 {
-
     public function __construct(
         private InstanceService $instanceService,
         private TlsCertificateService $tlsCertificateService,
-    ) {}
+    ) {
+    }
 
     #[Route('/tls/mail-certs', methods: 'GET')]
     public function getMailTlsCertificates(): JsonResponse

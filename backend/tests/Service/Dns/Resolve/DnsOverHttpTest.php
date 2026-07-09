@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Dns\Resolve;
 
 use App\Service\Dns\Resolve\DnsOverHttp;
@@ -19,7 +21,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 #[CoversClass(ResolveAnswer::class)]
 class DnsOverHttpTest extends KernelTestCase
 {
-
     public function test_dns_success(): void
     {
         $mockResponse = new JsonMockResponse([

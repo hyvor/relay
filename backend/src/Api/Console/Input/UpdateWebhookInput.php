@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Input;
 
 use App\Entity\Type\WebhooksEventEnum;
-
 use App\Util\OptionalPropertyTrait;
 use Symfony\Component\Validator\Constraints as Assert;
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Object\QueueObject;
@@ -13,10 +15,10 @@ use Symfony\Component\Routing\Attribute\Route;
 #[SudoPermissionRequired(SudoPermission::ACCESS_SUDO)]
 class QueueController extends AbstractController
 {
-
     public function __construct(
         private QueueService $queueService
-    ) {}
+    ) {
+    }
 
     #[Route('/queues', methods: 'GET')]
     public function getQueues(): JsonResponse
@@ -24,7 +26,7 @@ class QueueController extends AbstractController
         $queues = $this->queueService->getAllQueues();
 
         $queueObjects = array_map(
-            fn($queue) => new QueueObject($queue),
+            fn ($queue) => new QueueObject($queue),
             $queues
         );
 

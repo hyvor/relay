@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Object;
 
 use App\Api\Console\Authorization\Scope;
@@ -8,7 +10,6 @@ use Hyvor\Internal\Auth\AuthUser;
 
 class ProjectUserObject
 {
-
     public int $id;
     public int $created_at;
     /**

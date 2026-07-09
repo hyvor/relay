@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Tls;
 
 use App\Entity\Instance;
@@ -13,7 +15,6 @@ use Symfony\Component\Clock\ClockAwareTrait;
 
 class TlsCertificateService
 {
-
     use ClockAwareTrait;
 
     public function __construct(

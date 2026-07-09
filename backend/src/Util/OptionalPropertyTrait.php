@@ -1,10 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Util;
 
 trait OptionalPropertyTrait
 {
-
     /**
      * Checks if the property is INITIALIZED
      */

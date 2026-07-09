@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Console;
 
 use App\Api\Console\Controller\SendController;
@@ -19,7 +21,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 #[CoversClass(EntityResolver::class)]
 class EntityResolverTest extends KernelTestCase
 {
-
     private function getEntityResolver(): EntityResolver
     {
         $resolver = $this->container->get(EntityResolver::class);

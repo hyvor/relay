@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Console;
 
 use App\Api\Console\Resolver\ProjectResolver;
@@ -12,7 +14,6 @@ use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
 #[CoversClass(ProjectResolver::class)]
 class ProjectResolverTest extends TestCase
 {
-
     public function test_returns_empty_on_other_controllers(): void
     {
         $request = Request::create('/');

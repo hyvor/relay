@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Object\InstanceObject;
@@ -18,13 +20,13 @@ use Symfony\Component\Routing\Attribute\Route;
 #[SudoPermissionRequired(SudoPermission::ACCESS_SUDO)]
 class SudoController extends AbstractController
 {
-
     public function __construct(
         private Config $config,
         private InternalConfig $internalConfig,
         private InstanceService $instanceService,
         private SudoAuthorizationListener $sudoAuthorizationListener,
-    ) {}
+    ) {
+    }
 
     #[Route('/init', methods: 'POST')]
     public function initSudo(): JsonResponse

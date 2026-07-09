@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Sudo\DnsRecord;
 
 use App\Api\Sudo\Controller\DnsRecordController;
@@ -15,7 +17,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(DnsRecordService::class)]
 class DeleteDnsRecordTest extends WebTestCase
 {
-
     public function test_when_dns_record_not_found_returns_404(): void
     {
         $this->sudoApi("DELETE", "/dns-records/999999");

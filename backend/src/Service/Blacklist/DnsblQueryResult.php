@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Blacklist;
 
 use Symfony\Component\DependencyInjection\Attribute\Exclude;
@@ -7,7 +9,6 @@ use Symfony\Component\DependencyInjection\Attribute\Exclude;
 #[Exclude]
 class DnsblQueryResult
 {
-
     public function __construct(
         private bool $blocked,
         private ?string $resolvedIp = null,

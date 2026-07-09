@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\Sudo;
 
 use App\Service\Sudo\SudoListener;
@@ -14,7 +16,6 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 #[CoversClass(SudoListener::class)]
 class SudoListenerTest extends KernelTestCase
 {
-
     public function test_on_user_signup(): void
     {
         $instance = InstanceFactory::createOne();

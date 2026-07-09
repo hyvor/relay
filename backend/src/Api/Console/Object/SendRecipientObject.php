@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Object;
 
 use App\Entity\SendRecipient;
@@ -8,7 +10,6 @@ use App\Entity\Type\SendRecipientType;
 
 class SendRecipientObject
 {
-
     public int $id;
     public SendRecipientType $type;
     public string $address;

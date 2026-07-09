@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Symfony\Config\MonologConfig;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 

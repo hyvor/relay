@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Tests\Api\Console\Webhook;
+declare(strict_types=1);
 
+namespace App\Tests\Api\Console\Webhook;
 
 use App\Api\Console\Controller\WebhookController;
 use App\Api\Console\Object\WebhookObject;

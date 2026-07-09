@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Api\Sudo\Input\Debug;
+declare(strict_types=1);
 
+namespace App\Api\Sudo\Input\Debug;
 
 use App\Entity\Type\DebugIncomingEmailType;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class ParseBounceOrFblInput
 {
-
     #[Assert\NotBlank]
     public string $raw;
 

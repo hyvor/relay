@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\ApiKey;
 
 use Symfony\Component\HttpFoundation\IpUtils;

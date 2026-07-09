@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\App\Process;
 
 use App\Service\App\Process\ProcessFactory;
@@ -9,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ProcessFactory::class)]
 class ProcessFactoryTest extends TestCase
 {
-
     public function test_create_process(): void
     {
         $factory = new ProcessFactory();

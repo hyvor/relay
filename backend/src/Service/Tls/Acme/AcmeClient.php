@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Tls\Acme;
 
 use App\Service\Dns\Resolve\DnsResolveInterface;
@@ -23,7 +25,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class AcmeClient implements LoggerAwareInterface
 {
-
     use LoggerAwareTrait;
 
     public const string DIRECTORY_URL_LETSENCRYPT_PRODUCTION = 'https://acme-v02.api.letsencrypt.org/directory';
@@ -343,7 +344,7 @@ class AcmeClient implements LoggerAwareInterface
         $end = "-----END CERTIFICATE REQUEST-----";
         $pem = substr($pem, strpos($pem, $begin) + strlen($begin));
         $pem = substr($pem, 0, (int)strpos($pem, $end));
-        return base64_decode($pem);
+        return base64_decode($pem, true);
     }
 
     /**

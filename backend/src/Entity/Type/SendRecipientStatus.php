@@ -1,10 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity\Type;
 
 enum SendRecipientStatus: string
 {
-
     // message is queued to be sent by a worker
     case QUEUED = 'queued';
 

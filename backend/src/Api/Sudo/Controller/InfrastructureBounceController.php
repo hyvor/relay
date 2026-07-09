@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Object\InfrastructureBounceObject;
@@ -17,7 +19,8 @@ class InfrastructureBounceController extends AbstractController
 {
     public function __construct(
         private InfrastructureBounceService $infrastructureBounceService,
-    ) {}
+    ) {
+    }
 
     #[Route('/infrastructure-bounces', methods: 'GET')]
     public function getInfrastructureBounces(Request $request): JsonResponse
@@ -34,7 +37,7 @@ class InfrastructureBounceController extends AbstractController
             $limit,
             $offset,
             $isRead
-        )->map(fn($bounce) => new InfrastructureBounceObject($bounce));
+        )->map(fn ($bounce) => new InfrastructureBounceObject($bounce));
 
         return $this->json($bounces);
     }

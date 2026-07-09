@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Resolver;
 
 use App\Api\Console\Authorization\AuthorizationListener;
@@ -10,7 +12,6 @@ use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
 
 class ProjectResolver implements ValueResolverInterface
 {
-
     public function __construct()
     {
     }

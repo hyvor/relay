@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Sudo\Object;
 
 use App\Entity\Instance;
@@ -8,7 +10,6 @@ use App\Service\Instance\InstanceService;
 
 class InstanceObject
 {
-
     public string $domain;
 
     public string $dkim_host;

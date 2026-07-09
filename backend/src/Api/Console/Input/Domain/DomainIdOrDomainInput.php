@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Input\Domain;
 
 use App\Entity\Domain;
@@ -10,7 +12,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class DomainIdOrDomainInput
 {
-
     #[Assert\When(
         'this.domain == null',
         constraints: [

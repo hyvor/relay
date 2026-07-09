@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\ProjectUser;
 
 use App\Entity\Project;
@@ -10,11 +12,10 @@ use Symfony\Component\Clock\ClockAwareTrait;
 
 class ProjectUserService
 {
-
     use ClockAwareTrait;
 
     public function __construct(
-		private EntityManagerInterface $em,
+        private EntityManagerInterface $em,
     ) {
     }
 
@@ -34,7 +35,7 @@ class ProjectUserService
             ->setParameter('orgId', $orgId)
             ->getQuery()
             ->getResult();
-	}
+    }
 
     /**
      * @return ProjectUser[]
@@ -48,7 +49,7 @@ class ProjectUserService
     {
         return $this->em->getRepository(ProjectUser::class)
             ->findOneBy(['project' => $project, 'user_id' => $userId]);
-	}
+    }
 
     /**
      * @param string[] $scopes
@@ -87,8 +88,7 @@ class ProjectUserService
     public function deleteProjectUser(
         ProjectUser $projectUser,
         bool $flush = true
-    ): void
-    {
+    ): void {
         $this->em->remove($projectUser);
 
         if ($flush) {

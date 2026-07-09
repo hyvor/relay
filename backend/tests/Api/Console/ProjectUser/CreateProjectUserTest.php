@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Console\ProjectUser;
 
 use App\Api\Console\Controller\ProjectUserController;
@@ -20,7 +22,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(ProjectUserObject::class)]
 class CreateProjectUserTest extends WebTestCase
 {
-
     protected function setUp(): void
     {
         parent::setUp();

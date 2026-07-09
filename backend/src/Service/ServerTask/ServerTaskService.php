@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\ServerTask;
 
 use App\Entity\Server;
@@ -11,7 +13,6 @@ use Symfony\Component\Clock\ClockAwareTrait;
 
 class ServerTaskService
 {
-
     use ClockAwareTrait;
 
     public function __construct(

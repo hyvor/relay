@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Api\Local;
 
 use App\Api\Local\Controller\LocalController;
@@ -27,7 +29,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(TlsCertificateService::class)]
 class GetStateTest extends WebTestCase
 {
-
     public function test_cannot_call_from_non_localhost_ip(): void
     {
         $response = $this->localApi(

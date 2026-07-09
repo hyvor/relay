@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Idempotency\MessageHandler;
 
 use App\Entity\ApiIdempotencyRecord;
@@ -10,11 +12,9 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 #[AsMessageHandler]
 class ClearExpiredIdempotencyRecordsMessageHandler
 {
-
     public function __construct(
         private EntityManagerInterface $em
-    )
-    {
+    ) {
     }
 
     public function __invoke(ClearExpiredIdempotencyRecordsMessage $message): void

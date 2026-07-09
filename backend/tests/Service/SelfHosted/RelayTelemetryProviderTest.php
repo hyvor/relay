@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\SelfHosted;
 
 use App\Entity\Type\DomainStatus;
@@ -33,7 +35,6 @@ use Hyvor\Internal\Auth\Oidc\OidcUserFactory;
 #[CoversClass(WebhookDeliveryService::class)]
 class RelayTelemetryProviderTest extends KernelTestCase
 {
-
     public function test_gets_telemetry_data(): void
     {
         // ======= Add Data
@@ -97,26 +98,26 @@ class RelayTelemetryProviderTest extends KernelTestCase
 
         // ======= ASSERT
         $payload = $service->getPayload();
-        $this->assertEquals($instance->getUuid(), $service->getInstanceUuid());
-        $this->assertEquals('0.0.0', $service->getVersion());
-        $this->assertEquals(2, $payload['servers_count']);
-        $this->assertEquals(1, $payload['ip_addresses_count']);
-        $this->assertEquals(2, $payload['queues_count']); // from sends
-        $this->assertEquals(3, $payload['workers_api_count']);
-        $this->assertEquals(4, $payload['workers_email_count']);
-        $this->assertEquals(5, $payload['workers_incoming_count']);
-        $this->assertEquals(6, $payload['workers_webhook_count']);
-        $this->assertEquals(3, $payload['users_count']);
-        $this->assertEquals(5, $payload['projects_count']); // 4 created + 1 system project
-        $this->assertEquals(5, $payload['domains_count']);
-        $this->assertEquals(3, $payload['domains_active_count']);
-        $this->assertEquals(1, $payload['sends_24h_count']);
-        $this->assertEquals(8, $payload['recipients_24h_count']);
-        $this->assertEquals(2, $payload['recipients_24h_accepted_count']);
-        $this->assertEquals(3, $payload['recipients_24h_bounced_count']);
-        $this->assertEquals(1, $payload['recipients_24h_complained_count']);
-        $this->assertEquals(1, $payload['recipients_24h_failed_count']);
-        $this->assertEquals(1, $payload['recipients_24h_suppressed_count']);
+        $this->assertSame($instance->getUuid(), $service->getInstanceUuid());
+        $this->assertSame('0.0.0', $service->getVersion());
+        $this->assertSame(2, $payload['servers_count']);
+        $this->assertSame(1, $payload['ip_addresses_count']);
+        $this->assertSame(2, $payload['queues_count']); // from sends
+        $this->assertSame(3, $payload['workers_api_count']);
+        $this->assertSame(4, $payload['workers_email_count']);
+        $this->assertSame(5, $payload['workers_incoming_count']);
+        $this->assertSame(6, $payload['workers_webhook_count']);
+        $this->assertSame(3, $payload['users_count']);
+        $this->assertSame(5, $payload['projects_count']); // 4 created + 1 system project
+        $this->assertSame(5, $payload['domains_count']);
+        $this->assertSame(3, $payload['domains_active_count']);
+        $this->assertSame(1, $payload['sends_24h_count']);
+        $this->assertSame(8, $payload['recipients_24h_count']);
+        $this->assertSame(2, $payload['recipients_24h_accepted_count']);
+        $this->assertSame(3, $payload['recipients_24h_bounced_count']);
+        $this->assertSame(1, $payload['recipients_24h_complained_count']);
+        $this->assertSame(1, $payload['recipients_24h_failed_count']);
+        $this->assertSame(1, $payload['recipients_24h_suppressed_count']);
     }
 
 }

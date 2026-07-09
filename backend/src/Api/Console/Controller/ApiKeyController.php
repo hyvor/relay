@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Controller;
 
 use App\Api\Console\Authorization\Scope;
@@ -48,7 +50,7 @@ class ApiKeyController extends AbstractController
     public function getApiKeys(Project $project): JsonResponse
     {
         $apiKeys = $this->apiKeyService->getApiKeysForProject($project);
-        $apiKeyObjects = array_map(fn(ApiKey $apiKey) => new ApiKeyObject($apiKey), $apiKeys);
+        $apiKeyObjects = array_map(fn (ApiKey $apiKey) => new ApiKeyObject($apiKey), $apiKeys);
 
         return $this->json($apiKeyObjects);
     }

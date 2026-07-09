@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Management\Health;
 
 use App\Entity\IpAddress;
@@ -8,7 +10,6 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class AllActiveIpsHaveCorrectPtrHealthCheck extends HealthCheckAbstract
 {
-
     public function __construct(
         private EntityManagerInterface $em,
         private IpAddressService $ipAddressService,

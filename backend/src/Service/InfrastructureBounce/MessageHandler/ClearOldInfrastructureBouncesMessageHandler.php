@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\InfrastructureBounce\MessageHandler;
 
 use App\Service\InfrastructureBounce\Message\ClearOldInfrastructureBouncesMessage;
@@ -9,7 +11,6 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 #[AsMessageHandler]
 class ClearOldInfrastructureBouncesMessageHandler
 {
-
     public function __construct(private EntityManagerInterface $em)
     {
     }
@@ -27,4 +28,3 @@ class ClearOldInfrastructureBouncesMessageHandler
     }
 
 }
-

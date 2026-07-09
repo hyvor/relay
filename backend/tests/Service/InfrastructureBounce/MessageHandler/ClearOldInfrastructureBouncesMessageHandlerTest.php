@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service\InfrastructureBounce\MessageHandler;
 
 use App\Entity\InfrastructureBounce;
@@ -12,7 +14,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(ClearOldInfrastructureBouncesMessageHandler::class)]
 class ClearOldInfrastructureBouncesMessageHandlerTest extends KernelTestCase
 {
-
     public function test_deletes(): void
     {
         $bounce1 = InfrastructureBounceFactory::createOne(['created_at' => new \DateTimeImmutable('-2 years')]);
@@ -28,10 +29,9 @@ class ClearOldInfrastructureBouncesMessageHandlerTest extends KernelTestCase
         $bounces = $this->em->getRepository(InfrastructureBounce::class)->findAll();
         $this->assertCount(2, $bounces);
 
-        $bounceIds = array_map(fn(InfrastructureBounce $bounce) => $bounce->getId(), $bounces);
+        $bounceIds = array_map(fn (InfrastructureBounce $bounce) => $bounce->getId(), $bounces);
         $this->assertContains($bounce4->getId(), $bounceIds);
         $this->assertContains($bounce5->getId(), $bounceIds);
     }
 
 }
-

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Console\Controller;
 
 use App\Api\Console\Authorization\Scope;
@@ -26,8 +28,8 @@ class ProjectUserController extends AbstractController
 {
     public function __construct(
         private ProjectUserService $projectUserService,
-		private AuthInterface $auth,
-		private CommsInterface $comms,
+        private AuthInterface $auth,
+        private CommsInterface $comms,
         private InternalConfig $internalConfig,
     ) {
     }
@@ -46,7 +48,7 @@ class ProjectUserController extends AbstractController
         $authUsers = $this->auth->fromIds(array_keys($projectUsersById));
 
         return $this->json(array_map(
-            fn($authUser) => new ProjectUserObject(
+            fn ($authUser) => new ProjectUserObject(
                 $projectUsersById[$authUser->id],
                 $authUser
             ),
@@ -58,36 +60,36 @@ class ProjectUserController extends AbstractController
     #[ScopeRequired(Scope::PROJECT_WRITE)]
     public function addProjectUser(
         Project $project,
-        #[MapRequestPayload] CreateProjectUserInput $input): JsonResponse
-    {
+        #[MapRequestPayload] CreateProjectUserInput $input
+    ): JsonResponse {
         $authUser = $this->auth->fromId($input->user_id);
         if ($authUser === null) {
             throw new NotFoundHttpException('User with id ' . $input->user_id . ' not found.');
-		}
+        }
 
         if ($this->projectUserService->getProjectUser($project, $authUser->id) !== null) {
             throw new BadRequestHttpException('User is already added to the project');
         }
 
-		if ($this->internalConfig->getDeployment() === Deployment::CLOUD) {
-			$organizationId = $project->getOrganizationId();
-			assert($organizationId !== null);
+        if ($this->internalConfig->getDeployment() === Deployment::CLOUD) {
+            $organizationId = $project->getOrganizationId();
+            assert($organizationId !== null);
 
-			try {
-				$verification = $this->comms->send(
-					new VerifyMember(
-						$organizationId,
-						$authUser->id
-					),
-				);
-			} catch (CommsApiFailedException $e) {
-				throw new BadRequestHttpException('Unable to verify the user.');
-			}
+            try {
+                $verification = $this->comms->send(
+                    new VerifyMember(
+                        $organizationId,
+                        $authUser->id
+                    ),
+                );
+            } catch (CommsApiFailedException $e) {
+                throw new BadRequestHttpException('Unable to verify the user.');
+            }
 
-			if (!$verification->isMember()) {
-				throw new BadRequestHttpException('Unable to find the user in the organization');
-			}
-		}
+            if (!$verification->isMember()) {
+                throw new BadRequestHttpException('Unable to find the user in the organization');
+            }
+        }
 
         $projectUser = $this->projectUserService->createProjectUser($project, $authUser->id, $input->scopes);
 

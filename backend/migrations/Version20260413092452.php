@@ -22,5 +22,7 @@ final class Version20260413092452 extends AbstractMigration
         $this->addSql("ALTER TABLE sudo_users ADD COLUMN role TEXT NOT NULL DEFAULT 'sudo'");
     }
 
-    public function down(Schema $schema): void {}
+    public function down(Schema $schema): void
+    {
+    }
 }

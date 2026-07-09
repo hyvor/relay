@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Tls\Command;
 
 use App\Service\App\MessageTransport;
@@ -13,7 +15,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 #[AsCommand('tls:generate-mail-certificate', 'Generates a TLS certificate for mail servers')]
 class GenerateMailTlsCertificateCommand extends Command
 {
-
     public function __construct(
         private MailTlsGenerator $mailTlsGenerator,
     ) {

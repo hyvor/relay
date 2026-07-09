@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\App\Env;
 
 use Symfony\Component\DependencyInjection\EnvVarProcessorInterface;
