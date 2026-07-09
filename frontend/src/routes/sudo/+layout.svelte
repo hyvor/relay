@@ -93,8 +93,6 @@
 								<InstanceDomain />
 
 								<NavLinkGroup activeBackground="var(--accent-light)">
-									<div class="nav-title">Infrastructure</div>
-
 									<NavLink
 										href="/sudo/health"
 										active={page.url.pathname === '/sudo/health'}
@@ -132,27 +130,27 @@
 										{/snippet}
 										Settings
 									</NavLink>
-                  
-                  <div class="section-div"></div>
 
-							<NavLink
-								href="/sudo/projects"
-								active={page.url.pathname.startsWith('/sudo/projects')}
-							>
-								{#snippet start()}
-									<IconCardList />
-								{/snippet}
-								Projects
-							</NavLink>
-							<NavLink
-								href="/sudo/sends"
-								active={page.url.pathname.startsWith('/sudo/sends')}
-							>
-								{#snippet start()}
-									<IconEnvelope />
-								{/snippet}
-								Sends
-							</NavLink>
+									<div class="section-div"></div>
+
+									<NavLink
+										href="/sudo/projects"
+										active={page.url.pathname.startsWith('/sudo/projects')}
+									>
+										{#snippet start()}
+											<IconCardList />
+										{/snippet}
+										Projects
+									</NavLink>
+									<NavLink
+										href="/sudo/sends"
+										active={page.url.pathname.startsWith('/sudo/sends')}
+									>
+										{#snippet start()}
+											<IconEnvelope />
+										{/snippet}
+										Sends
+									</NavLink>
 
 									<div class="section-div"></div>
 

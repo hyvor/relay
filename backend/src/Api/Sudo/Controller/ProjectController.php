@@ -2,6 +2,8 @@
 
 namespace App\Api\Sudo\Controller;
 
+use App\Api\Sudo\Input\Project\GetProjectOrganizationsInput;
+use App\Api\Sudo\Input\Project\GetProjectsInput;
 use App\Api\Sudo\Object\OrganizationObject;
 use App\Api\Sudo\Object\ProjectObject;
 use App\Entity\Project;
@@ -12,7 +14,8 @@ use Hyvor\Internal\Auth\Dto\Organization;
 use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Attribute\MapQueryString;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
@@ -26,59 +29,35 @@ class ProjectController extends AbstractController
     ) {}
 
     #[Route('/projects', methods: 'GET')]
-    public function getProjects(Request $request): JsonResponse
+    public function getProjects(#[MapRequestPayload] GetProjectsInput $input): JsonResponse
     {
-        $limit = $request->query->getInt('limit', 50);
-        $beforeId = $request->query->has('before_id')
-            ? $request->query->getInt('before_id')
-            : null;
-
-        $search = null;
-        if ($request->query->has('search')) {
-            $value = trim($request->query->getString('search'));
-            if ($value !== '') {
-                $search = $value;
-            }
-        }
-
-        $organizationId = $request->query->has('organization_id')
-            ? $request->query->getInt('organization_id')
-            : null;
-
-        $projects = $this->projectService->getProjects($limit, $beforeId, $search, $organizationId);
+        $projects = $this->projectService->getProjects(
+            $input->limit,
+            $input->before_id,
+            $input->search,
+            $input->organization_id,
+        );
 
         $organizations = $this->resolveOrganizations($projects);
 
         return $this->json([
             'projects' => array_map(
                 fn(Project $project) => new ProjectObject($project),
-                $projects
+                $projects,
             ),
-            'orgs' => array_values(array_map(
-                fn(Organization $org) => new OrganizationObject($org),
-                $organizations
-            )),
+            'orgs' => array_values(
+                array_map(
+                    fn(Organization $org) => new OrganizationObject($org),
+                    $organizations,
+                ),
+            ),
         ]);
     }
 
-    /**
-     * Distinct organizations referenced by projects, for the filter dropdown.
-     *
-     * Paginated by organization id (descending) via a `before_id` cursor:
-     * organization names live in the auth service and can only be resolved by
-     * id, so we cannot load every organization at once.
-     */
     #[Route('/projects/organizations', methods: 'GET')]
-    public function getProjectOrganizations(Request $request): JsonResponse
+    public function getProjectOrganizations(#[MapQueryString] GetProjectOrganizationsInput $input): JsonResponse
     {
-        $limit = $request->query->getInt('limit', 50);
-        $limit = max(1, min($limit, 100));
-
-        $beforeId = $request->query->has('before_id')
-            ? $request->query->getInt('before_id')
-            : null;
-
-        $orgIds = $this->projectService->getDistinctOrganizationIds($limit, $beforeId);
+        $orgIds = $this->projectService->getDistinctOrganizationIds($input->limit, $input->before_id);
 
         if ($orgIds === []) {
             return $this->json([]);
