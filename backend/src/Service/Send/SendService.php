@@ -13,6 +13,7 @@ use App\Repository\SendRepository;
 use App\Service\Send\Dto\SendContent;
 use App\Service\Send\Dto\SendingAttachment;
 use App\Service\Send\Exception\EmailTooLargeException;
+use App\Service\Send\Exception\SendContentStorageException;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -117,6 +118,7 @@ class SendService
      * @param array<string, string> $customHeaders
      * @param array<SendingAttachment> $attachments
      * @throws EmailTooLargeException
+     * @throws SendContentStorageException
      */
     public function createSend(
         Project $project,

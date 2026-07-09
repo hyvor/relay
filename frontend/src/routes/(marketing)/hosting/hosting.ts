@@ -2,6 +2,7 @@ import type { Component } from 'svelte';
 import Introduction from './content/Introduction.svelte';
 import Setup from './content/Setup.svelte';
 import ProdDeploy from './content/ProdDeploy.svelte';
+import UpgradeGuide from './content/UpgradeGuide.svelte';
 import Monitoring from './content/monitoring/Monitoring.svelte';
 import EasyDeploy from './content/easy/EasyDeploy.svelte';
 import Env from './content/Env.svelte';
@@ -44,6 +45,11 @@ export const categories: Category[] = [
 				slug: 'scaling',
 				name: 'Scaling',
 				component: Scaling
+			},
+			{
+				slug: 'upgrade',
+				name: 'Upgrade Guide',
+				component: UpgradeGuide
 			}
 		]
 	},

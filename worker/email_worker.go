@@ -101,7 +101,7 @@ type EmailWorker struct {
 	metrics        *Metrics
 	ip             GoStateIp
 	instanceDomain string
-	contentStore   *SendContentStore
+	contentStore   SendContentStore
 
 	// mocks
 	ProcessSendFunc         func(conn *sql.DB) error

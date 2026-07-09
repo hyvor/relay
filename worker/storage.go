@@ -6,21 +6,43 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-// SendContentStore fetches the raw MIME content of sends from object storage.
-type SendContentStore struct {
-	client *s3.Client
-	bucket string
+const localMediaRoot = "/app/media"
+
+type SendContentStore interface {
+	GetRaw(ctx context.Context, uuid string) (string, error)
 }
 
 var NewSendContentStore = newSendContentStore
 
-func newSendContentStore() (*SendContentStore, error) {
+func newSendContentStore() (SendContentStore, error) {
+	filesystem := os.Getenv("FILESYSTEM")
+	if filesystem == "" {
+		filesystem = "file"
+	}
+
+	switch filesystem {
+	case "s3":
+		return newS3SendContentStore()
+	case "file":
+		return newLocalSendContentStore()
+	default:
+		return nil, fmt.Errorf("unsupported FILESYSTEM: %s", filesystem)
+	}
+}
+
+type s3SendContentStore struct {
+	client *s3.Client
+	bucket string
+}
+
+func newS3SendContentStore() (SendContentStore, error) {
 	endpoint := os.Getenv("S3_ENDPOINT")
 	region := os.Getenv("S3_REGION")
 	accessKey := os.Getenv("S3_KEY")
@@ -38,14 +60,13 @@ func newSendContentStore() (*SendContentStore, error) {
 		UsePathStyle: true,
 	})
 
-	return &SendContentStore{
+	return &s3SendContentStore{
 		client: client,
 		bucket: bucket,
 	}, nil
 }
 
-// Content is stored by the Symfony backend as 'sends/{uuid}.eml'.
-func (s *SendContentStore) GetRaw(ctx context.Context, uuid string) (string, error) {
+func (s *s3SendContentStore) GetRaw(ctx context.Context, uuid string) (string, error) {
 	key := "sends/" + uuid + ".eml"
 
 	out, err := s.client.GetObject(ctx, &s3.GetObjectInput{
@@ -63,4 +84,25 @@ func (s *SendContentStore) GetRaw(ctx context.Context, uuid string) (string, err
 	}
 
 	return buf.String(), nil
+}
+
+type localSendContentStore struct {
+	root string
+}
+
+func newLocalSendContentStore() (SendContentStore, error) {
+	return &localSendContentStore{
+		root: localMediaRoot,
+	}, nil
+}
+
+func (s *localSendContentStore) GetRaw(_ context.Context, uuid string) (string, error) {
+	path := filepath.Join(s.root, "sends", uuid+".eml")
+
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file %s: %w", path, err)
+	}
+
+	return string(content), nil
 }

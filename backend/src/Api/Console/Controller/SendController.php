@@ -17,6 +17,7 @@ use App\Entity\Type\SendRecipientStatus;
 use App\Service\Domain\DomainService;
 use App\Service\Send\EmailAddressFormat;
 use App\Service\Send\Exception\EmailTooLargeException;
+use App\Service\Send\Exception\SendContentStorageException;
 use App\Service\Send\SendContentStorage;
 use App\Service\Send\SendLimits;
 use App\Service\Send\SendService;
@@ -30,6 +31,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -117,6 +119,10 @@ class SendController extends AbstractController
         } catch (EmailTooLargeException) {
             throw new BadRequestException(
                 "Email size exceeds the maximum allowed size of 10MB."
+            );
+        } catch (SendContentStorageException) {
+            throw new ServiceUnavailableHttpException(
+                message: "Failed to store email content. Please try again later."
             );
         }
 
@@ -299,7 +305,13 @@ class SendController extends AbstractController
             );
         }
 
-        $content = $this->sendContentStorage->get($uuid);
+        try {
+            $content = $this->sendContentStorage->get($uuid);
+        } catch (SendContentStorageException) {
+            throw new ServiceUnavailableHttpException(
+                message: "Failed to retrieve email content. Please try again later."
+            );
+        }
 
         if ($content === null) {
             throw new NotFoundHttpException("Content for send with UUID $uuid not found");

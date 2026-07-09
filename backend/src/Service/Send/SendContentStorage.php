@@ -3,7 +3,9 @@
 namespace App\Service\Send;
 
 use App\Service\Send\Dto\SendContent;
+use App\Service\Send\Exception\SendContentStorageException;
 use League\Flysystem\Filesystem;
+use League\Flysystem\FilesystemException;
 
 class SendContentStorage
 {
@@ -12,29 +14,50 @@ class SendContentStorage
     ) {
     }
 
+    /**
+     * @throws SendContentStorageException
+     */
     public function store(string $uuid, SendContent $content): void
     {
-        $this->filesystem->write($this->getRawPath($uuid), $content->raw);
-        $this->filesystem->write($this->getJsonPath($uuid), $this->encodeJson($content));
+        try {
+            $this->filesystem->write($this->getRawPath($uuid), $content->raw);
+            $this->filesystem->write($this->getJsonPath($uuid), $this->encodeJson($content));
+        } catch (FilesystemException $e) {
+            throw new SendContentStorageException($e->getMessage(), previous: $e);
+        }
     }
 
+    /**
+     * @throws SendContentStorageException
+     */
     public function getRaw(string $uuid): ?string
     {
-        if (!$this->filesystem->fileExists($this->getRawPath($uuid))) {
-            return null;
-        }
+        try {
+            if (!$this->filesystem->fileExists($this->getRawPath($uuid))) {
+                return null;
+            }
 
-        return $this->filesystem->read($this->getRawPath($uuid));
+            return $this->filesystem->read($this->getRawPath($uuid));
+        } catch (FilesystemException $e) {
+            throw new SendContentStorageException($e->getMessage(), previous: $e);
+        }
     }
 
+    /**
+     * @throws SendContentStorageException
+     */
     public function get(string $uuid): ?SendContent
     {
-        if (!$this->filesystem->fileExists($this->getJsonPath($uuid))) {
-            return null;
-        }
+        try {
+            if (!$this->filesystem->fileExists($this->getJsonPath($uuid))) {
+                return null;
+            }
 
-        /** @var array{body_html: ?string, body_text: ?string, headers: array<string, string>} $data */
-        $data = json_decode($this->filesystem->read($this->getJsonPath($uuid)), true);
+            /** @var array{body_html: ?string, body_text: ?string, headers: array<string, string>} $data */
+            $data = json_decode($this->filesystem->read($this->getJsonPath($uuid)), true);
+        } catch (FilesystemException $e) {
+            throw new SendContentStorageException($e->getMessage(), previous: $e);
+        }
 
         return new SendContent(
             raw: $this->getRaw($uuid) ?? '',
@@ -44,10 +67,17 @@ class SendContentStorage
         );
     }
 
+    /**
+     * @throws SendContentStorageException
+     */
     public function delete(string $uuid): void
     {
-        $this->filesystem->delete($this->getRawPath($uuid));
-        $this->filesystem->delete($this->getJsonPath($uuid));
+        try {
+            $this->filesystem->delete($this->getRawPath($uuid));
+            $this->filesystem->delete($this->getJsonPath($uuid));
+        } catch (FilesystemException $e) {
+            throw new SendContentStorageException($e->getMessage(), previous: $e);
+        }
     }
 
     private function encodeJson(SendContent $content): string

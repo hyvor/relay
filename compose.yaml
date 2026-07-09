@@ -30,6 +30,7 @@ services:
       target: backend-dev
     volumes:
       - ./backend:/app/backend
+      - relay_media:/app/media
       #- ../internal:/app/backend/vendor/hyvor/internal:ro
     labels:
       traefik.enable: true
@@ -51,6 +52,7 @@ services:
       target: worker-dev
     volumes:
       - ./worker/:/worker/
+      - relay_media:/app/media
     environment:
       GO_SYMFONY_URL: http://hyvor-relay-backend
       # OUTGOING_SMTP_PORT: ":587"
@@ -76,3 +78,6 @@ services:
 networks:
   hyvor-network:
     external: true
+
+volumes:
+  relay_media:
