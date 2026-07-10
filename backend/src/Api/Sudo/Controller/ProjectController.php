@@ -15,7 +15,6 @@ use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
-use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
@@ -29,7 +28,7 @@ class ProjectController extends AbstractController
     ) {}
 
     #[Route('/projects', methods: 'GET')]
-    public function getProjects(#[MapRequestPayload] GetProjectsInput $input): JsonResponse
+    public function getProjects(#[MapQueryString] GetProjectsInput $input): JsonResponse
     {
         $projects = $this->projectService->getProjects(
             $input->limit,
