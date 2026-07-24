@@ -2,8 +2,13 @@
 
 namespace App\Api\Console\Authorization;
 
-enum Scope: string
+use Hyvor\Internal\CloudApi\Scope\ScopeInterface;
+
+enum Scope: string implements ScopeInterface
 {
+
+    // org-level
+    case ORG_PROJECTS_CREATE = 'org.projects.create';
 
     // all users must have this scope (api keys may not)
     case PROJECT_READ = 'project.read';
