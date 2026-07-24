@@ -15,7 +15,8 @@ class ApiKeyService
 
     use ClockAwareTrait;
 
-    const int MAX_API_KEY_PER_PROJECT = 10;
+    public const int MAX_API_KEY_PER_PROJECT = 10;
+    public const int API_KEY_LENGTH = 32;
 
     public function __construct(
         private EntityManagerInterface $em,
@@ -29,7 +30,7 @@ class ApiKeyService
      */
     public function createApiKey(Project $project, string $name, array $scopes, array $allowedIps = []): array
     {
-        $key = bin2hex(random_bytes(16));
+        $key = bin2hex(random_bytes(self::API_KEY_LENGTH / 2));
         $apiKey = new ApiKey();
         $apiKey->setProject($project)
             ->setName($name)
