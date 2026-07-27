@@ -3,7 +3,7 @@
 namespace App\Api\Console\Controller;
 
 use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Authorization\ScopeRequired;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
 use App\Api\Console\Idempotency\IdempotencySupported;
 use App\Api\Console\Input\RetrySendInput;
 use App\Api\Console\Input\SendEmail\SendEmailInput;
