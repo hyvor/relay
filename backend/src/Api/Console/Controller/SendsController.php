@@ -2,8 +2,8 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Authorization\ScopeRequired;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
 use App\Api\Console\Idempotency\IdempotencySupported;
 use App\Api\Console\Input\RetrySendInput;
 use App\Api\Console\Input\SendEmail\SendEmailInput;
@@ -52,7 +52,7 @@ class SendsController extends AbstractController
     ) {}
 
     #[Route("/sends", methods: "POST")]
-    #[ScopeRequired(Scope::SENDS_SEND)]
+    #[ScopeRequired(RelayScope::SENDS_SEND)]
     #[IdempotencySupported]
     #[OA\Post(
         summary: 'Send an email',
@@ -149,7 +149,7 @@ class SendsController extends AbstractController
     }
 
     #[Route("/sends", methods: "GET")]
-    #[ScopeRequired(Scope::SENDS_READ)]
+    #[ScopeRequired(RelayScope::SENDS_READ)]
     #[OA\Get(
         summary: 'Get all sends',
         description: 'Returns a paginated list of emails sent from the project.'
@@ -217,7 +217,7 @@ class SendsController extends AbstractController
     }
 
     #[Route("/sends/{id}", methods: "GET")]
-    #[ScopeRequired(Scope::SENDS_READ)]
+    #[ScopeRequired(RelayScope::SENDS_READ)]
     #[OA\Get(
         summary: 'Get a send by ID',
         description: 'Returns a single send including its recipients, attempts, and feedback.'
@@ -242,7 +242,7 @@ class SendsController extends AbstractController
     }
 
     #[Route("/sends/{id}/retry", methods: "POST")]
-    #[ScopeRequired(Scope::SENDS_SEND)]
+    #[ScopeRequired(RelayScope::SENDS_SEND)]
     #[OA\Post(
         summary: 'Retry a failed send',
         description: 'Retries sending to failed recipients of a send. Already queued sends are rescheduled to now.'
@@ -313,7 +313,7 @@ class SendsController extends AbstractController
     }
 
     #[Route("/sends/uuid/{uuid}", requirements: ['uuid' => Requirement::UUID], methods: "GET")]
-    #[ScopeRequired(Scope::SENDS_READ)]
+    #[ScopeRequired(RelayScope::SENDS_READ)]
     #[OA\Get(
         summary: 'Get a send by UUID',
         description: 'Returns a single send by its public UUID.'
@@ -350,7 +350,7 @@ class SendsController extends AbstractController
     }
 
     #[Route("/sends/uuid/{uuid}/content", requirements: ['uuid' => Requirement::UUID], methods: "GET")]
-    #[ScopeRequired(Scope::SENDS_READ)]
+    #[ScopeRequired(RelayScope::SENDS_READ)]
     #[OA\Get(
         summary: 'Get send content by UUID',
         description: 'Returns the stored content (HTML, text, headers, and raw) of a send by its UUID.'
