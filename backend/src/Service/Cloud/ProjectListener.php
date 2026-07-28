@@ -2,7 +2,9 @@
 
 namespace App\Service\Cloud;
 
-use App\Api\Console\Authorization\AuthorizationListener;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\AccessType;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleApiAuthorizationListenerAbstract;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleAuthResults;
 use App\Service\Project\Event\ProjectCreatingEvent;
 use Hyvor\Internal\InternalConfig;
 use Hyvor\Internal\Sudo\SudoUserService;
@@ -41,11 +43,22 @@ class ProjectListener
             return;
         }
 
-        if (!AuthorizationListener::hasUser($request)) {
+        $consoleAuthResults = $request->attributes->get(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY);
+
+        if (!$consoleAuthResults instanceof ConsoleAuthResults) {
             return;
         }
 
-        $user = AuthorizationListener::getUser($request);
+        if ($consoleAuthResults->getAccessType() !== AccessType::SESSION) {
+            return;
+        }
+
+        $user = $consoleAuthResults->getNullableUser();
+
+        if ($user === null) {
+            return;
+        }
+
 		$isSudo = $this->sudoUserService->exists($user->id);
 
         if (!$isSudo) {

@@ -115,7 +115,8 @@ class ProjectService
         ProjectSendType $sendType,
         bool $createProjectUser = true,
         bool $isSystemProject = false,
-        bool $flush = true
+        bool $flush = true,
+        ?string $createdBySource = null,
     ): array {
         $this->ed->dispatch(new ProjectCreatingEvent($userId));
 
@@ -126,7 +127,8 @@ class ProjectService
             ->setName($name)
             ->setCreatedAt($this->now())
             ->setUpdatedAt($this->now())
-            ->setSendType($sendType);
+            ->setSendType($sendType)
+            ->setCreatedBySource($createdBySource);
 
         $this->em->persist($project);
 

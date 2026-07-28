@@ -2,7 +2,8 @@
 
 namespace App\Api\Console\Resolver;
 
-use App\Api\Console\Authorization\AuthorizationListener;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleApiAuthorizationListenerAbstract;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleAuthResults;
 use App\Entity\ApiKey;
 use App\Entity\Domain;
 use App\Entity\Project;
@@ -82,7 +83,9 @@ class EntityResolver implements ValueResolverInterface
         }
 
         $projectOfEntity = $entity->getProject();
-        $currentProject = $request->attributes->get(AuthorizationListener::RESOLVED_PROJECT_ATTRIBUTE_KEY);
+        $consoleAuthResults = $request->attributes->get(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY);
+        assert($consoleAuthResults instanceof ConsoleAuthResults);
+        $currentProject = $consoleAuthResults->getResource();
         assert($currentProject instanceof Project);
 
         if ($projectOfEntity->getId() !== $currentProject->getId()) {

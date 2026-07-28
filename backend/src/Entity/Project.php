@@ -33,6 +33,9 @@ class Project
     #[ORM\Column(nullable: true)]
     private ?int $organization_id = null;
 
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $created_by_source = null;
+
     public function __construct()
     {
     }
@@ -111,6 +114,17 @@ class Project
     public function setOrganizationId(?int $organization_id): static
     {
         $this->organization_id = $organization_id;
+        return $this;
+    }
+
+    public function getCreatedBySource(): ?string
+    {
+        return $this->created_by_source;
+    }
+
+    public function setCreatedBySource(?string $created_by_source): static
+    {
+        $this->created_by_source = $created_by_source;
         return $this;
     }
 }

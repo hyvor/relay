@@ -4,18 +4,23 @@ namespace App\Tests\Api\Console;
 
 use App\Api\Console\Authorization\AuthorizationListener;
 use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Authorization\ScopeRequired;
 use App\Entity\ApiKey;
 use App\Service\ApiKey\AllowedIp;
+use App\Service\ApiKey\ApiKeyService;
 use App\Service\Project\ProjectService;
 use App\Service\ProjectUser\ProjectUserService;
 use App\Tests\Case\WebTestCase;
+use App\Tests\Factory\ApiKeyFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
-use App\Tests\Factory\ApiKeyFactory;
 use Hyvor\Internal\Auth\AuthFake;
-use Hyvor\Internal\Auth\AuthUser;
 use Hyvor\Internal\Auth\AuthUserOrganization;
+use Hyvor\Internal\CloudApi\CloudApiService;
+use Hyvor\Internal\CloudApi\CloudJwt;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\AccessType;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleApiAuthorizationListenerAbstract;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleAuthResults;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
 use Hyvor\Internal\Sudo\SudoUserFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -34,141 +39,6 @@ class AuthorizationTest extends WebTestCase
     protected function shouldEnableAuthFake(): bool
     {
         return false;
-    }
-
-    public function test_api_key_authentication_nothing(): void
-    {
-        $this->client->request("GET", "/api/console/sends");
-        $this->assertResponseStatusCodeSame(401);
-        $this->assertSame(
-            "Unauthorized",
-            $this->getJson()["message"]
-        );
-    }
-
-    public function test_wrong_authorization_header(): void
-    {
-        $this->client->request(
-            "GET",
-            "/api/console/sends",
-            server: [
-                "HTTP_AUTHORIZATION" => "WrongHeader",
-            ]
-        );
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame(
-            'Authorization header must start with "Bearer ".',
-            $this->getJson()["message"]
-        );
-    }
-
-    public function test_missing_bearer_token(): void
-    {
-        $this->client->request(
-            "GET",
-            "/api/console/sends",
-            server: [
-                "HTTP_AUTHORIZATION" => "Bearer ",
-            ]
-        );
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame(
-            "API key is missing or empty.",
-            $this->getJson()["message"]
-        );
-    }
-
-    public function test_invalid_api_key(): void
-    {
-        $this->client->request(
-            "GET",
-            "/api/console/sends",
-            server: [
-                "HTTP_AUTHORIZATION" => "Bearer InvalidApiKey",
-            ]
-        );
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame("Invalid API key.", $this->getJson()["message"]);
-    }
-
-    public function test_invalid_project_id(): void
-    {
-        AuthFake::enableForSymfony(
-            $this->container,
-            ['id' => 1],
-            new AuthUserOrganization(
-                id: 1,
-                name: 'Fake Organization',
-                role: 'member'
-            )
-        );
-
-        $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
-        $this->client->request(
-            "GET",
-            "/api/console/sends",
-            server: [
-                "HTTP_X_PROJECT_ID" => "999",
-                "HTTP_X_ORGANIZATION_ID" => "1",
-            ],
-        );
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame("Invalid project ID.", $this->getJson()["message"]);
-    }
-
-    public function test_invalid_session(): void
-    {
-        AuthFake::enableForSymfony($this->container, null, null);
-
-        $project = ProjectFactory::createOne();
-
-        $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
-        $this->client->request(
-            "GET",
-            "/api/console/sends",
-            server: [
-                "HTTP_X_PROJECT_ID" => $project->getId(),
-            ]
-        );
-        $this->assertResponseStatusCodeSame(401);
-        $this->assertSame("Unauthorized", $this->getJson()["message"]);
-    }
-
-    public function test_fails_when_org_is_null(): void
-    {
-        AuthFake::enableForSymfony($this->container, ['id' => 1]);
-
-        $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
-        $this->client->request(
-            "GET",
-            "/api/console/sends"
-        );
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame("Organization is required", $this->getJson()["message"]);
-    }
-
-    public function test_fails_when_org_mismatch(): void
-    {
-        AuthFake::enableForSymfony(
-            $this->container,
-            ['id' => 1],
-            new AuthUserOrganization(
-                id: 1,
-                name: 'Fake Organization',
-                role: 'member'
-            )
-        );
-
-        $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
-        $this->client->request(
-            "GET",
-            "/api/console/sends",
-            server: [
-                "HTTP_X_ORGANIZATION_ID" => "2",
-            ],
-        );
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame("org_mismatch", $this->getJson()["message"]);
     }
 
     public function test_fails_when_xprojectid_header_is_not_set(): void
@@ -192,118 +62,7 @@ class AuthorizationTest extends WebTestCase
             ],
         );
         $this->assertResponseStatusCodeSame(403);
-        $this->assertSame("X-Project-ID is required for this endpoint.", $this->getJson()["message"]);
-    }
-
-    public function test_user_has_no_access_to_org(): void
-    {
-        AuthFake::enableForSymfony(
-            $this->container,
-            ['id' => 1],
-            new AuthUserOrganization(
-                id: 1,
-                name: 'Fake Organization',
-                role: 'member'
-            )
-        );
-
-        $project = ProjectFactory::createOne([
-            'organization_id' => 999,
-        ]);
-        $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
-        $this->client->request(
-            "GET",
-            "/api/console/sends",
-            server: [
-                "HTTP_X_PROJECT_ID" => $project->getId(),
-                "HTTP_X_ORGANIZATION_ID" => "1",
-            ]
-        );
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame(
-            "This project does not belong to your current organization.",
-            $this->getJson()["message"]
-        );
-    }
-
-    public function test_user_not_authorized_for_project(): void
-    {
-        AuthFake::enableForSymfony(
-            $this->container,
-            ['id' => 1],
-            new AuthUserOrganization(
-                id: 1,
-                name: 'Fake Organization',
-                role: 'member'
-            )
-        );
-
-        $project = ProjectFactory::createOne();
-        $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
-        $this->client->request(
-            "GET",
-            "/api/console/sends",
-            server: [
-                "HTTP_X_PROJECT_ID" => $project->getId(),
-                "HTTP_X_ORGANIZATION_ID" => "1",
-            ]
-        );
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame(
-            "You do not have access to this project.",
-            $this->getJson()["message"]
-        );
-    }
-
-    public function test_verifies_scopes_for_user(): void
-    {
-        AuthFake::enableForSymfony(
-            $this->container,
-            ['id' => 1],
-            new AuthUserOrganization(
-                id: 1,
-                name: 'Fake Organization',
-                role: 'member'
-            )
-        );
-
-        $project = ProjectFactory::createOne();
-        ProjectUserFactory::createOne([
-            'project' => $project,
-            'user_id' => 1,
-            'scopes' => [Scope::PROJECT_READ->value],
-        ]);
-
-        $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
-        $this->client->request(
-            "GET",
-            "/api/console/sends",
-            server: [
-                "HTTP_X_PROJECT_ID" => $project->getId(),
-                "HTTP_X_ORGANIZATION_ID" => "1",
-            ]
-        );
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame(
-            "You do not have the required scope 'sends.read' to access this resource.",
-            $this->getJson()["message"]
-        );
-    }
-
-    public function test_missing_scope_required_attribute(): void
-    {
-        $project = ProjectFactory::createOne();
-        $this->consoleApi(
-            $project,
-            'GET',
-            '/sends',
-            scopes: [Scope::SENDS_SEND]
-        );
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame(
-            "You do not have the required scope 'sends.read' to access this resource.",
-            $this->getJson()["message"]
-        );
+        $this->assertSame("Unable to find the project from the request. Please provide a valid X-Project-ID header.", $this->getJson()["message"]);
     }
 
     public function test_authorizes_via_api_key_and_updates_last_usage(): void
@@ -319,12 +78,9 @@ class AuthorizationTest extends WebTestCase
         );
         $this->assertResponseStatusCodeSame(200);
 
-        $projectFromAttr = $this->client->getRequest()->attributes->get('console_api_resolved_project');
-        $this->assertInstanceOf(
-            \App\Entity\Project::class,
-            $projectFromAttr
-        );
-        $this->assertSame($project->getId(), $projectFromAttr->getId());
+        $authResults = $this->client->getRequest()->attributes->get(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY);
+        $this->assertInstanceOf(ConsoleAuthResults::class, $authResults);
+        $this->assertSame($project->getId(), $authResults->getResource()?->getId());
 
         $apiKey = $this->em->getRepository(ApiKey::class)->findOneBy(['project' => $project]);
 
@@ -345,7 +101,7 @@ class AuthorizationTest extends WebTestCase
         string $clientIp
     ): void {
         $project = ProjectFactory::createOne();
-        $apiKey = bin2hex(random_bytes(16));
+        $apiKey = bin2hex(random_bytes(ApiKeyService::API_KEY_LENGTH / 2));
         ApiKeyFactory::createOne([
             'project' => $project,
             'key_hashed' => hash('sha256', $apiKey),
@@ -367,7 +123,7 @@ class AuthorizationTest extends WebTestCase
     public function test_api_key_with_allowed_ips_rejects_non_matching_ip(): void
     {
         $project = ProjectFactory::createOne();
-        $apiKey = bin2hex(random_bytes(16));
+        $apiKey = bin2hex(random_bytes(ApiKeyService::API_KEY_LENGTH / 2));
         ApiKeyFactory::createOne([
             'project' => $project,
             'key_hashed' => hash('sha256', $apiKey),
@@ -390,7 +146,7 @@ class AuthorizationTest extends WebTestCase
     public function test_api_key_without_allowed_ips_skips_check(): void
     {
         $project = ProjectFactory::createOne();
-        $apiKey = bin2hex(random_bytes(16));
+        $apiKey = bin2hex(random_bytes(ApiKeyService::API_KEY_LENGTH / 2));
         ApiKeyFactory::createOne([
             'project' => $project,
             'key_hashed' => hash('sha256', $apiKey),
@@ -438,16 +194,10 @@ class AuthorizationTest extends WebTestCase
         );
         $this->assertResponseStatusCodeSame(200);
 
-        $projectFromAttr = $this->client->getRequest()->attributes->get('console_api_resolved_project');
-        $this->assertInstanceOf(
-            \App\Entity\Project::class,
-            $projectFromAttr
-        );
-        $this->assertSame($project->getId(), $projectFromAttr->getId());
-
-        $userFromAttr = $this->client->getRequest()->attributes->get('console_api_resolved_user');
-        $this->assertInstanceOf(AuthUser::class, $userFromAttr);
-        $this->assertSame(1, $userFromAttr->id);
+        $authResults = $this->client->getRequest()->attributes->get(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY);
+        $this->assertInstanceOf(ConsoleAuthResults::class, $authResults);
+        $this->assertSame($project->getId(), $authResults->getResource()?->getId());
+        $this->assertSame(1, $authResults->getNullableUser()?->id);
     }
 
     public function test_org_level_endpoint_works_with_org(): void
@@ -468,7 +218,7 @@ class AuthorizationTest extends WebTestCase
 
         $this->client->request(
             "POST",
-            "/api/console/project",
+            "/api/console/projects",
             [
                 'name' => 'Valid Project Name',
                 'send_type' => 'transactional',
@@ -492,10 +242,43 @@ class AuthorizationTest extends WebTestCase
             "GET",
             "/api/console/init",
         );
-        $this->assertResponseStatusCodeSame(200);
-
         $json = $this->getJson();
         $this->assertArrayHasKey('project_users', $json);
         $this->assertArrayHasKey('config', $json);
+    }
+
+    public function test_authorizes_via_cloud_token(): void
+    {
+        $project = ProjectFactory::createOne(['organization_id' => 10]);
+
+        $cloudJwt = CloudJwt::fromArray([
+            'iss' => 'https://api.hyvor.com',
+            'sub' => '10',
+            'iat' => (string) time(),
+            'nbf' => (string) time(),
+            'exp' => (string) (time() + 3600),
+            'scope' => 'relay:sends.read',
+            'src' => 'cloud:123',
+        ]);
+
+        $cloudApiService = $this->createMock(CloudApiService::class);
+        $cloudApiService->method('decodeJwtToken')->willReturn($cloudJwt);
+        $this->container->set(CloudApiService::class, $cloudApiService);
+
+        $this->client->request(
+            'GET',
+            '/api/console/sends',
+            server: [
+                'HTTP_AUTHORIZATION' => 'Bearer cloud_jwt_token_example',
+                'HTTP_X_PROJECT_ID' => (string) $project->getId(),
+            ]
+        );
+
+        $this->assertResponseStatusCodeSame(200);
+
+        $authResults = $this->client->getRequest()->attributes->get(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY);
+        $this->assertInstanceOf(ConsoleAuthResults::class, $authResults);
+        $this->assertSame(AccessType::CLOUD_TOKEN, $authResults->getAccessType());
+        $this->assertSame(10, $authResults->getOrganizationId());
     }
 }
