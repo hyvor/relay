@@ -9,6 +9,9 @@ use App\Entity\Send;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\SendFactory;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\AccessType;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleApiAuthorizationListenerAbstract;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleAuthResults;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
@@ -109,7 +112,8 @@ class EntityResolverTest extends KernelTestCase
         $request->attributes->set('id', (string)$send->getId());
 
         $project1 = ProjectFactory::createOne();
-        $request->attributes->set('console_api_resolved_project', $project1);
+        $authResults = new ConsoleAuthResults(AccessType::PRODUCT_API_KEY, 1, $project1->_real(), productApiKey: new \stdClass());
+        $request->attributes->set(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY, $authResults);
 
         $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn(Send::class);
@@ -128,7 +132,8 @@ class EntityResolverTest extends KernelTestCase
         $request->attributes->set('id', (string)$send->getId());
 
         $project = $send->getProject();
-        $request->attributes->set('console_api_resolved_project', $project);
+        $authResults = new ConsoleAuthResults(AccessType::PRODUCT_API_KEY, 1, $project, productApiKey: new \stdClass());
+        $request->attributes->set(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY, $authResults);
 
         $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn(Send::class);

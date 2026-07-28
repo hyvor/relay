@@ -113,7 +113,7 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
             }
             $server['HTTP_X_ORGANIZATION_ID'] ??= '1';
         } else {
-            $apiKey = bin2hex(random_bytes(16));
+            $apiKey = bin2hex(random_bytes(\App\Service\ApiKey\ApiKeyService::API_KEY_LENGTH / 2));
             $apiKeyHashed = hash('sha256', $apiKey);
             $apiKeyFactory = ['key_hashed' => $apiKeyHashed, 'project' => $project];
             if ($scopes !== true) {
