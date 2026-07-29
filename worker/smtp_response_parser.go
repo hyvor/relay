@@ -5,6 +5,11 @@ import (
 	"strings"
 )
 
+/**
+ * Most of this is based on https://smtpfieldmanual.com/
+ * See /hosting/providers
+ */
+
 type SmtpResponseParser struct {
 	Code         int
 	EnhancedCode [3]int
@@ -15,7 +20,7 @@ var recipientEnhancedCodes = map[string]bool{
 	"5.1.1": true, // Bad destination mailbox address
 	"5.1.2": true, // Bad destination system address
 	"5.1.3": true, // Bad destination mailbox address syntax
-	"5.5.0": true, // Other
+	"5.5.0": true, // Other or undefined mailbox status
 }
 
 func NewSmtpResponseParser(code int, enhancedCode [3]int, message string) *SmtpResponseParser {
@@ -36,10 +41,24 @@ func (p *SmtpResponseParser) IsBounce() bool {
 	return false
 }
 
+/**
+ * This checks if the SMTP response indicates a recipient bounce.
+ * ex: the bounce was due to an issue with the recipient address.
+ * This is important for suppressions. We only want to suppress on recipient bounces.
+ */
 func (p *SmtpResponseParser) IsRecipientBounce() bool {
+	// must be a bounce first
 	if !p.IsBounce() {
 		return false
 	}
+
+	/**
+	 * Most modern SMTP servers provide an enhanced status code for bounces.
+	 * If it is not present, it is likely an older server.
+	 * In that case, we assume there is no need for suppressions.
+	 * Not developed enough to support enhanced codes, not developed enough to ban based on repeated bounces.
+	 * (Note: this is an assumption that we may want to revisit in the future.)
+	 */
 	if p.EnhancedCode == [3]int{0, 0, 0} {
 		return false
 	}
@@ -47,7 +66,12 @@ func (p *SmtpResponseParser) IsRecipientBounce() bool {
 	return recipientEnhancedCodes[key]
 }
 
+/**
+ * Checks if the error is due to infrastructure issues (e.g., spam filtering, policy restrictions).
+ * These must be recorded
+ */
 func (p *SmtpResponseParser) IsInfrastructureError() bool {
+	// must have an enhanced code
 	if p.EnhancedCode == [3]int{0, 0, 0} {
 		return false
 	}
