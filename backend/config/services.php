@@ -22,7 +22,6 @@ use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
 return static function (ContainerConfigurator $containerConfigurator): void {
     $containerConfigurator->parameters()
         ->set('env(HOSTING)', 'self') // Default to self-hosted
-        ->set('env(FILESYSTEM)', 'file') // Default to local filesystem
     ;
     $services = $containerConfigurator->services();
 

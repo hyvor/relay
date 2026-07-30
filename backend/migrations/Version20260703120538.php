@@ -24,9 +24,5 @@ final class Version20260703120538 extends AbstractMigration
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE sends ADD COLUMN body_html TEXT DEFAULT NULL');
-        $this->addSql('ALTER TABLE sends ADD COLUMN body_text TEXT DEFAULT NULL');
-        $this->addSql("ALTER TABLE sends ADD COLUMN headers JSON NOT NULL DEFAULT '{}'");
-        $this->addSql("ALTER TABLE sends ADD COLUMN raw TEXT NOT NULL DEFAULT ''");
     }
 }
