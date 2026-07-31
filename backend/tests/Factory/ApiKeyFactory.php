@@ -2,7 +2,7 @@
 
 namespace App\Tests\Factory;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Entity\ApiKey;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
@@ -33,8 +33,8 @@ final class ApiKeyFactory extends PersistentObjectFactory
             'key_hashed' => hash('sha256', self::faker()->uuid()),
             'scopes' => [
                 ...array_map(
-                    fn(Scope $scope) => $scope->value,
-                    Scope::cases()
+                    fn(RelayScope $scope) => $scope->value,
+                    RelayScope::cases()
                 )
             ],
             'is_enabled' => true,

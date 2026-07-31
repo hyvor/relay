@@ -2,7 +2,7 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Api\Console\Object\ProjectObject;
 use App\Api\Console\Object\ProjectUserObject;
 use App\Entity\Project;
@@ -91,7 +91,7 @@ class ConsoleController extends AbstractController
                         'events' => array_map(fn($event) => $event->value, WebhooksEventEnum::cases()),
                     ],
                     'api_keys' => [
-                        'scopes' => array_map(fn($scope) => $scope->value, Scope::cases()),
+                        'scopes' => array_map(fn($scope) => $scope->value, RelayScope::cases()),
                     ],
                     'compliance' => [
                         'rates' => Compliance::getRates(),
@@ -103,7 +103,7 @@ class ConsoleController extends AbstractController
     }
 
     #[Route('/init/project', methods: 'GET')]
-    #[ScopeRequired(Scope::PROJECT_READ)]
+    #[ScopeRequired(RelayScope::PROJECT_READ)]
     public function initProject(Project $project): JsonResponse
     {
         return new JsonResponse([

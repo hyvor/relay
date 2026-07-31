@@ -2,7 +2,7 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
 use App\Api\Console\Input\ProjectUser\CreateProjectUserInput;
 use App\Api\Console\Object\ProjectUserObject;
@@ -33,7 +33,7 @@ class ProjectUserController extends AbstractController
     }
 
     #[Route('/project-users', methods: 'GET')]
-    #[ScopeRequired(Scope::PROJECT_READ)]
+    #[ScopeRequired(RelayScope::PROJECT_READ)]
     public function getProjectUsers(Project $project): JsonResponse
     {
         $projectUsers = $this->projectUserService->getProjectUsers($project);
@@ -55,7 +55,7 @@ class ProjectUserController extends AbstractController
     }
 
     #[Route('/project-users', methods: 'POST')]
-    #[ScopeRequired(Scope::PROJECT_WRITE)]
+    #[ScopeRequired(RelayScope::PROJECT_WRITE)]
     public function addProjectUser(
         Project $project,
         #[MapRequestPayload] CreateProjectUserInput $input): JsonResponse
@@ -95,7 +95,7 @@ class ProjectUserController extends AbstractController
     }
 
     #[Route('/project-users/{id}', methods: 'DELETE')]
-    #[ScopeRequired(Scope::PROJECT_WRITE)]
+    #[ScopeRequired(RelayScope::PROJECT_WRITE)]
     public function deleteProjectUser(ProjectUser $projectUser): JsonResponse
     {
         $this->projectUserService->deleteProjectUser($projectUser);
@@ -103,7 +103,7 @@ class ProjectUserController extends AbstractController
     }
 
     #[Route('/project-users', methods: 'DELETE')]
-    #[ScopeRequired(Scope::PROJECT_WRITE)]
+    #[ScopeRequired(RelayScope::PROJECT_WRITE)]
     public function deleteAllProjectUsers(Project $project): JsonResponse
     {
         $this->projectUserService->deleteAllProjectUsers($project);

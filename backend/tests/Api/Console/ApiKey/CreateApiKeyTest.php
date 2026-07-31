@@ -2,7 +2,6 @@
 
 namespace App\Tests\Api\Console\ApiKey;
 
-use App\Api\Console\Authorization\Scope;
 use App\Api\Console\Controller\ApiKeyController;
 use App\Api\Console\Input\CreateApiKeyInput;
 use App\Api\Console\Object\ApiKeyObject;
@@ -18,7 +17,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ApiKeyController::class)]
 #[CoversClass(ApiKeyService::class)]
-#[CoversClass(Scope::class)]
 #[CoversClass(CreateApiKeyInput::class)]
 #[CoversClass(ApiKeyObject::class)]
 #[CoversClass(AllowedIp::class)]

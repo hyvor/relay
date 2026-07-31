@@ -2,7 +2,7 @@
 
 namespace App\Service\Project;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Entity\Project;
 use App\Entity\ProjectUser;
 use App\Entity\Type\ProjectSendType;
@@ -136,7 +136,7 @@ class ProjectService
             $projectUser = $this->projectUserService->createProjectUser(
                 $project,
                 $userId,
-                Scope::all(),
+                RelayScope::all(),
                 flush: false
             );
         }

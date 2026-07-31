@@ -2,7 +2,7 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Api\Console\Object\ProjectObject;
 use App\Api\Console\Object\ProjectUserObject;
 use App\Entity\Project;
@@ -29,7 +29,7 @@ class ProjectController extends AbstractController
 
     #[Route('/projects', methods: 'POST')]
     #[OrgEndpoint]
-    #[ScopeRequired(Scope::ORG_PROJECTS_CREATE)]
+    #[ScopeRequired(RelayScope::ORG_PROJECTS_CREATE)]
     public function createProject(
         #[MapRequestPayload] CreateProjectInput $input,
         ConsoleAuthResults $consoleAuth,
@@ -52,14 +52,14 @@ class ProjectController extends AbstractController
     }
 
     #[Route('/project', methods: 'GET')]
-    #[ScopeRequired(Scope::PROJECT_READ)]
+    #[ScopeRequired(RelayScope::PROJECT_READ)]
     public function getNewsletterById(Project $project): JsonResponse
     {
         return $this->json(new ProjectObject($project));
     }
 
     #[Route('/project', methods: 'PATCH')]
-    #[ScopeRequired(Scope::PROJECT_WRITE)]
+    #[ScopeRequired(RelayScope::PROJECT_WRITE)]
     public function updateProject(#[MapRequestPayload] UpdateProjectInput $input, Project $project): JsonResponse
     {
         $updates = new UpdateProjectDto();

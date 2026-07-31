@@ -2,7 +2,7 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
 use App\Api\Console\Idempotency\IdempotencySupported;
 use App\Api\Console\Input\RetrySendInput;
@@ -50,7 +50,7 @@ class SendController extends AbstractController
     ) {}
 
     #[Route("/sends", methods: "POST")]
-    #[ScopeRequired(Scope::SENDS_SEND)]
+    #[ScopeRequired(RelayScope::SENDS_SEND)]
     #[IdempotencySupported]
     public function sendEmail(
         Project $project,
@@ -133,7 +133,7 @@ class SendController extends AbstractController
     }
 
     #[Route("/sends", methods: "GET")]
-    #[ScopeRequired(Scope::SENDS_READ)]
+    #[ScopeRequired(RelayScope::SENDS_READ)]
     public function getSends(Request $request, Project $project): JsonResponse
     {
         $limit = $request->query->getInt("limit", 50);
@@ -189,7 +189,7 @@ class SendController extends AbstractController
     }
 
     #[Route("/sends/{id}", methods: "GET")]
-    #[ScopeRequired(Scope::SENDS_READ)]
+    #[ScopeRequired(RelayScope::SENDS_READ)]
     public function getById(Send $send): JsonResponse
     {
         $attempts = $this->sendAttemptService->getSendAttemptsOfSend($send);
@@ -205,7 +205,7 @@ class SendController extends AbstractController
     }
 
     #[Route("/sends/{id}/retry", methods: "POST")]
-    #[ScopeRequired(Scope::SENDS_SEND)]
+    #[ScopeRequired(RelayScope::SENDS_SEND)]
     public function retrySend(
         Send $send,
         #[MapRequestPayload] RetrySendInput $input
@@ -262,7 +262,7 @@ class SendController extends AbstractController
     }
 
     #[Route("/sends/uuid/{uuid}", requirements: ['uuid' => Requirement::UUID], methods: "GET")]
-    #[ScopeRequired(Scope::SENDS_READ)]
+    #[ScopeRequired(RelayScope::SENDS_READ)]
     public function getByUuid(Project $project, string $uuid): JsonResponse
     {
         $send = $this->sendService->getSendByUuid($uuid);

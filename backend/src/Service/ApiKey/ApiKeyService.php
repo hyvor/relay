@@ -2,7 +2,7 @@
 
 namespace App\Service\ApiKey;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Entity\ApiKey;
 use App\Entity\Project;
 use App\Service\ApiKey\Dto\UpdateApiKeyDto;

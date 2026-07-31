@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\Domain;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Api\Console\Controller\DomainController;
 use App\Api\Console\Object\DomainObject;
 use App\Tests\Case\WebTestCase;
@@ -25,7 +25,7 @@ class GetDomainTest extends WebTestCase
             [
                 'id' => 9999,
             ],
-            scopes: [Scope::DOMAINS_READ]
+            scopes: [RelayScope::DOMAINS_READ]
         );
 
         $this->assertSame(400, $response->getStatusCode());
@@ -47,7 +47,7 @@ class GetDomainTest extends WebTestCase
             [
                 'id' => $domain->getId(),
             ],
-            scopes: [Scope::DOMAINS_READ]
+            scopes: [RelayScope::DOMAINS_READ]
         );
 
         $this->assertSame(200, $response->getStatusCode());
@@ -71,7 +71,7 @@ class GetDomainTest extends WebTestCase
             data: [
                 'domain' => 'example.com',
             ],
-            scopes: [Scope::DOMAINS_READ]
+            scopes: [RelayScope::DOMAINS_READ]
         );
 
         $this->assertResponseStatusCodeSame(400);

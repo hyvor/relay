@@ -2,7 +2,7 @@
 
 namespace App\Api\Console\Object;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Entity\ProjectUser;
 use Hyvor\Internal\Auth\AuthUser;
 
