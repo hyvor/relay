@@ -167,15 +167,7 @@ class DevSeedCommand extends Command
                 $bodyHtml,
             ]);
 
-            $this->sendContentStorage->store(
-                $send->getUuid(),
-                new SendContent(
-                    raw: $raw,
-                    bodyHtml: $bodyHtml,
-                    bodyText: $bodyText,
-                    headers: $headers,
-                )
-            );
+            $this->sendContentStorage->store($send->getUuid(), $raw);
 
             $types = SendRecipientType::cases();
             $typeKey = array_rand($types);

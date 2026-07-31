@@ -306,6 +306,9 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 	var localApiEndpoint string
 	var localApiBody interface{}
 
+	originalCallLocalApi := CallLocalApi
+	defer func() { CallLocalApi = originalCallLocalApi }()
+
 	CallLocalApi = func(ctx context.Context, method, endpoint string, body, responseJsonObject interface{}) error {
 		localApiMethod = method
 		localApiEndpoint = endpoint

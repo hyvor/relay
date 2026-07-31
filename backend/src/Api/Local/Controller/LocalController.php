@@ -13,13 +13,16 @@ use App\Service\IncomingMail\IncomingMailService;
 use App\Service\Management\GoState\GoStateFactory;
 use App\Service\Management\GoState\ServerNotFoundException;
 use App\Service\SendAttempt\SendAttemptService;
+use App\Service\Send\SendContentStorage;
 use Prometheus\RenderTextFormat;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 
 class LocalController extends AbstractController
 {
@@ -31,7 +34,20 @@ class LocalController extends AbstractController
         private IncomingMailService $incomingMailService,
         private DebugIncomingEmailService $debugIncomingEmailService,
         private MetricsListener $metricsListener,
+        private SendContentStorage $sendContentStorage,
     ) {
+    }
+
+    #[Route('/sends/{uuid}/raw', requirements: ['uuid' => Requirement::UUID], methods: 'GET')]
+    public function getSendRawContent(string $uuid): JsonResponse
+    {
+        $raw = $this->sendContentStorage->getRaw($uuid);
+
+        if ($raw === null) {
+            throw new NotFoundHttpException("Raw content for send with UUID $uuid not found");
+        }
+
+        return new JsonResponse(['raw' => $raw]);
     }
 
     #[Route('/state', methods: 'GET')]

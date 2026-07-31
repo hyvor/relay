@@ -57,22 +57,9 @@ final class Version20260703120538 extends AbstractMigration
 
             foreach ($rows as $row) {
                 $uuid = (string)$row['uuid'];
-                $jsonPath = 'sends/' . $uuid . '.json';
                 $rawPath = 'sends/' . $uuid . '.eml';
 
-                if (!$this->filesystem->fileExists($jsonPath)) {
-                    $headers = $row['headers'];
-                    if (is_string($headers)) {
-                        $headers = json_decode($headers, true) ?? [];
-                    }
-
-                    $json = json_encode([
-                        'body_html' => $row['body_html'],
-                        'body_text' => $row['body_text'],
-                        'headers' => $headers ?? [],
-                    ]);
-
-                    $this->filesystem->write($jsonPath, (string)$json);
+                if (!$this->filesystem->fileExists($rawPath)) {
                     $this->filesystem->write($rawPath, (string)($row['raw'] ?? ''));
                 }
 

@@ -166,15 +166,7 @@ class SendService
         $send->setMessageId($messageId);
         $send->setSizeBytes(strlen($rawEmail));
 
-        $this->sendContentStorage->store(
-            $uuid,
-            new SendContent(
-                raw: $rawEmail,
-                bodyHtml: $bodyHtml,
-                bodyText: $bodyText,
-                headers: $customHeaders,
-            )
-        );
+        $this->sendContentStorage->store($uuid, $rawEmail);
 
         $this->em->persist($send);
 

@@ -35,7 +35,7 @@ ENV APP_VERSION=${APP_VERSION}
 ENV APP_RUNTIME="Runtime\FrankenPhpSymfony\Runtime"
 WORKDIR /app/backend
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
-RUN install-php-extensions zip intl pdo_pgsql opcache apcu
+RUN install-php-extensions zip intl pdo_pgsql opcache apcu mailparse
 RUN apt update  && apt install -y supervisor
 
 FROM backend-base AS backend-dev

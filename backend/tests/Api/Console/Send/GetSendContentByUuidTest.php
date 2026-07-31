@@ -21,20 +21,23 @@ use Symfony\Component\Uid\Uuid;
 #[CoversClass(SendContent::class)]
 class GetSendContentByUuidTest extends WebTestCase
 {
-    private function storeContent(string $uuid): void
+    private function storeContent(string $uuid): string
     {
         $storage = $this->container->get(SendContentStorage::class);
-		$this->assertInstanceOf(SendContentStorage::class, $storage);
+        $this->assertInstanceOf(SendContentStorage::class, $storage);
 
-        $storage->store(
-            $uuid,
-            new SendContent(
-                raw: 'raw-mime-content',
-                bodyHtml: '<p>Hello</p>',
-                bodyText: 'Hello',
-                headers: ['X-Custom' => 'value'],
-            )
-        );
+        $raw = implode("\r\n", [
+            'From: sender@example.com',
+            'To: recipient@example.com',
+            'Subject: Test Email',
+            'X-Custom: value',
+            'Content-Type: text/html; charset=utf-8',
+            '',
+            '<p>Hello</p>',
+        ]);
+
+        $storage->store($uuid, $raw);
+        return $raw;
     }
 
     public function test_get_content(): void
@@ -42,7 +45,7 @@ class GetSendContentByUuidTest extends WebTestCase
         $project = ProjectFactory::createOne();
         $send = SendFactory::createOne(['project' => $project]);
 
-        $this->storeContent($send->getUuid());
+        $raw = $this->storeContent($send->getUuid());
 
         $response = $this->consoleApi(
             $project,
@@ -56,9 +59,10 @@ class GetSendContentByUuidTest extends WebTestCase
         /** @var array<string, mixed> $json */
         $json = $this->getJson();
         $this->assertSame('<p>Hello</p>', $json['body_html']);
-        $this->assertSame('Hello', $json['body_text']);
-        $this->assertSame('raw-mime-content', $json['raw']);
-        $this->assertSame(['X-Custom' => 'value'], $json['headers']);
+        $this->assertNull($json['body_text']);
+        $this->assertSame($raw, $json['raw']);
+        $this->assertIsArray($json['headers']);
+        $this->assertArrayHasKey('x-custom', $json['headers']);
     }
 
     public function test_content_not_found_when_not_stored(): void

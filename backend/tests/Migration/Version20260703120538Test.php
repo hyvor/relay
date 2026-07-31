@@ -95,14 +95,7 @@ class Version20260703120538Test extends KernelTestCase
         foreach ($sends as $send) {
             $uuid = $send['uuid'];
 
-            $this->assertTrue($filesystem->fileExists('sends/' . $uuid . '.json'));
             $this->assertTrue($filesystem->fileExists('sends/' . $uuid . '.eml'));
-
-            $json = json_decode($filesystem->read('sends/' . $uuid . '.json'), true);
-            $this->assertSame($send['body_html'], $json['body_html']);
-            $this->assertSame($send['body_text'], $json['body_text']);
-            $this->assertSame($send['headers'], $json['headers']);
-
             $this->assertSame($send['raw'], $filesystem->read('sends/' . $uuid . '.eml'));
         }
     }
