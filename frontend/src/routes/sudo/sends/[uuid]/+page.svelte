@@ -2,13 +2,14 @@
 	import { page } from '$app/state';
 	import SingleBox from '../../SingleBox.svelte';
 	import SendDetail from '$lib/sends/SendDetail.svelte';
-	import { getSendByUuid } from '../../sudoActions';
+	import { getSendByUuid, getSendContent } from '../../sudoActions';
 	import type { Send } from '../../../console/types';
 </script>
 
 <SingleBox>
 	<SendDetail
 		fetchSend={() => getSendByUuid(page.params.uuid ?? '')}
+		fetchContent={() => getSendContent(page.params.uuid ?? '')}
 		backHref="/sudo/sends"
 		{headerExtra}
 	/>
