@@ -5,6 +5,7 @@ namespace App\Tests\Api\Console;
 use App\Api\Console\Authorization\AuthorizationListener;
 use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Entity\ApiKey;
+use App\Entity\Project;
 use App\Service\ApiKey\AllowedIp;
 use App\Service\ApiKey\ApiKeyService;
 use App\Service\Project\ProjectService;
@@ -78,7 +79,9 @@ class AuthorizationTest extends WebTestCase
 
         $authResults = $this->client->getRequest()->attributes->get(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY);
         $this->assertInstanceOf(ConsoleAuthResults::class, $authResults);
-        $this->assertSame($project->getId(), $authResults->getResource()?->getId());
+        $resource = $authResults->getResource();
+        $this->assertInstanceOf(Project::class, $resource);
+        $this->assertSame($project->getId(), $resource->getId());
 
         $apiKey = $this->em->getRepository(ApiKey::class)->findOneBy(['project' => $project]);
 
@@ -194,7 +197,9 @@ class AuthorizationTest extends WebTestCase
 
         $authResults = $this->client->getRequest()->attributes->get(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY);
         $this->assertInstanceOf(ConsoleAuthResults::class, $authResults);
-        $this->assertSame($project->getId(), $authResults->getResource()?->getId());
+        $resource = $authResults->getResource();
+        $this->assertInstanceOf(Project::class, $resource);
+        $this->assertSame($project->getId(), $resource->getId());
         $this->assertSame(1, $authResults->getNullableUser()?->id);
     }
 

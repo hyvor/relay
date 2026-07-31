@@ -34,15 +34,17 @@ class ProjectController extends AbstractController
         #[MapRequestPayload] CreateProjectInput $input,
         ConsoleAuthResults $consoleAuth,
     ): JsonResponse {
+        $user = $consoleAuth->getNullableUser();
+        $organizationId = $consoleAuth->getOrganizationId();
+        assert($organizationId !== null);
+
         $newProject = $this->projectService->createProject(
-            $consoleAuth->getNullableUser()?->id ?? 0,
-            $consoleAuth->getOrganizationId(),
+            $user !== null ? $user->id : 0,
+            $organizationId,
             $input->name,
             $input->send_type,
             createdBySource: $consoleAuth->getSourceString(),
         );
-
-        $user = $consoleAuth->getNullableUser();
 
         if ($user) {
             return $this->json(new ProjectUserObject($newProject['projectUser'], $user));

@@ -109,9 +109,15 @@ class AuthorizationListener extends ConsoleApiAuthorizationListenerAbstract
         return 'Unable to find the project from the request. Please provide a valid X-Project-ID header.';
     }
 
+    /**
+     * @param Project $resource
+     */
     protected function getOrganizationIdFromResource(object $resource): int
     {
-        return $resource->getOrganizationId();
+        $orgId = $resource->getOrganizationId();
+        assert($orgId !== null);
+
+        return $orgId;
     }
 
     /**
