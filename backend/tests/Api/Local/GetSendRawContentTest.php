@@ -28,8 +28,8 @@ class GetSendRawContentTest extends WebTestCase
         );
 
         $this->assertResponseIsSuccessful();
-        $json = $this->getJson();
-        $this->assertSame($rawEmail, $json['raw']);
+        $this->assertResponseHeaderSame('content-type', 'message/rfc822');
+        $this->assertSame($rawEmail, $this->client->getInternalResponse()->getContent());
     }
 
     public function test_get_send_raw_content_not_found(): void

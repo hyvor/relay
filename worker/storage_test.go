@@ -14,8 +14,8 @@ func TestLocalApiSendContentStore_GetRaw(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/api/local/sends/test-uuid/raw", r.URL.Path)
 		assert.Equal(t, "GET", r.Method)
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"raw":"raw-email-content"}`))
+		w.Header().Set("Content-Type", "message/rfc822")
+		w.Write([]byte("raw-email-content"))
 	}))
 	os.Setenv("GO_SYMFONY_URL", server.URL)
 	defer os.Unsetenv("GO_SYMFONY_URL")

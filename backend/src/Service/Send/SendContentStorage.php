@@ -44,6 +44,23 @@ class SendContentStorage
     }
 
     /**
+     * @return resource|null
+     * @throws SendContentStorageException
+     */
+    public function getRawStream(string $uuid)
+    {
+        try {
+            if (!$this->filesystem->fileExists($this->getRawPath($uuid))) {
+                return null;
+            }
+
+            return $this->filesystem->readStream($this->getRawPath($uuid));
+        } catch (FilesystemException $e) {
+            throw new SendContentStorageException($e->getMessage(), previous: $e);
+        }
+    }
+
+    /**
      * @throws SendContentStorageException
      */
     public function get(string $uuid): ?SendContent
@@ -57,16 +74,16 @@ class SendContentStorage
             $parser = new Parser();
             $parser->setText($raw);
 
-            $bodyHtml = $parser->getMessageBody('html');
-            $bodyText = $parser->getMessageBody('text');
+            $bodyHtml = trim($parser->getMessageBody('html'));
+            $bodyText = trim($parser->getMessageBody('text'));
 
             /** @var array<string, string> $headers */
             $headers = $parser->getHeaders();
 
             return new SendContent(
                 raw: $raw,
-                bodyHtml: is_string($bodyHtml) && trim($bodyHtml) !== '' ? trim($bodyHtml) : null,
-                bodyText: is_string($bodyText) && trim($bodyText) !== '' ? trim($bodyText) : null,
+                bodyHtml: $bodyHtml !== '' ? $bodyHtml : null,
+                bodyText: $bodyText !== '' ? $bodyText : null,
                 headers: $headers,
             );
         } catch (\Throwable $e) {

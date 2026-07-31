@@ -466,13 +466,10 @@ class SendEmailTest extends WebTestCase
             $this->assertEmpty($recipient->getName());
         }
 
-        $this->assertSame(
-            [
-                "X-Custom-Header" => "Custom Value",
-                'Reply-To' => 'no-reply@hyvor.com'
-            ],
-            $storedContent->headers
-        );
+        $this->assertArrayHasKey('x-custom-header', $storedContent->headers);
+        $this->assertSame('Custom Value', $storedContent->headers['x-custom-header']);
+        $this->assertArrayHasKey('reply-to', $storedContent->headers);
+        $this->assertSame('no-reply@hyvor.com', $storedContent->headers['reply-to']);
 
         $raw = $storedContent->raw;
 

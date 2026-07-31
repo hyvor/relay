@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 )
 
 type SendContentStore interface {
@@ -17,22 +19,30 @@ func newSendContentStore() (SendContentStore, error) {
 
 type localApiSendContentStore struct{}
 
-type sendRawContentResponse struct {
-	Raw string `json:"raw"`
-}
-
 func (s *localApiSendContentStore) GetRaw(ctx context.Context, uuid string) (string, error) {
-	var resp sendRawContentResponse
-	err := CallLocalApi(
-		ctx,
-		"GET",
-		"/sends/"+uuid+"/raw",
-		nil,
-		&resp,
-	)
+	url := getSymfonyUrl("/api/local/sends/" + uuid + "/raw")
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch send content via local API for %s: %w", uuid, err)
+		return "", fmt.Errorf("failed to create request for send content %s: %w", uuid, err)
 	}
 
-	return resp.Raw, nil
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch send content for %s: %w", uuid, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyFirst200Bytes, _ := io.ReadAll(io.LimitReader(resp.Body, 200))
+		return "", fmt.Errorf("failed to fetch send content for %s (status %d): %s", uuid, resp.StatusCode, bodyFirst200Bytes)
+	}
+
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read send content stream for %s: %w", uuid, err)
+	}
+
+	return string(content), nil
 }

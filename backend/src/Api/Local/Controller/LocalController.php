@@ -18,6 +18,7 @@ use Prometheus\RenderTextFormat;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
@@ -39,15 +40,24 @@ class LocalController extends AbstractController
     }
 
     #[Route('/sends/{uuid}/raw', requirements: ['uuid' => Requirement::UUID], methods: 'GET')]
-    public function getSendRawContent(string $uuid): JsonResponse
+    public function getSendRawContent(string $uuid): StreamedResponse
     {
-        $raw = $this->sendContentStorage->getRaw($uuid);
+        $stream = $this->sendContentStorage->getRawStream($uuid);
 
-        if ($raw === null) {
+        if ($stream === null) {
             throw new NotFoundHttpException("Raw content for send with UUID $uuid not found");
         }
 
-        return new JsonResponse(['raw' => $raw]);
+        $response = new StreamedResponse(function () use ($stream) {
+            fpassthru($stream);
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        });
+
+        $response->headers->set('Content-Type', 'message/rfc822');
+
+        return $response;
     }
 
     #[Route('/state', methods: 'GET')]
