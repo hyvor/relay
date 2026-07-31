@@ -92,4 +92,16 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // but kept as a public service so its test can fetch it. The class is preserved
     // for upcoming Enterprise license logic.
     $services->set(RelayTelemetryProvider::class)->public();
+
+    // ================ MIGRATIONS =================
+    $services->load('DoctrineMigrations\\', '../migrations/');
+
+    $services->set(\DoctrineMigrations\Version20260703120538::class)
+        ->tag('doctrine_migrations.migration')
+        ->args([
+            new Reference('doctrine.migrations.connection'),
+            new Reference('doctrine.migrations.logger'),
+            new Reference(Filesystem::class),
+        ]);
 };
+
