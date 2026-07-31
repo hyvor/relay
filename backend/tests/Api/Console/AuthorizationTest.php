@@ -3,7 +3,7 @@
 namespace App\Tests\Api\Console;
 
 use App\Api\Console\Authorization\AuthorizationListener;
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Entity\ApiKey;
 use App\Service\ApiKey\AllowedIp;
 use App\Service\ApiKey\ApiKeyService;
@@ -20,7 +20,6 @@ use Hyvor\Internal\CloudApi\CloudJwt;
 use Hyvor\Internal\CloudApi\ConsoleApiAuth\AccessType;
 use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleApiAuthorizationListenerAbstract;
 use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleAuthResults;
-use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
 use Hyvor\Internal\Sudo\SudoUserFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -29,7 +28,6 @@ use Symfony\Component\Clock\Clock;
 use Symfony\Component\Clock\MockClock;
 
 #[CoversClass(AuthorizationListener::class)]
-#[CoversClass(ScopeRequired::class)]
 #[CoversClass(ProjectService::class)]
 #[CoversClass(ProjectUserService::class)]
 #[CoversClass(AllowedIp::class)]
@@ -74,7 +72,7 @@ class AuthorizationTest extends WebTestCase
             $project,
             'GET',
             '/sends',
-            scopes: [Scope::SENDS_READ]
+            scopes: [RelayScope::SENDS_READ]
         );
         $this->assertResponseStatusCodeSame(200);
 
@@ -105,7 +103,7 @@ class AuthorizationTest extends WebTestCase
         ApiKeyFactory::createOne([
             'project' => $project,
             'key_hashed' => hash('sha256', $apiKey),
-            'scopes' => [Scope::SENDS_READ->value],
+            'scopes' => [RelayScope::SENDS_READ->value],
             'allowed_ips' => $allowedIps,
         ]);
 
@@ -127,7 +125,7 @@ class AuthorizationTest extends WebTestCase
         ApiKeyFactory::createOne([
             'project' => $project,
             'key_hashed' => hash('sha256', $apiKey),
-            'scopes' => [Scope::SENDS_READ->value],
+            'scopes' => [RelayScope::SENDS_READ->value],
             'allowed_ips' => ['203.0.113.5'],
         ]);
 
@@ -150,7 +148,7 @@ class AuthorizationTest extends WebTestCase
         ApiKeyFactory::createOne([
             'project' => $project,
             'key_hashed' => hash('sha256', $apiKey),
-            'scopes' => [Scope::SENDS_READ->value],
+            'scopes' => [RelayScope::SENDS_READ->value],
             'allowed_ips' => [],
         ]);
 
@@ -181,7 +179,7 @@ class AuthorizationTest extends WebTestCase
         ProjectUserFactory::createOne([
             'project' => $project,
             'user_id' => 1,
-            'scopes' => [Scope::SENDS_READ->value],
+            'scopes' => [RelayScope::SENDS_READ->value],
         ]);
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
         $this->client->request(
