@@ -12,7 +12,7 @@
 	import { onMount, type Snippet } from 'svelte';
 	import Overview from './Overview.svelte';
 	import Preview from './Preview.svelte';
-	import type { RetrySendFn, Send } from '../../routes/console/types';
+	import type { RetrySendFn, Send, SendContent } from '../../routes/console/types';
 
 	interface Props {
 		fetchSend: () => Promise<Send>;

@@ -156,12 +156,11 @@ class DevSeedCommand extends Command
         $allSends = array_merge($sendsQueued, $sendsSent);
         foreach ($allSends as $send) {
             $bodyHtml = '<p>This is a test email.</p>';
-            $bodyText = 'This is a test email.';
-            $headers = ['X-Test' => 'true'];
             $raw = implode("\r\n", [
                 'From: ' . $send->getFromAddress(),
                 'Subject: ' . ($send->getSubject() ?? 'Test Email'),
                 'Message-ID: <' . $send->getMessageId() . '>',
+                'X-Test: true',
                 'Content-Type: text/html; charset=utf-8',
                 '',
                 $bodyHtml,

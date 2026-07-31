@@ -9,10 +9,10 @@ use App\Tests\Factory\QueueFactory;
 use Doctrine\DBAL\Connection;
 use DoctrineMigrations\Version20260703120538;
 use League\Flysystem\Filesystem;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use Symfony\Component\Uid\Uuid;
 
-#[CoversClass(Version20260703120538::class)]
+#[CoversNothing]
 class Version20260703120538Test extends KernelTestCase
 {
     private const PREVIOUS_VERSION = 'DoctrineMigrations\\Version20260504093617';
