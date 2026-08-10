@@ -18,7 +18,6 @@ use App\Service\Send\SendService;
 use App\Service\SendFeedback\SendFeedbackService;
 use App\Service\SendRecipient\SendRecipientService;
 use App\Service\Suppression\SuppressionService;
-use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -32,7 +31,6 @@ class IncomingMailService
         private InfrastructureBounceService $infrastructureBounceService,
         private LoggerInterface $logger,
         private EventDispatcherInterface $ed,
-        private EntityManagerInterface $em,
     ) {
     }
 
@@ -62,14 +60,15 @@ class IncomingMailService
                 return;
             }
 
-            $bounceReason = $this->classifyBounceReason($recipient->Status);
-            if ($bounceReason === null) {
+            // classified by Go, in SmtpResponseParser, when the DSN was parsed
+            $bounceReason = BounceReason::from($recipient->BounceReason);
+
+            if ($bounceReason === BounceReason::UNKNOWN) {
                 $this->logger->info('Received bounce that is not a recipient bounce or infrastructure error', [
                     'uuid' => $bounceUuid,
                     'recipient' => $recipient->EmailAddress,
                     'status' => $recipient->Status,
                 ]);
-                return;
             }
 
             $send = $this->sendService->getSendByUuid($bounceUuid);
@@ -91,10 +90,7 @@ class IncomingMailService
                 return;
             }
 
-            $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::BOUNCED);
-            $sendRecipient->setBouncedReason($bounceReason);
-            $this->em->persist($sendRecipient);
-            $this->em->flush();
+            $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::BOUNCED, $bounceReason);
 
             if ($bounceReason === BounceReason::RECIPIENT) {
                 $this->suppressionService->createSuppression(
@@ -126,25 +122,6 @@ class IncomingMailService
                 );
             }
         }
-    }
-
-    private function classifyBounceReason(?string $status): ?BounceReason
-    {
-        if ($status === null) {
-            return null;
-        }
-
-        // Recipient bounce codes
-        if (in_array($status, ['5.1.1', '5.1.2', '5.1.3', '5.5.0'], true)) {
-            return BounceReason::RECIPIENT;
-        }
-
-        // Infrastructure bounce codes
-        if (str_starts_with($status, '5.7.') || str_starts_with($status, '4.7.')) {
-            return BounceReason::INFRASTRUCTURE;
-        }
-
-        return null;
     }
 
     public function handleIncomingComplaint(

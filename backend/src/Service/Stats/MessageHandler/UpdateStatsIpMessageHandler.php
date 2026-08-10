@@ -15,17 +15,21 @@ class UpdateStatsIpMessageHandler
 
     public function __invoke(UpdateStatsIpMessage $message): void
     {
+        $statDate = $message->forLastDay
+            ? (new \DateTimeImmutable('yesterday'))->format('Y-m-d')
+            : (new \DateTimeImmutable('today'))->format('Y-m-d');
+
         $this->em->getConnection()->executeStatement(<<<SQL
             INSERT INTO stats_ip (
-                ip_address, stat_date,
+                ip_address_id, stat_date,
                 sends, send_recipients, send_attempts,
-                accepted, deferred, bounced_recipient, bounced_infrastructure, complained, suppressed, failed,
-                accepted_rate, deferred_rate, bounced_recipient_rate, bounced_infrastructure_rate,
+                accepted, deferred, bounced_recipient, bounced_infrastructure, bounced_unknown, complained, suppressed, failed,
+                accepted_rate, deferred_rate, bounced_recipient_rate, bounced_infrastructure_rate, bounced_unknown_rate,
                 complained_rate, suppressed_rate, failed_rate
             )
             SELECT
-                ia.ip_address::inet,
-                CURRENT_DATE AS stat_date,
+                ia.id,
+                :stat_date AS stat_date,
                 COUNT(DISTINCT s.id) AS sends,
                 COUNT(DISTINCT sr.id) AS send_recipients,
                 COUNT(DISTINCT sa.id) AS send_attempts,
@@ -33,6 +37,7 @@ class UpdateStatsIpMessageHandler
                 COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'deferred') AS deferred,
                 COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'recipient') AS bounced_recipient,
                 COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'infrastructure') AS bounced_infrastructure,
+                COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'unknown') AS bounced_unknown,
                 COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'complained') AS complained,
                 COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'suppressed') AS suppressed,
                 COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'failed') AS failed,
@@ -53,6 +58,10 @@ class UpdateStatsIpMessageHandler
                     / NULLIF(COUNT(DISTINCT sr.id), 0), 4
                 ) AS bounced_infrastructure_rate,
                 ROUND(
+                    COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'unknown')::NUMERIC
+                    / NULLIF(COUNT(DISTINCT sr.id), 0), 4
+                ) AS bounced_unknown_rate,
+                ROUND(
                     COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'complained')::NUMERIC
                     / NULLIF(COUNT(DISTINCT sr.id), 0), 4
                 ) AS complained_rate,
@@ -68,9 +77,9 @@ class UpdateStatsIpMessageHandler
             JOIN send_recipients sr ON sr.send_id = s.id
             JOIN send_attempts sa ON sa.send_id = s.id
             JOIN ip_addresses ia ON ia.id = sa.ip_address_id
-            WHERE sa.created_at::DATE = CURRENT_DATE
-            GROUP BY ia.ip_address, CURRENT_DATE
-            ON CONFLICT (ip_address, stat_date) DO UPDATE SET
+            WHERE sa.created_at::DATE = :stat_date
+            GROUP BY ia.id
+            ON CONFLICT (ip_address_id, stat_date) DO UPDATE SET
                 sends = EXCLUDED.sends,
                 send_recipients = EXCLUDED.send_recipients,
                 send_attempts = EXCLUDED.send_attempts,
@@ -78,6 +87,7 @@ class UpdateStatsIpMessageHandler
                 deferred = EXCLUDED.deferred,
                 bounced_recipient = EXCLUDED.bounced_recipient,
                 bounced_infrastructure = EXCLUDED.bounced_infrastructure,
+                bounced_unknown = EXCLUDED.bounced_unknown,
                 complained = EXCLUDED.complained,
                 suppressed = EXCLUDED.suppressed,
                 failed = EXCLUDED.failed,
@@ -85,9 +95,10 @@ class UpdateStatsIpMessageHandler
                 deferred_rate = EXCLUDED.deferred_rate,
                 bounced_recipient_rate = EXCLUDED.bounced_recipient_rate,
                 bounced_infrastructure_rate = EXCLUDED.bounced_infrastructure_rate,
+                bounced_unknown_rate = EXCLUDED.bounced_unknown_rate,
                 complained_rate = EXCLUDED.complained_rate,
                 suppressed_rate = EXCLUDED.suppressed_rate,
                 failed_rate = EXCLUDED.failed_rate
-        SQL);
+        SQL, ['stat_date' => $statDate]);
     }
 }

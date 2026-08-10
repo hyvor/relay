@@ -111,7 +111,7 @@ func (p *SmtpResponseParser) BounceReason() BounceReason {
 	if p.IsInfrastructureError() {
 		return BounceReasonInfrastructure
 	}
-	return ""
+	return BounceReasonUnknown
 }
 
 type BounceReason string
@@ -119,4 +119,5 @@ type BounceReason string
 const (
 	BounceReasonRecipient      BounceReason = "recipient"
 	BounceReasonInfrastructure BounceReason = "infrastructure"
+	BounceReasonUnknown        BounceReason = "unknown"
 )

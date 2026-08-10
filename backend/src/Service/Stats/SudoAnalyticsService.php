@@ -25,7 +25,7 @@ class SudoAnalyticsService
             <<<SQL
             SELECT
                 COALESCE(SUM(send_recipients), 0) AS total_send_recipients,
-                COALESCE(SUM(bounced_recipient + bounced_infrastructure), 0) AS total_bounced,
+                COALESCE(SUM(bounced_recipient + bounced_infrastructure + bounced_unknown), 0) AS total_bounced,
                 COALESCE(SUM(complained), 0) AS total_complained
             FROM stats_project
             WHERE stat_date >= :startDate
