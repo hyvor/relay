@@ -266,16 +266,16 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 					result: &SendResult{
 						RcptResults: []*RcptResult{
 							{
-								RecipientId: rcpt1Id,
-								Code:        250,
+								RecipientId:  rcpt1Id,
+								Code:         250,
 								EnhancedCode: [3]int{2, 0, 0},
-								Message:     "OK",
+								Message:      "OK",
 							},
 							{
-								RecipientId: rcpt2Id,
-								Code:        250,
+								RecipientId:  rcpt2Id,
+								Code:         250,
 								EnhancedCode: [3]int{2, 0, 0},
-								Message:     "OK",
+								Message:      "OK",
 							},
 						},
 					},
@@ -287,10 +287,10 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 					result: &SendResult{
 						RcptResults: []*RcptResult{
 							{
-								RecipientId: rcpt3Id,
-								Code:        250,
+								RecipientId:  rcpt3Id,
+								Code:         250,
 								EnhancedCode: [3]int{2, 0, 0},
-								Message: "OK",
+								Message:      "OK",
 							},
 						},
 					},
@@ -388,10 +388,10 @@ func TestEmailWorker_ProcessSend_Requeuing(t *testing.T) {
 				result: &SendResult{
 					RcptResults: []*RcptResult{
 						{
-							RecipientId: rcptId,
-							Code:        450,
+							RecipientId:  rcptId,
+							Code:         450,
 							EnhancedCode: [3]int{4, 2, 0},
-							Message:     "Try again later",
+							Message:      "Try again later",
 						},
 					},
 					NewTryCount: 1,
@@ -487,10 +487,10 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 			ResolvedMxHosts: []string{"mx1.hyvor.com", "mx2.hyvor.com"},
 			RcptResults: []*RcptResult{
 				{
-					RecipientId: recipientId,
-					Code:        250,
+					RecipientId:  recipientId,
+					Code:         250,
 					EnhancedCode: [3]int{2, 0, 0},
-					Message:     "OK",
+					Message:      "OK",
 				},
 			},
 		}
@@ -619,7 +619,6 @@ func TestEmailWorker_AttemptSendToDomain_BounceReason(t *testing.T) {
 					Code:         550,
 					EnhancedCode: [3]int{5, 1, 1},
 					Message:      "User unknown",
-					BounceReason: BounceReasonRecipient,
 				},
 			},
 		}
@@ -646,7 +645,7 @@ func TestEmailWorker_AttemptSendToDomain_BounceReason(t *testing.T) {
 
 	assert.Equal(t, 1, len(updatedSendAttempt.Recipients))
 	assert.Equal(t, 550, updatedSendAttempt.Recipients[0].SmtpCode)
-	assert.Equal(t, "recipient", updatedSendAttempt.Recipients[0].BounceReason)
+	assert.Equal(t, "recipient", updatedSendAttempt.Recipients[0].BounceReason.String)
 
 	updatedRecipient, err := factory.GetSendRecipientById(recipientId)
 	assert.NoError(t, err)
@@ -720,7 +719,6 @@ func TestEmailWorker_AttemptSendToDomain_BounceReason(t *testing.T) {
 					Code:         550,
 					EnhancedCode: [3]int{5, 7, 1},
 					Message:      "Message rejected due to security policy",
-					BounceReason: BounceReasonInfrastructure,
 				},
 			},
 		}
@@ -749,7 +747,7 @@ func TestEmailWorker_AttemptSendToDomain_BounceReason(t *testing.T) {
 
 	assert.Equal(t, 1, len(updatedSendAttempt2.Recipients))
 	assert.Equal(t, 550, updatedSendAttempt2.Recipients[0].SmtpCode)
-	assert.Equal(t, "infrastructure", updatedSendAttempt2.Recipients[0].BounceReason)
+	assert.Equal(t, "infrastructure", updatedSendAttempt2.Recipients[0].BounceReason.String)
 
 	updatedRecipient2, err := factory2.GetSendRecipientById(recipientId2)
 	assert.NoError(t, err)

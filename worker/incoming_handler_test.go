@@ -4,8 +4,28 @@ import (
 	"context"
 	"testing"
 
+	"github.com/hyvor/relay/worker/bounceparse"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestBuildDsnPayload_BounceReason(t *testing.T) {
+	dsn := &bounceparse.Dsn{
+		ReadableText: "some text",
+		Recipients: []bounceparse.DsnRecipient{
+			{EmailAddress: "a@example.com", Status: bounceparse.DsnStatus{5, 1, 1}, Action: "failed"},
+			{EmailAddress: "b@example.com", Status: bounceparse.DsnStatus{5, 7, 1}, Action: "failed"},
+			{EmailAddress: "c@example.com", Status: bounceparse.DsnStatus{5, 3, 0}, Action: "failed"},
+		},
+	}
+
+	payload := buildDsnPayload(dsn)
+
+	assert.Equal(t, "some text", payload.ReadableText)
+	assert.Len(t, payload.Recipients, 3)
+	assert.Equal(t, string(BounceReasonRecipient), payload.Recipients[0].BounceReason)
+	assert.Equal(t, string(BounceReasonInfrastructure), payload.Recipients[1].BounceReason)
+	assert.Equal(t, string(BounceReasonUnknown), payload.Recipients[2].BounceReason)
+}
 
 func TestIncomingMail_ReturnsWhenApiKey(t *testing.T) {
 
@@ -111,6 +131,14 @@ This is a test email message.
 	assert.Equal(t, "sender@example.org", bodyMap["mail_from"])
 	assert.Equal(t, "bounce+uuid@relay.com", bodyMap["rcpt_to"])
 	assert.Equal(t, string(m.Data), bodyMap["raw_email"])
+
+	dsn, ok := bodyMap["dsn"].(dsnPayload)
+	assert.True(t, ok)
+	assert.Len(t, dsn.Recipients, 1)
+	assert.Equal(t, "recipient@example.net", dsn.Recipients[0].EmailAddress)
+	assert.Equal(t, "5.1.1", dsn.Recipients[0].Status)
+	assert.Equal(t, "failed", dsn.Recipients[0].Action)
+	assert.Equal(t, string(BounceReasonRecipient), dsn.Recipients[0].BounceReason)
 
 }
 

@@ -69,10 +69,10 @@ class GetSudoStatsTest extends WebTestCase
             <<<SQL
             INSERT INTO stats_project (
                 project_id, stat_date,
-                send_recipients, bounced_recipient, bounced_infrastructure, complained
+                send_recipients, bounced_recipient, bounced_infrastructure, bounced_unknown, complained
             ) VALUES (
                 :projectId, CURRENT_DATE,
-                100, 5, 3, 2
+                100, 5, 3, 1, 2
             )
             SQL,
             ['projectId' => $project->getId()]
@@ -84,7 +84,7 @@ class GetSudoStatsTest extends WebTestCase
         $json = $this->getJson();
         $this->assertSame(1, $json['project_count']);
         $this->assertSame(100, $json['sends']);
-        $this->assertEquals(0.08, $json['bounce_rate']);
+        $this->assertEquals(0.09, $json['bounce_rate']);
         $this->assertEquals(0.02, $json['complaint_rate']);
     }
 

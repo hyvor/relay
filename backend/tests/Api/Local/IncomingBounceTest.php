@@ -59,11 +59,13 @@ class IncomingBounceTest extends WebTestCase
                             'EmailAddress' => 'nadil@hyvor.com',
                             'Status' => '5.1.1',
                             'Action' => 'failed',
+                            'BounceReason' => 'recipient',
                         ],
                         [
                             'EmailAddress' => 'supun@hyvor.com',
                             'Status' => '5.1.1',
                             'Action' => 'failed',
+                            'BounceReason' => 'recipient',
                         ],
                     ]
                 ],
@@ -189,6 +191,7 @@ class IncomingBounceTest extends WebTestCase
                             'EmailAddress' => 'nadil@hyvor.com',
                             'Status' => '5.1.1',
                             'Action' => 'delayed',
+                            'BounceReason' => 'recipient',
                         ]
                     ]
                 ],
@@ -229,6 +232,7 @@ class IncomingBounceTest extends WebTestCase
                             'EmailAddress' => 'nadil@hyvor.com',
                             'Status' => '4.1.1',
                             'Action' => 'failed',
+                            'BounceReason' => 'unknown',
                         ]
                     ]
                 ],
@@ -258,6 +262,56 @@ class IncomingBounceTest extends WebTestCase
         );
     }
 
+    public function test_unknown_bounce_recorded_without_suppression(): void
+    {
+        $project = ProjectFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project]);
+        $sendRecipient = SendRecipientFactory::createOne(['send' => $send, 'address' => 'nadil@hyvor.com']);
+
+        $response = $this->localApi(
+            'POST',
+            '/incoming',
+            [
+                'type' => 'bounce',
+                'dsn' => [
+                    'ReadableText' => 'Non permanent',
+                    'Recipients' => [
+                        [
+                            'EmailAddress' => 'nadil@hyvor.com',
+                            'Status' => '4.1.1',
+                            'Action' => 'failed',
+                            'BounceReason' => 'unknown',
+                        ]
+                    ]
+                ],
+                'bounce_uuid' => $send->getUuid(),
+                'raw_email' => 'raw',
+                'mail_from' => 'from@example.com',
+                'rcpt_to' => 'to@example.com'
+            ]
+        );
+        $this->assertSame(200, $response->getStatusCode());
+
+        $suppressions = $this->em->getRepository(Suppression::class)->findBy([
+            'project' => $project->_real(),
+            'reason' => SuppressionReason::BOUNCE
+        ]);
+        $this->assertCount(0, $suppressions);
+
+        $infrastructureBounces = $this->em->getRepository(InfrastructureBounce::class)->findBy([
+            'send_recipient_id' => $sendRecipient->getId()
+        ]);
+        $this->assertCount(0, $infrastructureBounces);
+
+        $this->assertSame(SendRecipientStatus::BOUNCED, $sendRecipient->getStatus());
+        $this->assertSame(BounceReason::UNKNOWN, $sendRecipient->getBouncedReason());
+
+        $logger = $this->getTestLogger();
+        $this->assertTrue(
+            $logger->hasInfoThatContains('Received bounce that is not a recipient bounce or infrastructure error')
+        );
+    }
+
     public function test_incoming_bounce_send_not_found(): void
     {
         $project = ProjectFactory::createOne();
@@ -273,6 +327,7 @@ class IncomingBounceTest extends WebTestCase
                             'EmailAddress' => 'nadil@hyvor.com',
                             'Status' => '5.1.1',
                             'Action' => 'failed',
+                            'BounceReason' => 'recipient',
                         ]
                     ]
                 ],
@@ -313,6 +368,7 @@ class IncomingBounceTest extends WebTestCase
                             'EmailAddress' => 'supun@hyvor.com',
                             'Status' => '5.1.1',
                             'Action' => 'failed',
+                            'BounceReason' => 'recipient',
                         ]
                     ]
                 ],
@@ -359,6 +415,7 @@ class IncomingBounceTest extends WebTestCase
                             'EmailAddress' => 'test@example.com',
                             'Status' => '5.7.1',
                             'Action' => 'failed',
+                            'BounceReason' => 'infrastructure',
                         ]
                     ]
                 ],

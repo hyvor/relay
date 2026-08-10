@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"strings"
 
@@ -61,7 +62,7 @@ func (m *IncomingMail) Handle(ctx context.Context, logger *slog.Logger, metrics 
 		if err != nil {
 			payload["error"] = err.Error()
 		} else {
-			payload["dsn"] = bounceDsn
+			payload["dsn"] = buildDsnPayload(bounceDsn)
 			payload["bounce_uuid"] = bounceUuid
 		}
 	} else if isFbl {
@@ -84,6 +85,48 @@ func (m *IncomingMail) Handle(ctx context.Context, logger *slog.Logger, metrics 
 
 	CallLocalApi(ctx, "POST", "/incoming", payload, nil)
 
+}
+
+// dsnRecipientPayload mirrors bounceparse.DsnRecipient for the JSON payload sent to
+// the PHP API, additionally carrying the BounceReason classified from the DSN status
+// code so PHP does not need to re-implement this classification.
+type dsnRecipientPayload struct {
+	EmailAddress string `json:"EmailAddress"`
+	Status       string `json:"Status"`
+	Action       string `json:"Action"`
+	BounceReason string `json:"BounceReason"`
+}
+
+type dsnPayload struct {
+	ReadableText string                `json:"ReadableText"`
+	Recipients   []dsnRecipientPayload `json:"Recipients"`
+}
+
+func buildDsnPayload(dsn *bounceparse.Dsn) dsnPayload {
+	recipients := make([]dsnRecipientPayload, 0, len(dsn.Recipients))
+
+	for _, r := range dsn.Recipients {
+		parser := NewSmtpResponseParser(0, [3]int(r.Status), "")
+
+		reason := BounceReasonUnknown
+		if parser.IsRecipientBounce() {
+			reason = BounceReasonRecipient
+		} else if parser.IsInfrastructureError() {
+			reason = BounceReasonInfrastructure
+		}
+
+		recipients = append(recipients, dsnRecipientPayload{
+			EmailAddress: r.EmailAddress,
+			Status:       fmt.Sprintf("%d.%d.%d", r.Status[0], r.Status[1], r.Status[2]),
+			Action:       r.Action,
+			BounceReason: string(reason),
+		})
+	}
+
+	return dsnPayload{
+		ReadableText: dsn.ReadableText,
+		Recipients:   recipients,
+	}
 }
 
 // Bounce email format: bounce+<uuid>@<instance_domain>

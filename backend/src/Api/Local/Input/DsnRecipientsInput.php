@@ -14,4 +14,7 @@ class DsnRecipientsInput
 
     #[Assert\NotBlank]
     public string $Action;
+
+    #[Assert\Choice(choices: ['recipient', 'infrastructure', 'unknown'])]
+    public string $BounceReason;
 }

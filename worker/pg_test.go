@@ -287,7 +287,7 @@ type FactorySendAttemptRecipientResult struct {
 	SmtpCode         int
 	SmtpEnhancedCode string
 	SmtpMessage      string
-	BounceReason     string
+	BounceReason     sql.NullString
 }
 
 func (f *TestFactory) GetSendAttemptById(id int) (*FactorySendAttempt, error) {

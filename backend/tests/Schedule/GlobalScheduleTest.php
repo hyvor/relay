@@ -25,7 +25,7 @@ class GlobalScheduleTest extends TestCase
         );
         $s = $schedule->getSchedule();
         $messages = $s->getRecurringMessages();
-        $this->assertCount(13, $messages);
+        $this->assertCount(17, $messages);
 
         $verifyDomainMessages = $this->getMessagesOfType($schedule, ReverifyDomainsMessage::class);
         $this->assertCount(2, $verifyDomainMessages);
