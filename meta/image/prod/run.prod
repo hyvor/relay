@@ -7,4 +7,4 @@ bin/console doctrine:migrations:migrate --no-interaction
 bin/console management:init
 
 # Run supervisor
-/usr/bin/supervisord
+/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
