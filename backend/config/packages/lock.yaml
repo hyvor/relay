@@ -1,4 +1,0 @@
-framework:
-  # replaces postgresql:// with postgresql+advisory://
-  # see AdvisoryProcessor
-  lock: "%env(advisory:DATABASE_URL)%"
