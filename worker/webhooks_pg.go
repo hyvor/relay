@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 )
 
 type WebhookDelivery struct {
@@ -141,24 +142,38 @@ func (b *WebhooksBatch) FinalizeWebhookByResult(delivery *WebhookDelivery, resul
 	return nil
 }
 
+// getWebhookRetryDelay is the base backoff ladder for a failed webhook
+// delivery, keyed by the try that just failed. Anything past the ladder waits
+// a day.
+func getWebhookRetryDelay(currentTry int) time.Duration {
+	retryDelays := map[int]time.Duration{
+		0: 1 * time.Minute,
+		1: 5 * time.Minute,
+		2: 15 * time.Minute,
+		3: 1 * time.Hour,
+		4: 4 * time.Hour,
+		5: 24 * time.Hour,
+	}
+
+	delay, ok := retryDelays[currentTry]
+
+	if !ok {
+		delay = 24 * time.Hour
+	}
+
+	return delay
+}
+
+// getWebhookRetryInterval returns the SQL expression assigned to send_after.
+//
+// When there is nothing left to retry the column keeps its current value, so
+// the expression is the column itself rather than an interval.
 func getWebhookRetryInterval(currentTry int, currentSuccess bool) string {
 	if currentSuccess || currentTry >= WEBHOOKS_MAX_RETRIES {
 		return "send_after"
-	} else {
-		retryIntervalMap := map[int]string{
-			0: "1 minute",
-			1: "5 minutes",
-			2: "15 minutes",
-			3: "1 hour",
-			4: "4 hours",
-			5: "24 hours",
-		}
-		interval, ok := retryIntervalMap[currentTry]
-
-		if !ok {
-			interval = "24 hours"
-		}
-
-		return fmt.Sprintf("NOW() + INTERVAL '%s'", interval)
 	}
+
+	// jittered so that an endpoint that went down while a burst of deliveries
+	// was queued does not get the whole burst back at the same instant
+	return fmt.Sprintf("NOW() + INTERVAL '%s'", jitteredSqlInterval(getWebhookRetryDelay(currentTry)))
 }

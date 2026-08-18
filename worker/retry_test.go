@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -116,5 +117,61 @@ func TestJitteredSqlInterval(t *testing.T) {
 
 	withJitterSource(t, 0)
 	assert.Equal(t, "3060 seconds", jitteredSqlInterval(time.Hour))
+
+}
+
+func TestWebhookRetryDelay(t *testing.T) {
+
+	// coupling for safety
+	delays := map[int]time.Duration{
+		0: 1 * time.Minute,
+		1: 5 * time.Minute,
+		2: 15 * time.Minute,
+		3: 1 * time.Hour,
+		4: 4 * time.Hour,
+		5: 24 * time.Hour,
+	}
+
+	for try, expected := range delays {
+		assert.Equal(t, expected, getWebhookRetryDelay(try))
+	}
+
+	assert.Equal(t, 24*time.Hour, getWebhookRetryDelay(99))
+
+}
+
+func TestWebhookRetryIntervalKeepsSendAfterWhenDone(t *testing.T) {
+
+	// delivered: nothing left to schedule
+	assert.Equal(t, "send_after", getWebhookRetryInterval(0, true))
+
+	// out of retries: nothing left to schedule
+	assert.Equal(t, "send_after", getWebhookRetryInterval(WEBHOOKS_MAX_RETRIES, false))
+	assert.Equal(t, "send_after", getWebhookRetryInterval(WEBHOOKS_MAX_RETRIES+1, false))
+
+}
+
+func TestWebhookRetryIntervalIsJittered(t *testing.T) {
+
+	withJitterSource(t, 0.5)
+	assert.Equal(t, "NOW() + INTERVAL '60 seconds'", getWebhookRetryInterval(0, false))
+	assert.Equal(t, "NOW() + INTERVAL '3600 seconds'", getWebhookRetryInterval(3, false))
+
+	for try := 0; try < WEBHOOKS_MAX_RETRIES; try++ {
+		base := getWebhookRetryDelay(try)
+		min := time.Duration(float64(base) * (1 - retryJitterFactor))
+		max := time.Duration(float64(base) * (1 + retryJitterFactor))
+
+		for i := 0; i < 100; i++ {
+			interval := getWebhookRetryInterval(try, false)
+
+			var seconds int64
+			_, err := fmt.Sscanf(interval, "NOW() + INTERVAL '%d seconds'", &seconds)
+			assert.NoError(t, err)
+
+			assert.GreaterOrEqual(t, time.Duration(seconds)*time.Second, min)
+			assert.LessOrEqual(t, time.Duration(seconds)*time.Second, max)
+		}
+	}
 
 }
