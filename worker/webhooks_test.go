@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"context"
+	"database/sql"
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -53,6 +55,7 @@ func TestWebhookWorkersPoolSet(t *testing.T) {
 		cancelFunc: cancelFunc,
 		workerFunc: mockWorker,
 		logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+		metrics:    newMetrics(),
 	}
 
 	pool.Set(2)
@@ -292,4 +295,37 @@ func (suite *WebhookWorkerTestSuite) TestWebhookDeliveryWithSignatureHeader() {
 	suite.Equal(200, int(delivery.ResponseCode.Int64))
 	suite.Equal(1, delivery.TryCount)
 	suite.Equal(testSignature, delivery.Signature.String)
+}
+
+func TestWebhookWorkerGaugeTracksGoroutineLifetime(t *testing.T) {
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// keep the worker parked in the reconnect loop so it stays alive until
+	// the context is cancelled
+	originalNewDbConn := NewDbConn
+	NewDbConn = func(config *DBConfig) (*sql.DB, error) {
+		return nil, errors.New("connection failed")
+	}
+	defer func() { NewDbConn = originalNewDbConn }()
+
+	metrics := newMetrics()
+	var wg sync.WaitGroup
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+
+	assert.Equal(t, 0.0, gaugeValue(t, metrics.workersWebhookTotal))
+
+	wg.Add(2)
+	go webhookWorker(ctx, 1, &wg, &DBConfig{}, logger, metrics)
+	go webhookWorker(ctx, 2, &wg, &DBConfig{}, logger, metrics)
+
+	assert.Eventually(t, func() bool {
+		return gaugeValue(t, metrics.workersWebhookTotal) == 2.0
+	}, time.Second, 5*time.Millisecond)
+
+	cancel()
+	wg.Wait()
+
+	assert.Equal(t, 0.0, gaugeValue(t, metrics.workersWebhookTotal))
+
 }

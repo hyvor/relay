@@ -102,6 +102,11 @@ func webhookWorker(
 ) {
 	defer wg.Done()
 
+	// see EmailWorker.Start(): the gauge tracks live goroutines, not the
+	// configured worker count
+	metrics.workersWebhookTotal.Inc()
+	defer metrics.workersWebhookTotal.Dec()
+
 	logger.Debug("Webhook worker started", "id", id)
 
 	conn, err := NewRetryingDbConn(ctx, dbConfig, logger)
