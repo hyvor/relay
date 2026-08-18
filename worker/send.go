@@ -100,6 +100,11 @@ type SmtpConversation struct {
 	// results for each recipient, indexed by recipient ID
 	RcptResults []*RcptResult `json:"-"`
 
+	// set when NetworkError came from the STARTTLS handshake and looks like
+	// something a lower TLS version could get past. Unexported so it stays
+	// out of the stored conversation; it only drives the retry decision.
+	tlsHandshakeFailed bool `json:"-"`
+
 	// simply record all steps for debugging
 	Steps []*SmtpStep `json:"steps"`
 }
@@ -413,6 +418,19 @@ func sendEmailToHostHandler(
 	ip string,
 	ptr string,
 ) *SmtpConversation {
+	// 0 means "no ceiling", so crypto/tls picks its own maximum
+	return sendEmailToHostWithTlsMaxVersion(send, recipients, host, instanceDomain, ip, ptr, 0)
+}
+
+func sendEmailToHostWithTlsMaxVersion(
+	send *SendRow,
+	recipients []*RecipientRow,
+	host string,
+	instanceDomain string,
+	ip string,
+	ptr string,
+	tlsMaxVersion uint16,
+) *SmtpConversation {
 
 	conversation := NewSmtpConversation()
 
@@ -444,15 +462,23 @@ func sendEmailToHostHandler(
 	// ============
 	if ok, _ := c.Extension("STARTTLS"); ok {
 
-		startTlsResult, ehloResult := c.StartTLS(&tls.Config{ServerName: host})
+		startTlsResult, ehloResult := c.StartTLS(&tls.Config{
+			ServerName: host,
+			MaxVersion: tlsMaxVersion,
+		})
 
 		if startTlsResult.Err != nil {
 			conversation.NetworkError = startTlsResult.Err
 			return conversation
 		}
 
+		// tls.Client() handshakes lazily, so a handshake failure surfaces
+		// here, on the first read of the EHLO that follows, rather than from
+		// StartTLS itself.
 		if ehloResult.Err != nil {
+			conversation.AddStepFromResult(SmtpStepStartTLS, &startTlsResult)
 			conversation.NetworkError = ehloResult.Err
+			conversation.tlsHandshakeFailed = isTlsVersionNegotiationError(ehloResult.Err)
 			return conversation
 		}
 
