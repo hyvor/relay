@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"strings"
@@ -681,22 +682,57 @@ func TestSend_JsonMarsh(t *testing.T) {
 
 }
 
-func TestSendAfterInterval(t *testing.T) {
+func TestSendRetryDelay(t *testing.T) {
 
 	// coupling for safety
-	intervals := map[int]string{
-		1: "15 minutes",
-		2: "1 hour",
-		3: "2 hours",
-		4: "4 hours",
-		5: "8 hours",
-		6: "16 hours",
+	delays := map[int]time.Duration{
+		1: 15 * time.Minute,
+		2: 1 * time.Hour,
+		3: 2 * time.Hour,
+		4: 4 * time.Hour,
+		5: 8 * time.Hour,
+		6: 16 * time.Hour,
 	}
 
 	for i := 1; i <= 6; i++ {
-		assert.Equal(t, intervals[i], getSendAfterInterval(i))
+		assert.Equal(t, delays[i], getSendRetryDelay(i))
 	}
 
-	assert.Equal(t, "1 day", getSendAfterInterval(10))
+	assert.Equal(t, 24*time.Hour, getSendRetryDelay(10))
 
+}
+
+func TestSendAfterIntervalIsJittered(t *testing.T) {
+
+	// no jitter: the literal matches the base ladder exactly
+	withJitterSource(t, 0.5)
+	assert.Equal(t, "900 seconds", getSendAfterInterval(1))
+	assert.Equal(t, "3600 seconds", getSendAfterInterval(2))
+	assert.Equal(t, "86400 seconds", getSendAfterInterval(10))
+
+	// full jitter both ways stays inside the configured factor
+	for attempt := 1; attempt <= 7; attempt++ {
+		base := getSendRetryDelay(attempt)
+		min := time.Duration(float64(base) * (1 - retryJitterFactor))
+		max := time.Duration(float64(base) * (1 + retryJitterFactor))
+
+		for i := 0; i < 100; i++ {
+			seconds := secondsFromInterval(t, getSendAfterInterval(attempt))
+
+			assert.GreaterOrEqual(t, seconds, min)
+			assert.LessOrEqual(t, seconds, max)
+		}
+	}
+
+}
+
+// secondsFromInterval parses the "<n> seconds" literal the retry ladders emit.
+func secondsFromInterval(t *testing.T, interval string) time.Duration {
+	t.Helper()
+
+	var seconds int64
+	_, err := fmt.Sscanf(interval, "%d seconds", &seconds)
+	assert.NoError(t, err)
+
+	return time.Duration(seconds) * time.Second
 }

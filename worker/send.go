@@ -562,27 +562,35 @@ func getReturnPath(
 	return fmt.Sprintf("bounce+%s@%s", send.Uuid, instanceDomain)
 }
 
-// tryCount is
-func getSendAfterInterval(currentAttempt int) string {
+// getSendRetryDelay is the base backoff ladder for a deferred send, keyed by
+// the attempt that just failed. Anything past the ladder waits a day.
+func getSendRetryDelay(currentAttempt int) time.Duration {
 
 	if currentAttempt == 1 {
-		return "15 minutes"
+		return 15 * time.Minute
 	}
 	if currentAttempt == 2 {
-		return "1 hour"
+		return 1 * time.Hour
 	}
 	if currentAttempt == 3 {
-		return "2 hours"
+		return 2 * time.Hour
 	}
 	if currentAttempt == 4 {
-		return "4 hours"
+		return 4 * time.Hour
 	}
 	if currentAttempt == 5 {
-		return "8 hours"
+		return 8 * time.Hour
 	}
 	if currentAttempt == 6 {
-		return "16 hours"
+		return 16 * time.Hour
 	}
 
-	return "1 day"
+	return 24 * time.Hour
+}
+
+// getSendAfterInterval renders the backoff for the attempt that just failed as
+// a Postgres interval literal, jittered so a batch of sends deferred by the
+// same remote server at the same moment does not come back in lockstep.
+func getSendAfterInterval(currentAttempt int) string {
+	return jitteredSqlInterval(getSendRetryDelay(currentAttempt))
 }
