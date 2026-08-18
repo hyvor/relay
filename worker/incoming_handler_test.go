@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/hyvor/relay/worker/bounceparse"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -114,6 +115,12 @@ This is a test email message.
 	assert.Equal(t, "sender@example.org", bodyMap["mail_from"])
 	assert.Equal(t, "bounce+uuid@relay.com", bodyMap["rcpt_to"])
 	assert.Equal(t, string(m.Data), bodyMap["raw_email"])
+
+	dsnMap, ok := bodyMap["dsn"].(*bounceparse.Dsn)
+	assert.True(t, ok)
+	bounceDsns := dsnMap.Recipients
+	assert.Equal(t, 1, len(bounceDsns))
+	assert.Equal(t, "recipient", bounceDsns[0].BounceReason)
 
 }
 
