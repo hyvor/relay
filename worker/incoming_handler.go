@@ -144,6 +144,13 @@ func incomingMailWorker(
 	mailChannel chan *IncomingMail,
 ) {
 
+	// see EmailWorker.Start(): the gauge tracks live goroutines, not the
+	// configured worker count. This pool is not wait-grouped, so a state
+	// update can briefly overlap two generations of workers; the gauge
+	// showing that overlap is the point.
+	metrics.workersIncomingTotal.Inc()
+	defer metrics.workersIncomingTotal.Dec()
+
 	logger.Debug("Starting incoming mail handler", "worker", i)
 
 	for {

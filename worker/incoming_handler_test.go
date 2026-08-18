@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"io"
+	"log/slog"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -178,5 +181,31 @@ Return-Path: <return@hyvor.com>
 	assert.Equal(t, "sender@example.org", bodyMap["mail_from"])
 	assert.Equal(t, "fbl@relay.com", bodyMap["rcpt_to"])
 	assert.Equal(t, string(m.Data), bodyMap["raw_email"])
+
+}
+
+func TestIncomingMailWorkerGaugeTracksGoroutineLifetime(t *testing.T) {
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	metrics := newMetrics()
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	mailChannel := make(chan *IncomingMail)
+
+	assert.Equal(t, 0.0, gaugeValue(t, metrics.workersIncomingTotal))
+
+	for i := 0; i < 3; i++ {
+		go incomingMailWorker(ctx, i, logger, metrics, mailChannel)
+	}
+
+	assert.Eventually(t, func() bool {
+		return gaugeValue(t, metrics.workersIncomingTotal) == 3.0
+	}, time.Second, 5*time.Millisecond)
+
+	cancel()
+
+	assert.Eventually(t, func() bool {
+		return gaugeValue(t, metrics.workersIncomingTotal) == 0.0
+	}, time.Second, 5*time.Millisecond)
 
 }
