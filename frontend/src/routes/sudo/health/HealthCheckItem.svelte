@@ -19,6 +19,16 @@
 		return dayjs(checkedAt).fromNow();
 	}
 
+	// the failure callout is rendered with {@html}, and some of these values
+	// come from remote DNS servers, so anything interpolated must be escaped
+	function escapeHtml(value: string): string {
+		return value
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;');
+	}
+
 	function renderFailureData(data: HealthCheckData[Key]): string {
 		if (checkKey === 'all_active_ips_have_correct_ptr') {
 			const ptrData = data as HealthCheckData['all_active_ips_have_correct_ptr'];
@@ -27,16 +37,27 @@
 				if (valid) {
 					return 'OK';
 				} else {
-					return 'invalid' + (error ? ` (${error})` : '');
+					return 'invalid' + (error ? ` (${escapeHtml(error)})` : '');
 				}
 			}
 
-			return `Invalid PTRs: ${ptrData.invalid_ptrs
-				.map(
-					(ptr) =>
-						`${ptr.ip}: forward ${getValidInvalidMsg(ptr.forward_valid, ptr.forward_error)}, reverse ${getValidInvalidMsg(ptr.reverse_valid, ptr.reverse_error)}`
-				)
-				.join(', ')}`;
+			function renderPtr(ptr: (typeof ptrData.invalid_ptrs)[number]): string {
+				const result =
+					`${escapeHtml(ptr.ip)}: ` +
+					`forward ${getValidInvalidMsg(ptr.forward_valid, ptr.forward_error)}, ` +
+					`reverse ${getValidInvalidMsg(ptr.reverse_valid, ptr.reverse_error)}`;
+
+				// health results are cached on the instance, so a run from
+				// before this field existed can still be on screen
+				if (!ptr.expected_ptr) {
+					return result;
+				}
+
+				return `${result}. Expected to see <code>${escapeHtml(ptr.expected_ptr)}</code>`;
+			}
+
+			// one IP per line: each entry already contains commas
+			return `Invalid PTRs:<br />${ptrData.invalid_ptrs.map(renderPtr).join('<br />')}`;
 		}
 
 		if (checkKey === 'all_queues_have_at_least_one_ip') {
