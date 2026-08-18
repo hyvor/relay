@@ -8,4 +8,8 @@ use Symfony\Component\Messenger\Attribute\AsMessage;
 #[AsMessage(MessageTransport::ASYNC)]
 readonly class UpdateStatsIpMessage
 {
+    public function __construct(
+        public bool $forLastDay = false,
+    ) {
+    }
 }

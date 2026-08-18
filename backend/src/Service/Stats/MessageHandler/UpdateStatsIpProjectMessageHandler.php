@@ -15,16 +15,18 @@ class UpdateStatsIpProjectMessageHandler
 
     public function __invoke(UpdateStatsIpProjectMessage $message): void
     {
+        $statDate = $message->forLastDay ? 'CURRENT_DATE - 1' : 'CURRENT_DATE';
+
         $this->em->getConnection()->executeStatement(<<<SQL
             INSERT INTO stats_ip_project (
-                ip_address, project_id, stat_date,
+                ip_address_id, project_id, stat_date,
                 sent, bounced_recipient, bounced_infrastructure, complained,
                 bounced_recipient_rate, bounced_infrastructure_rate, complained_rate
             )
             SELECT
-                ia.ip_address::inet,
+                sa.ip_address_id,
                 s.project_id,
-                CURRENT_DATE AS stat_date,
+                $statDate AS stat_date,
                 COUNT(DISTINCT sr.id) FILTER (WHERE sr.status IN ('accepted', 'deferred', 'bounced', 'failed', 'suppressed')) AS sent,
                 COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'recipient') AS bounced_recipient,
                 COUNT(DISTINCT sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'infrastructure') AS bounced_infrastructure,
@@ -44,10 +46,9 @@ class UpdateStatsIpProjectMessageHandler
             FROM sends s
             JOIN send_recipients sr ON sr.send_id = s.id
             JOIN send_attempts sa ON sa.send_id = s.id
-            JOIN ip_addresses ia ON ia.id = sa.ip_address_id
-            WHERE sa.created_at::DATE = CURRENT_DATE
-            GROUP BY ia.ip_address, s.project_id, CURRENT_DATE
-            ON CONFLICT (ip_address, project_id, stat_date) DO UPDATE SET
+            WHERE sa.created_at::DATE = $statDate
+            GROUP BY sa.ip_address_id, s.project_id, $statDate
+            ON CONFLICT (ip_address_id, project_id, stat_date) DO UPDATE SET
                 sent = EXCLUDED.sent,
                 bounced_recipient = EXCLUDED.bounced_recipient,
                 bounced_infrastructure = EXCLUDED.bounced_infrastructure,

@@ -15,6 +15,8 @@ class UpdateStatsProjectMessageHandler
 
     public function __invoke(UpdateStatsProjectMessage $message): void
     {
+        $statDate = $message->forLastDay ? 'CURRENT_DATE - 1' : 'CURRENT_DATE';
+
         $this->em->getConnection()->executeStatement(<<<SQL
             INSERT INTO stats_project (
                 project_id, stat_date,
@@ -25,7 +27,7 @@ class UpdateStatsProjectMessageHandler
             )
             SELECT
                 s.project_id,
-                CURRENT_DATE AS stat_date,
+                $statDate AS stat_date,
                 COUNT(DISTINCT s.id) AS sends,
                 COUNT(DISTINCT sr.id) AS send_recipients,
                 COUNT(DISTINCT sa.id) AS send_attempts,
@@ -66,9 +68,9 @@ class UpdateStatsProjectMessageHandler
                 ) AS failed_rate
             FROM sends s
             JOIN send_recipients sr ON sr.send_id = s.id
-            LEFT JOIN send_attempts sa ON sa.send_id = s.id AND sa.created_at::DATE = CURRENT_DATE
-            WHERE s.created_at::DATE = CURRENT_DATE
-            GROUP BY s.project_id, CURRENT_DATE
+            LEFT JOIN send_attempts sa ON sa.send_id = s.id AND sa.created_at::DATE = $statDate
+            WHERE s.created_at::DATE = $statDate
+            GROUP BY s.project_id, $statDate
             ON CONFLICT (project_id, stat_date) DO UPDATE SET
                 sends = EXCLUDED.sends,
                 send_recipients = EXCLUDED.send_recipients,

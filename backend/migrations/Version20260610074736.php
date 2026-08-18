@@ -18,7 +18,7 @@ final class Version20260610074736 extends AbstractMigration
     {
         $this->addSql("
             CREATE TABLE stats_project (
-                project_id BIGINT NOT NULL REFERENCES projects(id),
+                project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
                 stat_date DATE NOT NULL,
                 sends INT DEFAULT 0,
                 send_recipients INT DEFAULT 0,
@@ -43,7 +43,7 @@ final class Version20260610074736 extends AbstractMigration
 
         $this->addSql("
             CREATE TABLE stats_ip (
-                ip_address INET NOT NULL,
+                ip_address_id BIGINT NOT NULL REFERENCES ip_addresses(id) ON DELETE CASCADE,
                 stat_date DATE NOT NULL,
                 sends INT DEFAULT 0,
                 send_recipients INT DEFAULT 0,
@@ -62,14 +62,14 @@ final class Version20260610074736 extends AbstractMigration
                 complained_rate NUMERIC(6,4),
                 suppressed_rate NUMERIC(6,4),
                 failed_rate NUMERIC(6,4),
-                PRIMARY KEY (ip_address, stat_date)
+                PRIMARY KEY (ip_address_id, stat_date)
             )
         ");
 
         $this->addSql("
             CREATE TABLE stats_ip_project (
-                ip_address INET NOT NULL,
-                project_id BIGINT NOT NULL REFERENCES projects(id),
+                ip_address_id BIGINT NOT NULL REFERENCES ip_addresses(id) ON DELETE CASCADE,
+                project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
                 stat_date DATE NOT NULL,
                 sent INT DEFAULT 0,
                 bounced_recipient INT DEFAULT 0,
@@ -78,14 +78,14 @@ final class Version20260610074736 extends AbstractMigration
                 bounced_recipient_rate NUMERIC(6,4),
                 bounced_infrastructure_rate NUMERIC(6,4),
                 complained_rate NUMERIC(6,4),
-                PRIMARY KEY (ip_address, project_id, stat_date)
+                PRIMARY KEY (ip_address_id, project_id, stat_date)
             )
         ");
 
         $this->addSql("
             CREATE TABLE stats_delivery_domain (
-                project_id BIGINT NOT NULL REFERENCES projects(id),
-                ip_address INET NOT NULL,
+                project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                ip_address_id BIGINT NOT NULL REFERENCES ip_addresses(id) ON DELETE CASCADE,
                 recipient_domain TEXT NOT NULL,
                 provider TEXT NULL,
                 stat_date DATE NOT NULL,
@@ -94,7 +94,7 @@ final class Version20260610074736 extends AbstractMigration
                 bounced_recipient INT DEFAULT 0,
                 bounced_infrastructure INT DEFAULT 0,
                 complained INT DEFAULT 0,
-                PRIMARY KEY (project_id, ip_address, recipient_domain, stat_date)
+                PRIMARY KEY (project_id, ip_address_id, recipient_domain, stat_date)
             )
         ");
     }
