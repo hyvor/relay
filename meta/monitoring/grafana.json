@@ -2410,7 +2410,7 @@
         {
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sort_desc(sum(max_over_time(http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__range])- min_over_time(http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__range])) by (status))",
+          "expr": "sort_desc(floor(sum by(status) (increase(http_requests_total{job=\"$job\",instance=~\"$instance\"}[$__range]))))",
           "format": "table",
           "instant": true,
           "interval": "",
