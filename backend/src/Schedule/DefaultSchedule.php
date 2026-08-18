@@ -76,10 +76,16 @@ class DefaultSchedule implements ScheduleProviderInterface
             ->add(RecurringMessage::every('1 day', new CheckMailCertificateValidityMessage))
 
             // stats rollup
-            ->add(RecurringMessage::every('1 hour', new UpdateStatsProjectMessage))
-            ->add(RecurringMessage::every('1 hour', new UpdateStatsIpMessage))
-            ->add(RecurringMessage::every('1 hour', new UpdateStatsIpProjectMessage))
-            ->add(RecurringMessage::every('1 hour', new UpdateStatsDeliveryDomainMessage))
+            // current day, every 10 minutes
+            ->add(RecurringMessage::every('10 minutes', new UpdateStatsProjectMessage))
+            ->add(RecurringMessage::every('10 minutes', new UpdateStatsIpMessage))
+            ->add(RecurringMessage::every('10 minutes', new UpdateStatsIpProjectMessage))
+            ->add(RecurringMessage::every('10 minutes', new UpdateStatsDeliveryDomainMessage))
+            // previous day, once at 00:05 to update all
+            ->add(RecurringMessage::cron('5 0 * * *', new UpdateStatsProjectMessage(true)))
+            ->add(RecurringMessage::cron('5 0 * * *', new UpdateStatsIpMessage(true)))
+            ->add(RecurringMessage::cron('5 0 * * *', new UpdateStatsIpProjectMessage(true)))
+            ->add(RecurringMessage::cron('5 0 * * *', new UpdateStatsDeliveryDomainMessage(true)))
 
             // global lock
             ->lock($this->lockFactory->createLock('global-schedule', 20))

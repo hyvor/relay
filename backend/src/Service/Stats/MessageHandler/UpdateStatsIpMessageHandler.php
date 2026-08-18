@@ -15,17 +15,19 @@ class UpdateStatsIpMessageHandler
 
     public function __invoke(UpdateStatsIpMessage $message): void
     {
+        $statDate = $message->forLastDay ? 'CURRENT_DATE - 1' : 'CURRENT_DATE';
+
         $this->em->getConnection()->executeStatement(<<<SQL
             INSERT INTO stats_ip (
-                ip_address, stat_date,
+                ip_address_id, stat_date,
                 sends, send_recipients, send_attempts,
                 accepted, deferred, bounced_recipient, bounced_infrastructure, complained, suppressed, failed,
                 accepted_rate, deferred_rate, bounced_recipient_rate, bounced_infrastructure_rate,
                 complained_rate, suppressed_rate, failed_rate
             )
             SELECT
-                ia.ip_address::inet,
-                CURRENT_DATE AS stat_date,
+                sa.ip_address_id,
+                $statDate AS stat_date,
                 COUNT(DISTINCT s.id) AS sends,
                 COUNT(DISTINCT sr.id) AS send_recipients,
                 COUNT(DISTINCT sa.id) AS send_attempts,
@@ -67,10 +69,9 @@ class UpdateStatsIpMessageHandler
             FROM sends s
             JOIN send_recipients sr ON sr.send_id = s.id
             JOIN send_attempts sa ON sa.send_id = s.id
-            JOIN ip_addresses ia ON ia.id = sa.ip_address_id
-            WHERE sa.created_at::DATE = CURRENT_DATE
-            GROUP BY ia.ip_address, CURRENT_DATE
-            ON CONFLICT (ip_address, stat_date) DO UPDATE SET
+            WHERE sa.created_at::DATE = $statDate
+            GROUP BY sa.ip_address_id, $statDate
+            ON CONFLICT (ip_address_id, stat_date) DO UPDATE SET
                 sends = EXCLUDED.sends,
                 send_recipients = EXCLUDED.send_recipients,
                 send_attempts = EXCLUDED.send_attempts,
