@@ -224,10 +224,12 @@ func (server *MetricsServer) Set(goState GoState) {
 		goState.Env,
 		goState.InstanceDomain,
 	).Set(1)
+	// workers_api_total is the only worker gauge still set from the state:
+	// the API workers are PHP processes owned by the backend, so this process
+	// can only report the configured number. The email, webhook and incoming
+	// gauges are owned by the goroutines themselves (Inc on start, Dec on
+	// exit) and must not be overwritten here.
 	server.metrics.workersApiTotal.Set(float64(goState.ApiWorkers))
-	server.metrics.workersEmailTotal.Set(float64(len(goState.Ips) * goState.EmailWorkersPerIp))
-	server.metrics.workersWebhookTotal.Set(float64(goState.WebhookWorkers))
-	server.metrics.workersIncomingTotal.Set(float64(goState.IncomingWorkers))
 	server.metrics.serversTotal.Set(float64(goState.ServersCount))
 
 	if !server.serverStarted {

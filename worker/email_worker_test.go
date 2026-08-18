@@ -56,6 +56,7 @@ func TestEmailWorkersPoolSet(t *testing.T) {
 		ctx:        ctx,
 		cancelFunc: cancel,
 		logger:     slogDiscard(),
+		metrics:    newMetrics(),
 	}
 
 	pool.Set([]GoStateIp{
@@ -159,7 +160,8 @@ func TestEmailWorker_CallsProcessSend(t *testing.T) {
 			cancel()
 			return nil
 		},
-		logger: slogDiscard(),
+		logger:  slogDiscard(),
+		metrics: newMetrics(),
 	}
 
 	go emailWorker.Start()
@@ -540,5 +542,67 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "accepted", updatedRecipient.Status)
 	assert.Equal(t, 1, updatedRecipient.TryCount)
+
+}
+
+func TestEmailWorkerGaugeTracksGoroutineLifetime(t *testing.T) {
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// keep the workers parked in the reconnect loop so they stay alive until
+	// the context is cancelled
+	originalNewDbConn := NewDbConn
+	NewDbConn = func(config *DBConfig) (*sql.DB, error) {
+		return nil, errors.New("connection failed")
+	}
+	defer func() { NewDbConn = originalNewDbConn }()
+
+	metrics := newMetrics()
+	var wg sync.WaitGroup
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	ip := GoStateIp{Ip: "1.1.1.1", QueueId: 1, QueueName: "test"}
+
+	assert.Equal(t, 0.0, gaugeValue(t, metrics.workersEmailTotal))
+
+	for i := 0; i < 2; i++ {
+		wg.Add(1)
+		go NewEmailWorker(ctx, i, &wg, &DBConfig{}, logger, metrics, ip, "relay.hyvor.com").Start()
+	}
+
+	assert.Eventually(t, func() bool {
+		return gaugeValue(t, metrics.workersEmailTotal) == 2.0
+	}, time.Second, 5*time.Millisecond)
+
+	cancel()
+	wg.Wait()
+
+	assert.Equal(t, 0.0, gaugeValue(t, metrics.workersEmailTotal))
+
+}
+
+func TestEmailWorkerGaugeDropsWhenWorkerNeverStarts(t *testing.T) {
+
+	// a worker whose context is already dead exits before it does any work.
+	// The old code still reported it as a running worker; the gauge must end
+	// at zero.
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	originalNewDbConn := NewDbConn
+	NewDbConn = func(config *DBConfig) (*sql.DB, error) {
+		return nil, errors.New("connection failed")
+	}
+	defer func() { NewDbConn = originalNewDbConn }()
+
+	metrics := newMetrics()
+	var wg sync.WaitGroup
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	ip := GoStateIp{Ip: "1.1.1.1", QueueId: 1, QueueName: "test"}
+
+	wg.Add(1)
+	go NewEmailWorker(ctx, 1, &wg, &DBConfig{}, logger, metrics, ip, "relay.hyvor.com").Start()
+	wg.Wait()
+
+	assert.Equal(t, 0.0, gaugeValue(t, metrics.workersEmailTotal))
 
 }

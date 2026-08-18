@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -111,4 +113,47 @@ func TestIsIpApproved(t *testing.T) {
 			t.Errorf("isPrivateIp(%s) = %v; expected %v", tt.remoteAddr, got, tt.expected)
 		}
 	}
+}
+
+func TestWorkerGaugesAreNotOverwrittenByState(t *testing.T) {
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	metricsServer := NewMetricsServer(ctx, slogDiscard())
+
+	// pretend three email workers, two webhook workers and one incoming
+	// worker actually started
+	metricsServer.metrics.workersEmailTotal.Add(3)
+	metricsServer.metrics.workersWebhookTotal.Add(2)
+	metricsServer.metrics.workersIncomingTotal.Add(1)
+
+	// a state update asking for far more workers must not move the gauges:
+	// the goroutines have not started yet, so reporting them would be a lie
+	metricsServer.Set(GoState{
+		IsLeader:          false,
+		Ips:               []GoStateIp{{Id: 1}, {Id: 2}},
+		EmailWorkersPerIp: 50,
+		WebhookWorkers:    50,
+		IncomingWorkers:   50,
+		ApiWorkers:        7,
+	})
+
+	assert.Equal(t, 3.0, gaugeValue(t, metricsServer.metrics.workersEmailTotal))
+	assert.Equal(t, 2.0, gaugeValue(t, metricsServer.metrics.workersWebhookTotal))
+	assert.Equal(t, 1.0, gaugeValue(t, metricsServer.metrics.workersIncomingTotal))
+
+	// API workers are PHP processes this binary does not own, so that gauge
+	// is still reported from the state
+	assert.Equal(t, 7.0, gaugeValue(t, metricsServer.metrics.workersApiTotal))
+
+}
+
+func gaugeValue(t *testing.T, gauge prometheus.Gauge) float64 {
+	t.Helper()
+
+	metric := &dto.Metric{}
+	assert.NoError(t, gauge.Write(metric))
+
+	return metric.GetGauge().GetValue()
 }

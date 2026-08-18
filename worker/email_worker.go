@@ -148,6 +148,12 @@ func (worker *EmailWorker) Start() {
 
 	defer worker.wg.Done()
 
+	// count the goroutine, not the configured worker count, so the gauge
+	// reflects workers that actually got running and drops again as soon as
+	// one exits (including the early return below)
+	worker.metrics.workersEmailTotal.Inc()
+	defer worker.metrics.workersEmailTotal.Dec()
+
 	conn, err := NewRetryingDbConn(
 		worker.ctx,
 		worker.dbConfig,
