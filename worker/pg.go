@@ -96,16 +96,22 @@ func createNewRetryingDbConn(
 			return db, nil
 		}
 
+		// jitter the wait but keep the doubling deterministic, so the
+		// backoff still grows predictably while the wake-ups spread out.
+		// Every worker holds its own connection, so without this a single
+		// Postgres blip has all of them reconnecting in lockstep.
+		wait := jitterDuration(backoff)
+
 		logger.Error(
 			"Failed to connect to database, retrying",
 			"error", err,
-			"backoff", backoff,
+			"backoff", wait,
 		)
 
 		select {
 		case <-ctx.Done():
 			return nil, ctx.Err()
-		case <-time.After(backoff):
+		case <-time.After(wait):
 			backoff *= 2
 			if backoff > maxBackoff {
 				backoff = maxBackoff
