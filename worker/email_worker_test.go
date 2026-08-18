@@ -628,7 +628,6 @@ func TestEmailWorker_AttemptSendToDomain_BounceReason(t *testing.T) {
 					Code:         550,
 					EnhancedCode: [3]int{5, 1, 1},
 					Message:      "User unknown",
-					BounceReason: BounceReasonRecipient,
 				},
 			},
 		}
@@ -655,7 +654,7 @@ func TestEmailWorker_AttemptSendToDomain_BounceReason(t *testing.T) {
 
 	assert.Equal(t, 1, len(updatedSendAttempt.Recipients))
 	assert.Equal(t, 550, updatedSendAttempt.Recipients[0].SmtpCode)
-	assert.Equal(t, "recipient", updatedSendAttempt.Recipients[0].BounceReason)
+	assert.Equal(t, "recipient", updatedSendAttempt.Recipients[0].BounceReason.String)
 
 	updatedRecipient, err := factory.GetSendRecipientById(recipientId)
 	assert.NoError(t, err)
@@ -729,7 +728,6 @@ func TestEmailWorker_AttemptSendToDomain_BounceReason(t *testing.T) {
 					Code:         550,
 					EnhancedCode: [3]int{5, 7, 1},
 					Message:      "Message rejected due to security policy",
-					BounceReason: BounceReasonInfrastructure,
 				},
 			},
 		}
@@ -758,7 +756,7 @@ func TestEmailWorker_AttemptSendToDomain_BounceReason(t *testing.T) {
 
 	assert.Equal(t, 1, len(updatedSendAttempt2.Recipients))
 	assert.Equal(t, 550, updatedSendAttempt2.Recipients[0].SmtpCode)
-	assert.Equal(t, "infrastructure", updatedSendAttempt2.Recipients[0].BounceReason)
+	assert.Equal(t, "infrastructure", updatedSendAttempt2.Recipients[0].BounceReason.String)
 
 	updatedRecipient2, err := factory2.GetSendRecipientById(recipientId2)
 	assert.NoError(t, err)
