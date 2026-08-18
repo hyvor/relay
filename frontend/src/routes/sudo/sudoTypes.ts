@@ -71,6 +71,8 @@ export interface HealthCheckData {
 	all_active_ips_have_correct_ptr: {
 		invalid_ptrs: Array<{
 			ip: string;
+			/** the hostname the PTR record should resolve to, e.g. smtp1.mail.example.net */
+			expected_ptr: string;
 			forward_valid: boolean;
 			forward_error: string | null;
 			reverse_valid: boolean;
