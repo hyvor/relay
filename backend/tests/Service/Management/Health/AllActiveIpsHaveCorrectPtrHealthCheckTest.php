@@ -3,6 +3,7 @@
 namespace App\Tests\Service\Management\Health;
 
 use App\Entity\IpAddress;
+use App\Service\App\Config;
 use App\Service\Ip\Dto\PtrValidationDto;
 use App\Service\Ip\Ptr;
 use App\Service\Management\Health\AllActiveIpsHaveCorrectPtrHealthCheck;
@@ -31,7 +32,8 @@ class AllActiveIpsHaveCorrectPtrHealthCheckTest extends KernelTestCase
 
         $this->healthCheck = new AllActiveIpsHaveCorrectPtrHealthCheck(
             $this->em,
-            $ipAddressService
+            $ipAddressService,
+            $this->getService(Config::class)
         );
     }
 
@@ -102,5 +104,42 @@ class AllActiveIpsHaveCorrectPtrHealthCheckTest extends KernelTestCase
         $this->assertEquals('Simulated forward PTR failure', $invalidPtrs[0]['forward_error']);
         $this->assertFalse($invalidPtrs[0]['reverse_valid']);
         $this->assertEquals('Simulated reverse PTR failure', $invalidPtrs[0]['reverse_error']);
+    }
+
+    /**
+     * The reported problem was that the console could say the PTR was wrong
+     * but not what it should have been, so the operator had no way to know
+     * which hostname to point the record at.
+     */
+    public function testFailureDataIncludesTheExpectedPtrHostname(): void
+    {
+        $ip = IpAddressFactory::createOne([
+            'queue' => QueueFactory::new(),
+            'is_ptr_forward_valid' => true,
+            'is_ptr_reverse_valid' => false,
+        ]);
+
+        $this->ptr->method('validate')
+            ->willReturn([
+                'forward' => new PtrValidationDto(true),
+                'reverse' => new PtrValidationDto(false, 'DNS error: Non-existent domain (NXDOMAIN)'),
+            ]);
+
+        $this->assertFalse($this->healthCheck->check());
+
+        $invalidPtrs = $this->healthCheck->getData()['invalid_ptrs'];
+        $this->assertIsArray($invalidPtrs);
+        $this->assertIsArray($invalidPtrs[0]);
+
+        $expected = Ptr::getPtrDomain(
+            $ip->_real(),
+            $this->getService(Config::class)->getInstanceDomain()
+        );
+
+        $this->assertSame($expected, $invalidPtrs[0]['expected_ptr']);
+
+        // the whole point is that it names a specific host, not the bare
+        // instance domain
+        $this->assertStringStartsWith('smtp', $expected);
     }
 } 
