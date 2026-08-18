@@ -59,11 +59,13 @@ class IncomingBounceTest extends WebTestCase
                             'EmailAddress' => 'nadil@hyvor.com',
                             'Status' => '5.1.1',
                             'Action' => 'failed',
+                            'BounceReason' => 'recipient',
                         ],
                         [
                             'EmailAddress' => 'supun@hyvor.com',
                             'Status' => '5.1.1',
                             'Action' => 'failed',
+                            'BounceReason' => 'recipient',
                         ],
                     ]
                 ],
@@ -273,6 +275,7 @@ class IncomingBounceTest extends WebTestCase
                             'EmailAddress' => 'nadil@hyvor.com',
                             'Status' => '5.1.1',
                             'Action' => 'failed',
+                            'BounceReason' => 'recipient',
                         ]
                     ]
                 ],
@@ -313,6 +316,7 @@ class IncomingBounceTest extends WebTestCase
                             'EmailAddress' => 'supun@hyvor.com',
                             'Status' => '5.1.1',
                             'Action' => 'failed',
+                            'BounceReason' => 'recipient',
                         ]
                     ]
                 ],
@@ -359,6 +363,7 @@ class IncomingBounceTest extends WebTestCase
                             'EmailAddress' => 'test@example.com',
                             'Status' => '5.7.1',
                             'Action' => 'failed',
+                            'BounceReason' => 'infrastructure',
                         ]
                     ]
                 ],
