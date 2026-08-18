@@ -182,3 +182,19 @@ func TestTlsFallbackReachesAVersionIntolerantPeer(t *testing.T) {
 	assert.False(t, isTlsVersionNegotiationError(err), "got %v", err)
 
 }
+
+// skipTlsVerifyForTest relaxes certificate verification for the outgoing
+// STARTTLS config, so tests can use throwaway self-signed certificates while
+// still exercising real version negotiation.
+func skipTlsVerifyForTest(t *testing.T) func() {
+	t.Helper()
+
+	original := newSendTlsConfig
+	newSendTlsConfig = func(host string, maxVersion uint16) *tls.Config {
+		config := original(host, maxVersion)
+		config.InsecureSkipVerify = true
+		return config
+	}
+
+	return func() { newSendTlsConfig = original }
+}

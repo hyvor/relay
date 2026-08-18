@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -418,8 +417,35 @@ func sendEmailToHostHandler(
 	ip string,
 	ptr string,
 ) *SmtpConversation {
+
 	// 0 means "no ceiling", so crypto/tls picks its own maximum
-	return sendEmailToHostWithTlsMaxVersion(send, recipients, host, instanceDomain, ip, ptr, 0)
+	conversation := sendEmailToHostWithTlsMaxVersion(send, recipients, host, instanceDomain, ip, ptr, 0)
+
+	if !conversation.tlsHandshakeFailed {
+		return conversation
+	}
+
+	// Some receiving servers abort the handshake when they see a TLS 1.3
+	// ClientHello even though they negotiate TLS 1.2 happily. Retry the host
+	// once with the version capped before giving up on it.
+	//
+	// This needs a fresh connection: STARTTLS has already been issued on the
+	// old one and the handshake failed, so that socket cannot be reused.
+	retry := sendEmailToHostWithTlsMaxVersion(
+		send,
+		recipients,
+		host,
+		instanceDomain,
+		ip,
+		ptr,
+		tlsFallbackMaxVersion,
+	)
+
+	// keep the failed attempt in the conversation, otherwise the logs show a
+	// successful TLS 1.2 delivery with no sign that 1.3 was tried first
+	retry.Steps = append(conversation.Steps, retry.Steps...)
+
+	return retry
 }
 
 func sendEmailToHostWithTlsMaxVersion(
@@ -462,10 +488,7 @@ func sendEmailToHostWithTlsMaxVersion(
 	// ============
 	if ok, _ := c.Extension("STARTTLS"); ok {
 
-		startTlsResult, ehloResult := c.StartTLS(&tls.Config{
-			ServerName: host,
-			MaxVersion: tlsMaxVersion,
-		})
+		startTlsResult, ehloResult := c.StartTLS(newSendTlsConfig(host, tlsMaxVersion))
 
 		if startTlsResult.Err != nil {
 			conversation.NetworkError = startTlsResult.Err

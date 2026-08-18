@@ -12,6 +12,18 @@ import (
 // ClientHello even though they would happily negotiate TLS 1.2.
 const tlsFallbackMaxVersion = tls.VersionTLS12
 
+// newSendTlsConfig builds the client config used for outgoing STARTTLS.
+//
+// maxVersion of 0 leaves the ceiling to crypto/tls. It is a variable for the
+// same reason createSmtpClient is: tests need to point it at throwaway
+// certificates without weakening the real path.
+var newSendTlsConfig = func(host string, maxVersion uint16) *tls.Config {
+	return &tls.Config{
+		ServerName: host,
+		MaxVersion: maxVersion,
+	}
+}
+
 // isTlsVersionNegotiationError reports whether err looks like a handshake
 // failure that capping the TLS version might get past.
 //
