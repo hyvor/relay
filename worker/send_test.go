@@ -19,8 +19,8 @@ var testCache = NewSharedCache(nil)
 
 var sendEmail = sendEmailHandler
 
-func sendEmailHandler(send *SendRow, recipients []*RecipientRow, rcptDomain, instanceDomain string, ipId int, ip, ptr string) *SendResult {
-	return sendEmailHandlerContext(context.Background(), testCache, send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr)
+func sendEmailHandler(send *SendRow, recipients []*RecipientRow, rcptDomain, instanceDomain string, ipId int, ip, privateIp, ptr string) *SendResult {
+	return sendEmailHandlerContext(context.Background(), testCache, send, recipients, rcptDomain, instanceDomain, ipId, ip, privateIp, ptr)
 }
 
 func sendEmailToHostHandler(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, secureMx bool) *SmtpConversation {
@@ -73,6 +73,7 @@ func TestSendEmail_Accepted(t *testing.T) {
 		"relay.com",
 		1,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -119,6 +120,7 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 		"relay.com",
 		1,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -165,6 +167,7 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 		"relay.com",
 		1,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -210,6 +213,7 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 		"relay.com",
 		5,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -248,6 +252,7 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 		"relay.com",
 		0,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -286,6 +291,7 @@ func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 		"relay.com",
 		0,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -324,6 +330,7 @@ func TestSendEmail_MxFailed(t *testing.T) {
 		"relay.com",
 		0,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
