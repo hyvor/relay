@@ -42,9 +42,9 @@
 	<td class="ip-address">
 		{ip.ip_address}
 		{#if ip.private_ip_address}
-			<span class="private-ip">
+			<div class="private-ip">
 				{ip.private_ip_address}
-			</span>
+			</div>
 		{/if}
 	</td>
 	<td class="queue-name">
@@ -189,6 +189,6 @@
 	.private-ip {
 		font-size: 12px;
 		color: var(--text-light);
-		margin-left: 3px;
+		margin-top: 3px;
 	}
 </style>
