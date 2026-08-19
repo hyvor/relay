@@ -3,12 +3,10 @@
 namespace App\Api\Sudo\Input;
 
 use App\Util\OptionalPropertyTrait;
-use Symfony\Component\Validator\Constraints as Assert;
 
 class UpdateIpAddressInput
 {
-    use OptionalPropertyTrait;
+	use OptionalPropertyTrait;
 
-    #[Assert\Type('int')]
-    public ?int $queue_id;
+	public ?int $queue_id;
 }

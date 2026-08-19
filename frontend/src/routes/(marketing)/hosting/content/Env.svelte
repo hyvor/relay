@@ -1,5 +1,5 @@
 <script>
-    import {CodeBlock} from '@hyvor/design/components';
+	import { CodeBlock } from '@hyvor/design/components';
 </script>
 
 <h1>Environment Variables</h1>
@@ -7,7 +7,7 @@
 <p>These are the environment variables that you can set for Hyvor Relay.</p>
 
 <CodeBlock
-        code={`
+	code={`
 # Environment: prod, dev, or test
 # you probably want to use prod for a deployment
 APP_ENV=prod
@@ -62,5 +62,5 @@ S3_KEY=
 S3_SECRET=
 S3_BUCKET=
 `}
-        language="yaml"
+	language="yaml"
 />

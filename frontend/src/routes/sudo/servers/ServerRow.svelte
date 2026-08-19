@@ -52,8 +52,14 @@
 
 	<div class="tabs">
 		<TabNav>
-			<TabNavItem name="ips" active={activeTab === 'ips'} onclick={() => activeTab= 'ips'}>Ip Addresses</TabNavItem>
-			<TabNavItem name="settings" active={activeTab === 'settings'} onclick={() => activeTab= 'settings'}>Settings</TabNavItem>
+			<TabNavItem name="ips" active={activeTab === 'ips'} onclick={() => (activeTab = 'ips')}
+				>Ip Addresses</TabNavItem
+			>
+			<TabNavItem
+				name="settings"
+				active={activeTab === 'settings'}
+				onclick={() => (activeTab = 'settings')}>Settings</TabNavItem
+			>
 		</TabNav>
 	</div>
 
@@ -72,6 +78,7 @@
 								<IconBoxArrowUpRight size={12} />
 							</a>
 						</th>
+						<th>Warmup</th>
 					</tr>
 				</thead>
 				<tbody>

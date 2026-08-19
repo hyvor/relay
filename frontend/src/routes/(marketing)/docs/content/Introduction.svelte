@@ -51,8 +51,8 @@
 
 <p id="transactional-vs-distributional">
 	Note that a project can only send either <strong>transactional</strong> or
-	<strong>distributional</strong> emails, not both. Each type of email is sent from different IP
-	pools to maintain IP reputation separately.
+	<strong>distributional</strong> emails, not both. Each type of email is sent from different IP pools
+	to maintain IP reputation separately.
 </p>
 
 <ul>

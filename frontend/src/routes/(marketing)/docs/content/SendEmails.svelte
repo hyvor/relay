@@ -287,12 +287,12 @@ type Attachment = {
 	</li>
 	<li>
 		<strong>bounced</strong> - The recipient's email server has rejected the email. The email will
-		not be retried. If this was a hard bounce (5xx SMTP status code), the recipient's email will
-		be added to the suppression list, and no further emails will be sent to that address.
+		not be retried. If this was a hard bounce (5xx SMTP status code), the recipient's email will be
+		added to the suppression list, and no further emails will be sent to that address.
 	</li>
 	<li>
-		<strong>complained</strong> - The recipient has marked the email as spam or complained about
-		it, usually after the email was delivered.
+		<strong>complained</strong> - The recipient has marked the email as spam or complained about it,
+		usually after the email was delivered.
 	</li>
 </ul>
 

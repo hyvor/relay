@@ -195,7 +195,7 @@
 		{:else}
 			<SuppressionList {suppressions} loading={false} onDelete={handleDeleteSuppression} />
 
-			<div class=load-more>
+			<div class="load-more">
 				<LoadButton
 					text="Load More"
 					loading={loadingMore}

@@ -6,6 +6,7 @@ use App\Api\Sudo\Object\InstanceObject;
 use App\Service\App\Config;
 use App\Service\Blacklist\IpBlacklists;
 use App\Service\Instance\InstanceService;
+use App\Service\Ip\WarmupScheduleService;
 use App\Service\Sudo\SudoPermission;
 use Hyvor\Internal\Bundle\Api\SudoAuthorizationListener;
 use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
@@ -37,6 +38,7 @@ class SudoController extends AbstractController
                 'app_version' => $this->config->getAppVersion(),
                 'instance' => $this->internalConfig->getInstance(),
                 'blacklists' => IpBlacklists::getBlacklists(),
+                'default_warmup_schedule' => WarmupScheduleService::DEFAULT_SCHEDULE,
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name ?? $user->username,

@@ -107,7 +107,9 @@
 			</div>
 			<div class="detail-row">
 				<div class="detail-label">Created:</div>
-				<div class="detail-value">{dayjs.unix(delivery.created_at).format('YYYY-MM-DD HH:mm:ss')}</div>
+				<div class="detail-value">
+					{dayjs.unix(delivery.created_at).format('YYYY-MM-DD HH:mm:ss')}
+				</div>
 			</div>
 			{#if delivery.request_body}
 				<div class="detail-row response-row">
@@ -140,7 +142,7 @@
 		border-radius: 20px;
 		cursor: pointer;
 		text-align: left;
-        font-size: 14px;
+		font-size: 14px;
 	}
 	.row.opened {
 		background-color: var(--hover);
@@ -148,7 +150,7 @@
 	.row:hover {
 		background-color: var(--hover);
 	}
-    
+
 	.url {
 		color: var(--text-light);
 		font-size: 14px;
@@ -214,4 +216,3 @@
 		width: 100%;
 	}
 </style>
-

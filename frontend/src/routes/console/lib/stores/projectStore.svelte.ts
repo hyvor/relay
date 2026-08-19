@@ -1,7 +1,7 @@
-import { writable } from "svelte/store";
-import type { ProjectUser, Send, Project } from "../../types";
+import { writable } from 'svelte/store';
+import type { ProjectUser, Send, Project } from '../../types';
 
-let projectUsers= $state<ProjectUser[]>([]);
+let projectUsers = $state<ProjectUser[]>([]);
 let currentProjectUser = $state<ProjectUser>({} as ProjectUser);
 const currentProject = $derived(currentProjectUser?.project as Project);
 let currentProjectEditing = $state<Project>({} as Project);
@@ -12,7 +12,7 @@ export function getProjectUsers() {
 }
 
 export function setProjectUsers(pu: ProjectUser[]) {
-    projectUsers = pu;
+	projectUsers = pu;
 }
 
 export function addProjectUser(projectUser: ProjectUser) {
@@ -26,8 +26,8 @@ export function getCurrentProjectUser() {
 }
 
 export function setCurrentProjectUser(projectUser: ProjectUser) {
-    currentProjectUser = projectUser;
-    currentProjectEditing = { ...projectUser.project }; // Create a copy
+	currentProjectUser = projectUser;
+	currentProjectEditing = { ...projectUser.project }; // Create a copy
 }
 
 export function getCurrentProject() {
@@ -43,7 +43,7 @@ export function getCurrentProjectEditing() {
 }
 
 export function setCurrentProjectEditing(project: Project) {
-    currentProjectEditing = { ...project }; // Create a copy to be safe
+	currentProjectEditing = { ...project }; // Create a copy to be safe
 }
 
 /* export function setProjectEditingStore(

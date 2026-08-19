@@ -1,8 +1,11 @@
 <script lang="ts">
-	import { Button, Switch, Tag, Tooltip } from '@hyvor/design/components';
+	import { Button, Tooltip } from '@hyvor/design/components';
 	import type { IpAddress } from '../sudoTypes';
 	import IconExclamationCircle from '@hyvor/icons/IconExclamationCircle';
 	import QueueSelectModal from '../queues/QueueSelectModal.svelte';
+	import WarmupScheduleModal from './WarmupScheduleModal.svelte';
+	import WarmupScheduleManageModal from './WarmupScheduleManageModal.svelte';
+	import WarmupScheduleHistoryModal from './WarmupScheduleHistoryModal.svelte';
 	import IpPtrStatus from './IpPtrStatus.svelte';
 
 	interface Props {
@@ -12,6 +15,17 @@
 	let { ip = $bindable() }: Props = $props();
 
 	let showQueueModal = $state(false);
+	let showWarmupModal = $state(false);
+	let showManageModal = $state(false);
+	let showHistoryModal = $state(false);
+
+	const TOTAL_DAYS = 30;
+
+	let warmup = $derived(ip.currentWarmupSchedule);
+	let isWarming = $derived(warmup?.status === 'warming');
+
+	let currentDay = $derived(warmup ? Math.min(warmup.results.length + 1, TOTAL_DAYS) : 0);
+	let progressPercentage = $derived(Math.round((currentDay / TOTAL_DAYS) * 100));
 
 	function handleQueueButtonClick() {
 		showQueueModal = true;
@@ -19,6 +33,18 @@
 
 	function handleModalClose() {
 		showQueueModal = false;
+	}
+
+	function handleWarmupModalClose() {
+		showWarmupModal = false;
+	}
+
+	function handleManageModalClose() {
+		showManageModal = false;
+	}
+
+	function handleHistoryModalClose() {
+		showHistoryModal = false;
 	}
 
 	function handleIpUpdate(updatedIp: IpAddress) {
@@ -65,6 +91,56 @@
 			{/if}
 		</div>
 	</td>
+	<td class="warmup">
+		{#if isWarming && warmup}
+			<div class="warmup-day-progress">
+				<div class="warmup-day-label">
+					<span>Day {currentDay} of {TOTAL_DAYS}</span>
+					<span>{progressPercentage}%</span>
+				</div>
+				<div class="progress-track">
+					<div class="progress-fill" style="width: {progressPercentage}%"></div>
+				</div>
+			</div>
+			<div class="warmup-actions">
+				<Button
+					size="x-small"
+					color="input"
+					variant="outline"
+					on:click={() => (showManageModal = true)}
+				>
+					Manage
+				</Button>
+				<Button
+					size="x-small"
+					color="input"
+					variant="outline"
+					on:click={() => (showHistoryModal = true)}
+				>
+					History
+				</Button>
+			</div>
+		{:else}
+			<div class="warmup-actions">
+				<Button
+					size="x-small"
+					color="input"
+					variant="outline"
+					on:click={() => (showWarmupModal = true)}
+				>
+					Start Warmup
+				</Button>
+				<Button
+					size="x-small"
+					color="input"
+					variant="outline"
+					on:click={() => (showHistoryModal = true)}
+				>
+					History
+				</Button>
+			</div>
+		{/if}
+	</td>
 </tr>
 
 {#if showQueueModal}
@@ -73,6 +149,32 @@
 		{ip}
 		onClose={handleModalClose}
 		onUpdate={handleIpUpdate}
+	/>
+{/if}
+
+{#if showWarmupModal}
+	<WarmupScheduleModal
+		bind:show={showWarmupModal}
+		{ip}
+		onClose={handleWarmupModalClose}
+		onUpdate={handleIpUpdate}
+	/>
+{/if}
+
+{#if showManageModal}
+	<WarmupScheduleManageModal
+		bind:show={showManageModal}
+		{ip}
+		onClose={handleManageModalClose}
+		onUpdate={handleIpUpdate}
+	/>
+{/if}
+
+{#if showHistoryModal}
+	<WarmupScheduleHistoryModal
+		bind:show={showHistoryModal}
+		{ip}
+		onClose={handleHistoryModalClose}
 	/>
 {/if}
 
@@ -95,5 +197,41 @@
 
 	.ptr-tags {
 		margin-top: 5px;
+	}
+
+	.warmup {
+		white-space: nowrap;
+	}
+
+	.warmup-actions {
+		display: flex;
+		gap: 4px;
+	}
+
+	.warmup-day-progress {
+		margin-bottom: 8px;
+		min-width: 160px;
+	}
+
+	.warmup-day-label {
+		display: flex;
+		justify-content: space-between;
+		font-size: 12px;
+		color: var(--text-light);
+		margin-bottom: 4px;
+	}
+
+	.progress-track {
+		height: 6px;
+		background: var(--bg-input);
+		border-radius: 3px;
+		overflow: hidden;
+	}
+
+	.progress-fill {
+		height: 100%;
+		background: var(--orange);
+		border-radius: 3px;
+		transition: width 0.2s ease;
 	}
 </style>

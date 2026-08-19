@@ -27,7 +27,7 @@
 		if (isEditing) {
 			return availableScopes;
 		}
-		return availableScopes.filter(scope => scope !== 'sends.send');
+		return availableScopes.filter((scope) => scope !== 'sends.send');
 	});
 
 	function handleSelectAll() {

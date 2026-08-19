@@ -76,6 +76,7 @@ export type Send = {
 	size_bytes: number;
 	queued: boolean;
 	send_after: number;
+	ip_address: string | null;
 
 	recipients: SendRecipient[];
 	attempts: SendAttempt[];
@@ -95,15 +96,12 @@ export type SendContent = {
 };
 
 export type SendRecipientStatus =
-	| 'queued'
-	| 'accepted'
-	| 'deferred'
-	| 'bounced'
-	| 'suppressed'
-	| 'failed'
-	| 'complained';
+	'queued' | 'accepted' | 'deferred' | 'bounced' | 'suppressed' | 'failed' | 'complained';
 
-export type SendRecipientStatusForAttempt = Omit<SendRecipientStatus, 'queued' | 'suppressed' | 'complained'>;
+export type SendRecipientStatusForAttempt = Omit<
+	SendRecipientStatus,
+	'queued' | 'suppressed' | 'complained'
+>;
 
 export interface SendRecipient {
 	id: number;
@@ -243,4 +241,3 @@ export interface ProjectUserMiniObject {
 	picture_url: string | null;
 	oidc_sub: string | null;
 }
-

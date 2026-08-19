@@ -10,6 +10,7 @@ export interface SudoConfig {
 	deployment: 'cloud' | 'on-prem';
 	instance: string;
 	blacklists: Blacklist[];
+	default_warmup_schedule: number[];
 	user: {
 		id: number;
 		name: string;
@@ -45,6 +46,7 @@ export interface IpAddress {
 	queue: Queue | null;
 	is_ptr_forward_valid: boolean;
 	is_ptr_reverse_valid: boolean;
+	currentWarmupSchedule: WarmupSchedule | null;
 }
 
 export interface Queue {
@@ -219,4 +221,19 @@ export interface SudoProjectsResponse {
 export interface SudoProjectResponse {
 	project: SudoProject;
 	org: Organization | null;
+}
+
+export type WarmupStatus = 'warming' | 'warmed' | 'cancelled';
+
+export interface WarmupSchedule {
+	id: number;
+	status: WarmupStatus;
+	started_date: number;
+	sent_today: number;
+	max_today: number;
+	schedule: number[];
+	results: number[];
+	created_at: number;
+	updated_at: number;
+	ip_address_id: number;
 }

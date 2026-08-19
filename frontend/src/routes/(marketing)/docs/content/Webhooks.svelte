@@ -37,9 +37,9 @@
 		<strong>Content-Type</strong>: <code>application/json</code>
 	</li>
 	<li>
-		<strong>X-Signature</strong>: A hex-encoded HMAC-SHA256 signature of the raw request body, signed
-		with your webhook's secret. See <a href="#validating">Validating Webhooks</a> for how to verify
-		it.
+		<strong>X-Signature</strong>: A hex-encoded HMAC-SHA256 signature of the raw request body,
+		signed with your webhook's secret. See <a href="#validating">Validating Webhooks</a> for how to
+		verify it.
 	</li>
 </ul>
 
@@ -61,8 +61,8 @@
 
 <p>
 	Each event below shows the shape of the <code>payload</code> field of the
-	<a href="#request-format">request body</a>. The <code>event</code> field is set to the event name
-	(e.g. <code>send.recipient.accepted</code>).
+	<a href="#request-format">request body</a>. The <code>event</code> field is set to the event
+	name (e.g. <code>send.recipient.accepted</code>).
 </p>
 
 <ul>
@@ -214,9 +214,9 @@
 	Loop (FBL), to Hyvor Relay. Hyvor Relay is configured to receive FBLs from major email
 	providers.bind: We process these complaints and trigger the <code
 		>send.recipient.complained</code
-	> event. This event indicates that the recipient has marked the email as spam or junk. When this
-	event is triggered, the email address is automatically added to your project's suppression list,
-	similar to when a hard bounce occurs.
+	> event. This event indicates that the recipient has marked the email as spam or junk. When this event
+	is triggered, the email address is automatically added to your project's suppression list, similar
+	to when a hard bounce occurs.
 </p>
 
 <CodeBlock

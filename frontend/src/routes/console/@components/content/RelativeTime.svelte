@@ -3,7 +3,6 @@
 
 	export let unix: number;
 
-
 	$: val = getRelativeTime(unix);
 
 	function getRelativeTime(unix: number) {
@@ -44,7 +43,6 @@
 
 		return rtf.format(-seconds, 'second');
 	}
-
 
 	onMount(() => {
 		// update every minute

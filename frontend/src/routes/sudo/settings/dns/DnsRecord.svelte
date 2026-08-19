@@ -70,8 +70,8 @@
 		{/if}
 	</div>
 	{#if record.content.length > 50}
-		<div 
-			class="content clickable" 
+		<div
+			class="content clickable"
 			onclick={toggleExpanded}
 			onkeydown={handleKeydown}
 			role="button"
@@ -107,16 +107,16 @@
 		word-break: break-all;
 	}
 	.host {
-        word-break: break-all;  
-    }
-	
+		word-break: break-all;
+	}
+
 	.content.clickable {
 		cursor: pointer;
 		color: var(--color-primary);
 		text-decoration: underline;
 		text-decoration-style: dotted;
 	}
-	
+
 	.content.clickable:hover,
 	.content.clickable:focus {
 		color: var(--color-primary-dark);
