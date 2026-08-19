@@ -64,7 +64,7 @@ class IncomingComplaintTest extends WebTestCase
         $this->assertResponseStatusCodeSame(200, $response);
 
         $suppression = $this->em->getRepository(Suppression::class)->findOneBy([
-            'project' => $project->_real(),
+            'project' => $project,
             'reason' => SuppressionReason::COMPLAINT
         ]);
 
@@ -110,7 +110,7 @@ class IncomingComplaintTest extends WebTestCase
         $this->assertSame('raw', $debugIncomingEmail->getRawEmail());
         $this->assertSame('ARF missing', $debugIncomingEmail->getErrorMessage());
         $suppression = $this->em->getRepository(Suppression::class)->findOneBy([
-            'project' => $project->_real(),
+            'project' => $project,
             'reason' => SuppressionReason::COMPLAINT
         ]);
         $this->assertNull($suppression);
@@ -147,7 +147,7 @@ class IncomingComplaintTest extends WebTestCase
         ]);
         $this->assertNotNull($debugIncomingEmail);
         $suppression = $this->em->getRepository(Suppression::class)->findOneBy([
-            'project' => $project->_real(),
+            'project' => $project,
             'reason' => SuppressionReason::COMPLAINT
         ]);
         $this->assertNull($suppression);
@@ -183,7 +183,7 @@ class IncomingComplaintTest extends WebTestCase
         ]);
         $this->assertNotNull($debugIncomingEmail);
         $suppression = $this->em->getRepository(Suppression::class)->findOneBy([
-            'project' => $project->_real(),
+            'project' => $project,
             'reason' => SuppressionReason::COMPLAINT
         ]);
         $this->assertNull($suppression);

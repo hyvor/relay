@@ -326,7 +326,7 @@ class AuthorizationTest extends WebTestCase
         );
         $this->assertSame($project->getId(), $projectFromAttr->getId());
 
-        $apiKey = $this->em->getRepository(ApiKey::class)->findOneBy(['project' => $project->_real()]);
+        $apiKey = $this->em->getRepository(ApiKey::class)->findOneBy(['project' => $project]);
 
         $this->assertInstanceOf(ApiKey::class, $apiKey);
         $this->assertSame(

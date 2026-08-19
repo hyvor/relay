@@ -76,7 +76,7 @@ class IncomingBounceTest extends WebTestCase
         $this->assertSame(200, $response->getStatusCode());
 
         $suppressions = $this->em->getRepository(Suppression::class)->findBy([
-            'project' => $project->_real(),
+            'project' => $project,
             'reason' => SuppressionReason::BOUNCE
         ]);
 
@@ -130,7 +130,7 @@ class IncomingBounceTest extends WebTestCase
         $this->assertSame('raw', $debugIncomingEmail->getRawEmail());
         $this->assertSame('DSN missing', $debugIncomingEmail->getErrorMessage());
         $suppressions = $this->em->getRepository(Suppression::class)->findBy([
-            'project' => $project->_real(),
+            'project' => $project,
             'reason' => SuppressionReason::BOUNCE
         ]);
         $this->assertCount(0, $suppressions);
@@ -157,7 +157,7 @@ class IncomingBounceTest extends WebTestCase
         );
         $this->assertSame(200, $response->getStatusCode());
         $suppressions = $this->em->getRepository(Suppression::class)->findBy([
-            'project' => $project->_real(),
+            'project' => $project,
             'reason' => SuppressionReason::BOUNCE
         ]);
         $this->assertCount(0, $suppressions);
@@ -197,7 +197,7 @@ class IncomingBounceTest extends WebTestCase
         );
         $this->assertSame(200, $response->getStatusCode());
         $suppressions = $this->em->getRepository(Suppression::class)->findBy([
-            'project' => $project->_real(),
+            'project' => $project,
             'reason' => SuppressionReason::BOUNCE
         ]);
         $this->assertCount(0, $suppressions);
@@ -237,7 +237,7 @@ class IncomingBounceTest extends WebTestCase
         );
         $this->assertSame(200, $response->getStatusCode());
         $suppressions = $this->em->getRepository(Suppression::class)->findBy([
-            'project' => $project->_real(),
+            'project' => $project,
             'reason' => SuppressionReason::BOUNCE
         ]);
         $this->assertCount(0, $suppressions);
@@ -281,7 +281,7 @@ class IncomingBounceTest extends WebTestCase
         );
         $this->assertSame(200, $response->getStatusCode());
         $suppressions = $this->em->getRepository(Suppression::class)->findBy([
-            'project' => $project->_real(),
+            'project' => $project,
             'reason' => SuppressionReason::BOUNCE
         ]);
         $this->assertCount(0, $suppressions);

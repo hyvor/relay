@@ -8,6 +8,7 @@ use App\Service\Server\ServerService;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\ServerFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use function Zenstruck\Foundry\Persistence\refresh;
 
 #[CoversClass(PingMessage::class)]
 #[CoversClass(PingMessageHandler::class)]
@@ -25,7 +26,7 @@ class PingMessageHandlerTest extends KernelTestCase
         $transport->send($message);
         $transport->throwExceptions()->process();
 
-        $server->_refresh();
+        refresh($server);
         $this->assertNotNull($server->getLastPingAt());
     }
 
