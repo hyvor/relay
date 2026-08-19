@@ -5,6 +5,7 @@ namespace App\Service\IncomingMail;
 use App\Api\Local\Input\ArfInput;
 use App\Api\Local\Input\DsnInput;
 use App\Entity\DebugIncomingEmail;
+use App\Entity\Type\BounceReason;
 use App\Entity\Type\SendFeedbackType;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SuppressionReason;
@@ -16,7 +17,6 @@ use App\Service\InfrastructureBounce\InfrastructureBounceService;
 use App\Service\Send\SendService;
 use App\Service\SendFeedback\SendFeedbackService;
 use App\Service\SendRecipient\SendRecipientService;
-use App\Service\Smtp\SmtpResponseParser;
 use App\Service\Suppression\SuppressionService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -30,7 +30,7 @@ class IncomingMailService
         private SendFeedbackService $sendFeedbackService,
         private InfrastructureBounceService $infrastructureBounceService,
         private LoggerInterface $logger,
-        private EventDispatcherInterface $ed
+        private EventDispatcherInterface $ed,
     ) {
     }
 
@@ -60,8 +60,8 @@ class IncomingMailService
                 return;
             }
 
-            $smtpResponseParser = new SmtpResponseParser(null, $recipient->Status, $dsnInput->ReadableText);
-            if (!$smtpResponseParser->isRecipientBounce() && !$smtpResponseParser->isInfrastructureError()) {
+            $bounceReason = $recipient->BounceReason;
+            if ($bounceReason === null) {
                 $this->logger->info('Received bounce that is not a recipient bounce or infrastructure error', [
                     'uuid' => $bounceUuid,
                     'recipient' => $recipient->EmailAddress,
@@ -89,9 +89,9 @@ class IncomingMailService
                 return;
             }
 
-            if ($smtpResponseParser->isRecipientBounce()) {
-                $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::BOUNCED);
+            $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::BOUNCED, $bounceReason);
 
+            if ($bounceReason === BounceReason::RECIPIENT) {
                 $this->suppressionService->createSuppression(
                     $send->getProject(),
                     $recipient->EmailAddress,
@@ -107,8 +107,8 @@ class IncomingMailService
 
                 $bounceObject = new BounceDto($dsnInput->ReadableText, $recipient->Status);
                 $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient, $bounceObject));
-            } elseif ($smtpResponseParser->isInfrastructureError()) {
-                $this->logger->info('Received infrastructure error with unknown send UUID', [
+            } elseif ($bounceReason === BounceReason::INFRASTRUCTURE) {
+                $this->logger->info('Received infrastructure error', [
                     'uuid' => $bounceUuid,
                     'recipient' => $recipient->EmailAddress,
                 ]);

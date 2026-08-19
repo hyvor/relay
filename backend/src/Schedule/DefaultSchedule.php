@@ -9,6 +9,10 @@ use App\Service\Idempotency\Message\ClearExpiredIdempotencyRecordsMessage;
 use App\Service\InfrastructureBounce\Message\ClearOldInfrastructureBouncesMessage;
 use App\Service\Management\Message\RunHealthChecksMessage;
 use App\Service\Send\Message\ClearExpiredSendsMessage;
+use App\Service\Stats\Message\UpdateStatsDeliveryDomainMessage;
+use App\Service\Stats\Message\UpdateStatsIpMessage;
+use App\Service\Stats\Message\UpdateStatsIpProjectMessage;
+use App\Service\Stats\Message\UpdateStatsProjectMessage;
 use App\Service\Tls\Message\CheckMailCertificateValidityMessage;
 use App\Service\Webhook\Message\ClearOldWebhookDeliveriesMessage;
 use Symfony\Component\Lock\LockFactory;
@@ -70,6 +74,18 @@ class DefaultSchedule implements ScheduleProviderInterface
 
             // tls certificate renewal
             ->add(RecurringMessage::every('1 day', new CheckMailCertificateValidityMessage))
+
+            // stats rollup
+            // current day, every 10 minutes
+            ->add(RecurringMessage::every('10 minutes', new UpdateStatsProjectMessage))
+            ->add(RecurringMessage::every('10 minutes', new UpdateStatsIpMessage))
+            ->add(RecurringMessage::every('10 minutes', new UpdateStatsIpProjectMessage))
+            ->add(RecurringMessage::every('10 minutes', new UpdateStatsDeliveryDomainMessage))
+            // previous day, once at 00:05 to update all
+            ->add(RecurringMessage::cron('5 0 * * *', new UpdateStatsProjectMessage(true)))
+            ->add(RecurringMessage::cron('5 0 * * *', new UpdateStatsIpMessage(true)))
+            ->add(RecurringMessage::cron('5 0 * * *', new UpdateStatsIpProjectMessage(true)))
+            ->add(RecurringMessage::cron('5 0 * * *', new UpdateStatsDeliveryDomainMessage(true)))
 
             // global lock
             ->lock($this->lockFactory->createLock('global-schedule', 20))

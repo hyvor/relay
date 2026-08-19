@@ -17,7 +17,8 @@ import type {
 	SudoProjectsResponse,
 	SudoProjectResponse,
 	SudoSendsResponse,
-	SudoSendResponse
+	SudoSendResponse,
+	SudoStats
 } from './sudoTypes';
 
 export function initSudo() {
@@ -243,5 +244,12 @@ export function getProjectOrganizations(limit: number, before_id: number | null 
 export function getProjectById(id: number) {
 	return sudoApi.get<SudoProjectResponse>({
 		endpoint: `/projects/${id}`
+	});
+}
+
+export function getSudoStats(period: '30d' | '7d' | '24h' = '24h') {
+	return sudoApi.get<SudoStats>({
+		endpoint: '/stats',
+		data: { period }
 	});
 }

@@ -4,11 +4,11 @@ namespace App\Service\SendAttempt;
 
 use App\Entity\Send;
 use App\Entity\SendAttempt;
+use App\Entity\Type\BounceReason;
 use App\Entity\Type\SendAttemptStatus;
 use App\Entity\Type\SuppressionReason;
 use App\Service\InfrastructureBounce\InfrastructureBounceService;
 use App\Service\SendRecipient\SendRecipientService;
-use App\Service\Smtp\SmtpResponseParser;
 use App\Service\Suppression\SuppressionService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -45,25 +45,30 @@ class SendAttemptService
     public function handleAfterSendAttempt(SendAttempt $sendAttempt): void
     {
         foreach ($sendAttempt->getRecipients() as $attemptRecipient) {
-            $parser = SmtpResponseParser::fromAttemptRecipient($attemptRecipient);
             $sendRecipient = $this->sendRecipientService->getRecipientFromSendAndAttemptRecipient(
                 $sendAttempt->getSend(),
                 $attemptRecipient
             );
 
-            if ($parser->isRecipientBounce()) {
+            if ($attemptRecipient->getBouncedReason() === BounceReason::RECIPIENT) {
+                $description = $attemptRecipient->getSmtpMessage();
+                $code = $attemptRecipient->getSmtpCode();
+                $enhancedCode = $attemptRecipient->getSmtpEnhancedCode();
+                if ($code !== 0) {
+                    $description = $code . ($enhancedCode ? ' ' . $enhancedCode : '') . ' ' . $description;
+                }
                 $this->suppressionService->createSuppression(
                     $sendAttempt->getSend()->getProject(),
                     $sendRecipient->getAddress(),
                     SuppressionReason::BOUNCE,
-                    $parser->getFullMessage()
+                    $description
                 );
 
                 $attemptRecipient->setIsSuppressed(true);
                 $this->em->persist($attemptRecipient);
                 $this->em->flush();
             }
-            if ($parser->isInfrastructureError()) {
+            if ($attemptRecipient->getBouncedReason() === BounceReason::INFRASTRUCTURE) {
                 $this->infrastructureBounceService->createInfrastructureBounce(
                     $attemptRecipient->getSendRecipientId(),
                     $attemptRecipient->getSmtpCode(),
