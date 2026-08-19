@@ -48,11 +48,6 @@ class WarmupSchedule
     #[ORM\Column(type: 'json', options: ['default' => '[]'])]
     private array $results = [];
 
-    public function __construct(IpAddress $ipAddress)
-    {
-        $this->ip_address = $ipAddress;
-    }
-
     public function getId(): int
     {
         return $this->id;
@@ -67,6 +62,12 @@ class WarmupSchedule
     public function getIpAddress(): IpAddress
     {
         return $this->ip_address;
+    }
+
+    public function setIpAddress(IpAddress $ipAddress): static
+    {
+        $this->ip_address = $ipAddress;
+        return $this;
     }
 
     public function getCreatedAt(): \DateTimeImmutable

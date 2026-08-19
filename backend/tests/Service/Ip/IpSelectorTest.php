@@ -32,7 +32,7 @@ class IpSelectorTest extends KernelTestCase
 
         /** @var IpSelector $selector */
         $selector = $this->container->get(IpSelector::class);
-        $ip = $selector->selectForQueue($queue->_real());
+        $ip = $selector->selectForQueue($queue);
 
         $this->assertNotNull($ip);
         $this->assertSame($warmingIp->getId(), $ip->getId());
@@ -57,7 +57,7 @@ class IpSelectorTest extends KernelTestCase
 
         /** @var IpSelector $selector */
         $selector = $this->container->get(IpSelector::class);
-        $result = $selector->selectForQueue($queue->_real());
+        $result = $selector->selectForQueue($queue);
 
         $this->assertNull($result);
     }
@@ -68,7 +68,7 @@ class IpSelectorTest extends KernelTestCase
 
         /** @var IpSelector $selector */
         $selector = $this->container->get(IpSelector::class);
-        $ip = $selector->selectForQueue($queue->_real());
+        $ip = $selector->selectForQueue($queue);
 
         $this->assertNull($ip);
     }
@@ -106,7 +106,7 @@ class IpSelectorTest extends KernelTestCase
         /** @var IpSelector $selector */
         $selector = $this->container->get(IpSelector::class);
 
-        $ip = $selector->selectForQueue($queue->_real(), 10);
+        $ip = $selector->selectForQueue($queue, 10);
 
         $this->assertNotNull($ip);
         $this->assertSame($availableIp->getId(), $ip->getId());
@@ -129,7 +129,7 @@ class IpSelectorTest extends KernelTestCase
 
         /** @var IpSelector $selector */
         $selector = $this->container->get(IpSelector::class);
-        $result = $selector->selectForQueue($queue->_real());
+        $result = $selector->selectForQueue($queue);
 
         $this->assertNotNull($result);
         $this->assertSame($ip->getId(), $result->getId());
@@ -145,7 +145,7 @@ class IpSelectorTest extends KernelTestCase
 
         /** @var IpSelector $selector */
         $selector = $this->container->get(IpSelector::class);
-        $result = $selector->selectForQueue($queue->_real());
+        $result = $selector->selectForQueue($queue);
 
         $this->assertNotNull($result);
         $this->assertSame($ip->getId(), $result->getId());

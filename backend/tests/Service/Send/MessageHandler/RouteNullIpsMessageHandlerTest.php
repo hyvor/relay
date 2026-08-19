@@ -36,7 +36,7 @@ class RouteNullIpsMessageHandlerTest extends KernelTestCase
 		]);
 
         // Simulate IP removal (delete IP and nullify sends)
-        $this->em->remove($ip1->_real());
+        $this->em->remove($ip1);
         $this->em->flush();
 
         $transport = $this->transport('async');

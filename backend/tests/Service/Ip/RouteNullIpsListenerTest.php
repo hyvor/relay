@@ -23,11 +23,11 @@ class RouteNullIpsListenerTest extends KernelTestCase
         $ipAddress = IpAddressFactory::createOne(['queue' => $queue]);
 
         $updates = new UpdateIpAddressDto();
-        $updates->queue = $queue->_real();
+        $updates->queue = $queue;
 
         $event = new IpAddressUpdatedEvent(
-            $ipAddress->_real(),
-            $ipAddress->_real(),
+            $ipAddress,
+            $ipAddress,
             $updates
         );
 
@@ -50,8 +50,8 @@ class RouteNullIpsListenerTest extends KernelTestCase
         $updates = new UpdateIpAddressDto();
 
         $event = new IpAddressUpdatedEvent(
-            $ipAddress->_real(),
-            $ipAddress->_real(),
+            $ipAddress,
+            $ipAddress,
             $updates
         );
 
@@ -69,8 +69,8 @@ class RouteNullIpsListenerTest extends KernelTestCase
         $updates->queue = null;
 
         $event = new IpAddressUpdatedEvent(
-            $ipAddress->_real(),
-            $ipAddress->_real(),
+            $ipAddress,
+            $ipAddress,
             $updates
         );
 
@@ -85,7 +85,7 @@ class RouteNullIpsListenerTest extends KernelTestCase
         $queue = QueueFactory::createOne();
         $ipAddress = IpAddressFactory::createOne(['queue' => $queue]);
 
-        $event = new IpRemovedEvent($ipAddress->_real());
+        $event = new IpRemovedEvent($ipAddress);
         $this->getEd()->dispatch($event);
 
         $transport = $this->transport('async');
@@ -101,7 +101,7 @@ class RouteNullIpsListenerTest extends KernelTestCase
     {
         $ipAddress = IpAddressFactory::createOne(['queue' => null]);
 
-        $event = new IpRemovedEvent($ipAddress->_real());
+        $event = new IpRemovedEvent($ipAddress);
         $this->getEd()->dispatch($event);
 
         $transport = $this->transport('async');

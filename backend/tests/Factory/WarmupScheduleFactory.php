@@ -4,12 +4,12 @@ namespace App\Tests\Factory;
 
 use App\Entity\Type\WarmupStatus;
 use App\Entity\WarmupSchedule;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<WarmupSchedule>
+ * @extends PersistentObjectFactory<WarmupSchedule>
  */
-final class WarmupScheduleFactory extends PersistentProxyObjectFactory
+final class WarmupScheduleFactory extends PersistentObjectFactory
 {
 
     public function __construct()

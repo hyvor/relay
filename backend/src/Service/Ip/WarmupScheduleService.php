@@ -57,7 +57,8 @@ class WarmupScheduleService
         IpAddress $ipAddress,
         array $schedule,
     ): WarmupSchedule {
-        $warmup = new WarmupSchedule($ipAddress);
+        $warmup = new WarmupSchedule();
+        $warmup->setIpAddress($ipAddress);
         $warmup->setCreatedAt($this->now());
         $warmup->setUpdatedAt($this->now());
         $warmup->setStatus(WarmupStatus::WARMING);

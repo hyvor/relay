@@ -263,7 +263,10 @@ class Send
 
     public function addRecipient(SendRecipient $recipient): static
     {
-        $this->recipients[] = $recipient;
+        if (!$this->recipients->contains($recipient)) {
+            $this->recipients[] = $recipient;
+            $recipient->setSend($this);
+        }
         return $this;
     }
 

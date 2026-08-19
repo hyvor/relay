@@ -37,9 +37,10 @@ class RouteNullIpsMessageHandler
         ]);
 
         foreach ($sends as $send) {
-            $recipientCount = $send->getRecipients()->filter(
-                fn(SendRecipient $r) => $r->getStatus() === SendRecipientStatus::QUEUED
-            )->count();
+            $recipientCount = $this->em->getRepository(SendRecipient::class)->count([
+                'send' => $send,
+                'status' => SendRecipientStatus::QUEUED,
+            ]);
 
             if ($recipientCount === 0) {
                 continue;

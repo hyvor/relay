@@ -17,18 +17,26 @@ readonly class IpSelector
     public function selectForQueue(Queue $queue, int $recipientCount = 1): ?IpAddress
     {
         /** @var IpAddress[] $ips */
-        $ips = $this->em->createQuery('
-                SELECT ip, ws
-                FROM App\Entity\IpAddress ip
-                LEFT JOIN ip.warmupSchedules ws WITH ws.status = :warmingStatus
-                WHERE ip.queue = :queue
-            ')
+        $ips = $this->em->createQuery('SELECT ip FROM App\Entity\IpAddress ip WHERE ip.queue = :queue')
             ->setParameter('queue', $queue)
-            ->setParameter('warmingStatus', WarmupStatus::WARMING)
             ->getResult();
 
         if (empty($ips)) {
             return null;
+        }
+
+        /** @var WarmupSchedule[] $warmups */
+        $warmups = $this->em->createQuery('
+                SELECT ws FROM App\Entity\WarmupSchedule ws
+                WHERE ws.ip_address IN (:ips) AND ws.status = :status
+            ')
+            ->setParameter('ips', $ips)
+            ->setParameter('status', WarmupStatus::WARMING->value)
+            ->getResult();
+
+        $warmupByIpId = [];
+        foreach ($warmups as $ws) {
+            $warmupByIpId[$ws->getIpAddress()->getId()] = $ws;
         }
 
         shuffle($ips);
@@ -36,8 +44,7 @@ readonly class IpSelector
         $conn = $this->em->getConnection();
 
         foreach ($ips as $ip) {
-            $warmupSchedules = $ip->getWarmupSchedules();
-            $warmup = $warmupSchedules->isEmpty() ? null : $warmupSchedules->first();
+            $warmup = $warmupByIpId[$ip->getId()] ?? null;
 
             if ($warmup instanceof WarmupSchedule && $warmup->getStatus() === WarmupStatus::WARMING) {
                 if ($warmup->getSentToday() + $recipientCount <= $warmup->getMaxToday()) {
@@ -50,9 +57,9 @@ readonly class IpSelector
                     );
                     return $ip;
                 }
-			} else {
-				return $ip;
-			}
+            } else {
+                return $ip;
+            }
         }
 
         return null;
