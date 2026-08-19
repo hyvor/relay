@@ -48,7 +48,7 @@ func (b *SendTransaction) FetchSend(ipId int) (*SendRow, []*RecipientRow, error)
 
 	row := b.tx.QueryRowContext(b.ctx, `
 		WITH ids AS MATERIALIZED (
-			SELECT id, uuid, from_address, raw, queue_name
+			SELECT id, uuid, from_address, queue_name
 			FROM sends
 			WHERE queued = true AND ip_address_id = $1 AND send_after < NOW()
 			FOR UPDATE SKIP LOCKED
@@ -57,7 +57,7 @@ func (b *SendTransaction) FetchSend(ipId int) (*SendRow, []*RecipientRow, error)
 		UPDATE sends
 		SET queued = false, updated_at = NOW()
 		WHERE id = ANY(SELECT id FROM ids)
-		RETURNING id, uuid, from_address, raw, queue_name
+		RETURNING id, uuid, from_address, queue_name
     `, ipId)
 
 	var send SendRow
@@ -66,7 +66,6 @@ func (b *SendTransaction) FetchSend(ipId int) (*SendRow, []*RecipientRow, error)
 		&send.Id,
 		&send.Uuid,
 		&send.From,
-		&send.RawEmail,
 		&send.QueueName,
 	); err != nil {
 		return nil, nil, err

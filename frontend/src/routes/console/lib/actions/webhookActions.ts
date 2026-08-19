@@ -1,5 +1,5 @@
-import type { Webhook, WebhookDelivery } from "../../types";
-import consoleApi from "../consoleApi.svelte";
+import type { Webhook, WebhookDelivery } from '../../types';
+import consoleApi from '../consoleApi.svelte';
 
 export function getWebhooks() {
 	return consoleApi.get<Webhook[]>({
@@ -40,4 +40,4 @@ export function getWebhookDeliveries(webhookId?: number) {
 		endpoint: 'webhooks/deliveries',
 		data: webhookId ? { webhookId } : {}
 	});
-} 
+}

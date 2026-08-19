@@ -17,6 +17,7 @@ use App\Service\Queue\QueueService;
 use App\Service\Send\EmailBuilder;
 use App\Service\Send\Event\SendRecipientSuppressedEvent;
 use App\Service\Send\RecipientFactory;
+use App\Service\Send\SendContentStorage;
 use App\Service\Send\SendService;
 use App\Service\Suppression\SuppressionService;
 use App\Tests\Case\WebTestCase;
@@ -38,6 +39,7 @@ use PHPUnit\Framework\Attributes\TestWith;
 #[CoversClass(QueueService::class)]
 #[CoversClass(RecipientFactory::class)]
 #[CoversClass(SendRecipientSuppressedEvent::class)]
+#[CoversClass(SendContentStorage::class)]
 class SendEmailTest extends WebTestCase
 {
 
@@ -438,13 +440,19 @@ class SendEmailTest extends WebTestCase
         $this->assertSame(true, $send->getQueued());
         $this->assertSame($ip->getId(), $send->getIpAddress()?->getId());
         $this->assertSame("Test Email", $send->getSubject());
-        $this->assertSame("This is a test email.", $send->getBodyText());
-        $this->assertSame("<p>This is a test email.</p>", $send->getBodyHtml());
         $this->assertSame($messageId, $send->getMessageId());
         $this->assertSame($fromAddress, $send->getFromAddress());
 
         $this->assertGreaterThan(1000, $send->getSizeBytes());
         $this->assertLessThan(2500, $send->getSizeBytes());
+
+        $storage = $this->container->get(SendContentStorage::class);
+        $this->assertInstanceOf(SendContentStorage::class, $storage);
+
+        $storedContent = $storage->get($send->getUuid());
+        $this->assertNotNull($storedContent);
+        $this->assertSame("<p>This is a test email.</p>", $storedContent->bodyHtml);
+        $this->assertSame("This is a test email.", $storedContent->bodyText);
 
         /** @var SendRecipient[] $recipients */
         $recipients = $send->getRecipients();
@@ -461,15 +469,12 @@ class SendEmailTest extends WebTestCase
             $this->assertEmpty($recipient->getName());
         }
 
-        $this->assertSame(
-            [
-                "X-Custom-Header" => "Custom Value",
-                'Reply-To' => 'no-reply@hyvor.com'
-            ],
-            $send->getHeaders()
-        );
+        $this->assertArrayHasKey('x-custom-header', $storedContent->headers);
+        $this->assertSame('Custom Value', $storedContent->headers['x-custom-header']);
+        $this->assertArrayHasKey('reply-to', $storedContent->headers);
+        $this->assertSame('no-reply@hyvor.com', $storedContent->headers['reply-to']);
 
-        $raw = $send->getRaw();
+        $raw = $storedContent->raw;
 
         $rawSplit = explode("\r\n\r\n", $raw, 2);
         $rawHeaders = $rawSplit[0];
@@ -748,7 +753,13 @@ class SendEmailTest extends WebTestCase
 
         $send = $send[0];
 
-        $rawEmail = $send->getRaw();
+        $storage = $this->container->get(SendContentStorage::class);
+        $this->assertInstanceOf(SendContentStorage::class, $storage);
+
+        $storedContent = $storage->get($send->getUuid());
+        $this->assertNotNull($storedContent);
+
+        $rawEmail = $storedContent->raw;
 
         $this->assertStringContainsString("Content-Type: multipart/mixed; boundary=", $rawEmail);
         $this->assertStringContainsString("Content-Type: text/plain;", $rawEmail);

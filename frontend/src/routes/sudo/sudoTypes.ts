@@ -1,241 +1,239 @@
-import type { Send } from "../console/types";
+import type { Send } from '../console/types';
 
 export interface SudoInitResponse {
-  config: SudoConfig;
-  instance: Instance;
+	config: SudoConfig;
+	instance: Instance;
 }
 
 export interface SudoConfig {
-  app_version: string;
-  deployment: "cloud" | "on-prem";
-  instance: string;
-  blacklists: Blacklist[];
-  default_warmup_schedule: number[];
-  user: {
-    id: number;
-    name: string;
-    email: string;
-    picture_url: string | null;
-  };
+	app_version: string;
+	deployment: 'cloud' | 'on-prem';
+	instance: string;
+	blacklists: Blacklist[];
+	default_warmup_schedule: number[];
+	user: {
+		id: number;
+		name: string;
+		email: string;
+		picture_url: string | null;
+	};
 }
 
 export interface Instance {
-  domain: string;
-  dkim_host: string;
-  dkim_txt_value: string;
+	domain: string;
+	dkim_host: string;
+	dkim_txt_value: string;
 }
 
 export interface Server {
-  id: number;
-  created_at: number;
-  hostname: string;
-  last_ping_at?: number | null;
-  is_alive: boolean;
-  api_workers: number;
-  email_workers: number;
-  webhook_workers: number;
-  incoming_workers: number;
+	id: number;
+	created_at: number;
+	hostname: string;
+	last_ping_at?: number | null;
+	is_alive: boolean;
+	api_workers: number;
+	email_workers: number;
+	webhook_workers: number;
+	incoming_workers: number;
 }
 
 export interface IpAddress {
-  id: number;
-  created_at: number;
-  server_id: number;
-  ip_address: string;
-  ptr: string;
-  queue: Queue | null;
-  is_ptr_forward_valid: boolean;
-  is_ptr_reverse_valid: boolean;
-  currentWarmupSchedule: WarmupSchedule | null;
+	id: number;
+	created_at: number;
+	server_id: number;
+	ip_address: string;
+	ptr: string;
+	queue: Queue | null;
+	is_ptr_forward_valid: boolean;
+	is_ptr_reverse_valid: boolean;
+	currentWarmupSchedule: WarmupSchedule | null;
 }
 
 export interface Queue {
-  id: number;
-  created_at: number;
-  name: string;
+	id: number;
+	created_at: number;
+	name: string;
 }
 
 export interface Blacklist {
-  id: string;
-  name: string;
-  dns_lookup_domain: string;
-  removal_url: string | null;
+	id: string;
+	name: string;
+	dns_lookup_domain: string;
+	removal_url: string | null;
 }
 
-export interface HealthCheckResult<
-  T extends HealthCheckName = HealthCheckName,
-> {
-  passed: boolean;
-  data: HealthCheckData[T];
-  checked_at: string;
-  duration_ms: number;
+export interface HealthCheckResult<T extends HealthCheckName = HealthCheckName> {
+	passed: boolean;
+	data: HealthCheckData[T];
+	checked_at: string;
+	duration_ms: number;
 }
 
 export interface HealthCheckData {
-  all_active_ips_have_correct_ptr: {
-    invalid_ptrs: Array<{
-      ip: string;
-      forward_valid: boolean;
-      forward_error: string | null;
-      reverse_valid: boolean;
-      reverse_error: string | null;
-    }>;
-  };
-  all_queues_have_at_least_one_ip: {
-    queues_without_ip: string[];
-  };
-  instance_dkim_correct: {
-    error: string;
-    expected?: string;
-    actual?: string;
-  };
-  all_ips_are_in_spf_record: {
-    invalid_ips: string[];
-  };
-  none_of_the_ips_are_on_known_blacklists: {
-    lists: Record<string, Record<string, BlacklistIpResult>>;
-  };
-  no_unread_infrastructure_bounces: {
-    unread_count: number;
-  };
-  dns_server_pointed: {
-    error: string;
-  };
+	all_active_ips_have_correct_ptr: {
+		invalid_ptrs: Array<{
+			ip: string;
+			forward_valid: boolean;
+			forward_error: string | null;
+			reverse_valid: boolean;
+			reverse_error: string | null;
+		}>;
+	};
+	all_queues_have_at_least_one_ip: {
+		queues_without_ip: string[];
+	};
+	instance_dkim_correct: {
+		error: string;
+		expected?: string;
+		actual?: string;
+	};
+	all_ips_are_in_spf_record: {
+		invalid_ips: string[];
+	};
+	none_of_the_ips_are_on_known_blacklists: {
+		lists: Record<string, Record<string, BlacklistIpResult>>;
+	};
+	no_unread_infrastructure_bounces: {
+		unread_count: number;
+	};
+	dns_server_pointed: {
+		error: string;
+	};
 }
 
 export interface BlacklistIpResult {
-  duration_ms: number;
-  status: "ok" | "blocked" | "error";
-  resolved_ip?: string;
-  error?: string;
+	duration_ms: number;
+	status: 'ok' | 'blocked' | 'error';
+	resolved_ip?: string;
+	error?: string;
 }
 
 export type HealthCheckName = keyof HealthCheckData;
 
 export interface HealthCheckResults {
-  last_checked_at: number | null;
-  results: {
-    [key in HealthCheckName]: HealthCheckResult<key>;
-  };
+	last_checked_at: number | null;
+	results: {
+		[key in HealthCheckName]: HealthCheckResult<key>;
+	};
 }
 
 // DNS Records
 export interface DnsRecord {
-  id: number;
-  created_at: number;
-  updated_at: number;
-  type: DnsRecordType;
-  subdomain: string;
-  content: string;
-  ttl: number;
-  priority: number;
+	id: number;
+	created_at: number;
+	updated_at: number;
+	type: DnsRecordType;
+	subdomain: string;
+	content: string;
+	ttl: number;
+	priority: number;
 }
 
 export interface DefaultDnsRecord {
-  type: DnsRecordType;
-  host: string;
-  content: string;
-  ttl: number;
-  priority: number;
+	type: DnsRecordType;
+	host: string;
+	content: string;
+	ttl: number;
+	priority: number;
 }
 
-export type DnsRecordType = "A" | "AAAA" | "CNAME" | "MX" | "TXT";
+export type DnsRecordType = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT';
 
 // Debug
 
 export interface DebugIncomingEmail {
-  id: number;
-  created_at: number;
-  type: "bounce" | "fbl";
-  status: "success" | "failed";
-  raw_email: string;
-  mail_from: string;
-  rcpt_to: string;
-  parsed_data?: Record<string, any> | null;
-  error_message?: string | null;
+	id: number;
+	created_at: number;
+	type: 'bounce' | 'fbl';
+	status: 'success' | 'failed';
+	raw_email: string;
+	mail_from: string;
+	rcpt_to: string;
+	parsed_data?: Record<string, any> | null;
+	error_message?: string | null;
 }
 
 export interface InfrastructureBounce {
-  id: number;
-  created_at: number;
-  is_read: boolean;
-  smtp_code: number;
-  smtp_enhanced_code: string;
-  smtp_message: string;
-  send_recipient_id: number;
+	id: number;
+	created_at: number;
+	is_read: boolean;
+	smtp_code: number;
+	smtp_enhanced_code: string;
+	smtp_message: string;
+	send_recipient_id: number;
 }
 
 export interface TlsCertificate {
-  id: number;
-  created_at: number;
-  type: "mail";
-  domain: string;
-  status: "pending" | "failed" | "active" | "expired" | "revoked";
-  valid_from: number | null;
-  valid_to: number | null;
+	id: number;
+	created_at: number;
+	type: 'mail';
+	domain: string;
+	status: 'pending' | 'failed' | 'active' | 'expired' | 'revoked';
+	valid_from: number | null;
+	valid_to: number | null;
 }
 
 // Sends
 
 export interface SendProjectSummary {
-  id: number;
-  name: string;
+	id: number;
+	name: string;
 }
 
 export interface SudoSend extends Send {
-  project_id: number;
+	project_id: number;
 }
 
 export interface SudoSendsResponse {
-  sends: SudoSend[];
-  projects: SendProjectSummary[];
+	sends: SudoSend[];
+	projects: SendProjectSummary[];
 }
 
 export interface SudoSendResponse {
-  send: Send;
-  project: SendProjectSummary;
+	send: Send;
+	project: SendProjectSummary;
 }
 
 export interface SudoProject {
-  id: number;
-  user_id: number;
-  name: string;
-  created_at: number;
-  updated_at: number;
-  organization_id: number | null;
-  send_type: "transactional" | "distributional";
+	id: number;
+	user_id: number;
+	name: string;
+	created_at: number;
+	updated_at: number;
+	organization_id: number | null;
+	send_type: 'transactional' | 'distributional';
 }
 
 export interface Organization {
-  id: number;
-  name: string;
-  billing_email: string | null;
-  billing_address: {
-    country: string | null;
-  } | null;
+	id: number;
+	name: string;
+	billing_email: string | null;
+	billing_address: {
+		country: string | null;
+	} | null;
 }
 
 export interface SudoProjectsResponse {
-  projects: SudoProject[];
-  orgs: Organization[];
+	projects: SudoProject[];
+	orgs: Organization[];
 }
 
 export interface SudoProjectResponse {
-  project: SudoProject;
-  org: Organization | null;
+	project: SudoProject;
+	org: Organization | null;
 }
 
-export type WarmupStatus = "warming" | "warmed" | "cancelled";
+export type WarmupStatus = 'warming' | 'warmed' | 'cancelled';
 
 export interface WarmupSchedule {
-  id: number;
-  status: WarmupStatus;
-  started_date: number;
-  sent_today: number;
-  max_today: number;
-  schedule: number[];
-  results: number[];
-  created_at: number;
-  updated_at: number;
-  ip_address_id: number;
+	id: number;
+	status: WarmupStatus;
+	started_date: number;
+	sent_today: number;
+	max_today: number;
+	schedule: number[];
+	results: number[];
+	created_at: number;
+	updated_at: number;
+	ip_address_id: number;
 }

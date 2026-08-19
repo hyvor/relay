@@ -16,9 +16,7 @@
 		{/snippet}
 		Some recipients failed to receive this email. You can retry sending to the failed recipients.
 		<div class="retry-actions">
-			<Button size="small" color="orange" on:click={onRetryClick}>
-				Retry
-			</Button>
+			<Button size="small" color="orange" on:click={onRetryClick}>Retry</Button>
 		</div>
 	</Callout>
 </div>

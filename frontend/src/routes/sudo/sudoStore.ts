@@ -1,5 +1,13 @@
 import { writable } from 'svelte/store';
-import type { DnsRecord, DefaultDnsRecord, Instance, IpAddress, Queue, Server, SudoConfig } from './sudoTypes';
+import type {
+	DnsRecord,
+	DefaultDnsRecord,
+	Instance,
+	IpAddress,
+	Queue,
+	Server,
+	SudoConfig
+} from './sudoTypes';
 
 export const sudoConfigStore = writable<SudoConfig>({} as SudoConfig);
 export const instanceStore = writable<Instance>({} as Instance);

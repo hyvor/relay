@@ -4,12 +4,12 @@ namespace App\Tests\Factory;
 
 use App\Entity\Domain;
 use App\Entity\Type\DomainStatus;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<Domain>
+ * @extends PersistentObjectFactory<Domain>
  */
-final class DomainFactory extends PersistentProxyObjectFactory
+final class DomainFactory extends PersistentObjectFactory
 {
 
     public function __construct()

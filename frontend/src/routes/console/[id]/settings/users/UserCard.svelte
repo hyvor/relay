@@ -26,11 +26,7 @@
 			<div class="user-email">{user.email}</div>
 		</div>
 	</div>
-	<Button
-		size="small"
-		on:click={onInvite}
-		disabled={isAlreadyAdded}
-	>
+	<Button size="small" on:click={onInvite} disabled={isAlreadyAdded}>
 		{#snippet start()}
 			<IconPlus size={14} />
 		{/snippet}

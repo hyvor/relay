@@ -40,7 +40,11 @@
 	let showRetryModal = $state(false);
 	let tryNowLoading = $state(false);
 
-	async function handleRetryConfirm(recipientIds: number[], mode: 'now' | 'schedule', scheduledDate?: string) {
+	async function handleRetryConfirm(
+		recipientIds: number[],
+		mode: 'now' | 'schedule',
+		scheduledDate?: string
+	) {
 		if (!onRetry) return;
 
 		let sendAfter: number | undefined;
@@ -55,9 +59,10 @@
 		retryLoading = true;
 		try {
 			const result = await onRetry(send.id, sendAfter, recipientIds);
-			const msg = mode === 'now'
-				? `${result.retried_recipients} recipient(s) re-queued for retry`
-				: `${result.retried_recipients} recipient(s) scheduled for retry`;
+			const msg =
+				mode === 'now'
+					? `${result.retried_recipients} recipient(s) re-queued for retry`
+					: `${result.retried_recipients} recipient(s) scheduled for retry`;
 			toast.success(msg);
 			showRetryModal = false;
 			onSendUpdate(result.send);

@@ -60,7 +60,8 @@
 			loading = true;
 		}
 
-		const beforeId = more && organizations.length > 0 ? organizations[organizations.length - 1].id : null;
+		const beforeId =
+			more && organizations.length > 0 ? organizations[organizations.length - 1].id : null;
 
 		try {
 			const page = await getProjectOrganizations(PER_PAGE, beforeId);

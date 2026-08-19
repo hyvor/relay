@@ -51,8 +51,8 @@ class UpdateStateTaskListenerTest extends KernelTestCase
         $updates->apiWorkers = 4;
 
         $event = new ServerUpdatedEvent(
-            $server->_real(),
-            $server->_real(),
+            $server,
+            $server,
             updates: $updates,
             createUpdateStateTask: true
         );

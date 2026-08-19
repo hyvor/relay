@@ -51,9 +51,8 @@
 
 <ul>
 	<li>
-		First, you would rent/buy one or more <strong>servers</strong> from a cloud provider of your
-		choice. One is enough in most cases, but you can use multiple servers for high availability and
-		scalability.
+		First, you would rent/buy one or more <strong>servers</strong> from a cloud provider of your choice.
+		One is enough in most cases, but you can use multiple servers for high availability and scalability.
 	</li>
 	<li>
 		Each server would have one or more <strong>public IPv4 addresses</strong> assigned to it. Hyvor
@@ -71,10 +70,10 @@
 		access to the public IP addresses.
 	</li>
 	<li>
-		Finally, you would need to <strong>configure DNS records</strong> to point the web domain to
-		Hyvor Relay HTTP server. Then, you would also delegate DNS management of your instance domain
-		to Hyvor Relay DNS server by updating the NS records. We discuss the web and instance domains
-		in detail in the next pages.
+		Finally, you would need to <strong>configure DNS records</strong> to point the web domain to Hyvor
+		Relay HTTP server. Then, you would also delegate DNS management of your instance domain to Hyvor
+		Relay DNS server by updating the NS records. We discuss the web and instance domains in detail
+		in the next pages.
 	</li>
 </ul>
 

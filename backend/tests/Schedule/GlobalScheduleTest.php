@@ -21,7 +21,7 @@ class GlobalScheduleTest extends TestCase
     public function test_global_schedule(): void
     {
         $schedule = new DefaultSchedule(
-            $this->createMock(LockFactory::class), $this->createMock(CacheInterface::class)
+            $this->createStub(LockFactory::class), $this->createStub(CacheInterface::class)
         );
         $s = $schedule->getSchedule();
         $messages = $s->getRecurringMessages();

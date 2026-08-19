@@ -34,6 +34,9 @@ func TestServiceStateInitialize(t *testing.T) {
 
 	times := 0
 
+	originalCallLocalApi := CallLocalApi
+	defer func() { CallLocalApi = originalCallLocalApi }()
+
 	CallLocalApi = func(ctx context.Context, method string, path string, body any, result interface{}) error {
 		if times > 0 {
 			return nil

@@ -34,7 +34,7 @@ class ManagementInitCommandTest extends KernelTestCase
 
     public function test_creates_instance_server_and_adds_ips(): void
     {
-        $serverIpMock = $this->createMock(ServerIp::class);
+        $serverIpMock = $this->createStub(ServerIp::class);
         $serverIpMock->method('getPublicV4IpAddresses')->willReturn([
             '8.8.8.8',
             '9.9.9.9'
@@ -119,7 +119,7 @@ class ManagementInitCommandTest extends KernelTestCase
         ]);
         $ip3Id = $ip3->getId();
 
-        $serverIpMock = $this->createMock(ServerIp::class);
+        $serverIpMock = $this->createStub(ServerIp::class);
         $serverIpMock->method('getPublicV4IpAddresses')->willReturn([
             '8.8.8.8',
             '9.9.9.9'

@@ -49,7 +49,12 @@
 		{getIn()}.
 		{#if onTryNow}
 			<div class="try-now-actions">
-				<Button size="small" on:click={onTryNow} loading={tryNowLoading} disabled={tryNowLoading || !canTryNow}>
+				<Button
+					size="small"
+					on:click={onTryNow}
+					loading={tryNowLoading}
+					disabled={tryNowLoading || !canTryNow}
+				>
 					Try Now
 				</Button>
 			</div>

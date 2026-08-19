@@ -1,12 +1,5 @@
 <script lang="ts">
-	import { 
-		Button, 
-		toast, 
-		confirm, 
-		TabNav, 
-		TabNavItem, 
-		Loader
-	} from '@hyvor/design/components';
+	import { Button, toast, confirm, TabNav, TabNavItem, Loader } from '@hyvor/design/components';
 	import IconPlus from '@hyvor/icons/IconPlus';
 	import SingleBox from '../../@components/content/SingleBox.svelte';
 	import WebhookModal from './WebhookModal.svelte';
@@ -111,8 +104,16 @@
 	<div class="top">
 		<div class="tabs">
 			<TabNav>
-				<TabNavItem name="configure" active={activeTab === 'configure'} onclick={() => activeTab = 'configure'}>Configure</TabNavItem>
-				<TabNavItem name="deliveries" active={activeTab === 'deliveries'} onclick={() => activeTab = 'deliveries'}>Deliveries</TabNavItem>
+				<TabNavItem
+					name="configure"
+					active={activeTab === 'configure'}
+					onclick={() => (activeTab = 'configure')}>Configure</TabNavItem
+				>
+				<TabNavItem
+					name="deliveries"
+					active={activeTab === 'deliveries'}
+					onclick={() => (activeTab = 'deliveries')}>Deliveries</TabNavItem
+				>
 			</TabNav>
 		</div>
 		{#if activeTab === 'configure'}
@@ -150,7 +151,6 @@
 	onWebhookSaved={handleWebhookSaved}
 />
 
-
 <style>
 	.top {
 		display: flex;
@@ -178,5 +178,4 @@
 		align-items: center;
 		flex: 1;
 	}
-
 </style>

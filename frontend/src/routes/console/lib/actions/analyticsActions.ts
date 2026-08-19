@@ -1,6 +1,5 @@
-import type { AnalyticsStats } from "../../types";
-import consoleApi from "../consoleApi.svelte";
-
+import type { AnalyticsStats } from '../../types';
+import consoleApi from '../consoleApi.svelte';
 
 export function getAnalyticsStats(period: '30d' | '7d' | '24h' = '30d') {
 	return consoleApi.get<AnalyticsStats>({

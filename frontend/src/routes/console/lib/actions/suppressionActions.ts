@@ -1,18 +1,18 @@
-import type { Suppression, SuppressionReason } from "../../types";
-import consoleApi from "../consoleApi.svelte";
+import type { Suppression, SuppressionReason } from '../../types';
+import consoleApi from '../consoleApi.svelte';
 
 export function getSuppressions(
-	email?: string | null, 
+	email?: string | null,
 	reason?: SuppressionReason | null,
 	limit?: number,
 	offset?: number
 ) {
 	const data: Record<string, string | number> = {};
-	
+
 	if (email) {
 		data.email = email;
 	}
-	
+
 	if (reason) {
 		data.reason = reason;
 	}
@@ -35,4 +35,4 @@ export function deleteSuppression(id: number) {
 	return consoleApi.delete<void>({
 		endpoint: `suppressions/${id}`
 	});
-} 
+}

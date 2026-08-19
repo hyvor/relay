@@ -5,12 +5,12 @@ namespace App\Tests\Factory;
 use App\Entity\Type\WebhookDeliveryStatus;
 use App\Entity\Type\WebhooksEventEnum;
 use App\Entity\WebhookDelivery;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<WebhookDelivery>
+ * @extends PersistentObjectFactory<WebhookDelivery>
  */
-final class WebhookDeliveryFactory extends PersistentProxyObjectFactory
+final class WebhookDeliveryFactory extends PersistentObjectFactory
 {
     public function __construct()
     {

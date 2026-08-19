@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { Table, TableRow } from "@hyvor/design/components";
+	import { Table, TableRow } from '@hyvor/design/components';
 
-
-	const defaultWarmupSchedule: { from: number, to?: number, value: number }[] = [
+	const defaultWarmupSchedule: { from: number; to?: number; value: number }[] = [
 		{ from: 1, value: 50 },
 		{ from: 2, value: 100 },
 		{ from: 3, value: 250 },
@@ -18,30 +17,24 @@
 		{ from: 20, to: 25, value: 300000 },
 		{ from: 26, to: 28, value: 500000 },
 		{ from: 29, to: 30, value: 1000000 }
-	]
-
+	];
 </script>
 
-<h1>
-	Management
-</h1>
+<h1>Management</h1>
 
-<p>
-	This section covers ongoing management tasks for your Hyvor Relay instance.
-</p>
+<p>This section covers ongoing management tasks for your Hyvor Relay instance.</p>
 
 <ul>
-    <li>
-        <a href="#system-project">System Project</a>
-    </li>
-    <li>
-        <a href="#sudo-users">Sudo Users</a>
-    </li>
+	<li>
+		<a href="#system-project">System Project</a>
+	</li>
+	<li>
+		<a href="#sudo-users">Sudo Users</a>
+	</li>
 	<li>
 		<a href="#ip-warmup">IP Warmup</a>
 	</li>
 </ul>
-
 
 <h2 id="system-project">System Project</h2>
 
@@ -84,26 +77,22 @@
 <h2 id="ip-warmup">IP Warmup</h2>
 
 <p>
-	Email providers may temporarily block or limit emails if they detect a sudden increase in email volume from a new IP address. To avoid this, it is recommended to gradually increase the email volume over time. This process is known as <strong>IP warmup</strong>.
+	Email providers may temporarily block or limit emails if they detect a sudden increase in email
+	volume from a new IP address. To avoid this, it is recommended to gradually increase the email
+	volume over time. This process is known as <strong>IP warmup</strong>.
 </p>
 
 <p>
-	Hyvor Relay automatically starts the default warmup schedule for new IP addresses, but you can customize it in the Sudo &rarr; Servers section.
+	Hyvor Relay automatically starts the default warmup schedule for new IP addresses, but you can
+	customize it in the Sudo &rarr; Servers section.
 </p>
 
-<p>
-	Hyvor Relay's default warmup schedule is as follows:
-</p>
+<p>Hyvor Relay's default warmup schedule is as follows:</p>
 
-<Table style='bordered' columns="1fr 1fr">
-
+<Table style="bordered" columns="1fr 1fr">
 	<TableRow head>
-		<div>
-			Day
-		</div>
-		<div>
-			Email Volume
-		</div>
+		<div>Day</div>
+		<div>Email Volume</div>
 	</TableRow>
 
 	{#each defaultWarmupSchedule as schedule}
@@ -116,5 +105,4 @@
 			</div>
 		</TableRow>
 	{/each}
-
 </Table>

@@ -13,6 +13,7 @@ use App\Repository\SendRepository;
 use App\Service\Ip\IpSelector;
 use App\Service\Send\Dto\SendingAttachment;
 use App\Service\Send\Exception\EmailTooLargeException;
+use App\Service\Send\Exception\SendContentStorageException;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -30,8 +31,8 @@ class SendService
         private SendRepository $sendRepository,
         private RecipientFactory $recipientFactory,
         private IpSelector $ipSelector,
-    ) {
-    }
+        private SendContentStorage $sendContentStorage,
+    ) {}
 
     /**
      * @return ArrayCollection<int, Send>
@@ -66,7 +67,7 @@ class SendService
 
         if ($beforeId !== null) {
             $qb->andWhere('s.id < :beforeId')
-               ->setParameter('beforeId', $beforeId);
+                ->setParameter('beforeId', $beforeId);
         }
 
         if ($status !== null) {
@@ -119,6 +120,7 @@ class SendService
      * @param array<string, string> $customHeaders
      * @param array<SendingAttachment> $attachments
      * @throws EmailTooLargeException
+     * @throws SendContentStorageException
      */
     public function createSend(
         Project $project,
@@ -163,12 +165,10 @@ class SendService
         $send->setFromAddress($from->getAddress());
         $send->setFromName($from->getName());
         $send->setSubject($subject);
-        $send->setBodyHtml($bodyHtml);
-        $send->setBodyText($bodyText);
-        $send->setHeaders($customHeaders);
         $send->setMessageId($messageId);
-        $send->setRaw($rawEmail);
         $send->setSizeBytes(strlen($rawEmail));
+
+        $this->sendContentStorage->store($uuid, $rawEmail);
 
         $this->em->persist($send);
 
@@ -274,6 +274,4 @@ class SendService
             'recipients_24h_suppressed_count' => $data['recipients_24h_suppressed_count'] ?? 0,
         ];
     }
-
-
 }

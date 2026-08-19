@@ -183,8 +183,8 @@
 <p>
 	Email providers depend on blacklists, usually maintained by a third party, to determine if an
 	email is spam. They are primarily based on the <strong>sending IP address</strong> while some are
-	based on the sending domain. Getting one of your IPs blacklisted can significantly affect all of
-	your users' deliverability.
+	based on the sending domain. Getting one of your IPs blacklisted can significantly affect all of your
+	users' deliverability.
 </p>
 
 <p>

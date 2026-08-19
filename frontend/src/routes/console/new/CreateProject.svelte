@@ -17,7 +17,11 @@
 		getProjectUsers,
 		setCurrentProjectUser
 	} from '../lib/stores/projectStore.svelte';
-	import { ResourceCreator, type CloudContextOrganization, getCloudContext } from '@hyvor/design/cloud';
+	import {
+		ResourceCreator,
+		type CloudContextOrganization,
+		getCloudContext
+	} from '@hyvor/design/cloud';
 
 	let name = $state('');
 	let sendType: 'transactional' | 'distributional' = $state('transactional');
@@ -101,20 +105,15 @@
 		</FormControl>
 	</SplitControl>
 
-	<SplitControl
-		label="Sending Type"
-		caption="What type of emails will you send?"
-		column
-	>
+	<SplitControl label="Sending Type" caption="What type of emails will you send?" column>
 		<div class="type-wrap">
 			<FormControl>
 				<Radio bind:group={sendType} name="type" value="transactional">
 					<div class="td">
 						<div class="t">Transactional</div>
 						<div class="d">
-							These emails are sent to users after they take certain
-							actions, like creating an account, resetting a password, or
-							confirming a purchase.
+							These emails are sent to users after they take certain actions, like
+							creating an account, resetting a password, or confirming a purchase.
 						</div>
 					</div>
 				</Radio>
@@ -122,15 +121,14 @@
 					<div class="td">
 						<div class="t">Distributional</div>
 						<div class="d">
-							These emails are sent to many people at once, like
-							newsletters, product updates, or marketing campaigns.
+							These emails are sent to many people at once, like newsletters, product
+							updates, or marketing campaigns.
 						</div>
 					</div>
 				</Radio>
 			</FormControl>
 		</div>
 	</SplitControl>
-
 </ResourceCreator>
 
 <style>

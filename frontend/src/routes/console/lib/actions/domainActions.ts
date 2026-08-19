@@ -1,12 +1,12 @@
-import type { Domain } from "../../types";
-import consoleApi from "../consoleApi.svelte";
+import type { Domain } from '../../types';
+import consoleApi from '../consoleApi.svelte';
 
 export function getDomains(search?: string, limit: number = 50, offset: number = 0) {
 	const data: Record<string, any> = {
 		limit,
 		offset
 	};
-	
+
 	if (search) {
 		data.search = search;
 	}
@@ -43,4 +43,4 @@ export function verifyDomain(domain: string) {
 			domain
 		}
 	});
-} 
+}

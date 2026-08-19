@@ -32,7 +32,7 @@ class PtrTest extends KernelTestCase
     {
         $instance = InstanceFactory::createOne();
 
-        $dnsResolver = $this->createMock(DnsResolveInterface::class);
+        $dnsResolver = $this->createStub(DnsResolveInterface::class);
         $dnsResolver
             ->method('resolve')
             ->willReturnCallback(function (string $domain, DnsType $type) {
@@ -65,7 +65,7 @@ class PtrTest extends KernelTestCase
     {
         $instance = InstanceFactory::createOne();
 
-        $dnsResolver = $this->createMock(DnsResolveInterface::class);
+        $dnsResolver = $this->createStub(DnsResolveInterface::class);
         $dnsResolver
             ->method('resolve')
             ->willReturnCallback(function (string $domain, DnsType $type) {

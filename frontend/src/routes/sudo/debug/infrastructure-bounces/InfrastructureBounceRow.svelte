@@ -80,7 +80,9 @@
 			</div>
 			<div class="detail-row">
 				<div class="detail-label">Created:</div>
-				<div class="detail-value">{dayjs.unix(bounce.created_at).format('YYYY-MM-DD HH:mm:ss')}</div>
+				<div class="detail-value">
+					{dayjs.unix(bounce.created_at).format('YYYY-MM-DD HH:mm:ss')}
+				</div>
 			</div>
 
 			{#if !bounce.is_read}
@@ -164,4 +166,3 @@
 		border-top: 1px solid var(--border);
 	}
 </style>
-

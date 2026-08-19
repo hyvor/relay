@@ -67,7 +67,7 @@ class DeleteAllProjectUserTest extends WebTestCase
         $project = ProjectFactory::createOne();
 
         // Ensure no project users exist for this project
-        $existingUsers = $this->em->getRepository(ProjectUser::class)->findBy(['project' => $project->_real()]);
+        $existingUsers = $this->em->getRepository(ProjectUser::class)->findBy(['project' => $project]);
         $this->assertCount(0, $existingUsers);
 
         $this->consoleApi(

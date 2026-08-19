@@ -67,7 +67,9 @@
 					<div class="title">Health Checks</div>
 					{#if healthCheckResults.last_checked_at}
 						<div class="last-checked">
-							Last checked: <RelativeTime unix={healthCheckResults.last_checked_at!} />
+							Last checked: <RelativeTime
+								unix={healthCheckResults.last_checked_at!}
+							/>
 						</div>
 					{/if}
 				</div>
