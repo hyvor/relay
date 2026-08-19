@@ -74,7 +74,7 @@ class SendContentStorageTest extends TestCase
 
     public function test_store_throws_on_filesystem_error(): void
     {
-        $filesystem = $this->createMock(Filesystem::class);
+        $filesystem = $this->createStub(Filesystem::class);
         $filesystem->method('write')->willThrowException(UnableToWriteFile::atLocation('path'));
         $storage = new SendContentStorage($filesystem);
 
@@ -84,7 +84,7 @@ class SendContentStorageTest extends TestCase
 
     public function test_get_throws_on_filesystem_error(): void
     {
-        $filesystem = $this->createMock(Filesystem::class);
+        $filesystem = $this->createStub(Filesystem::class);
         $filesystem->method('fileExists')->willThrowException(UnableToReadFile::fromLocation('path'));
         $storage = new SendContentStorage($filesystem);
 
@@ -94,7 +94,7 @@ class SendContentStorageTest extends TestCase
 
     public function test_delete_throws_on_filesystem_error(): void
     {
-        $filesystem = $this->createMock(Filesystem::class);
+        $filesystem = $this->createStub(Filesystem::class);
         $filesystem->method('delete')->willThrowException(UnableToDeleteFile::atLocation('path'));
         $storage = new SendContentStorage($filesystem);
 

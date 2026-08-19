@@ -22,7 +22,7 @@ class DkimVerificationServiceTest extends KernelTestCase
         bool $verified,
         ?string $errorMessage = null
     ): void {
-        $resolver = $this->createMock(DnsResolveInterface::class);
+        $resolver = $this->createStub(DnsResolveInterface::class);
 
         if ($result === true) {
             $resolver->method('resolve')->willThrowException(new DnsResolvingFailedException('bad request'));

@@ -30,6 +30,7 @@ services:
       target: backend-dev
     volumes:
       - ./backend:/app/backend
+      - /app/backend/vendor
       - relay_media:/app/media
       #- ../internal:/app/backend/vendor/hyvor/internal:ro
     labels:

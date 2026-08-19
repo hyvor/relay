@@ -12,7 +12,7 @@ use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\InstanceFactory;
 use App\Tests\Factory\IpAddressFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use SPFLib\Check\Environment;
 use SPFLib\Check\Result;
 use SPFLib\Checker;
@@ -23,13 +23,13 @@ use SPFLib\DNS\Resolver;
 class AllIpsAreInSpfRecordHealthCheckTest extends KernelTestCase
 {
     private AllIpsAreInSpfRecordHealthCheck $healthCheck;
-    private Resolver&MockObject $dnsResolver;
+    private Resolver&Stub $dnsResolver;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->dnsResolver = $this->createMock(Resolver::class);
+        $this->dnsResolver = $this->createStub(Resolver::class);
         /** @var IpAddressService $ipAddressService */
         $ipAddressService = $this->container->get(IpAddressService::class);
 

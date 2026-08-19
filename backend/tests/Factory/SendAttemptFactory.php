@@ -4,12 +4,12 @@ namespace App\Tests\Factory;
 
 use App\Entity\SendAttempt;
 use App\Entity\Type\SendAttemptStatus;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<SendAttempt>
+ * @extends PersistentObjectFactory<SendAttempt>
  */
-final class SendAttemptFactory extends PersistentProxyObjectFactory
+final class SendAttemptFactory extends PersistentObjectFactory
 {
     public function __construct()
     {

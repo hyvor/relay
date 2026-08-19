@@ -33,6 +33,7 @@ use App\Tests\Factory\SuppressionFactory;
 use App\Tests\Factory\WebhookFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
+use function Zenstruck\Foundry\Persistence\refresh;
 
 #[CoversClass(WebhookEventListener::class)]
 #[CoversClass(WebhookService::class)]
@@ -165,6 +166,8 @@ class WebhookEventListenerTest extends KernelTestCase
             'recipient_status' => $sendRecipientStatus,
             'send_recipient_id' => $recipient->getId(),
         ]);
+
+        refresh($send);
 
         $this->getEd()->dispatch(new SendAttemptCreatedEvent($attempt));
 

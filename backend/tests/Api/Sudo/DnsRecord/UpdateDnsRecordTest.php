@@ -10,6 +10,7 @@ use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DnsRecordFactory;
 use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
+use function Zenstruck\Foundry\Persistence\refresh;
 
 #[CoversClass(DnsRecordController::class)]
 #[CoversClass(DnsRecordService::class)]
@@ -49,7 +50,7 @@ class UpdateDnsRecordTest extends WebTestCase
         $this->assertEquals(7200, $json['ttl']);
         $this->assertEquals(10, $json['priority']);
 
-        $record = $dnsRecord->_refresh();
+        $record = refresh($dnsRecord);
         $this->assertEquals('CNAME', $record->getType()->value);
         $this->assertEquals('updated', $record->getSubdomain());
         $this->assertEquals('updates.example.com', $record->getContent());

@@ -116,7 +116,7 @@
 				}
 			}}
 		>
-			<HyvorBar />
+			<HyvorBar logo="/img/logo.svg" />
 			{@render children?.()}
 		</CloudContext>
 	{/if}

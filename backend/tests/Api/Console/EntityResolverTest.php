@@ -30,8 +30,8 @@ class EntityResolverTest extends KernelTestCase
     public function test_does_not_concern_with_other_controllers(): void
     {
         $resolver = $this->getEntityResolver();
-        $request = $this->createMock(Request::class);
-        $argument = $this->createMock(ArgumentMetadata::class);
+        $request = $this->createStub(Request::class);
+        $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getControllerName')->willReturn(LocalController::class);
 
         $result = $resolver->resolve($request, $argument);
@@ -41,8 +41,8 @@ class EntityResolverTest extends KernelTestCase
     public function test_only_concerns_entites(): void
     {
         $resolver = $this->getEntityResolver();
-        $request = $this->createMock(Request::class);
-        $argument = $this->createMock(ArgumentMetadata::class);
+        $request = $this->createStub(Request::class);
+        $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn('App\Namespace');
         $argument->method('getControllerName')->willReturn('App\Api\Console\Controller\SomeController');
 
@@ -53,8 +53,8 @@ class EntityResolverTest extends KernelTestCase
     public function test_does_not_concern_project(): void
     {
         $resolver = $this->getEntityResolver();
-        $request = $this->createMock(Request::class);
-        $argument = $this->createMock(ArgumentMetadata::class);
+        $request = $this->createStub(Request::class);
+        $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn('App\Entity\Project');
         $argument->method('getControllerName')->willReturn('App\Api\Console\Controller\SomeController');
 
@@ -66,7 +66,7 @@ class EntityResolverTest extends KernelTestCase
     {
         $resolver = $this->getEntityResolver();
         $request = Request::create('/');
-        $argument = $this->createMock(ArgumentMetadata::class);
+        $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn(Send::class);
         $argument->method('getControllerName')->willReturn(SendController::class);
 
@@ -79,7 +79,7 @@ class EntityResolverTest extends KernelTestCase
         $resolver = $this->getEntityResolver();
         $request = Request::create('/api/console/invalid');
         $request->attributes->set('id', "1");
-        $argument = $this->createMock(ArgumentMetadata::class);
+        $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn(Send::class);
         $argument->method('getControllerName')->willReturn(SendController::class);
 
@@ -93,7 +93,7 @@ class EntityResolverTest extends KernelTestCase
         $resolver = $this->getEntityResolver();
         $request = Request::create('/api/console/sends');
         $request->attributes->set('id', "9999");
-        $argument = $this->createMock(ArgumentMetadata::class);
+        $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn(Send::class);
         $argument->method('getControllerName')->willReturn(SendController::class);
 
@@ -111,7 +111,7 @@ class EntityResolverTest extends KernelTestCase
         $project1 = ProjectFactory::createOne();
         $request->attributes->set('console_api_resolved_project', $project1);
 
-        $argument = $this->createMock(ArgumentMetadata::class);
+        $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn(Send::class);
         $argument->method('getControllerName')->willReturn(SendController::class);
 
@@ -130,7 +130,7 @@ class EntityResolverTest extends KernelTestCase
         $project = $send->getProject();
         $request->attributes->set('console_api_resolved_project', $project);
 
-        $argument = $this->createMock(ArgumentMetadata::class);
+        $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn(Send::class);
         $argument->method('getControllerName')->willReturn(SendController::class);
 

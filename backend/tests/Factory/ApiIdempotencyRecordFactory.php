@@ -3,12 +3,12 @@
 namespace App\Tests\Factory;
 
 use App\Entity\ApiIdempotencyRecord;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<ApiIdempotencyRecord>
+ * @extends PersistentObjectFactory<ApiIdempotencyRecord>
  */
-final class ApiIdempotencyRecordFactory extends PersistentProxyObjectFactory
+final class ApiIdempotencyRecordFactory extends PersistentObjectFactory
 {
     public function __construct()
     {
