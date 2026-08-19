@@ -290,7 +290,7 @@ class SendController extends AbstractController
     }
 
     #[Route("/sends/uuid/{uuid}/content", requirements: ['uuid' => Requirement::UUID], methods: "GET")]
-    #[ScopeRequired(Scope::SENDS_READ)]
+    #[ScopeRequired(RelayScope::SENDS_READ)]
     public function getContentByUuid(Project $project, string $uuid): JsonResponse
     {
         $send = $this->sendService->getSendByUuid($uuid);

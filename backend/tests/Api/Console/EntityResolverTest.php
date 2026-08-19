@@ -112,7 +112,7 @@ class EntityResolverTest extends KernelTestCase
         $request->attributes->set('id', (string)$send->getId());
 
         $project1 = ProjectFactory::createOne();
-        $authResults = new ConsoleAuthResults(AccessType::PRODUCT_API_KEY, 1, $project1->_real(), productApiKey: new \stdClass());
+        $authResults = new ConsoleAuthResults(AccessType::PRODUCT_API_KEY, 1, $project1, productApiKey: new \stdClass());
         $request->attributes->set(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY, $authResults);
 
         $argument = $this->createStub(ArgumentMetadata::class);
