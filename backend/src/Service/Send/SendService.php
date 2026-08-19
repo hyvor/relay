@@ -10,7 +10,6 @@ use App\Entity\SendRecipient;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
 use App\Repository\SendRepository;
-use App\Service\Send\Dto\SendContent;
 use App\Service\Send\Dto\SendingAttachment;
 use App\Service\Send\Exception\EmailTooLargeException;
 use App\Service\Send\Exception\SendContentStorageException;
@@ -31,8 +30,7 @@ class SendService
         private SendRepository $sendRepository,
         private RecipientFactory $recipientFactory,
         private SendContentStorage $sendContentStorage,
-    ) {
-    }
+    ) {}
 
     /**
      * @return ArrayCollection<int, Send>
@@ -65,7 +63,7 @@ class SendService
 
         if ($beforeId !== null) {
             $qb->andWhere('s.id < :beforeId')
-               ->setParameter('beforeId', $beforeId);
+                ->setParameter('beforeId', $beforeId);
         }
 
         if ($status !== null) {
@@ -266,6 +264,4 @@ class SendService
             'recipients_24h_suppressed_count' => $data['recipients_24h_suppressed_count'] ?? 0,
         ];
     }
-
-
 }

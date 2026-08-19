@@ -9,7 +9,6 @@ use App\Entity\Type\SendFeedbackType;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
 use App\Service\Instance\InstanceService;
-use App\Service\Send\Dto\SendContent;
 use App\Service\Send\SendContentStorage;
 use App\Tests\Factory\ApiKeyFactory;
 use App\Tests\Factory\DebugIncomingEmailFactory;
@@ -219,5 +218,4 @@ class DevSeedCommand extends Command
 
         return Command::SUCCESS;
     }
-
 }

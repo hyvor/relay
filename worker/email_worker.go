@@ -190,7 +190,7 @@ type AttemptData struct {
 	Error         error
 }
 
-// Downloads the raw MIME message for a send from object storage.
+// gets the raw MIME message from local API
 func (worker *EmailWorker) fetchContent(uuid string) (string, error) {
 	if worker.contentStore == nil {
 		return "", errors.New("send content store is not initialized")

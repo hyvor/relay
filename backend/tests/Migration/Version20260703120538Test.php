@@ -12,6 +12,8 @@ use League\Flysystem\Filesystem;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use Symfony\Component\Uid\Uuid;
 
+// s3 migration
+
 #[CoversNothing]
 class Version20260703120538Test extends KernelTestCase
 {
