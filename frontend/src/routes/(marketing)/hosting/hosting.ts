@@ -1,4 +1,4 @@
-import type { Component } from 'svelte';
+import type { NavSectionConfig } from '@hyvor/design/marketing';
 import Introduction from './content/Introduction.svelte';
 import Setup from './content/Setup.svelte';
 import ProdDeploy from './content/ProdDeploy.svelte';
@@ -12,94 +12,92 @@ import Scaling from './content/Scaling.svelte';
 import EmailProviders from './content/EmailProviders.svelte';
 import HealthChecks from './content/HealthChecks.svelte';
 
-export const categories: Category[] = [
+export const SECTIONS: NavSectionConfig[] = [
 	{
 		name: 'Hosting',
-		pages: [
+		navs: [
 			{
+				type: 'page',
 				slug: '',
 				name: 'Introduction',
-				component: Introduction
+				content: Introduction
 			},
 			{
+				type: 'page',
 				slug: 'deploy-easy',
 				name: 'Easy Deploy',
-				component: EasyDeploy
+				content: EasyDeploy
 			},
 			{
+				type: 'page',
 				slug: 'deploy',
 				name: 'Prod Deploy',
-				component: ProdDeploy
+				content: ProdDeploy
 			},
 			{
+				type: 'page',
 				slug: 'setup',
 				name: 'Setup',
-				component: Setup
+				content: Setup
 			},
 			{
+				type: 'page',
 				slug: 'monitoring',
 				name: 'Monitoring',
-				component: Monitoring
+				content: Monitoring
 			},
 			{
+				type: 'page',
 				slug: 'scaling',
 				name: 'Scaling',
-				component: Scaling
+				content: Scaling
 			},
 			{
+				type: 'page',
 				slug: 'upgrade',
 				name: 'Upgrade Guide',
-				component: UpgradeGuide
+				content: UpgradeGuide
 			}
 		]
 	},
 	{
 		name: 'Features',
-		pages: [
+		navs: [
 			{
+				type: 'page',
 				slug: 'health-checks',
 				name: 'Health Checks',
-				component: HealthChecks
+				content: HealthChecks
 			},
 			{
+				type: 'page',
 				slug: 'dns',
 				name: 'DNS Server',
-				component: Dns
+				content: Dns
 			}
 		]
 	},
 	{
 		name: 'Misc',
-		pages: [
+		navs: [
 			{
+				type: 'page',
 				slug: 'deliverability',
 				name: 'Deliverability',
-				component: Deliverability
+				content: Deliverability
 			},
 			{
+				type: 'page',
 				slug: 'providers',
 				name: 'Email Providers',
-				component: EmailProviders
+				content: EmailProviders
 			},
 			{
+				type: 'page',
 				slug: 'env',
 				name: 'Environment Variables',
-				component: Env
+				content: Env
 			}
 		]
 	}
 ];
-
-export const pages = categories.reduce((acc, category) => acc.concat(category.pages), [] as Page[]);
-
-interface Category {
-	name: string;
-	pages: Page[];
-}
-
-interface Page {
-	slug: string;
-	name: string;
-	component?: Component;
-	parent?: string;
-}

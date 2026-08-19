@@ -158,12 +158,14 @@
 	<strong>ns2.relay.yourdomain.com</strong> pointing to another server IP.)
 </Callout>
 
-<Callout type="info" style="margin-top: 15px;">
-	{#snippet icon()}
-		💡
-	{/snippet}
-	On Hyvor Relay Cloud, the instance domain is <strong>mail.hyvor-relay.com</strong>.
-</Callout>
+<div style="margin-top: 15px;">
+	<Callout type="info">
+		{#snippet icon()}
+			💡
+		{/snippet}
+		On Hyvor Relay Cloud, the instance domain is <strong>mail.hyvor-relay.com</strong>.
+	</Callout>
+</div>
 
 <h2 id="ptr">(4) PTR Records</h2>
 
