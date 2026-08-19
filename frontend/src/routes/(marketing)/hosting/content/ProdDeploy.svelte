@@ -261,7 +261,7 @@ compose.yaml			# Docker Compose file
 	</li>
 	<li>
 		<code>PRIVATE_NETWORK</code> (optional): Set this if your servers are behind 1:1 NAT. See
-		<a href="/hosting/setup#nat">Setup &rarr; NAT Configuration</a> for details.
+		<a href="/hosting/setup#nat">NAT Configuration</a> for details.
 	</li>
 </ul>
 

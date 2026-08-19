@@ -2,7 +2,6 @@
 	import { Callout, CodeBlock, Divider, Table, TableRow } from '@hyvor/design/components';
 	import { DocsImage } from '@hyvor/design/marketing';
 	import IconArrowLeftRight from '@hyvor/icons/IconArrowLeftRight';
-	import IconLightbulb from '@hyvor/icons/IconLightbulb';
 </script>
 
 <h1>Setup</h1>
@@ -27,9 +26,6 @@
 	</li>
 	<li>
 		<a href="#health-checks">(5) Health Checks</a>
-	</li>
-	<li>
-		<a href="#nat">(6) NAT Configuration</a>
 	</li>
 </ul>
 
@@ -221,57 +217,6 @@
 
 <Divider color="var(--gray-light)" margin={30} />
 
-<h2 id="nat">(6) NAT Configuration</h2>
-
-<p>
-	Hyvor Relay supports <strong>1:1 NAT</strong> (Network Address Translation), which is common in
-	cloud environments where each server has a private IP address that is mapped to a public IP address
-	by the cloud provider (e.g., AWS, GCP, Azure VPCs).
-</p>
-
-<p>
-	By default, Hyvor Relay auto-detects your server's public IP address by calling
-	<code>ifconfig.me</code> or <code>icanhazip.com</code> (with each as a fallback). No additional
-	configuration is needed for standard deployments where your server's IP address is directly
-	accessible from the internet.
-</p>
-
-<p>
-	If your servers are behind 1:1 NAT, set the <code>PRIVATE_NETWORK</code> environment variable to
-	the CIDR range(s) of your private network. Hyvor Relay will detect the server's private IP
-	addresses within the given range(s) and resolve the corresponding public IP address for each.
-</p>
-
-<CodeBlock
-	code={`# Single CIDR range
-PRIVATE_NETWORK=10.0.0.0/8
-
-# Multiple ranges (comma-separated)
-PRIVATE_NETWORK=10.0.0.0/8,172.16.0.0/12`}
-	language="yaml"
-/>
-
-<p>
-	By default, the public IP for each private IP is resolved automatically by binding to the private
-	interface and calling <code>ifconfig.me</code> / <code>icanhazip.com</code>. If you prefer to map
-	IP addresses manually (e.g., in air-gapped environments or to avoid outbound HTTP calls at startup),
-	use the <code>NAT_MAP</code> environment variable:
-</p>
-
-<CodeBlock
-	code={`# Format: private_ip:public_ip (comma-separated for multiple)
-NAT_MAP=10.0.1.5:203.0.113.10,10.0.1.6:203.0.113.11`}
-	language="yaml"
-/>
-
-<p>
-	Once configured, the private IP address is shown next to the public IP in
-	<strong>Sudo &rarr; Servers</strong>, and the NAT health check verifies that each private address
-	routes through the correct public IP.
-</p>
-
-<Divider color="var(--gray-light)" margin={30} />
-
 <h2 id="whats-next">What's Next?</h2>
 
 <ul>
@@ -298,6 +243,51 @@ NAT_MAP=10.0.1.5:203.0.113.10,10.0.1.6:203.0.113.11`}
 	sending system emails (e.g. notifications). All sudo users are automatically granted read-only
 	access (<code>project.read</code>, <code>sends.read</code>, <code>domains.read</code>,
 	<code>analytics.read</code>) and this is kept in sync as sudo users are added or removed.
+</p>
+
+<Divider color="var(--gray-light)" margin={30} />
+
+<h2 id="nat">NAT Configuration</h2>
+
+<p>
+	Hyvor Relay supports <strong>static 1:1 NAT</strong> configuration for servers that are behind a private network.
+</p>
+
+<p>
+	To get started, set the <code>PRIVATE_NETWORK</code> environment variable to
+	the CIDR range(s) of your private network. Hyvor Relay will detect the server's private IP
+	addresses within the given range(s) and resolve the corresponding public IP address for each.
+</p>
+
+
+<CodeBlock
+	code={`# Single CIDR range
+PRIVATE_NETWORK=10.0.0.0/8
+
+# Multiple ranges (comma-separated)
+PRIVATE_NETWORK=10.0.0.0/8,172.16.0.0/12`}
+	language="yaml"
+/>
+
+<p>
+	By default, Hyvor Relay auto-detects your server's public IP address by calling
+	<code>ifconfig.me</code> or <code>icanhazip.com</code> (with each as a fallback).
+	If you prefer to map
+	IP addresses manually (e.g., in air-gapped environments or to avoid outbound HTTP calls at startup),
+	use the <code>NAT_MAP</code> environment variable:
+</p>
+
+
+<CodeBlock
+	code={`# Format: private_ip:public_ip (comma-separated for multiple)
+NAT_MAP=10.0.1.5:203.0.113.10,10.0.1.6:203.0.113.11`}
+	language="yaml"
+/>
+
+<p>
+	Once configured, the private IP address is shown next to the public IP in
+	<strong>Sudo &rarr; Servers</strong>, and there is a health check to
+	verify that each private IP routes through the correct public IP.
 </p>
 
 <Divider color="var(--gray-light)" margin={30} />
