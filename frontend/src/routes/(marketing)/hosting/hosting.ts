@@ -2,7 +2,6 @@ import type { NavSectionConfig } from '@hyvor/design/marketing';
 import Introduction from './content/Introduction.svelte';
 import Setup from './content/Setup.svelte';
 import ProdDeploy from './content/ProdDeploy.svelte';
-import UpgradeGuide from './content/UpgradeGuide.svelte';
 import Monitoring from './content/monitoring/Monitoring.svelte';
 import EasyDeploy from './content/easy/EasyDeploy.svelte';
 import Env from './content/Env.svelte';
@@ -11,10 +10,11 @@ import Dns from './content/Dns.svelte';
 import Scaling from './content/Scaling.svelte';
 import EmailProviders from './content/EmailProviders.svelte';
 import HealthChecks from './content/HealthChecks.svelte';
+import UpgradeGuide_0_1_0 from './content/upgrade/0.1.0.md';
 
 export const SECTIONS: NavSectionConfig[] = [
 	{
-		name: 'Hosting',
+		name: '',
 		navs: [
 			{
 				type: 'page',
@@ -53,10 +53,20 @@ export const SECTIONS: NavSectionConfig[] = [
 				content: Scaling
 			},
 			{
-				type: 'page',
-				slug: 'upgrade',
-				name: 'Upgrade Guide',
-				content: UpgradeGuide
+				type: 'sub-section',
+				name: 'Upgrade Guides',
+				sections: [
+					{
+						navs: [
+							{
+								type: 'page',
+								name: '0.1.0',
+								slug: 'upgrade-0.1.0',
+								content: UpgradeGuide_0_1_0
+							}
+						]
+					}
+				]
 			}
 		]
 	},
