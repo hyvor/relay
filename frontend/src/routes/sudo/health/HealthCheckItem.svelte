@@ -106,7 +106,7 @@
 			</span>
 			{#if !result.passed && result.data}
 				<div class="failure-callout">
-					<Callout type="danger" size="small">
+					<Callout type="danger">
 						{@html renderFailureData(result.data)}
 					</Callout>
 				</div>

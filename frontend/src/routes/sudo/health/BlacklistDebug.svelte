@@ -19,10 +19,12 @@
 </script>
 
 {#if hasErrors}
-	<Callout type="warning" style="margin-top:10px; font-size: 14px;">
-		Warning: there were some errors in the blacklist check. Please check debug information
-		below.
-	</Callout>
+	<div class="callout-wrap">
+		<Callout type="warning">
+			Warning: there were some errors in the blacklist check. Please check debug information
+			below.
+		</Callout>
+	</div>
 {/if}
 
 <div class="wrap">
@@ -43,6 +45,10 @@
 {/if}
 
 <style>
+	.callout-wrap {
+		margin-top: 10px;
+		font-size: 14px;
+	}
 	.wrap {
 		margin-top: 10px;
 	}

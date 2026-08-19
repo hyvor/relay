@@ -75,7 +75,8 @@
 					type: 'none',
 					subscription: null,
 					license: null,
-					trial_ends_at: null
+					trial_ends_at: null,
+					complimentary_licenses: []
 				},
 				organization: null,
 				user: $sudoConfigStore.user,
