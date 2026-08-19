@@ -1,4 +1,4 @@
-> We are currently not accepting outside contributions to this repository. We will update this document when we are ready to accept contributions. In the meantime, please feel free to open issues for bugs or feature requests.
+> We are temporarily not accepting outside contributions to this repository. We will update this document when we are ready to accept contributions. In the meantime, please feel free to open issues for bugs or feature requests.
 
 # Contributing to Hyvor Relay
 
