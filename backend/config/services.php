@@ -4,8 +4,6 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use App\Api\Console\Resolver\EntityResolver;
 use App\Api\Console\Resolver\ProjectResolver;
-use App\Service\App\Lock\LockDoctrineFactory;
-use App\Service\App\Lock\LockDoctrineStoreFactory;
 use App\Service\Dns\Resolve\DnsOverHttp;
 use App\Service\Dns\Resolve\DnsResolveInterface;
 use App\Service\SelfHosted\RelayTelemetryProvider;
@@ -18,6 +16,8 @@ use Prometheus\Storage\APCng;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\DoctrineDbalPostgreSqlStore;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     $containerConfigurator->parameters()
@@ -28,13 +28,15 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // ================ DEFAULTS =================
 
     // Default configurdevation for services
-    $services->defaults()
+    $services
+        ->defaults()
         ->autowire(true)      // Automatically injects dependencies in your services.
         ->autoconfigure(true); // Automatically registers your services as commands, event subscribers, etc.
 
     // Makes classes in src/ available to be used as services
     // This creates a service per class whose id is the fully-qualified class name
-    $services->load('App\\', '../src/')
+    $services
+        ->load('App\\', '../src/')
         ->exclude([
             '../src/DependencyInjection/',
             '../src/Entity/',
@@ -42,22 +44,35 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ]);
 
     // ================ CONSOLE API =================
-    $services->set(ProjectResolver::class)
+    $services
+        ->set(ProjectResolver::class)
         ->tag(
             'controller.argument_value_resolver',
-            ['name' => 'console_api_newsletter', 'priority' => 150]
+            ['name' => 'console_api_newsletter', 'priority' => 150],
         );
-    $services->set(EntityResolver::class)
+    $services
+        ->set(EntityResolver::class)
         ->tag(
             'controller.argument_value_resolver',
-            ['name' => 'console_api_resource', 'priority' => 150]
+            ['name' => 'console_api_resource', 'priority' => 150],
         );
 
     // ================ OTHER SERVICES =================
     $services->alias(DnsResolveInterface::class, DnsOverHttp::class);
 
+    // Lock store shares Doctrine's managed `default` connection (instead of opening its
+    // own, unmanaged one) so it benefits from doctrine.dbal's idle_connection_ttl recycling.
+    // We use a PostgreSQL advisory lock store.
+    $services
+        ->set(DoctrineDbalPostgreSqlStore::class)
+        ->arg('$connOrUrl', service('doctrine.dbal.default_connection'));
+    $services
+        ->set(LockFactory::class)
+        ->arg('$store', service(DoctrineDbalPostgreSqlStore::class));
+
     // see hyvor/internal
-    $services->set(PdoSessionHandler::class)
+    $services
+        ->set(PdoSessionHandler::class)
         ->args([
             env('DATABASE_URL'),
             ['db_table' => 'oidc_sessions'],
