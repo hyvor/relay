@@ -85,7 +85,7 @@
 				}
 			}}
 		>
-			<HyvorBar />
+			<HyvorBar logo="/img/logo.svg" />
 			<main>
 				<div id="wrap">
 					<nav>
