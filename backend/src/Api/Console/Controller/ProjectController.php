@@ -36,7 +36,6 @@ class ProjectController extends AbstractController
     ): JsonResponse {
         $user = $consoleAuth->getNullableUser();
         $organizationId = $consoleAuth->getOrganizationId();
-        assert($organizationId !== null);
 
         $newProject = $this->projectService->createProject(
             $user !== null ? $user->id : 0,

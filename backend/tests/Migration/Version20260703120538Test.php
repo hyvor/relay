@@ -36,24 +36,30 @@ class Version20260703120538Test extends KernelTestCase
             throw new \RuntimeException("Migrate failed: " . $tester->getDisplay());
         }
 
-        $projectId = (int) $connection->fetchOne(
+        /** @var int|string $projectIdRaw */
+        $projectIdRaw = $connection->fetchOne(
             "INSERT INTO projects (created_at, updated_at, user_id, name, send_type, organization_id)
              VALUES (NOW(), NOW(), 1, 'Migration Test Project', 'transactional', 1)
              RETURNING id"
         );
+        $projectId = (int) $projectIdRaw;
 
-        $domainId = (int) $connection->fetchOne(
+        /** @var int|string $domainIdRaw */
+        $domainIdRaw = $connection->fetchOne(
             "INSERT INTO domains (created_at, updated_at, project_id, domain, status, status_changed_at, dkim_selector, dkim_public_key, dkim_private_key_encrypted)
              VALUES (NOW(), NOW(), ?, 'example.com', 'pending', NOW(), 'selector', 'public-key', 'private-key-encrypted')
              RETURNING id",
             [$projectId]
         );
+        $domainId = (int) $domainIdRaw;
 
-        $queueId = (int) $connection->fetchOne(
+        /** @var int|string $queueIdRaw */
+        $queueIdRaw = $connection->fetchOne(
             "INSERT INTO queues (created_at, updated_at, name, type)
              VALUES (NOW(), NOW(), 'default', 'default')
              RETURNING id"
         );
+        $queueId = (int) $queueIdRaw;
 
         $sends = [
             [
