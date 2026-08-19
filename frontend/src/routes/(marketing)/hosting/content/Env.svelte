@@ -48,6 +48,19 @@ TRUSTED_PROXIES=
 # One of: debug, info, notice, warning, error, critical, alert, emergency
 # Default: info
 LOG_LEVEL=info
+
+# Storage backend for email contents (raw .eml).
+# One of: file, s3
+# Default: file
+FILESYSTEM=file
+
+# S3-compatible object storage.
+# Only required when FILESYSTEM=s3.
+S3_ENDPOINT=
+S3_REGION=
+S3_KEY=
+S3_SECRET=
+S3_BUCKET=
 `}
         language="yaml"
 />

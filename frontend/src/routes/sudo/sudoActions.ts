@@ -1,6 +1,6 @@
 import sudoApi from './sudoApi';
 import { serversStore } from './sudoStore';
-import type { Send, SendRecipientStatus } from '../console/types';
+import type { Send, SendContent, SendRecipientStatus } from '../console/types';
 import type {
 	IpAddress,
 	Queue,
@@ -213,6 +213,12 @@ export function getSendByUuid(uuid: string) {
 			...send,
 			project
 		}));
+}
+
+export function getSendContent(uuid: string) {
+	return sudoApi.get<SendContent>({
+		endpoint: `/sends/uuid/${uuid}/content`
+	});
 }
 
 export function getProjects(

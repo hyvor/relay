@@ -1,21 +1,21 @@
 <script lang="ts">
-	import type { Send } from '../../routes/console/types';
+	import type { SendContent } from '../../routes/console/types';
 
 	interface Props {
-		send: Send;
+		content: SendContent;
 	}
 
-	let { send }: Props = $props();
+	let { content }: Props = $props();
 </script>
 
 <div class="preview">
-	{#if send.body_html}
+	{#if content.body_html}
 		<div class="title">HTML</div>
 
 		<div class="content">
 			<iframe
 				class="preview-iframe"
-				srcdoc={send.body_html}
+				srcdoc={content.body_html}
 				sandbox=""
 				frameborder="0"
 				title="Email Preview"
@@ -23,9 +23,9 @@
 		</div>
 	{/if}
 
-	{#if send.body_text}
+	{#if content.body_text}
 		<div class="title">Text</div>
-		<div class="content text">{send.body_text}</div>
+		<div class="content text">{content.body_text}</div>
 	{/if}
 </div>
 

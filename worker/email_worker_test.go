@@ -245,6 +245,9 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 		ip: GoStateIp{
 			QueueId: send.QueueId,
 		},
+		FetchContentFunc: func(uuid string) (string, error) {
+			return "raw-email-content", nil
+		},
 		AttemptSendToDomainFunc: func(
 			domainWg *sync.WaitGroup,
 			domainQueryMutex *sync.Mutex,
@@ -302,6 +305,9 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 	var localApiMethod string
 	var localApiEndpoint string
 	var localApiBody interface{}
+
+	originalCallLocalApi := CallLocalApi
+	defer func() { CallLocalApi = originalCallLocalApi }()
 
 	CallLocalApi = func(ctx context.Context, method, endpoint string, body, responseJsonObject interface{}) error {
 		localApiMethod = method
@@ -371,6 +377,9 @@ func TestEmailWorker_ProcessSend_Requeuing(t *testing.T) {
 		logger: slogDiscard(),
 		ip: GoStateIp{
 			QueueId: send.QueueId,
+		},
+		FetchContentFunc: func(uuid string) (string, error) {
+			return "raw-email-content", nil
 		},
 		AttemptSendToDomainFunc: func(
 			domainWg *sync.WaitGroup,

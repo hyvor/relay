@@ -8,6 +8,7 @@
         "ext-apcu": "*",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "ext-mailparse": "*",
         "ext-openssl": "*",
         "ext-pdo_pgsql": "*",
         "doctrine/dbal": "^3.10.5",
@@ -16,7 +17,11 @@
         "doctrine/orm": "^3.6.3",
         "egulias/email-validator": "^4.0.4",
         "hyvor/internal": "^4.0.11",
+        "league/flysystem": "^3.35.1",
+        "league/flysystem-async-aws-s3": "^3.31",
+        "league/flysystem-memory": "^3.31",
         "mlocati/spf-lib": "^3.3",
+        "php-mime-mail-parser/php-mime-mail-parser": "^9.0.1",
         "phpdocumentor/reflection-docblock": "^5.6.7",
         "phpmailer/phpmailer": "^6.12",
         "phpstan/phpdoc-parser": "^2.3.2",
@@ -52,7 +57,8 @@
     },
     "autoload": {
         "psr-4": {
-            "App\\": "src/"
+            "App\\": "src/",
+            "DoctrineMigrations\\": "migrations/"
         }
     },
     "autoload-dev": {

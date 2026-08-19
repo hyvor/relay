@@ -14,11 +14,6 @@ class SendObject
     public string $from_address;
     public ?string $from_name;
     public ?string $subject;
-    public ?string $body_html;
-    public ?string $body_text;
-    /** @var array<string, string> */
-    public array $headers;
-    public string $raw;
     public int $size_bytes;
     public bool $queued;
     public int $send_after;
@@ -46,7 +41,6 @@ class SendObject
         Send $send,
         array $attempts = [],
         array $feedback = [],
-        bool $content = false
     ) {
         $this->id = $send->getId();
         $this->uuid = $send->getUuid();
@@ -54,10 +48,6 @@ class SendObject
         $this->from_address = $send->getFromAddress();
         $this->from_name = $send->getFromName();
         $this->subject = $send->getSubject();
-        $this->body_html = $content ? $send->getBodyHtml() : null;
-        $this->body_text = $content ? $send->getBodyText() : null;
-        $this->headers = $send->getHeaders();
-        $this->raw = $content ? $send->getRaw() : '';
         $this->size_bytes = $send->getSizeBytes();
         $this->queued = $send->getQueued();
         $this->send_after = $send->getSendAfter()->getTimestamp();

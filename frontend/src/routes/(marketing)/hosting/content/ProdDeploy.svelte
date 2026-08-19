@@ -253,6 +253,12 @@ compose.yaml			# Docker Compose file
         <code>OIDC_ISSUER_URL</code>, <code>OIDC_CLIENT_ID</code>, <code>OIDC_CLIENT_SECRET</code>:
         Set these variables based on your OIDC provider configuration.
     </li>
+    <li>
+        <code>S3_ENDPOINT</code>, <code>S3_REGION</code>, <code>S3_KEY</code>,
+        <code>S3_SECRET</code>, <code>S3_BUCKET</code> (optional): Email contents are stored on the
+        local filesystem by default. You can connect your own S3-compatible storage platform by
+        setting these variables. This is recommended for scaling.
+    </li>
 </ul>
 
 <Callout type="info">

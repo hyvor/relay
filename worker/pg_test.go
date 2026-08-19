@@ -173,8 +173,6 @@ type FactorySend struct {
 	FromAddress string
 	ToAddress   string
 	Subject     string
-	BodyHtml    string
-	BodyText    string
 }
 
 type FactorySendRecipient struct {
@@ -211,18 +209,16 @@ func (m *TestFactory) Send(send *FactorySend) (*FactorySend, error) {
 	err = m.conn.QueryRow(`
 		INSERT INTO sends (
 			created_at, updated_at, send_after, project_id, domain_id, queue_id,
-			queue_name, from_address, subject, body_html, body_text,
-			headers, message_id, raw,
+			queue_name, from_address, subject, message_id,
 			size_bytes, queued
 		) VALUES (
 			$1, $2, $3, $4, $5, $6,
-			$7, $8, $9, $10, $11,
-			$12, $13, $14,
-			0, $15
+			$7, $8, $9, $10,
+			0, $11
 		) RETURNING id, uuid
 	`, now, now, send.SendAfter, projectId, send.DomainId, queueId,
 		"test-queue", send.FromAddress, send.Subject,
-		send.BodyHtml, send.BodyText, nil, "test-message-id", "raw-email-content",
+		"test-message-id",
 		send.Queued,
 	).Scan(&send.Id, &send.Uuid)
 
@@ -240,7 +236,7 @@ func (f *TestFactory) GetSendById(id int) (*FactorySend, error) {
 	row := f.conn.QueryRow(`
 		SELECT 
 			id, uuid, project_id, domain_id, queue_id, queued, send_after,
-			from_address, subject, body_html, body_text
+			from_address, subject
 		FROM sends WHERE id = $1
 	`, id)
 
@@ -254,8 +250,6 @@ func (f *TestFactory) GetSendById(id int) (*FactorySend, error) {
 		&send.SendAfter,
 		&send.FromAddress,
 		&send.Subject,
-		&send.BodyHtml,
-		&send.BodyText,
 	)
 
 	if err != nil {

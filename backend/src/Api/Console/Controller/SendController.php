@@ -9,6 +9,7 @@ use App\Api\Console\Input\RetrySendInput;
 use App\Api\Console\Input\SendEmail\SendEmailInput;
 use App\Api\Console\Input\SendEmail\UnableToDecodeAttachmentBase64Exception;
 use App\Api\Console\Object\SendObject;
+use App\Api\Console\Object\SendContentObject;
 use App\Entity\Project;
 use App\Entity\Send;
 use App\Entity\Type\ProjectSendType;
@@ -16,6 +17,8 @@ use App\Entity\Type\SendRecipientStatus;
 use App\Service\Domain\DomainService;
 use App\Service\Send\EmailAddressFormat;
 use App\Service\Send\Exception\EmailTooLargeException;
+use App\Service\Send\Exception\SendContentStorageException;
+use App\Service\Send\SendContentStorage;
 use App\Service\Send\SendLimits;
 use App\Service\Send\SendService;
 use App\Service\Queue\QueueService;
@@ -28,6 +31,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -38,6 +42,7 @@ class SendController extends AbstractController
 
     public function __construct(
         private SendService $sendService,
+        private SendContentStorage $sendContentStorage,
         private SendAttemptService $sendAttemptService,
         private SendFeedbackService $sendFeedbackService,
         private DomainService $domainService,
@@ -115,6 +120,10 @@ class SendController extends AbstractController
             throw new BadRequestException(
                 "Email size exceeds the maximum allowed size of 10MB."
             );
+        } catch (SendContentStorageException) {
+            throw new ServiceUnavailableHttpException(
+                message: "Failed to store email content. Please try again later."
+            );
         }
 
         return new JsonResponse([
@@ -191,7 +200,6 @@ class SendController extends AbstractController
                 $send,
                 attempts: $attempts,
                 feedback: $feedback,
-                content: true
             )
         );
     }
@@ -215,7 +223,6 @@ class SendController extends AbstractController
                     $send,
                     attempts: $attempts,
                     feedback: $feedback,
-                    content: true
                 ),
             ]);
         }
@@ -250,7 +257,6 @@ class SendController extends AbstractController
                 $send,
                 attempts: $attempts,
                 feedback: $feedback,
-                content: true
             ),
         ]);
     }
@@ -279,8 +285,38 @@ class SendController extends AbstractController
                 $send,
                 attempts: $attempts,
                 feedback: $feedback,
-                content: true
             )
         );
+    }
+
+    #[Route("/sends/uuid/{uuid}/content", requirements: ['uuid' => Requirement::UUID], methods: "GET")]
+    #[ScopeRequired(Scope::SENDS_READ)]
+    public function getContentByUuid(Project $project, string $uuid): JsonResponse
+    {
+        $send = $this->sendService->getSendByUuid($uuid);
+
+        if ($send === null) {
+            throw new NotFoundHttpException("Send with UUID $uuid not found");
+        }
+
+        if ($send->getProject()->getId() !== $project->getId()) {
+            throw new BadRequestException(
+                "Send with UUID $uuid does not belong to project"
+            );
+        }
+
+        try {
+            $content = $this->sendContentStorage->get($uuid);
+        } catch (SendContentStorageException) {
+            throw new ServiceUnavailableHttpException(
+                message: "Failed to retrieve email content. Please try again later."
+            );
+        }
+
+        if ($content === null) {
+            throw new NotFoundHttpException("Content for send with UUID $uuid not found");
+        }
+
+        return $this->json(new SendContentObject($content));
     }
 }
