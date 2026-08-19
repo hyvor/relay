@@ -52,6 +52,7 @@ func TestSendEmail_Accepted(t *testing.T) {
 		"relay.com",
 		1,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -102,6 +103,7 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 		"relay.com",
 		1,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -152,6 +154,7 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 		"relay.com",
 		1,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -201,6 +204,7 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 		"relay.com",
 		5,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -243,6 +247,7 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 		"relay.com",
 		0,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -285,6 +290,7 @@ func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 		"relay.com",
 		0,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -328,6 +334,7 @@ func TestSendEmail_MxFailed(t *testing.T) {
 		"relay.com",
 		0,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 

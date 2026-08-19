@@ -9,8 +9,11 @@ class GoStateIp
         // IP address ID
         public int $id,
 
-        // IP address
+        // Public IP address (used for PTR/EHLO and metrics)
         public string $ip,
+
+        // Private IP address for binding the SMTP connection (null if not using NAT)
+        public ?string $privateIp,
 
         // ptr domain (same as EHLO domain)
         public string $ptr,

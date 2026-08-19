@@ -6,6 +6,7 @@ use App\Entity\IpAddress;
 use App\Entity\Server;
 use App\Service\Ip\Dto\PtrValidationDto;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
+use App\Service\Ip\ServerIpResult;
 use App\Service\Ip\Event\IpAddressUpdatedEvent;
 use App\Service\Queue\QueueService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -60,37 +61,49 @@ class IpAddressService
 
     /**
      * Creates IP address records if not already present.
-     * Deletes IP address records that are not present in the server's current IP addresses.
+     * Updates private IP address if it has changed.
+     * Deletes IP address records that are no longer present on the server.
      */
     public function updateIpAddressesOfServer(Server $server): void
     {
-        $currentIpAddressesEntitiesInDb = $this->getIpAddressesOfServer($server);
-        $currentIpAddressesInDb = array_map(fn(IpAddress $ip) => $ip->getIpAddress(), $currentIpAddressesEntitiesInDb);
-        $serverIpAddresses = $this->serverIp->getPublicV4IpAddresses();
+        $currentEntitiesInDb = $this->getIpAddressesOfServer($server);
 
-        // Create IP addresses that are in the server's current IP addresses but not in the database
-        foreach ($serverIpAddresses as $serverIpAddress) {
-            $inArrayKey = in_array($serverIpAddress, $currentIpAddressesInDb);
-            if ($inArrayKey === false) {
-                $this->createIpAddress($server, $serverIpAddress);
+        /** @var array<string, IpAddress> $entitiesByPublicIp */
+        $entitiesByPublicIp = [];
+        foreach ($currentEntitiesInDb as $entity) {
+            $entitiesByPublicIp[$entity->getIpAddress()] = $entity;
+        }
+
+        $serverIpData = $this->serverIp->getServerIpData();
+
+        $serverPublicIps = array_map(fn(ServerIpResult $r) => $r->publicIp, $serverIpData);
+
+        foreach ($serverIpData as $result) {
+            if (!isset($entitiesByPublicIp[$result->publicIp])) {
+                $this->createIpAddress($server, $result->publicIp, $result->privateIp);
+            } elseif ($entitiesByPublicIp[$result->publicIp]->getPrivateIpAddress() !== $result->privateIp) {
+                $entity = $entitiesByPublicIp[$result->publicIp];
+                $entity->setPrivateIpAddress($result->privateIp);
+                $entity->setUpdatedAt($this->now());
+                $this->em->persist($entity);
+                $this->em->flush();
             }
         }
 
-        // Delete IP addresses that are in the database but not in the server's current IP addresses
-        $ipAddressesToDelete = array_filter(
-            $currentIpAddressesEntitiesInDb,
-            fn(IpAddress $ip) => !in_array($ip->getIpAddress(), $serverIpAddresses)
-        );
-        foreach ($ipAddressesToDelete as $ipAddress) {
-            $this->deleteIpAddress($ipAddress);
+        // Delete IP addresses no longer on the server
+        foreach ($currentEntitiesInDb as $entity) {
+            if (!in_array($entity->getIpAddress(), $serverPublicIps)) {
+                $this->deleteIpAddress($entity);
+            }
         }
     }
 
-    public function createIpAddress(Server $server, string $ipAddress): IpAddress
+    public function createIpAddress(Server $server, string $ipAddress, ?string $privateIpAddress = null): IpAddress
     {
         $ipAddressEntity = new IpAddress();
         $ipAddressEntity->setServer($server);
         $ipAddressEntity->setIpAddress($ipAddress);
+        $ipAddressEntity->setPrivateIpAddress($privateIpAddress);
         $ipAddressEntity->setCreatedAt($this->now());
         $ipAddressEntity->setUpdatedAt($this->now());
         $ipAddressEntity->setQueue($this->queueService->getAQueueThatHasNoIpAddresses());

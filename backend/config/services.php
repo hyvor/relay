@@ -22,6 +22,8 @@ use Symfony\Component\Lock\Store\DoctrineDbalPostgreSqlStore;
 return static function (ContainerConfigurator $containerConfigurator): void {
     $containerConfigurator->parameters()
         ->set('env(HOSTING)', 'self') // Default to self-hosted
+        ->set('env(PRIVATE_NETWORK)', '') // Default to empty (no NAT)
+        ->set('env(NAT_MAP)', '')         // Default to empty (no manual NAT map)
     ;
     $services = $containerConfigurator->services();
 
