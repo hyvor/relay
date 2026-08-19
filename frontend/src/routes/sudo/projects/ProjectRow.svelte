@@ -3,6 +3,7 @@
 	import RelativeTime from '../../console/@components/content/RelativeTime.svelte';
 	import { flagByCountryCode } from '$lib/helpers/countryCode';
 	import type { Organization, SudoProject } from '../sudoTypes';
+	import { sudoConfigStore } from '../sudoStore';
 
 	interface Props {
 		project: SudoProject;
@@ -31,17 +32,19 @@
 			{#if org.billing_email}
 				<div class="org-email">{org.billing_email}</div>
 			{/if}
-			<div class="view-button">
-				<Button
-					as="a"
-					href="https://hyvor.com/sudo/core/organizations/{org.id}"
-					size="x-small"
-					target="_blank"
-					color="input"
-				>
-					Org &rarr;
-				</Button>
-			</div>
+			{#if $sudoConfigStore.deployment === 'cloud'}
+				<div class="view-button">
+					<Button
+						as="a"
+						href="https://hyvor.com/sudo/core/organizations/{org.id}"
+						size="x-small"
+						target="_blank"
+						color="input"
+					>
+						Org &rarr;
+					</Button>
+				</div>
+			{/if}
 		{:else if project.organization_id !== null}
 			<span class="muted">org {project.organization_id}</span>
 		{:else}

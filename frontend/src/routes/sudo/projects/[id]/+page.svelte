@@ -8,6 +8,7 @@
 	import { getProjectById } from '../../sudoActions';
 	import { flagByCountryCode } from '$lib/helpers/countryCode';
 	import type { Organization, SudoProject } from '../../sudoTypes';
+	import { sudoConfigStore } from '../../sudoStore';
 
 	let project: SudoProject | null = $state(null);
 	let org: Organization | null = $state(null);
@@ -78,17 +79,20 @@
 							{#if org.billing_email}
 								<div class="muted">{org.billing_email}</div>
 							{/if}
-							<div class="org-link">
-								<Button
-									as="a"
-									href="https://hyvor.com/sudo/core/organizations/{org.id}"
-									size="x-small"
-									target="_blank"
-									color="input"
-								>
-									Org &rarr;
-								</Button>
-							</div>
+
+							{#if $sudoConfigStore.deployment === 'cloud'}
+								<div class="org-link">
+									<Button
+										as="a"
+										href="https://hyvor.com/sudo/core/organizations/{org.id}"
+										size="x-small"
+										target="_blank"
+										color="input"
+									>
+										Org &rarr;
+									</Button>
+								</div>
+							{/if}
 						{:else if project.organization_id !== null}
 							#{project.organization_id}
 						{:else}
