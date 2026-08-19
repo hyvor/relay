@@ -2,8 +2,8 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Authorization\ScopeRequired;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
 use App\Api\Console\Input\CreateWebhookInput;
 use App\Api\Console\Input\UpdateWebhookInput;
 use App\Api\Console\Object\WebhookDeliveryObject;
@@ -30,7 +30,7 @@ class WebhookController extends AbstractController
     }
 
     #[Route('/webhooks', methods: 'GET')]
-    #[ScopeRequired(Scope::WEBHOOKS_READ)]
+    #[ScopeRequired(RelayScope::WEBHOOKS_READ)]
     public function getWebhooks(Project $project): JsonResponse
     {
         $webhooks = $this->webhookService->getWebhooksForProject($project)
@@ -43,7 +43,7 @@ class WebhookController extends AbstractController
     }
 
     #[Route('/webhooks', methods: 'POST')]
-    #[ScopeRequired(Scope::WEBHOOKS_WRITE)]
+    #[ScopeRequired(RelayScope::WEBHOOKS_WRITE)]
     public function createWebhook(#[MapRequestPayload] CreateWebhookInput $input, Project $project): JsonResponse
     {
         $creation = $this->webhookService->createWebhook(
@@ -57,7 +57,7 @@ class WebhookController extends AbstractController
     }
 
     #[Route('/webhooks/{id}', methods: 'PATCH')]
-    #[ScopeRequired(Scope::WEBHOOKS_WRITE)]
+    #[ScopeRequired(RelayScope::WEBHOOKS_WRITE)]
     public function updateWebhook(#[MapRequestPayload] UpdateWebhookInput $input, Webhook $webhook): JsonResponse
     {
         $updates = new UpdateWebhookDto();
@@ -71,7 +71,7 @@ class WebhookController extends AbstractController
     }
 
     #[Route('/webhooks/{id}', methods: 'DELETE')]
-    #[ScopeRequired(Scope::WEBHOOKS_WRITE)]
+    #[ScopeRequired(RelayScope::WEBHOOKS_WRITE)]
     public function deleteWebhook(Webhook $webhook): JsonResponse
     {
         $this->webhookService->deleteWebhook($webhook);
@@ -80,7 +80,7 @@ class WebhookController extends AbstractController
     }
 
     #[Route('/webhooks/deliveries', methods: 'GET')]
-    #[ScopeRequired(Scope::WEBHOOKS_READ)]
+    #[ScopeRequired(RelayScope::WEBHOOKS_READ)]
     public function getWebhookDeliveries(Request $request, Project $project): JsonResponse
     {
         $webhookId = null;

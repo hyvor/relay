@@ -3,9 +3,6 @@
 namespace App\Tests\Migration;
 
 use App\Tests\Case\KernelTestCase;
-use App\Tests\Factory\DomainFactory;
-use App\Tests\Factory\ProjectFactory;
-use App\Tests\Factory\QueueFactory;
 use Doctrine\DBAL\Connection;
 use DoctrineMigrations\Version20260703120538;
 use League\Flysystem\Filesystem;
@@ -39,9 +36,30 @@ class Version20260703120538Test extends KernelTestCase
             throw new \RuntimeException("Migrate failed: " . $tester->getDisplay());
         }
 
-        $project = ProjectFactory::createOne();
-        $domain = DomainFactory::createOne(['project' => $project]);
-        $queue = QueueFactory::createOne();
+        /** @var int|string $projectIdRaw */
+        $projectIdRaw = $connection->fetchOne(
+            "INSERT INTO projects (created_at, updated_at, user_id, name, send_type, organization_id)
+             VALUES (NOW(), NOW(), 1, 'Migration Test Project', 'transactional', 1)
+             RETURNING id"
+        );
+        $projectId = (int) $projectIdRaw;
+
+        /** @var int|string $domainIdRaw */
+        $domainIdRaw = $connection->fetchOne(
+            "INSERT INTO domains (created_at, updated_at, project_id, domain, status, status_changed_at, dkim_selector, dkim_public_key, dkim_private_key_encrypted)
+             VALUES (NOW(), NOW(), ?, 'example.com', 'pending', NOW(), 'selector', 'public-key', 'private-key-encrypted')
+             RETURNING id",
+            [$projectId]
+        );
+        $domainId = (int) $domainIdRaw;
+
+        /** @var int|string $queueIdRaw */
+        $queueIdRaw = $connection->fetchOne(
+            "INSERT INTO queues (created_at, updated_at, name, type)
+             VALUES (NOW(), NOW(), 'default', 'default')
+             RETURNING id"
+        );
+        $queueId = (int) $queueIdRaw;
 
         $sends = [
             [
@@ -73,9 +91,9 @@ class Version20260703120538Test extends KernelTestCase
                  VALUES (?, NOW(), NOW(), true, NOW(), ?, ?, ?, 'default', 'test@example.com', 'Subject', ?, ?, ?::jsonb, ?, ?, 100)",
                 [
                     $send['uuid'],
-                    $project->getId(),
-                    $domain->getId(),
-                    $queue->getId(),
+                    $projectId,
+                    $domainId,
+                    $queueId,
                     $send['body_html'],
                     $send['body_text'],
                     json_encode($send['headers']),

@@ -2,8 +2,8 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Authorization\ScopeRequired;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
 use App\Api\Console\Input\AnalyticsStatsInput;
 use App\Entity\Project;
 use App\Service\Send\SendAnalyticsService;
@@ -25,7 +25,7 @@ class AnalyticsController extends AbstractController
     // - bounce rate for specified period
     // - complaint rate for specified period
     #[Route('/analytics/stats', methods: 'GET')]
-    #[ScopeRequired(Scope::ANALYTICS_READ)]
+    #[ScopeRequired(RelayScope::ANALYTICS_READ)]
     public function getStats(
         Project $project,
         #[MapQueryString] AnalyticsStatsInput $input
@@ -44,7 +44,7 @@ class AnalyticsController extends AbstractController
     }
 
     #[Route('/analytics/sends/chart', methods: 'GET')]
-    #[ScopeRequired(Scope::ANALYTICS_READ)]
+    #[ScopeRequired(RelayScope::ANALYTICS_READ)]
     public function getSendsChartData(Project $project): JsonResponse
     {
         $data = $this->sendAnalyticsService->getSendsChartData($project);

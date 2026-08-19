@@ -4,6 +4,9 @@ namespace App\Tests\Api\Console;
 
 use App\Api\Console\Resolver\ProjectResolver;
 use App\Entity\Project;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\AccessType;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleApiAuthorizationListenerAbstract;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleAuthResults;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -43,7 +46,8 @@ class ProjectResolverTest extends TestCase
     {
         $project = $this->createStub(Project::class);
         $request = Request::create('/');
-        $request->attributes->set('console_api_resolved_project', $project);
+        $authResults = new ConsoleAuthResults(AccessType::PRODUCT_API_KEY, 1, $project, productApiKey: new \stdClass());
+        $request->attributes->set(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY, $authResults);
 
         $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn('App\Entity\Project');

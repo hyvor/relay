@@ -2,8 +2,12 @@
 
 namespace App\Api\Console\RateLimit;
 
-use App\Api\Console\Authorization\AuthorizationListener;
+use App\Entity\ApiKey;
+use App\Entity\Project;
 use App\Service\App\RateLimit\RateLimiterProvider;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\AccessType;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleApiAuthorizationListenerAbstract;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleAuthResults;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
@@ -34,15 +38,19 @@ class RateLimitListener
 
     private function getRateLimiter(Request $request): LimiterInterface
     {
+        $consoleAuthResults = $request->attributes->get(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY);
+        assert($consoleAuthResults instanceof ConsoleAuthResults);
+
         // check if this is a session request (user logged in)
-        if (AuthorizationListener::hasUser($request)) {
-            $user = AuthorizationListener::getUser($request);
+        if ($consoleAuthResults->getAccessType() === AccessType::SESSION) {
+            $user = $consoleAuthResults->getNullableUser();
+            assert($user !== null);
             return $this->rateLimiterProvider->rateLimiter($this->rateLimit->session(), "user:" . $user->id);
         }
 
         //  otherwise, it is an API request with a project
-        $project = AuthorizationListener::getProject($request);
-        $apiKey = AuthorizationListener::getApiKey($request);
+        $project = $consoleAuthResults->getResource();
+        assert($project instanceof Project);
 
         // special limit for the POST /sends endpoint
         if ($request->getMethod() === 'POST' && $request->getPathInfo() === '/api/console/sends') {
@@ -52,7 +60,12 @@ class RateLimitListener
             );
         }
 
-        return $this->rateLimiterProvider->rateLimiter($this->rateLimit->apiKey(), 'api_key:' . $apiKey->getId());
+        if ($consoleAuthResults->getAccessType() === AccessType::PRODUCT_API_KEY) {
+            $apiKey = $consoleAuthResults->getResource();
+            return $this->rateLimiterProvider->rateLimiter($this->rateLimit->apiKey(), 'api_key:project:' . $project->getId());
+        }
+
+        return $this->rateLimiterProvider->rateLimiter($this->rateLimit->apiKey(), 'cloud:project:' . $project->getId());
     }
 
     public function onController(ControllerEvent $controllerEvent): void
@@ -64,6 +77,10 @@ class RateLimitListener
         $request = $controllerEvent->getRequest();
         if (!$this->isConsoleApiRequest($request)) {
             return; // @codeCoverageIgnore
+        }
+
+        if (!$request->attributes->has(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY)) {
+            return;
         }
 
         $limiter = $this->getRateLimiter($request);

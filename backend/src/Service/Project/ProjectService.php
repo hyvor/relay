@@ -2,7 +2,7 @@
 
 namespace App\Service\Project;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Entity\Project;
 use App\Entity\ProjectUser;
 use App\Entity\Type\ProjectSendType;
@@ -115,7 +115,8 @@ class ProjectService
         ProjectSendType $sendType,
         bool $createProjectUser = true,
         bool $isSystemProject = false,
-        bool $flush = true
+        bool $flush = true,
+        ?string $createdBySource = null,
     ): array {
         $this->ed->dispatch(new ProjectCreatingEvent($userId));
 
@@ -126,7 +127,8 @@ class ProjectService
             ->setName($name)
             ->setCreatedAt($this->now())
             ->setUpdatedAt($this->now())
-            ->setSendType($sendType);
+            ->setSendType($sendType)
+            ->setCreatedBySource($createdBySource);
 
         $this->em->persist($project);
 
@@ -134,7 +136,7 @@ class ProjectService
             $projectUser = $this->projectUserService->createProjectUser(
                 $project,
                 $userId,
-                Scope::all(),
+                RelayScope::all(),
                 flush: false
             );
         }

@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\Send;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Api\Console\Controller\SendController;
 use App\Api\Console\Object\SendAttemptObject;
 use App\Api\Console\Object\SendAttemptRecipientObject;
@@ -40,7 +40,7 @@ class GetSendByIdTest extends WebTestCase
             $project,
             'GET',
             '/sends/123',
-            scopes: [Scope::SENDS_READ]
+            scopes: [RelayScope::SENDS_READ]
         );
 
         $this->assertSame(404, $response->getStatusCode());
@@ -81,7 +81,7 @@ class GetSendByIdTest extends WebTestCase
             $project,
             'GET',
             '/sends/' . $send->getId(),
-            scopes: [Scope::SENDS_READ]
+            scopes: [RelayScope::SENDS_READ]
         );
 
         $this->assertSame(200, $response->getStatusCode());

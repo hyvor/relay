@@ -2,7 +2,7 @@
 
 namespace App\Tests\Factory;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Entity\Project;
 use App\Entity\ProjectUser;
 use App\Entity\Type\ProjectSendType;
@@ -35,7 +35,7 @@ class ProjectUserFactory extends PersistentObjectFactory
             'updated_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'user_id' => self::faker()->numberBetween(1, 10000),
             'project' => ProjectFactory::new(),
-            'scopes' => Scope::all(),
+            'scopes' => RelayScope::all(),
         ];
     }
 

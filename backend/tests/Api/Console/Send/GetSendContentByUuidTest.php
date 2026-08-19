@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\Send;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Api\Console\Controller\SendController;
 use App\Api\Console\Object\SendContentObject;
 use App\Service\Send\Dto\SendContent;
@@ -51,7 +51,7 @@ class GetSendContentByUuidTest extends WebTestCase
             $project,
             'GET',
             '/sends/uuid/' . $send->getUuid() . '/content',
-            scopes: [Scope::SENDS_READ]
+            scopes: [RelayScope::SENDS_READ]
         );
 
         $this->assertSame(200, $response->getStatusCode());
@@ -74,7 +74,7 @@ class GetSendContentByUuidTest extends WebTestCase
             $project,
             'GET',
             '/sends/uuid/' . $send->getUuid() . '/content',
-            scopes: [Scope::SENDS_READ]
+            scopes: [RelayScope::SENDS_READ]
         );
 
         $this->assertSame(404, $response->getStatusCode());
@@ -89,7 +89,7 @@ class GetSendContentByUuidTest extends WebTestCase
             $project,
             'GET',
             '/sends/uuid/' . $uuid . '/content',
-            scopes: [Scope::SENDS_READ]
+            scopes: [RelayScope::SENDS_READ]
         );
 
         $this->assertSame(404, $response->getStatusCode());
@@ -110,7 +110,7 @@ class GetSendContentByUuidTest extends WebTestCase
             $otherProject,
             'GET',
             '/sends/uuid/' . $send->getUuid() . '/content',
-            scopes: [Scope::SENDS_READ]
+            scopes: [RelayScope::SENDS_READ]
         );
 
         $this->assertSame(400, $response->getStatusCode());

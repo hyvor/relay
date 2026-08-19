@@ -2,7 +2,7 @@
 
 namespace App\Tests\Case;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Entity\Project;
 use App\Tests\Factory\ApiKeyFactory;
 use Doctrine\ORM\EntityManagerInterface;
@@ -92,7 +92,7 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
      * @param array<string, mixed> $data
      * @param array<string, mixed> $server
      * @param array<string, mixed> $parameters
-     * @param true|(string|Scope)[] $scopes
+     * @param true|(string|RelayScope)[] $scopes
      */
     public function consoleApi(
         Project|int|null $project,
@@ -113,12 +113,12 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
             }
             $server['HTTP_X_ORGANIZATION_ID'] ??= '1';
         } else {
-            $apiKey = bin2hex(random_bytes(16));
+            $apiKey = bin2hex(random_bytes(\App\Service\ApiKey\ApiKeyService::API_KEY_LENGTH / 2));
             $apiKeyHashed = hash('sha256', $apiKey);
             $apiKeyFactory = ['key_hashed' => $apiKeyHashed, 'project' => $project];
             if ($scopes !== true) {
                 $apiKeyFactory['scopes'] = array_map(
-                    fn(Scope|string $scope) => is_string($scope) ? $scope : $scope->value,
+                    fn(RelayScope|string $scope) => is_string($scope) ? $scope : $scope->value,
                     $scopes
                 );
             }

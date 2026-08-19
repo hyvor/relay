@@ -22,6 +22,7 @@
         "league/flysystem-memory": "^3.31",
         "mlocati/spf-lib": "^3.3",
         "php-mime-mail-parser/php-mime-mail-parser": "^9.0.1",
+        "nyholm/psr7": "^1.8.2",
         "phpdocumentor/reflection-docblock": "^5.6.7",
         "phpmailer/phpmailer": "^6.12",
         "phpstan/phpdoc-parser": "^2.3.3",

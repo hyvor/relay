@@ -2,10 +2,7 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\OrganizationOptional;
-use App\Api\Console\Authorization\ScopeRequired;
-use App\Api\Console\Authorization\AuthorizationListener;
-use App\Api\Console\Authorization\OrganizationLevelEndpoint;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Api\Console\Object\ProjectObject;
 use App\Api\Console\Object\ProjectUserObject;
 use App\Entity\Project;
@@ -13,6 +10,8 @@ use App\Service\App\Config;
 use App\Service\Instance\InstanceService;
 use App\Service\ProjectUser\ProjectUserService;
 use App\Service\Send\Compliance;
+use Hyvor\Internal\Auth\AuthInterface;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
 use Hyvor\Internal\InternalConfig;
 use Hyvor\Internal\Sudo\SudoUserService;
 use Psr\Log\LoggerInterface;
@@ -21,7 +20,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Entity\Type\WebhooksEventEnum;
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\Bundle\Api\DataCarryingHttpException;
 
 class ConsoleController extends AbstractController
 {
@@ -32,17 +31,27 @@ class ConsoleController extends AbstractController
         private LoggerInterface $logger,
         private InstanceService $instanceService,
         private SudoUserService $sudoUserService,
+        private AuthInterface $auth,
     ) {}
 
     #[Route('/init', methods: 'GET')]
-    #[OrganizationLevelEndpoint]
-    #[OrganizationOptional]
     public function initConsole(Request $request): JsonResponse
     {
-        $user = AuthorizationListener::getUser($request);
-        $org = AuthorizationListener::hasOrganization($request)
-            ? AuthorizationListener::getOrganization($request)
-            : null;
+        $me = $this->auth->me($request);
+
+        if ($me === null) {
+            throw new DataCarryingHttpException(
+                401,
+                [
+                    'login_url' => $this->auth->authUrl('login'),
+                    'signup_url' => $this->auth->authUrl('signup'),
+                ],
+                'Unauthorized'
+            );
+        }
+
+        $user = $me->getUser();
+        $org = $me->getOrganization();
         $instance = $this->instanceService->getInstance();
 
         $projectUsers = [];
@@ -82,7 +91,7 @@ class ConsoleController extends AbstractController
                         'events' => array_map(fn($event) => $event->value, WebhooksEventEnum::cases()),
                     ],
                     'api_keys' => [
-                        'scopes' => array_map(fn($scope) => $scope->value, Scope::cases()),
+                        'scopes' => array_map(fn($scope) => $scope->value, RelayScope::cases()),
                     ],
                     'compliance' => [
                         'rates' => Compliance::getRates(),
@@ -94,7 +103,7 @@ class ConsoleController extends AbstractController
     }
 
     #[Route('/init/project', methods: 'GET')]
-    #[ScopeRequired(Scope::PROJECT_READ)]
+    #[ScopeRequired(RelayScope::PROJECT_READ)]
     public function initProject(Project $project): JsonResponse
     {
         return new JsonResponse([

@@ -2,8 +2,8 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Authorization\ScopeRequired;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
 use App\Api\Console\Input\Domain\DomainIdOrDomainInput;
 use App\Api\Console\Input\Domain\DomainCreateInput;
 use App\Api\Console\Object\DomainObject;
@@ -32,7 +32,7 @@ class DomainController extends AbstractController
     }
 
     #[Route('/domains', methods: 'GET')]
-    #[ScopeRequired(Scope::DOMAINS_READ)]
+    #[ScopeRequired(RelayScope::DOMAINS_READ)]
     public function getDomains(Project $project, Request $request): JsonResponse
     {
         $limit = $request->query->getInt('limit', 50);
@@ -54,7 +54,7 @@ class DomainController extends AbstractController
     }
 
     #[Route('/domains', methods: 'POST')]
-    #[ScopeRequired(Scope::DOMAINS_WRITE)]
+    #[ScopeRequired(RelayScope::DOMAINS_WRITE)]
     public function createDomain(
         Project $project,
         #[MapRequestPayload] DomainCreateInput $createInput
@@ -74,7 +74,7 @@ class DomainController extends AbstractController
     }
 
     #[Route('/domains/verify', methods: 'POST')]
-    #[ScopeRequired(Scope::DOMAINS_WRITE)]
+    #[ScopeRequired(RelayScope::DOMAINS_WRITE)]
     public function verifyDomain(
         Project $project,
         #[MapRequestPayload] DomainIdOrDomainInput $input
@@ -95,7 +95,7 @@ class DomainController extends AbstractController
     }
 
     #[Route('/domains/by', methods: 'GET')]
-    #[ScopeRequired(Scope::DOMAINS_READ)]
+    #[ScopeRequired(RelayScope::DOMAINS_READ)]
     public function getDomainById(
         Project $project,
         #[MapRequestPayload] DomainIdOrDomainInput $input
@@ -106,7 +106,7 @@ class DomainController extends AbstractController
 
 
     #[Route('/domains', methods: 'DELETE')]
-    #[ScopeRequired(Scope::DOMAINS_WRITE)]
+    #[ScopeRequired(RelayScope::DOMAINS_WRITE)]
     public function deleteDomain(
         Project $project,
         #[MapRequestPayload] DomainIdOrDomainInput $input
