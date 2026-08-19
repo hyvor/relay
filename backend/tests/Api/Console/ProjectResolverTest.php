@@ -16,7 +16,7 @@ class ProjectResolverTest extends TestCase
     public function test_returns_empty_on_other_controllers(): void
     {
         $request = Request::create('/');
-        $argument = $this->createMock(ArgumentMetadata::class);
+        $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getControllerName')->willReturn('App\Controller\SomeOtherController');
         $argument->method('getType')->willReturn('App\Entity\Project');
 
@@ -29,7 +29,7 @@ class ProjectResolverTest extends TestCase
     public function test_does_not_resolve_non_project(): void
     {
         $request = Request::create('/');
-        $argument = $this->createMock(ArgumentMetadata::class);
+        $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn('App\Entity\Send');
         $argument->method('getControllerName')->willReturn('App\Api\Console\Controller\SendController');
 
@@ -41,11 +41,11 @@ class ProjectResolverTest extends TestCase
 
     public function test_gets_project_from_attributes(): void
     {
-        $project = $this->createMock(Project::class);
+        $project = $this->createStub(Project::class);
         $request = Request::create('/');
         $request->attributes->set('console_api_resolved_project', $project);
 
-        $argument = $this->createMock(ArgumentMetadata::class);
+        $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn('App\Entity\Project');
         $argument->method('getControllerName')->willReturn('App\Api\Console\Controller\SomeController');
 

@@ -16,6 +16,7 @@ use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use Hyvor\Internal\Bundle\EventDispatcher\TestEventDispatcher;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -197,6 +198,7 @@ class VerifyDomainTest extends WebTestCase
         $this->eventDispatcher->assertNotDispatched(DomainStatusChangedEvent::class);
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testVerifyDomainWithoutPermission(): void
     {
         $project = ProjectFactory::createOne();
@@ -219,6 +221,7 @@ class VerifyDomainTest extends WebTestCase
         $this->eventDispatcher->assertNotDispatched(DomainStatusChangedEvent::class);
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testVerifyDomainNotFound(): void
     {
         $project = ProjectFactory::createOne();
@@ -237,6 +240,7 @@ class VerifyDomainTest extends WebTestCase
         $this->eventDispatcher->assertNotDispatched(DomainStatusChangedEvent::class);
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testVerifyDomainFromDifferentProject(): void
     {
         $project1 = ProjectFactory::createOne();

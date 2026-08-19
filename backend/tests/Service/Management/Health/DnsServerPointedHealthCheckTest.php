@@ -22,7 +22,7 @@ class DnsServerPointedHealthCheckTest extends KernelTestCase
 
     public function test_when_dns_check_fail(): void
     {
-        $dnsResolver = $this->createMock(DnsResolveInterface::class);
+        $dnsResolver = $this->createStub(DnsResolveInterface::class);
         $dnsResolver->method('resolve')
             ->willThrowException(new DnsResolvingFailedException('bad connection'));
         $this->container->set(DnsResolveInterface::class, $dnsResolver);
@@ -47,7 +47,7 @@ class DnsServerPointedHealthCheckTest extends KernelTestCase
     ])]
     public function test_when_fail(int $status, string $message, array $answers = []): void
     {
-        $dnsResolver = $this->createMock(DnsResolveInterface::class);
+        $dnsResolver = $this->createStub(DnsResolveInterface::class);
         $dnsResolver->method('resolve')
             ->willReturn(new ResolveResult($status, $answers));
         $this->container->set(DnsResolveInterface::class, $dnsResolver);
@@ -65,7 +65,7 @@ class DnsServerPointedHealthCheckTest extends KernelTestCase
     {
         $instance = InstanceFactory::createOne();
 
-        $dnsResolver = $this->createMock(DnsResolveInterface::class);
+        $dnsResolver = $this->createStub(DnsResolveInterface::class);
         $dnsResolver->method('resolve')
             ->willReturn(
                 new ResolveResult(0, [
