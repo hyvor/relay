@@ -3,12 +3,12 @@
 namespace App\Tests\Factory;
 
 use App\Entity\Server;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<Server>
+ * @extends PersistentObjectFactory<Server>
  */
-final class ServerFactory extends PersistentProxyObjectFactory
+final class ServerFactory extends PersistentObjectFactory
 {
 
     public function __construct()

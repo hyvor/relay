@@ -4,12 +4,12 @@ namespace App\Tests\Factory;
 
 use App\Entity\DnsRecord;
 use App\Entity\Type\DnsRecordType;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<DnsRecord>
+ * @extends PersistentObjectFactory<DnsRecord>
  */
-final class DnsRecordFactory extends PersistentProxyObjectFactory
+final class DnsRecordFactory extends PersistentObjectFactory
 {
     public function __construct()
     {

@@ -6,12 +6,12 @@ use App\Api\Console\Authorization\Scope;
 use App\Entity\Project;
 use App\Entity\ProjectUser;
 use App\Entity\Type\ProjectSendType;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<ProjectUser>
+ * @extends PersistentObjectFactory<ProjectUser>
  */
-class ProjectUserFactory extends PersistentProxyObjectFactory
+class ProjectUserFactory extends PersistentObjectFactory
 {
 
 

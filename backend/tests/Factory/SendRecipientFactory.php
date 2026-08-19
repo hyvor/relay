@@ -5,12 +5,12 @@ namespace App\Tests\Factory;
 use App\Entity\SendRecipient;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<SendRecipient>
+ * @extends PersistentObjectFactory<SendRecipient>
  */
-final class SendRecipientFactory extends PersistentProxyObjectFactory
+final class SendRecipientFactory extends PersistentObjectFactory
 {
     public function __construct()
     {

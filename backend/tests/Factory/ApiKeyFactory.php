@@ -4,12 +4,12 @@ namespace App\Tests\Factory;
 
 use App\Api\Console\Authorization\Scope;
 use App\Entity\ApiKey;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<ApiKey>
+ * @extends PersistentObjectFactory<ApiKey>
  */
-final class ApiKeyFactory extends PersistentProxyObjectFactory
+final class ApiKeyFactory extends PersistentObjectFactory
 {
     public function __construct()
     {

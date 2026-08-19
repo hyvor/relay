@@ -4,12 +4,12 @@ namespace App\Tests\Factory;
 
 use App\Entity\Project;
 use App\Entity\Type\ProjectSendType;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<Project>
+ * @extends PersistentObjectFactory<Project>
  */
-final class ProjectFactory extends PersistentProxyObjectFactory
+final class ProjectFactory extends PersistentObjectFactory
 {
 
     public function __construct()

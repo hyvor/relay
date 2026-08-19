@@ -5,12 +5,12 @@ namespace App\Tests\Factory;
 use App\Entity\DebugIncomingEmail;
 use App\Entity\Type\DebugIncomingEmailStatus;
 use App\Entity\Type\DebugIncomingEmailType;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<DebugIncomingEmail>
+ * @extends PersistentObjectFactory<DebugIncomingEmail>
  */
-final class DebugIncomingEmailFactory extends PersistentProxyObjectFactory
+final class DebugIncomingEmailFactory extends PersistentObjectFactory
 {
     public function __construct()
     {

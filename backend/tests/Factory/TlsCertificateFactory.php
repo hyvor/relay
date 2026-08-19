@@ -5,12 +5,12 @@ namespace App\Tests\Factory;
 use App\Entity\TlsCertificate;
 use App\Entity\Type\TlsCertificateStatus;
 use App\Entity\Type\TlsCertificateType;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<TlsCertificate>
+ * @extends PersistentObjectFactory<TlsCertificate>
  */
-final class TlsCertificateFactory extends PersistentProxyObjectFactory
+final class TlsCertificateFactory extends PersistentObjectFactory
 {
     public function __construct()
     {
