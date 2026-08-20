@@ -14,7 +14,7 @@ class CreateApiKeyInput
     public string $name;
 
     /**
-     * @var array<string>
+     * @var list<string>
      */
     #[Assert\NotBlank]
     #[Assert\Type('array')]
@@ -24,7 +24,7 @@ class CreateApiKeyInput
     public array $scopes;
 
     /**
-     * @var array<string>
+     * @var list<string>
      */
     #[Assert\Type('array')]
     #[Assert\All([
@@ -34,7 +34,7 @@ class CreateApiKeyInput
     public array $allowed_ips = [];
 
     /**
-     * @return array<string>
+     * @return list<string>
      */
     public static function getScopeValues(): array
     {

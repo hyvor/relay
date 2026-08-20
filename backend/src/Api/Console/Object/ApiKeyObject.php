@@ -13,13 +13,13 @@ class ApiKeyObject
     public string $name;
 
     /**
-     * @var array<string> $scopes
+     * @var list<string> $scopes
      */
     #[OA\Property(type: 'array', items: new OA\Items(type: 'string'))]
     public array $scopes;
 
     /**
-     * @var array<string> $allowed_ips
+     * @var list<string> $allowed_ips
      */
     #[OA\Property(type: 'array', items: new OA\Items(type: 'string'))]
     public array $allowed_ips;
@@ -36,8 +36,15 @@ class ApiKeyObject
     {
         $this->id = $apiKey->getId();
         $this->name = $apiKey->getName();
-        $this->scopes = $apiKey->getScopes();
-        $this->allowed_ips = $apiKey->getAllowedIps();
+
+        /** @var list<string> $scopes */
+        $scopes = $apiKey->getScopes();
+        $this->scopes = $scopes;
+
+        /** @var list<string> $allowedIps */
+        $allowedIps = $apiKey->getAllowedIps();
+        $this->allowed_ips = $allowedIps;
+
         $this->key = $rawKey;
         $this->created_at = $apiKey->getCreatedAt()->getTimestamp();
         $this->is_enabled = $apiKey->getIsEnabled();

@@ -11,7 +11,7 @@ class WebhookObject
     public string $url;
     public ?string $description;
     /**
-     * @var array<string>
+     * @var list<string>
      */
     #[OA\Property(type: 'array', items: new OA\Items(type: 'string'))]
     public array $events;
@@ -22,7 +22,11 @@ class WebhookObject
         $this->id = $webhook->getId();
         $this->url = $webhook->getUrl();
         $this->description = $webhook->getDescription();
-        $this->events = $webhook->getEvents();
+
+        /** @var list<string> $events */
+        $events = $webhook->getEvents();
+        $this->events = $events;
+
         $this->secret = $secret;
     }
 }

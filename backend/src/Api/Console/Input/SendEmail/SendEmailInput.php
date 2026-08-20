@@ -70,7 +70,7 @@ class SendEmailInput
     public array $headers = [];
 
     /**
-     * @var array<array{content: string, name: ?string, content_type: ?string}>
+     * @var list<array{content: string, name: ?string, content_type: ?string}>
      */
     #[Assert\All([
         new Assert\Collection(

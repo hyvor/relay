@@ -17,7 +17,7 @@ class SendAttemptObject
 
     public string $domain;
     /**
-     * @var array<string>
+     * @var list<string>
      */
     #[OA\Property(type: 'array', items: new OA\Items(type: 'string'))]
     public array $resolved_mx_hosts;
@@ -31,7 +31,7 @@ class SendAttemptObject
     public int $duration_ms;
 
     /**
-     * @var array<SendAttemptRecipientObject>
+     * @var list<SendAttemptRecipientObject>
      */
     #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: SendAttemptRecipientObject::class)))]
     public array $recipients = [];
@@ -43,14 +43,21 @@ class SendAttemptObject
         $this->status = $attempt->getStatus();
         $this->try_count = $attempt->getTryCount();
         $this->domain = $attempt->getDomain();
-        $this->resolved_mx_hosts = $attempt->getResolvedMxHosts();
+
+        /** @var list<string> $resolvedMxHosts */
+        $resolvedMxHosts = $attempt->getResolvedMxHosts();
+        $this->resolved_mx_hosts = $resolvedMxHosts;
+
         $this->responded_mx_host = $attempt->getRespondedMxHost();
         $this->smtp_conversations = $attempt->getSmtpConversations();
         $this->duration_ms = $attempt->getDurationMs();
 
+        /** @var list<SendAttemptRecipientObject> $recipients */
+        $recipients = [];
         foreach ($attempt->getRecipients() as $recipient) {
-            $this->recipients[] = new SendAttemptRecipientObject($recipient);
+            $recipients[] = new SendAttemptRecipientObject($recipient);
         }
+        $this->recipients = $recipients;
     }
 
 }

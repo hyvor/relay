@@ -21,19 +21,19 @@ class SendObject
     public int $send_after;
 
     /**
-     * @var array<SendRecipientObject>
+     * @var list<SendRecipientObject>
      */
     #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: SendRecipientObject::class)))]
     public array $recipients = [];
 
     /**
-     * @var array<SendAttemptObject>
+     * @var list<SendAttemptObject>
      */
     #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: SendAttemptObject::class)))]
     public array $attempts = [];
 
     /**
-     * @var array<SendFeedbackObject>
+     * @var list<SendFeedbackObject>
      */
     #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: SendFeedbackObject::class)))]
     public array $feedback = [];
@@ -57,9 +57,17 @@ class SendObject
         $this->queued = $send->getQueued();
         $this->send_after = $send->getSendAfter()->getTimestamp();
 
-        $this->recipients = array_map(fn($recipient) => new SendRecipientObject($recipient),
-            $send->getRecipients()->toArray());
-        $this->attempts = array_map(fn(SendAttempt $attempt) => new SendAttemptObject($attempt), $attempts);
-        $this->feedback = array_map(fn(SendFeedback $fb) => new SendFeedbackObject($fb), $feedback);
+        $this->recipients = array_values(array_map(
+            fn($recipient) => new SendRecipientObject($recipient),
+            $send->getRecipients()->toArray()
+        ));
+        $this->attempts = array_values(array_map(
+            fn(SendAttempt $attempt) => new SendAttemptObject($attempt),
+            $attempts
+        ));
+        $this->feedback = array_values(array_map(
+            fn(SendFeedback $fb) => new SendFeedbackObject($fb),
+            $feedback
+        ));
     }
 }

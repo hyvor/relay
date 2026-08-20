@@ -13,7 +13,7 @@ class ProjectUserObject
     public int $id;
     public int $created_at;
     /**
-     * @var array<string>
+     * @var list<string>
      */
     #[OA\Property(type: 'array', items: new OA\Items(type: 'string'))]
     public array $scopes;
@@ -26,7 +26,11 @@ class ProjectUserObject
     {
         $this->id = $pu->getId();
         $this->created_at = $pu->getCreatedAt()->getTimestamp();
-        $this->scopes = $pu->getScopes();
+
+        /** @var list<string> $scopes */
+        $scopes = $pu->getScopes();
+        $this->scopes = $scopes;
+
         $this->user = new ProjectUserMiniObject($authUser);
         $this->oidc_sub = $authUser->oidc_sub;
         $this->project = new ProjectObject($pu->getProject());
