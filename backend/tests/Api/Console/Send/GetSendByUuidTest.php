@@ -3,7 +3,7 @@
 namespace App\Tests\Api\Console\Send;
 
 use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Controller\SendController;
+use App\Api\Console\Controller\SendsController;
 use App\Api\Console\Object\SendAttemptObject;
 use App\Api\Console\Object\SendObject;
 use App\Service\Send\SendService;
@@ -16,7 +16,7 @@ use App\Tests\Factory\SendFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\Uid\Uuid;
 
-#[CoversClass(SendController::class)]
+#[CoversClass(SendsController::class)]
 #[CoversClass(SendService::class)]
 #[CoversClass(SendObject::class)]
 #[CoversClass(SendAttemptObject::class)]

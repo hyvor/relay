@@ -17,7 +17,7 @@ class UpdateApiKeyInput
     public bool $is_enabled;
 
     /**
-     * @var string[]
+     * @var list<string>
      */
     #[Assert\Type('array')]
     #[Assert\All([
@@ -26,7 +26,7 @@ class UpdateApiKeyInput
     public array $scopes;
 
     /**
-     * @var string[]
+     * @var list<string>
      */
     #[Assert\Type('array')]
     #[Assert\All([
@@ -36,7 +36,7 @@ class UpdateApiKeyInput
     public array $allowed_ips;
 
     /**
-     * @return string[]
+     * @return list<string>
      */
     public static function getScopeValues(): array
     {
