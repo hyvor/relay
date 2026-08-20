@@ -91,6 +91,18 @@
 			return `Your instance domain's DNS is not pointed correctly to the in-built DNS server. Error: ${dnsData.error}`;
 		}
 
+		if (checkKey === 'nat_private_ips') {
+			const natData = data as HealthCheckData['nat_private_ips'];
+			return `NAT misconfiguration detected: ${natData.invalid_nats
+				.map((entry) => {
+					if (entry.error) {
+						return `${entry.private_ip} → failed to resolve public IP (${entry.error})`;
+					}
+					return `${entry.private_ip} → expected ${entry.expected_public_ip}, got ${entry.resolved_public_ip}`;
+				})
+				.join('; ')}`;
+		}
+
 		return JSON.stringify(data);
 	}
 </script>
