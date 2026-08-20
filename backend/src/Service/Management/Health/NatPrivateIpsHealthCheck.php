@@ -3,7 +3,7 @@
 namespace App\Service\Management\Health;
 
 use App\Entity\IpAddress;
-use App\Service\Ip\PublicIpResolver;
+use App\Service\Ip\ServerIpResolver\PublicIpResolver;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
@@ -16,8 +16,7 @@ class NatPrivateIpsHealthCheck extends HealthCheckAbstract
     public function __construct(
         private EntityManagerInterface $em,
         private PublicIpResolver $publicIpResolver,
-    ) {
-    }
+    ) {}
 
     public function check(): bool
     {
