@@ -2,14 +2,14 @@
 
 namespace App\Tests\Api\Console\Project;
 
-use App\Api\Console\Controller\ProjectController;
+use App\Api\Console\Controller\ProjectsController;
 use App\Api\Console\Object\ProjectObject;
 use App\Service\Project\ProjectService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(ProjectController::class)]
+#[CoversClass(ProjectsController::class)]
 #[CoversClass(ProjectService::class)]
 #[CoversClass(ProjectObject::class)]
 class GetProjectTest extends WebTestCase

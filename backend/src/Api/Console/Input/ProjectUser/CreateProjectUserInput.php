@@ -10,7 +10,7 @@ class CreateProjectUserInput
     public int $user_id;
 
     /**
-     * @var string[]
+     * @var array<string>
      */
     #[Assert\NotBlank]
     public array $scopes;

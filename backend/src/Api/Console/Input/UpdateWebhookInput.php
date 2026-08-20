@@ -19,7 +19,7 @@ class UpdateWebhookInput
     public string $description;
 
     /**
-     * @var string[]
+     * @var array<string>
      */
     #[Assert\NotBlank]
     #[Assert\Type('array')]
@@ -29,7 +29,7 @@ class UpdateWebhookInput
     public array $events;
 
     /**
-     * @return string[]
+     * @return array<string>
      */
     public static function getWebhookEventValues(): array
     {

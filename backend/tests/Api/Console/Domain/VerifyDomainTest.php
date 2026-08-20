@@ -3,7 +3,7 @@
 namespace App\Tests\Api\Console\Domain;
 
 use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Controller\DomainController;
+use App\Api\Console\Controller\DomainsController;
 use App\Api\Console\Object\DomainObject;
 use App\Entity\Type\DomainStatus;
 use App\Service\Domain\DkimVerificationResult;
@@ -24,7 +24,7 @@ use Symfony\Component\Clock\Clock;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\HttpFoundation\Response;
 
-#[CoversClass(DomainController::class)]
+#[CoversClass(DomainsController::class)]
 #[CoversClass(DomainService::class)]
 #[CoversClass(DomainStatusService::class)]
 #[CoversClass(DomainObject::class)]

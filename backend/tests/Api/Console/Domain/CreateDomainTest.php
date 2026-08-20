@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\Domain;
 
-use App\Api\Console\Controller\DomainController;
+use App\Api\Console\Controller\DomainsController;
 use App\Api\Console\Object\DomainObject;
 use App\Service\App\Validator\DkimPrivateKeyValidator;
 use App\Service\Domain\Dkim;
@@ -14,7 +14,7 @@ use App\Tests\Factory\ProjectFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 
-#[CoversClass(DomainController::class)]
+#[CoversClass(DomainsController::class)]
 #[CoversClass(DomainService::class)]
 #[CoversClass(DomainObject::class)]
 #[CoversClass(DomainCreatedEvent::class)]

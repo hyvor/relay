@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\Domain;
 
-use App\Api\Console\Controller\DomainController;
+use App\Api\Console\Controller\DomainsController;
 use App\Api\Console\Input\Domain\DomainIdOrDomainInput;
 use App\Api\Console\Object\DomainObject;
 use App\Entity\Domain;
@@ -16,7 +16,7 @@ use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 
-#[CoversClass(DomainController::class)]
+#[CoversClass(DomainsController::class)]
 #[CoversClass(DomainIdOrDomainInput::class)]
 #[CoversClass(DomainService::class)]
 #[CoversClass(DomainObject::class)]

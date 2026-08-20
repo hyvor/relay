@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\Project;
 
-use App\Api\Console\Controller\ProjectController;
+use App\Api\Console\Controller\ProjectsController;
 use App\Api\Console\Object\ProjectObject;
 use App\Entity\Project;
 use App\Entity\Type\ProjectSendType;
@@ -15,7 +15,7 @@ use Hyvor\Internal\Sudo\SudoUserFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\BrowserKit\Cookie;
 
-#[CoversClass(ProjectController::class)]
+#[CoversClass(ProjectsController::class)]
 #[CoversClass(ProjectService::class)]
 #[CoversClass(ProjectObject::class)]
 #[CoversClass(ProjectCreatingEvent::class)]

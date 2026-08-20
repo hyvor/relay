@@ -4,6 +4,8 @@ namespace App\Api\Console\Object;
 
 use App\Entity\SendAttempt;
 use App\Entity\Type\SendAttemptStatus;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use OpenApi\Attributes as OA;
 
 class SendAttemptObject
 {
@@ -14,11 +16,12 @@ class SendAttemptObject
     public int $try_count;
 
     public string $domain;
-
     /**
-     * @var string[]
+     * @var array<string>
      */
+    #[OA\Property(type: 'array', items: new OA\Items(type: 'string'))]
     public array $resolved_mx_hosts;
+
     public ?string $responded_mx_host = null;
 
     /**
@@ -30,6 +33,7 @@ class SendAttemptObject
     /**
      * @var array<SendAttemptRecipientObject>
      */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: SendAttemptRecipientObject::class)))]
     public array $recipients = [];
 
     public function __construct(SendAttempt $attempt)

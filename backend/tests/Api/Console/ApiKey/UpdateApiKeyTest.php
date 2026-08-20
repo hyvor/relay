@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\ApiKey;
 
-use App\Api\Console\Controller\ApiKeyController;
+use App\Api\Console\Controller\ApiKeysController;
 use App\Api\Console\Input\UpdateApiKeyInput;
 use App\Api\Console\Object\ApiKeyObject;
 use App\Entity\ApiKey;
@@ -15,7 +15,7 @@ use App\Validator\AllowedIpsConstraint;
 use App\Validator\AllowedIpsConstraintValidator;
 use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(ApiKeyController::class)]
+#[CoversClass(ApiKeysController::class)]
 #[CoversClass(ApiKeyService::class)]
 #[CoversClass(ApiKeyObject::class)]
 #[CoversClass(UpdateApiKeyInput::class)]

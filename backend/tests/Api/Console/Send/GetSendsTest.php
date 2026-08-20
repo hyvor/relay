@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\Send;
 
-use App\Api\Console\Controller\SendController;
+use App\Api\Console\Controller\SendsController;
 use App\Api\Console\Object\SendObject;
 use App\Entity\Send;
 use App\Entity\Type\SendRecipientStatus;
@@ -16,7 +16,7 @@ use App\Tests\Factory\SendRecipientFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 
-#[CoversClass(SendController::class)]
+#[CoversClass(SendsController::class)]
 #[CoversClass(SendService::class)]
 #[CoversClass(SendObject::class)]
 class GetSendsTest extends WebTestCase

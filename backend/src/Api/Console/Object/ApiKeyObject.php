@@ -3,6 +3,8 @@
 namespace App\Api\Console\Object;
 
 use App\Entity\ApiKey;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use OpenApi\Attributes as OA;
 
 class ApiKeyObject
 {
@@ -10,10 +12,16 @@ class ApiKeyObject
 
     public string $name;
 
-    /** @var string[] $scopes */
+    /**
+     * @var array<string> $scopes
+     */
+    #[OA\Property(type: 'array', items: new OA\Items(type: 'string'))]
     public array $scopes;
 
-    /** @var string[] $allowed_ips */
+    /**
+     * @var array<string> $allowed_ips
+     */
+    #[OA\Property(type: 'array', items: new OA\Items(type: 'string'))]
     public array $allowed_ips;
 
     public ?string $key;

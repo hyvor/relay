@@ -5,6 +5,8 @@ namespace App\Api\Console\Object;
 use App\Entity\Send;
 use App\Entity\SendAttempt;
 use App\Entity\SendFeedback;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use OpenApi\Attributes as OA;
 
 class SendObject
 {
@@ -19,18 +21,21 @@ class SendObject
     public int $send_after;
 
     /**
-     * @var SendRecipientObject[]
+     * @var array<SendRecipientObject>
      */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: SendRecipientObject::class)))]
     public array $recipients = [];
 
     /**
-     * @var SendAttemptObject[]
+     * @var array<SendAttemptObject>
      */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: SendAttemptObject::class)))]
     public array $attempts = [];
 
     /**
-     * @var SendFeedbackObject[]
+     * @var array<SendFeedbackObject>
      */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: SendFeedbackObject::class)))]
     public array $feedback = [];
 
     /**

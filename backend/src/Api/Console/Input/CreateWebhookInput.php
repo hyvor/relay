@@ -15,7 +15,7 @@ class CreateWebhookInput
     public string $description;
 
     /**
-     * @var string[]
+     * @var array<string>
      */
     #[Assert\NotBlank]
     #[Assert\Type('array')]
@@ -25,7 +25,7 @@ class CreateWebhookInput
     public array $events;
 
     /**
-     * @return string[]
+     * @return array<string>
      */
     public static function getWebhookEventValues(): array
     {

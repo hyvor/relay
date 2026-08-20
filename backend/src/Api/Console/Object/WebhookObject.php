@@ -3,6 +3,7 @@
 namespace App\Api\Console\Object;
 
 use App\Entity\Webhook;
+use OpenApi\Attributes as OA;
 
 class WebhookObject
 {
@@ -10,8 +11,9 @@ class WebhookObject
     public string $url;
     public ?string $description;
     /**
-     * @var string[]
+     * @var array<string>
      */
+    #[OA\Property(type: 'array', items: new OA\Items(type: 'string'))]
     public array $events;
     public ?string $secret;
 

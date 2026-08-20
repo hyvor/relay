@@ -3,7 +3,7 @@
 namespace App\Tests\Api\Console\ApiKey;
 
 use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Controller\ApiKeyController;
+use App\Api\Console\Controller\ApiKeysController;
 use App\Api\Console\Object\ApiKeyObject;
 use App\Service\ApiKey\ApiKeyService;
 use App\Tests\Case\WebTestCase;
@@ -11,7 +11,7 @@ use App\Tests\Factory\ApiKeyFactory;
 use App\Tests\Factory\ProjectFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(ApiKeyController::class)]
+#[CoversClass(ApiKeysController::class)]
 #[CoversClass(ApiKeyService::class)]
 #[CoversClass(Scope::class)]
 #[CoversClass(ApiKeyObject::class)]
