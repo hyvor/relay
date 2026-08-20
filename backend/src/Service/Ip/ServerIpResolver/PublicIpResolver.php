@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\Ip;
+namespace App\Service\Ip\ServerIpResolver;
 
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -19,8 +19,7 @@ class PublicIpResolver
     public function __construct(
         private HttpClientInterface $httpClient,
         private LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     /**
      * Resolves the public IP address as seen from the outside.
@@ -73,7 +72,7 @@ class PublicIpResolver
         throw new \RuntimeException(
             'Failed to resolve public IP from all external services' . ($localIp ? " for local IP $localIp" : ''),
             0,
-            $lastError
+            $lastError,
         );
     }
 }

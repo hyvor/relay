@@ -6,8 +6,9 @@ use App\Entity\IpAddress;
 use App\Entity\Server;
 use App\Service\Ip\Dto\PtrValidationDto;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
-use App\Service\Ip\ServerIpResult;
 use App\Service\Ip\Event\IpAddressUpdatedEvent;
+use App\Service\Ip\ServerIpResolver\ServerIpResolver;
+use App\Service\Ip\ServerIpResolver\ResolvedIp;
 use App\Service\Queue\QueueService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -19,13 +20,12 @@ class IpAddressService
     use ClockAwareTrait;
 
     public function __construct(
-        private ServerIp $serverIp,
+        private ServerIpResolver $serverIpResolver,
         private EntityManagerInterface $em,
         private EventDispatcherInterface $ed,
         private Ptr $ptr,
         private QueueService $queueService,
-    ) {
-    }
+    ) {}
 
     /**
      * @return IpAddress[]
@@ -34,7 +34,7 @@ class IpAddressService
     {
         return $this->em->getRepository(IpAddress::class)->findBy(
             [],
-            ['id' => 'ASC']
+            ['id' => 'ASC'],
         );
     }
 
@@ -55,7 +55,7 @@ class IpAddressService
     {
         return $this->em->getRepository(IpAddress::class)->findBy(
             ['server' => $server],
-            ['id' => 'ASC']
+            ['id' => 'ASC'],
         );
     }
 
@@ -74,9 +74,9 @@ class IpAddressService
             $entitiesByPublicIp[$entity->getIpAddress()] = $entity;
         }
 
-        $serverIpData = $this->serverIp->getServerIpData();
+        $serverIpData = $this->serverIpResolver->resolveIps();
 
-        $serverPublicIps = array_map(fn(ServerIpResult $r) => $r->publicIp, $serverIpData);
+        $serverPublicIps = array_map(fn(ResolvedIp $r) => $r->publicIp, $serverIpData);
 
         foreach ($serverIpData as $result) {
             if (!isset($entitiesByPublicIp[$result->publicIp])) {
@@ -122,7 +122,7 @@ class IpAddressService
 
     public function updateIpAddress(
         IpAddress $ipAddress,
-        UpdateIpAddressDto $updates
+        UpdateIpAddressDto $updates,
     ): IpAddress {
         $ipAddressOld = clone $ipAddress;
 

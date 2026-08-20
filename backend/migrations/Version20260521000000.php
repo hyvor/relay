@@ -17,6 +17,9 @@ final class Version20260521000000 extends AbstractMigration
     public function up(Schema $schema): void
     {
         $this->addSql('ALTER TABLE ip_addresses ADD COLUMN private_ip_address TEXT DEFAULT NULL');
+        $this->addSql(
+            'CREATE UNIQUE INDEX idx_ip_addresses_server_id_private_ip_address ON ip_addresses (server_id, private_ip_address)',
+        );
     }
 
     public function down(Schema $schema): void
