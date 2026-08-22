@@ -114,6 +114,7 @@ type EmailWorker struct {
 		domain string,
 		recipients []*RecipientRow,
 		sendTx *SendTransaction,
+		conn *sql.DB,
 	)
 }
 
@@ -271,6 +272,7 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 			domain,
 			rcpts,
 			sendTx,
+			conn,
 		)
 	}
 
@@ -341,6 +343,7 @@ func (worker *EmailWorker) attemptSendToDomain(
 	domain string,
 	recipients []*RecipientRow,
 	sendTx *SendTransaction,
+	conn *sql.DB,
 ) {
 
 	defer domainWg.Done()
@@ -353,6 +356,8 @@ func (worker *EmailWorker) attemptSendToDomain(
 	)
 
 	result := sendEmail(
+		worker.ctx,
+		conn,
 		send,
 		recipients,
 		domain,

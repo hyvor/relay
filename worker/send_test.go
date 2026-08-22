@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"errors"
 	"io"
 	"net"
@@ -18,7 +19,7 @@ import (
 func TestSendEmail_Accepted(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+	sendEmailToHost = func(ctx context.Context, conn *sql.DB, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, mtaStsEnforced bool) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
@@ -33,17 +34,16 @@ func TestSendEmail_Accepted(t *testing.T) {
 		}
 	}
 
-	mxCache.data["hyvor.com"] = mxCacheEntry{
-		Hosts:  []string{"mx.hyvor.com"},
-		Expiry: time.Now().Add(1 * time.Hour),
-	}
+	primeMxCacheForTest("hyvor.com", []string{"mx.hyvor.com"})
 
 	defer func() {
 		sendEmailToHost = originalSendEmailToHost
-		delete(mxCache.data, "hyvor.com")
+		cacheClearForTest()
 	}()
 
 	result := sendEmailHandler(
+		context.Background(),
+		nil,
 		&SendRow{},
 		[]*RecipientRow{
 			{Id: 1},
@@ -68,7 +68,7 @@ func TestSendEmail_Accepted(t *testing.T) {
 func TestSendEmail_500SmtpError(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+	sendEmailToHost = func(ctx context.Context, conn *sql.DB, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, mtaStsEnforced bool) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
@@ -83,17 +83,16 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 		}
 	}
 
-	mxCache.data["hyvor.com"] = mxCacheEntry{
-		Hosts:  []string{"mx.hyvor.com"},
-		Expiry: time.Now().Add(1 * time.Hour),
-	}
+	primeMxCacheForTest("hyvor.com", []string{"mx.hyvor.com"})
 
 	defer func() {
 		sendEmailToHost = originalSendEmailToHost
-		delete(mxCache.data, "hyvor.com")
+		cacheClearForTest()
 	}()
 
 	result := sendEmailHandler(
+		context.Background(),
+		nil,
 		&SendRow{},
 		[]*RecipientRow{
 			{Id: 1},
@@ -118,7 +117,7 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 func TestSendEmail_4xxSmtpError(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+	sendEmailToHost = func(ctx context.Context, conn *sql.DB, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, mtaStsEnforced bool) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
@@ -133,17 +132,16 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 		}
 	}
 
-	mxCache.data["hyvor.com"] = mxCacheEntry{
-		Hosts:  []string{"mx.hyvor.com"},
-		Expiry: time.Now().Add(1 * time.Hour),
-	}
+	primeMxCacheForTest("hyvor.com", []string{"mx.hyvor.com"})
 
 	defer func() {
 		sendEmailToHost = originalSendEmailToHost
-		delete(mxCache.data, "hyvor.com")
+		cacheClearForTest()
 	}()
 
 	result := sendEmailHandler(
+		context.Background(),
+		nil,
 		&SendRow{},
 		[]*RecipientRow{
 			{Id: 1},
@@ -168,7 +166,7 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+	sendEmailToHost = func(ctx context.Context, conn *sql.DB, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, mtaStsEnforced bool) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
@@ -183,16 +181,15 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 		}
 	}
 
-	mxCache.data["hyvor.com"] = mxCacheEntry{
-		Hosts:  []string{"mx.hyvor.com"},
-		Expiry: time.Now().Add(1 * time.Hour),
-	}
+	primeMxCacheForTest("hyvor.com", []string{"mx.hyvor.com"})
 	defer func() {
 		sendEmailToHost = originalSendEmailToHost
-		delete(mxCache.data, "hyvor.com")
+		cacheClearForTest()
 	}()
 
 	result := sendEmailHandler(
+		context.Background(),
+		nil,
 		&SendRow{},
 		[]*RecipientRow{
 			{Id: 1, TryCount: 6},
@@ -218,23 +215,22 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+	sendEmailToHost = func(ctx context.Context, conn *sql.DB, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, mtaStsEnforced bool) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: context.DeadlineExceeded,
 			Steps:        []*SmtpStep{},
 		}
 	}
 
-	mxCache.data["hyvor.com"] = mxCacheEntry{
-		Hosts:  []string{"mx.hyvor.com"},
-		Expiry: time.Now().Add(1 * time.Hour),
-	}
+	primeMxCacheForTest("hyvor.com", []string{"mx.hyvor.com"})
 	defer func() {
 		sendEmailToHost = originalSendEmailToHost
-		delete(mxCache.data, "hyvor.com")
+		cacheClearForTest()
 	}()
 
 	result := sendEmailHandler(
+		context.Background(),
+		nil,
 		&SendRow{},
 		[]*RecipientRow{
 			{Id: 1, TryCount: 0},
@@ -260,23 +256,22 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+	sendEmailToHost = func(ctx context.Context, conn *sql.DB, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, mtaStsEnforced bool) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: context.DeadlineExceeded,
 			Steps:        []*SmtpStep{},
 		}
 	}
 
-	mxCache.data["hyvor.com"] = mxCacheEntry{
-		Hosts:  []string{"mx.hyvor.com"},
-		Expiry: time.Now().Add(1 * time.Hour),
-	}
+	primeMxCacheForTest("hyvor.com", []string{"mx.hyvor.com"})
 	defer func() {
 		sendEmailToHost = originalSendEmailToHost
-		delete(mxCache.data, "hyvor.com")
+		cacheClearForTest()
 	}()
 
 	result := sendEmailHandler(
+		context.Background(),
+		nil,
 		&SendRow{},
 		[]*RecipientRow{
 			{Id: 1, TryCount: 1},
@@ -314,12 +309,16 @@ func TestSendEmail_MxFailed(t *testing.T) {
 		return nil, customHostError
 	}
 
+	cacheClearForTest()
+
 	defer func() {
 		lookupMxFunc = originalLookupMxFunc
 		lookupHostFunc = originalLookupHostFunc
 	}()
 
 	result := sendEmailHandler(
+		context.Background(),
+		nil,
 		&SendRow{},
 		[]*RecipientRow{
 			{Id: 4, TryCount: 1},
@@ -380,12 +379,15 @@ func TestSendEmailToHost(t *testing.T) {
 	}
 
 	convo := sendEmailToHost(
+		context.Background(),
+		nil,
 		send,
 		[]*RecipientRow{recipient},
 		"localhost",
 		"relay.com",
 		"127.0.0.1",
 		"smtp.relay.com",
+		false,
 	)
 
 	assert.NoError(t, convo.NetworkError)
@@ -456,12 +458,15 @@ func TestSendEmailToHost_OneRecipientFails(t *testing.T) {
 	}
 
 	convo := sendEmailToHost(
+		context.Background(),
+		nil,
 		send,
 		[]*RecipientRow{recipient1, recipient2},
 		"localhost",
 		"relay.com",
 		"127.0.0.1",
 		"smtp.relay.com",
+		false,
 	)
 
 	assert.NoError(t, convo.NetworkError)
@@ -519,12 +524,15 @@ func TestSendEmailToHost_DataCloseFails_ReplacesRcptResult(t *testing.T) {
 	recipient2 := &RecipientRow{Id: 2, Type: "to", Address: "b@somedomain.com"}
 
 	convo := sendEmailToHost(
+		context.Background(),
+		nil,
 		send,
 		[]*RecipientRow{recipient1, recipient2},
 		"localhost",
 		"relay.com",
 		"127.0.0.1",
 		"smtp.relay.com",
+		false,
 	)
 
 	assert.NoError(t, convo.NetworkError)
@@ -584,12 +592,15 @@ func TestSendEmailToHost_DataCloseFails_PreservesRcptRejection(t *testing.T) {
 	recipient2 := &RecipientRow{Id: 2, Type: "to", Address: "fail@somedomain.com"}
 
 	convo := sendEmailToHost(
+		context.Background(),
+		nil,
 		send,
 		[]*RecipientRow{recipient1, recipient2},
 		"localhost",
 		"relay.com",
 		"127.0.0.1",
 		"smtp.relay.com",
+		false,
 	)
 
 	assert.NoError(t, convo.NetworkError)
@@ -649,12 +660,15 @@ func TestSendEmailFailedSmtpStatus(t *testing.T) {
 	}
 
 	convo := sendEmailToHost(
+		context.Background(),
+		nil,
 		send,
 		[]*RecipientRow{recipient},
 		"localhost",
 		"relay.com",
 		"127.0.0.1",
 		"smtp.relay.com",
+		false,
 	)
 
 	assert.NoError(t, convo.NetworkError)
@@ -662,6 +676,183 @@ func TestSendEmailFailedSmtpStatus(t *testing.T) {
 
 	assert.Equal(t, 451, convo.RcptResults[0].Code)
 	assert.Equal(t, RecipientStatusDeferred, convo.RcptResults[0].ToRecipientStatus())
+
+}
+
+// STARTTLS is not enforced by default: if the server doesn't offer it, the
+// conversation falls back to plaintext and completes normally.
+func TestSendEmailToHost_StartTlsNotOffered_OpportunisticFallback(t *testing.T) {
+
+	originalSmtpServerPort1 := smtpServerPort1
+	smtpServerPort1 = ":25254"
+	defer func() {
+		smtpServerPort1 = originalSmtpServerPort1
+	}()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	incomingServer := NewIncomingMailServer(ctx, slogDiscard(), newMetrics())
+	go incomingServer.Set("hyvorrelay.io", 2, GoStateMailTls{Enabled: false})
+	time.Sleep(100 * time.Millisecond)
+
+	send := &SendRow{
+		Id:        1,
+		Uuid:      "test-uuid",
+		From:      "test@hyvor.com",
+		RawEmail:  "Subject: Test Email",
+		QueueName: "default",
+	}
+
+	recipient := &RecipientRow{
+		Id:      1,
+		Type:    "to",
+		Address: "fbl@hyvorrelay.io",
+	}
+
+	netResolveTCPAddr = func(network, address string) (*net.TCPAddr, error) {
+		return &net.TCPAddr{
+			IP:   net.ParseIP("127.0.0.1"),
+			Port: 25254,
+		}, nil
+	}
+
+	cacheClearForTest()
+	defer cacheClearForTest()
+
+	convo := sendEmailToHost(
+		context.Background(),
+		nil,
+		send,
+		[]*RecipientRow{recipient},
+		"localhost",
+		"relay.com",
+		"127.0.0.1",
+		"smtp.relay.com",
+		false, // mtaStsEnforced=false, and no DANE record cached => not enforced
+	)
+
+	assert.NoError(t, convo.NetworkError)
+	assert.Equal(t, 250, convo.RcptResults[0].Code)
+
+}
+
+// When STARTTLS is enforced (via MTA-STS here) but the server doesn't offer
+// it, the attempt must fail rather than silently falling back to plaintext.
+func TestSendEmailToHost_StartTlsNotOffered_EnforcedByMtaSts(t *testing.T) {
+
+	originalSmtpServerPort1 := smtpServerPort1
+	smtpServerPort1 = ":25255"
+	defer func() {
+		smtpServerPort1 = originalSmtpServerPort1
+	}()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	incomingServer := NewIncomingMailServer(ctx, slogDiscard(), newMetrics())
+	go incomingServer.Set("hyvorrelay.io", 2, GoStateMailTls{Enabled: false})
+	time.Sleep(100 * time.Millisecond)
+
+	send := &SendRow{
+		Id:        1,
+		Uuid:      "test-uuid",
+		From:      "test@hyvor.com",
+		RawEmail:  "Subject: Test Email",
+		QueueName: "default",
+	}
+
+	recipient := &RecipientRow{
+		Id:      1,
+		Type:    "to",
+		Address: "fbl@hyvorrelay.io",
+	}
+
+	netResolveTCPAddr = func(network, address string) (*net.TCPAddr, error) {
+		return &net.TCPAddr{
+			IP:   net.ParseIP("127.0.0.1"),
+			Port: 25255,
+		}, nil
+	}
+
+	cacheClearForTest()
+	defer cacheClearForTest()
+
+	convo := sendEmailToHost(
+		context.Background(),
+		nil,
+		send,
+		[]*RecipientRow{recipient},
+		"localhost",
+		"relay.com",
+		"127.0.0.1",
+		"smtp.relay.com",
+		true, // mtaStsEnforced=true
+	)
+
+	assert.Error(t, convo.NetworkError)
+	assert.Contains(t, convo.NetworkError.Error(), "STARTTLS required")
+	assert.Empty(t, convo.RcptResults)
+
+}
+
+// When STARTTLS is enforced via a cached DANE status (valid or invalid, not
+// not_found) but the server doesn't offer it, the attempt must also fail.
+func TestSendEmailToHost_StartTlsNotOffered_EnforcedByDane(t *testing.T) {
+
+	originalSmtpServerPort1 := smtpServerPort1
+	smtpServerPort1 = ":25256"
+	defer func() {
+		smtpServerPort1 = originalSmtpServerPort1
+	}()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	incomingServer := NewIncomingMailServer(ctx, slogDiscard(), newMetrics())
+	go incomingServer.Set("hyvorrelay.io", 2, GoStateMailTls{Enabled: false})
+	time.Sleep(100 * time.Millisecond)
+
+	send := &SendRow{
+		Id:        1,
+		Uuid:      "test-uuid",
+		From:      "test@hyvor.com",
+		RawEmail:  "Subject: Test Email",
+		QueueName: "default",
+	}
+
+	recipient := &RecipientRow{
+		Id:      1,
+		Type:    "to",
+		Address: "fbl@hyvorrelay.io",
+	}
+
+	netResolveTCPAddr = func(network, address string) (*net.TCPAddr, error) {
+		return &net.TCPAddr{
+			IP:   net.ParseIP("127.0.0.1"),
+			Port: 25256,
+		}, nil
+	}
+
+	cacheClearForTest()
+	defer cacheClearForTest()
+	cacheSet(context.Background(), nil, "dane:localhost", DaneCacheValue{Status: DaneValid}, daneCacheTtl)
+
+	convo := sendEmailToHost(
+		context.Background(),
+		nil,
+		send,
+		[]*RecipientRow{recipient},
+		"localhost",
+		"relay.com",
+		"127.0.0.1",
+		"smtp.relay.com",
+		false, // mtaStsEnforced=false, enforcement comes from DANE
+	)
+
+	assert.Error(t, convo.NetworkError)
+	assert.Contains(t, convo.NetworkError.Error(), "STARTTLS required")
+	assert.Empty(t, convo.RcptResults)
 
 }
 

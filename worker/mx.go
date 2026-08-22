@@ -1,45 +1,38 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net"
 	"strings"
-	"sync"
 	"time"
 )
 
-type mxCacheEntry struct {
-	Hosts  []string
-	Expiry time.Time
+type MxRecord struct {
+	Host     string `json:"host"`
+	Priority int    `json:"priority"`
 }
 
-type mxCacheType struct {
-	data map[string]mxCacheEntry
-	mu   sync.Mutex
+type MxCacheValue struct {
+	Records []MxRecord `json:"records"`
 }
 
-var mxCache = mxCacheType{
-	data: make(map[string]mxCacheEntry),
-	mu:   sync.Mutex{},
-}
-
-func (m *mxCacheType) Clear() {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.data = make(map[string]mxCacheEntry)
-}
+const mxCacheTtl = 1 * time.Hour
 
 var ErrSmtpMxLookupFailed = errors.New("MX lookup failed")
 
 var lookupMxFunc = net.LookupMX
 var lookupHostFunc = net.LookupHost
 
-func getMxHostsFromDomain(domain string) ([]string, error) {
+func getMxHostsFromDomain(ctx context.Context, conn *sql.DB, domain string) ([]string, error) {
 
-	// If the domain is already cached and not expired, return the cached hosts
-	if entry, ok := mxCache.data[domain]; ok && entry.Expiry.After(time.Now()) {
-		return entry.Hosts, nil
+	cacheKey := "mx:" + domain
+
+	var cached MxCacheValue
+	if found, _ := cacheGet(ctx, conn, cacheKey, &cached); found {
+		return getHostsFromMxCacheValue(cached), nil
 	}
 
 	// Perform the MX lookup
@@ -49,9 +42,9 @@ func getMxHostsFromDomain(domain string) ([]string, error) {
 	// if there are MX records, return those hosts
 	// net.LookupMX already sorts & verifies the domains
 	if len(mx) > 0 {
-		hosts := getHostsFromMxRecords(mx)
-		setMxCacheEntry(domain, hosts)
-		return hosts, nil
+		value := getMxCacheValueFromMxRecords(mx)
+		cacheSet(ctx, conn, cacheKey, value, mxCacheTtl)
+		return getHostsFromMxCacheValue(value), nil
 	}
 
 	// MX lookup failed or no records found
@@ -59,29 +52,27 @@ func getMxHostsFromDomain(domain string) ([]string, error) {
 	ips, err := lookupHostFunc(domain)
 
 	if err == nil && len(ips) > 0 {
-		hosts := []string{domain}
-		setMxCacheEntry(domain, hosts)
-		return hosts, nil
+		value := MxCacheValue{Records: []MxRecord{{Host: domain, Priority: 0}}}
+		cacheSet(ctx, conn, cacheKey, value, mxCacheTtl)
+		return getHostsFromMxCacheValue(value), nil
 	}
 
 	return nil, fmt.Errorf("%w: %s", ErrSmtpMxLookupFailed, err)
 }
 
-func setMxCacheEntry(domain string, hosts []string) {
-	mxCache.mu.Lock()
-	defer mxCache.mu.Unlock()
-
-	mxCache.data[domain] = mxCacheEntry{
-		Hosts:  hosts,
-		Expiry: time.Now().Add(5 * time.Minute),
-	}
-}
-
-func getHostsFromMxRecords(mxRecords []*net.MX) []string {
-	var hosts []string
+func getMxCacheValueFromMxRecords(mxRecords []*net.MX) MxCacheValue {
+	records := make([]MxRecord, 0, len(mxRecords))
 	for _, mxRecord := range mxRecords {
 		host := strings.TrimSuffix(mxRecord.Host, ".")
-		hosts = append(hosts, host)
+		records = append(records, MxRecord{Host: host, Priority: int(mxRecord.Pref)})
+	}
+	return MxCacheValue{Records: records}
+}
+
+func getHostsFromMxCacheValue(value MxCacheValue) []string {
+	hosts := make([]string, 0, len(value.Records))
+	for _, record := range value.Records {
+		hosts = append(hosts, record.Host)
 	}
 	return hosts
 }

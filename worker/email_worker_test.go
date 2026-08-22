@@ -256,6 +256,7 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 			domain string,
 			recipients []*RecipientRow,
 			sendTx *SendTransaction,
+			conn *sql.DB,
 		) {
 			defer domainWg.Done()
 			calledDomainsMutex.Lock()
@@ -389,6 +390,7 @@ func TestEmailWorker_ProcessSend_Requeuing(t *testing.T) {
 			domain string,
 			recipients []*RecipientRow,
 			sendTx *SendTransaction,
+			conn *sql.DB,
 		) {
 			defer domainWg.Done()
 
@@ -481,6 +483,8 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 	}
 
 	sendEmail = func(
+		ctx context.Context,
+		conn *sql.DB,
 		send *SendRow,
 		recipients []*RecipientRow,
 		rcptDomain string,
@@ -521,6 +525,7 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 		domain,
 		recipients,
 		sendTx,
+		factory.conn,
 	)
 	wg.Wait()
 	time.Sleep(20 * time.Millisecond)

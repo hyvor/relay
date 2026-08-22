@@ -42,6 +42,7 @@ func truncateTestDb() error {
 		DELETE FROM send_attempts;
 		DELETE FROM suppressions;
 		DELETE FROM debug_incoming_emails;
+		DELETE FROM cache_items;
 	`)
 
 	if err != nil {

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -258,6 +260,8 @@ func (r *SendResult) SetAllRcptResults(recipients []*RecipientRow, code int, enh
 var sendEmail = sendEmailHandler
 
 func sendEmailHandler(
+	ctx context.Context,
+	conn *sql.DB,
 	send *SendRow,
 	recipients []*RecipientRow,
 	rcptDomain string,
@@ -287,7 +291,7 @@ func sendEmailHandler(
 		result.Duration = duration
 	}()
 
-	mxHosts, err := getMxHostsFromDomain(rcptDomain)
+	mxHosts, err := getMxHostsFromDomain(ctx, conn, rcptDomain)
 
 	if err != nil {
 		result.SetAllRcptResultsFailed(recipients, err.Error())
@@ -296,17 +300,26 @@ func sendEmailHandler(
 
 	result.ResolvedMxHosts = mxHosts
 
+	// MTA-STS is a domain-level policy (not per-MX-host), so it's looked up
+	// once here. A lookup failure is treated as "not enforced" - fail open
+	// on our own lookup failure, consistent with opportunistic-by-default
+	// STARTTLS.
+	mtaStsEnforced, _ := getMtaStsEnforced(ctx, conn, rcptDomain)
+
 	var lastError error
 
 	for _, host := range mxHosts {
 
 		conversation := sendEmailToHost(
+			ctx,
+			conn,
 			send,
 			recipients,
 			host,
 			instanceDomain,
 			ip,
 			ptr,
+			mtaStsEnforced,
 		)
 
 		result.SmtpConversations[host] = conversation
@@ -406,12 +419,15 @@ var createSmtpClient = func(host string, localIp string) (*smtp.Client, error) {
 var sendEmailToHost = sendEmailToHostHandler
 
 func sendEmailToHostHandler(
+	ctx context.Context,
+	conn *sql.DB,
 	send *SendRow,
 	recipients []*RecipientRow,
 	host string,
 	instanceDomain string,
 	ip string,
 	ptr string,
+	mtaStsEnforced bool,
 ) *SmtpConversation {
 
 	conversation := NewSmtpConversation()
@@ -442,6 +458,16 @@ func sendEmailToHostHandler(
 
 	// STEP 2: STARTTLS
 	// ============
+	// STARTTLS is enforced (must not fall back to plaintext) when either an
+	// MTA-STS policy in "enforce" mode applies to the domain, or a DANE
+	// TLSA record (valid or invalid) exists for this MX host - in both
+	// cases plaintext delivery would silently defeat the sender's declared
+	// transport security requirement. A lookup failure here is treated as
+	// "not found" - fail open on our own lookup failure, consistent with
+	// opportunistic-by-default STARTTLS.
+	daneStatus, _ := getDaneStatus(ctx, conn, host)
+	enforceStartTls := mtaStsEnforced || daneStatus != DaneNotFound
+
 	if ok, _ := c.Extension("STARTTLS"); ok {
 
 		startTlsResult, ehloResult := c.StartTLS(&tls.Config{ServerName: host})
@@ -469,6 +495,12 @@ func sendEmailToHostHandler(
 			return conversation
 		}
 
+	} else if enforceStartTls {
+		conversation.NetworkError = fmt.Errorf(
+			"STARTTLS required by policy but not offered by %s",
+			host,
+		)
+		return conversation
 	}
 
 	// STEP 3: MAIL FROM
