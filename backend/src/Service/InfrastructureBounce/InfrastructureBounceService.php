@@ -3,6 +3,7 @@
 namespace App\Service\InfrastructureBounce;
 
 use App\Entity\InfrastructureBounce;
+use App\Entity\SendRecipient;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -87,6 +88,34 @@ class InfrastructureBounceService
         /** @var int $result */
         $result = $qb->getQuery()->execute();
         return $result;
+    }
+
+    /**
+     * @param int[] $sendRecipientIds
+     * @return array<int, string> recipientId => sendUuid
+     */
+    public function getSendUuidsByRecipientIds(array $sendRecipientIds): array
+    {
+        if ($sendRecipientIds === []) {
+            return [];
+        }
+
+        $qb = $this->em->createQueryBuilder();
+        $qb->select('sr', 's')
+            ->from(SendRecipient::class, 'sr')
+            ->join('sr.send', 's')
+            ->where('sr.id IN (:ids)')
+            ->setParameter('ids', $sendRecipientIds);
+
+        /** @var SendRecipient[] $recipients */
+        $recipients = $qb->getQuery()->getResult();
+
+        $map = [];
+        foreach ($recipients as $recipient) {
+            $map[$recipient->getId()] = $recipient->getSend()->getUuid();
+        }
+
+        return $map;
     }
 }
 
