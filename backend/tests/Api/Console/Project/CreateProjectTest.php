@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\Project;
 
-use App\Api\Console\Controller\ProjectsController;
+use App\Api\Console\Controller\Org\ProjectsController;
 use App\Api\Console\Object\ProjectObject;
 use App\Entity\Project;
 use App\Entity\Type\ProjectSendType;

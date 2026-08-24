@@ -31,7 +31,6 @@ class OpenApiSpecTest extends WebTestCase
         $this->assertIsArray($paths);
 
         $pathNames = array_keys($paths);
-        $this->assertContains('/api/console/init', $pathNames);
         $this->assertContains('/api/console/project', $pathNames);
         $this->assertContains('/api/console/api-keys', $pathNames);
         $this->assertContains('/api/console/domains', $pathNames);
