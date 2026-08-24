@@ -1,7 +1,7 @@
 <script lang="ts">
 	import dayjs from 'dayjs';
 	import type { InfrastructureBounce } from '../../sudoTypes';
-	import { Button, Tag, toast } from '@hyvor/design/components';
+	import { Button, Link, Tag, toast } from '@hyvor/design/components';
 	import IconCaretDown from '@hyvor/icons/IconCaretDown';
 	import IconCaretUp from '@hyvor/icons/IconCaretUp';
 	import { markInfrastructureBounceAsRead } from '../../sudoActions';
@@ -65,6 +65,16 @@
 			<div class="detail-row">
 				<div class="detail-label">Send Recipient ID:</div>
 				<div class="detail-value">{bounce.send_recipient_id}</div>
+			</div>
+			<div class="detail-row">
+				<div class="detail-label">Original send:</div>
+				<div class="detail-value">
+					{#if bounce.send_uuid}
+						<Link href="/sudo/sends/{bounce.send_uuid}">View original send</Link>
+					{:else}
+						Send no longer available
+					{/if}
+				</div>
 			</div>
 			<div class="detail-row">
 				<div class="detail-label">SMTP Code:</div>

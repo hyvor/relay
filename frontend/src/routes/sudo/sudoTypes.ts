@@ -159,6 +159,7 @@ export interface InfrastructureBounce {
 	smtp_enhanced_code: string;
 	smtp_message: string;
 	send_recipient_id: number;
+	send_uuid: string | null;
 }
 
 export interface TlsCertificate {
