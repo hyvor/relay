@@ -84,9 +84,11 @@ COPY meta/image/prod/run.prod /app/run
 
 RUN useradd -m -s /bin/sh chef \
     && apt-get install -y --no-install-recommends libcap2-bin \
-    && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp \
     && chown -R chef:chef /app \
     && mkdir -p /data/caddy && chown -R chef:chef /data/caddy \
+    && mkdir -p /config/caddy && chown -R chef:chef /config/caddy \
+    && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp \
+    && setcap CAP_NET_BIND_SERVICE=+eip /app/worker \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 USER chef
@@ -95,6 +97,6 @@ EXPOSE 80
 EXPOSE 443
 EXPOSE 25
 EXPOSE 587
-EXPOSE 53
+EXPOSE 53/udp
 
 CMD ["sh", "/app/run"]

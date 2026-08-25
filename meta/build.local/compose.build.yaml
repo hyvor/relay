@@ -16,8 +16,6 @@ services:
       - "12025:25" # SMTP (test with: swaks --to user@example.com --server localhost:12025)
       - "12587:587" # SMTP Submission
       - "12053:53/udp" # DNS
-    # user: root
-    #command: sh /app/run
     networks:
       hyvor-network:
         aliases:

@@ -1,6 +1,6 @@
 {
     "type": "project",
-    "license": "proprietary",
+    "license": "agpl-3.0",
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
