@@ -281,6 +281,7 @@ type FactorySendAttemptRecipientResult struct {
 	SmtpCode         int
 	SmtpEnhancedCode string
 	SmtpMessage      string
+	BounceReason     sql.NullString
 }
 
 func (f *TestFactory) GetSendAttemptById(id int) (*FactorySendAttempt, error) {
@@ -312,7 +313,7 @@ func (f *TestFactory) GetSendAttemptById(id int) (*FactorySendAttempt, error) {
 	var recipientResults []*FactorySendAttemptRecipientResult
 	rows, err := f.conn.Query(`
 		SELECT 
-			id, send_recipient_id, recipient_status, smtp_code, smtp_enhanced_code, smtp_message
+			id, send_recipient_id, recipient_status, smtp_code, smtp_enhanced_code, smtp_message, bounce_reason
 		FROM send_attempt_recipients WHERE send_attempt_id = $1
 	`, id)
 
@@ -330,6 +331,7 @@ func (f *TestFactory) GetSendAttemptById(id int) (*FactorySendAttempt, error) {
 			&result.SmtpCode,
 			&result.SmtpEnhancedCode,
 			&result.SmtpMessage,
+			&result.BounceReason,
 		); err != nil {
 			return nil, err
 		}
@@ -367,10 +369,11 @@ func (f *TestFactory) GetSendRecipientById(id int) (*FactorySendRecipient, error
 	var recipient FactorySendRecipient
 	row := f.conn.QueryRow(`
 		SELECT 
-			id, type, status, address, name, try_count
+			id, type, status, address, name, try_count, bounce_reason
 		FROM send_recipients WHERE id = $1
 	`, id)
 
+	var bounceReason sql.NullString
 	err := row.Scan(
 		&recipient.Id,
 		&recipient.Type,
@@ -378,6 +381,7 @@ func (f *TestFactory) GetSendRecipientById(id int) (*FactorySendRecipient, error
 		&recipient.Address,
 		&recipient.Name,
 		&recipient.TryCount,
+		&bounceReason,
 	)
 
 	if err != nil {

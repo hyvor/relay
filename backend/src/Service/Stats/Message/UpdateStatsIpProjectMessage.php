@@ -1,0 +1,15 @@
+<?php
+
+namespace App\Service\Stats\Message;
+
+use App\Service\App\MessageTransport;
+use Symfony\Component\Messenger\Attribute\AsMessage;
+
+#[AsMessage(MessageTransport::ASYNC)]
+readonly class UpdateStatsIpProjectMessage
+{
+    public function __construct(
+        public bool $forLastDay = false,
+    ) {
+    }
+}

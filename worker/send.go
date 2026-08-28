@@ -50,6 +50,11 @@ type RcptResult struct {
 	Message      string
 }
 
+// calculates the bounce reason from the SMTP response when needed
+func (r RcptResult) GetBounceReason() BounceReason {
+	return NewSmtpResponseParser(r.Code, r.EnhancedCode, r.Message).BounceReason()
+}
+
 func (r RcptResult) MarshalJSON() ([]byte, error) {
 
 	type RcptResultJson struct {
@@ -58,6 +63,7 @@ func (r RcptResult) MarshalJSON() ([]byte, error) {
 		EnhancedCode string `json:"enhanced_code"`
 		Message      string `json:"message"`
 		Status       string `json:"status"`
+		BounceReason string `json:"bounce_reason"`
 	}
 
 	var jsonObj = RcptResultJson{
@@ -66,6 +72,7 @@ func (r RcptResult) MarshalJSON() ([]byte, error) {
 		EnhancedCode: fmt.Sprintf("%d.%d.%d", r.EnhancedCode[0], r.EnhancedCode[1], r.EnhancedCode[2]),
 		Message:      r.Message,
 		Status:       r.ToRecipientStatus().ToString(),
+		BounceReason: string(r.GetBounceReason()),
 	}
 
 	return json.Marshal(jsonObj)

@@ -1,0 +1,98 @@
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+type SmtpResponseParser struct {
+	Code         int
+	EnhancedCode [3]int
+	Message      string
+}
+
+var recipientEnhancedCodes = map[string]bool{
+	"5.1.1": true, // Bad destination mailbox address
+	"5.1.2": true, // Bad destination system address
+	"5.1.3": true, // Bad destination mailbox address syntax
+	"5.5.0": true, // Other
+}
+
+func NewSmtpResponseParser(code int, enhancedCode [3]int, message string) *SmtpResponseParser {
+	return &SmtpResponseParser{
+		Code:         code,
+		EnhancedCode: enhancedCode,
+		Message:      message,
+	}
+}
+
+func (p *SmtpResponseParser) IsBounce() bool {
+	if p.Code != 0 {
+		return p.Code >= 500 && p.Code < 600
+	}
+	if p.EnhancedCode != [3]int{0, 0, 0} {
+		return p.EnhancedCode[0] == 5
+	}
+	return false
+}
+
+func (p *SmtpResponseParser) IsRecipientBounce() bool {
+	if !p.IsBounce() {
+		return false
+	}
+	if p.EnhancedCode == [3]int{0, 0, 0} {
+		return false
+	}
+	key := p.enhancedCodeString()
+	return recipientEnhancedCodes[key]
+}
+
+func (p *SmtpResponseParser) IsInfrastructureError() bool {
+	if p.EnhancedCode == [3]int{0, 0, 0} {
+		return false
+	}
+	ec := p.enhancedCodeString()
+	return len(ec) >= 3 && (ec[:3] == "5.7" || ec[:3] == "4.7")
+}
+
+func (p *SmtpResponseParser) GetFullMessage() string {
+	parts := []string{}
+	if p.Code != 0 {
+		parts = append(parts, fmt.Sprintf("%d", p.Code))
+	}
+	if p.EnhancedCode != [3]int{0, 0, 0} {
+		parts = append(parts, p.enhancedCodeString())
+	}
+	if p.Message != "" {
+		msg := p.Message
+		if len(msg) > 255 {
+			msg = msg[:255]
+		}
+		parts = append(parts, msg)
+	}
+	return strings.Join(parts, " ")
+}
+
+func (p *SmtpResponseParser) enhancedCodeString() string {
+	return fmt.Sprintf("%d.%d.%d", p.EnhancedCode[0], p.EnhancedCode[1], p.EnhancedCode[2])
+}
+
+func (p *SmtpResponseParser) BounceReason() BounceReason {
+	if !p.IsBounce() {
+		return ""
+	}
+	if p.IsRecipientBounce() {
+		return BounceReasonRecipient
+	}
+	if p.IsInfrastructureError() {
+		return BounceReasonInfrastructure
+	}
+	return ""
+}
+
+type BounceReason string
+
+const (
+	BounceReasonRecipient      BounceReason = "recipient"
+	BounceReasonInfrastructure BounceReason = "infrastructure"
+)

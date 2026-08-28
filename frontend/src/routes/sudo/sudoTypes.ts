@@ -220,3 +220,10 @@ export interface SudoProjectResponse {
 	project: SudoProject;
 	org: Organization | null;
 }
+
+export interface SudoStats {
+	project_count: number;
+	sends: number;
+	bounce_rate: number;
+	complaint_rate: number;
+}

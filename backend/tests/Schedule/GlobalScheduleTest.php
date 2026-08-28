@@ -5,6 +5,10 @@ namespace App\Tests\Schedule;
 use App\Entity\Type\DomainStatus;
 use App\Schedule\DefaultSchedule;
 use App\Service\Domain\Message\ReverifyDomainsMessage;
+use App\Service\Stats\Message\UpdateStatsDeliveryDomainMessage;
+use App\Service\Stats\Message\UpdateStatsIpMessage;
+use App\Service\Stats\Message\UpdateStatsIpProjectMessage;
+use App\Service\Stats\Message\UpdateStatsProjectMessage;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Lock\LockFactory;
@@ -25,12 +29,32 @@ class GlobalScheduleTest extends TestCase
         );
         $s = $schedule->getSchedule();
         $messages = $s->getRecurringMessages();
-        $this->assertCount(9, $messages);
+        $this->assertCount(17, $messages);
 
         $verifyDomainMessages = $this->getMessagesOfType($schedule, ReverifyDomainsMessage::class);
         $this->assertCount(2, $verifyDomainMessages);
         $this->assertSame([DomainStatus::ACTIVE, DomainStatus::WARNING], $verifyDomainMessages[0]->getStatuses());
         $this->assertSame([DomainStatus::PENDING], $verifyDomainMessages[1]->getStatuses());
+    }
+
+    // each stats message is scheduled for both the current day and the last day
+    public function test_stats_messages_scheduled_for_today_and_last_day(): void
+    {
+        $schedule = new DefaultSchedule(
+            $this->createMock(LockFactory::class), $this->createMock(CacheInterface::class)
+        );
+
+        foreach ([
+            UpdateStatsProjectMessage::class,
+            UpdateStatsIpMessage::class,
+            UpdateStatsIpProjectMessage::class,
+            UpdateStatsDeliveryDomainMessage::class,
+        ] as $messageClass) {
+            $messages = $this->getMessagesOfType($schedule, $messageClass);
+            $this->assertCount(2, $messages, $messageClass);
+            $this->assertFalse($messages[0]->forLastDay, $messageClass);
+            $this->assertTrue($messages[1]->forLastDay, $messageClass);
+        }
     }
 
 
