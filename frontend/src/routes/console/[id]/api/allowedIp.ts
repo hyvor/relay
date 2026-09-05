@@ -3,8 +3,11 @@
 
 import ipaddr from 'ipaddr.js';
 
-const IPV4_MIN_PREFIX = 24;
-const IPV6_MIN_PREFIX = 48;
+// Keep in sync with backend/src/Service/ApiKey/AllowedIp.php.
+// Broad enough for published cloud egress ranges (Cloudflare /12–/13 IPv4 and /32 IPv6, AWS /10
+// IPv4 and /24 IPv6), still narrow enough that 0.0.0.0/0 and ::/0 are rejected.
+const IPV4_MIN_PREFIX = 8;
+const IPV6_MIN_PREFIX = 19;
 
 export function cidrAddressCount(entry: string): number {
 	if (!entry.includes('/')) return 1;
