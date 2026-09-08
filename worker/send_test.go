@@ -302,21 +302,16 @@ func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 
 func TestSendEmail_MxFailed(t *testing.T) {
 
-	originalLookupMxFunc := lookupMxFunc
-	originalLookupHostFunc := lookupHostFunc
+	originalLookupDNSFunc := lookupDNSFunc
 
 	customHostError := errors.New("custom host error")
 
-	lookupMxFunc = func(domain string) ([]*net.MX, error) {
-		return nil, errors.New("some")
-	}
-	lookupHostFunc = func(domain string) ([]string, error) {
-		return nil, customHostError
+	lookupDNSFunc = func(_ context.Context, _ string, _ uint16) (DNSLookupResult, error) {
+		return DNSLookupResult{}, customHostError
 	}
 
 	defer func() {
-		lookupMxFunc = originalLookupMxFunc
-		lookupHostFunc = originalLookupHostFunc
+		lookupDNSFunc = originalLookupDNSFunc
 	}()
 
 	result := sendEmailHandler(

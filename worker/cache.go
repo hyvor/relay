@@ -26,12 +26,53 @@ type sharedCacheMemoryValue []byte
 // SharedCache stores JSON values in a bounded local cache backed by Symfony's
 // Doctrine DBAL cache table.
 type SharedCache struct {
+	dbMu   sync.RWMutex
 	db     *sql.DB
 	memory *ttlcache.Cache[string, sharedCacheMemoryValue]
 	loads  singleflight.Group
 	now    func() time.Time
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
+}
+
+var processSharedCache struct {
+	sync.Mutex
+	value *SharedCache
+}
+
+func getProcessSharedCache() *SharedCache {
+	processSharedCache.Lock()
+	defer processSharedCache.Unlock()
+	if processSharedCache.value == nil {
+		processSharedCache.value = NewSharedCache(nil)
+	}
+	return processSharedCache.value
+}
+
+// ConfigureProcessSharedCache attaches the process cache to a database. The
+// first worker connection is enough because *sql.DB is safe for concurrent use.
+func ConfigureProcessSharedCache(db *sql.DB) {
+	processSharedCache.Lock()
+	defer processSharedCache.Unlock()
+	if processSharedCache.value == nil {
+		processSharedCache.value = NewSharedCache(db)
+		return
+	}
+	processSharedCache.value.setDatabase(db)
+}
+
+func (c *SharedCache) setDatabase(db *sql.DB) {
+	c.dbMu.Lock()
+	defer c.dbMu.Unlock()
+	if c.db == nil {
+		c.db = db
+	}
+}
+
+func (c *SharedCache) database() *sql.DB {
+	c.dbMu.RLock()
+	defer c.dbMu.RUnlock()
+	return c.db
 }
 
 func NewSharedCache(db *sql.DB) *SharedCache {
@@ -82,7 +123,7 @@ func (c *SharedCache) Get(ctx context.Context, key string, destination any) (boo
 		return true, nil
 	}
 
-	if c.db == nil {
+	if c.database() == nil {
 		return false, nil
 	}
 
@@ -118,7 +159,7 @@ func (c *SharedCache) Set(ctx context.Context, key string, value any, ttl time.D
 	}
 
 	c.memory.Set(key, encoded, ttl)
-	if c.db == nil {
+	if c.database() == nil {
 		return nil
 	}
 
@@ -130,7 +171,7 @@ func (c *SharedCache) Set(ctx context.Context, key string, value any, ttl time.D
 
 func (c *SharedCache) Delete(ctx context.Context, key string) error {
 	c.memory.Delete(key)
-	if c.db == nil {
+	if c.database() == nil {
 		return nil
 	}
 

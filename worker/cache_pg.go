@@ -37,6 +37,10 @@ func sharedCacheItemID(key string) (string, error) {
 }
 
 func (c *SharedCache) loadFromDatabase(ctx context.Context, key string) (sharedCacheDatabaseEntry, error) {
+	db := c.database()
+	if db == nil {
+		return sharedCacheDatabaseEntry{}, nil
+	}
 	itemID, err := sharedCacheItemID(key)
 	if err != nil {
 		return sharedCacheDatabaseEntry{}, err
@@ -45,7 +49,7 @@ func (c *SharedCache) loadFromDatabase(ctx context.Context, key string) (sharedC
 	var value []byte
 	var lifetime int64
 	var writtenAt int64
-	err = c.db.QueryRowContext(ctx, `
+	err = db.QueryRowContext(ctx, `
 		SELECT item_data, item_lifetime, item_time
 		FROM cache_items
 		WHERE item_id = $1 AND item_lifetime IS NOT NULL
@@ -60,7 +64,7 @@ func (c *SharedCache) loadFromDatabase(ctx context.Context, key string) (sharedC
 	expiresAt := time.Unix(writtenAt, 0).Add(time.Duration(lifetime) * time.Second)
 	remaining := expiresAt.Sub(c.now())
 	if remaining <= 0 {
-		_, deleteErr := c.db.ExecContext(ctx, `
+		_, deleteErr := db.ExecContext(ctx, `
 			DELETE FROM cache_items
 			WHERE item_id = $1
 				AND item_lifetime IS NOT NULL
@@ -75,7 +79,7 @@ func (c *SharedCache) loadFromDatabase(ctx context.Context, key string) (sharedC
 		return sharedCacheDatabaseEntry{}, fmt.Errorf("%w: %d bytes", ErrCacheValueTooLarge, len(value))
 	}
 	if !json.Valid(value) {
-		_, deleteErr := c.db.ExecContext(ctx, `
+		_, deleteErr := db.ExecContext(ctx, `
 			DELETE FROM cache_items WHERE item_id = $1 AND item_data = $2
 		`, itemID, value)
 		if deleteErr != nil {
@@ -89,6 +93,10 @@ func (c *SharedCache) loadFromDatabase(ctx context.Context, key string) (sharedC
 }
 
 func (c *SharedCache) storeInDatabase(ctx context.Context, key string, value []byte, ttl time.Duration) error {
+	db := c.database()
+	if db == nil {
+		return nil
+	}
 	itemID, err := sharedCacheItemID(key)
 	if err != nil {
 		return err
@@ -96,7 +104,7 @@ func (c *SharedCache) storeInDatabase(ctx context.Context, key string, value []b
 
 	// DoctrineDbalAdapter stores whole-second lifetimes and write timestamps.
 	lifetime := int64((ttl + time.Second - 1) / time.Second)
-	_, err = c.db.ExecContext(ctx, `
+	_, err = db.ExecContext(ctx, `
 		INSERT INTO cache_items (item_id, item_data, item_lifetime, item_time)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (item_id) DO UPDATE SET
@@ -108,11 +116,15 @@ func (c *SharedCache) storeInDatabase(ctx context.Context, key string, value []b
 }
 
 func (c *SharedCache) deleteFromDatabase(ctx context.Context, key string) error {
+	db := c.database()
+	if db == nil {
+		return nil
+	}
 	itemID, err := sharedCacheItemID(key)
 	if err != nil {
 		return err
 	}
 
-	_, err = c.db.ExecContext(ctx, `DELETE FROM cache_items WHERE item_id = $1`, itemID)
+	_, err = db.ExecContext(ctx, `DELETE FROM cache_items WHERE item_id = $1`, itemID)
 	return err
 }
