@@ -169,6 +169,7 @@ func (worker *EmailWorker) Start() {
 		return
 	}
 	defer conn.Close()
+	ConfigureProcessSharedCache(conn)
 
 	for {
 
