@@ -22,3 +22,8 @@
 - reject non-success MX DNS responses instead of treating them as implicit-MX absence
 - retain the resolver's DNSSEC authenticated-data state in cached MX values
 - validate cached MX records before using them for delivery
+- query TLSA at `_25._tcp.<mx-host>` through the same DoH resolver
+- cache TLSA data under a versioned host-specific key with a one-hour TTL cap
+- distinguish secure TLSA records, secure absence, secure unusable records, and insecure answers
+- do not treat transient DNS errors as authenticated TLSA absence
+- validate TLSA selectors, matching types, and association-data lengths before caching
