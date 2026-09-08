@@ -21,6 +21,7 @@
         "league/flysystem-async-aws-s3": "^3.31",
         "league/flysystem-memory": "^3.31",
         "mlocati/spf-lib": "^3.3",
+        "nelmio/api-doc-bundle": "^5.11",
         "php-mime-mail-parser/php-mime-mail-parser": "^9.0.1",
         "phpdocumentor/reflection-docblock": "^5.6.7",
         "phpmailer/phpmailer": "^6.12",

@@ -3,7 +3,7 @@
 namespace App\Tests\Api\Console\Send;
 
 use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Controller\SendController;
+use App\Api\Console\Controller\SendsController;
 use App\Api\Console\Input\SendEmail\SendEmailInput;
 use App\Api\Console\Input\SendEmail\UnableToDecodeAttachmentBase64Exception;
 use App\Api\Console\Object\SendObject;
@@ -28,7 +28,7 @@ use App\Tests\Factory\SuppressionFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 
-#[CoversClass(SendController::class)]
+#[CoversClass(SendsController::class)]
 #[CoversClass(SendService::class)]
 #[CoversClass(SendEmailInput::class)]
 #[CoversClass(SendObject::class)]

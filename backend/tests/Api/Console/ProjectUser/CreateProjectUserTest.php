@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\ProjectUser;
 
-use App\Api\Console\Controller\ProjectUserController;
+use App\Api\Console\Controller\ProjectUsersController;
 use App\Api\Console\Object\ProjectUserObject;
 use App\Entity\ProjectUser;
 use App\Service\ProjectUser\ProjectUserService;
@@ -15,7 +15,7 @@ use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\VerifyMemberResponse;
 use Hyvor\Internal\Bundle\Comms\Exception\CommsApiFailedException;
 use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(ProjectUserController::class)]
+#[CoversClass(ProjectUsersController::class)]
 #[CoversClass(ProjectUserService::class)]
 #[CoversClass(ProjectUserObject::class)]
 class CreateProjectUserTest extends WebTestCase
