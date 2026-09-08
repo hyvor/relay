@@ -20,6 +20,7 @@ type MxRecord struct {
 
 type MxCacheValue struct {
 	Records []MxRecord `json:"records"`
+	Secure  bool       `json:"secure"`
 }
 
 // Legacy test seam retained while callers migrate to SharedCache.
@@ -67,53 +68,62 @@ func getMxHostsFromDomainContext(ctx context.Context, cache *SharedCache, domain
 
 	var cached MxCacheValue
 	if found, err := cache.Get(ctx, "mx:"+domain, &cached); err == nil && found {
-		return getHostsFromMxCacheValue(cached), nil
+		if validMxCacheValue(cached) {
+			return getHostsFromMxCacheValue(cached), nil
+		}
+		_ = cache.Delete(ctx, "mx:"+domain)
 	}
 
 	mxResult, err := lookupDNSFunc(ctx, domain, dns.TypeMX)
-	if err == nil && mxResult.Message.Rcode == dns.RcodeSuccess {
-		value, nullMx := getMxCacheValueFromDNS(mxResult.Message)
-		if nullMx {
-			return nil, fmt.Errorf("%w: null MX record for %s", ErrSmtpMxLookupFailed, domain)
-		}
-		if len(value.Records) > 0 {
-			cacheMxValue(ctx, cache, domain, value, mxResult.TTL)
-			return getHostsFromMxCacheValue(value), nil
-		}
-	} else if err != nil {
-		// A failed MX query is not the same as an empty MX answer. Do not
-		// downgrade a resolver failure into an implicit-MX lookup.
+	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrSmtpMxLookupFailed, err)
+	}
+	if mxResult.Message == nil {
+		return nil, fmt.Errorf("%w: MX DNS response was empty", ErrSmtpMxLookupFailed)
+	}
+	if mxResult.Message.Rcode != dns.RcodeSuccess {
+		return nil, fmt.Errorf("%w: MX DNS response code %s", ErrSmtpMxLookupFailed, dns.RcodeToString[mxResult.Message.Rcode])
+	}
+	value, nullMx := getMxCacheValueFromDNS(mxResult.Message, domain, mxResult.Secure)
+	if nullMx {
+		return nil, fmt.Errorf("%w: null MX record for %s", ErrSmtpMxLookupFailed, domain)
+	}
+	if len(value.Records) > 0 {
+		cacheMxValue(ctx, cache, domain, value, mxResult.TTL)
+		return getHostsFromMxCacheValue(value), nil
 	}
 
 	addressResult, err := lookupDNSFunc(ctx, domain, dns.TypeA)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrSmtpMxLookupFailed, err)
 	}
-	if addressResult.Message.Rcode != dns.RcodeSuccess {
-		return nil, fmt.Errorf("%w: no MX or address records for %s", ErrSmtpMxLookupFailed, domain)
+	if addressResult.Message == nil || addressResult.Message.Rcode != dns.RcodeSuccess {
+		return nil, fmt.Errorf("%w: A DNS response did not succeed", ErrSmtpMxLookupFailed)
 	}
-	if !hasAddressRecords(addressResult.Message) {
+	if !hasAddressRecords(addressResult.Message, domain) {
 		addressResult, err = lookupDNSFunc(ctx, domain, dns.TypeAAAA)
 		if err != nil {
 			return nil, fmt.Errorf("%w: %v", ErrSmtpMxLookupFailed, err)
 		}
-		if addressResult.Message.Rcode != dns.RcodeSuccess || !hasAddressRecords(addressResult.Message) {
+		if addressResult.Message == nil || addressResult.Message.Rcode != dns.RcodeSuccess || !hasAddressRecords(addressResult.Message, domain) {
 			return nil, fmt.Errorf("%w: no MX or address records for %s", ErrSmtpMxLookupFailed, domain)
 		}
 	}
 
-	value := MxCacheValue{Records: []MxRecord{{Host: domain, Priority: 0}}}
+	value = MxCacheValue{Records: []MxRecord{{Host: domain, Priority: 0}}, Secure: addressResult.Secure}
 	cacheMxValue(ctx, cache, domain, value, addressResult.TTL)
 	return getHostsFromMxCacheValue(value), nil
 }
 
-func getMxCacheValueFromDNS(message *dns.Msg) (MxCacheValue, bool) {
+func getMxCacheValueFromDNS(message *dns.Msg, domain string, secure bool) (MxCacheValue, bool) {
 	records := make([]MxRecord, 0)
 	nullMx := false
 	for _, answer := range message.Answer {
 		mx, ok := answer.(*dns.MX)
 		if !ok {
+			continue
+		}
+		if mx.Hdr.Class != dns.ClassINET || !strings.EqualFold(mx.Hdr.Name, dns.Fqdn(domain)) {
 			continue
 		}
 		host := strings.TrimSuffix(strings.ToLower(mx.Mx), ".")
@@ -126,7 +136,19 @@ func getMxCacheValueFromDNS(message *dns.Msg) (MxCacheValue, bool) {
 	sort.SliceStable(records, func(i, j int) bool {
 		return records[i].Priority < records[j].Priority
 	})
-	return MxCacheValue{Records: records}, nullMx
+	return MxCacheValue{Records: records, Secure: secure}, nullMx
+}
+
+func validMxCacheValue(value MxCacheValue) bool {
+	if len(value.Records) == 0 {
+		return false
+	}
+	for _, record := range value.Records {
+		if record.Host == "" || record.Host == "." || record.Priority < 0 {
+			return false
+		}
+	}
+	return true
 }
 
 func getHostsFromMxCacheValue(value MxCacheValue) []string {
@@ -137,11 +159,19 @@ func getHostsFromMxCacheValue(value MxCacheValue) []string {
 	return hosts
 }
 
-func hasAddressRecords(message *dns.Msg) bool {
+func hasAddressRecords(message *dns.Msg, domain string) bool {
 	for _, answer := range message.Answer {
 		switch answer.(type) {
-		case *dns.A, *dns.AAAA:
-			return true
+		case *dns.A:
+			record := answer.(*dns.A)
+			if record.Hdr.Class == dns.ClassINET && strings.EqualFold(record.Hdr.Name, dns.Fqdn(domain)) {
+				return true
+			}
+		case *dns.AAAA:
+			record := answer.(*dns.AAAA)
+			if record.Hdr.Class == dns.ClassINET && strings.EqualFold(record.Hdr.Name, dns.Fqdn(domain)) {
+				return true
+			}
 		}
 	}
 	return false

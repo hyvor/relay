@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
@@ -92,8 +93,8 @@ func (r *DoHResolver) Lookup(ctx context.Context, name string, recordType uint16
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
 		return DNSLookupResult{}, fmt.Errorf("%w: HTTP status %s", ErrDoHLookup, response.Status)
 	}
-	contentType := strings.ToLower(response.Header.Get("Content-Type"))
-	if contentType != "" && !strings.HasPrefix(contentType, "application/dns-message") {
+	contentType, _, contentTypeErr := mime.ParseMediaType(response.Header.Get("Content-Type"))
+	if contentTypeErr != nil || strings.ToLower(contentType) != "application/dns-message" {
 		return DNSLookupResult{}, fmt.Errorf("%w: unsupported content type %q", ErrDoHLookup, contentType)
 	}
 
@@ -109,7 +110,9 @@ func (r *DoHResolver) Lookup(ctx context.Context, name string, recordType uint16
 	if err := result.Unpack(responseBody); err != nil {
 		return DNSLookupResult{}, fmt.Errorf("%w: decode response: %v", ErrDoHLookup, err)
 	}
-	if len(result.Question) != 1 || !strings.EqualFold(result.Question[0].Name, dns.Fqdn(name)) || result.Question[0].Qtype != recordType {
+	if !result.Response || result.Truncated || result.Opcode != dns.OpcodeQuery || len(result.Question) != 1 ||
+		!strings.EqualFold(result.Question[0].Name, dns.Fqdn(name)) ||
+		result.Question[0].Qtype != recordType || result.Question[0].Qclass != dns.ClassINET {
 		return DNSLookupResult{}, fmt.Errorf("%w: response question does not match request", ErrDoHLookup)
 	}
 

@@ -60,6 +60,7 @@ func TestDoHResolverRejectsMismatchedQuestion(t *testing.T) {
 		query := new(dns.Msg)
 		require.NoError(t, query.Unpack(body))
 		query.Question[0].Name = "other.example."
+		writer.Header().Set("Content-Type", "application/dns-message")
 		writer.WriteHeader(http.StatusOK)
 		_, err = writer.Write(dohResponse(t, query, false))
 		assert.NoError(t, err)
