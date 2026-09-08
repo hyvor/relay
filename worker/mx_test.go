@@ -19,7 +19,13 @@ func withDNSLookupStub(t *testing.T, stub func(context.Context, string, uint16) 
 	})
 }
 
-func mxMessage(records ...dns.RR) *dns.Msg {
+func mxMessage(domain string, records ...dns.RR) *dns.Msg {
+	for _, record := range records {
+		record.Header().Name = dns.Fqdn(domain)
+		if record.Header().Class == 0 {
+			record.Header().Class = dns.ClassINET
+		}
+	}
 	return &dns.Msg{MsgHdr: dns.MsgHdr{Rcode: dns.RcodeSuccess}, Answer: records}
 }
 
@@ -35,10 +41,10 @@ func TestErrorOnLookupFailure(t *testing.T) {
 func TestReturnsCurrentHostWhenMxIsAbsent(t *testing.T) {
 	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
 		if recordType == dns.TypeMX {
-			return DNSLookupResult{Message: mxMessage(), TTL: time.Minute}, nil
+			return DNSLookupResult{Message: mxMessage("hyvor.com"), TTL: time.Minute}, nil
 		}
 		return DNSLookupResult{
-			Message: mxMessage(&dns.A{Hdr: dns.RR_Header{Rrtype: dns.TypeA}, A: []byte{1, 1, 1, 1}}),
+			Message: mxMessage("hyvor.com", &dns.A{Hdr: dns.RR_Header{Rrtype: dns.TypeA}, A: []byte{1, 1, 1, 1}}),
 			TTL:     time.Minute,
 		}, nil
 	})
@@ -54,7 +60,7 @@ func TestValidMxLookupAndCache(t *testing.T) {
 		lookups++
 		assert.Equal(t, dns.TypeMX, recordType)
 		return DNSLookupResult{
-			Message: mxMessage(
+			Message: mxMessage("hyvor.com",
 				&dns.MX{Hdr: dns.RR_Header{Rrtype: dns.TypeMX}, Mx: "mx1.hyvor.com.", Preference: 10},
 				&dns.MX{Hdr: dns.RR_Header{Rrtype: dns.TypeMX}, Mx: "mx2.hyvor.com.", Preference: 20},
 			),
@@ -87,7 +93,7 @@ func TestMxCacheUsesOneHourMaximumTTL(t *testing.T) {
 func TestMxLookupSortsByPriority(t *testing.T) {
 	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
 		require.Equal(t, dns.TypeMX, recordType)
-		return DNSLookupResult{Message: mxMessage(
+		return DNSLookupResult{Message: mxMessage("example.com",
 			&dns.MX{Hdr: dns.RR_Header{Rrtype: dns.TypeMX}, Mx: "slow.example.", Preference: 50},
 			&dns.MX{Hdr: dns.RR_Header{Rrtype: dns.TypeMX}, Mx: "fast.example.", Preference: 10},
 		), TTL: time.Minute}, nil
@@ -101,11 +107,46 @@ func TestMxLookupSortsByPriority(t *testing.T) {
 func TestNullMxIsRejected(t *testing.T) {
 	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
 		require.Equal(t, dns.TypeMX, recordType)
-		return DNSLookupResult{Message: mxMessage(
+		return DNSLookupResult{Message: mxMessage("example.com",
 			&dns.MX{Hdr: dns.RR_Header{Rrtype: dns.TypeMX}, Mx: "."},
 		), TTL: time.Minute}, nil
 	})
 
 	_, err := getMxHostsFromDomainContext(context.Background(), NewSharedCache(nil), "example.com")
 	assert.ErrorIs(t, err, ErrSmtpMxLookupFailed)
+}
+
+func TestMxDnsFailureDoesNotFallbackToAddress(t *testing.T) {
+	lookups := 0
+	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
+		lookups++
+		return DNSLookupResult{Message: &dns.Msg{MsgHdr: dns.MsgHdr{Rcode: dns.RcodeServerFailure}}}, nil
+	})
+
+	_, err := getMxHostsFromDomainContext(context.Background(), NewSharedCache(nil), "example.com")
+	assert.ErrorIs(t, err, ErrSmtpMxLookupFailed)
+	assert.Equal(t, 1, lookups)
+}
+
+func TestMxLookupFallsBackToAAAA(t *testing.T) {
+	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
+		switch recordType {
+		case dns.TypeMX:
+			return DNSLookupResult{Message: mxMessage("example.com"), TTL: time.Minute}, nil
+		case dns.TypeA:
+			return DNSLookupResult{Message: &dns.Msg{MsgHdr: dns.MsgHdr{Rcode: dns.RcodeSuccess}}}, nil
+		case dns.TypeAAAA:
+			return DNSLookupResult{Message: mxMessage("example.com", &dns.AAAA{
+				Hdr:  dns.RR_Header{Rrtype: dns.TypeAAAA},
+				AAAA: []byte{0x20, 0x01},
+			}), TTL: time.Minute}, nil
+		default:
+			t.Fatalf("unexpected record type %d", recordType)
+			return DNSLookupResult{}, nil
+		}
+	})
+
+	hosts, err := getMxHostsFromDomainContext(context.Background(), NewSharedCache(nil), "example.com")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"example.com"}, hosts)
 }
