@@ -293,6 +293,20 @@ func sendEmailHandlerContext(
 		result.Duration = duration
 	}()
 
+	mtaSTSResult := mtaSTSResult{}
+	if ctx != context.Background() {
+		var err error
+		mtaSTSResult, err = lookupMTASTS(ctx, getProcessSharedCache(), rcptDomain)
+		if err != nil {
+			if result.NewTryCount < MAX_SEND_TRIES {
+				result.SetAllRcptResults(recipients, 400, [3]int{4, 2, 1}, err.Error())
+			} else {
+				result.SetAllRcptResultsFailed(recipients, err.Error())
+			}
+			return result
+		}
+	}
+
 	mxValue, err := getMxValueFromDomainContext(ctx, getProcessSharedCache(), rcptDomain)
 
 	if err != nil {
@@ -316,10 +330,13 @@ func sendEmailHandlerContext(
 	for _, host := range mxHosts {
 
 		var conversation *SmtpConversation
-		if ctx == context.Background() {
+		if mtaSTSResult.Enforce && !mtaSTSResult.AllowsMX(host) {
+			conversation = NewSmtpConversation()
+			conversation.NetworkError = fmt.Errorf("MTA-STS policy does not allow MX host %s", host)
+		} else if ctx == context.Background() {
 			conversation = sendEmailToHost(send, recipients, host, instanceDomain, ip, ptr, mxValue.Secure)
 		} else {
-			conversation = sendEmailToHostContext(ctx, send, recipients, host, instanceDomain, ip, ptr, mxValue.Secure, rcptDomain)
+			conversation = sendEmailToHostContext(ctx, send, recipients, host, instanceDomain, ip, ptr, mxValue.Secure, mtaSTSResult.Enforce, rcptDomain)
 		}
 
 		result.SmtpConversations[host] = conversation
@@ -461,7 +478,7 @@ var sendEmailToHost = sendEmailToHostHandler
 var sendEmailToHostContext = sendEmailToHostHandlerContext
 
 func sendEmailToHostHandler(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, secureMx bool) *SmtpConversation {
-	return sendEmailToHostHandlerContext(context.Background(), send, recipients, host, instanceDomain, ip, ptr, secureMx)
+	return sendEmailToHostHandlerContext(context.Background(), send, recipients, host, instanceDomain, ip, ptr, secureMx, false)
 }
 
 func sendEmailToHostHandlerContext(
@@ -473,6 +490,23 @@ func sendEmailToHostHandlerContext(
 	ip string,
 	ptr string,
 	secureMx bool,
+	mtaSTSRequireTLS bool,
+	referenceNames ...string,
+) *SmtpConversation {
+	return sendEmailToHostHandlerContextAttempt(ctx, send, recipients, host, instanceDomain, ip, ptr, secureMx, mtaSTSRequireTLS, true, referenceNames...)
+}
+
+func sendEmailToHostHandlerContextAttempt(
+	ctx context.Context,
+	send *SendRow,
+	recipients []*RecipientRow,
+	host string,
+	instanceDomain string,
+	ip string,
+	ptr string,
+	secureMx bool,
+	mtaSTSRequireTLS bool,
+	tryStartTLS bool,
 	referenceNames ...string,
 ) *SmtpConversation {
 
@@ -489,7 +523,7 @@ func sendEmailToHostHandlerContext(
 		}
 	}
 	daneRequired := secureMx && tlsaResult.State == TLSAStateSecureRecords
-	tlsRequired := secureMx && (daneRequired || tlsaResult.State == TLSAStateSecureUnusable)
+	tlsRequired := mtaSTSRequireTLS || (secureMx && (daneRequired || tlsaResult.State == TLSAStateSecureUnusable))
 
 	// STEP 0: Connect to SMTP server
 	// ==============================
@@ -537,56 +571,64 @@ func sendEmailToHostHandlerContext(
 	// STEP 2: STARTTLS
 	// ============
 	tlsStarted := false
-	if ok, _ := c.Extension("STARTTLS"); ok {
-		if err := setSmtpDeadline(c); err != nil {
-			conversation.NetworkError = err
-			return conversation
-		}
-		config := &tls.Config{ServerName: host}
-		if tlsRequired {
-			config.InsecureSkipVerify = true
-		}
-		if daneRequired {
-			config.VerifyConnection = func(state tls.ConnectionState) error {
-				names := append([]string{host}, referenceNames...)
-				return verifyDANECertificates(state.PeerCertificates, tlsaResult.Records, names...)
-			}
-		}
-
-		startTlsResult, ehloResult := c.StartTLS(config)
-
-		if startTlsResult.Err != nil {
-			conversation.NetworkError = startTlsResult.Err
-			return conversation
-		}
-
-		if ehloResult.Err != nil {
-			conversation.NetworkError = ehloResult.Err
-			return conversation
-		}
-
-		conversation.AddStepFromResult(SmtpStepStartTLS, &startTlsResult)
-		conversation.AddStepFromResult(SmtpStepHello, &ehloResult)
-
-		if !startTlsResult.CodeValid(220) {
-			if tlsRequired {
-				conversation.NetworkError = fmt.Errorf("%w: STARTTLS rejected by %s", ErrDANEAuthentication, host)
+	if tryStartTLS {
+		if ok, _ := c.Extension("STARTTLS"); ok {
+			if err := setSmtpDeadline(c); err != nil {
+				conversation.NetworkError = err
 				return conversation
 			}
-			conversation.SetRcptResults(recipients, &startTlsResult)
-			return conversation
-		}
+			config := &tls.Config{ServerName: host}
+			if tlsRequired && (!mtaSTSRequireTLS || daneRequired) {
+				config.InsecureSkipVerify = true
+			}
+			if daneRequired {
+				config.VerifyConnection = func(state tls.ConnectionState) error {
+					names := append([]string{host}, referenceNames...)
+					return verifyDANECertificates(state.PeerCertificates, tlsaResult.Records, names...)
+				}
+			}
 
-		if !ehloResult.CodeValid(250) {
-			if tlsRequired {
-				conversation.NetworkError = fmt.Errorf("%w: post-STARTTLS EHLO failed for %s", ErrDANEAuthentication, host)
+			startTlsResult, ehloResult := c.StartTLS(config)
+
+			if startTlsResult.Err != nil {
+				if !tlsRequired && ctx.Err() == nil {
+					return sendEmailToHostHandlerContextAttempt(ctx, send, recipients, host, instanceDomain, ip, ptr, secureMx, false, false, referenceNames...)
+				}
+				conversation.NetworkError = startTlsResult.Err
 				return conversation
 			}
-			conversation.SetRcptResults(recipients, &ehloResult)
-			return conversation
-		}
-		tlsStarted = true
 
+			if ehloResult.Err != nil {
+				if !tlsRequired && ctx.Err() == nil {
+					return sendEmailToHostHandlerContextAttempt(ctx, send, recipients, host, instanceDomain, ip, ptr, secureMx, false, false, referenceNames...)
+				}
+				conversation.NetworkError = ehloResult.Err
+				return conversation
+			}
+
+			conversation.AddStepFromResult(SmtpStepStartTLS, &startTlsResult)
+			conversation.AddStepFromResult(SmtpStepHello, &ehloResult)
+
+			if !startTlsResult.CodeValid(220) {
+				if tlsRequired {
+					conversation.NetworkError = fmt.Errorf("%w: STARTTLS rejected by %s", ErrDANEAuthentication, host)
+					return conversation
+				}
+				// STARTTLS was rejected, so continue with plaintext when policy is
+				// opportunistic. A failed TLS handshake cannot safely fall back.
+			} else {
+				if !ehloResult.CodeValid(250) {
+					if tlsRequired {
+						conversation.NetworkError = fmt.Errorf("%w: post-STARTTLS EHLO failed for %s", ErrDANEAuthentication, host)
+						return conversation
+					}
+					conversation.SetRcptResults(recipients, &ehloResult)
+					return conversation
+				}
+				tlsStarted = true
+			}
+
+		}
 	}
 	if tlsRequired && !tlsStarted {
 		conversation.NetworkError = fmt.Errorf("%w: SMTP server does not advertise STARTTLS", ErrDANEAuthentication)

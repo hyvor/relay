@@ -28,8 +28,6 @@ type sharedCacheLoad struct {
 	generation uint64
 }
 
-// SharedCache stores JSON values in a bounded local cache backed by Symfony's
-// Doctrine DBAL cache table.
 type SharedCache struct {
 	dbMu         sync.RWMutex
 	db           *sql.DB

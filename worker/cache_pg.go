@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"database/sql"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -12,7 +11,7 @@ import (
 )
 
 const (
-	sharedCacheNamespace       = "relay-shared-v1"
+	sharedCacheNamespace       = "shared-v1"
 	sharedCacheMaxItemIDLen    = 255
 	sharedCacheDatabaseTimeout = 2 * time.Second
 )
@@ -26,12 +25,6 @@ type sharedCacheDatabaseEntry struct {
 func sharedCacheItemID(key string) (string, error) {
 	if key == "" {
 		return "", fmt.Errorf("cache key cannot be empty")
-	}
-
-	encoded := "k." + base64.RawURLEncoding.EncodeToString([]byte(key))
-	itemID := sharedCacheNamespace + ":" + encoded
-	if len(itemID) <= sharedCacheMaxItemIDLen {
-		return itemID, nil
 	}
 
 	digest := sha256.Sum256([]byte(key))

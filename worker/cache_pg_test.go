@@ -21,7 +21,7 @@ func TestSharedCacheDatabaseRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { db.Close() })
 
-	_, err = db.Exec(`DELETE FROM cache_items WHERE item_id LIKE 'relay-shared-v1:%'`)
+	_, err = db.Exec(`DELETE FROM cache_items WHERE item_id LIKE 'shared-v1:%'`)
 	require.NoError(t, err)
 
 	cache := NewSharedCache(db)

@@ -15,6 +15,19 @@ import (
 	smtp "github.com/hyvor/relay/worker/smtp"
 )
 
+func seedTestMxCache(t *testing.T) {
+	t.Helper()
+	cache := getProcessSharedCache()
+	if err := cache.Set(context.Background(), dnsCacheKey("mx", "hyvor.com"), MxCacheValue{
+		Records: []MxRecord{{Host: "mx.hyvor.com"}},
+	}, time.Hour); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = cache.Delete(context.Background(), dnsCacheKey("mx", "hyvor.com"))
+	})
+}
+
 func TestSendEmail_Accepted(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHost
@@ -33,14 +46,10 @@ func TestSendEmail_Accepted(t *testing.T) {
 		}
 	}
 
-	mxCache.data["hyvor.com"] = mxCacheEntry{
-		Hosts:  []string{"mx.hyvor.com"},
-		Expiry: time.Now().Add(1 * time.Hour),
-	}
+	seedTestMxCache(t)
 
 	defer func() {
 		sendEmailToHost = originalSendEmailToHost
-		delete(mxCache.data, "hyvor.com")
 	}()
 
 	result := sendEmailHandler(
@@ -83,14 +92,10 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 		}
 	}
 
-	mxCache.data["hyvor.com"] = mxCacheEntry{
-		Hosts:  []string{"mx.hyvor.com"},
-		Expiry: time.Now().Add(1 * time.Hour),
-	}
+	seedTestMxCache(t)
 
 	defer func() {
 		sendEmailToHost = originalSendEmailToHost
-		delete(mxCache.data, "hyvor.com")
 	}()
 
 	result := sendEmailHandler(
@@ -133,14 +138,10 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 		}
 	}
 
-	mxCache.data["hyvor.com"] = mxCacheEntry{
-		Hosts:  []string{"mx.hyvor.com"},
-		Expiry: time.Now().Add(1 * time.Hour),
-	}
+	seedTestMxCache(t)
 
 	defer func() {
 		sendEmailToHost = originalSendEmailToHost
-		delete(mxCache.data, "hyvor.com")
 	}()
 
 	result := sendEmailHandler(
@@ -183,13 +184,9 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 		}
 	}
 
-	mxCache.data["hyvor.com"] = mxCacheEntry{
-		Hosts:  []string{"mx.hyvor.com"},
-		Expiry: time.Now().Add(1 * time.Hour),
-	}
+	seedTestMxCache(t)
 	defer func() {
 		sendEmailToHost = originalSendEmailToHost
-		delete(mxCache.data, "hyvor.com")
 	}()
 
 	result := sendEmailHandler(
@@ -225,13 +222,9 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 		}
 	}
 
-	mxCache.data["hyvor.com"] = mxCacheEntry{
-		Hosts:  []string{"mx.hyvor.com"},
-		Expiry: time.Now().Add(1 * time.Hour),
-	}
+	seedTestMxCache(t)
 	defer func() {
 		sendEmailToHost = originalSendEmailToHost
-		delete(mxCache.data, "hyvor.com")
 	}()
 
 	result := sendEmailHandler(
@@ -267,13 +260,9 @@ func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 		}
 	}
 
-	mxCache.data["hyvor.com"] = mxCacheEntry{
-		Hosts:  []string{"mx.hyvor.com"},
-		Expiry: time.Now().Add(1 * time.Hour),
-	}
+	seedTestMxCache(t)
 	defer func() {
 		sendEmailToHost = originalSendEmailToHost
-		delete(mxCache.data, "hyvor.com")
 	}()
 
 	result := sendEmailHandler(
