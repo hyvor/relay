@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/x509"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -49,7 +50,7 @@ func lookupTLSA(ctx context.Context, cache *SharedCache, host string) (TLSAResul
 		return TLSAResult{}, fmt.Errorf("%w: empty host", ErrTLSALookup)
 	}
 
-	cacheKey := "tlsa:v1:_25._tcp." + host
+	cacheKey := dnsCacheKey("tlsa", "_25._tcp."+host)
 	var cached TLSACacheValue
 	if found, err := cache.Get(ctx, cacheKey, &cached); err == nil && found {
 		if validTLSACacheValue(cached) {
@@ -76,45 +77,78 @@ func lookupTLSA(ctx context.Context, cache *SharedCache, host string) (TLSAResul
 	}
 	if result.Message.Rcode == dns.RcodeSuccess {
 		var invalid bool
-		value.Records, invalid = getTLSARecordsFromDNS(result.Message, name)
+		var complete bool
+		value.Records, invalid, complete = getTLSARecordsFromDNS(result.Message, name)
+		if !complete {
+			return TLSAResult{}, fmt.Errorf("%w: incomplete or looping TLSA alias chain for %s", ErrTLSALookup, name)
+		}
 		if len(value.Records) > 0 && result.Secure {
 			value.State = TLSAStateSecureRecords
 		} else if invalid && result.Secure {
 			value.State = TLSAStateSecureUnusable
 		}
+	} else if result.Message.Rcode == dns.RcodeNameError && hasCNAMEAnswer(result.Message) {
+		return TLSAResult{}, fmt.Errorf("%w: incomplete TLSA alias response for %s", ErrTLSALookup, name)
 	}
 
 	cacheTLSAValue(ctx, cache, cacheKey, value, result.TTL)
 	return TLSAResult{State: value.State, Records: value.Records}, nil
 }
 
+func hasCNAMEAnswer(message *dns.Msg) bool {
+	for _, answer := range message.Answer {
+		if _, ok := answer.(*dns.CNAME); ok {
+			return true
+		}
+	}
+	return false
+}
+
 func normalizeDNSHost(host string) string {
 	return strings.TrimSuffix(strings.ToLower(strings.TrimSpace(host)), ".")
 }
 
-func getTLSARecordsFromDNS(message *dns.Msg, owner string) ([]TLSARecord, bool) {
+func getTLSARecordsFromDNS(message *dns.Msg, owner string) ([]TLSARecord, bool, bool) {
 	records := make([]TLSARecord, 0)
 	invalid := false
-	for _, answer := range message.Answer {
-		tlsa, ok := answer.(*dns.TLSA)
-		if !ok || tlsa.Hdr.Class != dns.ClassINET || !strings.EqualFold(tlsa.Hdr.Name, dns.Fqdn(owner)) {
-			continue
+	currentOwner := dns.Fqdn(owner)
+	followedAlias := false
+	for hops := 0; hops < 8; hops++ {
+		foundOwner := false
+		for _, answer := range message.Answer {
+			tlsa, ok := answer.(*dns.TLSA)
+			if !ok || tlsa.Hdr.Class != dns.ClassINET || !strings.EqualFold(tlsa.Hdr.Name, currentOwner) {
+				continue
+			}
+			foundOwner = true
+			if !validTLSAFields(tlsa.Usage, tlsa.Selector, tlsa.MatchingType, tlsa.Certificate) {
+				invalid = true
+				continue
+			}
+			records = append(records, TLSARecord{
+				CertificateUsage:       tlsa.Usage,
+				Selector:               tlsa.Selector,
+				MatchingType:           tlsa.MatchingType,
+				CertificateAssociation: strings.ToLower(tlsa.Certificate),
+			})
 		}
-		if !validTLSAFields(tlsa.Usage, tlsa.Selector, tlsa.MatchingType, tlsa.Certificate) {
-			invalid = true
-			continue
+		if foundOwner {
+			return records, invalid, true
 		}
-		records = append(records, TLSARecord{
-			CertificateUsage:       tlsa.Usage,
-			Selector:               tlsa.Selector,
-			MatchingType:           tlsa.MatchingType,
-			CertificateAssociation: strings.ToLower(tlsa.Certificate),
-		})
+		alias, ok := dnsAliasTarget(message, currentOwner)
+		if !ok {
+			return records, invalid, !followedAlias || !hasAliasContinuation(message)
+		}
+		followedAlias = true
+		currentOwner = alias
 	}
-	return records, invalid
+	return records, invalid, false
 }
 
 func validTLSAFields(usage, selector, matchingType uint8, associationData string) bool {
+	if usage != 2 && usage != 3 {
+		return false
+	}
 	if selector > 1 || matchingType > 2 {
 		return false
 	}
@@ -124,7 +158,12 @@ func validTLSAFields(usage, selector, matchingType uint8, associationData string
 	}
 	switch matchingType {
 	case 0:
-		return len(decoded) > 0
+		if selector == 0 {
+			_, err := x509.ParseCertificate(decoded)
+			return err == nil
+		}
+		_, err := x509.ParsePKIXPublicKey(decoded)
+		return err == nil
 	case 1:
 		return len(decoded) == 32
 	case 2:
@@ -139,6 +178,9 @@ func validTLSACacheValue(value TLSACacheValue) bool {
 		return false
 	}
 	if value.State == TLSAStateSecureRecords && len(value.Records) == 0 {
+		return false
+	}
+	if (value.State == TLSAStateSecureAbsent || value.State == TLSAStateSecureUnusable) && len(value.Records) != 0 {
 		return false
 	}
 	for _, record := range value.Records {

@@ -70,6 +70,7 @@ func createNewDbConn(dbConfig *DBConfig) (*sql.DB, error) {
 
 	err = db.Ping()
 	if err != nil {
+		_ = db.Close()
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 

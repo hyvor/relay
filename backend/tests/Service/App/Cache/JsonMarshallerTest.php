@@ -34,4 +34,15 @@ class JsonMarshallerTest extends TestCase
         self::assertSame(['good' => 'true'], $values);
         self::assertSame(['bad'], $failed);
     }
+
+    public function test_rejects_values_larger_than_shared_cache_limit(): void
+    {
+        $marshaller = new JsonMarshaller();
+        $failed = null;
+
+        $values = $marshaller->marshall(['large' => str_repeat('x', 1024 * 1024)], $failed);
+
+        self::assertSame([], $values);
+        self::assertSame(['large'], $failed);
+    }
 }

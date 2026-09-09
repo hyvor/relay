@@ -12,13 +12,15 @@ import (
 )
 
 const (
-	sharedCacheNamespace    = "relay-shared-v1"
-	sharedCacheMaxItemIDLen = 255
+	sharedCacheNamespace       = "relay-shared-v1"
+	sharedCacheMaxItemIDLen    = 255
+	sharedCacheDatabaseTimeout = 2 * time.Second
 )
 
 type sharedCacheDatabaseEntry struct {
-	value []byte
-	found bool
+	value     []byte
+	found     bool
+	expiresAt time.Time
 }
 
 func sharedCacheItemID(key string) (string, error) {
@@ -37,6 +39,8 @@ func sharedCacheItemID(key string) (string, error) {
 }
 
 func (c *SharedCache) loadFromDatabase(ctx context.Context, key string) (sharedCacheDatabaseEntry, error) {
+	ctx, cancel := context.WithTimeout(ctx, sharedCacheDatabaseTimeout)
+	defer cancel()
 	db := c.database()
 	if db == nil {
 		return sharedCacheDatabaseEntry{}, nil
@@ -88,11 +92,12 @@ func (c *SharedCache) loadFromDatabase(ctx context.Context, key string) (sharedC
 		return sharedCacheDatabaseEntry{}, fmt.Errorf("invalid JSON in database cache value for %q", key)
 	}
 
-	c.memory.Set(key, value, remaining)
-	return sharedCacheDatabaseEntry{value: value, found: true}, nil
+	return sharedCacheDatabaseEntry{value: value, found: true, expiresAt: expiresAt}, nil
 }
 
 func (c *SharedCache) storeInDatabase(ctx context.Context, key string, value []byte, ttl time.Duration) error {
+	ctx, cancel := context.WithTimeout(ctx, sharedCacheDatabaseTimeout)
+	defer cancel()
 	db := c.database()
 	if db == nil {
 		return nil
@@ -116,6 +121,8 @@ func (c *SharedCache) storeInDatabase(ctx context.Context, key string, value []b
 }
 
 func (c *SharedCache) deleteFromDatabase(ctx context.Context, key string) error {
+	ctx, cancel := context.WithTimeout(ctx, sharedCacheDatabaseTimeout)
+	defer cancel()
 	db := c.database()
 	if db == nil {
 		return nil

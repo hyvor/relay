@@ -18,7 +18,7 @@ import (
 func TestSendEmail_Accepted(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
@@ -68,7 +68,7 @@ func TestSendEmail_Accepted(t *testing.T) {
 func TestSendEmail_500SmtpError(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
@@ -118,7 +118,7 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 func TestSendEmail_4xxSmtpError(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
@@ -168,7 +168,7 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
@@ -218,7 +218,7 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: context.DeadlineExceeded,
 			Steps:        []*SmtpStep{},
@@ -260,7 +260,7 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: context.DeadlineExceeded,
 			Steps:        []*SmtpStep{},
@@ -290,8 +290,8 @@ func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 
 	var rcptResult = result.RcptResults[0]
 	assert.Equal(t, 1, rcptResult.RecipientId)
-	assert.Equal(t, 0, rcptResult.Code)
-	assert.Equal(t, [3]int{0, 0, 0}, rcptResult.EnhancedCode)
+	assert.Equal(t, 400, rcptResult.Code)
+	assert.Equal(t, [3]int{4, 2, 1}, rcptResult.EnhancedCode)
 	assert.Equal(t, "context deadline exceeded", rcptResult.Message)
 
 	assert.Equal(t, "", result.RespondedMxHost)
@@ -328,8 +328,8 @@ func TestSendEmail_MxFailed(t *testing.T) {
 
 	var rcptResult = result.RcptResults[0]
 	assert.Equal(t, 4, rcptResult.RecipientId)
-	assert.Equal(t, 0, rcptResult.Code)
-	assert.Equal(t, [3]int{0, 0, 0}, rcptResult.EnhancedCode)
+	assert.Equal(t, 400, rcptResult.Code)
+	assert.Equal(t, [3]int{4, 2, 1}, rcptResult.EnhancedCode)
 	assert.Equal(t, "MX lookup failed: custom host error", rcptResult.Message)
 
 	assert.Equal(t, "", result.RespondedMxHost)
@@ -352,7 +352,7 @@ func TestSendEmailToHost_DaneRequiresStartTLS(t *testing.T) {
 		}, nil
 	}
 	cache := getProcessSharedCache()
-	assert.NoError(t, cache.Set(context.Background(), "mx:example.com", MxCacheValue{
+	assert.NoError(t, cache.Set(context.Background(), dnsCacheKey("mx", "example.com"), MxCacheValue{
 		Records: []MxRecord{{Host: "mx.example.com"}},
 		Secure:  true,
 	}, time.Minute))
@@ -368,13 +368,14 @@ func TestSendEmailToHost_DaneRequiresStartTLS(t *testing.T) {
 	t.Cleanup(func() {
 		lookupTLSAFunc = originalTLSA
 		createSmtpClient = originalCreateClient
-		_ = cache.Delete(context.Background(), "mx:example.com")
+		_ = cache.Delete(context.Background(), dnsCacheKey("mx", "example.com"))
 	})
 
 	conversation := sendEmailToHostHandler(
 		&SendRow{From: "sender@example.com", RawEmail: "Subject: test"},
 		[]*RecipientRow{{Id: 1, Address: "recipient@example.com"}},
 		"mx.example.com", "relay.example.com", "127.0.0.1", "relay.example.com",
+		true,
 	)
 
 	assert.ErrorIs(t, conversation.NetworkError, ErrDANEAuthentication)
@@ -424,6 +425,7 @@ func TestSendEmailToHost(t *testing.T) {
 		"relay.com",
 		"127.0.0.1",
 		"smtp.relay.com",
+		false,
 	)
 
 	assert.NoError(t, convo.NetworkError)
@@ -500,6 +502,7 @@ func TestSendEmailToHost_OneRecipientFails(t *testing.T) {
 		"relay.com",
 		"127.0.0.1",
 		"smtp.relay.com",
+		false,
 	)
 
 	assert.NoError(t, convo.NetworkError)
@@ -563,6 +566,7 @@ func TestSendEmailToHost_DataCloseFails_ReplacesRcptResult(t *testing.T) {
 		"relay.com",
 		"127.0.0.1",
 		"smtp.relay.com",
+		false,
 	)
 
 	assert.NoError(t, convo.NetworkError)
@@ -628,6 +632,7 @@ func TestSendEmailToHost_DataCloseFails_PreservesRcptRejection(t *testing.T) {
 		"relay.com",
 		"127.0.0.1",
 		"smtp.relay.com",
+		false,
 	)
 
 	assert.NoError(t, convo.NetworkError)
@@ -693,6 +698,7 @@ func TestSendEmailFailedSmtpStatus(t *testing.T) {
 		"relay.com",
 		"127.0.0.1",
 		"smtp.relay.com",
+		false,
 	)
 
 	assert.NoError(t, convo.NetworkError)

@@ -82,3 +82,11 @@ func TestDnsMessageTTLUsesSmallestAnswerOrAuthorityTTL(t *testing.T) {
 	}
 	assert.Equal(t, time.Minute, dnsMessageTTL(message))
 }
+
+func TestDnsMessageTTLUsesSoaMinimumForNegativeAnswers(t *testing.T) {
+	message := &dns.Msg{
+		Answer: nil,
+		Ns:     []dns.RR{&dns.SOA{Hdr: dns.RR_Header{Ttl: 300}, Minttl: 60}},
+	}
+	assert.Equal(t, time.Minute, dnsMessageTTL(message))
+}

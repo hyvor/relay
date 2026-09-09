@@ -15,7 +15,7 @@
 - default to Cloudflare's `https://cloudflare-dns.com/dns-query` endpoint
 - validate the DNS response question and reject redirects, invalid, oversized, or non-DNS responses
 - use the DNSSEC authenticated-data flag when supplied by the DoH resolver
-- cache MX records as JSON under `mx:<domain>` with TTL capped at one hour
+- cache MX records as JSON under a resolver-scoped `dns:v2:<resolver>:mx:<domain>` key with TTL capped at one hour
 - sort MX hosts by preference and reject Null MX records
 - fall back from an empty MX response to A, then AAAA records for implicit MX
 - DoH failures are SMTP MX lookup failures; cache failures do not fail delivery
@@ -23,10 +23,11 @@
 - retain the resolver's DNSSEC authenticated-data state in cached MX values
 - validate cached MX records before using them for delivery
 - query TLSA at `_25._tcp.<mx-host>` through the same DoH resolver
-- cache TLSA data under a versioned host-specific key with a one-hour TTL cap
+- cache TLSA data under a resolver-scoped, versioned host-specific key with a one-hour TTL cap
 - distinguish secure TLSA records, secure absence, secure unusable records, and insecure answers
 - do not treat transient DNS errors as authenticated TLSA absence
 - validate TLSA selectors, matching types, and association-data lengths before caching
+- support DANE-TA (usage 2) and DANE-EE (usage 3); classify other usages as secure but unusable
 - support TLSA certificate and SPKI selectors with full, SHA-256, and SHA-512 matching
 - allow DANE-EE authentication without public-CA validation
 - require certificate-chain validation for DANE-TA and PKIX TLSA usages
@@ -36,3 +37,5 @@
 - run DANE certificate verification during the TLS handshake, before `MAIL FROM`
 - treat missing STARTTLS, TLSA lookup failures, and certificate mismatches as temporary delivery failures on the first attempt
 - refresh the process cache database handle when email workers restart
+- treat DNS cache entries as scoped to the configured DoH endpoint
+- process-owned cache database handles close only after the email worker pool drains

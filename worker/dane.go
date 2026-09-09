@@ -14,9 +14,9 @@ var ErrDANEAuthentication = errors.New("DANE certificate authentication failed")
 
 // verifyDANECertificates evaluates TLSA records against the peer chain. The
 // peer slice contains the leaf followed by any certificates sent by the peer.
-// DANE-EE can authenticate without a public CA; DANE-TA and PKIX usages still
-// require ordinary chain verification.
-func verifyDANECertificates(peer []*x509.Certificate, records []TLSARecord, serverName string) error {
+// DANE-EE can authenticate without a public CA; DANE-TA requires ordinary
+// chain verification against the matched trust anchor.
+func verifyDANECertificates(peer []*x509.Certificate, records []TLSARecord, serverNames ...string) error {
 	if len(peer) == 0 {
 		return fmt.Errorf("%w: peer sent no certificates", ErrDANEAuthentication)
 	}
@@ -31,21 +31,8 @@ func verifyDANECertificates(peer []*x509.Certificate, records []TLSARecord, serv
 	}
 
 	for _, record := range records {
-		if record.CertificateUsage == 2 && matchesTrustAnchor(record, peer, serverName) {
+		if record.CertificateUsage == 2 && matchesTrustAnchor(record, peer, serverNames...) {
 			return nil
-		}
-	}
-
-	for _, record := range records {
-		switch record.CertificateUsage {
-		case 1:
-			if tlsaMatchesCertificate(record, peer[0]) && verifyPKIXChain(peer, serverName, nil) == nil {
-				return nil
-			}
-		case 0:
-			if matchesTrustAnchor(record, peer, serverName) {
-				return nil
-			}
 		}
 	}
 
@@ -80,20 +67,27 @@ func tlsaMatchesCertificate(record TLSARecord, certificate *x509.Certificate) bo
 	}
 }
 
-func matchesTrustAnchor(record TLSARecord, peer []*x509.Certificate, serverName string) bool {
+func matchesTrustAnchor(record TLSARecord, peer []*x509.Certificate, serverNames ...string) bool {
+	if record.Selector == 0 && record.MatchingType == 0 {
+		if association, err := hex.DecodeString(strings.TrimSpace(record.CertificateAssociation)); err == nil {
+			if anchor, err := x509.ParseCertificate(association); err == nil && verifyPKIXChain(peer, serverNames, anchor) == nil {
+				return true
+			}
+		}
+	}
 	for index := 1; index < len(peer); index++ {
 		candidate := peer[index]
 		if !tlsaMatchesCertificate(record, candidate) {
 			continue
 		}
-		if verifyPKIXChain(peer, serverName, candidate) == nil {
+		if verifyPKIXChain(peer, serverNames, candidate) == nil {
 			return true
 		}
 	}
 	return false
 }
 
-func verifyPKIXChain(peer []*x509.Certificate, serverName string, trustAnchor *x509.Certificate) error {
+func verifyPKIXChain(peer []*x509.Certificate, serverNames []string, trustAnchor *x509.Certificate) error {
 	if len(peer) == 0 {
 		return fmt.Errorf("%w: empty peer chain", ErrDANEAuthentication)
 	}
@@ -109,11 +103,18 @@ func verifyPKIXChain(peer []*x509.Certificate, serverName string, trustAnchor *x
 		roots.AddCert(trustAnchor)
 	}
 
-	_, err := peer[0].Verify(x509.VerifyOptions{
-		DNSName:       serverName,
-		Roots:         roots,
-		Intermediates: intermediates,
-		KeyUsages:     []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-	})
-	return err
+	var lastErr error
+	for _, serverName := range serverNames {
+		_, err := peer[0].Verify(x509.VerifyOptions{
+			DNSName:       serverName,
+			Roots:         roots,
+			Intermediates: intermediates,
+			KeyUsages:     []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		})
+		if err == nil {
+			return nil
+		}
+		lastErr = err
+	}
+	return lastErr
 }
