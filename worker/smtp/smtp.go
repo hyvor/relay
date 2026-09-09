@@ -157,7 +157,7 @@ func (c *Client) ehlo() CommandResult {
 func (c *Client) StartTLS(config *tls.Config) (CommandResult, CommandResult) {
 	tlsResult := c.cmd("STARTTLS")
 
-	if tlsResult.Err != nil {
+	if tlsResult.Err != nil || !tlsResult.CodeValid(220) {
 		return tlsResult, CommandResult{}
 	}
 
@@ -166,6 +166,15 @@ func (c *Client) StartTLS(config *tls.Config) (CommandResult, CommandResult) {
 	c.tls = true
 
 	return tlsResult, c.ehlo()
+}
+
+// ConnectionState returns the negotiated TLS state when the client is using TLS.
+func (c *Client) ConnectionState() (tls.ConnectionState, bool) {
+	connection, ok := c.conn.(*tls.Conn)
+	if !ok {
+		return tls.ConnectionState{}, false
+	}
+	return connection.ConnectionState(), true
 }
 
 // Mail issues a MAIL command to the server using the provided email address.

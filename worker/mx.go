@@ -62,7 +62,7 @@ func getMxHostsFromDomainContext(ctx context.Context, cache *SharedCache, domain
 	mxCache.mu.RLock()
 	legacyEntry, legacyFound := mxCache.data[domain]
 	mxCache.mu.RUnlock()
-	if legacyFound && legacyEntry.Expiry.After(time.Now()) {
+	if legacyFound && legacyEntry.Expiry.After(time.Now()) && len(legacyEntry.Hosts) > 0 {
 		return legacyEntry.Hosts, nil
 	}
 
@@ -157,6 +157,15 @@ func getHostsFromMxCacheValue(value MxCacheValue) []string {
 		hosts = append(hosts, record.Host)
 	}
 	return hosts
+}
+
+func cachedMxIsSecure(ctx context.Context, cache *SharedCache, domain string) bool {
+	if domain == "" {
+		return false
+	}
+	var value MxCacheValue
+	found, err := cache.Get(ctx, "mx:"+domain, &value)
+	return err == nil && found && validMxCacheValue(value) && value.Secure
 }
 
 func hasAddressRecords(message *dns.Msg, domain string) bool {

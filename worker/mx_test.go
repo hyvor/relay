@@ -13,9 +13,12 @@ import (
 
 func withDNSLookupStub(t *testing.T, stub func(context.Context, string, uint16) (DNSLookupResult, error)) {
 	original := lookupDNSFunc
+	originalTLSA := lookupTLSAFunc
 	lookupDNSFunc = stub
+	lookupTLSAFunc = lookupTLSA
 	t.Cleanup(func() {
 		lookupDNSFunc = original
+		lookupTLSAFunc = originalTLSA
 	})
 }
 

@@ -49,8 +49,9 @@ func getProcessSharedCache() *SharedCache {
 	return processSharedCache.value
 }
 
-// ConfigureProcessSharedCache attaches the process cache to a database. The
-// first worker connection is enough because *sql.DB is safe for concurrent use.
+// ConfigureProcessSharedCache attaches the process cache to the current worker
+// database. Workers may be restarted, so the handle must be refreshed rather
+// than retaining a connection that a previous worker closed.
 func ConfigureProcessSharedCache(db *sql.DB) {
 	processSharedCache.Lock()
 	defer processSharedCache.Unlock()
@@ -64,9 +65,7 @@ func ConfigureProcessSharedCache(db *sql.DB) {
 func (c *SharedCache) setDatabase(db *sql.DB) {
 	c.dbMu.Lock()
 	defer c.dbMu.Unlock()
-	if c.db == nil {
-		c.db = db
-	}
+	c.db = db
 }
 
 func (c *SharedCache) database() *sql.DB {
