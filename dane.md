@@ -27,3 +27,7 @@
 - distinguish secure TLSA records, secure absence, secure unusable records, and insecure answers
 - do not treat transient DNS errors as authenticated TLSA absence
 - validate TLSA selectors, matching types, and association-data lengths before caching
+- support TLSA certificate and SPKI selectors with full, SHA-256, and SHA-512 matching
+- allow DANE-EE authentication without public-CA validation
+- require certificate-chain validation for DANE-TA and PKIX TLSA usages
+- never treat a TLSA association mismatch as a reason to downgrade to plaintext
