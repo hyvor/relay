@@ -55,7 +55,7 @@ func lookupTLSA(ctx context.Context, cache *SharedCache, host string) (TLSAResul
 	var cached TLSACacheValue
 	if found, err := cache.Get(ctx, cacheKey, &cached); err == nil && found {
 		if validTLSACacheValue(cached) {
-			return TLSAResult{State: cached.State, Records: cached.Records}, nil
+			return TLSAResult(cached), nil
 		}
 		_ = cache.Delete(ctx, cacheKey)
 	}
@@ -92,7 +92,7 @@ func lookupTLSA(ctx context.Context, cache *SharedCache, host string) (TLSAResul
 	}
 
 	cacheTLSAValue(ctx, cache, cacheKey, value, result.TTL)
-	return TLSAResult{State: value.State, Records: value.Records}, nil
+	return TLSAResult(value), nil
 }
 
 func hasCNAMEAnswer(message *dns.Msg) bool {
