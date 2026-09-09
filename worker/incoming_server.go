@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/mail"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/emersion/go-sasl"
@@ -90,6 +91,14 @@ func (s *Session) Mail(from string, opts *smtp.MailOptions) error {
 }
 
 func (s *Session) Rcpt(to string, opts *smtp.RcptOptions) error {
+	if s.incomingMail.RcptTo != "" {
+		return &smtp.SMTPError{
+			Code:         452,
+			EnhancedCode: smtp.EnhancedCode{4, 5, 3},
+			Message:      "only one recipient is supported",
+		}
+	}
+
 	parsed, err := mail.ParseAddress(to)
 
 	if err != nil {
@@ -126,30 +135,44 @@ func (s *Session) Data(r io.Reader) error {
 		return err
 	}
 
+	mailSnapshot := s.incomingMail
+	mailSnapshot.Data = append([]byte(nil), b...)
+
 	s.logger.Debug("Received email",
-		"MAIL", s.incomingMail.MailFrom,
-		"RCPT", s.incomingMail.RcptTo,
+		"MAIL", mailSnapshot.MailFrom,
+		"RCPT", mailSnapshot.RcptTo,
 		"data", string(b),
 	)
 
-	s.incomingMail.Data = b
-
-	if s.incomingMail.HasApiKey() {
-		return forwardEmailToApi(s.ctx, s.logger, s.metrics, &s.incomingMail)
-	} else {
-		s.mailChannel <- &s.incomingMail
+	ctx := s.ctx
+	if ctx == nil {
+		ctx = context.Background()
 	}
 
-	return nil
+	if mailSnapshot.HasApiKey() {
+		return forwardEmailToApi(ctx, s.logger, s.metrics, &mailSnapshot)
+	}
+
+	select {
+	case s.mailChannel <- &mailSnapshot:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
-func (s *Session) Reset() {}
+func (s *Session) Reset() {
+	s.incomingMail.MailFrom = ""
+	s.incomingMail.RcptTo = ""
+	s.incomingMail.Data = nil
+}
 
 func (s *Session) Logout() error {
 	return nil
 }
 
 type IncomingMailServer struct {
+	mu      sync.Mutex
 	ctx     context.Context
 	logger  *slog.Logger
 	metrics *Metrics
@@ -179,29 +202,35 @@ func (server *IncomingMailServer) Set(instanceDomain string, numWorkers int, mai
 }
 
 func (server *IncomingMailServer) Shutdown() {
-
+	server.mu.Lock()
+	// DATA handlers use the worker lifecycle context, so cancel it before
+	// waiting for active SMTP connections to finish.
 	if server.workersCancelFunc != nil {
 		server.workersCancelFunc()
 		server.workersCancelFunc = nil
 	}
 
+	smtpServer1 := server.smtpServer1
+	server.smtpServer1 = nil
+	smtpServer2 := server.smtpServer2
+	server.smtpServer2 = nil
+	server.mu.Unlock()
+
 	shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCtxCancel()
 
-	if server.smtpServer1 != nil {
-		err := server.smtpServer1.Shutdown(shutdownCtx)
+	if smtpServer1 != nil {
+		err := smtpServer1.Shutdown(shutdownCtx)
 		if err != nil {
 			server.logger.Error("Failed to shutdown SMTP server", "error", err)
 		}
-		server.smtpServer1 = nil
 	}
 
-	if server.smtpServer2 != nil {
-		err := server.smtpServer2.Shutdown(shutdownCtx)
+	if smtpServer2 != nil {
+		err := smtpServer2.Shutdown(shutdownCtx)
 		if err != nil {
 			server.logger.Error("Failed to shutdown SMTP server", "error", err)
 		}
-		server.smtpServer2 = nil
 	}
 
 }
@@ -216,7 +245,9 @@ func (server *IncomingMailServer) StartChannelAndSmtpServers(instanceDomain stri
 
 	// worker context
 	workerCtx, cancel := context.WithCancel(server.ctx)
+	server.mu.Lock()
 	server.workersCancelFunc = cancel
+	server.mu.Unlock()
 
 	for i := 0; i < numWorkers; i++ {
 		go incomingMailWorker(
@@ -228,12 +259,13 @@ func (server *IncomingMailServer) StartChannelAndSmtpServers(instanceDomain stri
 		)
 	}
 
-	go server.StartSmtpServer(smtpServerPort1, instanceDomain, mailTls, mailChannel, 1)
-	go server.StartSmtpServer(smtpServerPort2, instanceDomain, mailTls, mailChannel, 2)
+	go server.StartSmtpServer(workerCtx, smtpServerPort1, instanceDomain, mailTls, mailChannel, 1)
+	go server.StartSmtpServer(workerCtx, smtpServerPort2, instanceDomain, mailTls, mailChannel, 2)
 
 }
 
 func (server *IncomingMailServer) StartSmtpServer(
+	ctx context.Context,
 	port string,
 	instanceDomain string,
 	mailTls GoStateMailTls,
@@ -242,7 +274,7 @@ func (server *IncomingMailServer) StartSmtpServer(
 ) {
 
 	be := &IncomingBackend{
-		ctx:            server.ctx,
+		ctx:            ctx,
 		logger:         server.logger,
 		instanceDomain: instanceDomain,
 		mailChannel:    mailChannel,
@@ -256,15 +288,13 @@ func (server *IncomingMailServer) StartSmtpServer(
 	smtpServer.WriteTimeout = 60 * time.Second
 	smtpServer.ReadTimeout = 60 * time.Second
 	smtpServer.MaxMessageBytes = 1024 * 1024
-	smtpServer.MaxRecipients = 10
-	smtpServer.AllowInsecureAuth = true
+	smtpServer.MaxRecipients = 1
+	smtpServer.AllowInsecureAuth = false
 
 	if mailTls.Enabled {
 		cert, err := tls.X509KeyPair([]byte(mailTls.Certificate), []byte(mailTls.PrivateKey))
 
 		if err != nil {
-			server.logger.Info("cert", "certificate", mailTls.Certificate)
-			server.logger.Info("cert", "privateKey", mailTls.PrivateKey)
 			server.logger.Error("Failed to load TLS certificate for incoming mail server", "error", err)
 			return
 		}
@@ -275,11 +305,17 @@ func (server *IncomingMailServer) StartSmtpServer(
 		}
 	}
 
+	server.mu.Lock()
+	if ctx.Err() != nil {
+		server.mu.Unlock()
+		return
+	}
 	if serverNumber == 1 {
 		server.smtpServer1 = smtpServer
 	} else if serverNumber == 2 {
 		server.smtpServer2 = smtpServer
 	}
+	server.mu.Unlock()
 
 	server.logger.Info("Starting incoming mail server at " + smtpServer.Addr)
 	if err := smtpServer.ListenAndServe(); err != nil {

@@ -61,6 +61,19 @@ func TestDANEVerifyDaneTrustAnchor(t *testing.T) {
 	assert.NoError(t, verifyDANECertificates([]*x509.Certificate{leaf, root}, []TLSARecord{record}, "mail.example.com"))
 }
 
+func TestDANEVerifyFullTrustAnchorNotSentByPeer(t *testing.T) {
+	root, rootKey := testCertificate(t, true, nil, nil)
+	leaf, _ := testCertificate(t, false, root, rootKey)
+	record := TLSARecord{
+		CertificateUsage:       2,
+		Selector:               0,
+		MatchingType:           0,
+		CertificateAssociation: hex.EncodeToString(root.Raw),
+	}
+
+	assert.NoError(t, verifyDANECertificates([]*x509.Certificate{leaf}, []TLSARecord{record}, "mail.example.com"))
+}
+
 func testCertificate(t *testing.T, isCA bool, issuer *x509.Certificate, issuerKey *rsa.PrivateKey) (*x509.Certificate, *rsa.PrivateKey) {
 	t.Helper()
 	key, err := rsa.GenerateKey(rand.Reader, 2048)

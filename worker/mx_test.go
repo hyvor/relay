@@ -88,7 +88,7 @@ func TestMxCacheUsesOneHourMaximumTTL(t *testing.T) {
 	t.Cleanup(cache.Close)
 	cacheMxValue(context.Background(), cache, "hyvor.com", MxCacheValue{Records: []MxRecord{{Host: "mx.hyvor.com"}}}, 2*time.Hour)
 
-	item := cache.memory.Get("mx:hyvor.com")
+	item := cache.memory.Get(dnsCacheKey("mx", "hyvor.com"))
 	require.NotNil(t, item)
 	assert.WithinDuration(t, time.Now().Add(time.Hour), item.ExpiresAt(), 2*time.Second)
 }
@@ -152,4 +152,21 @@ func TestMxLookupFallsBackToAAAA(t *testing.T) {
 	hosts, err := getMxHostsFromDomainContext(context.Background(), NewSharedCache(nil), "example.com")
 	require.NoError(t, err)
 	assert.Equal(t, []string{"example.com"}, hosts)
+}
+
+func TestMxLookupFollowsCname(t *testing.T) {
+	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
+		require.Equal(t, dns.TypeMX, recordType)
+		return DNSLookupResult{Message: &dns.Msg{
+			MsgHdr: dns.MsgHdr{Rcode: dns.RcodeSuccess},
+			Answer: []dns.RR{
+				&dns.CNAME{Hdr: dns.RR_Header{Name: "example.com.", Rrtype: dns.TypeCNAME, Class: dns.ClassINET}, Target: "canonical.example."},
+				&dns.MX{Hdr: dns.RR_Header{Name: "canonical.example.", Rrtype: dns.TypeMX, Class: dns.ClassINET}, Mx: "mx.example.", Preference: 10},
+			},
+		}, TTL: time.Minute}, nil
+	})
+
+	hosts, err := getMxHostsFromDomainContext(context.Background(), NewSharedCache(nil), "example.com")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"mx.example"}, hosts)
 }

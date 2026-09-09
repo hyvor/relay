@@ -10,12 +10,13 @@ import (
 )
 
 type EmailWorkersPool struct {
-	ctx        context.Context
-	mu         sync.Mutex
-	wg         sync.WaitGroup
-	cancelFunc context.CancelFunc
-	logger     *slog.Logger
-	metrics    *Metrics
+	ctx         context.Context
+	mu          sync.Mutex
+	lifecycleMu sync.Mutex
+	wg          sync.WaitGroup
+	cancelFunc  context.CancelFunc
+	logger      *slog.Logger
+	metrics     *Metrics
 }
 
 func NewEmailWorkersPool(
@@ -45,7 +46,9 @@ func (pool *EmailWorkersPool) Set(
 	instanceDomain string,
 ) {
 
-	pool.StopWorkers()
+	pool.lifecycleMu.Lock()
+	defer pool.lifecycleMu.Unlock()
+	pool.stopWorkers()
 
 	pool.mu.Lock()
 	defer pool.mu.Unlock()
@@ -79,6 +82,12 @@ func (pool *EmailWorkersPool) Set(
 }
 
 func (pool *EmailWorkersPool) StopWorkers() {
+	pool.lifecycleMu.Lock()
+	defer pool.lifecycleMu.Unlock()
+	pool.stopWorkers()
+}
+
+func (pool *EmailWorkersPool) stopWorkers() {
 
 	pool.mu.Lock()
 	defer pool.mu.Unlock()
@@ -89,6 +98,7 @@ func (pool *EmailWorkersPool) StopWorkers() {
 	}
 
 	pool.wg.Wait()
+	CloseProcessSharedCache()
 
 }
 
@@ -115,6 +125,7 @@ type EmailWorker struct {
 		recipients []*RecipientRow,
 		sendTx *SendTransaction,
 	)
+	SendEmailContextFunc func(context.Context, *SendRow, []*RecipientRow, string, string, int, string, string) *SendResult
 }
 
 var NewEmailWorker = newEmailWorker
@@ -152,6 +163,7 @@ func newEmailWorker(
 	worker.FetchContentFunc = worker.fetchContent
 	worker.ProcessSendFunc = worker.processSend
 	worker.AttemptSendToDomainFunc = worker.attemptSendToDomain
+	worker.SendEmailContextFunc = sendEmailHandlerContext
 
 	return worker
 }
@@ -168,8 +180,9 @@ func (worker *EmailWorker) Start() {
 	if err != nil {
 		return
 	}
-	defer conn.Close()
-	ConfigureProcessSharedCache(conn)
+	if !ConfigureProcessSharedCache(conn) {
+		defer conn.Close()
+	}
 
 	for {
 
@@ -284,10 +297,13 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 	// otherwise it is set to the new try count for requeuing
 	requeingTryCount := 0
 
+	var attemptErr error
 	for attempt := range attemptCh {
 		if attempt.Error != nil {
-			sendTx.Rollback()
-			return attempt.Error
+			if attemptErr == nil {
+				attemptErr = attempt.Error
+			}
+			continue
 		} else {
 			sendAttemptIds = append(sendAttemptIds, attempt.SendAttemptId)
 
@@ -304,6 +320,10 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 				requeingTryCount = attempt.result.NewTryCount
 			}
 		}
+	}
+	if attemptErr != nil {
+		sendTx.Rollback()
+		return attemptErr
 	}
 
 	if requeingTryCount > 0 {
@@ -326,7 +346,7 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 		return commitErr
 	}
 
-	go notifySendAttemptsToSymfony(worker.ctx, sendAttemptIds, worker.logger)
+	notifySendAttemptsToSymfony(worker.ctx, sendAttemptIds, worker.logger)
 
 	time.Sleep(50 * time.Millisecond)
 
@@ -353,15 +373,12 @@ func (worker *EmailWorker) attemptSendToDomain(
 		"recipients", len(recipients),
 	)
 
-	result := sendEmail(
-		send,
-		recipients,
-		domain,
-		worker.instanceDomain,
-		worker.ip.Id,
-		worker.ip.Ip,
-		worker.ip.Ptr,
-	)
+	var result *SendResult
+	if worker.SendEmailContextFunc != nil {
+		result = worker.SendEmailContextFunc(worker.ctx, send, recipients, domain, worker.instanceDomain, worker.ip.Id, worker.ip.Ip, worker.ip.Ptr)
+	} else {
+		result = sendEmail(send, recipients, domain, worker.instanceDomain, worker.ip.Id, worker.ip.Ip, worker.ip.Ptr)
+	}
 
 	// get the lock before calling the DB
 	domainQueryMutex.Lock()

@@ -6,6 +6,8 @@ use Symfony\Component\Cache\Marshaller\MarshallerInterface;
 
 final class JsonMarshaller implements MarshallerInterface
 {
+    private const MAX_VALUE_SIZE = 1024 * 1024;
+
     /**
      * @param array<string, mixed> $values
      * @param array<int, string>|null $failed
@@ -19,7 +21,11 @@ final class JsonMarshaller implements MarshallerInterface
 
         foreach ($values as $key => $value) {
             try {
-                $serialized[$key] = json_encode($value, JSON_THROW_ON_ERROR);
+                $encoded = json_encode($value, JSON_THROW_ON_ERROR);
+                if (strlen($encoded) > self::MAX_VALUE_SIZE) {
+                    throw new \JsonException('Cache value is too large');
+                }
+                $serialized[$key] = $encoded;
             } catch (\JsonException) {
                 $failed[] = $key;
             }

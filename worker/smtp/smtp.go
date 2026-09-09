@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/textproto"
 	"strings"
+	"time"
 )
 
 // A Client represents a client connection to an SMTP server.
@@ -30,6 +31,12 @@ type Client struct {
 	localName   string        // the name to use in HELO/EHLO
 	helloResult CommandResult // result of the last hello command
 	didHello    bool          // whether we've said HELO/EHLO
+}
+
+// SetDeadline limits the next SMTP operation, including TLS handshakes and
+// DATA writes. Callers should refresh it before each operation.
+func (c *Client) SetDeadline(deadline time.Time) error {
+	return c.conn.SetDeadline(deadline)
 }
 
 // Dial returns a new [Client] connected to an SMTP server at addr.
@@ -219,7 +226,10 @@ type dataCloser struct {
 func (d *dataCloser) Close() CommandResult {
 	commandResult := CommandResult{}
 
-	d.WriteCloser.Close()
+	if err := d.WriteCloser.Close(); err != nil {
+		commandResult.Err = err
+		return commandResult
+	}
 	code, msg, err := d.c.Text.ReadResponse(0)
 
 	if err != nil {

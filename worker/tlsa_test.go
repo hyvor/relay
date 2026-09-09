@@ -105,6 +105,47 @@ func TestLookupTLSASecureInvalidRecordsAreNotAbsence(t *testing.T) {
 	assert.Empty(t, result.Records)
 }
 
+func TestLookupTLSAUnsupportedUsageIsUnusable(t *testing.T) {
+	withDNSLookupStub(t, func(_ context.Context, name string, _ uint16) (DNSLookupResult, error) {
+		return DNSLookupResult{
+			Message: tlsaMessage(name, &dns.TLSA{
+				Hdr:          dns.RR_Header{Rrtype: dns.TypeTLSA},
+				Usage:        1,
+				Selector:     1,
+				MatchingType: 1,
+				Certificate:  strings.Repeat("ab", 32),
+			}),
+			Secure: true,
+			TTL:    time.Minute,
+		}, nil
+	})
+
+	result, err := lookupTLSA(context.Background(), NewSharedCache(nil), "mx.example.com")
+	require.NoError(t, err)
+	assert.Equal(t, TLSAStateSecureUnusable, result.State)
+}
+
+func TestLookupTLSAFollowsCname(t *testing.T) {
+	withDNSLookupStub(t, func(_ context.Context, name string, _ uint16) (DNSLookupResult, error) {
+		return DNSLookupResult{
+			Message: &dns.Msg{
+				MsgHdr: dns.MsgHdr{Rcode: dns.RcodeSuccess},
+				Answer: []dns.RR{
+					&dns.CNAME{Hdr: dns.RR_Header{Name: dns.Fqdn(name), Rrtype: dns.TypeCNAME, Class: dns.ClassINET}, Target: "shared.example."},
+					&dns.TLSA{Hdr: dns.RR_Header{Name: "shared.example.", Rrtype: dns.TypeTLSA, Class: dns.ClassINET}, Usage: 3, Selector: 1, MatchingType: 1, Certificate: strings.Repeat("ab", 32)},
+				},
+			},
+			Secure: true,
+			TTL:    time.Minute,
+		}, nil
+	})
+
+	result, err := lookupTLSA(context.Background(), NewSharedCache(nil), "mx.example.com")
+	require.NoError(t, err)
+	assert.Equal(t, TLSAStateSecureRecords, result.State)
+	assert.Len(t, result.Records, 1)
+}
+
 func TestLookupTLSARejectsTransientDnsFailure(t *testing.T) {
 	withDNSLookupStub(t, func(_ context.Context, _ string, _ uint16) (DNSLookupResult, error) {
 		return DNSLookupResult{Message: &dns.Msg{MsgHdr: dns.MsgHdr{Rcode: dns.RcodeServerFailure}}}, nil

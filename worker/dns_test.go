@@ -25,7 +25,7 @@ func (f *fakeResponseWriter) TsigStatus() error         { return nil }
 func (f *fakeResponseWriter) TsigTimersOnly(bool)       {}
 func (f *fakeResponseWriter) Hijack()                   {}
 
-func getAnswer(dnsServer DnsServer, query string, dnsType uint16) ([]dns.RR, error) {
+func getAnswer(dnsServer *DnsServer, query string, dnsType uint16) ([]dns.RR, error) {
 
 	req := new(dns.Msg)
 	req.SetQuestion(query, dnsType)
@@ -99,7 +99,7 @@ func TestHandleDNSRequest(t *testing.T) {
 		metrics: newMetrics(),
 	}
 
-	answer, err := getAnswer(dnsServer, "smtp1.relay.hyvor.com.", dns.TypeA)
+	answer, err := getAnswer(&dnsServer, "smtp1.relay.hyvor.com.", dns.TypeA)
 	assert.NoError(t, err)
 	assert.Len(t, answer, 2)
 	aRecord1, ok := answer[0].(*dns.A)
@@ -109,14 +109,14 @@ func TestHandleDNSRequest(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "2.2.2.2", aRecord2.A.String())
 
-	answerAAAA, err := getAnswer(dnsServer, "smtp1.relay.hyvor.com.", dns.TypeAAAA)
+	answerAAAA, err := getAnswer(&dnsServer, "smtp1.relay.hyvor.com.", dns.TypeAAAA)
 	assert.NoError(t, err)
 	assert.Len(t, answerAAAA, 1)
 	aaaaRecord, ok := answerAAAA[0].(*dns.AAAA)
 	assert.True(t, ok)
 	assert.Equal(t, "2001:db8::1", aaaaRecord.AAAA.String())
 
-	answerCNAME, err := getAnswer(dnsServer, "blog.relay.hyvor.com.", dns.TypeCNAME)
+	answerCNAME, err := getAnswer(&dnsServer, "blog.relay.hyvor.com.", dns.TypeCNAME)
 	assert.NoError(t, err)
 	assert.Len(t, answerCNAME, 1)
 	cnameRecord, ok := answerCNAME[0].(*dns.CNAME)
@@ -124,7 +124,7 @@ func TestHandleDNSRequest(t *testing.T) {
 	assert.Equal(t, "hyvorblogs.io.", cnameRecord.Target)
 	assert.Equal(t, uint32(300), cnameRecord.Hdr.Ttl)
 
-	answerMX, err := getAnswer(dnsServer, "relay.hyvor.com.", dns.TypeMX)
+	answerMX, err := getAnswer(&dnsServer, "relay.hyvor.com.", dns.TypeMX)
 	assert.NoError(t, err)
 	assert.Len(t, answerMX, 2)
 	mxRecord1, ok := answerMX[0].(*dns.MX)
@@ -136,7 +136,7 @@ func TestHandleDNSRequest(t *testing.T) {
 	assert.Equal(t, "mx2.relay.hyvor.com.", mxRecord2.Mx)
 	assert.Equal(t, uint16(20), mxRecord2.Preference)
 
-	answerTXT, err := getAnswer(dnsServer, "relay.hyvor.com.", dns.TypeTXT)
+	answerTXT, err := getAnswer(&dnsServer, "relay.hyvor.com.", dns.TypeTXT)
 	assert.NoError(t, err)
 	assert.Len(t, answerTXT, 1)
 	txtRecord, ok := answerTXT[0].(*dns.TXT)
@@ -144,7 +144,7 @@ func TestHandleDNSRequest(t *testing.T) {
 	assert.Equal(t, "v=spf1 ip4:1.1.1.1 ip4:2.2.2.2 -all", txtRecord.Txt[0])
 
 	// Test for non-existing record
-	_, err = getAnswer(dnsServer, "nonexistent.relay.hyvor.com.", dns.TypeA)
+	_, err = getAnswer(&dnsServer, "nonexistent.relay.hyvor.com.", dns.TypeA)
 	assert.Error(t, err)
 
 }

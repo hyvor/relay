@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -16,6 +18,19 @@ import (
 
 	"github.com/miekg/dns"
 )
+
+func dnsResolverCacheIdentity() string {
+	endpoint := defaultDoHURL
+	if outboundDNSResolver != nil && outboundDNSResolver.URL != "" {
+		endpoint = outboundDNSResolver.URL
+	}
+	hash := sha256.Sum256([]byte(endpoint))
+	return hex.EncodeToString(hash[:8])
+}
+
+func dnsCacheKey(kind, name string) string {
+	return "dns:v2:" + dnsResolverCacheIdentity() + ":" + kind + ":" + name
+}
 
 const (
 	defaultDoHURL       = "https://cloudflare-dns.com/dns-query"
@@ -134,8 +149,21 @@ func (r *DoHResolver) Lookup(ctx context.Context, name string, recordType uint16
 func dnsMessageTTL(message *dns.Msg) time.Duration {
 	var ttl uint32
 	set := false
+	negative := message.Rcode != dns.RcodeSuccess || len(message.Answer) == 0
+	for _, record := range message.Answer {
+		if _, ok := record.(*dns.CNAME); !ok {
+			negative = false
+			break
+		}
+		negative = true
+	}
 	for _, record := range append(append([]dns.RR{}, message.Answer...), message.Ns...) {
 		current := record.Header().Ttl
+		if negative {
+			if soa, ok := record.(*dns.SOA); ok && soa.Minttl < current {
+				current = soa.Minttl
+			}
+		}
 		if !set || current < ttl {
 			ttl = current
 			set = true
