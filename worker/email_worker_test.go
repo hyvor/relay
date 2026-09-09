@@ -269,16 +269,16 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 					result: &SendResult{
 						RcptResults: []*RcptResult{
 							{
-								RecipientId: rcpt1Id,
-								Code:        250,
+								RecipientId:  rcpt1Id,
+								Code:         250,
 								EnhancedCode: [3]int{2, 0, 0},
-								Message:     "OK",
+								Message:      "OK",
 							},
 							{
-								RecipientId: rcpt2Id,
-								Code:        250,
+								RecipientId:  rcpt2Id,
+								Code:         250,
 								EnhancedCode: [3]int{2, 0, 0},
-								Message:     "OK",
+								Message:      "OK",
 							},
 						},
 					},
@@ -290,10 +290,10 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 					result: &SendResult{
 						RcptResults: []*RcptResult{
 							{
-								RecipientId: rcpt3Id,
-								Code:        250,
+								RecipientId:  rcpt3Id,
+								Code:         250,
 								EnhancedCode: [3]int{2, 0, 0},
-								Message: "OK",
+								Message:      "OK",
 							},
 						},
 					},
@@ -305,11 +305,13 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 	var localApiMethod string
 	var localApiEndpoint string
 	var localApiBody interface{}
+	var localApiContext context.Context
 
 	originalCallLocalApi := CallLocalApi
 	defer func() { CallLocalApi = originalCallLocalApi }()
 
 	CallLocalApi = func(ctx context.Context, method, endpoint string, body, responseJsonObject interface{}) error {
+		localApiContext = ctx
 		localApiMethod = method
 		localApiEndpoint = endpoint
 		localApiBody = body
@@ -338,6 +340,9 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 
 	assert.Equal(t, "POST", localApiMethod)
 	assert.Equal(t, "/send-attempts/done", localApiEndpoint)
+	deadline, hasDeadline := localApiContext.Deadline()
+	assert.True(t, hasDeadline)
+	assert.WithinDuration(t, time.Now().Add(sendAttemptsNotificationTimeout), deadline, 100*time.Millisecond)
 	bodyMap, ok := localApiBody.(map[string]interface{})
 	assert.True(t, ok)
 	sendAttemptIds, ok := bodyMap["send_attempt_ids"].([]int)
@@ -350,6 +355,33 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, updatedSend.Queued)
 
+}
+
+func TestNotifySendAttemptsToSymfony_CancelsStalledApiCall(t *testing.T) {
+	originalCallLocalApi := CallLocalApi
+	originalTimeout := sendAttemptsNotificationTimeout
+	defer func() {
+		CallLocalApi = originalCallLocalApi
+		sendAttemptsNotificationTimeout = originalTimeout
+	}()
+
+	sendAttemptsNotificationTimeout = 10 * time.Millisecond
+	apiCanceled := make(chan struct{})
+	CallLocalApi = func(ctx context.Context, method, endpoint string, body, responseJsonObject interface{}) error {
+		<-ctx.Done()
+		close(apiCanceled)
+		return ctx.Err()
+	}
+
+	start := time.Now()
+	notifySendAttemptsToSymfony(context.Background(), []int{1}, slogDiscard())
+
+	assert.Less(t, time.Since(start), time.Second)
+	select {
+	case <-apiCanceled:
+	case <-time.After(time.Second):
+		t.Fatal("stalled API call was not canceled")
+	}
 }
 
 func TestEmailWorker_ProcessSend_Requeuing(t *testing.T) {
@@ -397,10 +429,10 @@ func TestEmailWorker_ProcessSend_Requeuing(t *testing.T) {
 				result: &SendResult{
 					RcptResults: []*RcptResult{
 						{
-							RecipientId: rcptId,
-							Code:        450,
+							RecipientId:  rcptId,
+							Code:         450,
 							EnhancedCode: [3]int{4, 2, 0},
-							Message:     "Try again later",
+							Message:      "Try again later",
 						},
 					},
 					NewTryCount: 1,
@@ -470,14 +502,26 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 	ipAddressId, err := factory.IpAddress()
 	assert.NoError(t, err)
 
+	workerContext := context.Background()
 	worker := &EmailWorker{
-		ctx:    context.Background(),
+		ctx:    workerContext,
 		logger: slogDiscard(),
 		ip: GoStateIp{
 			Id:      ipAddressId,
 			QueueId: send.QueueId,
 		},
 		metrics: newMetrics(),
+		SendEmailContextFunc: func(
+			ctx context.Context,
+			send *SendRow,
+			recipients []*RecipientRow,
+			rcptDomain, instanceDomain string,
+			ipId int,
+			ip, ptr string,
+		) *SendResult {
+			assert.Equal(t, workerContext, ctx)
+			return sendEmail(send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr)
+		},
 	}
 
 	sendEmail = func(
@@ -496,21 +540,17 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 			ResolvedMxHosts: []string{"mx1.hyvor.com", "mx2.hyvor.com"},
 			RcptResults: []*RcptResult{
 				{
-					RecipientId: recipientId,
-					Code:        250,
+					RecipientId:  recipientId,
+					Code:         250,
 					EnhancedCode: [3]int{2, 0, 0},
-					Message:     "OK",
+					Message:      "OK",
 				},
 			},
 		}
 	}
 
-	chData := make([]AttemptData, 0)
-	go func() {
-		for data := range attemptCh {
-			chData = append(chData, data)
-		}
-	}()
+	dataCh := make(chan AttemptData, 1)
+	go func() { dataCh <- <-attemptCh }()
 
 	wg.Add(1)
 	worker.attemptSendToDomain(
@@ -523,10 +563,7 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 		sendTx,
 	)
 	wg.Wait()
-	time.Sleep(20 * time.Millisecond)
-
-	assert.Equal(t, 1, len(chData))
-	data := chData[0]
+	data := <-dataCh
 	assert.NotZero(t, data.SendAttemptId)
 	assert.NoError(t, data.Error)
 

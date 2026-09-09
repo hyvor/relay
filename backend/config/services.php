@@ -74,6 +74,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ]);
     $services
         ->set(SharedCache::class)
+        ->public()
         ->arg('$pool', service('cache.shared'));
 
     // Lock store shares Doctrine's managed `default` connection (instead of opening its

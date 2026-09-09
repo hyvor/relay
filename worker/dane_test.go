@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/hex"
@@ -74,7 +75,55 @@ func TestDANEVerifyFullTrustAnchorNotSentByPeer(t *testing.T) {
 	assert.NoError(t, verifyDANECertificates([]*x509.Certificate{leaf}, []TLSARecord{record}, "mail.example.com"))
 }
 
+func TestDANEVerifyTrustAnchorRejectsMissingReferenceIdentifier(t *testing.T) {
+	root, rootKey := testCertificate(t, true, nil, nil)
+	leaf, _ := testCertificate(t, false, root, rootKey)
+	record := TLSARecord{CertificateUsage: 2, Selector: 0, MatchingType: 1, CertificateAssociation: hex.EncodeToString(sha256Bytes(root.Raw))}
+
+	assert.ErrorIs(t, verifyDANECertificates([]*x509.Certificate{leaf, root}, []TLSARecord{record}), ErrDANEAuthentication)
+	assert.ErrorIs(t, verifyDANECertificates([]*x509.Certificate{leaf, root}, []TLSARecord{record}, ""), ErrDANEAuthentication)
+}
+
+func TestDANEVerifyTrustAnchorSupportsCommonNameOnly(t *testing.T) {
+	root, rootKey := testCertificate(t, true, nil, nil)
+	leaf, _ := testCertificateWithDNSNames(t, false, root, rootKey)
+	record := TLSARecord{CertificateUsage: 2, Selector: 0, MatchingType: 1, CertificateAssociation: hex.EncodeToString(sha256Bytes(root.Raw))}
+
+	assert.NoError(t, verifyDANECertificates([]*x509.Certificate{leaf, root}, []TLSARecord{record}, "mail.example.com"))
+}
+
+func TestDANEVerifyTrustAnchorRejectsWrongReferenceIdentifier(t *testing.T) {
+	root, rootKey := testCertificate(t, true, nil, nil)
+	leaf, _ := testCertificateWithDNSNames(t, false, root, rootKey, "other.example.com")
+	record := TLSARecord{CertificateUsage: 2, Selector: 0, MatchingType: 1, CertificateAssociation: hex.EncodeToString(sha256Bytes(root.Raw))}
+
+	assert.ErrorIs(t, verifyDANECertificates([]*x509.Certificate{leaf, root}, []TLSARecord{record}, "mail.example.com"), ErrDANEAuthentication)
+}
+
+func TestDANEVerifyTrustAnchorPrefersDNSNameOverCommonName(t *testing.T) {
+	root, rootKey := testCertificate(t, true, nil, nil)
+	leaf, _ := testCertificateWithDNSNames(t, false, root, rootKey, "other.example.com")
+	record := TLSARecord{CertificateUsage: 2, Selector: 0, MatchingType: 1, CertificateAssociation: hex.EncodeToString(sha256Bytes(root.Raw))}
+
+	assert.ErrorIs(t, verifyDANECertificates([]*x509.Certificate{leaf, root}, []TLSARecord{record}, "mail.example.com"), ErrDANEAuthentication)
+}
+
+func TestDANEVerifyPrefersStrongerDigest(t *testing.T) {
+	certificate, _ := testCertificate(t, false, nil, nil)
+	sha512Hash := sha512Bytes(certificate.Raw)
+	records := []TLSARecord{
+		{CertificateUsage: 3, Selector: 0, MatchingType: 1, CertificateAssociation: hex.EncodeToString(make([]byte, 32))},
+		{CertificateUsage: 3, Selector: 0, MatchingType: 2, CertificateAssociation: hex.EncodeToString(sha512Hash)},
+	}
+
+	assert.NoError(t, verifyDANECertificates([]*x509.Certificate{certificate}, records, "mail.example.com"))
+}
+
 func testCertificate(t *testing.T, isCA bool, issuer *x509.Certificate, issuerKey *rsa.PrivateKey) (*x509.Certificate, *rsa.PrivateKey) {
+	return testCertificateWithDNSNames(t, isCA, issuer, issuerKey, "mail.example.com")
+}
+
+func testCertificateWithDNSNames(t *testing.T, isCA bool, issuer *x509.Certificate, issuerKey *rsa.PrivateKey, dnsNames ...string) (*x509.Certificate, *rsa.PrivateKey) {
 	t.Helper()
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	require.NoError(t, err)
@@ -83,7 +132,7 @@ func testCertificate(t *testing.T, isCA bool, issuer *x509.Certificate, issuerKe
 	template := &x509.Certificate{
 		SerialNumber:          serial,
 		Subject:               pkix.Name{CommonName: "mail.example.com"},
-		DNSNames:              []string{"mail.example.com"},
+		DNSNames:              dnsNames,
 		NotBefore:             time.Now().Add(-time.Minute),
 		NotAfter:              time.Now().Add(time.Hour),
 		BasicConstraintsValid: true,
@@ -102,4 +151,14 @@ func testCertificate(t *testing.T, isCA bool, issuer *x509.Certificate, issuerKe
 	certificate, err := x509.ParseCertificate(der)
 	require.NoError(t, err)
 	return certificate, key
+}
+
+func sha256Bytes(value []byte) []byte {
+	hash := sha256.Sum256(value)
+	return hash[:]
+}
+
+func sha512Bytes(value []byte) []byte {
+	hash := sha512.Sum512(value)
+	return hash[:]
 }

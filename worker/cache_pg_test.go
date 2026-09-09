@@ -68,8 +68,7 @@ func TestSharedCacheReadsSymfonyJsonEntryWithoutExtendingExpiry(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { db.Close() })
 
-	itemID, err := sharedCacheItemID("mta_sts:example.com")
-	require.NoError(t, err)
+	itemID := "shared-v1:h.ec06a31deb92499b60429301ecc5cac14f660cb4177110fbaf79f298122ee038"
 	writtenAt := time.Now().Add(-30 * time.Minute).Unix()
 	_, err = db.Exec(`
 		INSERT INTO cache_items (item_id, item_data, item_lifetime, item_time)
@@ -123,9 +122,7 @@ func TestSharedCacheDatabaseLoadDoesNotRepublishAfterSet(t *testing.T) {
 	database.waitForLoad(t, 1)
 
 	require.NoError(t, cache.Set(context.Background(), "key", sharedCacheTestValue{Name: "new"}, time.Hour))
-	cache.writeMu.Lock()
 	cache.memory.Delete("key")
-	cache.writeMu.Unlock()
 
 	second := getSharedCacheTestValue(cache, context.Background(), "key")
 	database.waitForLoad(t, 2)
@@ -154,12 +151,14 @@ func TestSharedCacheDatabaseHydrationUsesAbsoluteExpiry(t *testing.T) {
 	result := getSharedCacheTestValue(cache, context.Background(), "key")
 	database.waitForLoad(t, 1)
 
-	cache.writeMu.Lock()
+	state := cache.keyState("key")
+	state.Lock()
 	database.releaseLoad()
 	waitForSharedCacheSignal(t, clock.firstCall)
 	clock.set(writtenAt.Add(45 * time.Minute))
 	clock.releaseFirstCall()
-	cache.writeMu.Unlock()
+	state.Unlock()
+	cache.releaseKeyState("key", state)
 
 	loaded := waitForSharedCacheTestValue(t, result)
 	require.NoError(t, loaded.err)

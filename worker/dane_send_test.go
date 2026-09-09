@@ -17,6 +17,10 @@ import (
 func TestSendEmailToHost_DaneHandshakeProceedsToMail(t *testing.T) {
 	certificate, key := testCertificate(t, false, nil, nil)
 	clientConn, serverConn := net.Pipe()
+	t.Cleanup(func() {
+		_ = clientConn.Close()
+		_ = serverConn.Close()
+	})
 	serverDone := make(chan error, 1)
 	go func() {
 		defer serverConn.Close()
@@ -110,8 +114,7 @@ func TestSendEmailToHost_DaneHandshakeProceedsToMail(t *testing.T) {
 	}()
 
 	originalTLSA := lookupTLSAFunc
-	originalCreateClient := createSmtpClient
-	cache := getProcessSharedCache()
+	originalCreateClient := createSmtpClientContext
 	lookupTLSAFunc = func(context.Context, *SharedCache, string) (TLSAResult, error) {
 		return TLSAResult{State: TLSAStateSecureRecords, Records: []TLSARecord{{
 			CertificateUsage:       3,
@@ -120,24 +123,28 @@ func TestSendEmailToHost_DaneHandshakeProceedsToMail(t *testing.T) {
 			CertificateAssociation: hex.EncodeToString(certificate.Raw),
 		}}}, nil
 	}
-	require.NoError(t, cache.Set(context.Background(), dnsCacheKey("mx", "example.com"), MxCacheValue{
-		Records: []MxRecord{{Host: "mx.example.com"}},
-		Secure:  true,
-	}, time.Minute))
-	createSmtpClient = func(string, string) (*smtp.Client, error) {
+	createSmtpClientContext = func(context.Context, string, string) (*smtp.Client, error) {
 		return smtp.NewClient(clientConn, "mx.example.com")
 	}
 	t.Cleanup(func() {
 		lookupTLSAFunc = originalTLSA
-		createSmtpClient = originalCreateClient
-		_ = cache.Delete(context.Background(), dnsCacheKey("mx", "example.com"))
+		createSmtpClientContext = originalCreateClient
 	})
 
-	conversation := sendEmailToHostHandler(
-		&SendRow{From: "sender@example.com", RawEmail: "Subject: test\r\n\r\nbody"},
-		[]*RecipientRow{{Id: 1, Address: "recipient@example.com"}},
-		"mx.example.com", "relay.example.com", "127.0.0.1", "relay.example.com", true,
-	)
+	conversationDone := make(chan *SmtpConversation, 1)
+	go func() {
+		conversationDone <- sendEmailToHostHandler(
+			&SendRow{From: "sender@example.com", RawEmail: "Subject: test\r\n\r\nbody"},
+			[]*RecipientRow{{Id: 1, Address: "recipient@example.com"}},
+			"mx.example.com", "relay.example.com", "127.0.0.1", "relay.example.com", true,
+		)
+	}()
+	var conversation *SmtpConversation
+	select {
+	case conversation = <-conversationDone:
+	case <-time.After(5 * time.Second):
+		t.Fatal("SMTP conversation did not finish")
+	}
 
 	assert.NoError(t, conversation.NetworkError)
 	require.Len(t, conversation.RcptResults, 1)

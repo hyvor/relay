@@ -128,6 +128,8 @@ type EmailWorker struct {
 	SendEmailContextFunc func(context.Context, *SendRow, []*RecipientRow, string, string, int, string, string) *SendResult
 }
 
+var sendAttemptsNotificationTimeout = 5 * time.Second
+
 var NewEmailWorker = newEmailWorker
 
 func newEmailWorker(
@@ -373,12 +375,7 @@ func (worker *EmailWorker) attemptSendToDomain(
 		"recipients", len(recipients),
 	)
 
-	var result *SendResult
-	if worker.SendEmailContextFunc != nil {
-		result = worker.SendEmailContextFunc(worker.ctx, send, recipients, domain, worker.instanceDomain, worker.ip.Id, worker.ip.Ip, worker.ip.Ptr)
-	} else {
-		result = sendEmail(send, recipients, domain, worker.instanceDomain, worker.ip.Id, worker.ip.Ip, worker.ip.Ptr)
-	}
+	result := worker.SendEmailContextFunc(worker.ctx, send, recipients, domain, worker.instanceDomain, worker.ip.Id, worker.ip.Ip, worker.ip.Ptr)
 
 	// get the lock before calling the DB
 	domainQueryMutex.Lock()
@@ -440,8 +437,11 @@ func notifySendAttemptsToSymfony(
 		return
 	}
 
+	notificationCtx, cancel := context.WithTimeout(ctx, sendAttemptsNotificationTimeout)
+	defer cancel()
+
 	err := CallLocalApi(
-		ctx,
+		notificationCtx,
 		"POST",
 		"/send-attempts/done",
 		map[string]interface{}{

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"sort"
 	"strings"
 	"time"
@@ -29,14 +28,6 @@ var ErrSmtpMxPermanent = errors.New("permanent MX failure")
 
 var lookupDNSFunc = func(ctx context.Context, name string, recordType uint16) (DNSLookupResult, error) {
 	return outboundDNSResolver.Lookup(ctx, name, recordType)
-}
-
-func getMxHostsFromDomain(domain string) ([]string, error) {
-	value, err := getMxValueFromDomainContext(context.Background(), getProcessSharedCache(), domain)
-	if err != nil {
-		return nil, err
-	}
-	return getHostsFromMxCacheValue(value), nil
 }
 
 func getMxHostsFromDomainContext(ctx context.Context, cache *SharedCache, domain string) ([]string, error) {
@@ -233,16 +224,4 @@ func cacheMxValue(ctx context.Context, cache *SharedCache, domain string, value 
 		ttl = mxCacheTTL
 	}
 	_ = cache.Set(ctx, dnsCacheKey("mx", domain), value, ttl)
-}
-
-// Kept for callers that need to convert resolver results into SMTP hosts.
-func getHostsFromMxRecords(mxRecords []*net.MX) []string {
-	value := MxCacheValue{Records: make([]MxRecord, 0, len(mxRecords))}
-	for _, mxRecord := range mxRecords {
-		value.Records = append(value.Records, MxRecord{
-			Host:     strings.TrimSuffix(strings.ToLower(mxRecord.Host), "."),
-			Priority: int(mxRecord.Pref),
-		})
-	}
-	return getHostsFromMxCacheValue(value)
 }

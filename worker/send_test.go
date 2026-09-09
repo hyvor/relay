@@ -328,7 +328,7 @@ func TestSendEmail_MxFailed(t *testing.T) {
 
 func TestSendEmailToHost_DaneRequiresStartTLS(t *testing.T) {
 	originalTLSA := lookupTLSAFunc
-	originalCreateClient := createSmtpClient
+	originalCreateClient := createSmtpClientContext
 	lookupTLSAFunc = func(context.Context, *SharedCache, string) (TLSAResult, error) {
 		return TLSAResult{
 			State: TLSAStateSecureRecords,
@@ -351,12 +351,12 @@ func TestSendEmailToHost_DaneRequiresStartTLS(t *testing.T) {
 		io.Reader
 		io.Writer
 	}{strings.NewReader(server), &bytes.Buffer{}}
-	createSmtpClient = func(host string, _ string) (*smtp.Client, error) {
+	createSmtpClientContext = func(_ context.Context, host string, _ string) (*smtp.Client, error) {
 		return smtp.NewClient(fake, host)
 	}
 	t.Cleanup(func() {
 		lookupTLSAFunc = originalTLSA
-		createSmtpClient = originalCreateClient
+		createSmtpClientContext = originalCreateClient
 		_ = cache.Delete(context.Background(), dnsCacheKey("mx", "example.com"))
 	})
 
@@ -455,13 +455,13 @@ func TestSendEmailToHost_OneRecipientFails(t *testing.T) {
 		&wrote,
 	}
 
-	var createSmtpClientBackup = createSmtpClient
-	createSmtpClient = func(host string, _ string) (*smtp.Client, error) {
+	createSmtpClientBackup := createSmtpClientContext
+	createSmtpClientContext = func(_ context.Context, host string, _ string) (*smtp.Client, error) {
 		return smtp.NewClient(fake, host)
 	}
 
 	defer func() {
-		createSmtpClient = createSmtpClientBackup
+		createSmtpClientContext = createSmtpClientBackup
 	}()
 
 	send := &SendRow{
@@ -531,11 +531,11 @@ func TestSendEmailToHost_DataCloseFails_ReplacesRcptResult(t *testing.T) {
 		&wrote,
 	}
 
-	var createSmtpClientBackup = createSmtpClient
-	createSmtpClient = func(host string, _ string) (*smtp.Client, error) {
+	createSmtpClientBackup := createSmtpClientContext
+	createSmtpClientContext = func(_ context.Context, host string, _ string) (*smtp.Client, error) {
 		return smtp.NewClient(fake, host)
 	}
-	defer func() { createSmtpClient = createSmtpClientBackup }()
+	defer func() { createSmtpClientContext = createSmtpClientBackup }()
 
 	send := &SendRow{
 		Id:        1,
@@ -597,11 +597,11 @@ func TestSendEmailToHost_DataCloseFails_PreservesRcptRejection(t *testing.T) {
 		&wrote,
 	}
 
-	var createSmtpClientBackup = createSmtpClient
-	createSmtpClient = func(host string, _ string) (*smtp.Client, error) {
+	createSmtpClientBackup := createSmtpClientContext
+	createSmtpClientContext = func(_ context.Context, host string, _ string) (*smtp.Client, error) {
 		return smtp.NewClient(fake, host)
 	}
-	defer func() { createSmtpClient = createSmtpClientBackup }()
+	defer func() { createSmtpClientContext = createSmtpClientBackup }()
 
 	send := &SendRow{
 		Id:        1,

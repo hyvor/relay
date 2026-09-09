@@ -22,13 +22,17 @@ final class JsonMarshaller implements MarshallerInterface
         foreach ($values as $key => $value) {
             try {
                 $encoded = json_encode($value, JSON_THROW_ON_ERROR);
-                if (strlen($encoded) > self::MAX_VALUE_SIZE) {
-                    throw new \JsonException('Cache value is too large');
-                }
-                $serialized[$key] = $encoded;
-            } catch (\JsonException) {
+            } catch (\Throwable) {
                 $failed[] = $key;
+                continue;
             }
+
+            if (strlen($encoded) > self::MAX_VALUE_SIZE) {
+                $failed[] = $key;
+                continue;
+            }
+
+            $serialized[$key] = $encoded;
         }
 
         return $serialized;
