@@ -50,7 +50,8 @@ func lookupTLSA(ctx context.Context, cache *SharedCache, host string) (TLSAResul
 		return TLSAResult{}, fmt.Errorf("%w: empty host", ErrTLSALookup)
 	}
 
-	cacheKey := dnsCacheKey("tlsa", "_25._tcp."+host)
+	name := "_25._tcp." + host
+	cacheKey := dnsCacheKey("tlsa", name)
 	var cached TLSACacheValue
 	if found, err := cache.Get(ctx, cacheKey, &cached); err == nil && found {
 		if validTLSACacheValue(cached) {
@@ -59,7 +60,6 @@ func lookupTLSA(ctx context.Context, cache *SharedCache, host string) (TLSAResul
 		_ = cache.Delete(ctx, cacheKey)
 	}
 
-	name := "_25._tcp." + host
 	result, err := lookupDNSFunc(ctx, name, dns.TypeTLSA)
 	if err != nil {
 		return TLSAResult{}, fmt.Errorf("%w: %v", ErrTLSALookup, err)
@@ -168,9 +168,8 @@ func validTLSAFields(usage, selector, matchingType uint8, associationData string
 		return len(decoded) == 32
 	case 2:
 		return len(decoded) == 64
-	default:
-		return false
 	}
+	return false
 }
 
 func validTLSACacheValue(value TLSACacheValue) bool {

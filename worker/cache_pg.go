@@ -12,7 +12,6 @@ import (
 
 const (
 	sharedCacheNamespace       = "shared-v1"
-	sharedCacheMaxItemIDLen    = 255
 	sharedCacheDatabaseTimeout = 2 * time.Second
 )
 
@@ -88,7 +87,7 @@ func (c *SharedCache) loadFromDatabase(ctx context.Context, key string) (sharedC
 	return sharedCacheDatabaseEntry{value: value, found: true, expiresAt: expiresAt}, nil
 }
 
-func (c *SharedCache) storeInDatabase(ctx context.Context, key string, value []byte, ttl time.Duration) error {
+func (c *SharedCache) storeInDatabase(ctx context.Context, key string, value []byte, writtenAt, expiresAt time.Time) error {
 	ctx, cancel := context.WithTimeout(ctx, sharedCacheDatabaseTimeout)
 	defer cancel()
 	db := c.database()
@@ -101,7 +100,10 @@ func (c *SharedCache) storeInDatabase(ctx context.Context, key string, value []b
 	}
 
 	// DoctrineDbalAdapter stores whole-second lifetimes and write timestamps.
-	lifetime := int64((ttl + time.Second - 1) / time.Second)
+	lifetime := int64(expiresAt.Sub(time.Unix(writtenAt.Unix(), 0)) / time.Second)
+	if lifetime < 1 {
+		lifetime = 1
+	}
 	_, err = db.ExecContext(ctx, `
 		INSERT INTO cache_items (item_id, item_data, item_lifetime, item_time)
 		VALUES ($1, $2, $3, $4)
@@ -109,7 +111,7 @@ func (c *SharedCache) storeInDatabase(ctx context.Context, key string, value []b
 			item_data = EXCLUDED.item_data,
 			item_lifetime = EXCLUDED.item_lifetime,
 			item_time = EXCLUDED.item_time
-	`, itemID, value, lifetime, c.now().Unix())
+	`, itemID, value, lifetime, writtenAt.Unix())
 	return err
 }
 

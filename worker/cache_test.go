@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"strings"
 	"testing"
@@ -34,18 +32,16 @@ func TestSharedCacheMemoryExpiryDoesNotSlide(t *testing.T) {
 	cache := NewSharedCache(nil)
 	t.Cleanup(cache.Close)
 
-	require.NoError(t, cache.Set(context.Background(), "key", true, 40*time.Millisecond))
-	time.Sleep(25 * time.Millisecond)
+	require.NoError(t, cache.Set(context.Background(), "key", true, time.Hour))
+	item := cache.memory.Get("key")
+	require.NotNil(t, item)
+	expiresAt := item.ExpiresAt()
 
 	var value bool
 	found, err := cache.Get(context.Background(), "key", &value)
 	require.NoError(t, err)
 	assert.True(t, found)
-
-	time.Sleep(25 * time.Millisecond)
-	found, err = cache.Get(context.Background(), "key", &value)
-	require.NoError(t, err)
-	assert.False(t, found)
+	assert.Equal(t, expiresAt, cache.memory.Get("key").ExpiresAt())
 }
 
 func TestSharedCacheDelete(t *testing.T) {
@@ -61,6 +57,37 @@ func TestSharedCacheDelete(t *testing.T) {
 	assert.False(t, found)
 }
 
+func TestSharedCacheMemoryHitDoesNotWaitForBlockedDatabaseLoad(t *testing.T) {
+	db, database := newSharedCacheBarrierDatabase(t, "blocked", []byte(`true`), time.Now())
+	cache := NewSharedCache(db)
+	t.Cleanup(cache.Close)
+	cache.memory.Set("cached", []byte(`true`), time.Hour)
+
+	blocked := make(chan struct{})
+	go func() {
+		var value bool
+		_, _ = cache.Get(context.Background(), "blocked", &value)
+		close(blocked)
+	}()
+	database.waitForLoad(t, 1)
+
+	result := make(chan bool, 1)
+	go func() {
+		var value bool
+		found, err := cache.Get(context.Background(), "cached", &value)
+		result <- found && err == nil && value
+	}()
+
+	select {
+	case found := <-result:
+		assert.True(t, found)
+	case <-time.After(time.Second):
+		t.Fatal("memory hit waited for a blocked database load on another key")
+	}
+	database.releaseLoad()
+	<-blocked
+}
+
 func TestSharedCacheRejectsOversizedValues(t *testing.T) {
 	cache := NewSharedCache(nil)
 	t.Cleanup(cache.Close)
@@ -72,13 +99,7 @@ func TestSharedCacheRejectsOversizedValues(t *testing.T) {
 func TestSharedCacheItemID(t *testing.T) {
 	itemID, err := sharedCacheItemID("mx:example.com")
 	require.NoError(t, err)
-	digest := sha256.Sum256([]byte("mx:example.com"))
-	assert.Equal(t, "shared-v1:h."+hex.EncodeToString(digest[:]), itemID)
-
-	longID, err := sharedCacheItemID(strings.Repeat("a", 300))
-	require.NoError(t, err)
-	assert.LessOrEqual(t, len(longID), sharedCacheMaxItemIDLen)
-	assert.True(t, strings.HasPrefix(longID, "shared-v1:h."))
+	assert.Equal(t, "shared-v1:h.e4b96a16d2ff7506f1554ec72f5aeb3e347284fe302dd2dd90af34c5b9276e77", itemID)
 
 	_, err = sharedCacheItemID("")
 	assert.Error(t, err)

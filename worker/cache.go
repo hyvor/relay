@@ -24,21 +24,26 @@ var ErrCacheValueTooLarge = errors.New("cache value is too large")
 type sharedCacheMemoryValue []byte
 
 type sharedCacheLoad struct {
-	entry      sharedCacheDatabaseEntry
-	generation uint64
+	entry   sharedCacheDatabaseEntry
+	version uint64
+}
+
+type sharedCacheKeyState struct {
+	sync.Mutex
+	version uint64
+	refs    int
 }
 
 type SharedCache struct {
-	dbMu         sync.RWMutex
-	db           *sql.DB
-	memory       *ttlcache.Cache[string, sharedCacheMemoryValue]
-	loads        singleflight.Group
-	now          func() time.Time
-	cancel       context.CancelFunc
-	wg           sync.WaitGroup
-	writeMu      sync.Mutex
-	generationMu sync.Mutex
-	generation   uint64
+	dbMu        sync.RWMutex
+	db          *sql.DB
+	memory      *ttlcache.Cache[string, sharedCacheMemoryValue]
+	loads       singleflight.Group
+	now         func() time.Time
+	cancel      context.CancelFunc
+	wg          sync.WaitGroup
+	keyStatesMu sync.Mutex
+	keyStates   map[string]*sharedCacheKeyState
 }
 
 var processSharedCache struct {
@@ -109,9 +114,10 @@ func NewSharedCache(db *sql.DB) *SharedCache {
 	)
 
 	cache := &SharedCache{
-		db:     db,
-		memory: memory,
-		now:    time.Now,
+		db:        db,
+		memory:    memory,
+		now:       time.Now,
+		keyStates: make(map[string]*sharedCacheKeyState),
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cache.cancel = cancel
@@ -143,29 +149,31 @@ func (c *SharedCache) Get(ctx context.Context, key string, destination any) (boo
 		return false, err
 	}
 
+	state := c.keyState(key)
+	defer c.releaseKeyState(key, state)
 	for {
-		c.writeMu.Lock()
+		state.Lock()
 		item := c.memory.Get(key)
 		if item != nil {
 			if err := json.Unmarshal(item.Value(), destination); err != nil {
 				c.memory.Delete(key)
-				c.writeMu.Unlock()
+				state.Unlock()
 				return false, fmt.Errorf("decode memory cache value for %q: %w", key, err)
 			}
-			c.writeMu.Unlock()
+			state.Unlock()
 			return true, nil
 		}
-		generation := c.currentGeneration()
-		c.writeMu.Unlock()
+		version := state.version
+		state.Unlock()
 
 		if c.database() == nil {
 			return false, nil
 		}
 
 		loadCtx := context.WithoutCancel(ctx)
-		result := c.loads.DoChan(fmt.Sprintf("%d:%s", generation, key), func() (any, error) {
+		result := c.loads.DoChan(key, func() (any, error) {
 			entry, err := c.loadFromDatabase(loadCtx, key)
-			return sharedCacheLoad{entry: entry, generation: generation}, err
+			return sharedCacheLoad{entry: entry, version: version}, err
 		})
 		var load sharedCacheLoad
 		var err error
@@ -177,30 +185,30 @@ func (c *SharedCache) Get(ctx context.Context, key string, destination any) (boo
 			err = result.Err
 		}
 
-		c.writeMu.Lock()
-		if c.currentGeneration() != load.generation {
-			c.writeMu.Unlock()
+		state.Lock()
+		if state.version != load.version {
+			state.Unlock()
 			continue
 		}
 		if err != nil {
-			c.writeMu.Unlock()
+			state.Unlock()
 			return false, err
 		}
 		if !load.entry.found {
-			c.writeMu.Unlock()
+			state.Unlock()
 			return false, nil
 		}
 		remaining := load.entry.expiresAt.Sub(c.now())
 		if remaining <= 0 {
-			c.writeMu.Unlock()
+			state.Unlock()
 			return false, nil
 		}
 		if err := json.Unmarshal(load.entry.value, destination); err != nil {
-			c.writeMu.Unlock()
+			state.Unlock()
 			return false, fmt.Errorf("decode database cache value for %q: %w", key, err)
 		}
 		c.memory.Set(key, load.entry.value, remaining)
-		c.writeMu.Unlock()
+		state.Unlock()
 
 		return true, nil
 	}
@@ -213,9 +221,6 @@ func (c *SharedCache) Set(ctx context.Context, key string, value any, ttl time.D
 	if ttl <= 0 {
 		return c.Delete(ctx, key)
 	}
-	c.writeMu.Lock()
-	defer c.writeMu.Unlock()
-	c.bumpGeneration()
 
 	encoded, err := json.Marshal(value)
 	if err != nil {
@@ -224,16 +229,22 @@ func (c *SharedCache) Set(ctx context.Context, key string, value any, ttl time.D
 	if len(encoded) > sharedCacheMaxValueSize {
 		return fmt.Errorf("%w: %d bytes", ErrCacheValueTooLarge, len(encoded))
 	}
+	state := c.keyState(key)
+	defer c.releaseKeyState(key, state)
+	state.Lock()
+	defer state.Unlock()
+	state.version++
+	writtenAt := c.now()
+	expiresAt := writtenAt.Add(ttl)
 
-	c.memory.Set(key, encoded, ttl)
+	c.memory.Set(key, encoded, expiresAt.Sub(c.now()))
 	if c.database() == nil {
 		return nil
 	}
 
-	if err := c.storeInDatabase(ctx, key, encoded, ttl); err != nil {
+	if err := c.storeInDatabase(ctx, key, encoded, writtenAt, expiresAt); err != nil {
 		return fmt.Errorf("store database cache value for %q: %w", key, err)
 	}
-	c.bumpGeneration()
 	return nil
 }
 
@@ -241,9 +252,11 @@ func (c *SharedCache) Delete(ctx context.Context, key string) error {
 	if _, err := sharedCacheItemID(key); err != nil {
 		return err
 	}
-	c.writeMu.Lock()
-	defer c.writeMu.Unlock()
-	c.bumpGeneration()
+	state := c.keyState(key)
+	defer c.releaseKeyState(key, state)
+	state.Lock()
+	defer state.Unlock()
+	state.version++
 	c.memory.Delete(key)
 	if c.database() == nil {
 		return nil
@@ -252,18 +265,26 @@ func (c *SharedCache) Delete(ctx context.Context, key string) error {
 	if err := c.deleteFromDatabase(ctx, key); err != nil {
 		return fmt.Errorf("delete database cache value for %q: %w", key, err)
 	}
-	c.bumpGeneration()
 	return nil
 }
 
-func (c *SharedCache) currentGeneration() uint64 {
-	c.generationMu.Lock()
-	defer c.generationMu.Unlock()
-	return c.generation
+func (c *SharedCache) keyState(key string) *sharedCacheKeyState {
+	c.keyStatesMu.Lock()
+	defer c.keyStatesMu.Unlock()
+	state := c.keyStates[key]
+	if state == nil {
+		state = &sharedCacheKeyState{}
+		c.keyStates[key] = state
+	}
+	state.refs++
+	return state
 }
 
-func (c *SharedCache) bumpGeneration() {
-	c.generationMu.Lock()
-	c.generation++
-	c.generationMu.Unlock()
+func (c *SharedCache) releaseKeyState(key string, state *sharedCacheKeyState) {
+	c.keyStatesMu.Lock()
+	defer c.keyStatesMu.Unlock()
+	state.refs--
+	if state.refs == 0 {
+		delete(c.keyStates, key)
+	}
 }

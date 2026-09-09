@@ -45,4 +45,21 @@ class JsonMarshallerTest extends TestCase
         self::assertSame([], $values);
         self::assertSame(['large'], $failed);
     }
+
+    public function test_reports_exceptions_from_json_serializable_values(): void
+    {
+        $marshaller = new JsonMarshaller();
+        $failed = null;
+        $value = new class implements \JsonSerializable {
+            public function jsonSerialize(): mixed
+            {
+                throw new \RuntimeException('Cannot serialize');
+            }
+        };
+
+        $values = $marshaller->marshall(['bad' => $value, 'good' => true], $failed);
+
+        self::assertSame(['good' => 'true'], $values);
+        self::assertSame(['bad'], $failed);
+    }
 }

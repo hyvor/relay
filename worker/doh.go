@@ -35,7 +35,6 @@ func dnsCacheKey(kind, name string) string {
 const (
 	defaultDoHURL       = "https://cloudflare-dns.com/dns-query"
 	dohRequestTimeout   = 5 * time.Second
-	dohMaxResponseSize  = 1 << 20
 	dohMaxDnsMessageLen = 65535
 )
 
@@ -70,6 +69,10 @@ func NewDoHResolver() *DoHResolver {
 }
 
 var outboundDNSResolver = NewDoHResolver()
+
+func configureOutboundDNSResolver() {
+	outboundDNSResolver = NewDoHResolver()
+}
 
 func (r *DoHResolver) Lookup(ctx context.Context, name string, recordType uint16) (DNSLookupResult, error) {
 	if r == nil || r.Client == nil || r.URL == "" {
@@ -113,11 +116,11 @@ func (r *DoHResolver) Lookup(ctx context.Context, name string, recordType uint16
 		return DNSLookupResult{}, fmt.Errorf("%w: unsupported content type %q", ErrDoHLookup, contentType)
 	}
 
-	responseBody, err := io.ReadAll(io.LimitReader(response.Body, dohMaxResponseSize+1))
+	responseBody, err := io.ReadAll(io.LimitReader(response.Body, dohMaxDnsMessageLen+1))
 	if err != nil {
 		return DNSLookupResult{}, fmt.Errorf("%w: read response: %v", ErrDoHLookup, err)
 	}
-	if len(responseBody) > dohMaxResponseSize || len(responseBody) > dohMaxDnsMessageLen {
+	if len(responseBody) > dohMaxDnsMessageLen {
 		return DNSLookupResult{}, fmt.Errorf("%w: response is too large", ErrDoHLookup)
 	}
 
@@ -132,10 +135,12 @@ func (r *DoHResolver) Lookup(ctx context.Context, name string, recordType uint16
 	}
 
 	ttl := dnsMessageTTL(result)
-	if age, parseErr := strconv.Atoi(response.Header.Get("Age")); parseErr == nil && age > 0 {
-		ttl -= time.Duration(age) * time.Second
-		if ttl < 0 {
+	if age, parseErr := strconv.ParseUint(response.Header.Get("Age"), 10, 32); parseErr == nil {
+		ageDuration := time.Duration(age) * time.Second
+		if ageDuration >= ttl {
 			ttl = 0
+		} else {
+			ttl -= ageDuration
 		}
 	}
 
@@ -147,23 +152,44 @@ func (r *DoHResolver) Lookup(ctx context.Context, name string, recordType uint16
 }
 
 func dnsMessageTTL(message *dns.Msg) time.Duration {
-	var ttl uint32
-	set := false
-	negative := message.Rcode != dns.RcodeSuccess || len(message.Answer) == 0
-	for _, record := range message.Answer {
-		if _, ok := record.(*dns.CNAME); !ok {
-			negative = false
-			break
-		}
+	negative := message.Rcode != dns.RcodeSuccess
+	if message.Rcode == dns.RcodeSuccess {
 		negative = true
-	}
-	for _, record := range append(append([]dns.RR{}, message.Answer...), message.Ns...) {
-		current := record.Header().Ttl
-		if negative {
-			if soa, ok := record.(*dns.SOA); ok && soa.Minttl < current {
-				current = soa.Minttl
+		for _, record := range message.Answer {
+			switch record.(type) {
+			case *dns.CNAME, *dns.RRSIG:
+			default:
+				negative = false
 			}
 		}
+	}
+	if negative {
+		var ttl uint32
+		set := false
+		for _, record := range message.Ns {
+			soa, ok := record.(*dns.SOA)
+			if !ok {
+				continue
+			}
+			current := soa.Hdr.Ttl
+			if soa.Minttl < current {
+				current = soa.Minttl
+			}
+			if !set || current < ttl {
+				ttl = current
+				set = true
+			}
+		}
+		if !set {
+			return 0
+		}
+		return time.Duration(ttl) * time.Second
+	}
+
+	var ttl uint32
+	set := false
+	for _, record := range append(append([]dns.RR{}, message.Answer...), message.Ns...) {
+		current := record.Header().Ttl
 		if !set || current < ttl {
 			ttl = current
 			set = true

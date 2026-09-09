@@ -26,7 +26,7 @@ func TestLookupMTASTSEnforcePolicyAndCache(t *testing.T) {
 				MsgHdr: dns.MsgHdr{Rcode: dns.RcodeSuccess},
 				Answer: []dns.RR{&dns.TXT{
 					Hdr: dns.RR_Header{Name: dns.Fqdn(name), Class: dns.ClassINET, Rrtype: dns.TypeTXT},
-					Txt: []string{"v=STSv1; id=policy-1"},
+					Txt: []string{"v=STSv1; id=policy1"},
 				}},
 			},
 			TTL: time.Minute,
@@ -67,7 +67,7 @@ func TestLookupMTASTSNonePolicy(t *testing.T) {
 				MsgHdr: dns.MsgHdr{Rcode: dns.RcodeSuccess},
 				Answer: []dns.RR{&dns.TXT{
 					Hdr: dns.RR_Header{Name: dns.Fqdn(name), Class: dns.ClassINET, Rrtype: dns.TypeTXT},
-					Txt: []string{"v=STSv1; id=policy-2"},
+					Txt: []string{"v=STSv1; id=policy2"},
 				}},
 			},
 			TTL: time.Minute,
@@ -133,7 +133,7 @@ func TestMTASTSEnforceRequiresStartTLS(t *testing.T) {
 		false,
 		true,
 	)
-	assert.ErrorIs(t, conversation.NetworkError, ErrDANEAuthentication)
+	assert.ErrorIs(t, conversation.NetworkError, ErrTLSRequired)
 }
 
 func TestMTASTSOnlyAllowsMatchingMXHosts(t *testing.T) {
