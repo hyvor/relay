@@ -267,9 +267,7 @@ func validMTASTSMXPattern(pattern string) bool {
 	if pattern == "" || strings.Contains(pattern[1:], "*") {
 		return false
 	}
-	if strings.HasPrefix(pattern, "*.") {
-		pattern = strings.TrimPrefix(pattern, "*.")
-	}
+	pattern = strings.TrimPrefix(pattern, "*.")
 	for _, label := range strings.Split(pattern, ".") {
 		if label == "" || len(label) > 63 || strings.HasPrefix(label, "-") || strings.HasSuffix(label, "-") {
 			return false
