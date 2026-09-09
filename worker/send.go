@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	smtp "github.com/hyvor/relay/worker/smtp"
@@ -290,7 +292,11 @@ func sendEmailHandler(
 	mxHosts, err := getMxHostsFromDomain(rcptDomain)
 
 	if err != nil {
-		result.SetAllRcptResultsFailed(recipients, err.Error())
+		if result.NewTryCount == 1 {
+			result.SetAllRcptResults(recipients, 400, [3]int{4, 2, 1}, err.Error())
+		} else {
+			result.SetAllRcptResultsFailed(recipients, err.Error())
+		}
 		return result
 	}
 
@@ -416,6 +422,28 @@ func sendEmailToHostHandler(
 
 	conversation := NewSmtpConversation()
 
+	recipientDomain := ""
+	if len(recipients) > 0 {
+		_, recipientDomain, _ = strings.Cut(strings.ToLower(recipients[0].Address), "@")
+		recipientDomain = strings.TrimSuffix(recipientDomain, ".")
+	}
+	cache := getProcessSharedCache()
+	secureMx := cachedMxIsSecure(context.Background(), cache, recipientDomain)
+	tlsaResult := TLSAResult{State: TLSAStateSecureAbsent}
+	if secureMx {
+		var err error
+		tlsaResult, err = lookupTLSAFunc(context.Background(), cache, host)
+		if err != nil {
+			conversation.NetworkError = err
+			return conversation
+		}
+	}
+	daneRequired := secureMx && tlsaResult.State == TLSAStateSecureRecords
+	if tlsaResult.State == TLSAStateSecureUnusable {
+		conversation.NetworkError = fmt.Errorf("%w: unusable secure TLSA records for %s", ErrDANEAuthentication, host)
+		return conversation
+	}
+
 	// STEP 0: Connect to SMTP server
 	// ==============================
 	c, err := createSmtpClient(host, ip)
@@ -443,8 +471,15 @@ func sendEmailToHostHandler(
 	// STEP 2: STARTTLS
 	// ============
 	if ok, _ := c.Extension("STARTTLS"); ok {
+		config := &tls.Config{ServerName: host}
+		if daneRequired {
+			config.InsecureSkipVerify = true
+			config.VerifyConnection = func(state tls.ConnectionState) error {
+				return verifyDANECertificates(state.PeerCertificates, tlsaResult.Records, host)
+			}
+		}
 
-		startTlsResult, ehloResult := c.StartTLS(&tls.Config{ServerName: host})
+		startTlsResult, ehloResult := c.StartTLS(config)
 
 		if startTlsResult.Err != nil {
 			conversation.NetworkError = startTlsResult.Err
@@ -469,6 +504,10 @@ func sendEmailToHostHandler(
 			return conversation
 		}
 
+	}
+	if daneRequired {
+		conversation.NetworkError = fmt.Errorf("%w: SMTP server does not advertise STARTTLS", ErrDANEAuthentication)
+		return conversation
 	}
 
 	// STEP 3: MAIL FROM

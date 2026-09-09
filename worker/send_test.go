@@ -23,13 +23,13 @@ func TestSendEmail_Accepted(t *testing.T) {
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
 				{
-					RecipientId: 1,
-					Code:        250,
+					RecipientId:  1,
+					Code:         250,
 					EnhancedCode: [3]int{0, 0, 0},
-					Message:     "OK",
+					Message:      "OK",
 				},
 			},
-			Steps:        []*SmtpStep{},
+			Steps: []*SmtpStep{},
 		}
 	}
 
@@ -73,10 +73,10 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
 				{
-					RecipientId: 1,
-					Code:        511,
+					RecipientId:  1,
+					Code:         511,
 					EnhancedCode: [3]int{5, 1, 1},
-					Message:     "User does not exist",
+					Message:      "User does not exist",
 				},
 			},
 			Steps: []*SmtpStep{},
@@ -123,10 +123,10 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
 				{
-					RecipientId: 1,
-					Code:        451,
+					RecipientId:  1,
+					Code:         451,
 					EnhancedCode: [3]int{4, 2, 1},
-					Message:     "Requested action aborted: local error in processing",
+					Message:      "Requested action aborted: local error in processing",
 				},
 			},
 			Steps: []*SmtpStep{},
@@ -173,10 +173,10 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
 				{
-					RecipientId: 1,
-					Code:        451,
+					RecipientId:  1,
+					Code:         451,
 					EnhancedCode: [3]int{4, 2, 1},
-					Message:     "Requested action aborted: local error in processing",
+					Message:      "Requested action aborted: local error in processing",
 				},
 			},
 			Steps: []*SmtpStep{},
@@ -207,7 +207,7 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 	var rcptResult = result.RcptResults[0]
 	assert.Equal(t, 1, rcptResult.RecipientId)
 	assert.Equal(t, 0, rcptResult.Code)
-	assert.Equal(t, [3]int{0,0,0}, rcptResult.EnhancedCode)
+	assert.Equal(t, [3]int{0, 0, 0}, rcptResult.EnhancedCode)
 	assert.Equal(t, "maximum send attempts reached", rcptResult.Message)
 
 	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
@@ -335,6 +335,49 @@ func TestSendEmail_MxFailed(t *testing.T) {
 	assert.Equal(t, "", result.RespondedMxHost)
 	assert.Equal(t, 2, result.NewTryCount)
 
+}
+
+func TestSendEmailToHost_DaneRequiresStartTLS(t *testing.T) {
+	originalTLSA := lookupTLSAFunc
+	originalCreateClient := createSmtpClient
+	lookupTLSAFunc = func(context.Context, *SharedCache, string) (TLSAResult, error) {
+		return TLSAResult{
+			State: TLSAStateSecureRecords,
+			Records: []TLSARecord{{
+				CertificateUsage:       3,
+				Selector:               0,
+				MatchingType:           1,
+				CertificateAssociation: strings.Repeat("00", 32),
+			}},
+		}, nil
+	}
+	cache := getProcessSharedCache()
+	assert.NoError(t, cache.Set(context.Background(), "mx:example.com", MxCacheValue{
+		Records: []MxRecord{{Host: "mx.example.com"}},
+		Secure:  true,
+	}, time.Minute))
+	server := "220 mx.example.com ready\r\n250-mx.example.com\r\n250 HELP\r\n"
+	var fake fakeConn
+	fake.ReadWriter = struct {
+		io.Reader
+		io.Writer
+	}{strings.NewReader(server), &bytes.Buffer{}}
+	createSmtpClient = func(host string, _ string) (*smtp.Client, error) {
+		return smtp.NewClient(fake, host)
+	}
+	t.Cleanup(func() {
+		lookupTLSAFunc = originalTLSA
+		createSmtpClient = originalCreateClient
+		_ = cache.Delete(context.Background(), "mx:example.com")
+	})
+
+	conversation := sendEmailToHostHandler(
+		&SendRow{From: "sender@example.com", RawEmail: "Subject: test"},
+		[]*RecipientRow{{Id: 1, Address: "recipient@example.com"}},
+		"mx.example.com", "relay.example.com", "127.0.0.1", "relay.example.com",
+	)
+
+	assert.ErrorIs(t, conversation.NetworkError, ErrDANEAuthentication)
 }
 
 func TestSendEmailToHost(t *testing.T) {

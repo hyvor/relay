@@ -31,3 +31,8 @@
 - allow DANE-EE authentication without public-CA validation
 - require certificate-chain validation for DANE-TA and PKIX TLSA usages
 - never treat a TLSA association mismatch as a reason to downgrade to plaintext
+- require STARTTLS when authenticated TLSA records are present
+- only apply TLSA policy when the corresponding MX or implicit-MX answer was DNSSEC authenticated
+- run DANE certificate verification during the TLS handshake, before `MAIL FROM`
+- treat missing STARTTLS, TLSA lookup failures, and certificate mismatches as temporary delivery failures on the first attempt
+- refresh the process cache database handle when email workers restart

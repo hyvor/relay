@@ -41,6 +41,8 @@ type TLSAResult struct {
 	Records []TLSARecord
 }
 
+var lookupTLSAFunc = lookupTLSA
+
 func lookupTLSA(ctx context.Context, cache *SharedCache, host string) (TLSAResult, error) {
 	host = normalizeDNSHost(host)
 	if host == "" {
