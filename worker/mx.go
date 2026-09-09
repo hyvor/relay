@@ -7,7 +7,6 @@ import (
 	"net"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/miekg/dns"
@@ -21,25 +20,6 @@ type MxRecord struct {
 type MxCacheValue struct {
 	Records []MxRecord `json:"records"`
 	Secure  bool       `json:"secure"`
-}
-
-// Legacy test seam retained while callers migrate to SharedCache.
-type mxCacheEntry struct {
-	Hosts  []string
-	Expiry time.Time
-}
-
-type mxCacheType struct {
-	data map[string]mxCacheEntry
-	mu   sync.RWMutex
-}
-
-var mxCache = mxCacheType{data: make(map[string]mxCacheEntry)}
-
-func (m *mxCacheType) Clear() {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.data = make(map[string]mxCacheEntry)
 }
 
 const mxCacheTTL = time.Hour
@@ -72,17 +52,6 @@ func getMxValueFromDomainContext(ctx context.Context, cache *SharedCache, domain
 	if domain == "" {
 		return MxCacheValue{}, fmt.Errorf("%w: empty domain", ErrSmtpMxLookupFailed)
 	}
-	mxCache.mu.RLock()
-	legacyEntry, legacyFound := mxCache.data[domain]
-	mxCache.mu.RUnlock()
-	if legacyFound && legacyEntry.Expiry.After(time.Now()) && len(legacyEntry.Hosts) > 0 {
-		records := make([]MxRecord, 0, len(legacyEntry.Hosts))
-		for _, host := range legacyEntry.Hosts {
-			records = append(records, MxRecord{Host: host})
-		}
-		return MxCacheValue{Records: records}, nil
-	}
-
 	var cached MxCacheValue
 	cacheKey := dnsCacheKey("mx", domain)
 	if found, err := cache.Get(ctx, cacheKey, &cached); err == nil && found {

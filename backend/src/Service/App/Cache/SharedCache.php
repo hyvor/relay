@@ -6,7 +6,7 @@ use Psr\Cache\CacheItemPoolInterface;
 
 final readonly class SharedCache
 {
-    public const NAMESPACE = 'relay-shared-v1';
+    public const NAMESPACE = 'shared-v1';
 
     public function __construct(private CacheItemPoolInterface $pool)
     {
@@ -39,11 +39,6 @@ final readonly class SharedCache
     {
         if ($key === '') {
             throw new \InvalidArgumentException('Cache key cannot be empty');
-        }
-
-        $encoded = 'k.'.rtrim(strtr(base64_encode($key), '+/', '-_'), '=');
-        if (strlen(self::NAMESPACE.':'.$encoded) <= 255) {
-            return $encoded;
         }
 
         return 'h.'.hash('sha256', $key);

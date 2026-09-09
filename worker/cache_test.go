@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"strings"
 	"testing"
@@ -70,12 +72,13 @@ func TestSharedCacheRejectsOversizedValues(t *testing.T) {
 func TestSharedCacheItemID(t *testing.T) {
 	itemID, err := sharedCacheItemID("mx:example.com")
 	require.NoError(t, err)
-	assert.Equal(t, "relay-shared-v1:k.bXg6ZXhhbXBsZS5jb20", itemID)
+	digest := sha256.Sum256([]byte("mx:example.com"))
+	assert.Equal(t, "shared-v1:h."+hex.EncodeToString(digest[:]), itemID)
 
 	longID, err := sharedCacheItemID(strings.Repeat("a", 300))
 	require.NoError(t, err)
 	assert.LessOrEqual(t, len(longID), sharedCacheMaxItemIDLen)
-	assert.True(t, strings.HasPrefix(longID, "relay-shared-v1:h."))
+	assert.True(t, strings.HasPrefix(longID, "shared-v1:h."))
 
 	_, err = sharedCacheItemID("")
 	assert.Error(t, err)

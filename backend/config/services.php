@@ -64,7 +64,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->alias(DnsResolveInterface::class, DnsOverHttp::class);
 
     $services
-        ->set('cache.relay_shared', DoctrineDbalAdapter::class)
+        ->set('cache.shared', DoctrineDbalAdapter::class)
         ->args([
             service('doctrine.dbal.default_connection'),
             SharedCache::NAMESPACE,
@@ -74,7 +74,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ]);
     $services
         ->set(SharedCache::class)
-        ->arg('$pool', service('cache.relay_shared'));
+        ->arg('$pool', service('cache.shared'));
 
     // Lock store shares Doctrine's managed `default` connection (instead of opening its
     // own, unmanaged one) so it benefits from doctrine.dbal's idle_connection_ttl recycling.

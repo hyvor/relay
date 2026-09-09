@@ -22,7 +22,7 @@ class SharedCacheTest extends TestCase
 
     public function test_key_encoding_matches_go(): void
     {
-        self::assertSame('k.bXg6ZXhhbXBsZS5jb20', SharedCache::encodeKey('mx:example.com'));
+        self::assertSame('h.'.hash('sha256', 'mx:example.com'), SharedCache::encodeKey('mx:example.com'));
         self::assertStringStartsWith('h.', SharedCache::encodeKey(str_repeat('a', 300)));
         self::assertLessThanOrEqual(239, strlen(SharedCache::encodeKey(str_repeat('a', 300))));
     }
