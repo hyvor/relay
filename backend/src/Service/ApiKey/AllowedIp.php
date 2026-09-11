@@ -6,8 +6,19 @@ use Symfony\Component\HttpFoundation\IpUtils;
 
 class AllowedIp
 {
-    public const int IPV4_MIN_PREFIX = 24;
-    public const int IPV6_MIN_PREFIX = 48;
+    /**
+     * Lower bound on how broad a single allow-list entry may be.
+     *
+     * The bound exists to stop an allow-list from silently becoming "everyone" (0.0.0.0/0), not to
+     * dictate how callers reach the API. Senders that run on serverless platforms have no fixed
+     * egress address at all and can only be described by their provider's published ranges, which
+     * are far larger than a /24: Cloudflare publishes /12 and /13 for IPv4 and /32 for IPv6, AWS
+     * publishes down to /10 for IPv4 and /24 for IPv6. With a /24 floor those ranges have to be
+     * expanded into thousands of entries (Cloudflare's IPv4 list alone becomes 5,956 of them), which
+     * is unreadable in the UI, expensive to keep in sync, and no safer than writing the range once.
+     */
+    public const int IPV4_MIN_PREFIX = 8;
+    public const int IPV6_MIN_PREFIX = 19;
 
     /**
      * Validates a single allow-list entry. Returns null on success, an error

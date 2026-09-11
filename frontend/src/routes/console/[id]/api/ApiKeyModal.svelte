@@ -282,7 +282,7 @@
 
 		<SplitControl
 			label={sendsSendSelected ? 'Allowed IPs (required)' : 'Allowed IPs'}
-			caption={'Choose which IP addresses are allowed to use this API key (HTTP and SMTP). CIDR ranges are supported (max /24 for IPv4, /48 for IPv6).' +
+			caption={'Choose which IP addresses are allowed to use this API key (HTTP and SMTP). CIDR ranges are supported (broadest allowed: /8 for IPv4, /19 for IPv6).' +
 				(sendsSendSelected ? ' This is required when "sends.send" scope is enabled.' : '')}
 			error={errors.allowed_ips}
 			column

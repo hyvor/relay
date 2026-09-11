@@ -20,6 +20,13 @@ class AllowedIpTest extends TestCase
         yield 'ipv4 /32' => ['203.0.113.5/32'];
         yield 'single ipv6' => ['2001:db8::1'];
         yield 'ipv6 /48' => ['2001:db8::/48'];
+        yield 'cloudflare ipv4 /13' => ['104.16.0.0/13'];
+        yield 'cloudflare ipv4 /12' => ['172.64.0.0/12'];
+        yield 'cloudflare ipv6 /32' => ['2606:4700::/32'];
+        yield 'aws ipv4 /10' => ['100.64.0.0/10'];
+        yield 'aws ipv6 /24' => ['2600:1f00::/24'];
+        yield 'ipv4 at the floor' => ['10.0.0.0/8'];
+        yield 'ipv6 at the floor' => ['2000::/19'];
         yield 'ipv6 /64' => ['2001:db8::/64'];
         yield 'ipv6 /128' => ['2001:db8::1/128'];
         yield 'private 10/8' => ['10.0.0.5'];
@@ -44,9 +51,11 @@ class AllowedIpTest extends TestCase
     {
         yield 'empty' => [''];
         yield 'gibberish' => ['not-an-ip'];
-        yield 'ipv4 too broad' => ['203.0.113.0/16'];
+        yield 'ipv4 too broad' => ['203.0.113.0/7'];
+        yield 'ipv4 everything' => ['0.0.0.0/0'];
         yield 'ipv4 prefix too high' => ['203.0.113.5/33'];
-        yield 'ipv6 too broad' => ['2001:db8::/32'];
+        yield 'ipv6 too broad' => ['2001:db8::/18'];
+        yield 'ipv6 everything' => ['::/0'];
         yield 'ipv6 prefix too high' => ['2001:db8::/129'];
         yield 'invalid prefix non-numeric' => ['203.0.113.5/abc'];
         yield 'empty prefix' => ['203.0.113.5/'];
