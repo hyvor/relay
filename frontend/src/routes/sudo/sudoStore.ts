@@ -6,7 +6,8 @@ import type {
 	IpAddress,
 	Queue,
 	Server,
-	SudoConfig
+	SudoConfig,
+	WarmupSchedule
 } from './sudoTypes';
 
 export const sudoConfigStore = writable<SudoConfig>({} as SudoConfig);
@@ -16,3 +17,4 @@ export const ipAddressesStore = writable<IpAddress[]>([]);
 export const queuesStore = writable<Queue[]>([]);
 export const dnsRecordsStore = writable<DnsRecord[]>([]);
 export const defaultDnsRecordsStore = writable<DefaultDnsRecord[]>([]);
+export const warmupSchedulesStore = writable<WarmupSchedule[]>([]);

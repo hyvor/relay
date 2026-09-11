@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Tag } from '@hyvor/design/components';
 	import IconCheck from '@hyvor/icons/IconCheck';
-	import type { WarmupSchedule } from '../sudoTypes';
+	import type { WarmupSchedule } from '../../sudoTypes';
 
 	interface Props {
 		schedule: WarmupSchedule;

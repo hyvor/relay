@@ -3,9 +3,6 @@
 	import type { IpAddress } from '../sudoTypes';
 	import IconExclamationCircle from '@hyvor/icons/IconExclamationCircle';
 	import QueueSelectModal from '../queues/QueueSelectModal.svelte';
-	import WarmupScheduleModal from './WarmupScheduleModal.svelte';
-	import WarmupScheduleManageModal from './WarmupScheduleManageModal.svelte';
-	import WarmupScheduleHistoryModal from './WarmupScheduleHistoryModal.svelte';
 	import IpPtrStatus from './IpPtrStatus.svelte';
 
 	interface Props {
@@ -15,9 +12,6 @@
 	let { ip = $bindable() }: Props = $props();
 
 	let showQueueModal = $state(false);
-	let showWarmupModal = $state(false);
-	let showManageModal = $state(false);
-	let showHistoryModal = $state(false);
 
 	const TOTAL_DAYS = 30;
 
@@ -33,18 +27,6 @@
 
 	function handleModalClose() {
 		showQueueModal = false;
-	}
-
-	function handleWarmupModalClose() {
-		showWarmupModal = false;
-	}
-
-	function handleManageModalClose() {
-		showManageModal = false;
-	}
-
-	function handleHistoryModalClose() {
-		showHistoryModal = false;
 	}
 
 	function handleIpUpdate(updatedIp: IpAddress) {
@@ -93,7 +75,7 @@
 	</td>
 	<td class="warmup">
 		{#if isWarming && warmup}
-			<div class="warmup-day-progress">
+			<a class="warmup-day-progress" href="/sudo/settings/ip-warmups?ip={ip.id}">
 				<div class="warmup-day-label">
 					<span>Day {currentDay} of {TOTAL_DAYS}</span>
 					<span>{progressPercentage}%</span>
@@ -101,44 +83,17 @@
 				<div class="progress-track">
 					<div class="progress-fill" style="width: {progressPercentage}%"></div>
 				</div>
-			</div>
-			<div class="warmup-actions">
-				<Button
-					size="x-small"
-					color="input"
-					variant="outline"
-					on:click={() => (showManageModal = true)}
-				>
-					Manage
-				</Button>
-				<Button
-					size="x-small"
-					color="input"
-					variant="outline"
-					on:click={() => (showHistoryModal = true)}
-				>
-					History
-				</Button>
-			</div>
+			</a>
 		{:else}
-			<div class="warmup-actions">
-				<Button
-					size="x-small"
-					color="input"
-					variant="outline"
-					on:click={() => (showWarmupModal = true)}
-				>
-					Start Warmup
-				</Button>
-				<Button
-					size="x-small"
-					color="input"
-					variant="outline"
-					on:click={() => (showHistoryModal = true)}
-				>
-					History
-				</Button>
-			</div>
+			<Button
+				size="x-small"
+				color="input"
+				variant="outline"
+				as="a"
+				href="/sudo/settings/ip-warmups/new?ip={ip.id}"
+			>
+				Start Warmup
+			</Button>
 		{/if}
 	</td>
 </tr>
@@ -149,32 +104,6 @@
 		{ip}
 		onClose={handleModalClose}
 		onUpdate={handleIpUpdate}
-	/>
-{/if}
-
-{#if showWarmupModal}
-	<WarmupScheduleModal
-		bind:show={showWarmupModal}
-		{ip}
-		onClose={handleWarmupModalClose}
-		onUpdate={handleIpUpdate}
-	/>
-{/if}
-
-{#if showManageModal}
-	<WarmupScheduleManageModal
-		bind:show={showManageModal}
-		{ip}
-		onClose={handleManageModalClose}
-		onUpdate={handleIpUpdate}
-	/>
-{/if}
-
-{#if showHistoryModal}
-	<WarmupScheduleHistoryModal
-		bind:show={showHistoryModal}
-		{ip}
-		onClose={handleHistoryModalClose}
 	/>
 {/if}
 
@@ -203,13 +132,8 @@
 		white-space: nowrap;
 	}
 
-	.warmup-actions {
-		display: flex;
-		gap: 4px;
-	}
-
 	.warmup-day-progress {
-		margin-bottom: 8px;
+		display: block;
 		min-width: 160px;
 	}
 
