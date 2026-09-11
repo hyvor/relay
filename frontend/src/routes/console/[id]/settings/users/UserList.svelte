@@ -31,6 +31,7 @@
 			remaining: scopes.slice(2)
 		};
 	}
+
 </script>
 
 {#if isLoadingUsers}
@@ -46,11 +47,7 @@
 			<div class="user-row">
 				<div class="user-info">
 					{#if projectUser.user.picture_url}
-						<img
-							src={projectUser.user.picture_url}
-							alt={projectUser.user.name}
-							class="user-avatar"
-						/>
+						<img src={projectUser.user.picture_url} alt={projectUser.user.name} class="user-avatar" />
 					{:else}
 						<div class="user-avatar-placeholder">
 							{projectUser.user.name.charAt(0).toUpperCase()}
@@ -73,23 +70,21 @@
 					{/each}
 					{#if displayScopes.remaining.length > 0}
 						<Tooltip text={displayScopes.remaining.join(', ')}>
-							<span class="scope-tag scope-tag-more"
-								>+{displayScopes.remaining.length}</span
-							>
+							<span class="scope-tag scope-tag-more">+{displayScopes.remaining.length}</span>
 						</Tooltip>
 					{/if}
 				</div>
 				<div class="user-actions">
-					<IconButton
-						size="small"
-						color="red"
-						variant="fill-light"
-						on:click={() => onDeleteUser(projectUser)}
-						disabled={isCurrentUser(projectUser)}
-						title="Remove user from project"
-					>
-						<IconTrash size={14} />
-					</IconButton>
+						<IconButton
+							size="small"
+							color="red"
+                            variant="fill-light"
+							on:click={() => onDeleteUser(projectUser)}
+                            disabled={isCurrentUser(projectUser)}
+							title="Remove user from project"
+						>
+							<IconTrash size={14} />
+						</IconButton>
 				</div>
 			</div>
 		{/each}

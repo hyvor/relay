@@ -22,7 +22,7 @@
 		if (addingUserId !== undefined) {
 			openAddUserModal();
 		}
-	});
+	})
 
 	const availableScopes: Scope[] = [
 		'project.read',
@@ -119,17 +119,20 @@
 				endpoint: `project-users/${projectUser.id}`
 			});
 
-			projectUsers = projectUsers.filter((pu) => pu.id !== projectUser.id);
+			projectUsers = projectUsers.filter(pu => pu.id !== projectUser.id);
 			toast.success(`${projectUser.user.name} has been removed from the project`);
 		} catch (error: any) {
 			toast.error('Failed to remove user: ' + error.message);
 		}
 	}
+
+
 </script>
 
 <ScopeMask scope="project.write">
 	<SettingsBody>
 		<div class="user-management">
+
 			<div class="section">
 				<h2>Add Users</h2>
 				<p class="section-description">
@@ -158,7 +161,7 @@
 <AddUserModal
 	bind:show={showInviteModal}
 	bind:selectedScopes
-	{isAdding}
+	isAdding={isAdding}
 	isEditing={false}
 	{availableScopes}
 	onCancel={closeAddUserModal}
@@ -167,8 +170,8 @@
 
 <style>
 	.user-management {
-		padding: 20px 30px;
-	}
+        padding: 20px 30px;
+    }
 
 	.section {
 		margin-bottom: 40px;

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Button, Dropdown, IconButton } from '@hyvor/design/components';
 	import IconCaretDown from '@hyvor/icons/IconCaretDown';
-	import IconX from '@hyvor/icons/IconX';
+    import IconX from '@hyvor/icons/IconX';
 
 	export let name: string;
 	export let value: string | undefined = undefined;
@@ -15,41 +15,42 @@
 	export let align: 'start' | 'center' | 'end' = 'start';
 
 	export let width = 400;
+
 </script>
 
-<Dropdown bind:show {width} {align}>
+<Dropdown bind:show width={width} align={align}>
 	{#snippet trigger()}
-		<Button size="small" color="input" on:click={handleTriggerClick} {disabled}>
-			<span class="name">
-				{name}
-			</span>
+	<Button size="small" color="input" on:click={handleTriggerClick} {disabled}>
+		<span class="name">
+			{name}
+		</span>
 
-			<span class="value">
-				{#if $$slots.value}
-					<slot name="value" />
-				{:else}
-					{value}
-				{/if}
-			</span>
-
-			{#if isSelected}
-				<IconButton
-					size={14}
-					style="margin-left:4px;"
-					color="gray"
-					on:click={(e) => {
-						e.stopPropagation();
-						handleDeselectClick();
-					}}
-				>
-					<IconX size={10} />
-				</IconButton>
+		<span class="value">
+			{#if $$slots.value}
+				<slot name="value" />
+			{:else}
+				{value}
 			{/if}
+		</span>
 
-			<div class="icon-caret">
-				<IconCaretDown size={12} />
-			</div>
-		</Button>
+		{#if isSelected}
+			<IconButton
+				size={14}
+				style="margin-left:4px;"
+				color="gray"
+				on:click={(e) => {
+					e.stopPropagation();
+					handleDeselectClick();
+				}}
+			>
+				<IconX size={10} />
+			</IconButton>
+		{/if}
+
+		<div class="icon-caret">
+			<IconCaretDown size={12} />
+		</div>
+	</Button>
 	{/snippet}
 
 	{#snippet content()}

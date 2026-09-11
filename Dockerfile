@@ -16,6 +16,11 @@ RUN npm install
 
 ###################################################
 FROM frontend-base AS frontend-dev
+COPY frontend/package.json frontend/package-lock.json \
+    frontend/svelte.config.js \
+    frontend/vite.config.ts \
+    frontend/.prettier* \
+    frontend/tsconfig.json /app/frontend/
 COPY frontend/src /app/frontend/src
 COPY frontend/static /app/frontend/static
 CMD ["npm", "run", "dev"]
