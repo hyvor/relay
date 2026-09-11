@@ -46,7 +46,7 @@ export interface IpAddress {
 	queue: Queue | null;
 	is_ptr_forward_valid: boolean;
 	is_ptr_reverse_valid: boolean;
-	currentWarmupSchedule: WarmupSchedule | null;
+	current_warmup_schedule: WarmupSchedule | null;
 }
 
 export interface Queue {

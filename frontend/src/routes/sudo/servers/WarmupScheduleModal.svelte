@@ -18,8 +18,8 @@
 	let loading = $state(false);
 
 	function initSchedule() {
-		if (ip?.currentWarmupSchedule?.schedule?.length === 30) {
-			schedule = [...ip.currentWarmupSchedule.schedule];
+		if (ip?.current_warmup_schedule?.schedule?.length === 30) {
+			schedule = [...ip.current_warmup_schedule.schedule];
 		} else {
 			schedule = Array(30).fill(0);
 		}
@@ -73,7 +73,7 @@
 
 			const updatedIp: IpAddress = {
 				...ip,
-				currentWarmupSchedule: updatedWarmup
+				current_warmup_schedule: updatedWarmup
 			};
 
 			ipAddressesStore.update((ips) =>

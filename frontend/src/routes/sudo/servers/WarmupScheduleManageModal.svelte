@@ -14,7 +14,7 @@
 
 	let { show = $bindable(), ip, onClose, onUpdate }: Props = $props();
 
-	let warmup = $derived(ip?.currentWarmupSchedule ?? null);
+	let warmup = $derived(ip?.current_warmup_schedule ?? null);
 
 	function handleClose() {
 		show = false;
@@ -44,7 +44,7 @@
 
 			const updatedIp: IpAddress = {
 				...ip,
-				currentWarmupSchedule: updatedWarmup
+				current_warmup_schedule: updatedWarmup
 			};
 
 			ipAddressesStore.update((ips) =>

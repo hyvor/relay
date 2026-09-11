@@ -17,7 +17,7 @@ class IpAddressObject
     public ?QueueObject $queue = null;
     public bool $is_ptr_forward_valid = false;
     public bool $is_ptr_reverse_valid = false;
-    public ?WarmupScheduleObject $currentWarmupSchedule = null;
+    public ?WarmupScheduleObject $current_warmup_schedule = null;
 
     public function __construct(IpAddress $ipAddress, string $instanceDomain, ?WarmupSchedule $currentWarmup = null)
     {
@@ -31,7 +31,7 @@ class IpAddressObject
         $this->is_ptr_forward_valid = $ipAddress->getIsPtrForwardValid();
         $this->is_ptr_reverse_valid = $ipAddress->getIsPtrReverseValid();
 
-        $this->currentWarmupSchedule = $currentWarmup ? new WarmupScheduleObject($currentWarmup) : null;
+        $this->current_warmup_schedule = $currentWarmup ? new WarmupScheduleObject($currentWarmup) : null;
     }
 
 }

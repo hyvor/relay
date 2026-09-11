@@ -21,7 +21,7 @@
 
 	const TOTAL_DAYS = 30;
 
-	let warmup = $derived(ip.currentWarmupSchedule);
+	let warmup = $derived(ip.current_warmup_schedule);
 	let isWarming = $derived(warmup?.status === 'warming');
 
 	let currentDay = $derived(warmup ? Math.min(warmup.results.length + 1, TOTAL_DAYS) : 0);
