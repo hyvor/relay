@@ -7,6 +7,7 @@ use App\Service\InfrastructureBounce\InfrastructureBounceService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\InfrastructureBounceFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
+
 use function Zenstruck\Foundry\Persistence\refresh;
 
 #[CoversClass(InfrastructureBounceService::class)]
@@ -28,7 +29,7 @@ class MarkInfrastructureBounceAsReadTest extends WebTestCase
         $response = $this->sudoApi('PATCH', "/infrastructure-bounces/{$bounce->getId()}/mark-as-read");
 
         $this->assertResponseStatusCodeSame(200);
-        $this->assertSame('null', $response->getContent());
+        $this->assertSame('{}', $response->getContent());
 
         $bounce = refresh($bounce);
         $this->assertTrue($bounce->isRead());
@@ -43,7 +44,7 @@ class MarkInfrastructureBounceAsReadTest extends WebTestCase
         $response = $this->sudoApi('PATCH', "/infrastructure-bounces/{$bounce->getId()}/mark-as-read");
 
         $this->assertResponseStatusCodeSame(200);
-        $this->assertSame('null', $response->getContent());
+        $this->assertSame('{}', $response->getContent());
 
         $bounce = refresh($bounce);
         $this->assertTrue($bounce->isRead());
