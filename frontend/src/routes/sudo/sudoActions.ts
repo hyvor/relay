@@ -155,7 +155,7 @@ export function getInfrastructureBounces(limit: number = 20, offset: number = 0,
 }
 
 export function markInfrastructureBounceAsRead(id: number) {
-	return sudoApi.patch<InfrastructureBounce>({
+	return sudoApi.patch({
 		endpoint: `/infrastructure-bounces/${id}/mark-as-read`
 	});
 }

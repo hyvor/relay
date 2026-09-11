@@ -3,17 +3,14 @@
 namespace App\Tests\Api\Sudo\InfrastructureBounce;
 
 use App\Api\Sudo\Controller\InfrastructureBounceController;
-use App\Api\Sudo\Object\InfrastructureBounceObject;
 use App\Service\InfrastructureBounce\InfrastructureBounceService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\InfrastructureBounceFactory;
-use App\Tests\Factory\SendRecipientFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use function Zenstruck\Foundry\Persistence\refresh;
 
 #[CoversClass(InfrastructureBounceService::class)]
 #[CoversClass(InfrastructureBounceController::class)]
-#[CoversClass(InfrastructureBounceObject::class)]
 class MarkInfrastructureBounceAsReadTest extends WebTestCase
 {
     public function test_when_bounce_not_found_returns_404(): void
@@ -28,12 +25,10 @@ class MarkInfrastructureBounceAsReadTest extends WebTestCase
             'is_read' => false,
         ]);
 
-        $this->sudoApi('PATCH', "/infrastructure-bounces/{$bounce->getId()}/mark-as-read");
+        $response = $this->sudoApi('PATCH', "/infrastructure-bounces/{$bounce->getId()}/mark-as-read");
 
         $this->assertResponseStatusCodeSame(200);
-        $json = $this->getJson();
-        $this->assertTrue($json['is_read']);
-        $this->assertSame($bounce->getId(), $json['id']);
+        $this->assertSame('null', $response->getContent());
 
         $bounce = refresh($bounce);
         $this->assertTrue($bounce->isRead());
@@ -45,28 +40,12 @@ class MarkInfrastructureBounceAsReadTest extends WebTestCase
             'is_read' => true,
         ]);
 
-        $this->sudoApi('PATCH', "/infrastructure-bounces/{$bounce->getId()}/mark-as-read");
+        $response = $this->sudoApi('PATCH', "/infrastructure-bounces/{$bounce->getId()}/mark-as-read");
 
         $this->assertResponseStatusCodeSame(200);
-        $json = $this->getJson();
-        $this->assertTrue($json['is_read']);
+        $this->assertSame('null', $response->getContent());
 
         $bounce = refresh($bounce);
         $this->assertTrue($bounce->isRead());
-    }
-
-    public function test_includes_send_uuid_when_recipient_exists(): void
-    {
-        $recipient = SendRecipientFactory::createOne();
-        $bounce = InfrastructureBounceFactory::createOne([
-            'is_read' => false,
-            'send_recipient_id' => $recipient->getId(),
-        ]);
-
-        $this->sudoApi('PATCH', "/infrastructure-bounces/{$bounce->getId()}/mark-as-read");
-
-        $this->assertResponseStatusCodeSame(200);
-        $json = $this->getJson();
-        $this->assertSame($recipient->getSend()->getUuid(), $json['send_uuid']);
     }
 }

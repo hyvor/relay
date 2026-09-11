@@ -101,7 +101,7 @@ class GetInfrastructureBounceTest extends WebTestCase
         $this->assertCount(10, $json);
     }
 
-    public function test_includes_send_uuid_when_recipient_exists(): void
+    public function test_includes_send_uuid_and_recipient_email_when_recipient_exists(): void
     {
         $recipient = SendRecipientFactory::createOne();
         InfrastructureBounceFactory::createOne([
@@ -128,6 +128,11 @@ class GetInfrastructureBounceTest extends WebTestCase
             $recipient->getSend()->getUuid(),
             $byRecipientId[$recipient->getId()]['send_uuid']
         );
+        $this->assertSame(
+            $recipient->getAddress(),
+            $byRecipientId[$recipient->getId()]['recipient_email']
+        );
         $this->assertNull($byRecipientId[999999]['send_uuid']);
+        $this->assertNull($byRecipientId[999999]['recipient_email']);
     }
 }

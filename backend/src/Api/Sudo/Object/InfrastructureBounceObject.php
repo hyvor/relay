@@ -14,8 +14,9 @@ class InfrastructureBounceObject
     public string $smtp_message;
     public int $send_recipient_id;
     public ?string $send_uuid;
+    public ?string $recipient_email;
 
-    public function __construct(InfrastructureBounce $bounce, ?string $sendUuid = null)
+    public function __construct(InfrastructureBounce $bounce, ?string $sendUuid = null, ?string $recipientEmail = null)
     {
         $this->id = $bounce->getId();
         $this->created_at = $bounce->getCreatedAt()->getTimestamp();
@@ -25,6 +26,7 @@ class InfrastructureBounceObject
         $this->smtp_message = $bounce->getSmtpMessage();
         $this->send_recipient_id = $bounce->getSendRecipientId();
         $this->send_uuid = $sendUuid;
+        $this->recipient_email = $recipientEmail;
     }
 }
 

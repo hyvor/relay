@@ -70,22 +70,16 @@ class InfrastructureBounceServiceTest extends KernelTestCase
         $service = $this->getService(InfrastructureBounceService::class);
 
         $all = $service->getInfrastructureBounces(10, 0);
-        $firstOfAll = $all->first();
-        $this->assertNotFalse($firstOfAll);
-        $this->assertSame($second->getId(), $firstOfAll->getId());
         $this->assertCount(2, $all);
+        $this->assertSame($second->getId(), $all[0]['bounce']->getId());
 
         $unread = $service->getInfrastructureBounces(10, 0, false);
-        $firstUnread = $unread->first();
-        $this->assertNotFalse($firstUnread);
         $this->assertCount(1, $unread);
-        $this->assertSame($first->getId(), $firstUnread->getId());
+        $this->assertSame($first->getId(), $unread[0]['bounce']->getId());
 
         $read = $service->getInfrastructureBounces(10, 0, true);
-        $firstRead = $read->first();
-        $this->assertNotFalse($firstRead);
         $this->assertCount(1, $read);
-        $this->assertSame($second->getId(), $firstRead->getId());
+        $this->assertSame($second->getId(), $read[0]['bounce']->getId());
     }
 
     public function test_mark_all_unread_as_read(): void
@@ -109,19 +103,27 @@ class InfrastructureBounceServiceTest extends KernelTestCase
         $this->assertCount(5, $read);
     }
 
-    public function test_get_send_uuids_by_recipient_ids(): void
+    public function test_get_infrastructure_bounces_includes_recipient_info(): void
     {
         $recipient = SendRecipientFactory::createOne();
-        $service = $this->getService(InfrastructureBounceService::class);
-
-        $map = $service->getSendUuidsByRecipientIds([
-            $recipient->getId(),
-            999999,
+        InfrastructureBounceFactory::createOne([
+            'send_recipient_id' => $recipient->getId(),
+        ]);
+        InfrastructureBounceFactory::createOne([
+            'send_recipient_id' => 999999,
         ]);
 
-        $this->assertSame($recipient->getSend()->getUuid(), $map[$recipient->getId()]);
-        $this->assertArrayNotHasKey(999999, $map);
+        $service = $this->getService(InfrastructureBounceService::class);
+        $bounces = $service->getInfrastructureBounces(10, 0);
 
-        $this->assertSame([], $service->getSendUuidsByRecipientIds([]));
+        $byRecipientId = [];
+        foreach ($bounces as $row) {
+            $byRecipientId[$row['bounce']->getSendRecipientId()] = $row;
+        }
+
+        $this->assertSame($recipient->getSend()->getUuid(), $byRecipientId[$recipient->getId()]['send_uuid']);
+        $this->assertSame($recipient->getAddress(), $byRecipientId[$recipient->getId()]['recipient_email']);
+        $this->assertNull($byRecipientId[999999]['send_uuid']);
+        $this->assertNull($byRecipientId[999999]['recipient_email']);
     }
 }

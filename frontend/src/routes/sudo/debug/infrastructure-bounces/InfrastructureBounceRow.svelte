@@ -63,14 +63,13 @@
 	{#if opened}
 		<div class="details">
 			<div class="detail-row">
-				<div class="detail-label">Send Recipient ID:</div>
-				<div class="detail-value">{bounce.send_recipient_id}</div>
-			</div>
-			<div class="detail-row">
-				<div class="detail-label">Original send:</div>
+				<div class="detail-label">Recipient:</div>
 				<div class="detail-value">
+					{bounce.recipient_email ?? 'Unknown recipient'}
 					{#if bounce.send_uuid}
-						<Link href="/sudo/sends/{bounce.send_uuid}">View original send</Link>
+						<Link href="/sudo/sends/{bounce.send_uuid}">
+							View send &rarr;
+						</Link>
 					{:else}
 						Send no longer available
 					{/if}

@@ -160,6 +160,7 @@ export interface InfrastructureBounce {
 	smtp_message: string;
 	send_recipient_id: number;
 	send_uuid: string | null;
+	recipient_email: string | null;
 }
 
 export interface TlsCertificate {

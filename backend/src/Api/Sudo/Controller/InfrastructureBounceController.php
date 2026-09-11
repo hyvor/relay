@@ -36,15 +36,13 @@ class InfrastructureBounceController extends AbstractController
             $isRead
         );
 
-        $sendUuids = $this->infrastructureBounceService->getSendUuidsByRecipientIds(
-            $bounces->map(fn($bounce) => $bounce->getSendRecipientId())->toArray()
-        );
-
-        $bounceObjects = $bounces->map(
-            fn($bounce) => new InfrastructureBounceObject(
-                $bounce,
-                $sendUuids[$bounce->getSendRecipientId()] ?? null
-            )
+        $bounceObjects = array_map(
+            fn(array $row) => new InfrastructureBounceObject(
+                $row['bounce'],
+                $row['send_uuid'],
+                $row['recipient_email']
+            ),
+            $bounces
         );
 
         return $this->json($bounceObjects);
@@ -61,14 +59,7 @@ class InfrastructureBounceController extends AbstractController
 
         $this->infrastructureBounceService->markAsRead($bounce);
 
-        $sendUuids = $this->infrastructureBounceService->getSendUuidsByRecipientIds([
-            $bounce->getSendRecipientId(),
-        ]);
-
-        return new JsonResponse(new InfrastructureBounceObject(
-            $bounce,
-            $sendUuids[$bounce->getSendRecipientId()] ?? null
-        ));
+        return new JsonResponse();
     }
 
     #[Route('/infrastructure-bounces/mark-all-as-read', methods: 'POST')]
