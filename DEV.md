@@ -20,22 +20,11 @@ bin/console dev:reset --seed
 docker compose exec -it backend bash -c "bin/console dev:reset --seed"
 ```
 
-
-### Sending an email with curl
-
-"Test Project" is seeded with an API key 'test-api-key', which you can use for testing. Then, check Sends in Console for
-logs.
+### Running tests
 
 ```bash
-curl -X POST https://relay.hyvor.localhost/api/console/sends \
-     -H "Authorization: Bearer test-api-key" \
-     -H "Content-Type: application/json" \
-     -d '{
-           "from": "test@hyvor.local.testing",
-           "to": "accept@simulator.net",
-           "subject": "Hello from Hyvor Relay",
-           "body_text": "This is a test email sent via the API."
-         }'
+# go tests
+docker compose exec worker go test -v ./...
 ```
 
 ### Testing with the Simulator
@@ -53,3 +42,20 @@ docker compose up -d simulator
 ```
 
 Note: the simulator can send back bounce (DSN) and complaint (ARF) messages back to Go email server.
+
+### Sending an email with curl
+
+"Test Project" is seeded with an API key 'test-api-key', which you can use for testing. Then, check Sends in Console for
+logs.
+
+```bash
+curl -X POST https://relay.hyvor.localhost/api/console/sends \
+     -H "Authorization: Bearer test-api-key" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "from": "test@hyvor.local.testing",
+           "to": "accept@simulator.net",
+           "subject": "Hello from Hyvor Relay",
+           "body_text": "This is a test email sent via the API."
+         }'
+```

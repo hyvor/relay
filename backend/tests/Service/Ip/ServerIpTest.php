@@ -2,34 +2,35 @@
 
 namespace App\Tests\Service\Ip;
 
-use App\Service\Ip\ServerIp;
+use App\Service\Ip\ServerIpResolver\ServerIpResolver;
+use App\Service\Ip\ServerIpResolver\ResolvedIp;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(ServerIp::class)]
+#[CoversClass(ServerIpResolver::class)]
 class ServerIpTest extends TestCase
 {
 
     public function test_get_public_ips(): void
     {
-        $ipService = new ServerIp();
-        $addresses = $ipService->getPublicV4IpAddresses();
+        $ipService = new ServerIpResolver();
+        $addresses = $ipService->getServerIpData();
         // @phpstan-ignore-next-line
         $this->assertIsArray($addresses);
     }
 
     public function test_get_public_ips_mocked(): void
     {
-        $ipService = new ServerIp(
-            netGetInterfacesFunction: [$this, 'getMockedNetGetInterfaces']
+        $ipService = new ServerIpResolver(
+            netGetInterfacesFunction: [$this, 'getMockedNetGetInterfaces'],
         );
-        $addresses = $ipService->getPublicV4IpAddresses();
+        $addresses = $ipService->getServerIpData();
         $this->assertSame(
             [
                 '54.12.34.56',
                 '8.8.8.8',
             ],
-            $addresses
+            array_map(fn(ResolvedIp $result) => $result->publicIp, $addresses),
         );
     }
 
@@ -51,7 +52,7 @@ class ServerIpTest extends TestCase
 
             // public
             '8.8.8.8',
-            '54.12.34.56'
+            '54.12.34.56',
         ];
 
         $interfaces = [];
@@ -60,8 +61,8 @@ class ServerIpTest extends TestCase
             $interfaces[] = [
                 'up' => true,
                 'unicast' => [
-                    ['address' => $address]
-                ]
+                    ['address' => $address],
+                ],
             ];
         }
 

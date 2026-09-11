@@ -32,6 +32,9 @@ class IpAddress
     #[ORM\JoinColumn()]
     private ?Queue $queue;
 
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
+    private ?string $private_ip_address = null;
+
     #[ORM\Column(type: 'boolean')]
     private bool $is_ptr_forward_valid = true;
 
@@ -105,6 +108,17 @@ class IpAddress
     public function setQueue(?Queue $queue): static
     {
         $this->queue = $queue;
+        return $this;
+    }
+
+    public function getPrivateIpAddress(): ?string
+    {
+        return $this->private_ip_address;
+    }
+
+    public function setPrivateIpAddress(?string $privateIpAddress): static
+    {
+        $this->private_ip_address = $privateIpAddress;
         return $this;
     }
 

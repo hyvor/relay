@@ -41,6 +41,7 @@ export interface IpAddress {
 	created_at: number;
 	server_id: number;
 	ip_address: string;
+	private_ip_address: string | null;
 	ptr: string;
 	queue: Queue | null;
 	is_ptr_forward_valid: boolean;
@@ -96,6 +97,14 @@ export interface HealthCheckData {
 	};
 	dns_server_pointed: {
 		error: string;
+	};
+	nat_private_ips: {
+		invalid_nats: Array<{
+			private_ip: string;
+			expected_public_ip: string;
+			resolved_public_ip: string | null;
+			error: string | null;
+		}>;
 	};
 }
 

@@ -12,7 +12,8 @@ use App\Entity\Type\ProjectSendType;
 use App\Service\Domain\DomainService;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
-use App\Service\Ip\ServerIp;
+use App\Service\Ip\ServerIpResolver\ServerIpResolver;
+use App\Service\Ip\ServerIpResolver\ResolvedIp;
 use App\Service\Management\ManagementService;
 use App\Service\Queue\QueueService;
 use App\Service\Server\ServerService;
@@ -34,12 +35,12 @@ class ManagementInitCommandTest extends KernelTestCase
 
     public function test_creates_instance_server_and_adds_ips(): void
     {
-        $serverIpMock = $this->createStub(ServerIp::class);
-        $serverIpMock->method('getPublicV4IpAddresses')->willReturn([
-            '8.8.8.8',
-            '9.9.9.9'
+        $serverIpMock = $this->createStub(ServerIpResolver::class);
+        $serverIpMock->method('getServerIpData')->willReturn([
+            new ResolvedIp('8.8.8.8'),
+            new ResolvedIp('9.9.9.9'),
         ]);
-        $this->container->set(ServerIp::class, $serverIpMock);
+        $this->container->set(ServerIpResolver::class, $serverIpMock);
 
         $command = $this->commandTester('management:init');
         $command->execute([]);
@@ -72,7 +73,7 @@ class ManagementInitCommandTest extends KernelTestCase
         $this->assertSame($instance->getDkimPublicKey(), $domain->getDkimPublicKey());
         $this->assertSame(
             $encryption->decryptString($instance->getDkimPrivateKeyEncrypted()),
-            $encryption->decryptString($domain->getDkimPrivateKeyEncrypted())
+            $encryption->decryptString($domain->getDkimPrivateKeyEncrypted()),
         );
 
         // QUEUES
@@ -99,7 +100,7 @@ class ManagementInitCommandTest extends KernelTestCase
     public function test_deletes_ip_addresses(): void
     {
         $server = ServerFactory::createOne([
-            'hostname' => 'hyvor-relay'
+            'hostname' => 'hyvor-relay',
         ]);
 
         $ip1 = IpAddressFactory::createOne([
@@ -119,12 +120,12 @@ class ManagementInitCommandTest extends KernelTestCase
         ]);
         $ip3Id = $ip3->getId();
 
-        $serverIpMock = $this->createStub(ServerIp::class);
-        $serverIpMock->method('getPublicV4IpAddresses')->willReturn([
-            '8.8.8.8',
-            '9.9.9.9'
+        $serverIpMock = $this->createStub(ServerIpResolver::class);
+        $serverIpMock->method('getServerIpData')->willReturn([
+            new ResolvedIp('8.8.8.8'),
+            new ResolvedIp('9.9.9.9'),
         ]);
-        $this->container->set(ServerIp::class, $serverIpMock);
+        $this->container->set(ServerIpResolver::class, $serverIpMock);
 
         $command = $this->commandTester('management:init');
         $command->execute([]);
