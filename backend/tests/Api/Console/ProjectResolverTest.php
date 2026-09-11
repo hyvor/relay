@@ -34,7 +34,7 @@ class ProjectResolverTest extends TestCase
         $request = Request::create('/');
         $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn('App\Entity\Send');
-        $argument->method('getControllerName')->willReturn('App\Api\Console\Controller\SendController');
+        $argument->method('getControllerName')->willReturn('App\Api\Console\Controller\SendsController');
 
         $resolver = new ProjectResolver();
         $result = $resolver->resolve($request, $argument);

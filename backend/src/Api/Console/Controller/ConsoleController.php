@@ -6,6 +6,7 @@ use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Api\Console\Object\ProjectObject;
 use App\Api\Console\Object\ProjectUserObject;
 use App\Entity\Project;
+use App\Entity\Type\WebhooksEventEnum;
 use App\Service\App\Config;
 use App\Service\Instance\InstanceService;
 use App\Service\ProjectUser\ProjectUserService;
@@ -19,12 +20,10 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
-use App\Entity\Type\WebhooksEventEnum;
 use Hyvor\Internal\Bundle\Api\DataCarryingHttpException;
 
 class ConsoleController extends AbstractController
 {
-
     public function __construct(
         private ProjectUserService $projectUserService,
         private InternalConfig $internalConfig,
@@ -35,7 +34,7 @@ class ConsoleController extends AbstractController
     ) {}
 
     #[Route('/init', methods: 'GET')]
-    public function initConsole(Request $request): JsonResponse
+    public function init(Request $request): JsonResponse
     {
         $me = $this->auth->me($request);
 
