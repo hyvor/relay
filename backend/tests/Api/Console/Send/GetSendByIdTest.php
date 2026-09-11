@@ -3,7 +3,7 @@
 namespace App\Tests\Api\Console\Send;
 
 use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Controller\SendController;
+use App\Api\Console\Controller\SendsController;
 use App\Api\Console\Object\SendAttemptObject;
 use App\Api\Console\Object\SendAttemptRecipientObject;
 use App\Api\Console\Object\SendFeedbackObject;
@@ -22,7 +22,7 @@ use App\Tests\Factory\SendFeedbackFactory;
 use App\Tests\Factory\SendRecipientFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(SendController::class)]
+#[CoversClass(SendsController::class)]
 #[CoversClass(SendObject::class)]
 #[CoversClass(SendRecipientObject::class)]
 #[CoversClass(SendAttemptRecipientObject::class)]

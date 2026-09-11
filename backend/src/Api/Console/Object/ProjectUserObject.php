@@ -5,6 +5,7 @@ namespace App\Api\Console\Object;
 use App\Api\Console\Authorization\Scope;
 use App\Entity\ProjectUser;
 use Hyvor\Internal\Auth\AuthUser;
+use OpenApi\Attributes as OA;
 
 class ProjectUserObject
 {
@@ -12,8 +13,9 @@ class ProjectUserObject
     public int $id;
     public int $created_at;
     /**
-     * @var string[]
+     * @var list<string>
      */
+    #[OA\Property(type: 'array', items: new OA\Items(type: 'string'))]
     public array $scopes;
     public ProjectUserMiniObject $user;
     public ?string $oidc_sub;
@@ -24,7 +26,11 @@ class ProjectUserObject
     {
         $this->id = $pu->getId();
         $this->created_at = $pu->getCreatedAt()->getTimestamp();
-        $this->scopes = $pu->getScopes();
+
+        /** @var list<string> $scopes */
+        $scopes = $pu->getScopes();
+        $this->scopes = $scopes;
+
         $this->user = new ProjectUserMiniObject($authUser);
         $this->oidc_sub = $authUser->oidc_sub;
         $this->project = new ProjectObject($pu->getProject());

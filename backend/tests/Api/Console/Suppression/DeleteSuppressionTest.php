@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\Suppression;
 
-use App\Api\Console\Controller\SuppressionController;
+use App\Api\Console\Controller\SuppressionsController;
 use App\Entity\Suppression;
 use App\Service\Suppression\Event\SuppressionDeletedEvent;
 use App\Service\Suppression\SuppressionService;
@@ -12,7 +12,7 @@ use App\Tests\Factory\SuppressionFactory;
 use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(SuppressionController::class)]
+#[CoversClass(SuppressionsController::class)]
 #[CoversClass(SuppressionService::class)]
 #[CoversClass(SuppressionDeletedEvent::class)]
 class DeleteSuppressionTest extends WebTestCase

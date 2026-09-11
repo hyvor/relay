@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\Webhook;
 
-use App\Api\Console\Controller\WebhookController;
+use App\Api\Console\Controller\WebhooksController;
 use App\Api\Console\Input\CreateWebhookInput;
 use App\Api\Console\Object\WebhookObject;
 use App\Service\Webhook\WebhookService;
@@ -10,7 +10,7 @@ use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(WebhookController::class)]
+#[CoversClass(WebhooksController::class)]
 #[CoversClass(WebhookService::class)]
 #[CoversClass(WebhookObject::class)]
 #[CoversClass(CreateWebhookInput::class)]

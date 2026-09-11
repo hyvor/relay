@@ -8,35 +8,37 @@ use App\Api\Console\Idempotency\IdempotencySupported;
 use App\Api\Console\Input\RetrySendInput;
 use App\Api\Console\Input\SendEmail\SendEmailInput;
 use App\Api\Console\Input\SendEmail\UnableToDecodeAttachmentBase64Exception;
-use App\Api\Console\Object\SendObject;
 use App\Api\Console\Object\SendContentObject;
+use App\Api\Console\Object\SendObject;
 use App\Entity\Project;
 use App\Entity\Send;
 use App\Entity\Type\ProjectSendType;
 use App\Entity\Type\SendRecipientStatus;
 use App\Service\Domain\DomainService;
+use App\Service\Queue\QueueService;
 use App\Service\Send\EmailAddressFormat;
 use App\Service\Send\Exception\EmailTooLargeException;
 use App\Service\Send\Exception\SendContentStorageException;
 use App\Service\Send\SendContentStorage;
 use App\Service\Send\SendLimits;
 use App\Service\Send\SendService;
-use App\Service\Queue\QueueService;
 use App\Service\SendAttempt\SendAttemptService;
 use App\Service\SendFeedback\SendFeedbackService;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
-use Symfony\Component\Clock\ClockAwareTrait;
 
-class SendController extends AbstractController
+class SendsController extends AbstractController
 {
     use ClockAwareTrait;
 
@@ -52,7 +54,21 @@ class SendController extends AbstractController
     #[Route("/sends", methods: "POST")]
     #[ScopeRequired(Scope::SENDS_SEND)]
     #[IdempotencySupported]
-    public function sendEmail(
+    #[OA\Post(
+        summary: 'Send an email',
+        description: 'Sends an email from the project. Supports To, Cc, Bcc, attachments, and custom headers.'
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns the created send ID and Message-ID.',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'id', type: 'integer'),
+                new OA\Property(property: 'message_id', type: 'string'),
+            ]
+        )
+    )]
+    public function send(
         Project $project,
         #[MapRequestPayload] SendEmailInput $sendEmailInput
     ): JsonResponse {
@@ -134,7 +150,19 @@ class SendController extends AbstractController
 
     #[Route("/sends", methods: "GET")]
     #[ScopeRequired(Scope::SENDS_READ)]
-    public function getSends(Request $request, Project $project): JsonResponse
+    #[OA\Get(
+        summary: 'Get all sends',
+        description: 'Returns a paginated list of emails sent from the project.'
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'List of sends',
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: SendObject::class))
+        )
+    )]
+    public function list(Request $request, Project $project): JsonResponse
     {
         $limit = $request->query->getInt("limit", 50);
         $beforeId = $request->query->has("before_id")
@@ -190,7 +218,16 @@ class SendController extends AbstractController
 
     #[Route("/sends/{id}", methods: "GET")]
     #[ScopeRequired(Scope::SENDS_READ)]
-    public function getById(Send $send): JsonResponse
+    #[OA\Get(
+        summary: 'Get a send by ID',
+        description: 'Returns a single send including its recipients, attempts, and feedback.'
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns the send object.',
+        content: new Model(type: SendObject::class)
+    )]
+    public function get(Send $send): JsonResponse
     {
         $attempts = $this->sendAttemptService->getSendAttemptsOfSend($send);
         $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
@@ -206,7 +243,21 @@ class SendController extends AbstractController
 
     #[Route("/sends/{id}/retry", methods: "POST")]
     #[ScopeRequired(Scope::SENDS_SEND)]
-    public function retrySend(
+    #[OA\Post(
+        summary: 'Retry a failed send',
+        description: 'Retries sending to failed recipients of a send. Already queued sends are rescheduled to now.'
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns the number of retried recipients and the updated send object.',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'retried_recipients', type: 'integer'),
+                new OA\Property(property: 'send', ref: new Model(type: SendObject::class)),
+            ]
+        )
+    )]
+    public function retry(
         Send $send,
         #[MapRequestPayload] RetrySendInput $input
     ): JsonResponse {
@@ -263,6 +314,15 @@ class SendController extends AbstractController
 
     #[Route("/sends/uuid/{uuid}", requirements: ['uuid' => Requirement::UUID], methods: "GET")]
     #[ScopeRequired(Scope::SENDS_READ)]
+    #[OA\Get(
+        summary: 'Get a send by UUID',
+        description: 'Returns a single send by its public UUID.'
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns the send object.',
+        content: new Model(type: SendObject::class)
+    )]
     public function getByUuid(Project $project, string $uuid): JsonResponse
     {
         $send = $this->sendService->getSendByUuid($uuid);
@@ -291,7 +351,16 @@ class SendController extends AbstractController
 
     #[Route("/sends/uuid/{uuid}/content", requirements: ['uuid' => Requirement::UUID], methods: "GET")]
     #[ScopeRequired(Scope::SENDS_READ)]
-    public function getContentByUuid(Project $project, string $uuid): JsonResponse
+    #[OA\Get(
+        summary: 'Get send content by UUID',
+        description: 'Returns the stored content (HTML, text, headers, and raw) of a send by its UUID.'
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns the send content object.',
+        content: new Model(type: SendContentObject::class)
+    )]
+    public function getContent(Project $project, string $uuid): JsonResponse
     {
         $send = $this->sendService->getSendByUuid($uuid);
 
