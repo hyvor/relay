@@ -2,8 +2,8 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Authorization\ScopeRequired;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
 use App\Api\Console\Input\ProjectUser\CreateProjectUserInput;
 use App\Api\Console\Object\ProjectUserObject;
 use App\Entity\Project;
@@ -35,7 +35,7 @@ class ProjectUsersController extends AbstractController
     }
 
     #[Route('/project-users', methods: 'GET')]
-    #[ScopeRequired(Scope::PROJECT_READ)]
+    #[ScopeRequired(RelayScope::PROJECT_READ)]
     #[OA\Get(
         summary: 'Get all project users',
         description: 'Returns all users that have access to the project.'
@@ -69,7 +69,7 @@ class ProjectUsersController extends AbstractController
     }
 
     #[Route('/project-users', methods: 'POST')]
-    #[ScopeRequired(Scope::PROJECT_WRITE)]
+    #[ScopeRequired(RelayScope::PROJECT_WRITE)]
     #[OA\Post(
         summary: 'Add a user to the project',
         description: 'Adds an existing user to the project with the given scopes.'
@@ -118,7 +118,7 @@ class ProjectUsersController extends AbstractController
     }
 
     #[Route('/project-users/{id}', methods: 'DELETE')]
-    #[ScopeRequired(Scope::PROJECT_WRITE)]
+    #[ScopeRequired(RelayScope::PROJECT_WRITE)]
     #[OA\Delete(
         summary: 'Remove a user from the project',
         description: 'Removes a single user from the project.'
@@ -135,7 +135,7 @@ class ProjectUsersController extends AbstractController
     }
 
     #[Route('/project-users', methods: 'DELETE')]
-    #[ScopeRequired(Scope::PROJECT_WRITE)]
+    #[ScopeRequired(RelayScope::PROJECT_WRITE)]
     #[OA\Delete(
         summary: 'Remove all users from the project',
         description: 'Removes all project users except the owner.'
