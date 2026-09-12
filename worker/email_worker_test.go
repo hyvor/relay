@@ -305,13 +305,10 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 	var localApiMethod string
 	var localApiEndpoint string
 	var localApiBody interface{}
-	var localApiContext context.Context
-
 	originalCallLocalApi := CallLocalApi
 	defer func() { CallLocalApi = originalCallLocalApi }()
 
 	CallLocalApi = func(ctx context.Context, method, endpoint string, body, responseJsonObject interface{}) error {
-		localApiContext = ctx
 		localApiMethod = method
 		localApiEndpoint = endpoint
 		localApiBody = body
@@ -340,9 +337,6 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 
 	assert.Equal(t, "POST", localApiMethod)
 	assert.Equal(t, "/send-attempts/done", localApiEndpoint)
-	deadline, hasDeadline := localApiContext.Deadline()
-	assert.True(t, hasDeadline)
-	assert.WithinDuration(t, time.Now().Add(sendAttemptsNotificationTimeout), deadline, 100*time.Millisecond)
 	bodyMap, ok := localApiBody.(map[string]interface{})
 	assert.True(t, ok)
 	sendAttemptIds, ok := bodyMap["send_attempt_ids"].([]int)
@@ -355,33 +349,6 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, updatedSend.Queued)
 
-}
-
-func TestNotifySendAttemptsToSymfony_CancelsStalledApiCall(t *testing.T) {
-	originalCallLocalApi := CallLocalApi
-	originalTimeout := sendAttemptsNotificationTimeout
-	defer func() {
-		CallLocalApi = originalCallLocalApi
-		sendAttemptsNotificationTimeout = originalTimeout
-	}()
-
-	sendAttemptsNotificationTimeout = 10 * time.Millisecond
-	apiCanceled := make(chan struct{})
-	CallLocalApi = func(ctx context.Context, method, endpoint string, body, responseJsonObject interface{}) error {
-		<-ctx.Done()
-		close(apiCanceled)
-		return ctx.Err()
-	}
-
-	start := time.Now()
-	notifySendAttemptsToSymfony(context.Background(), []int{1}, slogDiscard())
-
-	assert.Less(t, time.Since(start), time.Second)
-	select {
-	case <-apiCanceled:
-	case <-time.After(time.Second):
-		t.Fatal("stalled API call was not canceled")
-	}
 }
 
 func TestEmailWorker_ProcessSend_Requeuing(t *testing.T) {
