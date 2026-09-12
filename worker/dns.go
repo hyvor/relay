@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
-	"sync"
 
 	"github.com/miekg/dns"
 )
@@ -14,7 +13,6 @@ type DnsServer struct {
 	ctx     context.Context
 	logger  *slog.Logger
 	metrics *Metrics
-	mu      sync.RWMutex
 
 	server     *dns.Server
 	dnsRecords []GoStateDnsRecord
@@ -35,9 +33,7 @@ func (s *DnsServer) Set(
 	dnsRecords []GoStateDnsRecord,
 ) {
 
-	s.mu.Lock()
-	s.dnsRecords = append([]GoStateDnsRecord(nil), dnsRecords...)
-	s.mu.Unlock()
+	s.dnsRecords = dnsRecords
 
 	s.StopServer()
 	s.StartServer(dnsIp)
@@ -52,9 +48,7 @@ func (s *DnsServer) StartServer(dnsIp string) {
 
 		addr := dnsIp + ":53"
 		server := &dns.Server{Addr: addr, Net: "udp"}
-		s.mu.Lock()
 		s.server = server
-		s.mu.Unlock()
 
 		s.logger.Info("Starting DNS server at " + addr)
 		if err := server.ListenAndServe(); err != nil {
@@ -71,16 +65,14 @@ func (s *DnsServer) StartServer(dnsIp string) {
 }
 
 func (s *DnsServer) StopServer() {
-	s.mu.Lock()
-	server := s.server
-	s.server = nil
-	s.mu.Unlock()
-	if server != nil {
-		if err := server.Shutdown(); err != nil {
+
+	if s.server != nil {
+		if err := s.server.Shutdown(); err != nil {
 			s.logger.Error("Failed to stop DNS server", "error", err)
 		} else {
 			s.logger.Info("DNS server stopped")
 		}
+		s.server = nil
 	}
 
 }
@@ -144,13 +136,10 @@ func (s *DnsServer) handleRequest(w dns.ResponseWriter, r *dns.Msg) {
 }
 
 func (s *DnsServer) findDnsRecordsByTypeAndHost(recordType, host string) []*GoStateDnsRecord {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
 	var records []*GoStateDnsRecord
-	for i := range s.dnsRecords {
-		record := &s.dnsRecords[i]
+	for _, record := range s.dnsRecords {
 		if record.Type == recordType && record.Host == host {
-			records = append(records, record)
+			records = append(records, &record)
 		}
 	}
 	return records

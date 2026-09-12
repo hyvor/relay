@@ -128,8 +128,6 @@ type EmailWorker struct {
 	SendEmailContextFunc func(context.Context, *SendRow, []*RecipientRow, string, string, int, string, string) *SendResult
 }
 
-var sendAttemptsNotificationTimeout = 5 * time.Second
-
 var NewEmailWorker = newEmailWorker
 
 func newEmailWorker(
@@ -348,7 +346,7 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 		return commitErr
 	}
 
-	notifySendAttemptsToSymfony(worker.ctx, sendAttemptIds, worker.logger)
+	go notifySendAttemptsToSymfony(worker.ctx, sendAttemptIds, worker.logger)
 
 	time.Sleep(50 * time.Millisecond)
 
@@ -437,11 +435,8 @@ func notifySendAttemptsToSymfony(
 		return
 	}
 
-	notificationCtx, cancel := context.WithTimeout(ctx, sendAttemptsNotificationTimeout)
-	defer cancel()
-
 	err := CallLocalApi(
-		notificationCtx,
+		ctx,
 		"POST",
 		"/send-attempts/done",
 		map[string]interface{}{

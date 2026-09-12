@@ -175,15 +175,6 @@ func (c *Client) StartTLS(config *tls.Config) (CommandResult, CommandResult) {
 	return tlsResult, c.ehlo()
 }
 
-// ConnectionState returns the negotiated TLS state when the client is using TLS.
-func (c *Client) ConnectionState() (tls.ConnectionState, bool) {
-	connection, ok := c.conn.(*tls.Conn)
-	if !ok {
-		return tls.ConnectionState{}, false
-	}
-	return connection.ConnectionState(), true
-}
-
 // Mail issues a MAIL command to the server using the provided email address.
 // If the server supports the 8BITMIME extension, Mail adds the BODY=8BITMIME
 // parameter. If the server supports the SMTPUTF8 extension, Mail adds the

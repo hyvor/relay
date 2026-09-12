@@ -12,6 +12,18 @@ import (
 
 var ErrDANEAuthentication = errors.New("DANE certificate authentication failed")
 
+const (
+	certificateUsageDANETA = uint8(2)
+	certificateUsageDANEEE = uint8(3)
+
+	tlsaSelectorFullCertificate  = uint8(0)
+	tlsaSelectorSubjectPublicKey = uint8(1)
+
+	tlsaMatchingTypeExact  = uint8(0)
+	tlsaMatchingTypeSHA256 = uint8(1)
+	tlsaMatchingTypeSHA512 = uint8(2)
+)
+
 // verifyDANECertificates evaluates TLSA records against the peer chain. The
 // peer slice contains the leaf followed by any certificates sent by the peer.
 // DANE-EE can authenticate without a public CA; DANE-TA requires ordinary
@@ -26,13 +38,13 @@ func verifyDANECertificates(peer []*x509.Certificate, records []TLSARecord, serv
 
 	records = preferredTLSARecords(records)
 	for _, record := range records {
-		if record.CertificateUsage == 3 && tlsaMatchesCertificate(record, peer[0]) {
+		if record.CertificateUsage == certificateUsageDANEEE && tlsaMatchesCertificate(record, peer[0]) {
 			return nil
 		}
 	}
 
 	for _, record := range records {
-		if record.CertificateUsage == 2 && matchesTrustAnchor(record, peer, serverNames...) {
+		if record.CertificateUsage == certificateUsageDANETA && matchesTrustAnchor(record, peer, serverNames...) {
 			return nil
 		}
 	}
@@ -43,7 +55,7 @@ func verifyDANECertificates(peer []*x509.Certificate, records []TLSARecord, serv
 func preferredTLSARecords(records []TLSARecord) []TLSARecord {
 	strongest := make(map[[2]uint8]uint8)
 	for _, record := range records {
-		if record.MatchingType == 1 || record.MatchingType == 2 {
+		if record.MatchingType == tlsaMatchingTypeSHA256 || record.MatchingType == tlsaMatchingTypeSHA512 {
 			key := [2]uint8{record.CertificateUsage, record.Selector}
 			if record.MatchingType > strongest[key] {
 				strongest[key] = record.MatchingType
@@ -52,7 +64,7 @@ func preferredTLSARecords(records []TLSARecord) []TLSARecord {
 	}
 	filtered := make([]TLSARecord, 0, len(records))
 	for _, record := range records {
-		if record.MatchingType == 0 {
+		if record.MatchingType == tlsaMatchingTypeExact {
 			filtered = append(filtered, record)
 			continue
 		}
@@ -68,7 +80,7 @@ func tlsaMatchesCertificate(record TLSARecord, certificate *x509.Certificate) bo
 		return false
 	}
 	selected := certificate.Raw
-	if record.Selector == 1 {
+	if record.Selector == tlsaSelectorSubjectPublicKey {
 		selected = certificate.RawSubjectPublicKeyInfo
 	}
 
@@ -78,12 +90,12 @@ func tlsaMatchesCertificate(record TLSARecord, certificate *x509.Certificate) bo
 	}
 
 	switch record.MatchingType {
-	case 0:
+	case tlsaMatchingTypeExact:
 		return string(selected) == string(association)
-	case 1:
+	case tlsaMatchingTypeSHA256:
 		hash := sha256.Sum256(selected)
 		return string(hash[:]) == string(association)
-	case 2:
+	case tlsaMatchingTypeSHA512:
 		hash := sha512.Sum512(selected)
 		return string(hash[:]) == string(association)
 	default:
@@ -92,7 +104,7 @@ func tlsaMatchesCertificate(record TLSARecord, certificate *x509.Certificate) bo
 }
 
 func matchesTrustAnchor(record TLSARecord, peer []*x509.Certificate, serverNames ...string) bool {
-	if record.Selector == 0 && record.MatchingType == 0 {
+	if record.Selector == tlsaSelectorFullCertificate && record.MatchingType == tlsaMatchingTypeExact {
 		if association, err := hex.DecodeString(strings.TrimSpace(record.CertificateAssociation)); err == nil {
 			if anchor, err := x509.ParseCertificate(association); err == nil && verifyPKIXChain(peer, serverNames, anchor) == nil {
 				return true
