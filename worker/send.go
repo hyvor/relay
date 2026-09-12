@@ -359,18 +359,6 @@ func sendEmailHandlerContext(
 		// a connection-level error happened
 		// continue the loop to try the next host
 		if conversation.NetworkError != nil {
-			if len(conversation.RcptResults) > 0 {
-				for _, rcptResult := range conversation.RcptResults {
-					if rcptResult.ToRecipientStatus() == RecipientStatusAccepted {
-						rcptResult.Code = 400
-						rcptResult.EnhancedCode = [3]int{4, 4, 0}
-						rcptResult.Message = conversation.NetworkError.Error()
-					}
-				}
-				result.RespondedMxHost = host
-				result.RcptResults = conversation.RcptResults
-				return result
-			}
 			lastError = conversation.NetworkError
 			continue
 		}
@@ -697,7 +685,7 @@ func sendEmailToHostHandlerContextAttempt(
 		conversation.AddStepFromResult(SmtpStepRcpt, &rcptResult)
 		conversation.SetRcptResult(rcpt.Id, &rcptResult)
 
-		if rcptResult.Reply.Code >= 200 && rcptResult.Reply.Code < 300 {
+		if rcptResult.Reply.Code == 250 {
 			acceptedRecipients = append(acceptedRecipients, rcpt)
 		}
 	}

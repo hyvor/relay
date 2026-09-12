@@ -516,8 +516,12 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 		}
 	}
 
-	dataCh := make(chan AttemptData, 1)
-	go func() { dataCh <- <-attemptCh }()
+	chData := make([]AttemptData, 0)
+	go func() {
+		for data := range attemptCh {
+			chData = append(chData, data)
+		}
+	}()
 
 	wg.Add(1)
 	worker.attemptSendToDomain(
@@ -530,7 +534,10 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 		sendTx,
 	)
 	wg.Wait()
-	data := <-dataCh
+	time.Sleep(20 * time.Millisecond)
+
+	assert.Equal(t, 1, len(chData))
+	data := chData[0]
 	assert.NotZero(t, data.SendAttemptId)
 	assert.NoError(t, data.Error)
 
