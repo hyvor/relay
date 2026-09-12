@@ -217,10 +217,7 @@ type dataCloser struct {
 func (d *dataCloser) Close() CommandResult {
 	commandResult := CommandResult{}
 
-	if err := d.WriteCloser.Close(); err != nil {
-		commandResult.Err = err
-		return commandResult
-	}
+	d.WriteCloser.Close()
 	code, msg, err := d.c.Text.ReadResponse(0)
 
 	if err != nil {
