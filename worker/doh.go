@@ -19,21 +19,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-func dnsResolverCacheIdentity() string {
-	endpoint := defaultDoHURL
-	if outboundDNSResolver != nil && outboundDNSResolver.URL != "" {
-		endpoint = outboundDNSResolver.URL
-	}
-	hash := sha256.Sum256([]byte(endpoint))
-	return hex.EncodeToString(hash[:8])
-}
-
-func dnsCacheKey(kind, name string) string {
-	return "dns:v2:" + dnsResolverCacheIdentity() + ":" + kind + ":" + name
-}
-
 const (
-	defaultDoHURL       = "https://cloudflare-dns.com/dns-query"
 	dohRequestTimeout   = 5 * time.Second
 	dohMaxDnsMessageLen = 65535
 )
@@ -55,8 +41,9 @@ type DNSLookupResult struct {
 func NewDoHResolver() *DoHResolver {
 	endpoint := os.Getenv("DNS_OVER_HTTPS_URL")
 	if endpoint == "" {
-		endpoint = defaultDoHURL
+		panic("DNS_OVER_HTTPS_URL is not set")
 	}
+
 	return &DoHResolver{
 		URL: endpoint,
 		Client: &http.Client{
@@ -68,10 +55,20 @@ func NewDoHResolver() *DoHResolver {
 	}
 }
 
-var outboundDNSResolver = NewDoHResolver()
+var outboundDNSResolver *DoHResolver
 
 func configureOutboundDNSResolver() {
 	outboundDNSResolver = NewDoHResolver()
+}
+
+func dnsCacheKey(kind, name string) string {
+	var endpoint string
+	if outboundDNSResolver != nil {
+		endpoint = outboundDNSResolver.URL
+	}
+
+	hash := sha256.Sum256([]byte(endpoint))
+	return "dns:v1:" + hex.EncodeToString(hash[:8]) + ":" + kind + ":" + name
 }
 
 func (r *DoHResolver) Lookup(ctx context.Context, name string, recordType uint16) (DNSLookupResult, error) {
