@@ -4,7 +4,6 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use App\Api\Console\Resolver\EntityResolver;
 use App\Api\Console\Resolver\ProjectResolver;
-use App\Service\App\Cache\JsonMarshaller;
 use App\Service\App\Cache\SharedCache;
 use App\Service\Dns\Resolve\DnsOverHttp;
 use App\Service\Dns\Resolve\DnsResolveInterface;
@@ -15,7 +14,6 @@ use Hyvor\Internal\Bundle\EventDispatcher\TestEventDispatcher;
 use League\Flysystem\Filesystem;
 use Prometheus\Storage\Adapter;
 use Prometheus\Storage\APCng;
-use Symfony\Component\Cache\Adapter\DoctrineDbalAdapter;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
@@ -63,15 +61,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // ================ OTHER SERVICES =================
     $services->alias(DnsResolveInterface::class, DnsOverHttp::class);
 
-    $services
-        ->set('cache.shared', DoctrineDbalAdapter::class)
-        ->args([
-            service('doctrine.dbal.default_connection'),
-            SharedCache::NAMESPACE,
-            0,
-            [],
-            service(JsonMarshaller::class),
-        ]);
     $services
         ->set(SharedCache::class)
         ->public()

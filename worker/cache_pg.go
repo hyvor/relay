@@ -33,10 +33,12 @@ func sharedCacheItemID(key string) (string, error) {
 func (c *SharedCache) loadFromDatabase(ctx context.Context, key string) (sharedCacheDatabaseEntry, error) {
 	ctx, cancel := context.WithTimeout(ctx, sharedCacheDatabaseTimeout)
 	defer cancel()
+
 	db := c.database()
 	if db == nil {
 		return sharedCacheDatabaseEntry{}, nil
 	}
+
 	itemID, err := sharedCacheItemID(key)
 	if err != nil {
 		return sharedCacheDatabaseEntry{}, err
@@ -45,14 +47,17 @@ func (c *SharedCache) loadFromDatabase(ctx context.Context, key string) (sharedC
 	var value []byte
 	var lifetime int64
 	var writtenAt int64
+
 	err = db.QueryRowContext(ctx, `
 		SELECT item_data, item_lifetime, item_time
 		FROM cache_items
 		WHERE item_id = $1 AND item_lifetime IS NOT NULL
 	`, itemID).Scan(&value, &lifetime, &writtenAt)
+
 	if err == sql.ErrNoRows {
 		return sharedCacheDatabaseEntry{}, nil
 	}
+
 	if err != nil {
 		return sharedCacheDatabaseEntry{}, err
 	}
@@ -71,9 +76,11 @@ func (c *SharedCache) loadFromDatabase(ctx context.Context, key string) (sharedC
 		}
 		return sharedCacheDatabaseEntry{}, nil
 	}
+
 	if len(value) > sharedCacheMaxValueSize {
 		return sharedCacheDatabaseEntry{}, fmt.Errorf("%w: %d bytes", ErrCacheValueTooLarge, len(value))
 	}
+
 	if !json.Valid(value) {
 		_, deleteErr := db.ExecContext(ctx, `
 			DELETE FROM cache_items WHERE item_id = $1 AND item_data = $2
@@ -90,10 +97,12 @@ func (c *SharedCache) loadFromDatabase(ctx context.Context, key string) (sharedC
 func (c *SharedCache) storeInDatabase(ctx context.Context, key string, value []byte, writtenAt, expiresAt time.Time) error {
 	ctx, cancel := context.WithTimeout(ctx, sharedCacheDatabaseTimeout)
 	defer cancel()
+
 	db := c.database()
 	if db == nil {
 		return nil
 	}
+
 	itemID, err := sharedCacheItemID(key)
 	if err != nil {
 		return err
@@ -104,6 +113,7 @@ func (c *SharedCache) storeInDatabase(ctx context.Context, key string, value []b
 	if lifetime < 1 {
 		lifetime = 1
 	}
+
 	_, err = db.ExecContext(ctx, `
 		INSERT INTO cache_items (item_id, item_data, item_lifetime, item_time)
 		VALUES ($1, $2, $3, $4)
@@ -112,16 +122,19 @@ func (c *SharedCache) storeInDatabase(ctx context.Context, key string, value []b
 			item_lifetime = EXCLUDED.item_lifetime,
 			item_time = EXCLUDED.item_time
 	`, itemID, value, lifetime, writtenAt.Unix())
+
 	return err
 }
 
 func (c *SharedCache) deleteFromDatabase(ctx context.Context, key string) error {
 	ctx, cancel := context.WithTimeout(ctx, sharedCacheDatabaseTimeout)
 	defer cancel()
+
 	db := c.database()
 	if db == nil {
 		return nil
 	}
+
 	itemID, err := sharedCacheItemID(key)
 	if err != nil {
 		return err
