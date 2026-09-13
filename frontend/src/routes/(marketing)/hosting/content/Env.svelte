@@ -49,6 +49,12 @@ TRUSTED_PROXIES=
 # Default: info
 LOG_LEVEL=info
 
+# DNS over HTTPS resolver endpoint.
+# The backend queries it with the JSON API and the worker with the wire format,
+# so the endpoint must serve both at this URL.
+# Default: https://cloudflare-dns.com/dns-query
+DNS_OVER_HTTPS_URL=https://cloudflare-dns.com/dns-query
+
 # Storage backend for email contents (raw .eml).
 # One of: file, s3
 # Default: file
