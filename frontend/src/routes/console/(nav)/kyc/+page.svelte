@@ -22,6 +22,10 @@
 	let loading = $state(true);
 	let saving = $state(false);
 	let existingKyc = $state<Kyc | null>(null);
+	let currentStep = $state<1 | 2>(1);
+	// true once the details form has been validated and "Next" clicked in this session,
+	// so the user can move between steps without having submitted anything yet
+	let detailsConfirmed = $state(false);
 
 	let fullName = $state('');
 	let businessType = $state<KycBusinessType>('individual');
@@ -52,6 +56,14 @@
 		website = kyc.website;
 	}
 
+	function goToStep(step: 1 | 2) {
+		// step 2 (payment) only makes sense once the details step has been completed
+		if (step === 2 && !existingKyc && !detailsConfirmed) {
+			return;
+		}
+		currentStep = step;
+	}
+
 	onMount(() => {
 		if (getAppConfig().deployment !== 'cloud') {
 			goto('/console');
@@ -63,6 +75,8 @@
 				existingKyc = res;
 				if (res) {
 					fillForm(res);
+					detailsConfirmed = true;
+					currentStep = 2;
 				}
 			})
 			.catch((error) => {
@@ -107,11 +121,21 @@
 		return Object.keys(errors).length === 0;
 	}
 
-	function handleSubmit() {
+	// step 1: just validates and moves on to the payment step. Nothing is saved yet -
+	// the KYC is only submitted once the payment step is also done (see handleSubmit).
+	function handleNext() {
 		if (!validate()) {
 			return;
 		}
 
+		detailsConfirmed = true;
+		currentStep = 2;
+	}
+
+	// step 2: this is where the KYC actually gets submitted, once the card details are
+	// in too. For now (before the card iframe is wired up) this just submits the details
+	// collected in step 1.
+	function handleSubmit() {
 		saving = true;
 
 		submitKyc({
@@ -125,7 +149,7 @@
 		})
 			.then((res) => {
 				existingKyc = res;
-				toast.success("KYC submitted. We'll review your details shortly.");
+				toast.success('KYC submitted. We will review your details shortly.');
 			})
 			.catch((error) => {
 				toast.error(error.message ?? 'Failed to submit KYC');
@@ -144,8 +168,8 @@
 	<div class="top">
 		<h1>KYC Verification</h1>
 		<p class="subtitle">
-			We need a few details about you or your business to comply with regulations before you
-			can send emails on Hyvor Relay Cloud.
+			We need a few details about you or your business, and your payment details, to comply
+			with regulations before you can send emails on Hyvor Relay Cloud.
 		</p>
 	</div>
 
@@ -155,138 +179,207 @@
 				<Loader size="large" />
 			</div>
 		{:else}
-			{#if existingKyc?.status === 'pending'}
-				<div class="callout-wrap">
-					<Callout type="info">
-						Your KYC submission is under review. You can still update the details below and
-						resubmit while it's pending.
-					</Callout>
-				</div>
-			{:else if existingKyc?.status === 'approved'}
-				<div class="callout-wrap">
-					<Callout type="success">Your KYC has been approved.</Callout>
-				</div>
-			{:else if existingKyc?.status === 'rejected'}
-				<div class="callout-wrap">
-					<Callout type="danger">
-						Your KYC submission was rejected. Please review the details below and resubmit.
-					</Callout>
-				</div>
-			{/if}
-
-			<div class="form">
-				<SplitControl label="Full name" caption="Your full legal name">
-					<FormControl>
-						<TextInput
-							bind:value={fullName}
-							block
-							disabled={saving || isApproved}
-							placeholder="Jane Doe"
-						/>
-						{#if errors.full_name}
-							<Validation state="error">{errors.full_name}</Validation>
-						{/if}
-					</FormControl>
-				</SplitControl>
-
-				<SplitControl
-					label="Account type"
-					caption="Are you sending emails as an individual or a business?"
+			<div class="steps">
+				<button
+					type="button"
+					class="step"
+					class:active={currentStep === 1}
+					onclick={() => goToStep(1)}
 				>
-					<FormControl>
-						<Select
-							bind:value={businessType}
-							options={businessTypeOptions}
-							block
-							disabled={saving || isApproved}
-						/>
-					</FormControl>
-				</SplitControl>
+					<span class="step-num">1</span>
+					<span class="step-label">Your details</span>
+				</button>
+				<div class="step-connector"></div>
+				<button
+					type="button"
+					class="step"
+					class:active={currentStep === 2}
+					disabled={!existingKyc && !detailsConfirmed}
+					onclick={() => goToStep(2)}
+				>
+					<span class="step-num">2</span>
+					<span class="step-label">Payment details</span>
+				</button>
+			</div>
 
-				{#if businessType === 'company'}
-					<SplitControl
-						label="Business name"
-						caption="Your company or organization's legal name"
-					>
+			{#if currentStep === 1}
+				{#if existingKyc?.status === 'pending'}
+					<div class="callout-wrap">
+						<Callout type="info">
+							Your KYC submission is under review. You can still update the details below
+							and resubmit while it's pending.
+						</Callout>
+					</div>
+				{:else if existingKyc?.status === 'approved'}
+					<div class="callout-wrap">
+						<Callout type="success">Your KYC has been approved.</Callout>
+					</div>
+				{:else if existingKyc?.status === 'rejected'}
+					<div class="callout-wrap">
+						<Callout type="danger">
+							Your KYC submission was rejected. Please review the details below and
+							resubmit.
+						</Callout>
+					</div>
+				{/if}
+
+				<div class="form">
+					<SplitControl label="Full name" caption="Your full legal name">
 						<FormControl>
 							<TextInput
-								bind:value={businessName}
+								bind:value={fullName}
 								block
-								disabled={saving || isApproved}
-								placeholder="Acme Inc."
+								disabled={isApproved}
+								placeholder="Jane Doe"
 							/>
-							{#if errors.business_name}
-								<Validation state="error">{errors.business_name}</Validation>
+							{#if errors.full_name}
+								<Validation state="error">{errors.full_name}</Validation>
 							{/if}
 						</FormControl>
 					</SplitControl>
+
+					<SplitControl
+						label="Account type"
+						caption="Are you sending emails as an individual or a business?"
+					>
+						<FormControl>
+							<Select
+								bind:value={businessType}
+								options={businessTypeOptions}
+								block
+								disabled={isApproved}
+							/>
+						</FormControl>
+					</SplitControl>
+
+					{#if businessType === 'company'}
+						<SplitControl
+							label="Business name"
+							caption="Your company or organization's legal name"
+						>
+							<FormControl>
+								<TextInput
+									bind:value={businessName}
+									block
+									disabled={isApproved}
+									placeholder="Acme Inc."
+								/>
+								{#if errors.business_name}
+									<Validation state="error">{errors.business_name}</Validation>
+								{/if}
+							</FormControl>
+						</SplitControl>
+					{/if}
+
+					<SplitControl label="Country" caption="Country of residence or incorporation">
+						<FormControl>
+							<Select
+								bind:value={country}
+								options={countryOptions}
+								placeholder="Select a country"
+								block
+								disabled={isApproved}
+								state={errors.country ? 'error' : 'default'}
+							/>
+							{#if errors.country}
+								<Validation state="error">{errors.country}</Validation>
+							{/if}
+						</FormControl>
+					</SplitControl>
+
+					<SplitControl label="Address" caption="Your residential or business address">
+						<FormControl>
+							<Textarea
+								bind:value={address}
+								block
+								rows={3}
+								disabled={isApproved}
+								placeholder="123 Main Street, City, Postal Code"
+							/>
+							{#if errors.address}
+								<Validation state="error">{errors.address}</Validation>
+							{/if}
+						</FormControl>
+					</SplitControl>
+
+					<SplitControl label="Phone number" caption="A phone number we can reach you on">
+						<FormControl>
+							<TextInput
+								bind:value={phone}
+								block
+								disabled={isApproved}
+								placeholder="+1 234 567 8900"
+							/>
+							{#if errors.phone}
+								<Validation state="error">{errors.phone}</Validation>
+							{/if}
+						</FormControl>
+					</SplitControl>
+
+					<SplitControl label="Website" caption="A website related to your use case">
+						<FormControl>
+							<TextInput
+								bind:value={website}
+								block
+								disabled={isApproved}
+								placeholder="https://example.com"
+							/>
+							{#if errors.website}
+								<Validation state="error">{errors.website}</Validation>
+							{/if}
+						</FormControl>
+					</SplitControl>
+				</div>
+
+				{#if !isApproved}
+					<div class="actions">
+						<Button color="accent" variant="fill" on:click={handleNext}>Next</Button>
+					</div>
+				{/if}
+			{:else}
+				{#if existingKyc?.status === 'rejected'}
+					<div class="callout-wrap">
+						<Callout type="danger">
+							Your KYC submission was rejected. Go back to Step 1 to update your details,
+							then submit again below.
+						</Callout>
+					</div>
+				{:else if existingKyc?.status === 'approved'}
+					<div class="callout-wrap">
+						<Callout type="success">
+							Your KYC has been approved. Your card will be charged automatically for
+							your subscription.
+						</Callout>
+					</div>
+				{:else if existingKyc?.status === 'pending'}
+					<div class="callout-wrap">
+						<Callout type="info">
+							Your KYC submission is under review. You can still update your payment
+							details below.
+						</Callout>
+					</div>
+				{:else}
+					<div class="callout-wrap">
+						<Callout type="info">
+							Add your payment details below, then submit to complete your KYC
+							verification. Your card will be charged automatically once it's approved.
+						</Callout>
+					</div>
 				{/if}
 
-				<SplitControl label="Country" caption="Country of residence or incorporation">
-					<FormControl>
-						<Select
-							bind:value={country}
-							options={countryOptions}
-							placeholder="Select a country"
-							block
-							disabled={saving || isApproved}
-							state={errors.country ? 'error' : 'default'}
-						/>
-						{#if errors.country}
-							<Validation state="error">{errors.country}</Validation>
-						{/if}
-					</FormControl>
-				</SplitControl>
+				<div class="payment-placeholder">
+					<!-- TODO: embed the card-collection iframe here. It validates and saves the
+					     card itself; this app only needs to know the outcome once that's wired up. -->
+					<p>Payment form coming soon.</p>
+				</div>
 
-				<SplitControl label="Address" caption="Your residential or business address">
-					<FormControl>
-						<Textarea
-							bind:value={address}
-							block
-							rows={3}
-							disabled={saving || isApproved}
-							placeholder="123 Main Street, City, Postal Code"
-						/>
-						{#if errors.address}
-							<Validation state="error">{errors.address}</Validation>
-						{/if}
-					</FormControl>
-				</SplitControl>
-
-				<SplitControl label="Phone number" caption="A phone number we can reach you on">
-					<FormControl>
-						<TextInput
-							bind:value={phone}
-							block
-							disabled={saving || isApproved}
-							placeholder="+1 234 567 8900"
-						/>
-						{#if errors.phone}
-							<Validation state="error">{errors.phone}</Validation>
-						{/if}
-					</FormControl>
-				</SplitControl>
-
-				<SplitControl label="Website" caption="A website related to your use case">
-					<FormControl>
-						<TextInput
-							bind:value={website}
-							block
-							disabled={saving || isApproved}
-							placeholder="https://example.com"
-						/>
-						{#if errors.website}
-							<Validation state="error">{errors.website}</Validation>
-						{/if}
-					</FormControl>
-				</SplitControl>
-			</div>
-
-			{#if !isApproved}
-				<div class="actions">
-					<Button color="accent" variant="fill" disabled={saving} on:click={handleSubmit}>
-						{saving ? 'Submitting...' : existingKyc ? 'Resubmit KYC' : 'Submit KYC'}
-					</Button>
+				<div class="actions space-between">
+					<Button variant="outline" color="gray" on:click={() => goToStep(1)}>Back</Button>
+					{#if !isApproved}
+						<Button color="accent" variant="fill" disabled={saving} on:click={handleSubmit}>
+							{saving ? 'Submitting...' : existingKyc ? 'Resubmit KYC' : 'Submit KYC'}
+						</Button>
+					{/if}
 				</div>
 			{/if}
 		{/if}
@@ -323,14 +416,82 @@
 		height: 100%;
 	}
 
+	.steps {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-bottom: 25px;
+	}
+
+	.step {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		background: none;
+		border: none;
+		padding: 6px 0;
+		font: inherit;
+		font-weight: 600;
+		font-size: 13px;
+		color: var(--text-light);
+		cursor: pointer;
+	}
+
+	.step[disabled] {
+		cursor: not-allowed;
+		opacity: 0.5;
+	}
+
+	.step.active {
+		color: var(--text);
+	}
+
+	.step-num {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 22px;
+		height: 22px;
+		border-radius: 50%;
+		background: var(--accent-lightest);
+		color: var(--text-light);
+		font-size: 12px;
+	}
+
+	.step.active .step-num {
+		background: var(--accent);
+		color: var(--accent-text);
+	}
+
+	.step-connector {
+		width: 40px;
+		height: 1px;
+		background: var(--border);
+		margin: 0 12px;
+	}
+
 	.callout-wrap {
 		margin-bottom: 20px;
 	}
 
+	.payment-placeholder {
+		border: 1px dashed var(--border);
+		border-radius: 8px;
+		padding: 60px 20px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--text-light);
+		font-size: 13px;
+	}
+
 	.actions {
-		max-width: 720px;
 		display: flex;
 		justify-content: flex-end;
 		margin-top: 20px;
+	}
+
+	.actions.space-between {
+		justify-content: space-between;
 	}
 </style>
