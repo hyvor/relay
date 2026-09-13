@@ -3,6 +3,7 @@
 namespace App\Api\Console\Input\Kyc;
 
 use App\Entity\Type\KycBusinessType;
+use App\Service\Kyc\Countries;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
@@ -30,7 +31,7 @@ class KycSubmitInput
     }
 
     #[Assert\NotBlank]
-    #[Assert\Regex(pattern: '/^[A-Za-z]{2}$/', message: 'Country must be a valid 2-letter country code.')]
+    #[Assert\Choice(choices: Countries::NAMES, message: 'Please select a valid country.')]
     public string $country;
 
     #[Assert\NotBlank]

@@ -38,7 +38,7 @@ final class Version20260911100000 extends AbstractMigration
                 full_name VARCHAR(255) NOT NULL,
                 business_type kyc_business_type_enum NOT NULL,
                 business_name VARCHAR(255),
-                country VARCHAR(2) NOT NULL,
+                country VARCHAR(255) NOT NULL,
                 address TEXT NOT NULL,
                 phone VARCHAR(50) NOT NULL,
                 website VARCHAR(255),

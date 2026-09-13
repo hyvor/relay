@@ -24,7 +24,7 @@
 {/if} -->
 
 
-<!-- {#if isCloud} -->
+{#if getAppConfig().deployment === 'cloud'}
 	<div class="wrap hds-box">
 		<div class="nav-links">
 			<NavLink href="/console/kyc">
@@ -35,7 +35,7 @@
 			</NavLink>
 		</div>
 	</div>
-<!-- {/if} -->
+{/if}
 
 <style>
 	.wrap {

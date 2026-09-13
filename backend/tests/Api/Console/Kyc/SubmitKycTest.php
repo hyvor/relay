@@ -24,7 +24,7 @@ class SubmitKycTest extends WebTestCase
             'full_name' => 'Nadil Karunarathna',
             'business_type' => 'company',
             'business_name' => 'HYVOR',
-            'country' => 'LK',
+            'country' => 'Sri Lanka',
             'address' => '123 Main Street, Colombo',
             'phone' => '+94771234567',
             'website' => 'https://hyvor.com',
@@ -58,7 +58,7 @@ class SubmitKycTest extends WebTestCase
         $kyc = $this->em->getRepository(Kyc::class)->findOneBy(['organization_id' => 1]);
         $this->assertNotNull($kyc);
         $this->assertSame('HYVOR', $kyc->getBusinessName());
-        $this->assertSame('LK', $kyc->getCountry());
+        $this->assertSame('Sri Lanka', $kyc->getCountry());
 
         $this->getEd()->assertDispatched(KycSubmittedEvent::class);
     }
@@ -165,6 +165,22 @@ class SubmitKycTest extends WebTestCase
         );
 
         $this->assertHasViolation('business_name');
+    }
+
+    public function test_fails_validation_when_country_is_not_a_known_country(): void
+    {
+        $payload = $this->validPayload();
+        $payload['country'] = 'LK';
+
+        $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            $payload,
+            useSession: true
+        );
+
+        $this->assertHasViolation('country');
     }
 
     public function test_returns_404_on_non_cloud_deployment(): void

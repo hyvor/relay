@@ -34,7 +34,7 @@ final class KycFactory extends PersistentObjectFactory
             'full_name' => self::faker()->name(),
             'business_type' => KycBusinessType::COMPANY,
             'business_name' => self::faker()->company(),
-            'country' => 'US',
+            'country' => 'France',
             'address' => self::faker()->address(),
             'phone' => '+1234567890',
             'website' => self::faker()->url(),

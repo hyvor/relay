@@ -57,7 +57,7 @@ class KycService
         $kyc->setFullName($fullName);
         $kyc->setBusinessType($businessType);
         $kyc->setBusinessName($businessName);
-        $kyc->setCountry(strtoupper($country));
+        $kyc->setCountry($country);
         $kyc->setAddress($address);
         $kyc->setPhone($phone);
         $kyc->setWebsite($website);

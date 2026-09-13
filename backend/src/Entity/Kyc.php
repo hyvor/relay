@@ -34,7 +34,7 @@ class Kyc
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $business_name = null;
 
-    #[ORM\Column(length: 2)]
+    #[ORM\Column(length: 255)]
     private string $country;
 
     #[ORM\Column(type: 'text')]
