@@ -63,11 +63,11 @@ class SubmitKycTest extends WebTestCase
         $this->getEd()->assertDispatched(KycSubmittedEvent::class);
     }
 
-    public function test_submits_as_individual_without_business_name_or_website(): void
+    public function test_submits_as_individual_without_business_name(): void
     {
         $payload = $this->validPayload();
         $payload['business_type'] = 'individual';
-        unset($payload['business_name'], $payload['website']);
+        unset($payload['business_name']);
 
         $response = $this->consoleApi(
             null,
@@ -83,12 +83,26 @@ class SubmitKycTest extends WebTestCase
         $json = $this->getJson();
         $this->assertSame('individual', $json['business_type']);
         $this->assertNull($json['business_name']);
-        $this->assertNull($json['website']);
 
         $kyc = $this->em->getRepository(Kyc::class)->findOneBy(['organization_id' => 1]);
         $this->assertNotNull($kyc);
         $this->assertNull($kyc->getBusinessName());
-        $this->assertNull($kyc->getWebsite());
+    }
+
+    public function test_fails_validation_when_website_missing(): void
+    {
+        $payload = $this->validPayload();
+        unset($payload['website']);
+
+        $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            $payload,
+            useSession: true
+        );
+
+        $this->assertHasViolation('website');
     }
 
     public function test_resubmits_and_overwrites_previous_data(): void

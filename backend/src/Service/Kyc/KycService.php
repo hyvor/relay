@@ -39,7 +39,7 @@ class KycService
         string $country,
         string $address,
         string $phone,
-        ?string $website
+        string $website
     ): Kyc {
         $kyc = $this->getByOrganizationId($organizationId);
 

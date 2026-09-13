@@ -49,7 +49,7 @@
 		country = kyc.country;
 		address = kyc.address;
 		phone = kyc.phone;
-		website = kyc.website ?? '';
+		website = kyc.website;
 	}
 
 	onMount(() => {
@@ -98,7 +98,9 @@
 			errors.phone = 'Enter a valid phone number';
 		}
 
-		if (website.trim() && !/^https?:\/\/.+/i.test(website.trim())) {
+		if (!website.trim()) {
+			errors.website = 'Website is required';
+		} else if (!/^https?:\/\/.+/i.test(website.trim())) {
 			errors.website = 'Enter a valid URL starting with http:// or https://';
 		}
 
@@ -119,7 +121,7 @@
 			country,
 			address: address.trim(),
 			phone: phone.trim(),
-			website: website.trim() || undefined
+			website: website.trim()
 		})
 			.then((res) => {
 				existingKyc = res;
@@ -265,7 +267,7 @@
 					</FormControl>
 				</SplitControl>
 
-				<SplitControl label="Website" caption="Optional. A website related to your use case">
+				<SplitControl label="Website" caption="A website related to your use case">
 					<FormControl>
 						<TextInput
 							bind:value={website}

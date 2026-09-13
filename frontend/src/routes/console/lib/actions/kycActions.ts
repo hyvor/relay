@@ -8,7 +8,7 @@ export interface KycSubmitData {
 	country: string;
 	address: string;
 	phone: string;
-	website?: string;
+	website: string;
 }
 
 export function getKyc() {

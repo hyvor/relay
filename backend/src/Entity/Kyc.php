@@ -43,8 +43,8 @@ class Kyc
     #[ORM\Column(length: 50)]
     private string $phone;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $website = null;
+    #[ORM\Column(length: 255)]
+    private string $website;
 
     #[ORM\Column(enumType: KycStatus::class)]
     private KycStatus $status;
@@ -172,12 +172,12 @@ class Kyc
         return $this;
     }
 
-    public function getWebsite(): ?string
+    public function getWebsite(): string
     {
         return $this->website;
     }
 
-    public function setWebsite(?string $website): static
+    public function setWebsite(string $website): static
     {
         $this->website = $website;
 

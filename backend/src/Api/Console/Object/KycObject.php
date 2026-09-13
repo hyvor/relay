@@ -17,7 +17,7 @@ class KycObject
     public string $country;
     public string $address;
     public string $phone;
-    public ?string $website;
+    public string $website;
     public KycStatus $status;
     public int $submitted_at;
 

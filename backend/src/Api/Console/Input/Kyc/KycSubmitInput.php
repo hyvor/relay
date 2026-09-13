@@ -43,8 +43,9 @@ class KycSubmitInput
     #[Assert\Regex(pattern: '/^\+?[0-9 ()\-]+$/', message: 'Please enter a valid phone number.')]
     public string $phone;
 
+    #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     #[Assert\Url(message: 'Please enter a valid URL.')]
-    public ?string $website = null;
+    public string $website;
 
 }

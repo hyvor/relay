@@ -41,7 +41,7 @@ final class Version20260911100000 extends AbstractMigration
                 country VARCHAR(255) NOT NULL,
                 address TEXT NOT NULL,
                 phone VARCHAR(50) NOT NULL,
-                website VARCHAR(255),
+                website VARCHAR(255) NOT NULL,
                 status kyc_status_enum NOT NULL DEFAULT 'pending',
                 submitted_at TIMESTAMPTZ NOT NULL,
                 UNIQUE (organization_id)

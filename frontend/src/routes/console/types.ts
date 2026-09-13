@@ -249,7 +249,7 @@ export interface Kyc {
 	country: string;
 	address: string;
 	phone: string;
-	website: string | null;
+	website: string;
 	status: KycStatus;
 	submitted_at: number;
 }
