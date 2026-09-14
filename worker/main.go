@@ -17,6 +17,7 @@ func loadEnvFiles() {
 func main() {
 
 	loadEnvFiles()
+	configureOutboundDNSResolver()
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
