@@ -26,8 +26,6 @@ const (
 
 // verifyDANECertificates evaluates TLSA records against the peer chain. The
 // peer slice contains the leaf followed by any certificates sent by the peer.
-// DANE-EE can authenticate without a public CA; DANE-TA requires ordinary
-// chain verification against the matched trust anchor.
 func verifyDANECertificates(peer []*x509.Certificate, records []TLSARecord, serverNames ...string) error {
 	if len(peer) == 0 {
 		return fmt.Errorf("%w: peer sent no certificates", ErrDANEAuthentication)

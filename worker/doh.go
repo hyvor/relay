@@ -24,7 +24,6 @@ const (
 	dohMaxDnsMessageLen = 65535
 )
 
-var ErrDoHNoRecords = errors.New("DNS response contains no records")
 var ErrDoHLookup = errors.New("DNS lookup failed")
 
 type DoHResolver struct {

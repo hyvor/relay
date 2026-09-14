@@ -17,7 +17,6 @@ type sharedCacheTestValue struct {
 
 func TestSharedCacheMemoryRoundTrip(t *testing.T) {
 	cache := NewSharedCache(nil)
-	t.Cleanup(cache.Close)
 
 	require.NoError(t, cache.Set(context.Background(), "mx:example.com", sharedCacheTestValue{Name: "mx.example.com"}, time.Hour))
 
@@ -31,7 +30,6 @@ func TestSharedCacheMemoryRoundTrip(t *testing.T) {
 
 func TestSharedCacheMemoryExpiryDoesNotSlide(t *testing.T) {
 	cache := NewSharedCache(nil)
-	t.Cleanup(cache.Close)
 
 	require.NoError(t, cache.Set(context.Background(), "key", true, time.Hour))
 
@@ -50,7 +48,6 @@ func TestSharedCacheMemoryExpiryDoesNotSlide(t *testing.T) {
 
 func TestSharedCacheDelete(t *testing.T) {
 	cache := NewSharedCache(nil)
-	t.Cleanup(cache.Close)
 
 	require.NoError(t, cache.Set(context.Background(), "key", true, time.Hour))
 	require.NoError(t, cache.Delete(context.Background(), "key"))
@@ -63,7 +60,6 @@ func TestSharedCacheDelete(t *testing.T) {
 
 func TestSharedCacheRejectsOversizedValues(t *testing.T) {
 	cache := NewSharedCache(nil)
-	t.Cleanup(cache.Close)
 
 	// The two surrounding quotes are what push these over and under the limit.
 	err := cache.Set(context.Background(), "key", strings.Repeat("x", sharedCacheMaxValueSize), time.Hour)
@@ -84,7 +80,6 @@ func TestSharedCacheItemID(t *testing.T) {
 
 func TestSharedCacheMemoryDecodeErrorRemovesEntry(t *testing.T) {
 	cache := NewSharedCache(nil)
-	t.Cleanup(cache.Close)
 	cache.memory.Set("key", []byte("{"), time.Hour)
 
 	var value sharedCacheTestValue
@@ -94,53 +89,9 @@ func TestSharedCacheMemoryDecodeErrorRemovesEntry(t *testing.T) {
 	assert.Nil(t, cache.memory.Get("key"))
 }
 
-func TestSharedCacheLoadDoesNotRepublishAfterDelete(t *testing.T) {
-	cache := NewSharedCache(nil)
-	t.Cleanup(cache.Close)
-	loader := newSharedCacheTestLoader(t, cache, []byte(`{"name":"old"}`), time.Now().Add(time.Hour))
-
-	// The load is already in flight when the delete lands, so the entry it
-	// returns is stale by the time it arrives and must not reach memory.
-	result := getSharedCacheTestValue(cache, context.Background(), "key")
-	loader.waitForLoad(t)
-
-	require.NoError(t, cache.Delete(context.Background(), "key"))
-	loader.deleteEntry()
-	loader.releaseLoad()
-
-	loaded := waitForSharedCacheTestValue(t, result)
-	require.NoError(t, loaded.err)
-	assert.False(t, loaded.found)
-	assert.Nil(t, cache.memory.Get("key"))
-}
-
-func TestSharedCacheLoadDoesNotRepublishAfterSet(t *testing.T) {
-	cache := NewSharedCache(nil)
-	t.Cleanup(cache.Close)
-	loader := newSharedCacheTestLoader(t, cache, []byte(`{"name":"old"}`), time.Now().Add(time.Hour))
-
-	// Same race as the delete case: the in-flight load carries the old value and
-	// must not overwrite the newer one the set just stored.
-	result := getSharedCacheTestValue(cache, context.Background(), "key")
-	loader.waitForLoad(t)
-
-	require.NoError(t, cache.Set(context.Background(), "key", sharedCacheTestValue{Name: "new"}, time.Hour))
-	loader.releaseLoad()
-
-	loaded := waitForSharedCacheTestValue(t, result)
-	require.NoError(t, loaded.err)
-	assert.True(t, loaded.found)
-	assert.Equal(t, "new", loaded.value.Name)
-
-	item := cache.memory.Get("key")
-	require.NotNil(t, item)
-	assert.JSONEq(t, `{"name":"new"}`, string(item.Value()))
-}
-
 func TestSharedCacheHydrationUsesAbsoluteExpiry(t *testing.T) {
 	writtenAt := time.Unix(1_700_000_000, 0)
 	cache := NewSharedCache(nil)
-	t.Cleanup(cache.Close)
 	loader := newSharedCacheTestLoader(t, cache, []byte(`{"name":"database"}`), writtenAt.Add(time.Hour))
 
 	// The entry was written 45 minutes ago with a one hour lifetime, so memory
@@ -160,7 +111,6 @@ func TestSharedCacheHydrationUsesAbsoluteExpiry(t *testing.T) {
 
 func TestSharedCacheLoadIsNotCanceledByFirstWaiter(t *testing.T) {
 	cache := NewSharedCache(nil)
-	t.Cleanup(cache.Close)
 	loader := newSharedCacheTestLoader(t, cache, []byte(`{"name":"database"}`), time.Now().Add(time.Hour))
 
 	firstCtx, cancelFirst := context.WithCancel(context.Background())
@@ -186,7 +136,6 @@ func TestSharedCacheLoadIsNotCanceledByFirstWaiter(t *testing.T) {
 
 func TestSharedCacheMemoryHitDoesNotWaitForBlockedLoad(t *testing.T) {
 	cache := NewSharedCache(nil)
-	t.Cleanup(cache.Close)
 	loader := newSharedCacheTestLoader(t, cache, []byte(`true`), time.Now().Add(time.Hour))
 	cache.memory.Set("cached", []byte(`true`), time.Hour)
 

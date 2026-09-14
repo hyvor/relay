@@ -80,7 +80,6 @@ func TestValidMxLookupAndCache(t *testing.T) {
 	})
 
 	cache := NewSharedCache(nil)
-	t.Cleanup(cache.Close)
 	hosts, err := getMxHostsFromDomainContext(context.Background(), cache, "HYVOR.COM.")
 	require.NoError(t, err)
 	assert.Equal(t, []string{"mx1.hyvor.com", "mx2.hyvor.com"}, hosts)
@@ -93,7 +92,6 @@ func TestValidMxLookupAndCache(t *testing.T) {
 
 func TestMxCacheUsesOneHourMaximumTTL(t *testing.T) {
 	cache := NewSharedCache(nil)
-	t.Cleanup(cache.Close)
 	cacheMxValue(context.Background(), cache, "hyvor.com", MxCacheValue{Records: []MxRecord{{Host: "mx.hyvor.com"}}}, 2*time.Hour)
 
 	item := cache.memory.Get(dnsCacheKey("mx", "hyvor.com"))

@@ -138,9 +138,6 @@ func getMxCacheValueFromDNS(message *dns.Msg, domain string, secure bool) (MxCac
 		followedAlias = true
 		owner = alias
 	}
-	sort.SliceStable(records, func(i, j int) bool {
-		return records[i].Priority < records[j].Priority
-	})
 	return MxCacheValue{Records: records, Secure: secure}, nullMx, false
 }
 

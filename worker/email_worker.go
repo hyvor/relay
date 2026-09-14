@@ -16,6 +16,7 @@ type EmailWorkersPool struct {
 	cancelFunc context.CancelFunc
 	logger     *slog.Logger
 	metrics    *Metrics
+	cache      *SharedCache
 }
 
 func NewEmailWorkersPool(
@@ -52,6 +53,12 @@ func (pool *EmailWorkersPool) Set(
 
 	pool.stopWorkersLocked()
 
+	db, err := sql.Open("postgres", LoadDBConfig().DSN())
+	if err != nil {
+		pool.logger.Error("Failed to open the shared cache database handle", "error", err)
+	}
+	pool.cache = NewSharedCache(db)
+
 	ctx, cancel := context.WithCancel(pool.ctx)
 	pool.cancelFunc = cancel
 
@@ -73,6 +80,7 @@ func (pool *EmailWorkersPool) Set(
 				pool.metrics,
 				ip,
 				instanceDomain,
+				pool.cache,
 			)
 			go worker.Start()
 		}
@@ -89,7 +97,10 @@ func (pool *EmailWorkersPool) stopWorkersLocked() {
 
 	pool.wg.Wait()
 
-	CloseProcessSharedCache()
+	if pool.cache != nil {
+		pool.cache.Close()
+		pool.cache = nil
+	}
 }
 
 type EmailWorker struct {
@@ -102,6 +113,7 @@ type EmailWorker struct {
 	ip             GoStateIp
 	instanceDomain string
 	contentStore   SendContentStore
+	cache          *SharedCache
 
 	// mocks
 	ProcessSendFunc         func(conn *sql.DB) error
@@ -129,6 +141,7 @@ func newEmailWorker(
 	metrics *Metrics,
 	ip GoStateIp,
 	instanceDomain string,
+	cache *SharedCache,
 ) *EmailWorker {
 	contentStore, err := NewSendContentStore()
 	if err != nil {
@@ -148,12 +161,22 @@ func newEmailWorker(
 		ip:             ip,
 		instanceDomain: instanceDomain,
 		contentStore:   contentStore,
+		cache:          cache,
 	}
 
 	worker.FetchContentFunc = worker.fetchContent
 	worker.ProcessSendFunc = worker.processSend
 	worker.AttemptSendToDomainFunc = worker.attemptSendToDomain
-	worker.SendEmailContextFunc = sendEmailHandlerContext
+	worker.SendEmailContextFunc = func(
+		ctx context.Context,
+		send *SendRow,
+		recipients []*RecipientRow,
+		rcptDomain, instanceDomain string,
+		ipId int,
+		ip, ptr string,
+	) *SendResult {
+		return sendEmailHandlerContext(ctx, worker.cache, send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr)
+	}
 
 	return worker
 }
@@ -170,9 +193,7 @@ func (worker *EmailWorker) Start() {
 	if err != nil {
 		return
 	}
-	if !ConfigureProcessSharedCache(conn) {
-		defer conn.Close()
-	}
+	defer conn.Close()
 
 	for {
 

@@ -48,7 +48,6 @@ func TestLookupMTASTSEnforcePolicyAndCache(t *testing.T) {
 	})
 
 	cache := NewSharedCache(nil)
-	t.Cleanup(cache.Close)
 	result, err := lookupMTASTS(context.Background(), cache, "example.com")
 	require.NoError(t, err)
 	assert.True(t, result.Enforce)
@@ -89,7 +88,6 @@ func TestLookupMTASTSNonePolicy(t *testing.T) {
 	})
 
 	cache := NewSharedCache(nil)
-	t.Cleanup(cache.Close)
 	result, err := lookupMTASTS(context.Background(), cache, "example.com")
 	require.NoError(t, err)
 	assert.False(t, result.Enforce)
@@ -102,7 +100,6 @@ func TestLookupMTASTSAbsentIsNotAnError(t *testing.T) {
 	})
 
 	cache := NewSharedCache(nil)
-	t.Cleanup(cache.Close)
 	result, err := lookupMTASTS(context.Background(), cache, "example.com")
 	require.NoError(t, err)
 	assert.False(t, result.Enforce)
@@ -124,6 +121,7 @@ func TestMTASTSEnforceRequiresStartTLS(t *testing.T) {
 	defer cancel()
 	conversation := sendEmailToHostHandlerContextAttempt(
 		ctx,
+		NewSharedCache(nil),
 		&SendRow{Uuid: "test"},
 		[]*RecipientRow{{Id: 1, Address: "user@example.com"}},
 		"mx.example.com",

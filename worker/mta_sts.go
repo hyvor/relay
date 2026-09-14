@@ -67,25 +67,15 @@ func (r mtaSTSResult) AllowsMX(host string) bool {
 }
 
 func lookupMTASTS(ctx context.Context, cache *SharedCache, domain string) (mtaSTSResult, error) {
-	return lookupMTASTSWithCache(ctx, cache, domain, true)
-}
-
-func lookupMTASTSRefresh(ctx context.Context, cache *SharedCache, domain string) (mtaSTSResult, error) {
-	return lookupMTASTSWithCache(ctx, cache, domain, false)
-}
-
-func lookupMTASTSWithCache(ctx context.Context, cache *SharedCache, domain string, useCache bool) (mtaSTSResult, error) {
 	domain = normalizeDNSHost(domain)
 	if domain == "" {
 		return mtaSTSResult{}, fmt.Errorf("%w: empty domain", ErrMTASTSLookup)
 	}
 
 	cacheKey := dnsCacheKey("mta_sts", domain)
-	if useCache {
-		var cached mtaSTSCacheValue
-		if found, err := cache.Get(ctx, cacheKey, &cached); err == nil && found {
-			return mtaSTSResult{Enforce: cached.Enforce, MXPatterns: cached.MXPatterns}, nil
-		}
+	var cached mtaSTSCacheValue
+	if found, err := cache.Get(ctx, cacheKey, &cached); err == nil && found {
+		return mtaSTSResult(cached), nil
 	}
 
 	queryName := "_mta-sts." + domain
@@ -109,7 +99,7 @@ func lookupMTASTSWithCache(ctx context.Context, cache *SharedCache, domain strin
 			}
 			value := mtaSTSCacheValue{Enforce: policy.Mode == "enforce", MXPatterns: policy.MXPatterns}
 			cacheMTASTSValue(ctx, cache, cacheKey, value, time.Duration(policy.MaxAge)*time.Second)
-			return mtaSTSResult{Enforce: value.Enforce, MXPatterns: value.MXPatterns}, nil
+			return mtaSTSResult(value), nil
 		}
 		if target, ok := mtaSTSRedirectTarget(txtResult.Message, queryName); ok {
 			queryName = target

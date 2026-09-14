@@ -4,30 +4,32 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"net"
-	"net/http"
-	"net/http/httptest"
 	"strings"
-	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	smtp "github.com/hyvor/relay/worker/smtp"
 )
 
+var testCache = NewSharedCache(nil)
+
+var sendEmail = sendEmailHandler
+
+func sendEmailHandler(send *SendRow, recipients []*RecipientRow, rcptDomain, instanceDomain string, ipId int, ip, ptr string) *SendResult {
+	return sendEmailHandlerContext(context.Background(), testCache, send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr)
+}
+
 func sendEmailToHostHandler(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, secureMx bool) *SmtpConversation {
-	return sendEmailToHostHandlerContextAttempt(context.Background(), send, recipients, host, instanceDomain, ip, ptr, secureMx, false, true)
+	return sendEmailToHostHandlerContextAttempt(context.Background(), testCache, send, recipients, host, instanceDomain, ip, ptr, secureMx, false, true)
 }
 
 func seedTestMxCache(t *testing.T) {
 	t.Helper()
-	cache := getProcessSharedCache()
+	cache := testCache
 	if err := cache.Set(context.Background(), dnsCacheKey("mx", "hyvor.com"), MxCacheValue{
 		Records: []MxRecord{{Host: "mx.hyvor.com"}},
 	}, time.Hour); err != nil {
@@ -41,7 +43,7 @@ func seedTestMxCache(t *testing.T) {
 func TestSendEmail_Accepted(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHostContext
-	sendEmailToHostContext = func(_ context.Context, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
+	sendEmailToHostContext = func(_ context.Context, _ *SharedCache, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
@@ -87,7 +89,7 @@ func TestSendEmail_Accepted(t *testing.T) {
 func TestSendEmail_500SmtpError(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHostContext
-	sendEmailToHostContext = func(_ context.Context, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
+	sendEmailToHostContext = func(_ context.Context, _ *SharedCache, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
@@ -133,7 +135,7 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 func TestSendEmail_4xxSmtpError(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHostContext
-	sendEmailToHostContext = func(_ context.Context, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
+	sendEmailToHostContext = func(_ context.Context, _ *SharedCache, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
@@ -179,7 +181,7 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHostContext
-	sendEmailToHostContext = func(_ context.Context, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
+	sendEmailToHostContext = func(_ context.Context, _ *SharedCache, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
@@ -225,7 +227,7 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHostContext
-	sendEmailToHostContext = func(_ context.Context, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
+	sendEmailToHostContext = func(_ context.Context, _ *SharedCache, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: context.DeadlineExceeded,
 			Steps:        []*SmtpStep{},
@@ -263,7 +265,7 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 
 	originalSendEmailToHost := sendEmailToHostContext
-	sendEmailToHostContext = func(_ context.Context, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
+	sendEmailToHostContext = func(_ context.Context, _ *SharedCache, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: context.DeadlineExceeded,
 			Steps:        []*SmtpStep{},
@@ -350,7 +352,7 @@ func TestSendEmailToHost_DaneRequiresStartTLS(t *testing.T) {
 			}},
 		}, nil
 	}
-	cache := getProcessSharedCache()
+	cache := testCache
 	assert.NoError(t, cache.Set(context.Background(), dnsCacheKey("mx", "example.com"), MxCacheValue{
 		Records: []MxRecord{{Host: "mx.example.com"}},
 		Secure:  true,
@@ -742,64 +744,4 @@ func TestSendAfterInterval(t *testing.T) {
 
 	assert.Equal(t, "1 day", getSendAfterInterval(10))
 
-}
-
-func TestSendEmailAttemptBoundsMTASTSPolicyRefreshRecursion(t *testing.T) {
-	cache := getProcessSharedCache()
-	require.NoError(t, cache.Set(context.Background(), dnsCacheKey("mx", "example.com"), MxCacheValue{
-		Records: []MxRecord{{Host: "mx.example.com"}},
-		Secure:  false,
-	}, time.Hour))
-	t.Cleanup(func() {
-		_ = cache.Delete(context.Background(), dnsCacheKey("mx", "example.com"))
-		_ = cache.Delete(context.Background(), dnsCacheKey("mta_sts", "example.com"))
-	})
-
-	withDNSLookupStub(t, func(_ context.Context, name string, recordType uint16) (DNSLookupResult, error) {
-		require.Equal(t, dns.TypeTXT, recordType)
-		return DNSLookupResult{
-			Message: &dns.Msg{
-				MsgHdr: dns.MsgHdr{Rcode: dns.RcodeSuccess},
-				Answer: []dns.RR{&dns.TXT{
-					Hdr: dns.RR_Header{Name: dns.Fqdn(name), Class: dns.ClassINET, Rrtype: dns.TypeTXT},
-					Txt: []string{"v=STSv1; id=policy1"},
-				}},
-			},
-			TTL: time.Minute,
-		}, nil
-	})
-
-	var policyFetches atomic.Int32
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		n := policyFetches.Add(1)
-		_, _ = fmt.Fprintf(w, "version: STSv1\nmode: enforce\nmx: never-matches-%d.invalid\nmax_age: 600\n", n)
-	}))
-	defer server.Close()
-
-	originalURL := mtaSTSURL
-	originalClient := mtaSTSHTTPClient
-	mtaSTSURL = func(string) string { return server.URL }
-	mtaSTSHTTPClient = server.Client()
-	t.Cleanup(func() {
-		mtaSTSURL = originalURL
-		mtaSTSHTTPClient = originalClient
-	})
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	result := sendEmailHandlerContext(
-		ctx,
-		&SendRow{Uuid: "test"},
-		[]*RecipientRow{{Id: 1, Address: "user@example.com", TryCount: 1}},
-		"example.com",
-		"relay.example.com",
-		0,
-		"1.1.1.1",
-		"relay.example.com",
-	)
-
-	assert.LessOrEqual(t, int(policyFetches.Load()), 1+maxMTASTSPolicyRefreshes)
-	require.Len(t, result.RcptResults, 1)
-	assert.NotEqual(t, RecipientStatusAccepted, result.RcptResults[0].ToRecipientStatus())
 }

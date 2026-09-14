@@ -46,10 +46,11 @@ func TestEmailWorkersPoolSet(t *testing.T) {
 		metrics *Metrics,
 		ip GoStateIp,
 		instanceDomain string,
+		cache *SharedCache,
 	) *EmailWorker {
 		numWorkersCreated++
 
-		return newEmailWorker(ctx, id, wg, dbConfig, logger, metrics, ip, instanceDomain)
+		return newEmailWorker(ctx, id, wg, dbConfig, logger, metrics, ip, instanceDomain, cache)
 	}
 
 	pool := &EmailWorkersPool{
@@ -132,6 +133,7 @@ func TestEmailWorker_DatabaseConnectionFailure(t *testing.T) {
 		newMetrics(),
 		ip,
 		"relay.hyvor.com",
+		NewSharedCache(nil),
 	)
 	go emailWorker.Start()
 	go func() {

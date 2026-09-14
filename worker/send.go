@@ -9,7 +9,6 @@ import (
 	"log/slog"
 	"net"
 	"os"
-	"slices"
 	"time"
 
 	smtp "github.com/hyvor/relay/worker/smtp"
@@ -267,14 +266,9 @@ func (r *SendResult) SetAllRcptResults(recipients []*RecipientRow, code int, enh
 	}
 }
 
-var sendEmail = sendEmailHandler
-
-func sendEmailHandler(send *SendRow, recipients []*RecipientRow, rcptDomain, instanceDomain string, ipId int, ip, ptr string) *SendResult {
-	return sendEmailHandlerContext(context.Background(), send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr)
-}
-
 func sendEmailHandlerContext(
 	ctx context.Context,
+	cache *SharedCache,
 	send *SendRow,
 	recipients []*RecipientRow,
 	rcptDomain string,
@@ -282,22 +276,6 @@ func sendEmailHandlerContext(
 	ipId int,
 	ip string,
 	ptr string,
-) *SendResult {
-	return sendEmailAttempt(ctx, send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr, 0)
-}
-
-const maxMTASTSPolicyRefreshes = 2
-
-func sendEmailAttempt(
-	ctx context.Context,
-	send *SendRow,
-	recipients []*RecipientRow,
-	rcptDomain string,
-	instanceDomain string,
-	ipId int,
-	ip string,
-	ptr string,
-	policyRefreshes int,
 ) *SendResult {
 
 	startTime := time.Now()
@@ -320,7 +298,7 @@ func sendEmailAttempt(
 		result.Duration = duration
 	}()
 
-	policyResult, err := lookupMTASTS(ctx, getProcessSharedCache(), rcptDomain)
+	policyResult, err := lookupMTASTS(ctx, cache, rcptDomain)
 	if err != nil {
 		if ctx.Err() == nil {
 			slog.Warn("MTA-STS lookup failed; continuing without policy", "domain", rcptDomain, "error", err)
@@ -335,7 +313,7 @@ func sendEmailAttempt(
 		}
 	}
 
-	mxValue, err := getMxValueFromDomainContext(ctx, getProcessSharedCache(), rcptDomain)
+	mxValue, err := getMxValueFromDomainContext(ctx, cache, rcptDomain)
 
 	if err != nil {
 		if errors.Is(err, ErrSmtpMxPermanent) {
@@ -362,7 +340,7 @@ func sendEmailAttempt(
 			conversation = NewSmtpConversation()
 			conversation.NetworkError = fmt.Errorf("MTA-STS policy does not allow MX host %s", host)
 		} else {
-			conversation = sendEmailToHostContext(ctx, send, recipients, host, instanceDomain, ip, ptr, mxValue.Secure, policyResult.Enforce, true, rcptDomain)
+			conversation = sendEmailToHostContext(ctx, cache, send, recipients, host, instanceDomain, ip, ptr, mxValue.Secure, policyResult.Enforce, true, rcptDomain)
 		}
 
 		result.SmtpConversations[host] = conversation
@@ -395,12 +373,6 @@ func sendEmailAttempt(
 	}
 
 	// if we reach here, all hosts have failed due to non-smtp errors (e.g. network errors)
-	if policyResult.Enforce && policyRefreshes < maxMTASTSPolicyRefreshes {
-		if refreshed, refreshErr := lookupMTASTSRefresh(ctx, getProcessSharedCache(), rcptDomain); refreshErr == nil && !sameMTASTSResult(policyResult, refreshed) {
-			return sendEmailAttempt(ctx, send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr, policyRefreshes+1)
-		}
-	}
-
 	message := "all MX hosts failed"
 	if lastError != nil {
 		message = lastError.Error()
@@ -413,10 +385,6 @@ func sendEmailAttempt(
 	}
 
 	return result
-}
-
-func sameMTASTSResult(left, right mtaSTSResult) bool {
-	return left.Enforce == right.Enforce && slices.Equal(left.MXPatterns, right.MXPatterns)
 }
 
 var netResolveTCPAddr = net.ResolveTCPAddr
@@ -490,6 +458,7 @@ var sendEmailToHostContext = sendEmailToHostHandlerContextAttempt
 
 func sendEmailToHostHandlerContextAttempt(
 	ctx context.Context,
+	cache *SharedCache,
 	send *SendRow,
 	recipients []*RecipientRow,
 	host string,
@@ -504,7 +473,6 @@ func sendEmailToHostHandlerContextAttempt(
 
 	conversation := NewSmtpConversation()
 
-	cache := getProcessSharedCache()
 	tlsaResult := TLSAResult{State: TLSAStateSecureAbsent}
 	if secureMx {
 		var err error
@@ -525,7 +493,6 @@ func sendEmailToHostHandlerContextAttempt(
 		return conversation
 	}
 	defer c.Close()
-	defer context.AfterFunc(ctx, func() { _ = c.SetDeadline(time.Now()) })()
 
 	conversation.AddStep(SmtpStepDial, "", 0, "")
 
@@ -556,8 +523,9 @@ func sendEmailToHostHandlerContextAttempt(
 				conversation.NetworkError = err
 				return conversation
 			}
+
 			config := &tls.Config{ServerName: host}
-			if tlsRequired && (!mtaSTSRequireTLS || daneRequired) {
+			if !mtaSTSRequireTLS || daneRequired {
 				config.InsecureSkipVerify = true
 			}
 			if daneRequired {
@@ -569,19 +537,12 @@ func sendEmailToHostHandlerContextAttempt(
 
 			startTlsResult, ehloResult := c.StartTLS(config)
 
-			if startTlsResult.Err != nil {
+			if tlsErr := firstError(startTlsResult.Err, ehloResult.Err); tlsErr != nil {
 				if !tlsRequired && ctx.Err() == nil {
-					return sendEmailToHostHandlerContextAttempt(ctx, send, recipients, host, instanceDomain, ip, ptr, secureMx, false, false, referenceNames...)
+					_ = c.Close()
+					return sendEmailToHostHandlerContextAttempt(ctx, cache, send, recipients, host, instanceDomain, ip, ptr, secureMx, false, false, referenceNames...)
 				}
-				conversation.NetworkError = startTlsResult.Err
-				return conversation
-			}
-
-			if ehloResult.Err != nil {
-				if !tlsRequired && ctx.Err() == nil {
-					return sendEmailToHostHandlerContextAttempt(ctx, send, recipients, host, instanceDomain, ip, ptr, secureMx, false, false, referenceNames...)
-				}
-				conversation.NetworkError = ehloResult.Err
+				conversation.NetworkError = tlsErr
 				return conversation
 			}
 
@@ -750,4 +711,13 @@ func getSendAfterInterval(currentAttempt int) string {
 	}
 
 	return "1 day"
+}
+
+func firstError(errs ...error) error {
+	for _, err := range errs {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
