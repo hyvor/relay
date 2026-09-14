@@ -124,9 +124,6 @@ func matchesTrustAnchor(record TLSARecord, peer []*x509.Certificate, serverNames
 }
 
 func verifyPKIXChain(peer []*x509.Certificate, serverNames []string, trustAnchor *x509.Certificate) error {
-	if len(peer) == 0 || trustAnchor == nil {
-		return fmt.Errorf("%w: empty peer chain", ErrDANEAuthentication)
-	}
 	if len(serverNames) == 0 {
 		return fmt.Errorf("%w: no reference identifiers", ErrDANEAuthentication)
 	}
@@ -159,14 +156,10 @@ func verifyPKIXChain(peer []*x509.Certificate, serverNames []string, trustAnchor
 			Intermediates: intermediates,
 			KeyUsages:     []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		})
-		if err == nil && certificateMatchesReference(leaf, serverName) {
+		if err == nil {
 			return nil
 		}
-		if err != nil {
-			lastErr = err
-		} else {
-			lastErr = fmt.Errorf("certificate name does not match %q", serverName)
-		}
+		lastErr = err
 	}
 	return lastErr
 }
@@ -175,21 +168,4 @@ func cloneWithCommonNameAsDNSName(certificate *x509.Certificate) *x509.Certifica
 	clone := *certificate
 	clone.DNSNames = []string{certificate.Subject.CommonName}
 	return &clone
-}
-
-func certificateMatchesReference(certificate *x509.Certificate, serverName string) bool {
-	if len(certificate.DNSNames) > 0 {
-		return certificate.VerifyHostname(serverName) == nil
-	}
-	return matchesDNSName(certificate.Subject.CommonName, serverName)
-}
-
-func matchesDNSName(pattern, name string) bool {
-	pattern = strings.TrimSuffix(strings.ToLower(pattern), ".")
-	name = strings.TrimSuffix(strings.ToLower(name), ".")
-	if pattern == name {
-		return true
-	}
-	return strings.HasPrefix(pattern, "*.") && strings.Count(pattern[2:], ".") >= 1 &&
-		strings.HasSuffix(name, pattern[1:]) && strings.Count(name, ".") == strings.Count(pattern, ".")
 }

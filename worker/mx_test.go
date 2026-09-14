@@ -11,6 +11,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func getMxHostsFromDomainContext(ctx context.Context, cache *SharedCache, domain string) ([]string, error) {
+	value, err := getMxValueFromDomainContext(ctx, cache, domain)
+	if err != nil {
+		return nil, err
+	}
+	return getHostsFromMxCacheValue(value), nil
+}
+
 func withDNSLookupStub(t *testing.T, stub func(context.Context, string, uint16) (DNSLookupResult, error)) {
 	original := lookupDNSFunc
 	originalTLSA := lookupTLSAFunc
@@ -116,7 +124,7 @@ func TestNullMxIsRejected(t *testing.T) {
 	})
 
 	_, err := getMxHostsFromDomainContext(context.Background(), NewSharedCache(nil), "example.com")
-	assert.ErrorIs(t, err, ErrSmtpMxLookupFailed)
+	assert.ErrorIs(t, err, ErrSmtpMxPermanent)
 }
 
 func TestMxDnsFailureDoesNotFallbackToAddress(t *testing.T) {
@@ -169,4 +177,19 @@ func TestMxLookupFollowsCname(t *testing.T) {
 	hosts, err := getMxHostsFromDomainContext(context.Background(), NewSharedCache(nil), "example.com")
 	require.NoError(t, err)
 	assert.Equal(t, []string{"mx.example"}, hosts)
+}
+
+func TestMxLookupRejectsIncompleteCnameChain(t *testing.T) {
+	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
+		require.Equal(t, dns.TypeMX, recordType, "must not fall back to an address lookup")
+		return DNSLookupResult{Message: &dns.Msg{
+			MsgHdr: dns.MsgHdr{Rcode: dns.RcodeSuccess},
+			Answer: []dns.RR{
+				&dns.CNAME{Hdr: dns.RR_Header{Name: "example.com.", Rrtype: dns.TypeCNAME, Class: dns.ClassINET}, Target: "canonical.example."},
+			},
+		}, TTL: time.Minute}, nil
+	})
+
+	_, err := getMxHostsFromDomainContext(context.Background(), NewSharedCache(nil), "example.com")
+	assert.ErrorIs(t, err, ErrSmtpMxLookupFailed)
 }

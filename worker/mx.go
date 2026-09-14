@@ -30,14 +30,6 @@ var lookupDNSFunc = func(ctx context.Context, name string, recordType uint16) (D
 	return outboundDNSResolver.Lookup(ctx, name, recordType)
 }
 
-func getMxHostsFromDomainContext(ctx context.Context, cache *SharedCache, domain string) ([]string, error) {
-	value, err := getMxValueFromDomainContext(ctx, cache, domain)
-	if err != nil {
-		return nil, err
-	}
-	return getHostsFromMxCacheValue(value), nil
-}
-
 func getMxValueFromDomainContext(ctx context.Context, cache *SharedCache, domain string) (MxCacheValue, error) {
 	domain = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(domain)), ".")
 	if domain == "" {
@@ -141,7 +133,7 @@ func getMxCacheValueFromDNS(message *dns.Msg, domain string, secure bool) (MxCac
 		}
 		alias, ok := dnsAliasTarget(message, owner)
 		if !ok {
-			return MxCacheValue{Records: records, Secure: secure}, nullMx, !followedAlias || !hasAliasContinuation(message)
+			return MxCacheValue{Records: records, Secure: secure}, nullMx, !followedAlias || hasSOAInAuthority(message)
 		}
 		followedAlias = true
 		owner = alias
@@ -157,7 +149,7 @@ func validMxCacheValue(value MxCacheValue) bool {
 		return false
 	}
 	for _, record := range value.Records {
-		if record.Host == "" || record.Host == "." || record.Priority < 0 || record.Priority > 65535 ||
+		if record.Host == "" || record.Host == "." ||
 			normalizeDNSHost(record.Host) != record.Host || strings.ContainsAny(record.Host, " /:@") {
 			return false
 		}
@@ -197,13 +189,13 @@ func hasAddressRecords(message *dns.Msg, domain string) (bool, bool, string) {
 	return false, false, ""
 }
 
-func hasAliasContinuation(message *dns.Msg) bool {
+func hasSOAInAuthority(message *dns.Msg) bool {
 	for _, record := range message.Ns {
 		if _, ok := record.(*dns.SOA); ok {
-			return false
+			return true
 		}
 	}
-	return true
+	return false
 }
 
 func dnsAliasTarget(message *dns.Msg, owner string) (string, bool) {

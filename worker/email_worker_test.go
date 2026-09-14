@@ -79,7 +79,9 @@ func TestEmailWorkersPoolStopWorkers(t *testing.T) {
 		cancelFunc: cancelFunc,
 	}
 
-	pool.StopWorkers()
+	pool.mu.Lock()
+	pool.stopWorkersLocked()
+	pool.mu.Unlock()
 
 	time.Sleep(10 * time.Millisecond)
 

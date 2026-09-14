@@ -41,7 +41,6 @@ type mtaSTSResult struct {
 type mtaSTSCacheValue struct {
 	Enforce    bool     `json:"enforce"`
 	MXPatterns []string `json:"mx_patterns,omitempty"`
-	PolicyID   string   `json:"policy_id,omitempty"`
 }
 
 func (r mtaSTSResult) AllowsMX(host string) bool {
@@ -51,14 +50,14 @@ func (r mtaSTSResult) AllowsMX(host string) bool {
 	if len(r.MXPatterns) == 0 {
 		return false
 	}
+	normalizedHost := normalizeDNSHost(host)
 	for _, pattern := range r.MXPatterns {
 		pattern = normalizeDNSHost(pattern)
-		if pattern == normalizeDNSHost(host) {
+		if pattern == normalizedHost {
 			return true
 		}
 		if strings.HasPrefix(pattern, "*.") {
 			suffix := strings.TrimPrefix(pattern, "*.")
-			normalizedHost := normalizeDNSHost(host)
 			if strings.HasSuffix(normalizedHost, "."+suffix) && strings.Count(normalizedHost, ".") == strings.Count(suffix, ".")+1 {
 				return true
 			}
@@ -103,12 +102,12 @@ func lookupMTASTSWithCache(ctx context.Context, cache *SharedCache, domain strin
 		if txtResult.Message.Rcode != dns.RcodeSuccess && txtResult.Message.Rcode != dns.RcodeNameError {
 			return mtaSTSResult{}, fmt.Errorf("%w: TXT response code %s", ErrMTASTSLookup, dns.RcodeToString[txtResult.Message.Rcode])
 		}
-		if discovery, found := mtaSTSDiscovery(txtResult.Message, queryName); found {
+		if _, found := mtaSTSDiscovery(txtResult.Message, queryName); found {
 			policy, err := fetchMTASTSPolicy(ctx, domain)
 			if err != nil {
 				return mtaSTSResult{}, err
 			}
-			value := mtaSTSCacheValue{Enforce: policy.Mode == "enforce", MXPatterns: policy.MXPatterns, PolicyID: discovery.ID}
+			value := mtaSTSCacheValue{Enforce: policy.Mode == "enforce", MXPatterns: policy.MXPatterns}
 			cacheMTASTSValue(ctx, cache, cacheKey, value, time.Duration(policy.MaxAge)*time.Second)
 			return mtaSTSResult{Enforce: value.Enforce, MXPatterns: value.MXPatterns}, nil
 		}

@@ -122,7 +122,7 @@ func TestMTASTSEnforceRequiresStartTLS(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	conversation := sendEmailToHostHandlerContext(
+	conversation := sendEmailToHostHandlerContextAttempt(
 		ctx,
 		&SendRow{Uuid: "test"},
 		[]*RecipientRow{{Id: 1, Address: "user@example.com"}},
@@ -131,6 +131,7 @@ func TestMTASTSEnforceRequiresStartTLS(t *testing.T) {
 		"127.0.0.1",
 		"relay.example.com",
 		false,
+		true,
 		true,
 	)
 	assert.ErrorIs(t, conversation.NetworkError, ErrTLSRequired)

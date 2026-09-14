@@ -84,45 +84,38 @@ func TestLookupTLSAInsecureRecordsAreNotDANEUsable(t *testing.T) {
 	assert.Len(t, result.Records, 1)
 }
 
-func TestLookupTLSASecureInvalidRecordsAreNotAbsence(t *testing.T) {
-	withDNSLookupStub(t, func(_ context.Context, name string, _ uint16) (DNSLookupResult, error) {
-		return DNSLookupResult{
-			Message: tlsaMessage(name, &dns.TLSA{
-				Hdr:          dns.RR_Header{Rrtype: dns.TypeTLSA},
-				Usage:        3,
-				Selector:     1,
-				MatchingType: 1,
-				Certificate:  "not-hex",
-			}),
-			Secure: true,
-			TTL:    time.Minute,
-		}, nil
-	})
+func TestLookupTLSAUnusableRecordsAreNotAbsence(t *testing.T) {
+	tests := []struct {
+		name   string
+		record *dns.TLSA
+	}{
+		{
+			name:   "association is not hex",
+			record: &dns.TLSA{Usage: 3, Selector: 1, MatchingType: 1, Certificate: "not-hex"},
+		},
+		{
+			name:   "unsupported certificate usage",
+			record: &dns.TLSA{Usage: 1, Selector: 1, MatchingType: 1, Certificate: strings.Repeat("ab", 32)},
+		},
+	}
 
-	result, err := lookupTLSA(context.Background(), NewSharedCache(nil), "mx.example.com")
-	require.NoError(t, err)
-	assert.Equal(t, TLSAStateSecureUnusable, result.State)
-	assert.Empty(t, result.Records)
-}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			test.record.Hdr = dns.RR_Header{Rrtype: dns.TypeTLSA}
+			withDNSLookupStub(t, func(_ context.Context, name string, _ uint16) (DNSLookupResult, error) {
+				return DNSLookupResult{
+					Message: tlsaMessage(name, test.record),
+					Secure:  true,
+					TTL:     time.Minute,
+				}, nil
+			})
 
-func TestLookupTLSAUnsupportedUsageIsUnusable(t *testing.T) {
-	withDNSLookupStub(t, func(_ context.Context, name string, _ uint16) (DNSLookupResult, error) {
-		return DNSLookupResult{
-			Message: tlsaMessage(name, &dns.TLSA{
-				Hdr:          dns.RR_Header{Rrtype: dns.TypeTLSA},
-				Usage:        1,
-				Selector:     1,
-				MatchingType: 1,
-				Certificate:  strings.Repeat("ab", 32),
-			}),
-			Secure: true,
-			TTL:    time.Minute,
-		}, nil
-	})
-
-	result, err := lookupTLSA(context.Background(), NewSharedCache(nil), "mx.example.com")
-	require.NoError(t, err)
-	assert.Equal(t, TLSAStateSecureUnusable, result.State)
+			result, err := lookupTLSA(context.Background(), NewSharedCache(nil), "mx.example.com")
+			require.NoError(t, err)
+			assert.Equal(t, TLSAStateSecureUnusable, result.State)
+			assert.Empty(t, result.Records)
+		})
+	}
 }
 
 func TestLookupTLSAFollowsCname(t *testing.T) {

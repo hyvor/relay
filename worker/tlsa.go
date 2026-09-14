@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/x509"
 	"encoding/hex"
 	"errors"
@@ -32,14 +34,9 @@ type TLSARecord struct {
 	CertificateAssociation string `json:"certificate_association_data"`
 }
 
-type TLSACacheValue struct {
+type TLSAResult struct {
 	State   TLSAState    `json:"state"`
 	Records []TLSARecord `json:"records"`
-}
-
-type TLSAResult struct {
-	State   TLSAState
-	Records []TLSARecord
 }
 
 var lookupTLSAFunc = lookupTLSA
@@ -52,10 +49,10 @@ func lookupTLSA(ctx context.Context, cache *SharedCache, host string) (TLSAResul
 
 	name := "_25._tcp." + host
 	cacheKey := dnsCacheKey("tlsa", name)
-	var cached TLSACacheValue
+	var cached TLSAResult
 	if found, err := cache.Get(ctx, cacheKey, &cached); err == nil && found {
 		if validTLSACacheValue(cached) {
-			return TLSAResult(cached), nil
+			return cached, nil
 		}
 		_ = cache.Delete(ctx, cacheKey)
 	}
@@ -71,7 +68,7 @@ func lookupTLSA(ctx context.Context, cache *SharedCache, host string) (TLSAResul
 		return TLSAResult{}, fmt.Errorf("%w: DNS response code %s", ErrTLSALookup, dns.RcodeToString[result.Message.Rcode])
 	}
 
-	value := TLSACacheValue{State: TLSAStateInsecure}
+	value := TLSAResult{State: TLSAStateInsecure}
 	if result.Secure {
 		value.State = TLSAStateSecureAbsent
 	}
@@ -92,7 +89,7 @@ func lookupTLSA(ctx context.Context, cache *SharedCache, host string) (TLSAResul
 	}
 
 	cacheTLSAValue(ctx, cache, cacheKey, value, result.TTL)
-	return TLSAResult(value), nil
+	return value, nil
 }
 
 func hasCNAMEAnswer(message *dns.Msg) bool {
@@ -137,7 +134,7 @@ func getTLSARecordsFromDNS(message *dns.Msg, owner string) ([]TLSARecord, bool, 
 		}
 		alias, ok := dnsAliasTarget(message, currentOwner)
 		if !ok {
-			return records, invalid, !followedAlias || !hasAliasContinuation(message)
+			return records, invalid, !followedAlias || hasSOAInAuthority(message)
 		}
 		followedAlias = true
 		currentOwner = alias
@@ -146,10 +143,10 @@ func getTLSARecordsFromDNS(message *dns.Msg, owner string) ([]TLSARecord, bool, 
 }
 
 func validTLSAFields(usage, selector, matchingType uint8, associationData string) bool {
-	if usage != 2 && usage != 3 {
+	if usage != certificateUsageDANETA && usage != certificateUsageDANEEE {
 		return false
 	}
-	if selector > 1 || matchingType > 2 {
+	if selector > tlsaSelectorSubjectPublicKey || matchingType > tlsaMatchingTypeSHA512 {
 		return false
 	}
 	decoded, err := hex.DecodeString(associationData)
@@ -157,29 +154,23 @@ func validTLSAFields(usage, selector, matchingType uint8, associationData string
 		return false
 	}
 	switch matchingType {
-	case 0:
-		if selector == 0 {
+	case tlsaMatchingTypeExact:
+		if selector == tlsaSelectorFullCertificate {
 			_, err := x509.ParseCertificate(decoded)
 			return err == nil
 		}
 		_, err := x509.ParsePKIXPublicKey(decoded)
 		return err == nil
-	case 1:
-		return len(decoded) == 32
-	case 2:
-		return len(decoded) == 64
+	case tlsaMatchingTypeSHA256:
+		return len(decoded) == sha256.Size
+	case tlsaMatchingTypeSHA512:
+		return len(decoded) == sha512.Size
 	}
 	return false
 }
 
-func validTLSACacheValue(value TLSACacheValue) bool {
+func validTLSACacheValue(value TLSAResult) bool {
 	if value.State != TLSAStateSecureRecords && value.State != TLSAStateSecureAbsent && value.State != TLSAStateSecureUnusable && value.State != TLSAStateInsecure {
-		return false
-	}
-	if value.State == TLSAStateSecureRecords && len(value.Records) == 0 {
-		return false
-	}
-	if (value.State == TLSAStateSecureAbsent || value.State == TLSAStateSecureUnusable) && len(value.Records) != 0 {
 		return false
 	}
 	for _, record := range value.Records {
@@ -190,7 +181,7 @@ func validTLSACacheValue(value TLSACacheValue) bool {
 	return true
 }
 
-func cacheTLSAValue(ctx context.Context, cache *SharedCache, key string, value TLSACacheValue, ttl time.Duration) {
+func cacheTLSAValue(ctx context.Context, cache *SharedCache, key string, value TLSAResult, ttl time.Duration) {
 	if ttl <= 0 {
 		return
 	}
