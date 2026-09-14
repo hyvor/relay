@@ -168,7 +168,7 @@
 				{/snippet}
 			</Dropdown>
 			<IconButton
-				size={28}
+				size={25}
 				color="input"
 				variant="outline"
 				aria-label="Toggle sort direction"

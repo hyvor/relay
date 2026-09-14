@@ -133,7 +133,7 @@
 		<div class="details">
 			<div class="detail">
 				<span class="label">Business type</span>
-				<span>{kyc.business_type}</span>
+				<span class="value">{kyc.business_type}</span>
 			</div>
 			<div class="detail">
 				<span class="label">Address</span>
@@ -205,5 +205,8 @@
 		color: var(--text-light);
 		font-size: 12px;
 		margin-bottom: 2px;
+	}
+	.detail .value {
+		text-transform: capitalize;
 	}
 </style>
