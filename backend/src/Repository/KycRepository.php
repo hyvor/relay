@@ -15,9 +15,4 @@ class KycRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Kyc::class);
     }
-
-    public function findOneByOrganizationId(int $organizationId): ?Kyc
-    {
-        return $this->findOneBy(['organization_id' => $organizationId]);
-    }
 }
