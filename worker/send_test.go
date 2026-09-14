@@ -4,13 +4,19 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
+	"net/http"
+	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	smtp "github.com/hyvor/relay/worker/smtp"
 )
@@ -732,4 +738,64 @@ func TestSendAfterInterval(t *testing.T) {
 
 	assert.Equal(t, "1 day", getSendAfterInterval(10))
 
+}
+
+func TestSendEmailAttemptBoundsMTASTSPolicyRefreshRecursion(t *testing.T) {
+	cache := getProcessSharedCache()
+	require.NoError(t, cache.Set(context.Background(), dnsCacheKey("mx", "example.com"), MxCacheValue{
+		Records: []MxRecord{{Host: "mx.example.com"}},
+		Secure:  false,
+	}, time.Hour))
+	t.Cleanup(func() {
+		_ = cache.Delete(context.Background(), dnsCacheKey("mx", "example.com"))
+		_ = cache.Delete(context.Background(), dnsCacheKey("mta_sts", "example.com"))
+	})
+
+	withDNSLookupStub(t, func(_ context.Context, name string, recordType uint16) (DNSLookupResult, error) {
+		require.Equal(t, dns.TypeTXT, recordType)
+		return DNSLookupResult{
+			Message: &dns.Msg{
+				MsgHdr: dns.MsgHdr{Rcode: dns.RcodeSuccess},
+				Answer: []dns.RR{&dns.TXT{
+					Hdr: dns.RR_Header{Name: dns.Fqdn(name), Class: dns.ClassINET, Rrtype: dns.TypeTXT},
+					Txt: []string{"v=STSv1; id=policy1"},
+				}},
+			},
+			TTL: time.Minute,
+		}, nil
+	})
+
+	var policyFetches atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		n := policyFetches.Add(1)
+		_, _ = fmt.Fprintf(w, "version: STSv1\nmode: enforce\nmx: never-matches-%d.invalid\nmax_age: 600\n", n)
+	}))
+	defer server.Close()
+
+	originalURL := mtaSTSURL
+	originalClient := mtaSTSHTTPClient
+	mtaSTSURL = func(string) string { return server.URL }
+	mtaSTSHTTPClient = server.Client()
+	t.Cleanup(func() {
+		mtaSTSURL = originalURL
+		mtaSTSHTTPClient = originalClient
+	})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	result := sendEmailHandlerContext(
+		ctx,
+		&SendRow{Uuid: "test"},
+		[]*RecipientRow{{Id: 1, Address: "user@example.com", TryCount: 1}},
+		"example.com",
+		"relay.example.com",
+		0,
+		"1.1.1.1",
+		"relay.example.com",
+	)
+
+	assert.LessOrEqual(t, int(policyFetches.Load()), 1+maxMTASTSPolicyRefreshes)
+	require.Len(t, result.RcptResults, 1)
+	assert.NotEqual(t, RecipientStatusAccepted, result.RcptResults[0].ToRecipientStatus())
 }

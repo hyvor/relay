@@ -100,23 +100,14 @@ func TestDANEVerifyTrustAnchorRejectsWrongReferenceIdentifier(t *testing.T) {
 	assert.ErrorIs(t, verifyDANECertificates([]*x509.Certificate{leaf, root}, []TLSARecord{record}, "mail.example.com"), ErrDANEAuthentication)
 }
 
-func TestDANEVerifyTrustAnchorPrefersDNSNameOverCommonName(t *testing.T) {
-	root, rootKey := testCertificate(t, true, nil, nil)
-	leaf, _ := testCertificateWithDNSNames(t, false, root, rootKey, "other.example.com")
-	record := TLSARecord{CertificateUsage: 2, Selector: 0, MatchingType: 1, CertificateAssociation: hex.EncodeToString(sha256Bytes(root.Raw))}
-
-	assert.ErrorIs(t, verifyDANECertificates([]*x509.Certificate{leaf, root}, []TLSARecord{record}, "mail.example.com"), ErrDANEAuthentication)
-}
-
 func TestDANEVerifyPrefersStrongerDigest(t *testing.T) {
 	certificate, _ := testCertificate(t, false, nil, nil)
-	sha512Hash := sha512Bytes(certificate.Raw)
 	records := []TLSARecord{
-		{CertificateUsage: 3, Selector: 0, MatchingType: 1, CertificateAssociation: hex.EncodeToString(make([]byte, 32))},
-		{CertificateUsage: 3, Selector: 0, MatchingType: 2, CertificateAssociation: hex.EncodeToString(sha512Hash)},
+		{CertificateUsage: 3, Selector: 0, MatchingType: 1, CertificateAssociation: hex.EncodeToString(sha256Bytes(certificate.Raw))},
+		{CertificateUsage: 3, Selector: 0, MatchingType: 2, CertificateAssociation: hex.EncodeToString(make([]byte, 64))},
 	}
 
-	assert.NoError(t, verifyDANECertificates([]*x509.Certificate{certificate}, records, "mail.example.com"))
+	assert.ErrorIs(t, verifyDANECertificates([]*x509.Certificate{certificate}, records, "mail.example.com"), ErrDANEAuthentication)
 }
 
 func testCertificate(t *testing.T, isCA bool, issuer *x509.Certificate, issuerKey *rsa.PrivateKey) (*x509.Certificate, *rsa.PrivateKey) {

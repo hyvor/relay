@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net"
 	"os"
+	"slices"
 	"time"
 
 	smtp "github.com/hyvor/relay/worker/smtp"
@@ -282,6 +283,22 @@ func sendEmailHandlerContext(
 	ip string,
 	ptr string,
 ) *SendResult {
+	return sendEmailAttempt(ctx, send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr, 0)
+}
+
+const maxMTASTSPolicyRefreshes = 2
+
+func sendEmailAttempt(
+	ctx context.Context,
+	send *SendRow,
+	recipients []*RecipientRow,
+	rcptDomain string,
+	instanceDomain string,
+	ipId int,
+	ip string,
+	ptr string,
+	policyRefreshes int,
+) *SendResult {
 
 	startTime := time.Now()
 	tryCount := recipients[0].TryCount // all recipients of this domain should have the same try count
@@ -351,7 +368,7 @@ func sendEmailHandlerContext(
 		} else if ctx == context.Background() {
 			conversation = sendEmailToHost(send, recipients, host, instanceDomain, ip, ptr, mxValue.Secure)
 		} else {
-			conversation = sendEmailToHostContext(ctx, send, recipients, host, instanceDomain, ip, ptr, mxValue.Secure, policyResult.Enforce, rcptDomain)
+			conversation = sendEmailToHostHandlerContextAttempt(ctx, send, recipients, host, instanceDomain, ip, ptr, mxValue.Secure, policyResult.Enforce, true, rcptDomain)
 		}
 
 		result.SmtpConversations[host] = conversation
@@ -384,23 +401,20 @@ func sendEmailHandlerContext(
 	}
 
 	// if we reach here, all hosts have failed due to non-smtp errors (e.g. network errors)
-	if policyResult.Enforce {
+	if policyResult.Enforce && policyRefreshes < maxMTASTSPolicyRefreshes {
 		if refreshed, refreshErr := lookupMTASTSRefresh(ctx, getProcessSharedCache(), rcptDomain); refreshErr == nil && !sameMTASTSResult(policyResult, refreshed) {
-			return sendEmailHandlerContext(ctx, send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr)
+			return sendEmailAttempt(ctx, send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr, policyRefreshes+1)
 		}
+	}
+
+	message := "all MX hosts failed"
+	if lastError != nil {
+		message = lastError.Error()
 	}
 	if result.NewTryCount < MAX_SEND_TRIES {
 		// give it one more try later (15mins) if this was the first try
-		message := "all MX hosts failed"
-		if lastError != nil {
-			message = lastError.Error()
-		}
 		result.SetAllRcptResults(recipients, 400, [3]int{4, 2, 1}, message)
 	} else {
-		message := "all MX hosts failed"
-		if lastError != nil {
-			message = lastError.Error()
-		}
 		result.SetAllRcptResultsFailed(recipients, message)
 	}
 
@@ -408,15 +422,7 @@ func sendEmailHandlerContext(
 }
 
 func sameMTASTSResult(left, right mtaSTSResult) bool {
-	if left.Enforce != right.Enforce || len(left.MXPatterns) != len(right.MXPatterns) {
-		return false
-	}
-	for index := range left.MXPatterns {
-		if left.MXPatterns[index] != right.MXPatterns[index] {
-			return false
-		}
-	}
-	return true
+	return left.Enforce == right.Enforce && slices.Equal(left.MXPatterns, right.MXPatterns)
 }
 
 var netResolveTCPAddr = net.ResolveTCPAddr
@@ -436,11 +442,7 @@ const smtpClientKeepAlive = 8 * time.Second
 const smtpOperationTimeout = 30 * time.Second
 const smtpDataResponseTimeout = 10 * time.Minute
 
-func setSmtpDeadline(c *smtp.Client) error {
-	return c.SetDeadline(time.Now().Add(smtpOperationTimeout))
-}
-
-func setSmtpPhaseDeadline(c *smtp.Client, timeout time.Duration) error {
+func setSmtpDeadline(c *smtp.Client, timeout time.Duration) error {
 	return c.SetDeadline(time.Now().Add(timeout))
 }
 
@@ -491,25 +493,9 @@ func createSmtpClientContextHandler(ctx context.Context, host string, localIp st
 }
 
 var sendEmailToHost = sendEmailToHostHandler
-var sendEmailToHostContext = sendEmailToHostHandlerContext
 
 func sendEmailToHostHandler(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, secureMx bool) *SmtpConversation {
-	return sendEmailToHostHandlerContext(context.Background(), send, recipients, host, instanceDomain, ip, ptr, secureMx, false)
-}
-
-func sendEmailToHostHandlerContext(
-	ctx context.Context,
-	send *SendRow,
-	recipients []*RecipientRow,
-	host string,
-	instanceDomain string,
-	ip string,
-	ptr string,
-	secureMx bool,
-	mtaSTSRequireTLS bool,
-	referenceNames ...string,
-) *SmtpConversation {
-	return sendEmailToHostHandlerContextAttempt(ctx, send, recipients, host, instanceDomain, ip, ptr, secureMx, mtaSTSRequireTLS, true, referenceNames...)
+	return sendEmailToHostHandlerContextAttempt(context.Background(), send, recipients, host, instanceDomain, ip, ptr, secureMx, false, true)
 }
 
 func sendEmailToHostHandlerContextAttempt(
@@ -549,20 +535,13 @@ func sendEmailToHostHandlerContextAttempt(
 		return conversation
 	}
 	defer c.Close()
-	stopCancellation := make(chan struct{})
-	defer close(stopCancellation)
-	go func() {
-		select {
-		case <-ctx.Done():
-			_ = c.SetDeadline(time.Now())
-		case <-stopCancellation:
-		}
-	}()
+	defer context.AfterFunc(ctx, func() { _ = c.SetDeadline(time.Now()) })()
+
 	conversation.AddStep(SmtpStepDial, "", 0, "")
 
 	// STEP 1: EHLO/HELO
 	// =================
-	if err := setSmtpDeadline(c); err != nil {
+	if err := setSmtpDeadline(c, smtpOperationTimeout); err != nil {
 		conversation.NetworkError = err
 		return conversation
 	}
@@ -583,7 +562,7 @@ func sendEmailToHostHandlerContextAttempt(
 	tlsStarted := false
 	if tryStartTLS {
 		if ok, _ := c.Extension("STARTTLS"); ok {
-			if err := setSmtpDeadline(c); err != nil {
+			if err := setSmtpDeadline(c, smtpOperationTimeout); err != nil {
 				conversation.NetworkError = err
 				return conversation
 			}
@@ -647,7 +626,7 @@ func sendEmailToHostHandlerContextAttempt(
 
 	// STEP 3: MAIL FROM
 	// ================
-	if err := setSmtpDeadline(c); err != nil {
+	if err := setSmtpDeadline(c, smtpOperationTimeout); err != nil {
 		conversation.NetworkError = err
 		return conversation
 	}
@@ -671,7 +650,7 @@ func sendEmailToHostHandlerContextAttempt(
 	acceptedRecipients := make([]*RecipientRow, 0, len(recipients))
 
 	for _, rcpt := range recipients {
-		if err := setSmtpDeadline(c); err != nil {
+		if err := setSmtpDeadline(c, smtpOperationTimeout); err != nil {
 			conversation.NetworkError = err
 			return conversation
 		}
@@ -697,7 +676,7 @@ func sendEmailToHostHandlerContextAttempt(
 
 	// STEP 5: DATA
 	// ============
-	if err := setSmtpPhaseDeadline(c, smtpDataResponseTimeout); err != nil {
+	if err := setSmtpDeadline(c, smtpDataResponseTimeout); err != nil {
 		conversation.NetworkError = err
 		return conversation
 	}
@@ -711,7 +690,7 @@ func sendEmailToHostHandlerContextAttempt(
 		conversation.SetRcptResults(acceptedRecipients, &dataResult)
 		return conversation
 	}
-	if err := setSmtpDeadline(c); err != nil {
+	if err := setSmtpDeadline(c, smtpOperationTimeout); err != nil {
 		conversation.NetworkError = err
 		return conversation
 	}
@@ -723,7 +702,7 @@ func sendEmailToHostHandlerContextAttempt(
 
 	// STEP 5.1: Close DATA
 	// ============
-	if err := setSmtpPhaseDeadline(c, smtpDataResponseTimeout); err != nil {
+	if err := setSmtpDeadline(c, smtpDataResponseTimeout); err != nil {
 		conversation.NetworkError = err
 		return conversation
 	}
@@ -740,7 +719,7 @@ func sendEmailToHostHandlerContextAttempt(
 
 	// STEP 6: QUIT
 	// ============
-	if err := setSmtpDeadline(c); err == nil {
+	if err := setSmtpDeadline(c, smtpOperationTimeout); err == nil {
 		quitResult := c.Quit() // QUIT error won't be considered a failure
 		if quitResult.Err == nil {
 			conversation.AddStepFromResult(SmtpStepQuit, &quitResult)

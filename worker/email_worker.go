@@ -10,13 +10,12 @@ import (
 )
 
 type EmailWorkersPool struct {
-	ctx         context.Context
-	mu          sync.Mutex
-	lifecycleMu sync.Mutex
-	wg          sync.WaitGroup
-	cancelFunc  context.CancelFunc
-	logger      *slog.Logger
-	metrics     *Metrics
+	ctx        context.Context
+	mu         sync.Mutex
+	wg         sync.WaitGroup
+	cancelFunc context.CancelFunc
+	logger     *slog.Logger
+	metrics    *Metrics
 }
 
 func NewEmailWorkersPool(
@@ -33,7 +32,10 @@ func NewEmailWorkersPool(
 	go func() {
 		<-ctx.Done()
 		pool.logger.Info("Stopping email workers pool")
-		pool.StopWorkers()
+
+		pool.mu.Lock()
+		defer pool.mu.Unlock()
+		pool.stopWorkersLocked()
 	}()
 
 	return pool
@@ -45,13 +47,10 @@ func (pool *EmailWorkersPool) Set(
 	workersPerIp int,
 	instanceDomain string,
 ) {
-
-	pool.lifecycleMu.Lock()
-	defer pool.lifecycleMu.Unlock()
-	pool.stopWorkers()
-
 	pool.mu.Lock()
 	defer pool.mu.Unlock()
+
+	pool.stopWorkersLocked()
 
 	ctx, cancel := context.WithCancel(pool.ctx)
 	pool.cancelFunc = cancel
@@ -81,25 +80,16 @@ func (pool *EmailWorkersPool) Set(
 
 }
 
-func (pool *EmailWorkersPool) StopWorkers() {
-	pool.lifecycleMu.Lock()
-	defer pool.lifecycleMu.Unlock()
-	pool.stopWorkers()
-}
-
-func (pool *EmailWorkersPool) stopWorkers() {
-
-	pool.mu.Lock()
-	defer pool.mu.Unlock()
-
+// stopWorkersLocked requires pool.mu to be held.
+func (pool *EmailWorkersPool) stopWorkersLocked() {
 	if pool.cancelFunc != nil {
 		pool.cancelFunc()
 		pool.cancelFunc = nil
 	}
 
 	pool.wg.Wait()
-	CloseProcessSharedCache()
 
+	CloseProcessSharedCache()
 }
 
 type EmailWorker struct {
