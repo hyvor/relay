@@ -220,3 +220,37 @@ export interface SudoProjectResponse {
 	project: SudoProject;
 	org: Organization | null;
 }
+
+// KYC
+
+export type KycStatus = 'pending' | 'approved' | 'rejected';
+export type KycBusinessType = 'individual' | 'company';
+export type KycSortBy = 'submitted_at' | 'status' | 'created_at';
+
+export interface SudoKyc {
+	id: number;
+	organization_id: number;
+	created_at: number;
+	updated_at: number;
+	full_name: string;
+	business_type: KycBusinessType;
+	business_name: string | null;
+	country: string;
+	address: string;
+	phone: string;
+	website: string;
+	status: KycStatus;
+	submitted_at: number;
+}
+
+export interface SudoKycsResponse {
+	kycs: SudoKyc[];
+	orgs: Organization[];
+	total: number;
+}
+
+export interface SudoKycApprovalResponse {
+	kyc: SudoKyc;
+	charge_success: boolean;
+	charge_error: string | null;
+}
