@@ -21,6 +21,10 @@ import (
 	smtp "github.com/hyvor/relay/worker/smtp"
 )
 
+func sendEmailToHostHandler(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, secureMx bool) *SmtpConversation {
+	return sendEmailToHostHandlerContextAttempt(context.Background(), send, recipients, host, instanceDomain, ip, ptr, secureMx, false, true)
+}
+
 func seedTestMxCache(t *testing.T) {
 	t.Helper()
 	cache := getProcessSharedCache()
@@ -36,8 +40,8 @@ func seedTestMxCache(t *testing.T) {
 
 func TestSendEmail_Accepted(t *testing.T) {
 
-	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool) *SmtpConversation {
+	originalSendEmailToHost := sendEmailToHostContext
+	sendEmailToHostContext = func(_ context.Context, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
@@ -55,7 +59,7 @@ func TestSendEmail_Accepted(t *testing.T) {
 	seedTestMxCache(t)
 
 	defer func() {
-		sendEmailToHost = originalSendEmailToHost
+		sendEmailToHostContext = originalSendEmailToHost
 	}()
 
 	result := sendEmailHandler(
@@ -82,8 +86,8 @@ func TestSendEmail_Accepted(t *testing.T) {
 
 func TestSendEmail_500SmtpError(t *testing.T) {
 
-	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool) *SmtpConversation {
+	originalSendEmailToHost := sendEmailToHostContext
+	sendEmailToHostContext = func(_ context.Context, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
@@ -101,7 +105,7 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 	seedTestMxCache(t)
 
 	defer func() {
-		sendEmailToHost = originalSendEmailToHost
+		sendEmailToHostContext = originalSendEmailToHost
 	}()
 
 	result := sendEmailHandler(
@@ -128,8 +132,8 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 
 func TestSendEmail_4xxSmtpError(t *testing.T) {
 
-	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool) *SmtpConversation {
+	originalSendEmailToHost := sendEmailToHostContext
+	sendEmailToHostContext = func(_ context.Context, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
@@ -147,7 +151,7 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 	seedTestMxCache(t)
 
 	defer func() {
-		sendEmailToHost = originalSendEmailToHost
+		sendEmailToHostContext = originalSendEmailToHost
 	}()
 
 	result := sendEmailHandler(
@@ -174,8 +178,8 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 
 func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 
-	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool) *SmtpConversation {
+	originalSendEmailToHost := sendEmailToHostContext
+	sendEmailToHostContext = func(_ context.Context, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: nil,
 			RcptResults: []*RcptResult{
@@ -192,7 +196,7 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 
 	seedTestMxCache(t)
 	defer func() {
-		sendEmailToHost = originalSendEmailToHost
+		sendEmailToHostContext = originalSendEmailToHost
 	}()
 
 	result := sendEmailHandler(
@@ -220,8 +224,8 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 
 func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 
-	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool) *SmtpConversation {
+	originalSendEmailToHost := sendEmailToHostContext
+	sendEmailToHostContext = func(_ context.Context, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: context.DeadlineExceeded,
 			Steps:        []*SmtpStep{},
@@ -230,7 +234,7 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 
 	seedTestMxCache(t)
 	defer func() {
-		sendEmailToHost = originalSendEmailToHost
+		sendEmailToHostContext = originalSendEmailToHost
 	}()
 
 	result := sendEmailHandler(
@@ -258,8 +262,8 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 
 func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 
-	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool) *SmtpConversation {
+	originalSendEmailToHost := sendEmailToHostContext
+	sendEmailToHostContext = func(_ context.Context, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
 		return &SmtpConversation{
 			NetworkError: context.DeadlineExceeded,
 			Steps:        []*SmtpStep{},
@@ -268,7 +272,7 @@ func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 
 	seedTestMxCache(t)
 	defer func() {
-		sendEmailToHost = originalSendEmailToHost
+		sendEmailToHostContext = originalSendEmailToHost
 	}()
 
 	result := sendEmailHandler(
@@ -413,7 +417,7 @@ func TestSendEmailToHost(t *testing.T) {
 		}, nil
 	}
 
-	convo := sendEmailToHost(
+	convo := sendEmailToHostHandler(
 		send,
 		[]*RecipientRow{recipient},
 		"localhost",
@@ -490,7 +494,7 @@ func TestSendEmailToHost_OneRecipientFails(t *testing.T) {
 		Address: "fail@somedomain.com",
 	}
 
-	convo := sendEmailToHost(
+	convo := sendEmailToHostHandler(
 		send,
 		[]*RecipientRow{recipient1, recipient2},
 		"localhost",
@@ -554,7 +558,7 @@ func TestSendEmailToHost_DataCloseFails_ReplacesRcptResult(t *testing.T) {
 	recipient1 := &RecipientRow{Id: 1, Type: "to", Address: "a@somedomain.com"}
 	recipient2 := &RecipientRow{Id: 2, Type: "to", Address: "b@somedomain.com"}
 
-	convo := sendEmailToHost(
+	convo := sendEmailToHostHandler(
 		send,
 		[]*RecipientRow{recipient1, recipient2},
 		"localhost",
@@ -620,7 +624,7 @@ func TestSendEmailToHost_DataCloseFails_PreservesRcptRejection(t *testing.T) {
 	recipient1 := &RecipientRow{Id: 1, Type: "to", Address: "accept@somedomain.com"}
 	recipient2 := &RecipientRow{Id: 2, Type: "to", Address: "fail@somedomain.com"}
 
-	convo := sendEmailToHost(
+	convo := sendEmailToHostHandler(
 		send,
 		[]*RecipientRow{recipient1, recipient2},
 		"localhost",
@@ -686,7 +690,7 @@ func TestSendEmailFailedSmtpStatus(t *testing.T) {
 		}, nil
 	}
 
-	convo := sendEmailToHost(
+	convo := sendEmailToHostHandler(
 		send,
 		[]*RecipientRow{recipient},
 		"localhost",
