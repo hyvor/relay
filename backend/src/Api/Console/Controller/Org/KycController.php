@@ -7,6 +7,7 @@ use App\Api\Console\Authorization\OrganizationLevelEndpoint;
 use App\Api\Console\Input\Kyc\KycSubmitInput;
 use App\Api\Console\Object\KycObject;
 use App\Service\Kyc\Exception\KycAlreadyApprovedException;
+use App\Service\Kyc\Exception\PaymentMethodRequiredException;
 use App\Service\Kyc\KycService;
 use Hyvor\Internal\InternalConfig;
 use Nelmio\ApiDocBundle\Attribute\Model;
@@ -80,7 +81,7 @@ class KycController extends AbstractController
                 $input->phone,
                 $input->website,
             );
-        } catch (KycAlreadyApprovedException $e) {
+        } catch (KycAlreadyApprovedException | PaymentMethodRequiredException $e) {
             throw new BadRequestHttpException($e->getMessage(), previous: $e);
         }
 

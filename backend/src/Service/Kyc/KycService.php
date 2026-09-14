@@ -8,7 +8,11 @@ use App\Entity\Type\KycStatus;
 use App\Repository\KycRepository;
 use App\Service\Kyc\Event\KycSubmittedEvent;
 use App\Service\Kyc\Exception\KycAlreadyApprovedException;
+use App\Service\Kyc\Exception\PaymentMethodRequiredException;
 use Doctrine\ORM\EntityManagerInterface;
+use Hyvor\Internal\Bundle\Comms\CommsInterface;
+use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\GetOrganizations;
+use Hyvor\Internal\Bundle\Comms\Exception\CommsApiFailedException;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -19,7 +23,8 @@ class KycService
     public function __construct(
         private KycRepository $kycRepository,
         private EntityManagerInterface $em,
-        private EventDispatcherInterface $eventDispatcher
+        private EventDispatcherInterface $eventDispatcher,
+        private CommsInterface $comms,
     ) {
     }
 
@@ -30,6 +35,7 @@ class KycService
 
     /**
      * @throws KycAlreadyApprovedException if the organization's KYC is already approved
+     * @throws PaymentMethodRequiredException if the organization has no payment method on file
      */
     public function submit(
         int $organizationId,
@@ -46,6 +52,8 @@ class KycService
         if ($kyc !== null && $kyc->getStatus() === KycStatus::APPROVED) {
             throw new KycAlreadyApprovedException('KYC for this organization has already been approved.');
         }
+
+        $this->assertHasPaymentMethod($organizationId);
 
         if ($kyc === null) {
             $kyc = new Kyc();
@@ -70,5 +78,27 @@ class KycService
         $this->eventDispatcher->dispatch(new KycSubmittedEvent($kyc));
 
         return $kyc;
+    }
+
+    /**
+     * @throws PaymentMethodRequiredException
+     */
+    private function assertHasPaymentMethod(int $organizationId): void
+    {
+        try {
+            $response = $this->comms->send(new GetOrganizations([$organizationId], includeBillingInfo: true));
+        } catch (CommsApiFailedException $e) {
+            throw new PaymentMethodRequiredException(
+                'Unable to verify your payment method right now. Please try again.',
+            );
+        }
+
+        $organization = $response->getOrganizations()[$organizationId] ?? null;
+
+        if ($organization === null || !$organization->hasPaymentMethod()) {
+            throw new PaymentMethodRequiredException(
+                'Please add a payment method before submitting your KYC.',
+            );
+        }
     }
 }

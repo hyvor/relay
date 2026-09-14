@@ -9,6 +9,10 @@ use App\Service\Kyc\Event\KycSubmittedEvent;
 use App\Service\Kyc\KycService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\KycFactory;
+use Hyvor\Internal\Auth\Dto\Organization;
+use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\GetOrganizations;
+use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\GetOrganizationsResponse;
+use Hyvor\Internal\Bundle\Comms\Exception\CommsApiFailedException;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(KycController::class)]
@@ -35,10 +39,35 @@ class SubmitKycTest extends WebTestCase
     {
         parent::setUp();
         $_ENV['DEPLOYMENT'] = 'cloud';
+        // Note: deliberately not faking the GetOrganizations (payment method) Comms
+        // response here. Doing so would resolve the CommsInterface service (and,
+        // transitively, InternalConfig) this early, which freezes the deployment
+        // value for the rest of the test - breaking tests that override
+        // $_ENV['DEPLOYMENT'] afterwards (e.g. test_returns_404_on_non_cloud_deployment).
+        // Each test that actually reaches KycService::submit()'s payment-method
+        // check calls fakeOrganizationHasPaymentMethod() itself instead.
+    }
+
+    private function fakeOrganizationHasPaymentMethod(bool $hasPaymentMethod): void
+    {
+        $this->getComms()->addResponse(
+            GetOrganizations::class,
+            function (GetOrganizations $event) use ($hasPaymentMethod) {
+                $organizations = [];
+                foreach ($event->getOrganizationIds() as $id) {
+                    $org = new Organization($id, 'Test Org', 1);
+                    $org->setHasPaymentMethod($hasPaymentMethod);
+                    $organizations[$id] = $org;
+                }
+                return new GetOrganizationsResponse($organizations);
+            }
+        );
     }
 
     public function test_submits_kyc_for_organization(): void
     {
+        $this->fakeOrganizationHasPaymentMethod(true);
+
         $response = $this->consoleApi(
             null,
             'POST',
@@ -68,6 +97,8 @@ class SubmitKycTest extends WebTestCase
         $payload = $this->validPayload();
         $payload['business_type'] = 'individual';
         unset($payload['business_name']);
+
+        $this->fakeOrganizationHasPaymentMethod(true);
 
         $response = $this->consoleApi(
             null,
@@ -113,6 +144,8 @@ class SubmitKycTest extends WebTestCase
             'full_name' => 'Old Name',
         ]);
 
+        $this->fakeOrganizationHasPaymentMethod(true);
+
         $response = $this->consoleApi(
             null,
             'POST',
@@ -129,6 +162,42 @@ class SubmitKycTest extends WebTestCase
 
         $count = count($this->em->getRepository(Kyc::class)->findBy(['organization_id' => 1]));
         $this->assertSame(1, $count);
+    }
+
+    public function test_fails_when_no_payment_method(): void
+    {
+        $this->fakeOrganizationHasPaymentMethod(false);
+
+        $response = $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            $this->validPayload(),
+            useSession: true
+        );
+
+        $this->assertSame(400, $response->getStatusCode());
+        $this->assertResponseFailed(400, 'Please add a payment method');
+
+        $kyc = $this->em->getRepository(Kyc::class)->findOneBy(['organization_id' => 1]);
+        $this->assertNull($kyc);
+    }
+
+    public function test_fails_when_payment_method_check_fails(): void
+    {
+        $this->getComms()->addResponse(GetOrganizations::class, function () {
+            throw new CommsApiFailedException();
+        });
+
+        $response = $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            $this->validPayload(),
+            useSession: true
+        );
+
+        $this->assertSame(400, $response->getStatusCode());
     }
 
     public function test_fails_when_already_approved(): void

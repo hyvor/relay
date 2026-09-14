@@ -11,9 +11,11 @@
 		Button,
 		Callout,
 		Loader,
-		toast
+		toast,
+		Tooltip
 	} from '@hyvor/design/components';
 	import SingleBox from '../../@components/content/SingleBox.svelte';
+	import CardCollector from './CardCollector.svelte';
 	import { getAppConfig } from '../../lib/stores/consoleStore';
 	import { getKyc, submitKyc } from '../../lib/actions/kycActions';
 	import { COUNTRIES } from '../../lib/countries';
@@ -26,6 +28,9 @@
 	// true once the details form has been validated and "Next" clicked in this session,
 	// so the user can move between steps without having submitted anything yet
 	let detailsConfirmed = $state(false);
+	// true once the card component has confirmed a card was added and saved -
+	// the KYC can't be (re)submitted before this
+	let cardAdded = $state(false);
 
 	let fullName = $state('');
 	let businessType = $state<KycBusinessType>('individual');
@@ -76,6 +81,9 @@
 				if (res) {
 					fillForm(res);
 					detailsConfirmed = true;
+					// a previous submission only exists because a card was added and
+					// saved first (see handleSubmit), so this is safe to assume
+					cardAdded = true;
 					currentStep = 2;
 				}
 			})
@@ -132,10 +140,12 @@
 		currentStep = 2;
 	}
 
-	// step 2: this is where the KYC actually gets submitted, once the card details are
-	// in too. For now (before the card iframe is wired up) this just submits the details
-	// collected in step 1.
+	// step 2: this is where the KYC actually gets submitted, now that the card is added too.
 	function handleSubmit() {
+		if (saving || !cardAdded) {
+			return;
+		}
+
 		saving = true;
 
 		submitKyc({
@@ -157,6 +167,18 @@
 			.finally(() => {
 				saving = false;
 			});
+	}
+
+	// called once the card component (embedded from core) confirms the card was
+	// added and verified - we then submit the KYC automatically
+	function handleCardAdded() {
+		cardAdded = true;
+		toast.success('Card added.');
+		handleSubmit();
+	}
+
+	function handleCardError(message: string) {
+		toast.error(message);
 	}
 </script>
 
@@ -367,18 +389,30 @@
 					</div>
 				{/if}
 
-				<div class="payment-placeholder">
-					<!-- TODO: embed the card-collection iframe here. It validates and saves the
-					     card itself; this app only needs to know the outcome once that's wired up. -->
-					<p>Payment form coming soon.</p>
-				</div>
+				{#if !isApproved}
+					<div class="payment-box">
+						<CardCollector onSuccess={handleCardAdded} onError={handleCardError} />
+					</div>
+				{/if}
 
 				<div class="actions space-between">
 					<Button variant="outline" color="gray" on:click={() => goToStep(1)}>Back</Button>
 					{#if !isApproved}
-						<Button color="accent" variant="fill" disabled={saving} on:click={handleSubmit}>
-							{saving ? 'Submitting...' : existingKyc ? 'Resubmit KYC' : 'Submit KYC'}
-						</Button>
+						<div class="submit-wrap">
+							<Tooltip text="Save your card to proceed" disabled={cardAdded}>
+								<Button
+									color="accent"
+									variant="fill"
+									disabled={saving || !cardAdded}
+									on:click={handleSubmit}
+								>
+									{saving ? 'Submitting...' : existingKyc ? 'Resubmit KYC' : 'Submit KYC'}
+								</Button>
+							</Tooltip>
+							<!-- {#if !cardAdded}
+								<p class="submit-hint">Add and save your card above first.</p>
+							{/if} -->
+						</div>
 					{/if}
 				</div>
 			{/if}
@@ -474,15 +508,10 @@
 		margin-bottom: 20px;
 	}
 
-	.payment-placeholder {
-		border: 1px dashed var(--border);
-		border-radius: 8px;
-		padding: 60px 20px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: var(--text-light);
-		font-size: 13px;
+	.payment-box {
+		/* border: 1px solid var(--border);
+		border-radius: 8px; */
+		overflow: hidden;
 	}
 
 	.actions {
@@ -493,5 +522,17 @@
 
 	.actions.space-between {
 		justify-content: space-between;
+	}
+
+	.submit-wrap {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+	}
+
+	.submit-hint {
+		margin: 6px 0 0;
+		font-size: 12px;
+		color: var(--text-light);
 	}
 </style>
