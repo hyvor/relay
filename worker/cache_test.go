@@ -208,13 +208,6 @@ func (l *sharedCacheTestLoader) load(ctx context.Context, _ string) (sharedCache
 	return entry, nil
 }
 
-// deleteEntry makes every later load report a miss, the way a deleted row would.
-func (l *sharedCacheTestLoader) deleteEntry() {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	l.entry = sharedCacheDatabaseEntry{}
-}
-
 func (l *sharedCacheTestLoader) releaseLoad() {
 	l.releaseOnce.Do(func() { close(l.release) })
 }
