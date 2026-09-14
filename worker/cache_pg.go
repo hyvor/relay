@@ -34,7 +34,7 @@ func (c *SharedCache) loadFromDatabase(ctx context.Context, key string) (sharedC
 	ctx, cancel := context.WithTimeout(ctx, sharedCacheDatabaseTimeout)
 	defer cancel()
 
-	db := c.database()
+	db := c.db
 	if db == nil {
 		return sharedCacheDatabaseEntry{}, nil
 	}
@@ -98,7 +98,7 @@ func (c *SharedCache) storeInDatabase(ctx context.Context, key string, value []b
 	ctx, cancel := context.WithTimeout(ctx, sharedCacheDatabaseTimeout)
 	defer cancel()
 
-	db := c.database()
+	db := c.db
 	if db == nil {
 		return nil
 	}
@@ -130,7 +130,7 @@ func (c *SharedCache) deleteFromDatabase(ctx context.Context, key string) error 
 	ctx, cancel := context.WithTimeout(ctx, sharedCacheDatabaseTimeout)
 	defer cancel()
 
-	db := c.database()
+	db := c.db
 	if db == nil {
 		return nil
 	}

@@ -11,16 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func tlsaMessage(owner string, records ...dns.RR) *dns.Msg {
-	for _, record := range records {
-		record.Header().Name = dns.Fqdn(owner)
-		if record.Header().Class == 0 {
-			record.Header().Class = dns.ClassINET
-		}
-	}
-	return &dns.Msg{MsgHdr: dns.MsgHdr{Rcode: dns.RcodeSuccess}, Answer: records}
-}
-
 func validTLSARecord() *dns.TLSA {
 	return &dns.TLSA{
 		Hdr:          dns.RR_Header{Rrtype: dns.TypeTLSA},
@@ -38,14 +28,13 @@ func TestLookupTLSASecureRecordsAndCache(t *testing.T) {
 		assert.Equal(t, "_25._tcp.mx.example.com", name)
 		assert.Equal(t, dns.TypeTLSA, recordType)
 		return DNSLookupResult{
-			Message: tlsaMessage(name, validTLSARecord()),
+			Message: mxMessage(name, validTLSARecord()),
 			Secure:  true,
 			TTL:     2 * time.Hour,
 		}, nil
 	})
 
 	cache := NewSharedCache(nil)
-	t.Cleanup(cache.Close)
 	result, err := lookupTLSA(context.Background(), cache, "MX.Example.Com.")
 	require.NoError(t, err)
 	assert.Equal(t, TLSAStateSecureRecords, result.State)
@@ -75,7 +64,7 @@ func TestLookupTLSASecureAbsenceIsDistinguished(t *testing.T) {
 
 func TestLookupTLSAInsecureRecordsAreNotDANEUsable(t *testing.T) {
 	withDNSLookupStub(t, func(_ context.Context, _ string, _ uint16) (DNSLookupResult, error) {
-		return DNSLookupResult{Message: tlsaMessage("_25._tcp.mx.example.com", validTLSARecord()), TTL: time.Minute}, nil
+		return DNSLookupResult{Message: mxMessage("_25._tcp.mx.example.com", validTLSARecord()), TTL: time.Minute}, nil
 	})
 
 	result, err := lookupTLSA(context.Background(), NewSharedCache(nil), "mx.example.com")
@@ -104,7 +93,7 @@ func TestLookupTLSAUnusableRecordsAreNotAbsence(t *testing.T) {
 			test.record.Hdr = dns.RR_Header{Rrtype: dns.TypeTLSA}
 			withDNSLookupStub(t, func(_ context.Context, name string, _ uint16) (DNSLookupResult, error) {
 				return DNSLookupResult{
-					Message: tlsaMessage(name, test.record),
+					Message: mxMessage(name, test.record),
 					Secure:  true,
 					TTL:     time.Minute,
 				}, nil

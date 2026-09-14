@@ -16,7 +16,6 @@ func TestSharedCacheDatabaseRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 
 	cache := NewSharedCache(db)
-	t.Cleanup(cache.Close)
 	require.NoError(t, cache.Set(context.Background(), "mx:example.com", sharedCacheTestValue{Name: "mx.example.com"}, time.Hour))
 	cache.memory.DeleteAll()
 
@@ -35,7 +34,6 @@ func TestSharedCacheDatabaseExpiredEntryIsDeletedSafely(t *testing.T) {
 	insertCacheItem(t, db, itemID, []byte(`true`), 60, time.Now().Add(-time.Hour))
 
 	cache := NewSharedCache(db)
-	t.Cleanup(cache.Close)
 	var value bool
 	found, err := cache.Get(context.Background(), "expired", &value)
 	require.NoError(t, err)
@@ -54,7 +52,6 @@ func TestSharedCacheReadsSymfonyJsonEntryWithoutExtendingExpiry(t *testing.T) {
 	insertCacheItem(t, db, itemID, []byte(`{"name":"from-symfony"}`), 3600, writtenAt)
 
 	cache := NewSharedCache(db)
-	t.Cleanup(cache.Close)
 	var value sharedCacheTestValue
 	found, err := cache.Get(context.Background(), "mta_sts:example.com", &value)
 	require.NoError(t, err)

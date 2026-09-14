@@ -84,21 +84,10 @@ func lookupTLSA(ctx context.Context, cache *SharedCache, host string) (TLSAResul
 		} else if invalid && result.Secure {
 			value.State = TLSAStateSecureUnusable
 		}
-	} else if result.Message.Rcode == dns.RcodeNameError && hasCNAMEAnswer(result.Message) {
-		return TLSAResult{}, fmt.Errorf("%w: incomplete TLSA alias response for %s", ErrTLSALookup, name)
 	}
 
 	cacheTLSAValue(ctx, cache, cacheKey, value, result.TTL)
 	return value, nil
-}
-
-func hasCNAMEAnswer(message *dns.Msg) bool {
-	for _, answer := range message.Answer {
-		if _, ok := answer.(*dns.CNAME); ok {
-			return true
-		}
-	}
-	return false
 }
 
 func normalizeDNSHost(host string) string {

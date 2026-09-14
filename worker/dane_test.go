@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
-	"crypto/sha512"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/hex"
@@ -146,10 +145,5 @@ func testCertificateWithDNSNames(t *testing.T, isCA bool, issuer *x509.Certifica
 
 func sha256Bytes(value []byte) []byte {
 	hash := sha256.Sum256(value)
-	return hash[:]
-}
-
-func sha512Bytes(value []byte) []byte {
-	hash := sha512.Sum512(value)
 	return hash[:]
 }
