@@ -320,22 +320,18 @@ func sendEmailAttempt(
 		result.Duration = duration
 	}()
 
-	policyResult := mtaSTSResult{}
-	if ctx != context.Background() {
-		var err error
-		policyResult, err = lookupMTASTS(ctx, getProcessSharedCache(), rcptDomain)
-		if err != nil {
-			if ctx.Err() == nil {
-				slog.Warn("MTA-STS lookup failed; continuing without policy", "domain", rcptDomain, "error", err)
-				policyResult = mtaSTSResult{}
+	policyResult, err := lookupMTASTS(ctx, getProcessSharedCache(), rcptDomain)
+	if err != nil {
+		if ctx.Err() == nil {
+			slog.Warn("MTA-STS lookup failed; continuing without policy", "domain", rcptDomain, "error", err)
+			policyResult = mtaSTSResult{}
+		} else {
+			if result.NewTryCount < MAX_SEND_TRIES {
+				result.SetAllRcptResults(recipients, 400, [3]int{4, 2, 1}, err.Error())
 			} else {
-				if result.NewTryCount < MAX_SEND_TRIES {
-					result.SetAllRcptResults(recipients, 400, [3]int{4, 2, 1}, err.Error())
-				} else {
-					result.SetAllRcptResultsFailed(recipients, err.Error())
-				}
-				return result
+				result.SetAllRcptResultsFailed(recipients, err.Error())
 			}
+			return result
 		}
 	}
 
@@ -365,10 +361,8 @@ func sendEmailAttempt(
 		if policyResult.Enforce && !policyResult.AllowsMX(host) {
 			conversation = NewSmtpConversation()
 			conversation.NetworkError = fmt.Errorf("MTA-STS policy does not allow MX host %s", host)
-		} else if ctx == context.Background() {
-			conversation = sendEmailToHost(send, recipients, host, instanceDomain, ip, ptr, mxValue.Secure)
 		} else {
-			conversation = sendEmailToHostHandlerContextAttempt(ctx, send, recipients, host, instanceDomain, ip, ptr, mxValue.Secure, policyResult.Enforce, true, rcptDomain)
+			conversation = sendEmailToHostContext(ctx, send, recipients, host, instanceDomain, ip, ptr, mxValue.Secure, policyResult.Enforce, true, rcptDomain)
 		}
 
 		result.SmtpConversations[host] = conversation
@@ -492,11 +486,7 @@ func createSmtpClientContextHandler(ctx context.Context, host string, localIp st
 	return client, nil
 }
 
-var sendEmailToHost = sendEmailToHostHandler
-
-func sendEmailToHostHandler(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, secureMx bool) *SmtpConversation {
-	return sendEmailToHostHandlerContextAttempt(context.Background(), send, recipients, host, instanceDomain, ip, ptr, secureMx, false, true)
-}
+var sendEmailToHostContext = sendEmailToHostHandlerContextAttempt
 
 func sendEmailToHostHandlerContextAttempt(
 	ctx context.Context,
