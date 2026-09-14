@@ -359,42 +359,43 @@
 					</div>
 				{/if}
 			{:else}
-				{#if existingKyc?.status === 'rejected'}
-					<div class="callout-wrap">
-						<Callout type="danger">
-							Your KYC submission was rejected. Go back to Step 1 to update your details,
-							then submit again below.
-						</Callout>
-					</div>
-				{:else if existingKyc?.status === 'approved'}
-					<div class="callout-wrap">
-						<Callout type="success">
-							Your KYC has been approved. Your card will be charged automatically for
-							your subscription.
-						</Callout>
-					</div>
-				{:else if existingKyc?.status === 'pending'}
-					<div class="callout-wrap">
-						<Callout type="info">
-							Your KYC submission is under review. You can still update your payment
-							details below.
-						</Callout>
-					</div>
-				{:else}
-					<div class="callout-wrap">
-						<Callout type="info">
-							Add your payment details below, then submit to complete your KYC
-							verification. Your card will be charged automatically once it's approved.
-						</Callout>
-					</div>
-				{/if}
+				<div class="kyc-card-wrap">
+					{#if existingKyc?.status === 'rejected'}
+						<div class="callout-wrap">
+							<Callout type="danger">
+								Your KYC submission was rejected. Go back to Step 1 to update your details,
+								then submit again below.
+							</Callout>
+						</div>
+					{:else if existingKyc?.status === 'approved'}
+						<div class="callout-wrap">
+							<Callout type="success">
+								Your KYC has been approved. Your card will be charged automatically for
+								your subscription.
+							</Callout>
+						</div>
+					{:else if existingKyc?.status === 'pending'}
+						<div class="callout-wrap">
+							<Callout type="info">
+								Your KYC submission is under review. You can still update your payment
+								details below.
+							</Callout>
+						</div>
+					{:else}
+						<div class="callout-wrap">
+							<Callout type="info">
+								Add your payment details below, then submit to complete your KYC
+								verification. Your card will be charged automatically once it's approved.
+							</Callout>
+						</div>
+					{/if}
 
-				{#if !isApproved}
-					<div class="payment-box">
-						<CardCollector onSuccess={handleCardAdded} onError={handleCardError} />
-					</div>
-				{/if}
-
+					{#if !isApproved}
+						<div class="payment-box">
+							<CardCollector onSuccess={handleCardAdded} onError={handleCardError} />
+						</div>
+					{/if}
+				</div>
 				<div class="actions space-between">
 					<Button variant="outline" color="gray" on:click={() => goToStep(1)}>Back</Button>
 					{#if !isApproved}
@@ -534,5 +535,10 @@
 		margin: 6px 0 0;
 		font-size: 12px;
 		color: var(--text-light);
+	}
+
+	.kyc-card-wrap {
+		max-width: 600px;
+		margin: 0 auto;
 	}
 </style>
