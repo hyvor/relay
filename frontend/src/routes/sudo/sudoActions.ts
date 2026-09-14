@@ -17,7 +17,11 @@ import type {
 	SudoProjectsResponse,
 	SudoProjectResponse,
 	SudoSendsResponse,
-	SudoSendResponse
+	SudoSendResponse,
+	SudoKycsResponse,
+	SudoKycApprovalResponse,
+	KycStatus,
+	KycSortBy
 } from './sudoTypes';
 
 export function initSudo() {
@@ -243,5 +247,30 @@ export function getProjectOrganizations(limit: number, before_id: number | null 
 export function getProjectById(id: number) {
 	return sudoApi.get<SudoProjectResponse>({
 		endpoint: `/projects/${id}`
+	});
+}
+
+export function getKycs(opts: {
+	status: KycStatus | null;
+	sort_by: KycSortBy;
+	sort: 'asc' | 'desc';
+	limit: number;
+	offset: number;
+}) {
+	return sudoApi.get<SudoKycsResponse>({
+		endpoint: '/kyc',
+		data: opts
+	});
+}
+
+export function approveKyc(id: number) {
+	return sudoApi.post<SudoKycApprovalResponse>({
+		endpoint: `/kyc/${id}/approve`
+	});
+}
+
+export function rejectKyc(id: number) {
+	return sudoApi.post<{ kyc: SudoKycApprovalResponse['kyc'] }>({
+		endpoint: `/kyc/${id}/reject`
 	});
 }

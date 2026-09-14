@@ -235,6 +235,25 @@ export interface AnalyticsStats {
 	complaint_rate: number;
 }
 
+export type KycBusinessType = 'individual' | 'company';
+
+export type KycStatus = 'pending' | 'approved' | 'rejected';
+
+export interface Kyc {
+	id: number;
+	created_at: number;
+	updated_at: number;
+	full_name: string;
+	business_type: KycBusinessType;
+	business_name: string | null;
+	country: string;
+	address: string;
+	phone: string;
+	website: string;
+	status: KycStatus;
+	submitted_at: number;
+}
+
 export interface ProjectUserMiniObject {
 	id: number;
 	name: string;
