@@ -28,9 +28,10 @@ export function initSudo() {
 	});
 }
 
-export function getServers() {
+export function getServers(search: string | null, limit: number, before_id: number | null = null) {
 	return sudoApi.get<Server[]>({
-		endpoint: '/servers'
+		endpoint: '/servers',
+		data: { search, limit, before_id }
 	});
 }
 

@@ -10,6 +10,7 @@ class WarmupScheduleObject
 
     public int $id;
     public int $ip_address_id;
+    public string $ip_address;
     public WarmupStatus $status;
     public int $started_date;
     public int $sent_today;
@@ -25,6 +26,7 @@ class WarmupScheduleObject
     {
         $this->id = $schedule->getId();
         $this->ip_address_id = $schedule->getIpAddress()->getId();
+        $this->ip_address = $schedule->getIpAddress()->getIpAddress();
         $this->status = $schedule->getStatus();
         $this->started_date = $schedule->getStartedDate()->getTimestamp();
         $this->sent_today = $schedule->getSentToday();

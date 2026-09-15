@@ -35,6 +35,7 @@ export interface Server {
 	email_workers: number;
 	webhook_workers: number;
 	incoming_workers: number;
+	ip_addresses: IpAddress[];
 }
 
 export interface IpAddress {
@@ -53,6 +54,7 @@ export interface Queue {
 	id: number;
 	created_at: number;
 	name: string;
+	ip_count: number;
 }
 
 export interface Blacklist {
@@ -229,6 +231,7 @@ export type WarmupStatus = 'warming' | 'warmed' | 'cancelled';
 
 export interface WarmupSchedule {
 	id: number;
+	ip_address: string;
 	status: WarmupStatus;
 	started_date: number;
 	sent_today: number;

@@ -4,6 +4,7 @@
 	import IconExclamationCircle from '@hyvor/icons/IconExclamationCircle';
 	import QueueSelectModal from '../queues/QueueSelectModal.svelte';
 	import IpPtrStatus from './IpPtrStatus.svelte';
+	import IconArrowRight from '@hyvor/icons/IconArrowRight';
 
 	interface Props {
 		ip: IpAddress;
@@ -96,6 +97,12 @@
 			</Button>
 		{/if}
 	</td>
+	<td>
+		<a class="hds-link history-link" href="/sudo/settings/ip-warmups?ip={ip.id}">
+			History
+			<IconArrowRight size={12} />
+		</a>
+	</td>
 </tr>
 
 {#if showQueueModal}
@@ -129,6 +136,14 @@
 	}
 
 	.warmup {
+		white-space: nowrap;
+	}
+
+	.history-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		font-size: 13px;
 		white-space: nowrap;
 	}
 

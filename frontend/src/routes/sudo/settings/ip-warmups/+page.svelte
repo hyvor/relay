@@ -1,27 +1,21 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { Button, Loader, Select, toast } from '@hyvor/design/components';
-	import { onMount } from 'svelte';
-	import { getIpAddresses, getWarmupSchedules } from '../../sudoActions';
-	import { ipAddressesStore, warmupSchedulesStore } from '../../sudoStore';
+	import { Button, IconMessage, Loader, toast } from '@hyvor/design/components';
+	import { getWarmupSchedules } from '../../sudoActions';
+	import { warmupSchedulesStore } from '../../sudoStore';
+	import type { IpAddress } from '../../sudoTypes';
 	import WarmupScheduleRow from './WarmupScheduleRow.svelte';
+	import IpAddressSelector from './IpAddressSelector.svelte';
 
 	let loading = $state(true);
 
 	let filterIpId = $state(page.url.searchParams.get('ip') ?? '');
-
-	let ipFilterOptions = $derived([
-		{ value: '', label: 'All IP Addresses' },
-		...$ipAddressesStore.map((ip) => ({ value: String(ip.id), label: ip.ip_address }))
-	]);
+	let selectedIp: IpAddress | null = $state(null);
+	let mounted = false;
 
 	let sortedSchedules = $derived(
 		[...$warmupSchedulesStore].sort((a, b) => b.created_at - a.created_at)
 	);
-
-	function ipAddressFor(ipAddressId: number): string {
-		return $ipAddressesStore.find((ip) => ip.id === ipAddressId)?.ip_address ?? `#${ipAddressId}`;
-	}
 
 	function loadSchedules() {
 		const ipAddressId = filterIpId ? Number(filterIpId) : undefined;
@@ -39,12 +33,12 @@
 			});
 	}
 
-	onMount(() => {
-		getIpAddresses()
-			.then((ips) => ipAddressesStore.set(ips))
-			.catch((error: any) => {
-				toast.error('Failed to load IP addresses: ' + error.message);
-			});
+	$effect(() => {
+		selectedIp;
+		if (mounted) {
+			filterIpId = selectedIp ? String(selectedIp.id) : '';
+		}
+		mounted = true;
 	});
 
 	$effect(() => {
@@ -56,28 +50,34 @@
 <div class="ip-warmups">
 	<div class="top">
 		<div class="filters">
-			<Select bind:value={filterIpId} options={ipFilterOptions} size="small" block={false} />
+			<IpAddressSelector bind:selectedIp />
 		</div>
 
-		<Button as="a" href="/sudo/settings/ip-warmups/new">New Warmup</Button>
+		<Button as="a" href="/sudo/settings/ip-warmups/new">
+			New Warmup
+			{#snippet end()}
+				&plus;
+			{/snippet}
+		</Button>
 	</div>
 
-	{#if loading}
-		<Loader size="large" />
-	{:else if sortedSchedules.length === 0}
-		<div class="empty">No warmup schedules found.</div>
-	{:else}
-		<div class="rows">
-			{#each sortedSchedules as schedule (schedule.id)}
-				<WarmupScheduleRow {schedule} ipAddress={ipAddressFor(schedule.ip_address_id)} />
-			{/each}
-		</div>
-	{/if}
+	<div class="content">
+		{#if loading}
+			<Loader size="large" />
+		{:else if sortedSchedules.length === 0}
+			<IconMessage empty>No warmup schedules found.</IconMessage>
+		{:else}
+			<div class="rows">
+				{#each sortedSchedules as schedule (schedule.id)}
+					<WarmupScheduleRow {schedule} />
+				{/each}
+			</div>
+		{/if}
+	</div>
 </div>
 
 <style>
 	.ip-warmups {
-		padding: 30px 40px;
 		overflow: auto;
 	}
 
@@ -86,8 +86,9 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 12px;
-		margin-bottom: 20px;
 		flex-wrap: wrap;
+		padding: 15px 40px;
+		border-bottom: 1px solid var(--border);
 	}
 
 	.filters {
@@ -102,9 +103,7 @@
 		gap: 8px;
 	}
 
-	.empty {
-		text-align: center;
-		padding: 40px;
-		color: var(--text-light);
+	.content {
+		padding: 20px 40px;
 	}
 </style>

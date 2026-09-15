@@ -3,13 +3,16 @@
 namespace App\Tests\Api\Sudo\Server;
 
 use App\Api\Sudo\Controller\ServerController;
+use App\Api\Sudo\Object\ServerObject;
 use App\Service\Server\ServerService;
 use App\Tests\Case\WebTestCase;
+use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ServerFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ServerController::class)]
 #[CoversClass(ServerService::class)]
+#[CoversClass(ServerObject::class)]
 class GetServersTest extends WebTestCase
 {
 
@@ -40,22 +43,72 @@ class GetServersTest extends WebTestCase
          */
         $response = $this->getJson();
 
-        // Assert we have 3 servers
+        // Assert we have 3 servers, most recently created first
         $this->assertCount(3, $response);
 
-        // Assert server 1 data
-        $this->assertEquals($server1->getId(), $response[0]['id']);
-        $this->assertEquals('server1.example.com', $response[0]['hostname']);
-        $this->assertEquals($server1->getCreatedAt()->getTimestamp(), $response[0]['created_at']);
+        $this->assertEquals($server3->getId(), $response[0]['id']);
+        $this->assertEquals('server3.example.com', $response[0]['hostname']);
+        $this->assertEquals($server3->getCreatedAt()->getTimestamp(), $response[0]['created_at']);
+        $this->assertEquals([], $response[0]['ip_addresses']);
 
-        // Assert server 2 data
         $this->assertEquals($server2->getId(), $response[1]['id']);
         $this->assertEquals('server2.example.com', $response[1]['hostname']);
-        $this->assertEquals($server2->getCreatedAt()->getTimestamp(), $response[1]['created_at']);
 
-        // Assert server 3 data
-        $this->assertEquals($server3->getId(), $response[2]['id']);
-        $this->assertEquals('server3.example.com', $response[2]['hostname']);
-        $this->assertEquals($server3->getCreatedAt()->getTimestamp(), $response[2]['created_at']);
+        $this->assertEquals($server1->getId(), $response[2]['id']);
+        $this->assertEquals('server1.example.com', $response[2]['hostname']);
+    }
+
+    public function test_get_servers_with_ip_addresses(): void
+    {
+        $server = ServerFactory::createOne(['hostname' => 'server.example.com']);
+        $ip1 = IpAddressFactory::createOne(['server' => $server, 'ip_address' => '1.1.1.1']);
+        $ip2 = IpAddressFactory::createOne(['server' => $server, 'ip_address' => '2.2.2.2']);
+
+        $this->sudoApi('GET', '/servers');
+
+        $this->assertResponseIsSuccessful();
+
+        $json = $this->getJson();
+        $this->assertCount(1, $json);
+
+        $ipAddresses = $json[0]['ip_addresses'];
+        $this->assertCount(2, $ipAddresses);
+
+        $returnedAddresses = array_column($ipAddresses, 'ip_address');
+        $this->assertContains($ip1->getIpAddress(), $returnedAddresses);
+        $this->assertContains($ip2->getIpAddress(), $returnedAddresses);
+    }
+
+    public function test_get_servers_pagination(): void
+    {
+        $server1 = ServerFactory::createOne(['hostname' => 'a.example.com']);
+        $server2 = ServerFactory::createOne(['hostname' => 'b.example.com']);
+        $server3 = ServerFactory::createOne(['hostname' => 'c.example.com']);
+
+        $this->sudoApi('GET', '/servers?limit=2');
+        $this->assertResponseIsSuccessful();
+        $json = $this->getJson();
+        $this->assertCount(2, $json);
+        $this->assertEquals($server3->getId(), $json[0]['id']);
+        $this->assertEquals($server2->getId(), $json[1]['id']);
+
+        $this->sudoApi('GET', '/servers?limit=2&before_id=' . $server2->getId());
+        $this->assertResponseIsSuccessful();
+        $json = $this->getJson();
+        $this->assertCount(1, $json);
+        $this->assertEquals($server1->getId(), $json[0]['id']);
+    }
+
+    public function test_get_servers_search(): void
+    {
+        ServerFactory::createOne(['hostname' => 'mail-primary.example.com']);
+        ServerFactory::createOne(['hostname' => 'mail-backup.example.com']);
+        ServerFactory::createOne(['hostname' => 'other.example.com']);
+
+        $this->sudoApi('GET', '/servers?search=mail-');
+        $this->assertResponseIsSuccessful();
+
+        $json = $this->getJson();
+        $this->assertCount(2, $json);
     }
 }

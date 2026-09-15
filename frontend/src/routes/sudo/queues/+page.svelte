@@ -1,18 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Loader, toast } from '@hyvor/design/components';
-	import { getIpAddresses, getQueues } from '../sudoActions';
-	import { ipAddressesStore, queuesStore } from '../sudoStore';
+	import { getQueues } from '../sudoActions';
+	import { queuesStore } from '../sudoStore';
 	import QueueRow from './QueueRow.svelte';
 	import SingleBox from '../SingleBox.svelte';
 
 	let loading = $state(true);
 
-	onMount(async () => {
-		Promise.all([await getQueues(), await getIpAddresses()])
-			.then(([queuesResponse, ipsResponse]) => {
+	onMount(() => {
+		getQueues()
+			.then((queuesResponse) => {
 				queuesStore.set(queuesResponse);
-				ipAddressesStore.set(ipsResponse);
 			})
 			.catch((err) => {
 				toast.error('Failed to load data: ' + err.message);

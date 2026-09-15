@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { TabNav, TabNavItem, Tag, Tooltip } from '@hyvor/design/components';
 	import type { Server } from '../sudoTypes';
-	import { ipAddressesStore } from '../sudoStore';
 	import WorkersTag from './WorkersTag.svelte';
 	import WorkerSplit from './WorkerSplit.svelte';
 	import IpRow from './IpRow.svelte';
@@ -14,7 +13,7 @@
 
 	let { server }: Props = $props();
 
-	const ips = $derived($ipAddressesStore.filter((ip) => ip.server_id === server.id));
+	const ips = $derived(server.ip_addresses);
 
 	let activeTab: 'ips' | 'settings' = $state('ips');
 
@@ -79,6 +78,7 @@
 							</a>
 						</th>
 						<th>Warmup</th>
+						<th>History</th>
 					</tr>
 				</thead>
 				<tbody>

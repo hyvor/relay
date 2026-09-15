@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Modal, TextInput, Button } from '@hyvor/design/components';
-	import { queuesStore, ipAddressesStore } from '../sudoStore';
+	import { queuesStore } from '../sudoStore';
 	import { getQueues, updateIpAddress } from '../sudoActions';
 	import type { Queue, IpAddress } from '../sudoTypes';
 	import { toast } from '@hyvor/design/components';
@@ -41,10 +41,6 @@
 		updating = true;
 		try {
 			const updatedIp = await updateIpAddress(ip.id, { queue_id: queueId });
-
-			ipAddressesStore.update((ips) =>
-				ips.map((existingIp) => (existingIp.id === ip.id ? updatedIp : existingIp))
-			);
 
 			onUpdate(updatedIp);
 			toast.success(successMessage);

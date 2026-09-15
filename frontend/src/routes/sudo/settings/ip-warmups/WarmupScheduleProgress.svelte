@@ -56,14 +56,16 @@
 				{/if}
 			</div>
 			<div class="day-limit">{formatNumber(day.limit)}</div>
-			{#if day.sent !== null}
-				<div class="day-sent">
+			<div class="day-sent">
+				{#if day.sent !== null}
 					{formatNumber(day.sent)} sent
-					{#if day.percentage !== null}
-						<span class="day-percentage">({day.percentage}%)</span>
-					{/if}
-				</div>
-			{/if}
+				{:else}
+					-
+				{/if}
+				{#if day.percentage !== null}
+					<span class="day-percentage">({day.percentage}%)</span>
+				{/if}
+			</div>
 		</div>
 	{/each}
 </div>
@@ -79,9 +81,9 @@
 		display: flex;
 		flex-direction: column;
 		gap: 4px;
-		padding: 10px;
-		background: var(--bg-input);
-		border-radius: 8px;
+		padding: 10px 20px;
+		background: var(--input);
+		border-radius: 20px;
 		border: 1px solid transparent;
 	}
 

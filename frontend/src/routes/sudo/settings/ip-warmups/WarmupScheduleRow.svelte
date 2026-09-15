@@ -5,13 +5,15 @@
 	import { warmupSchedulesStore } from '../../sudoStore';
 	import WarmupScheduleProgress from './WarmupScheduleProgress.svelte';
 	import type { WarmupSchedule, WarmupStatus } from '../../sudoTypes';
+	import { slide } from 'svelte/transition';
 
 	interface Props {
 		schedule: WarmupSchedule;
-		ipAddress: string;
 	}
 
-	let { schedule, ipAddress }: Props = $props();
+	let { schedule }: Props = $props();
+
+	const ipAddress = $derived(schedule.ip_address);
 
 	const TOTAL_DAYS = 30;
 
@@ -96,7 +98,9 @@
 
 		try {
 			await deleteWarmupSchedule(schedule.id);
-			warmupSchedulesStore.update((schedules) => schedules.filter((s) => s.id !== schedule.id));
+			warmupSchedulesStore.update((schedules) =>
+				schedules.filter((s) => s.id !== schedule.id)
+			);
 			toast.success('Warmup schedule deleted');
 		} catch (error: any) {
 			toast.error('Failed to delete warmup schedule: ' + error.message);
@@ -110,32 +114,38 @@
 <div class="row" class:open={expanded}>
 	<button class="row-header" onclick={toggle}>
 		<span class="chevron" class:rotated={expanded}>
-			<IconChevronRight size={14} />
+			<IconChevronRight size={12} />
 		</span>
 
-		<span class="ip">{ipAddress}</span>
+		<div>
+			<div class="ip-status">
+				<span class="ip">{ipAddress}</span>
 
-		<Tag color={statusColors[schedule.status]} size="small">
-			{schedule.status}
-		</Tag>
+				<Tag color={statusColors[schedule.status]} size="small">
+					<span class="status-tag">{schedule.status}</span>
+				</Tag>
+			</div>
 
-		<span class="dates">
-			{formatDate(schedule.started_date)} &ndash; {endDate()}
-		</span>
-
-		{#if schedule.status === 'warming'}
-			<span class="progress">
-				<span class="progress-label">Day {currentDay} of {TOTAL_DAYS}</span>
-				<span class="progress-track">
-					<span class="progress-fill" style="width: {progressPercentage}%"></span>
+			<div class="dates-progress">
+				<span class="dates">
+					{formatDate(schedule.started_date)} &ndash; {endDate()}
 				</span>
-			</span>
-		{/if}
+
+				{#if schedule.status === 'warming'}
+					<span class="progress">
+						<span class="progress-label">Day {currentDay} of {TOTAL_DAYS}</span>
+						<span class="progress-track">
+							<span class="progress-fill" style="width: {progressPercentage}%"></span>
+						</span>
+					</span>
+				{/if}
+			</div>
+		</div>
 
 		<span class="actions">
 			{#if schedule.status === 'warming'}
 				<Button
-					size="x-small"
+					size="small"
 					color="red"
 					variant="outline"
 					disabled={cancelling}
@@ -144,20 +154,22 @@
 					Cancel
 				</Button>
 			{/if}
-			<Button
-				size="x-small"
-				color="red"
-				variant="fill-light"
-				disabled={deleting}
-				on:click={handleDelete}
-			>
-				Delete
-			</Button>
+			{#if schedule.status !== 'warming'}
+				<Button
+					size="small"
+					color="red"
+					variant="fill-light"
+					disabled={deleting}
+					on:click={handleDelete}
+				>
+					Delete
+				</Button>
+			{/if}
 		</span>
 	</button>
 
 	{#if expanded}
-		<div class="row-body">
+		<div class="row-body" transition:slide={{ duration: 150 }}>
 			<WarmupScheduleProgress {schedule} />
 		</div>
 	{/if}
@@ -166,7 +178,7 @@
 <style>
 	.row {
 		border: 1px solid var(--border);
-		border-radius: 8px;
+		border-radius: 20px;
 		overflow: hidden;
 	}
 
@@ -182,10 +194,15 @@
 		text-align: left;
 		font-size: 14px;
 		flex-wrap: wrap;
+		transition: background-color 0.15s ease;
 	}
 
 	.row-header:hover {
-		background: var(--hover);
+		background-color: var(--hover);
+	}
+
+	.row.open .row-header {
+		background-color: var(--hover);
 	}
 
 	.chevron {
@@ -199,9 +216,22 @@
 		transform: rotate(90deg);
 	}
 
+	.ip-status {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+	}
+
 	.ip {
 		font-weight: 600;
-		min-width: 120px;
+	}
+
+	.dates-progress {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-top: 5px;
+		gap: 20px;
 	}
 
 	.dates {
@@ -221,7 +251,7 @@
 	.progress-track {
 		width: 80px;
 		height: 6px;
-		background: var(--bg-input);
+		background: var(--input);
 		border-radius: 3px;
 		overflow: hidden;
 	}
@@ -242,5 +272,9 @@
 	.row-body {
 		padding: 16px;
 		border-top: 1px solid var(--border);
+	}
+
+	.status-tag {
+		text-transform: capitalize;
 	}
 </style>

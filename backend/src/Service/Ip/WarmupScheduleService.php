@@ -34,15 +34,19 @@ class WarmupScheduleService
      */
     public function getWarmupSchedules(?int $ipAddressId = null): array
     {
-        $criteria = [];
+        $qb = $this->em->createQueryBuilder()
+            ->select('ws', 'ip')
+            ->from(WarmupSchedule::class, 'ws')
+            ->join('ws.ip_address', 'ip')
+            ->orderBy('ws.id', 'DESC');
+
         if ($ipAddressId !== null) {
-            $criteria['ip_address'] = $ipAddressId;
+            $qb->andWhere('ws.ip_address = :ipAddressId')
+                ->setParameter('ipAddressId', $ipAddressId);
         }
 
-        return $this->em->getRepository(WarmupSchedule::class)->findBy(
-            $criteria,
-            ['id' => 'DESC']
-        );
+        /** @var WarmupSchedule[] */
+        return $qb->getQuery()->getResult();
     }
 
     public function getWarmupScheduleById(int $id): ?WarmupSchedule

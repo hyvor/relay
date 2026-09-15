@@ -30,6 +30,7 @@ class GetWarmupSchedulesTest extends WebTestCase
         $item = $json[0];
         $this->assertIsArray($item);
         $this->assertEquals($ipAddress->getId(), $item['ip_address_id']);
+        $this->assertEquals($ipAddress->getIpAddress(), $item['ip_address']);
     }
 
 }
