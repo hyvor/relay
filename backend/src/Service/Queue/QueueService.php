@@ -2,6 +2,7 @@
 
 namespace App\Service\Queue;
 
+use App\Entity\IpAddress;
 use App\Entity\Queue;
 use App\Entity\Type\QueueType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -108,6 +109,34 @@ class QueueService
         $queueId = $result[0]['id'];
 
         return $this->getQueueById((int)$queueId);
+    }
+
+    /**
+     * @param int[] $queueIds
+     * @return array<int, int> IP address count indexed by queue id
+     */
+    public function getIpCountsForQueues(array $queueIds): array
+    {
+        if ($queueIds === []) {
+            return [];
+        }
+
+        /** @var array<array{queue_id: int, cnt: int}> $rows */
+        $rows = $this->em->createQueryBuilder()
+            ->select('IDENTITY(i.queue) AS queue_id', 'COUNT(i.id) AS cnt')
+            ->from(IpAddress::class, 'i')
+            ->where('i.queue IN (:queueIds)')
+            ->groupBy('i.queue')
+            ->setParameter('queueIds', $queueIds)
+            ->getQuery()
+            ->getResult();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[(int) $row['queue_id']] = (int) $row['cnt'];
+        }
+
+        return $counts;
     }
 
     public function getQueuesCount(): int

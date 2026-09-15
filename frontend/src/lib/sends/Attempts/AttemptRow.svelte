@@ -53,9 +53,7 @@
 					rejected or deferrred.
 				</span>
 			{:else if attempt.status === 'failed'}
-				<span class="error">
-					Message failed to send.
-				</span>
+				<span class="error"> Message failed to send. </span>
 			{:else}
 				<span class="info">Pending</span>
 			{/if}

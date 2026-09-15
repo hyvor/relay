@@ -40,7 +40,11 @@
 	let showRetryModal = $state(false);
 	let tryNowLoading = $state(false);
 
-	async function handleRetryConfirm(recipientIds: number[], mode: 'now' | 'schedule', scheduledDate?: string) {
+	async function handleRetryConfirm(
+		recipientIds: number[],
+		mode: 'now' | 'schedule',
+		scheduledDate?: string
+	) {
 		if (!onRetry) return;
 
 		let sendAfter: number | undefined;
@@ -55,9 +59,10 @@
 		retryLoading = true;
 		try {
 			const result = await onRetry(send.id, sendAfter, recipientIds);
-			const msg = mode === 'now'
-				? `${result.retried_recipients} recipient(s) re-queued for retry`
-				: `${result.retried_recipients} recipient(s) scheduled for retry`;
+			const msg =
+				mode === 'now'
+					? `${result.retried_recipients} recipient(s) re-queued for retry`
+					: `${result.retried_recipients} recipient(s) scheduled for retry`;
 			toast.success(msg);
 			showRetryModal = false;
 			onSendUpdate(result.send);
@@ -97,42 +102,55 @@
 		<FailedCallout onRetryClick={() => (showRetryModal = true)} />
 	{/if}
 
-	<div class="grid">
-		<DetailCard label="From" content={send.from_address} />
-
-		<DetailCard label="Subject" content={send.subject || 'No subject'} />
-
-		<DetailCard label="Date">
+	<div class="details">
+		<div class="detail">
+			<div>From</div>
+			<div>{send.from_address}</div>
+		</div>
+		<div class="detail">
+			<div>Subject</div>
+			<div>{send.subject || 'No subject'}</div>
+		</div>
+		<div class="detail">
+			<div>Date</div>
 			<div>
 				{formatTimestamp(send.created_at)}
 				<span class="relative-time">(<RelativeTime unix={send.created_at} />)</span>
 			</div>
-		</DetailCard>
-
-		<div class="recipients-wrap">
-			<DetailCard label="Recipients">
-				<div class="recipients">
-					{#each recipients as recipient}
-						<div class="recipient">
-							<div class="type">
-								<Tag size="x-small">
-									{recipient.type.toUpperCase()}
-								</Tag>
-							</div>
-							<div class="address-name">
-								<div class="address">{recipient.address}</div>
-								{#if recipient.name}
-									<div class="name">{recipient.name}</div>
-								{/if}
-							</div>
-							<RecipientStatus {recipient} />
-						</div>
-					{/each}
-				</div>
-			</DetailCard>
 		</div>
-
-		<DetailCard label="Size" content={byteFormatter(send.size_bytes)} />
+		<div class="detail">
+			<div>Recipients</div>
+			<div class="recipients">
+				{#each recipients as recipient}
+					<div class="recipient">
+						<div class="type">
+							<Tag size="x-small">
+								{recipient.type.toUpperCase()}
+							</Tag>
+						</div>
+						<div class="address-name">
+							<div class="address">{recipient.address}</div>
+							{#if recipient.name}
+								<div class="name">{recipient.name}</div>
+							{/if}
+						</div>
+						<RecipientStatus {recipient} />
+					</div>
+				{/each}
+			</div>
+		</div>
+		<div class="detail">
+			<div>Size</div>
+			<div>
+				{byteFormatter(send.size_bytes)}
+			</div>
+		</div>
+		<div class="detail">
+			<div>IP Address</div>
+			<div>
+				{send.ip_address ?? 'Not assigned'}
+			</div>
+		</div>
 	</div>
 </div>
 
@@ -154,14 +172,29 @@
 {/if}
 
 <style>
-	.grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+	.details {
+		border: 1px solid var(--border);
+		background-color: var(--hover);
+		padding: 25px 30px;
+		border-radius: 20px;
+		display: flex;
+		flex-direction: column;
 		gap: 15px;
 	}
 
-	.recipients-wrap {
-		grid-column: span 2;
+	.detail {
+		display: flex;
+		gap: 10px;
+	}
+
+	.detail > div:first-child {
+		font-weight: 600;
+		color: var(--text-light);
+		width: 120px;
+	}
+
+	.detail > div:last-child {
+		flex: 1;
 	}
 
 	.recipients {

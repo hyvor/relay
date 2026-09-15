@@ -2,14 +2,20 @@
 
 namespace App\Api\Sudo\Controller;
 
+use App\Api\Sudo\Input\GetServersInput;
 use App\Api\Sudo\Input\UpdateServerInput;
 use App\Api\Sudo\Object\ServerObject;
+use App\Entity\IpAddress;
+use App\Entity\Server;
+use App\Service\App\Config;
+use App\Service\Ip\WarmupScheduleService;
 use App\Service\Server\Dto\UpdateServerDto;
 use App\Service\Server\ServerService;
 use App\Service\Sudo\SudoPermission;
 use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,15 +26,30 @@ class ServerController extends AbstractController
 
     public function __construct(
         private ServerService $serverService,
+        private WarmupScheduleService $warmupScheduleService,
+        private Config $appConfig,
     ) {}
 
     #[Route('/servers', methods: 'GET')]
-    public function getServers(): JsonResponse
+    public function getServers(#[MapQueryString] GetServersInput $input): JsonResponse
     {
-        $servers = $this->serverService->getServers();
+        $servers = $this->serverService->getServersPaginated($input->limit, $input->before_id, $input->search);
+
+        /** @var IpAddress[] $ipAddresses */
+        $ipAddresses = [];
+        foreach ($servers as $server) {
+            foreach ($server->getIpAddresses() as $ipAddress) {
+                $ipAddresses[] = $ipAddress;
+            }
+        }
+        $warmupSchedules = $this->warmupScheduleService->getCurrentWarmupSchedulesByIpAddresses($ipAddresses);
 
         $serverObjects = array_map(
-            fn($server) => new ServerObject($server),
+            fn(Server $server) => new ServerObject(
+                $server,
+                $this->appConfig->getInstanceDomain(),
+                $warmupSchedules,
+            ),
             $servers
         );
 
@@ -63,6 +84,6 @@ class ServerController extends AbstractController
 
         $this->serverService->updateServer($server, $updates, createUpdateStateTask: true);
 
-        return $this->json(new ServerObject($server));
+        return $this->json(new ServerObject($server, $this->appConfig->getInstanceDomain()));
     }
 }

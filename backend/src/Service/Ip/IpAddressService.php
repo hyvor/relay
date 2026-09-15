@@ -3,12 +3,15 @@
 namespace App\Service\Ip;
 
 use App\Entity\IpAddress;
+use App\Entity\Queue;
 use App\Entity\Server;
 use App\Service\Ip\Dto\PtrValidationDto;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
 use App\Service\Ip\Event\IpAddressUpdatedEvent;
+use App\Service\Ip\Event\IpRemovedEvent;
 use App\Service\Queue\QueueService;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Query\ResultSetMappingBuilder;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -23,8 +26,8 @@ class IpAddressService
         private EventDispatcherInterface $ed,
         private Ptr $ptr,
         private QueueService $queueService,
-    ) {
-    }
+        private WarmupScheduleService $warmupScheduleService,
+    ) {}
 
     /**
      * @return IpAddress[]
@@ -98,6 +101,11 @@ class IpAddressService
         $this->em->persist($ipAddressEntity);
         $this->em->flush();
 
+        $this->warmupScheduleService->createWarmupSchedule(
+            $ipAddressEntity,
+            WarmupScheduleService::DEFAULT_SCHEDULE,
+        );
+
         return $ipAddressEntity;
     }
 
@@ -105,6 +113,8 @@ class IpAddressService
     {
         $this->em->remove($ipAddress);
         $this->em->flush();
+
+        $this->ed->dispatch(new IpRemovedEvent($ipAddress));
     }
 
     public function updateIpAddress(
@@ -118,12 +128,10 @@ class IpAddressService
         }
 
         $ipAddress->setUpdatedAt($this->now());
-
         $this->em->persist($ipAddress);
         $this->em->flush();
 
-        $event = new IpAddressUpdatedEvent($ipAddressOld, $ipAddress, $updates);
-        $this->ed->dispatch($event);
+        $this->ed->dispatch(new IpAddressUpdatedEvent($ipAddressOld, $ipAddress, $updates));
 
         return $ipAddress;
     }
@@ -143,5 +151,4 @@ class IpAddressService
 
         return $validity;
     }
-
 }

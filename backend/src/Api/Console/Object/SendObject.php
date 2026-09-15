@@ -19,6 +19,7 @@ class SendObject
     public int $size_bytes;
     public bool $queued;
     public int $send_after;
+    public ?string $ip_address;
 
     /**
      * @var list<SendRecipientObject>
@@ -56,6 +57,7 @@ class SendObject
         $this->size_bytes = $send->getSizeBytes();
         $this->queued = $send->getQueued();
         $this->send_after = $send->getSendAfter()->getTimestamp();
+        $this->ip_address = $send->getIpAddress()?->getIpAddress();
 
         $this->recipients = array_values(array_map(
             fn($recipient) => new SendRecipientObject($recipient),
