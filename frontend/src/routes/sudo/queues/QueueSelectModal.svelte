@@ -55,7 +55,7 @@
 	async function handleQueueSelect(queue: Queue) {
 		await updateQueue(
 			queue.id,
-			`Queue "${queue.name}" assigned to IP ${ip?.ip_address}`,
+			`IP ${ip?.ip_address} assigned to the queue "${queue.name}"`,
 			'Failed to assign queue: '
 		);
 	}

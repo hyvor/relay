@@ -89,19 +89,19 @@
 			<Button
 				size="x-small"
 				color="input"
-				variant="outline"
 				as="a"
 				href="/sudo/settings/ip-warmups/new?ip={ip.id}"
 			>
 				Start Warmup
 			</Button>
 		{/if}
-	</td>
-	<td>
-		<a class="hds-link history-link" href="/sudo/settings/ip-warmups?ip={ip.id}">
+
+		<Button size="x-small" color="input" as="a" href="/sudo/settings/ip-warmups?ip={ip.id}">
 			History
-			<IconArrowRight size={12} />
-		</a>
+			{#snippet end()}
+				<IconArrowRight size={12} />
+			{/snippet}
+		</Button>
 	</td>
 </tr>
 
@@ -139,17 +139,16 @@
 		white-space: nowrap;
 	}
 
-	.history-link {
-		display: inline-flex;
-		align-items: center;
-		gap: 4px;
-		font-size: 13px;
-		white-space: nowrap;
-	}
-
 	.warmup-day-progress {
 		display: block;
 		min-width: 160px;
+		padding: 10px 15px;
+		margin: 0 -15px;
+		margin-bottom: 5px;
+		border-radius: 20px;
+	}
+	.warmup-day-progress:hover {
+		background-color: var(--hover);
 	}
 
 	.warmup-day-label {
