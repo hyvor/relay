@@ -3,10 +3,12 @@
 namespace App\Service\Ip;
 
 use App\Entity\IpAddress;
+use App\Entity\Queue;
 use App\Entity\Server;
 use App\Service\Ip\Dto\PtrValidationDto;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
 use App\Service\Ip\Event\IpAddressUpdatedEvent;
+use App\Service\Ip\Event\IpRemovedEvent;
 use App\Service\Queue\QueueService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -23,8 +25,8 @@ class IpAddressService
         private EventDispatcherInterface $ed,
         private Ptr $ptr,
         private QueueService $queueService,
-    ) {
-    }
+        private WarmupScheduleService $warmupScheduleService,
+    ) {}
 
     /**
      * @return IpAddress[]
@@ -33,7 +35,7 @@ class IpAddressService
     {
         return $this->em->getRepository(IpAddress::class)->findBy(
             [],
-            ['id' => 'ASC']
+            ['id' => 'ASC'],
         );
     }
 
@@ -54,7 +56,7 @@ class IpAddressService
     {
         return $this->em->getRepository(IpAddress::class)->findBy(
             ['server' => $server],
-            ['id' => 'ASC']
+            ['id' => 'ASC'],
         );
     }
 
@@ -79,7 +81,7 @@ class IpAddressService
         // Delete IP addresses that are in the database but not in the server's current IP addresses
         $ipAddressesToDelete = array_filter(
             $currentIpAddressesEntitiesInDb,
-            fn(IpAddress $ip) => !in_array($ip->getIpAddress(), $serverIpAddresses)
+            fn(IpAddress $ip) => !in_array($ip->getIpAddress(), $serverIpAddresses),
         );
         foreach ($ipAddressesToDelete as $ipAddress) {
             $this->deleteIpAddress($ipAddress);
@@ -98,6 +100,11 @@ class IpAddressService
         $this->em->persist($ipAddressEntity);
         $this->em->flush();
 
+        $this->warmupScheduleService->createWarmupSchedule(
+            $ipAddressEntity,
+            WarmupScheduleService::DEFAULT_SCHEDULE,
+        );
+
         return $ipAddressEntity;
     }
 
@@ -105,11 +112,13 @@ class IpAddressService
     {
         $this->em->remove($ipAddress);
         $this->em->flush();
+
+        $this->ed->dispatch(new IpRemovedEvent($ipAddress));
     }
 
     public function updateIpAddress(
         IpAddress $ipAddress,
-        UpdateIpAddressDto $updates
+        UpdateIpAddressDto $updates,
     ): IpAddress {
         $ipAddressOld = clone $ipAddress;
 
@@ -118,12 +127,10 @@ class IpAddressService
         }
 
         $ipAddress->setUpdatedAt($this->now());
-
         $this->em->persist($ipAddress);
         $this->em->flush();
 
-        $event = new IpAddressUpdatedEvent($ipAddressOld, $ipAddress, $updates);
-        $this->ed->dispatch($event);
+        $this->ed->dispatch(new IpAddressUpdatedEvent($ipAddressOld, $ipAddress, $updates));
 
         return $ipAddress;
     }
@@ -143,5 +150,4 @@ class IpAddressService
 
         return $validity;
     }
-
 }
