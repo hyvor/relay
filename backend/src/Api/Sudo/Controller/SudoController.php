@@ -3,10 +3,16 @@
 namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Object\InstanceObject;
+use App\Api\Sudo\Object\IpAddressObject;
+use App\Api\Sudo\Object\ServerObject;
+use App\Entity\IpAddress;
+use App\Entity\Server;
 use App\Service\App\Config;
 use App\Service\Blacklist\IpBlacklists;
 use App\Service\Instance\InstanceService;
+use App\Service\Ip\IpAddressService;
 use App\Service\Ip\WarmupScheduleService;
+use App\Service\Server\ServerService;
 use App\Service\Sudo\SudoPermission;
 use Hyvor\Internal\Bundle\Api\SudoAuthorizationListener;
 use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
@@ -24,6 +30,9 @@ class SudoController extends AbstractController
         private InternalConfig $internalConfig,
         private InstanceService $instanceService,
         private SudoAuthorizationListener $sudoAuthorizationListener,
+        private ServerService $serverService,
+        private IpAddressService $ipAddressService,
+        private WarmupScheduleService $warmupScheduleService,
     ) {}
 
     #[Route('/init', methods: 'POST')]
@@ -31,6 +40,11 @@ class SudoController extends AbstractController
     {
         $instance = $this->instanceService->getInstance();
         $user = $this->sudoAuthorizationListener->getResolvedUser();
+        $instanceDomain = $this->config->getInstanceDomain();
+
+        $servers = $this->serverService->getServers();
+        $ipAddresses = $this->ipAddressService->getAllIpAddresses();
+        $warmupSchedules = $this->warmupScheduleService->getCurrentWarmupSchedulesByIpAddresses($ipAddresses);
 
         return new JsonResponse([
             'config' => [
@@ -44,9 +58,21 @@ class SudoController extends AbstractController
                     'name' => $user->name ?? $user->username,
                     'email' => $user->email,
                     'picture_url' => $user->picture_url,
-                ]
+                ],
             ],
-            'instance' => new InstanceObject($instance, $this->config->getInstanceDomain())
+            'instance' => new InstanceObject($instance, $instanceDomain),
+            'servers' => array_map(
+                fn(Server $server) => new ServerObject($server),
+                $servers,
+            ),
+            'ip_addresses' => array_map(
+                fn(IpAddress $ipAddress) => new IpAddressObject(
+                    $ipAddress,
+                    $instanceDomain,
+                    $warmupSchedules[$ipAddress->getId()] ?? null,
+                ),
+                $ipAddresses,
+            ),
         ]);
     }
 }

@@ -33,7 +33,7 @@ class ServerController extends AbstractController
     #[Route('/servers', methods: 'GET')]
     public function getServers(#[MapQueryString] GetServersInput $input): JsonResponse
     {
-        $servers = $this->serverService->getServersPaginated($input->limit, $input->before_id, $input->search);
+        $servers = $this->serverService->getServers($input->search);
 
         /** @var IpAddress[] $ipAddresses */
         $ipAddresses = [];

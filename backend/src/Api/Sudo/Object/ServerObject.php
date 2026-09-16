@@ -17,34 +17,23 @@ class ServerObject
     public int $email_workers;
     public int $webhook_workers;
     public int $incoming_workers;
-    /** @var IpAddressObject[] */
-    public array $ip_addresses;
 
     /**
      * @param array<int, WarmupSchedule> $currentWarmupSchedules indexed by IP address id
      */
     public function __construct(
         Server $server,
-        string $instanceDomain,
-        array $currentWarmupSchedules = [],
-    )
-    {
+    ) {
         $this->id = $server->getId();
         $this->created_at = $server->getCreatedAt()->getTimestamp();
         $this->hostname = $server->getHostname();
         $this->last_ping_at = $server->getLastPingAt()?->getTimestamp();
-        $this->is_alive = ($server->getLastPingAt() ?? new \DateTimeImmutable()) > (new \DateTimeImmutable('-3 minutes'));
+        $this->is_alive = ($server->getLastPingAt() ?? new \DateTimeImmutable()) > (new \DateTimeImmutable(
+                '-3 minutes',
+            ));
         $this->api_workers = $server->getApiWorkers();
         $this->email_workers = $server->getEmailWorkers();
         $this->webhook_workers = $server->getWebhookWorkers();
         $this->incoming_workers = $server->getIncomingWorkers();
-        $this->ip_addresses = array_map(
-            fn(IpAddress $ip) => new IpAddressObject(
-                $ip,
-                $instanceDomain,
-                $currentWarmupSchedules[$ip->getId()] ?? null,
-            ),
-            $server->getIpAddresses()->toArray()
-        );
     }
 }

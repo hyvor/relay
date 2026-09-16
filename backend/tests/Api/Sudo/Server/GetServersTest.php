@@ -64,6 +64,8 @@ class GetServersTest extends WebTestCase
         $ip1 = IpAddressFactory::createOne(['server' => $server, 'ip_address' => '1.1.1.1']);
         $ip2 = IpAddressFactory::createOne(['server' => $server, 'ip_address' => '2.2.2.2']);
 
+        $this->em->clear();
+
         $this->sudoApi('GET', '/servers');
 
         $this->assertResponseIsSuccessful();
@@ -77,26 +79,6 @@ class GetServersTest extends WebTestCase
         $returnedAddresses = array_column($ipAddresses, 'ip_address');
         $this->assertContains($ip1->getIpAddress(), $returnedAddresses);
         $this->assertContains($ip2->getIpAddress(), $returnedAddresses);
-    }
-
-    public function test_get_servers_pagination(): void
-    {
-        $server1 = ServerFactory::createOne(['hostname' => 'a.example.com']);
-        $server2 = ServerFactory::createOne(['hostname' => 'b.example.com']);
-        $server3 = ServerFactory::createOne(['hostname' => 'c.example.com']);
-
-        $this->sudoApi('GET', '/servers?limit=2');
-        $this->assertResponseIsSuccessful();
-        $json = $this->getJson();
-        $this->assertCount(2, $json);
-        $this->assertEquals($server3->getId(), $json[0]['id']);
-        $this->assertEquals($server2->getId(), $json[1]['id']);
-
-        $this->sudoApi('GET', '/servers?limit=2&before_id=' . $server2->getId());
-        $this->assertResponseIsSuccessful();
-        $json = $this->getJson();
-        $this->assertCount(1, $json);
-        $this->assertEquals($server1->getId(), $json[0]['id']);
     }
 
     public function test_get_servers_search(): void

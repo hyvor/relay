@@ -1,27 +1,35 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { get } from 'svelte/store';
 	import { Button, IconMessage, Loader, toast } from '@hyvor/design/components';
 	import { getWarmupSchedules } from '../../sudoActions';
-	import { warmupSchedulesStore } from '../../sudoStore';
+	import { ipAddressesStore, warmupSchedulesStore } from '../../sudoStore';
 	import type { IpAddress } from '../../sudoTypes';
 	import WarmupScheduleRow from './WarmupScheduleRow.svelte';
 	import IpAddressSelector from './IpAddressSelector.svelte';
 
 	let loading = $state(true);
 
-	let filterIpId = $state(page.url.searchParams.get('ip') ?? '');
-	let selectedIp: IpAddress | null = $state(null);
-	let mounted = false;
+	const ipParam = page.url.searchParams.get('ip');
+
+	let selectedIp: IpAddress | null = $state(
+		ipParam ? (get(ipAddressesStore).find((ip) => ip.ip_address === ipParam) ?? null) : null
+	);
 
 	let sortedSchedules = $derived(
 		[...$warmupSchedulesStore].sort((a, b) => b.created_at - a.created_at)
 	);
 
-	function loadSchedules() {
-		const ipAddressId = filterIpId ? Number(filterIpId) : undefined;
+	let autoOpenScheduleId = $derived(
+		ipParam
+			? (sortedSchedules.find((s) => s.ip_address === ipParam && s.status === 'warming')
+					?.id ?? null)
+			: null
+	);
 
+	function loadSchedules() {
 		loading = true;
-		return getWarmupSchedules(ipAddressId)
+		return getWarmupSchedules(selectedIp?.id)
 			.then((schedules) => {
 				warmupSchedulesStore.set(schedules);
 			})
@@ -35,14 +43,6 @@
 
 	$effect(() => {
 		selectedIp;
-		if (mounted) {
-			filterIpId = selectedIp ? String(selectedIp.id) : '';
-		}
-		mounted = true;
-	});
-
-	$effect(() => {
-		filterIpId;
 		loadSchedules();
 	});
 </script>
@@ -69,7 +69,10 @@
 		{:else}
 			<div class="rows">
 				{#each sortedSchedules as schedule (schedule.id)}
-					<WarmupScheduleRow {schedule} />
+					<WarmupScheduleRow
+						{schedule}
+						initiallyOpen={schedule.id === autoOpenScheduleId}
+					/>
 				{/each}
 			</div>
 		{/if}

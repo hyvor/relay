@@ -9,15 +9,16 @@
 
 	interface Props {
 		schedule: WarmupSchedule;
+		initiallyOpen?: boolean;
 	}
 
-	let { schedule }: Props = $props();
+	let { schedule, initiallyOpen = false }: Props = $props();
 
 	const ipAddress = $derived(schedule.ip_address);
 
 	const TOTAL_DAYS = 30;
 
-	let expanded = $state(false);
+	let expanded = $state(initiallyOpen);
 	let cancelling = $state(false);
 	let deleting = $state(false);
 

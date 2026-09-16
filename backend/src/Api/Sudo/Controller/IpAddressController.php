@@ -2,7 +2,6 @@
 
 namespace App\Api\Sudo\Controller;
 
-use App\Api\Sudo\Input\GetIpAddressesInput;
 use App\Api\Sudo\Input\UpdateIpAddressInput;
 use App\Api\Sudo\Object\IpAddressObject;
 use App\Service\App\Config;
@@ -14,7 +13,6 @@ use App\Service\Sudo\SudoPermission;
 use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
@@ -31,9 +29,8 @@ class IpAddressController extends AbstractController
     ) {}
 
     #[Route('/ip-addresses', methods: 'GET')]
-    public function getIpAddresses(
-        #[MapQueryString] GetIpAddressesInput $input,
-    ): JsonResponse {
+    public function getIpAddresses(): JsonResponse
+    {
         $ipAddresses = $this->ipAddressService->getAllIpAddresses();
         $warmupSchedules = $this->warmupScheduleService->getCurrentWarmupSchedulesByIpAddresses($ipAddresses);
 

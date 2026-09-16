@@ -3,6 +3,8 @@ import type { Send } from '../console/types';
 export interface SudoInitResponse {
 	config: SudoConfig;
 	instance: Instance;
+	servers: Server[];
+	ip_addresses: IpAddress[];
 }
 
 export interface SudoConfig {
@@ -35,7 +37,6 @@ export interface Server {
 	email_workers: number;
 	webhook_workers: number;
 	incoming_workers: number;
-	ip_addresses: IpAddress[];
 }
 
 export interface IpAddress {

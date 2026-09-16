@@ -76,7 +76,10 @@
 	</td>
 	<td class="warmup">
 		{#if isWarming && warmup}
-			<a class="warmup-day-progress" href="/sudo/settings/ip-warmups?ip={ip.id}">
+			<a
+				class="warmup-day-progress"
+				href="/sudo/settings/ip-warmups?ip={encodeURIComponent(ip.ip_address)}"
+			>
 				<div class="warmup-day-label">
 					<span>Day {currentDay} of {TOTAL_DAYS}</span>
 					<span>{progressPercentage}%</span>
@@ -90,13 +93,18 @@
 				size="x-small"
 				color="input"
 				as="a"
-				href="/sudo/settings/ip-warmups/new?ip={ip.id}"
+				href="/sudo/settings/ip-warmups/new?ip={encodeURIComponent(ip.ip_address)}"
 			>
 				Start Warmup
 			</Button>
 		{/if}
 
-		<Button size="x-small" color="input" as="a" href="/sudo/settings/ip-warmups?ip={ip.id}">
+		<Button
+			size="x-small"
+			color="input"
+			as="a"
+			href="/sudo/settings/ip-warmups?ip={encodeURIComponent(ip.ip_address)}"
+		>
 			History
 			{#snippet end()}
 				<IconArrowRight size={12} />

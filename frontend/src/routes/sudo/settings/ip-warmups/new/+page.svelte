@@ -1,19 +1,17 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
-	import { Button, IconMessage, Loader, Select, TextInput, toast } from '@hyvor/design/components';
+	import { Button, IconMessage, Select, TextInput, toast } from '@hyvor/design/components';
 	import IconCaretLeft from '@hyvor/icons/IconCaretLeft';
-	import { onMount } from 'svelte';
 	import SingleBox from '../../../SingleBox.svelte';
-	import { getIpAddresses, createWarmupSchedule } from '../../../sudoActions';
+	import { createWarmupSchedule } from '../../../sudoActions';
 	import { ipAddressesStore, sudoConfigStore, warmupSchedulesStore } from '../../../sudoStore';
 
-	let loading = $state(true);
 	let saving = $state(false);
 
 	let ipParam = $derived(page.url.searchParams.get('ip'));
 	let lockedIp = $derived(
-		ipParam ? ($ipAddressesStore.find((ip) => ip.id === Number(ipParam)) ?? null) : null
+		ipParam ? ($ipAddressesStore.find((ip) => ip.ip_address === ipParam) ?? null) : null
 	);
 
 	let selectableIps = $derived(
@@ -22,17 +20,6 @@
 	let selectedIpId = $state('');
 
 	let schedule = $state<number[]>(Array(30).fill(0));
-
-	onMount(() => {
-		getIpAddresses()
-			.then((ips) => ipAddressesStore.set(ips))
-			.catch((error: any) => {
-				toast.error('Failed to load IP addresses: ' + error.message);
-			})
-			.finally(() => {
-				loading = false;
-			});
-	});
 
 	function applyDefaultSchedule() {
 		schedule = [...$sudoConfigStore.default_warmup_schedule];
@@ -56,7 +43,7 @@
 	}
 
 	async function handleSave() {
-		const ipAddressId = ipParam ? Number(ipParam) : Number(selectedIpId);
+		const ipAddressId = lockedIp ? lockedIp.id : Number(selectedIpId);
 
 		if (!ipAddressId) {
 			toast.error('Please select an IP address');
@@ -92,86 +79,82 @@
 </script>
 
 <SingleBox>
-	{#if loading}
-		<Loader full />
-	{:else}
-		<div class="header">
-			<Button size="small" color="input" as="a" href="/sudo/settings/ip-warmups">
-				{#snippet start()}
-					<IconCaretLeft size={12} />
-				{/snippet}
-				All Warmups
-			</Button>
-			<div class="title">New Warmup Schedule</div>
-		</div>
+	<div class="header">
+		<Button size="small" color="input" as="a" href="/sudo/settings/ip-warmups">
+			{#snippet start()}
+				<IconCaretLeft size={12} />
+			{/snippet}
+			All Warmups
+		</Button>
+		<div class="title">New Warmup Schedule</div>
+	</div>
 
-		<div class="content">
-			{#if ipParam && !lockedIp}
-				<IconMessage error message={`IP address #${ipParam} was not found.`} />
-			{:else}
-				<div class="field">
-					<div class="label">IP Address</div>
-					{#if lockedIp}
-						<div class="locked-ip">{lockedIp.ip_address}</div>
-						{#if lockedIp.current_warmup_schedule?.status === 'warming'}
-							<div class="warning">
-								This IP address already has an active warmup schedule.
-							</div>
-						{/if}
-					{:else}
-						<Select
-							bind:value={selectedIpId}
-							placeholder="Select an IP address"
-							block
-							options={selectableIps.map((ip) => ({
-								value: String(ip.id),
-								label: ip.ip_address
-							}))}
-						/>
-					{/if}
-				</div>
-
-				<div class="actions">
-					<Button
-						size="small"
-						color="input"
-						variant="outline"
-						onclick={applyDefaultSchedule}
-						disabled={saving}
-					>
-						Use Default Schedule
-					</Button>
-				</div>
-
-				<div class="schedule-grid">
-					{#each schedule as value, i (i)}
-						<div class="day-input">
-							<label class="day-label" for="day-{i}">Day {i + 1}</label>
-							<TextInput
-								id="day-{i}"
-								type="number"
-								{value}
-								on:input={(e) => handleInputChange(i, e.currentTarget.value)}
-								block
-								disabled={saving}
-								min="0"
-							/>
+	<div class="content">
+		{#if ipParam && !lockedIp}
+			<IconMessage error message={`IP address ${ipParam} was not found.`} />
+		{:else}
+			<div class="field">
+				<div class="label">IP Address</div>
+				{#if lockedIp}
+					<div class="locked-ip">{lockedIp.ip_address}</div>
+					{#if lockedIp.current_warmup_schedule?.status === 'warming'}
+						<div class="warning">
+							This IP address already has an active warmup schedule.
 						</div>
-					{/each}
-				</div>
+					{/if}
+				{:else}
+					<Select
+						bind:value={selectedIpId}
+						placeholder="Select an IP address"
+						block
+						options={selectableIps.map((ip) => ({
+							value: String(ip.id),
+							label: ip.ip_address
+						}))}
+					/>
+				{/if}
+			</div>
 
-				<div class="save">
-					<Button
-						onclick={handleSave}
-						loading={saving}
-						disabled={saving || (lockedIp?.current_warmup_schedule?.status === 'warming')}
-					>
-						Start Warmup
-					</Button>
-				</div>
-			{/if}
-		</div>
-	{/if}
+			<div class="actions">
+				<Button
+					size="small"
+					color="input"
+					variant="outline"
+					onclick={applyDefaultSchedule}
+					disabled={saving}
+				>
+					Use Default Schedule
+				</Button>
+			</div>
+
+			<div class="schedule-grid">
+				{#each schedule as value, i (i)}
+					<div class="day-input">
+						<label class="day-label" for="day-{i}">Day {i + 1}</label>
+						<TextInput
+							id="day-{i}"
+							type="number"
+							{value}
+							on:input={(e) => handleInputChange(i, e.currentTarget.value)}
+							block
+							disabled={saving}
+							min="0"
+						/>
+					</div>
+				{/each}
+			</div>
+
+			<div class="save">
+				<Button
+					onclick={handleSave}
+					loading={saving}
+					disabled={saving || lockedIp?.current_warmup_schedule?.status === 'warming'}
+				>
+					Start Warmup
+				</Button>
+			</div>
+		{/if}
+	</div>
 </SingleBox>
 
 <style>

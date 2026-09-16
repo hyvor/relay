@@ -25,31 +25,12 @@ class ServerService
     /**
      * @return Server[]
      */
-    public function getServers(): array
-    {
-        return $this->em->getRepository(Server::class)->findBy([], orderBy: ['id' => 'ASC']);
-    }
-
-    public function getServersCount(): int
-    {
-        return $this->em->getRepository(Server::class)->count();
-    }
-
-    /**
-     * @return Server[]
-     */
-    public function getServersPaginated(int $limit, ?int $beforeId = null, ?string $search = null): array
+    public function getServers(?string $search = null): array
     {
         $qb = $this->em->createQueryBuilder()
             ->select('s')
             ->from(Server::class, 's')
-            ->orderBy('s.id', 'DESC')
-            ->setMaxResults($limit);
-
-        if ($beforeId !== null) {
-            $qb->andWhere('s.id < :beforeId')
-                ->setParameter('beforeId', $beforeId);
-        }
+            ->orderBy('s.id', 'DESC');
 
         if ($search !== null && $search !== '') {
             $qb->andWhere('LOWER(s.hostname) LIKE LOWER(:search)')
@@ -75,6 +56,11 @@ class ServerService
             ->setParameter('ids', $ids)
             ->getQuery()
             ->getResult();
+    }
+
+    public function getServersCount(): int
+    {
+        return $this->em->getRepository(Server::class)->count();
     }
 
     public function isServerLeader(Server $server): bool
