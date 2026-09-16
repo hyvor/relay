@@ -56,3 +56,15 @@ export function isBroadAllowedIpEntry(entry: string): boolean {
 		return false;
 	}
 }
+
+export function broadAllowedIpEntryWarning(entry: string): string | null {
+	if (!isBroadAllowedIpEntry(entry)) return null;
+
+	try {
+		const [, prefix] = ipaddr.parseCIDR(entry.trim());
+		const count = cidrAddressCount(entry);
+		return `/${prefix} prefix allows ${count.toLocaleString()} IP address${count === 1 ? '' : 'es'}`;
+	} catch {
+		return null;
+	}
+}

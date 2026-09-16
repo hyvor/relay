@@ -13,7 +13,11 @@
 	import { createApiKey, updateApiKey } from '../../lib/actions/apiKeyActions';
 	import type { ApiKey } from '../../types';
 	import { getAppConfig } from '../../lib/stores/consoleStore';
-	import { isBroadAllowedIpEntry, validateAllowedIpEntry } from './allowedIp';
+	import {
+		broadAllowedIpEntryWarning,
+		isBroadAllowedIpEntry,
+		validateAllowedIpEntry
+	} from './allowedIp';
 	import AddedIpRow from './AddedIpRow.svelte';
 
 	interface Props {
@@ -309,7 +313,11 @@
 				<div class="ip-error">{ipError}</div>
 			{/if}
 			{#if isBroadAllowedIpEntry(ipInput)}
-				<Validation state="warning">This range may be too broad.</Validation>
+				<div class="ip-broad-warning">
+					<Validation state="warning">
+						This range may be too broad. {broadAllowedIpEntryWarning(ipInput)}.
+					</Validation>
+				</div>
 			{/if}
 			{#if allowedIps.length > 0}
 				<div class="ip-list">
@@ -408,6 +416,10 @@
 		margin-top: 6px;
 		font-size: 12px;
 		color: var(--red);
+	}
+
+	.ip-broad-warning {
+		margin-top: 6px;
 	}
 
 	.ip-list {
