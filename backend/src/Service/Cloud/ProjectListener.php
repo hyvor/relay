@@ -24,8 +24,7 @@ class ProjectListener
         private RequestStack $requestStack,
         private SudoUserService $sudoUserService,
         private InternalConfig $internalConfig,
-    ) {
-    }
+    ) {}
 
     public function onProjectCreation(ProjectCreatingEvent $event): void
     {
@@ -44,24 +43,13 @@ class ProjectListener
         }
 
         $consoleAuthResults = $request->attributes->get(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY);
+        assert($consoleAuthResults instanceof ConsoleAuthResults);
 
-        if (!$consoleAuthResults instanceof ConsoleAuthResults) {
-            return;
-        }
-
-        if ($consoleAuthResults->getAccessType() !== AccessType::SESSION) {
-            return;
-        }
-
-        $user = $consoleAuthResults->getNullableUser();
-
-        if ($user === null) {
-            return;
-        }
-
-		$isSudo = $this->sudoUserService->exists($user->id);
-
-        if (!$isSudo) {
+        if (
+            $consoleAuthResults->getAccessType() !== AccessType::SESSION ||
+            ($user = $consoleAuthResults->getNullableUser()) === null ||
+            !$this->sudoUserService->exists($user->id)
+        ) {
             throw new BadRequestHttpException('Currently not available for public usage.');
         }
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Api\Console\Project;
+namespace App\Tests\Api\Console\Org;
 
 use App\Api\Console\Controller\Org\ProjectsController;
 use App\Api\Console\Object\ProjectObject;
@@ -28,15 +28,15 @@ class CreateProjectTest extends WebTestCase
 
     public function test_create_project_valid(): void
     {
-		AuthFake::enableForSymfony(
-			$this->container,
-			['id' => 1],
-			new AuthUserOrganization(
-				id: 1,
-				name: 'Fake Organization',
-				role: 'member'
-			)
-		);
+        AuthFake::enableForSymfony(
+            $this->container,
+            ['id' => 1],
+            new AuthUserOrganization(
+                id: 1,
+                name: 'Fake Organization',
+                role: 'member',
+            ),
+        );
 
         SudoUserFactory::createOne(['user_id' => 1]);
 
@@ -51,7 +51,7 @@ class CreateProjectTest extends WebTestCase
             ],
             server: [
                 'HTTP_X_ORGANIZATION_ID' => '1',
-            ]
+            ],
         );
 
         $this->assertResponseStatusCodeSame(200);
@@ -74,6 +74,7 @@ class CreateProjectTest extends WebTestCase
         $this->assertNotNull($projectDb);
         $this->assertSame('Valid Project Name', $projectDb->getName());
         $this->assertSame(ProjectSendType::TRANSACTIONAL, $projectDb->getSendType());
+        $this->assertSame('session:', $projectDb->getCreatedBySource());
     }
 
     public function test_disallow_project_creation_for_non_sudo_users(): void
@@ -81,15 +82,15 @@ class CreateProjectTest extends WebTestCase
         // The non-sudo restriction only applies on cloud deployments.
         $_ENV['DEPLOYMENT'] = 'cloud';
 
-		AuthFake::enableForSymfony(
-			$this->container,
-			['id' => 99],
-			new AuthUserOrganization(
-				id: 1,
-				name: 'Fake Organization',
-				role: 'member'
-			)
-		);
+        AuthFake::enableForSymfony(
+            $this->container,
+            ['id' => 99],
+            new AuthUserOrganization(
+                id: 1,
+                name: 'Fake Organization',
+                role: 'member',
+            ),
+        );
 
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
 
@@ -102,7 +103,7 @@ class CreateProjectTest extends WebTestCase
             ],
             server: [
                 'HTTP_X_ORGANIZATION_ID' => '1',
-            ]
+            ],
         );
 
         $this->assertResponseStatusCodeSame(400);

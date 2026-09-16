@@ -16,7 +16,13 @@ final class Version20260728064600 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE projects ADD COLUMN created_by_source VARCHAR(255) DEFAULT NULL');
+        $this->addSql(
+            '
+            ALTER TABLE projects
+                ADD COLUMN created_by_source TEXT DEFAULT NULL,
+                ALTER COLUMN user_id DROP NOT NULL
+        ',
+        );
     }
 
     public function down(Schema $schema): void

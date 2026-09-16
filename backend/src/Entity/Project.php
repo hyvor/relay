@@ -15,9 +15,6 @@ class Project
     #[ORM\Column(type: 'integer')]
     private int $id;
 
-    #[ORM\Column(type: 'integer', nullable: false)]
-    private int $user_id;
-
     #[ORM\Column(type: 'string', length: 255, nullable: false)]
     private string $name;
 
@@ -28,7 +25,7 @@ class Project
     private \DateTimeImmutable $updated_at;
 
     #[ORM\Column(type: 'string', enumType: ProjectSendType::class)]
-	private ProjectSendType $send_type;
+    private ProjectSendType $send_type;
 
     #[ORM\Column(nullable: true)]
     private ?int $organization_id = null;
@@ -36,9 +33,7 @@ class Project
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $created_by_source = null;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function getId(): int
     {
@@ -48,17 +43,6 @@ class Project
     public function setId(int $id): static
     {
         $this->id = $id;
-        return $this;
-    }
-
-    public function getUserId(): int
-    {
-        return $this->user_id;
-    }
-
-    public function setUserId(int $hyvorUserId): static
-    {
-        $this->user_id = $hyvorUserId;
         return $this;
     }
 

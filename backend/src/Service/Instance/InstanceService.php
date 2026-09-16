@@ -29,8 +29,7 @@ class InstanceService
         private LoggerInterface $logger,
         private DomainService $domainService,
         private Config $config,
-    ) {
-    }
+    ) {}
 
     public function tryGetInstance(): ?Instance
     {
@@ -61,38 +60,40 @@ class InstanceService
             'private' => $privateKey,
         ] = Dkim::generateDkimKeys();
 
-        $newProject = $this->projectService->createProject(
-			0,
-			0,
-            'System',
-            ProjectSendType::TRANSACTIONAL,
-            isSystemProject: true,
-            flush: false
-        );
-        $systemProject = $newProject['project'];
-        $systemProjectDomain = $this->domainService->createDomain(
-            $systemProject,
-            $this->config->getInstanceDomain(),
-            dkimSelector: self::DEFAULT_DKIM_SELECTOR,
-            customDkimPublicKey: $publicKey,
-            customDkimPrivateKey: $privateKey,
-            flush: false,
-            dispatch: false
-        );
+        $instance = $this->em->wrapInTransaction(function () use ($publicKey, $privateKey) {
+            $newProject = $this->projectService->createProject(
+                0,
+                'System',
+                ProjectSendType::TRANSACTIONAL,
+                isSystemProject: true,
+                flush: false,
+            );
+            $systemProject = $newProject['project'];
+            $systemProjectDomain = $this->domainService->createDomain(
+                $systemProject,
+                $this->config->getInstanceDomain(),
+                dkimSelector: self::DEFAULT_DKIM_SELECTOR,
+                customDkimPublicKey: $publicKey,
+                customDkimPrivateKey: $privateKey,
+                flush: false,
+                dispatch: false,
+            );
 
-        $instance = new Instance();
-        $instance
-            ->setCreatedAt($this->now())
-            ->setUpdatedAt($this->now())
-            ->setUuid(Uuid::v4())
-            ->setDkimPublicKey($publicKey)
-            ->setDkimPrivateKeyEncrypted($this->encryption->encryptString($privateKey))
-            ->setSystemProject($systemProject);
+            $instance = new Instance();
+            $instance
+                ->setCreatedAt($this->now())
+                ->setUpdatedAt($this->now())
+                ->setUuid(Uuid::v4())
+                ->setDkimPublicKey($publicKey)
+                ->setDkimPrivateKeyEncrypted($this->encryption->encryptString($privateKey))
+                ->setSystemProject($systemProject);
 
-        $this->em->persist($instance);
-        $this->em->persist($systemProject);
-        $this->em->persist($systemProjectDomain);
-        $this->em->flush();
+            $this->em->persist($instance);
+            $this->em->persist($systemProject);
+            $this->em->persist($systemProjectDomain);
+
+            return $instance;
+        });
 
         return $instance;
     }
