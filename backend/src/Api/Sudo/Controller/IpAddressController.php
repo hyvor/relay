@@ -2,6 +2,7 @@
 
 namespace App\Api\Sudo\Controller;
 
+use App\Api\Sudo\Input\GetIpAddressesInput;
 use App\Api\Sudo\Input\UpdateIpAddressInput;
 use App\Api\Sudo\Object\IpAddressObject;
 use App\Service\App\Config;
@@ -13,6 +14,7 @@ use App\Service\Sudo\SudoPermission;
 use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
@@ -29,8 +31,9 @@ class IpAddressController extends AbstractController
     ) {}
 
     #[Route('/ip-addresses', methods: 'GET')]
-    public function getIpAddresses(): JsonResponse
-    {
+    public function getIpAddresses(
+        #[MapQueryString] GetIpAddressesInput $input,
+    ): JsonResponse {
         $ipAddresses = $this->ipAddressService->getAllIpAddresses();
         $warmupSchedules = $this->warmupScheduleService->getCurrentWarmupSchedulesByIpAddresses($ipAddresses);
 
@@ -40,7 +43,7 @@ class IpAddressController extends AbstractController
                 $this->appConfig->getInstanceDomain(),
                 $warmupSchedules[$ipAddress->getId()] ?? null,
             ),
-            $ipAddresses
+            $ipAddresses,
         );
 
         return $this->json($ipAddressObjects);
@@ -70,10 +73,12 @@ class IpAddressController extends AbstractController
 
         $ipAddress = $this->ipAddressService->updateIpAddress($ipAddress, $updates);
 
-        return $this->json(new IpAddressObject(
-            $ipAddress,
-            $this->appConfig->getInstanceDomain(),
-            $this->warmupScheduleService->getCurrentWarmupSchedule($ipAddress),
-        ));
+        return $this->json(
+            new IpAddressObject(
+                $ipAddress,
+                $this->appConfig->getInstanceDomain(),
+                $this->warmupScheduleService->getCurrentWarmupSchedule($ipAddress),
+            ),
+        );
     }
 }

@@ -11,7 +11,6 @@ use App\Service\Ip\Event\IpAddressUpdatedEvent;
 use App\Service\Ip\Event\IpRemovedEvent;
 use App\Service\Queue\QueueService;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Query\ResultSetMappingBuilder;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -36,7 +35,7 @@ class IpAddressService
     {
         return $this->em->getRepository(IpAddress::class)->findBy(
             [],
-            ['id' => 'ASC']
+            ['id' => 'ASC'],
         );
     }
 
@@ -57,7 +56,7 @@ class IpAddressService
     {
         return $this->em->getRepository(IpAddress::class)->findBy(
             ['server' => $server],
-            ['id' => 'ASC']
+            ['id' => 'ASC'],
         );
     }
 
@@ -82,7 +81,7 @@ class IpAddressService
         // Delete IP addresses that are in the database but not in the server's current IP addresses
         $ipAddressesToDelete = array_filter(
             $currentIpAddressesEntitiesInDb,
-            fn(IpAddress $ip) => !in_array($ip->getIpAddress(), $serverIpAddresses)
+            fn(IpAddress $ip) => !in_array($ip->getIpAddress(), $serverIpAddresses),
         );
         foreach ($ipAddressesToDelete as $ipAddress) {
             $this->deleteIpAddress($ipAddress);
@@ -119,7 +118,7 @@ class IpAddressService
 
     public function updateIpAddress(
         IpAddress $ipAddress,
-        UpdateIpAddressDto $updates
+        UpdateIpAddressDto $updates,
     ): IpAddress {
         $ipAddressOld = clone $ipAddress;
 
