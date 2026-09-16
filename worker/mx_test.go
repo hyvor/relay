@@ -1,114 +1,193 @@
 package main
 
 import (
+	"context"
 	"errors"
-	"net"
-	"os"
 	"testing"
 	"time"
 
+	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestMain(m *testing.M) {
-	originalLookupMxFunc := lookupMxFunc
-	originalLookupHostFunc := lookupHostFunc
-	defer func() {
-		lookupMxFunc = originalLookupMxFunc
-		lookupHostFunc = originalLookupHostFunc
-	}()
-	code := m.Run()
-	os.Exit(code)
+func getMxHostsFromDomainContext(ctx context.Context, cache *SharedCache, domain string) ([]string, error) {
+	value, err := getMxValueFromDomainContext(ctx, cache, domain)
+	if err != nil {
+		return nil, err
+	}
+	return getHostsFromMxCacheValue(value), nil
 }
 
-func TestErrorOnLookupBothMxAndHostLookupsFail(t *testing.T) {
-	mxCache.Clear()
-
-	lookupMxFunc = func(_ string) ([]*net.MX, error) {
-		return nil, errors.New("lookup failed")
-	}
-
-	lookupHostFunc = func(_ string) ([]string, error) {
-		return nil, errors.New("lookup failed")
-	}
-
-	_, err := getMxHostsFromDomain("hyvor.com")
-
-	assert.Error(t, err)
-	assert.True(t, errors.Is(err, ErrSmtpMxLookupFailed))
+func withDNSLookupStub(t *testing.T, stub func(context.Context, string, uint16) (DNSLookupResult, error)) {
+	original := lookupDNSFunc
+	originalTLSA := lookupTLSAFunc
+	lookupDNSFunc = stub
+	lookupTLSAFunc = lookupTLSA
+	t.Cleanup(func() {
+		lookupDNSFunc = original
+		lookupTLSAFunc = originalTLSA
+	})
 }
 
-func TestReturnsCurrentHostOnMxLookupFailure(t *testing.T) {
-	mxCache.Clear()
-
-	lookupMxFunc = func(_ string) ([]*net.MX, error) {
-		return nil, errors.New("lookup failed")
+func mxMessage(domain string, records ...dns.RR) *dns.Msg {
+	for _, record := range records {
+		record.Header().Name = dns.Fqdn(domain)
+		if record.Header().Class == 0 {
+			record.Header().Class = dns.ClassINET
+		}
 	}
-
-	lookupHostFunc = func(_ string) ([]string, error) {
-		return []string{"1.1.1.1"}, nil
-	}
-
-	hosts, err := getMxHostsFromDomain("hyvor.com")
-
-	assert.NoError(t, err)
-	assert.Equal(t, []string{"hyvor.com"}, hosts)
-
+	return &dns.Msg{MsgHdr: dns.MsgHdr{Rcode: dns.RcodeSuccess}, Answer: records}
 }
 
-func TestCurrentDomainOnNoMxHosts(t *testing.T) {
-	mxCache.Clear()
+func TestErrorOnLookupFailure(t *testing.T) {
+	withDNSLookupStub(t, func(context.Context, string, uint16) (DNSLookupResult, error) {
+		return DNSLookupResult{}, errors.New("lookup failed")
+	})
 
-	lookupMxFunc = func(_ string) ([]*net.MX, error) {
-		return []*net.MX{}, nil
-	}
+	_, err := getMxHostsFromDomainContext(context.Background(), NewSharedCache(nil), "hyvor.com")
+	assert.ErrorIs(t, err, ErrSmtpMxLookupFailed)
+}
 
-	lookupHostFunc = func(_ string) ([]string, error) {
-		return []string{"1.1.1.1"}, nil
-	}
+func TestReturnsCurrentHostWhenMxIsAbsent(t *testing.T) {
+	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
+		if recordType == dns.TypeMX {
+			return DNSLookupResult{Message: mxMessage("hyvor.com"), TTL: time.Minute}, nil
+		}
+		return DNSLookupResult{
+			Message: mxMessage("hyvor.com", &dns.A{Hdr: dns.RR_Header{Rrtype: dns.TypeA}, A: []byte{1, 1, 1, 1}}),
+			TTL:     time.Minute,
+		}, nil
+	})
 
-	hosts, err := getMxHostsFromDomain("hyvor.com")
-	assert.NoError(t, err)
+	hosts, err := getMxHostsFromDomainContext(context.Background(), NewSharedCache(nil), "hyvor.com")
+	require.NoError(t, err)
 	assert.Equal(t, []string{"hyvor.com"}, hosts)
 }
 
 func TestValidMxLookupAndCache(t *testing.T) {
-
-	mxCache.Clear()
-
-	lookupMxFunc = func(_ string) ([]*net.MX, error) {
-		return []*net.MX{
-			{Host: "mx1.hyvor.com."}, // trims the trailing dot
-			{Host: "mx2.hyvor.com"},
+	lookups := 0
+	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
+		lookups++
+		assert.Equal(t, dns.TypeMX, recordType)
+		return DNSLookupResult{
+			Message: mxMessage("hyvor.com",
+				&dns.MX{Hdr: dns.RR_Header{Rrtype: dns.TypeMX}, Mx: "mx1.hyvor.com.", Preference: 10},
+				&dns.MX{Hdr: dns.RR_Header{Rrtype: dns.TypeMX}, Mx: "mx2.hyvor.com.", Preference: 20},
+			),
+			TTL: 2 * time.Hour,
 		}, nil
-	}
+	})
 
-	hosts, err := getMxHostsFromDomain("hyvor.com")
-	assert.NoError(t, err)
-	assert.Equal(t, 2, len(hosts))
-
-	assert.Equal(t, "mx1.hyvor.com", hosts[0])
-	assert.Equal(t, "mx2.hyvor.com", hosts[1])
-
-	entry, ok := mxCache.data["hyvor.com"]
-	assert.True(t, ok)
-	assert.Equal(t, []string{"mx1.hyvor.com", "mx2.hyvor.com"}, entry.Hosts)
-	assert.WithinDuration(t, time.Now().Add(5*time.Minute), entry.Expiry, 10*time.Second)
-
-}
-
-func TestGetHostsFromCache(t *testing.T) {
-
-	mxCache.Clear()
-
-	// Pre-populate the cache
-	mxCache.data["hyvor.com"] = mxCacheEntry{
-		Hosts:  []string{"mx1.hyvor.com", "mx2.hyvor.com"},
-		Expiry: time.Now().Add(5 * time.Minute),
-	}
-
-	hosts, err := getMxHostsFromDomain("hyvor.com")
-	assert.NoError(t, err)
+	cache := NewSharedCache(nil)
+	hosts, err := getMxHostsFromDomainContext(context.Background(), cache, "HYVOR.COM.")
+	require.NoError(t, err)
 	assert.Equal(t, []string{"mx1.hyvor.com", "mx2.hyvor.com"}, hosts)
 
+	hosts, err = getMxHostsFromDomainContext(context.Background(), cache, "hyvor.com")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"mx1.hyvor.com", "mx2.hyvor.com"}, hosts)
+	assert.Equal(t, 1, lookups)
+}
+
+func TestMxCacheUsesOneHourMaximumTTL(t *testing.T) {
+	cache := NewSharedCache(nil)
+	cacheMxValue(context.Background(), cache, "hyvor.com", MxCacheValue{Records: []MxRecord{{Host: "mx.hyvor.com"}}}, 2*time.Hour)
+
+	item := cache.memory.Get(dnsCacheKey("mx", "hyvor.com"))
+	require.NotNil(t, item)
+	assert.WithinDuration(t, time.Now().Add(time.Hour), item.ExpiresAt(), 2*time.Second)
+}
+
+func TestMxLookupSortsByPriority(t *testing.T) {
+	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
+		require.Equal(t, dns.TypeMX, recordType)
+		return DNSLookupResult{Message: mxMessage("example.com",
+			&dns.MX{Hdr: dns.RR_Header{Rrtype: dns.TypeMX}, Mx: "slow.example.", Preference: 50},
+			&dns.MX{Hdr: dns.RR_Header{Rrtype: dns.TypeMX}, Mx: "fast.example.", Preference: 10},
+		), TTL: time.Minute}, nil
+	})
+
+	hosts, err := getMxHostsFromDomainContext(context.Background(), NewSharedCache(nil), "example.com")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"fast.example", "slow.example"}, hosts)
+}
+
+func TestNullMxIsRejected(t *testing.T) {
+	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
+		require.Equal(t, dns.TypeMX, recordType)
+		return DNSLookupResult{Message: mxMessage("example.com",
+			&dns.MX{Hdr: dns.RR_Header{Rrtype: dns.TypeMX}, Mx: "."},
+		), TTL: time.Minute}, nil
+	})
+
+	_, err := getMxHostsFromDomainContext(context.Background(), NewSharedCache(nil), "example.com")
+	assert.ErrorIs(t, err, ErrSmtpMxPermanent)
+}
+
+func TestMxDnsFailureDoesNotFallbackToAddress(t *testing.T) {
+	lookups := 0
+	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
+		lookups++
+		return DNSLookupResult{Message: &dns.Msg{MsgHdr: dns.MsgHdr{Rcode: dns.RcodeServerFailure}}}, nil
+	})
+
+	_, err := getMxHostsFromDomainContext(context.Background(), NewSharedCache(nil), "example.com")
+	assert.ErrorIs(t, err, ErrSmtpMxLookupFailed)
+	assert.Equal(t, 1, lookups)
+}
+
+func TestMxLookupFallsBackToAAAA(t *testing.T) {
+	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
+		switch recordType {
+		case dns.TypeMX:
+			return DNSLookupResult{Message: mxMessage("example.com"), TTL: time.Minute}, nil
+		case dns.TypeA:
+			return DNSLookupResult{Message: &dns.Msg{MsgHdr: dns.MsgHdr{Rcode: dns.RcodeSuccess}}}, nil
+		case dns.TypeAAAA:
+			return DNSLookupResult{Message: mxMessage("example.com", &dns.AAAA{
+				Hdr:  dns.RR_Header{Rrtype: dns.TypeAAAA},
+				AAAA: []byte{0x20, 0x01},
+			}), TTL: time.Minute}, nil
+		default:
+			t.Fatalf("unexpected record type %d", recordType)
+			return DNSLookupResult{}, nil
+		}
+	})
+
+	hosts, err := getMxHostsFromDomainContext(context.Background(), NewSharedCache(nil), "example.com")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"example.com"}, hosts)
+}
+
+func TestMxLookupFollowsCname(t *testing.T) {
+	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
+		require.Equal(t, dns.TypeMX, recordType)
+		return DNSLookupResult{Message: &dns.Msg{
+			MsgHdr: dns.MsgHdr{Rcode: dns.RcodeSuccess},
+			Answer: []dns.RR{
+				&dns.CNAME{Hdr: dns.RR_Header{Name: "example.com.", Rrtype: dns.TypeCNAME, Class: dns.ClassINET}, Target: "canonical.example."},
+				&dns.MX{Hdr: dns.RR_Header{Name: "canonical.example.", Rrtype: dns.TypeMX, Class: dns.ClassINET}, Mx: "mx.example.", Preference: 10},
+			},
+		}, TTL: time.Minute}, nil
+	})
+
+	hosts, err := getMxHostsFromDomainContext(context.Background(), NewSharedCache(nil), "example.com")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"mx.example"}, hosts)
+}
+
+func TestMxLookupRejectsIncompleteCnameChain(t *testing.T) {
+	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
+		require.Equal(t, dns.TypeMX, recordType, "must not fall back to an address lookup")
+		return DNSLookupResult{Message: &dns.Msg{
+			MsgHdr: dns.MsgHdr{Rcode: dns.RcodeSuccess},
+			Answer: []dns.RR{
+				&dns.CNAME{Hdr: dns.RR_Header{Name: "example.com.", Rrtype: dns.TypeCNAME, Class: dns.ClassINET}, Target: "canonical.example."},
+			},
+		}, TTL: time.Minute}, nil
+	})
+
+	_, err := getMxHostsFromDomainContext(context.Background(), NewSharedCache(nil), "example.com")
+	assert.ErrorIs(t, err, ErrSmtpMxLookupFailed)
 }

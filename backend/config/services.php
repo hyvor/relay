@@ -4,6 +4,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use App\Api\Console\Resolver\EntityResolver;
 use App\Api\Console\Resolver\ProjectResolver;
+use App\Service\App\Cache\SharedCache;
 use App\Service\Dns\Resolve\DnsOverHttp;
 use App\Service\Dns\Resolve\DnsResolveInterface;
 use App\Service\SelfHosted\RelayTelemetryProvider;
@@ -59,6 +60,15 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     // ================ OTHER SERVICES =================
     $services->alias(DnsResolveInterface::class, DnsOverHttp::class);
+
+    $services
+        ->set(DnsOverHttp::class)
+        ->arg('$dnsQueryUrl', '%env(string:DNS_OVER_HTTPS_URL)%');
+
+    $services
+        ->set(SharedCache::class)
+        ->public()
+        ->arg('$pool', service('cache.shared'));
 
     // Lock store shares Doctrine's managed `default` connection (instead of opening its
     // own, unmanaged one) so it benefits from doctrine.dbal's idle_connection_ttl recycling.
@@ -119,4 +129,3 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             new Reference(Filesystem::class),
         ]);
 };
-
