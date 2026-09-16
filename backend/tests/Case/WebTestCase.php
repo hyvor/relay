@@ -41,8 +41,8 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
                 new AuthUserOrganization(
                     id: 1,
                     name: 'Fake Organization',
-                    role: 'admin'
-                )
+                    role: 'admin',
+                ),
             );
         }
 
@@ -81,7 +81,7 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         if ($response->getStatusCode() === 500) {
             throw new \Exception(
                 'API call failed with status code 500. ' .
-                    'Response: ' . $response->getContent()
+                'Response: ' . $response->getContent(),
             );
         }
 
@@ -102,8 +102,10 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         array $parameters = [],
         array $server = [],
         true|array $scopes = true,
-        bool $useSession = false
-    ): Response {
+        bool $useSession = false,
+        ?string $bearerToken = null, // custom token (to test cloud api mostly)
+    ): Response
+    {
         $project = is_int($project) ? $this->em->getRepository(Project::class)->find($project) : $project;
 
         if ($useSession) {
@@ -112,6 +114,8 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
                 $server['HTTP_X_PROJECT_ID'] = (string)$project->getId();
             }
             $server['HTTP_X_ORGANIZATION_ID'] ??= '1';
+        } elseif ($bearerToken) {
+            $server['HTTP_AUTHORIZATION'] = 'Bearer ' . $bearerToken;
         } else {
             $apiKey = bin2hex(random_bytes(\App\Service\ApiKey\ApiKeyService::API_KEY_LENGTH / 2));
             $apiKeyHashed = hash('sha256', $apiKey);
@@ -119,7 +123,7 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
             if ($scopes !== true) {
                 $apiKeyFactory['scopes'] = array_map(
                     fn(RelayScope|string $scope) => is_string($scope) ? $scope : $scope->value,
-                    $scopes
+                    $scopes,
                 );
             }
             ApiKeyFactory::createOne($apiKeyFactory);
@@ -172,7 +176,7 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         if ($response->getStatusCode() === 500) {
             throw new \Exception(
                 'API call failed with status code 500. ' .
-                    'Response: ' . $response->getContent()
+                'Response: ' . $response->getContent(),
             );
         }
 
@@ -212,7 +216,7 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         if ($response->getStatusCode() === 500) {
             throw new \Exception(
                 'API call failed with status code 500. ' .
-                    'Response: ' . $response->getContent()
+                'Response: ' . $response->getContent(),
             );
         }
 

@@ -26,8 +26,7 @@ class RateLimitListener
     public function __construct(
         private RateLimit $rateLimit,
         private RateLimiterProvider $rateLimiterProvider,
-    ) {
-    }
+    ) {}
 
     private const string RATE_LIMIT_HEADERS_ATTRIBUTE_KEY = 'console_api_rate_limit_headers';
 
@@ -50,22 +49,29 @@ class RateLimitListener
 
         //  otherwise, it is an API request with a project
         $project = $consoleAuthResults->getResource();
+
+        if ($project === null) {
+            // cloud API key calling non-project routes
+            return $this->rateLimiterProvider->rateLimiter(
+                $this->rateLimit->session(),
+                'cloud:' . $consoleAuthResults->getOrganizationId(),
+            );
+        }
+
         assert($project instanceof Project);
 
         // special limit for the POST /sends endpoint
         if ($request->getMethod() === 'POST' && $request->getPathInfo() === '/api/console/sends') {
             return $this->rateLimiterProvider->rateLimiter(
                 $this->rateLimit->sends(),
-                'sends:project:' . $project->getId()
+                'sends:project:' . $project->getId(),
             );
         }
 
-        if ($consoleAuthResults->getAccessType() === AccessType::PRODUCT_API_KEY) {
-            $apiKey = $consoleAuthResults->getResource();
-            return $this->rateLimiterProvider->rateLimiter($this->rateLimit->apiKey(), 'api_key:project:' . $project->getId());
-        }
-
-        return $this->rateLimiterProvider->rateLimiter($this->rateLimit->apiKey(), 'cloud:project:' . $project->getId());
+        return $this->rateLimiterProvider->rateLimiter(
+            $this->rateLimit->apiKey(),
+            'project:' . $project->getId(),
+        );
     }
 
     public function onController(ControllerEvent $controllerEvent): void

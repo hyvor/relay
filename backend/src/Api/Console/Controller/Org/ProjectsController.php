@@ -3,10 +3,13 @@
 namespace App\Api\Console\Controller\Org;
 
 use App\Api\Console\Input\CreateProjectInput;
+use App\Api\Console\Object\ProjectObject;
 use App\Api\Console\Object\ProjectUserObject;
 use App\Service\Project\ProjectService;
 use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleAuthResults;
 use Hyvor\Internal\CloudApi\ConsoleApiAuth\OrgEndpoint;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use Nelmio\ApiDocBundle\Attribute\Model;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,6 +25,7 @@ class ProjectsController extends AbstractController
 
     #[Route('/projects', methods: 'POST')]
     #[OrgEndpoint]
+    #[ScopeRequired(RelayScope::ORG_PROJECTS_CREATE)]
     #[OA\Post(
         description: 'Creates a new project in the current organization and adds the authenticated user to it.',
         summary: 'Create a project'
@@ -46,6 +50,11 @@ class ProjectsController extends AbstractController
             createdBySource: $consoleAuth->getSourceString(),
         );
 
-        return $this->json(new ProjectUserObject($newProject['projectUser'], $user));
+        return $this->json([
+            'project' => new ProjectObject($newProject['project']),
+            'project_user' => $newProject['projectUser'] ? new ProjectUserObject(
+                $newProject['projectUser'], $user,
+            ) : null,
+        ]);
     }
 }
