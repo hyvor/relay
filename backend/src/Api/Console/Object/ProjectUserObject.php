@@ -2,7 +2,7 @@
 
 namespace App\Api\Console\Object;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Entity\ProjectUser;
 use Hyvor\Internal\Auth\AuthUser;
 use OpenApi\Attributes as OA;
@@ -18,7 +18,6 @@ class ProjectUserObject
     #[OA\Property(type: 'array', items: new OA\Items(type: 'string'))]
     public array $scopes;
     public ProjectUserMiniObject $user;
-    public ?string $oidc_sub;
     public ProjectObject $project;
 
 
@@ -32,7 +31,6 @@ class ProjectUserObject
         $this->scopes = $scopes;
 
         $this->user = new ProjectUserMiniObject($authUser);
-        $this->oidc_sub = $authUser->oidc_sub;
         $this->project = new ProjectObject($pu->getProject());
     }
 

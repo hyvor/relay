@@ -2,8 +2,8 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Authorization\ScopeRequired;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
 use App\Api\Console\Object\SuppressionObject;
 use App\Entity\Project;
 use App\Entity\Suppression;
@@ -24,7 +24,7 @@ class SuppressionsController extends AbstractController
     }
 
     #[Route('/suppressions', methods: 'GET')]
-    #[ScopeRequired(Scope::SUPPRESSIONS_READ)]
+    #[ScopeRequired(RelayScope::SUPPRESSIONS_READ)]
     #[OA\Get(
         summary: 'Get all suppressions',
         description: 'Returns suppressed email addresses for the project.'
@@ -62,7 +62,7 @@ class SuppressionsController extends AbstractController
     }
 
     #[Route('/suppressions/{id}', methods: 'DELETE')]
-    #[ScopeRequired(Scope::SUPPRESSIONS_WRITE)]
+    #[ScopeRequired(RelayScope::SUPPRESSIONS_WRITE)]
     #[OA\Delete(
         summary: 'Delete a suppression',
         description: 'Removes an email address from the project suppressions list.'

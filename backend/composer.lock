@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d2c4a83dfbcfe6c7ef78212064bca2e2",
+    "content-hash": "b1571f9a01cb07811e1b22818e9b80c4",
     "packages": [
         {
             "name": "async-aws/core",
@@ -1528,16 +1528,16 @@
         },
         {
             "name": "hyvor/internal",
-            "version": "4.1.8",
+            "version": "4.1.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/hyvor/internal.git",
-                "reference": "c825e02edd24d59021b39321e531b7728dce1297"
+                "reference": "4fa707d3e039eb641f3068afee3a7a39ccae85b3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/hyvor/internal/zipball/c825e02edd24d59021b39321e531b7728dce1297",
-                "reference": "c825e02edd24d59021b39321e531b7728dce1297",
+                "url": "https://api.github.com/repos/hyvor/internal/zipball/4fa707d3e039eb641f3068afee3a7a39ccae85b3",
+                "reference": "4fa707d3e039eb641f3068afee3a7a39ccae85b3",
                 "shasum": ""
             },
             "require": {
@@ -1601,9 +1601,9 @@
             "description": "Internal Package for HYVOR Applications",
             "support": {
                 "issues": "https://github.com/hyvor/internal/issues",
-                "source": "https://github.com/hyvor/internal/tree/4.1.8"
+                "source": "https://github.com/hyvor/internal/tree/4.1.9"
             },
-            "time": "2026-09-07T15:57:28+00:00"
+            "time": "2026-09-16T23:05:27+00:00"
         },
         {
             "name": "illuminate/collections",
@@ -11464,5 +11464,5 @@
         "ext-pdo_pgsql": "*"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }

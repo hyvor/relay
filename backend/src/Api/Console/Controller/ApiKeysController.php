@@ -2,8 +2,8 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Authorization\ScopeRequired;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
 use App\Api\Console\Input\CreateApiKeyInput;
 use App\Api\Console\Input\UpdateApiKeyInput;
 use App\Api\Console\Object\ApiKeyObject;
@@ -27,7 +27,7 @@ class ApiKeysController extends AbstractController
     }
 
     #[Route('/api-keys', methods: 'POST')]
-    #[ScopeRequired(Scope::API_KEYS_WRITE)]
+    #[ScopeRequired(RelayScope::API_KEYS_WRITE)]
     #[OA\Post(
         summary: 'Create a new API key',
         description: 'Creates a new API key for the project. The raw key is returned only once and must be stored securely.'
@@ -55,7 +55,7 @@ class ApiKeysController extends AbstractController
     }
 
     #[Route('/api-keys', methods: 'GET')]
-    #[ScopeRequired(Scope::API_KEYS_READ)]
+    #[ScopeRequired(RelayScope::API_KEYS_READ)]
     #[OA\Get(
         summary: 'Get all API keys',
         description: 'Returns all API keys of the project. The raw key is not returned; only its metadata is.'
@@ -77,7 +77,7 @@ class ApiKeysController extends AbstractController
     }
 
     #[Route('/api-keys/{id}', methods: 'PATCH')]
-    #[ScopeRequired(Scope::API_KEYS_WRITE)]
+    #[ScopeRequired(RelayScope::API_KEYS_WRITE)]
     #[OA\Patch(
         summary: 'Update an API key',
         description: 'Updates the name, scopes, enabled status, or allowed IPs of an API key.'
@@ -111,7 +111,7 @@ class ApiKeysController extends AbstractController
             $scopes = $input->scopes ?? $apiKey->getScopes();
             $allowedIps = $input->allowed_ips ?? $apiKey->getAllowedIps();
 
-            if (in_array(Scope::SENDS_SEND->value, $scopes, true) && count($allowedIps) === 0) {
+            if (in_array(RelayScope::SENDS_SEND->value, $scopes, true) && count($allowedIps) === 0) {
                 throw new BadRequestHttpException('At least one allowed IP is required when the "sends.send" scope is enabled.');
             }
         }
@@ -122,7 +122,7 @@ class ApiKeysController extends AbstractController
     }
 
     #[Route('/api-keys/{id}', methods: 'DELETE')]
-    #[ScopeRequired(Scope::API_KEYS_WRITE)]
+    #[ScopeRequired(RelayScope::API_KEYS_WRITE)]
     #[OA\Delete(
         summary: 'Delete an API key',
         description: 'Permanently deletes an API key. Requests made with the deleted key will be rejected immediately.'

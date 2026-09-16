@@ -2,8 +2,8 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Authorization\ScopeRequired;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
 use App\Api\Console\Input\Domain\DomainCreateInput;
 use App\Api\Console\Input\Domain\DomainIdOrDomainInput;
 use App\Api\Console\Object\DomainObject;
@@ -33,7 +33,7 @@ class DomainsController extends AbstractController
     }
 
     #[Route('/domains', methods: 'GET')]
-    #[ScopeRequired(Scope::DOMAINS_READ)]
+    #[ScopeRequired(RelayScope::DOMAINS_READ)]
     #[OA\Get(
         summary: 'Get all domains',
         description: 'Returns all domains registered for the project.'
@@ -67,7 +67,7 @@ class DomainsController extends AbstractController
     }
 
     #[Route('/domains', methods: 'POST')]
-    #[ScopeRequired(Scope::DOMAINS_WRITE)]
+    #[ScopeRequired(RelayScope::DOMAINS_WRITE)]
     #[OA\Post(
         summary: 'Create a domain',
         description: 'Registers a new domain for the project. Generates DKIM keys by default unless a custom private key is provided.'
@@ -96,7 +96,7 @@ class DomainsController extends AbstractController
     }
 
     #[Route('/domains/verify', methods: 'POST')]
-    #[ScopeRequired(Scope::DOMAINS_WRITE)]
+    #[ScopeRequired(RelayScope::DOMAINS_WRITE)]
     #[OA\Post(
         summary: 'Verify a domain',
         description: 'Verifies the DKIM DNS records of a pending domain and updates its status.'
@@ -126,7 +126,7 @@ class DomainsController extends AbstractController
     }
 
     #[Route('/domains/by', methods: 'GET')]
-    #[ScopeRequired(Scope::DOMAINS_READ)]
+    #[ScopeRequired(RelayScope::DOMAINS_READ)]
     #[OA\Get(
         summary: 'Get a domain by ID or name',
         description: 'Returns a single domain identified by its ID or domain name.'
@@ -145,7 +145,7 @@ class DomainsController extends AbstractController
     }
 
     #[Route('/domains', methods: 'DELETE')]
-    #[ScopeRequired(Scope::DOMAINS_WRITE)]
+    #[ScopeRequired(RelayScope::DOMAINS_WRITE)]
     #[OA\Delete(
         summary: 'Delete a domain',
         description: 'Permanently deletes a domain from the project.'

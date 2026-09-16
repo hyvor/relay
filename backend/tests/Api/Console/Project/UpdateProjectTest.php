@@ -2,9 +2,11 @@
 
 namespace App\Tests\Api\Console\Project;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Api\Console\Controller\ProjectController;
+use App\Api\Console\Input\UpdateProjectInput;
 use App\Api\Console\Object\ProjectObject;
+use App\Service\Project\Dto\UpdateProjectDto;
 use App\Entity\Project;
 use App\Service\Project\ProjectService;
 use App\Tests\Case\WebTestCase;
@@ -14,6 +16,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(ProjectController::class)]
 #[CoversClass(ProjectService::class)]
 #[CoversClass(ProjectObject::class)]
+#[CoversClass(UpdateProjectInput::class)]
+#[CoversClass(UpdateProjectDto::class)]
 class UpdateProjectTest extends WebTestCase
 {
     public function test_update_project(): void
@@ -29,7 +33,7 @@ class UpdateProjectTest extends WebTestCase
             [
                 'name' => 'Updated Project Name',
             ],
-            scopes: [Scope::PROJECT_WRITE]
+            scopes: [RelayScope::PROJECT_WRITE]
         );
 
         $this->assertSame(200, $response->getStatusCode());
