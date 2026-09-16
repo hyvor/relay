@@ -7,7 +7,7 @@
 		Dropdown
 	} from '@hyvor/design/components';
 	import type { IpAddress } from '../../sudoTypes';
-	import { serversStore } from '../../sudoStore';
+	import { ipAddressesStore, serversStore } from '../../sudoStore';
 	import IconChevronDown from '@hyvor/icons/IconChevronDown';
 
 	interface Props {
@@ -17,6 +17,15 @@
 	let { selectedIp = $bindable(null) }: Props = $props();
 
 	let showDropdown = $state(false);
+
+	let serverGroups = $derived(
+		$serversStore
+			.map((server) => ({
+				server,
+				ips: $ipAddressesStore.filter((ip) => ip.server_id === server.id)
+			}))
+			.filter((group) => group.ips.length > 0)
+	);
 
 	function handleSelect(ip: IpAddress | null) {
 		selectedIp = ip;
@@ -48,16 +57,14 @@
 			<ActionList>
 				<ActionListItem on:select={() => handleSelect(null)}>Any</ActionListItem>
 
-				{#each $serversStore as server (server.id)}
-					{#if server.ip_addresses.length > 0}
-						<ActionListGroup title={server.hostname}>
-							{#each server.ip_addresses as ip (ip.id)}
-								<ActionListItem on:select={() => handleSelect(ip)}>
-									{ip.ip_address}
-								</ActionListItem>
-							{/each}
-						</ActionListGroup>
-					{/if}
+				{#each serverGroups as group (group.server.id)}
+					<ActionListGroup title={group.server.hostname}>
+						{#each group.ips as ip (ip.id)}
+							<ActionListItem on:select={() => handleSelect(ip)}>
+								{ip.ip_address}
+							</ActionListItem>
+						{/each}
+					</ActionListGroup>
 				{/each}
 			</ActionList>
 		</div>

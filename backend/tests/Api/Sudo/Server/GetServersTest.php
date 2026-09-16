@@ -6,7 +6,6 @@ use App\Api\Sudo\Controller\ServerController;
 use App\Api\Sudo\Object\ServerObject;
 use App\Service\Server\ServerService;
 use App\Tests\Case\WebTestCase;
-use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ServerFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
@@ -49,36 +48,12 @@ class GetServersTest extends WebTestCase
         $this->assertEquals($server3->getId(), $response[0]['id']);
         $this->assertEquals('server3.example.com', $response[0]['hostname']);
         $this->assertEquals($server3->getCreatedAt()->getTimestamp(), $response[0]['created_at']);
-        $this->assertEquals([], $response[0]['ip_addresses']);
 
         $this->assertEquals($server2->getId(), $response[1]['id']);
         $this->assertEquals('server2.example.com', $response[1]['hostname']);
 
         $this->assertEquals($server1->getId(), $response[2]['id']);
         $this->assertEquals('server1.example.com', $response[2]['hostname']);
-    }
-
-    public function test_get_servers_with_ip_addresses(): void
-    {
-        $server = ServerFactory::createOne(['hostname' => 'server.example.com']);
-        $ip1 = IpAddressFactory::createOne(['server' => $server, 'ip_address' => '1.1.1.1']);
-        $ip2 = IpAddressFactory::createOne(['server' => $server, 'ip_address' => '2.2.2.2']);
-
-        $this->em->clear();
-
-        $this->sudoApi('GET', '/servers');
-
-        $this->assertResponseIsSuccessful();
-
-        $json = $this->getJson();
-        $this->assertCount(1, $json);
-
-        $ipAddresses = $json[0]['ip_addresses'];
-        $this->assertCount(2, $ipAddresses);
-
-        $returnedAddresses = array_column($ipAddresses, 'ip_address');
-        $this->assertContains($ip1->getIpAddress(), $returnedAddresses);
-        $this->assertContains($ip2->getIpAddress(), $returnedAddresses);
     }
 
     public function test_get_servers_search(): void

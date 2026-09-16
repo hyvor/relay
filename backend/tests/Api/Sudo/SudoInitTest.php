@@ -44,7 +44,6 @@ class SudoInitTest extends WebTestCase
 
         $this->assertCount(1, $json['servers']);
         $this->assertEquals($server->getId(), $json['servers'][0]['id']);
-        $this->assertCount(1, $json['servers'][0]['ip_addresses']);
 
         $this->assertCount(1, $json['ip_addresses']);
         $this->assertEquals($ip->getId(), $json['ip_addresses'][0]['id']);

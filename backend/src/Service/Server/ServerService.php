@@ -37,25 +37,8 @@ class ServerService
                 ->setParameter('search', '%' . $search . '%');
         }
 
-        /** @var Server[] $servers */
-        $servers = $qb->getQuery()->getResult();
-
-        if ($servers === []) {
-            return [];
-        }
-
-        $ids = array_map(fn(Server $server) => $server->getId(), $servers);
-
         /** @var Server[] */
-        return $this->em->createQueryBuilder()
-            ->select('s', 'i')
-            ->from(Server::class, 's')
-            ->leftJoin('s.ipAddresses', 'i')
-            ->where('s.id IN (:ids)')
-            ->orderBy('s.id', 'DESC')
-            ->setParameter('ids', $ids)
-            ->getQuery()
-            ->getResult();
+        return $qb->getQuery()->getResult();
     }
 
     public function getServersCount(): int

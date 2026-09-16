@@ -2,9 +2,7 @@
 
 namespace App\Api\Sudo\Object;
 
-use App\Entity\IpAddress;
 use App\Entity\Server;
-use App\Entity\WarmupSchedule;
 
 class ServerObject
 {
@@ -18,9 +16,6 @@ class ServerObject
     public int $webhook_workers;
     public int $incoming_workers;
 
-    /**
-     * @param array<int, WarmupSchedule> $currentWarmupSchedules indexed by IP address id
-     */
     public function __construct(
         Server $server,
     ) {

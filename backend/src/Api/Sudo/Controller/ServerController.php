@@ -5,10 +5,7 @@ namespace App\Api\Sudo\Controller;
 use App\Api\Sudo\Input\GetServersInput;
 use App\Api\Sudo\Input\UpdateServerInput;
 use App\Api\Sudo\Object\ServerObject;
-use App\Entity\IpAddress;
 use App\Entity\Server;
-use App\Service\App\Config;
-use App\Service\Ip\WarmupScheduleService;
 use App\Service\Server\Dto\UpdateServerDto;
 use App\Service\Server\ServerService;
 use App\Service\Sudo\SudoPermission;
@@ -26,8 +23,6 @@ class ServerController extends AbstractController
 
     public function __construct(
         private ServerService $serverService,
-        private WarmupScheduleService $warmupScheduleService,
-        private Config $appConfig,
     ) {}
 
     #[Route('/servers', methods: 'GET')]
@@ -35,21 +30,8 @@ class ServerController extends AbstractController
     {
         $servers = $this->serverService->getServers($input->search);
 
-        /** @var IpAddress[] $ipAddresses */
-        $ipAddresses = [];
-        foreach ($servers as $server) {
-            foreach ($server->getIpAddresses() as $ipAddress) {
-                $ipAddresses[] = $ipAddress;
-            }
-        }
-        $warmupSchedules = $this->warmupScheduleService->getCurrentWarmupSchedulesByIpAddresses($ipAddresses);
-
         $serverObjects = array_map(
-            fn(Server $server) => new ServerObject(
-                $server,
-                $this->appConfig->getInstanceDomain(),
-                $warmupSchedules,
-            ),
+            fn(Server $server) => new ServerObject($server),
             $servers
         );
 
@@ -84,6 +66,6 @@ class ServerController extends AbstractController
 
         $this->serverService->updateServer($server, $updates, createUpdateStateTask: true);
 
-        return $this->json(new ServerObject($server, $this->appConfig->getInstanceDomain()));
+        return $this->json(new ServerObject($server));
     }
 }
