@@ -98,16 +98,16 @@ class RateLimitTest extends WebTestCase
 
     public function test_for_cloud_api_org_endpoints(): void
     {
-        $cloudApiServiceMock = $this->createMock(CloudApiService::class);
+        $cloudApiServiceMock = $this->createStub(CloudApiService::class);
         $cloudApiServiceMock
             ->method('decodeJwtToken')
             ->willReturn(
                 CloudJwt::fromArray([
                     'iss' => 'https://api.hyvor.com',
                     'sub' => 'org:1',
-                    'iat' => time(),
-                    'nbf' => time(),
-                    'exp' => time() + 3600,
+                    'iat' => (string)time(),
+                    'nbf' => (string)time(),
+                    'exp' => (string)(time() + 3600),
                     'scope' => 'relay:org.projects.create',
                     'src' => 'dev:test',
                 ]),

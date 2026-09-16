@@ -52,7 +52,7 @@ class ProjectsController extends AbstractController
 
         return $this->json([
             'project' => new ProjectObject($newProject['project']),
-            'project_user' => $newProject['projectUser'] ? new ProjectUserObject(
+            'project_user' => $newProject['projectUser'] && $user ? new ProjectUserObject(
                 $newProject['projectUser'], $user,
             ) : null,
         ]);

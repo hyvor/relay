@@ -60,13 +60,12 @@ class InstanceService
             'private' => $privateKey,
         ] = Dkim::generateDkimKeys();
 
-        $instance = $this->em->wrapInTransaction(function () use ($publicKey, $privateKey) {
+        return $this->em->wrapInTransaction(function () use ($publicKey, $privateKey) {
             $newProject = $this->projectService->createProject(
                 0,
                 'System',
                 ProjectSendType::TRANSACTIONAL,
                 isSystemProject: true,
-                flush: false,
             );
             $systemProject = $newProject['project'];
             $systemProjectDomain = $this->domainService->createDomain(
@@ -94,7 +93,5 @@ class InstanceService
 
             return $instance;
         });
-
-        return $instance;
     }
 }

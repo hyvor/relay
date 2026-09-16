@@ -108,7 +108,7 @@ class ProjectService
     /**
      * @return array{
      *     project: Project,
-     *     projectUser: ($createProjectUser is true ? ProjectUser : null)
+     *     projectUser: ($userId is null ? null : ProjectUser)
      * }
      */
     public function createProject(
@@ -117,7 +117,6 @@ class ProjectService
         ProjectSendType $sendType,
         ?int $userId = null,
         bool $isSystemProject = false,
-        bool $flush = true,
         ?string $createdBySource = null,
     ): array {
         $this->ed->dispatch(new ProjectCreatingEvent($userId));
@@ -128,7 +127,6 @@ class ProjectService
             $sendType,
             $userId,
             $isSystemProject,
-            $flush,
             $createdBySource,
         ) {
             $project = new Project()

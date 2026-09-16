@@ -48,8 +48,8 @@ class AuthorizationTest extends WebTestCase
             new AuthUserOrganization(
                 id: 1,
                 name: 'Fake Organization',
-                role: 'member'
-            )
+                role: 'member',
+            ),
         );
 
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
@@ -61,7 +61,10 @@ class AuthorizationTest extends WebTestCase
             ],
         );
         $this->assertResponseStatusCodeSame(403);
-        $this->assertSame("Unable to find the project from the request. Please provide a valid X-Project-ID header.", $this->getJson()["message"]);
+        $this->assertSame(
+            "Unable to find the project from the request. Please provide a valid X-Project-ID header.",
+            $this->getJson()["message"],
+        );
     }
 
     public function test_authorizes_via_api_key_and_updates_last_usage(): void
@@ -73,11 +76,13 @@ class AuthorizationTest extends WebTestCase
             $project,
             'GET',
             '/sends',
-            scopes: [RelayScope::SENDS_READ]
+            scopes: [RelayScope::SENDS_READ],
         );
         $this->assertResponseStatusCodeSame(200);
 
-        $authResults = $this->client->getRequest()->attributes->get(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY);
+        $authResults = $this->client->getRequest()->attributes->get(
+            ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY,
+        );
         $this->assertInstanceOf(ConsoleAuthResults::class, $authResults);
         $resource = $authResults->getResource();
         $this->assertInstanceOf(Project::class, $resource);
@@ -88,7 +93,7 @@ class AuthorizationTest extends WebTestCase
         $this->assertInstanceOf(ApiKey::class, $apiKey);
         $this->assertSame(
             '2025-06-01 00:00:00',
-            $apiKey->getLastAccessedAt()?->format('Y-m-d H:i:s')
+            $apiKey->getLastAccessedAt()?->format('Y-m-d H:i:s'),
         );
     }
 
@@ -99,7 +104,7 @@ class AuthorizationTest extends WebTestCase
     #[TestWith([['2001:db8::1', '2001:db8::/32'], '2001:db8::1234'])]
     public function test_api_key_with_allowed_ips_accepts_matching_ip(
         array $allowedIps,
-        string $clientIp
+        string $clientIp,
     ): void {
         $project = ProjectFactory::createOne();
         $apiKey = bin2hex(random_bytes(ApiKeyService::API_KEY_LENGTH / 2));
@@ -116,7 +121,7 @@ class AuthorizationTest extends WebTestCase
             server: [
                 'HTTP_AUTHORIZATION' => 'Bearer ' . $apiKey,
                 'HTTP_X_FORWARDED_FOR' => $clientIp,
-            ]
+            ],
         );
         $this->assertResponseStatusCodeSame(200);
     }
@@ -138,7 +143,7 @@ class AuthorizationTest extends WebTestCase
             server: [
                 'HTTP_AUTHORIZATION' => 'Bearer ' . $apiKey,
                 'HTTP_X_FORWARDED_FOR' => '198.51.100.42',
-            ]
+            ],
         );
         $this->assertResponseStatusCodeSame(403);
         $this->assertSame('Client IP is not allowed for this API key.', $this->getJson()['message']);
@@ -161,7 +166,7 @@ class AuthorizationTest extends WebTestCase
             server: [
                 'HTTP_AUTHORIZATION' => 'Bearer ' . $apiKey,
                 'HTTP_X_FORWARDED_FOR' => '198.51.100.42',
-            ]
+            ],
         );
         $this->assertResponseStatusCodeSame(200);
     }
@@ -174,8 +179,8 @@ class AuthorizationTest extends WebTestCase
             new AuthUserOrganization(
                 id: 1,
                 name: 'Fake Organization',
-                role: 'member'
-            )
+                role: 'member',
+            ),
         );
 
         $project = ProjectFactory::createOne();
@@ -191,11 +196,13 @@ class AuthorizationTest extends WebTestCase
             server: [
                 "HTTP_X_PROJECT_ID" => $project->getId(),
                 "HTTP_X_ORGANIZATION_ID" => "1",
-            ]
+            ],
         );
         $this->assertResponseStatusCodeSame(200);
 
-        $authResults = $this->client->getRequest()->attributes->get(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY);
+        $authResults = $this->client->getRequest()->attributes->get(
+            ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY,
+        );
         $this->assertInstanceOf(ConsoleAuthResults::class, $authResults);
         $resource = $authResults->getResource();
         $this->assertInstanceOf(Project::class, $resource);
@@ -211,8 +218,8 @@ class AuthorizationTest extends WebTestCase
             new AuthUserOrganization(
                 id: 1,
                 name: 'Fake Organization',
-                role: 'member'
-            )
+                role: 'member',
+            ),
         );
 
         SudoUserFactory::createOne(['user_id' => 1]);
@@ -228,7 +235,7 @@ class AuthorizationTest extends WebTestCase
             ],
             server: [
                 'HTTP_X_ORGANIZATION_ID' => '1',
-            ]
+            ],
         );
 
         $this->assertResponseStatusCodeSame(200);
@@ -257,14 +264,14 @@ class AuthorizationTest extends WebTestCase
         $cloudJwt = CloudJwt::fromArray([
             'iss' => 'https://api.hyvor.com',
             'sub' => '10',
-            'iat' => (string) time(),
-            'nbf' => (string) time(),
-            'exp' => (string) (time() + 3600),
+            'iat' => (string)time(),
+            'nbf' => (string)time(),
+            'exp' => (string)(time() + 3600),
             'scope' => 'relay:sends.read',
             'src' => 'cloud:123',
         ]);
 
-        $cloudApiService = $this->createMock(CloudApiService::class);
+        $cloudApiService = $this->createStub(CloudApiService::class);
         $cloudApiService->method('decodeJwtToken')->willReturn($cloudJwt);
         $this->container->set(CloudApiService::class, $cloudApiService);
 
@@ -273,13 +280,15 @@ class AuthorizationTest extends WebTestCase
             '/api/console/sends',
             server: [
                 'HTTP_AUTHORIZATION' => 'Bearer cloud_jwt_token_example',
-                'HTTP_X_PROJECT_ID' => (string) $project->getId(),
-            ]
+                'HTTP_X_PROJECT_ID' => (string)$project->getId(),
+            ],
         );
 
         $this->assertResponseStatusCodeSame(200);
 
-        $authResults = $this->client->getRequest()->attributes->get(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY);
+        $authResults = $this->client->getRequest()->attributes->get(
+            ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY,
+        );
         $this->assertInstanceOf(ConsoleAuthResults::class, $authResults);
         $this->assertSame(AccessType::CLOUD_TOKEN, $authResults->getAccessType());
         $this->assertSame(10, $authResults->getOrganizationId());
