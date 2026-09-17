@@ -26,11 +26,11 @@ class Kyc
     #[ORM\Column]
     private int $organization_id;
 
-    #[ORM\Column(length: 255)]
-    private string $name;
-
     #[ORM\Column(enumType: KycAccountType::class)]
     private KycAccountType $account_type;
+
+    #[ORM\Column(length: 255)]
+    private string $name;
 
     #[ORM\Column(length: 255)]
     private string $country;
@@ -107,18 +107,6 @@ class Kyc
         return $this;
     }
 
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    public function setName(string $name): static
-    {
-        $this->name = $name;
-
-        return $this;
-    }
-
     public function getAccountType(): KycAccountType
     {
         return $this->account_type;
@@ -127,6 +115,18 @@ class Kyc
     public function setAccountType(KycAccountType $account_type): static
     {
         $this->account_type = $account_type;
+
+        return $this;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function setName(string $name): static
+    {
+        $this->name = $name;
 
         return $this;
     }

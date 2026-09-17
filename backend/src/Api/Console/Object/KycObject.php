@@ -18,12 +18,10 @@ class KycObject
     public string $address;
     public string $website;
     public KycContentOwnership $content_ownership;
-
     /**
      * @var string[]
      */
     public array $sending_type;
-
     public string $use_case;
     public KycStatus $status;
     public int $submitted_at;

@@ -33,7 +33,7 @@ class GetKycTest extends WebTestCase
             'organization_id' => 1,
             'name' => 'Nadil Karunarathna',
         ]);
-        // a kyc for a different organization should not be returned
+
         KycFactory::createOne(['organization_id' => 2]);
 
         $response = $this->consoleApi(null, 'GET', '/kyc', useSession: true);

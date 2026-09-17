@@ -15,8 +15,10 @@
 				return 'green';
 			case 'rejected':
 				return 'red';
-			default:
+			case 'pending':
 				return 'orange';
+			default:
+				return 'default';
 		}
 	});
 </script>

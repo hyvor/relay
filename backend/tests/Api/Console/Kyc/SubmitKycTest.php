@@ -4,6 +4,7 @@ namespace App\Tests\Api\Console\Kyc;
 
 use App\Api\Console\Controller\Org\KycController;
 use App\Entity\Kyc;
+use App\Entity\Type\KycSendingType;
 use App\Entity\Type\KycStatus;
 use App\Service\Kyc\Event\KycSubmittedEvent;
 use App\Service\Kyc\KycService;
@@ -31,7 +32,7 @@ class SubmitKycTest extends WebTestCase
             'address' => '123 Main Street, Colombo',
             'website' => 'https://hyvor.com',
             'content_ownership' => 'self',
-            'sending_type' => ['transactional'],
+            'sending_type' => [KycSendingType::TRANSACTIONAL->value],
             'use_case' => 'Sending order confirmation emails to our customers.',
         ];
     }
@@ -76,7 +77,7 @@ class SubmitKycTest extends WebTestCase
         $json = $this->getJson();
         $this->assertSame('Nadil Karunarathna', $json['name']);
         $this->assertSame('business', $json['account_type']);
-        $this->assertSame(['transactional'], $json['sending_type']);
+        $this->assertSame([KycSendingType::TRANSACTIONAL->value], $json['sending_type']);
         $this->assertSame('pending', $json['status']);
 
         $kyc = $this->em->getRepository(Kyc::class)->findOneBy(['organization_id' => 1]);
@@ -114,7 +115,7 @@ class SubmitKycTest extends WebTestCase
     public function test_submits_with_multiple_sending_types(): void
     {
         $payload = $this->validPayload();
-        $payload['sending_type'] = ['transactional', 'distributional'];
+        $payload['sending_type'] = [KycSendingType::TRANSACTIONAL->value, KycSendingType::DISTRIBUTIONAL->value];
 
         $this->fakeOrganizationHasPaymentMethod(true);
 
@@ -130,7 +131,7 @@ class SubmitKycTest extends WebTestCase
 
         /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertSame(['transactional', 'distributional'], $json['sending_type']);
+        $this->assertSame([KycSendingType::TRANSACTIONAL->value, KycSendingType::DISTRIBUTIONAL->value], $json['sending_type']);
     }
 
     public function test_fails_validation_when_sending_type_is_empty(): void
