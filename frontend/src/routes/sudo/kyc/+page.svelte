@@ -28,7 +28,7 @@
 	];
 
 	const sortByOptions: { value: KycSortBy; label: string }[] = [
-		{ value: 'created_at', label: 'Submitted date' },
+		{ value: 'created_at', label: 'Created At' },
 		{ value: 'status', label: 'Status' }
 	];
 
@@ -42,7 +42,7 @@
 	let showSortDropdown = $state(false);
 
 	const statusLabel = $derived(
-		statusOptions.find((option) => option.value === statusFilter)?.label ?? 'All statuses'
+		statusOptions.find((option) => option.value === statusFilter)?.label ?? 'All'
 	);
 	const sortByLabel = $derived(
 		sortByOptions.find((option) => option.value === sortBy)?.label ?? ''

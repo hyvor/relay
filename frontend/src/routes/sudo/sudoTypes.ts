@@ -234,8 +234,8 @@ export interface SudoKyc {
 	organization_id: number;
 	created_at: number;
 	updated_at: number;
-	name: string;
 	account_type: KycAccountType;
+	name: string;
 	country: string;
 	address: string;
 	website: string;

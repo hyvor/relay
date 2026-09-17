@@ -8,7 +8,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class GetKycsInput
 {
-
     #[Assert\Choice(callback: [KycStatus::class, 'getValues'])]
     public ?string $status = null;
 
@@ -27,5 +26,4 @@ class GetKycsInput
 
     #[Assert\PositiveOrZero]
     public int $offset = 0;
-
 }
