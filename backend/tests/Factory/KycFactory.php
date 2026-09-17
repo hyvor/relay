@@ -3,7 +3,9 @@
 namespace App\Tests\Factory;
 
 use App\Entity\Kyc;
-use App\Entity\Type\KycBusinessType;
+use App\Entity\Type\KycAccountType;
+use App\Entity\Type\KycContentOwnership;
+use App\Entity\Type\KycSendingType;
 use App\Entity\Type\KycStatus;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
@@ -31,13 +33,14 @@ final class KycFactory extends PersistentObjectFactory
             'created_at' => new \DateTimeImmutable(),
             'updated_at' => new \DateTimeImmutable(),
             'organization_id' => self::faker()->unique()->numberBetween(1, 1000000),
-            'full_name' => self::faker()->name(),
-            'business_type' => KycBusinessType::COMPANY,
-            'business_name' => self::faker()->company(),
+            'name' => self::faker()->name(),
+            'account_type' => KycAccountType::BUSINESS,
             'country' => 'France',
             'address' => self::faker()->address(),
-            'phone' => '+1234567890',
             'website' => self::faker()->url(),
+            'content_ownership' => KycContentOwnership::SELF,
+            'sending_type' => [KycSendingType::TRANSACTIONAL],
+            'use_case' => self::faker()->sentence(),
             'status' => KycStatus::PENDING,
             'submitted_at' => new \DateTimeImmutable(),
         ];

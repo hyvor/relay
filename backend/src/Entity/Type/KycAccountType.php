@@ -2,10 +2,10 @@
 
 namespace App\Entity\Type;
 
-enum KycBusinessType: string
+enum KycAccountType: string
 {
 
     case INDIVIDUAL = 'individual';
-    case COMPANY = 'company';
+    case BUSINESS = 'business';
 
 }

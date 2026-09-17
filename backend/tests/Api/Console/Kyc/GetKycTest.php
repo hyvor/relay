@@ -30,7 +30,7 @@ class GetKycTest extends WebTestCase
     {
         KycFactory::createOne([
             'organization_id' => 1,
-            'full_name' => 'Nadil Karunarathna',
+            'name' => 'Nadil Karunarathna',
         ]);
         // a kyc for a different organization should not be returned
         KycFactory::createOne(['organization_id' => 2]);
@@ -40,7 +40,7 @@ class GetKycTest extends WebTestCase
         $this->assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertSame('Nadil Karunarathna', $json['full_name']);
+        $this->assertSame('Nadil Karunarathna', $json['name']);
     }
 
     public function test_returns_404_on_non_cloud_deployment(): void

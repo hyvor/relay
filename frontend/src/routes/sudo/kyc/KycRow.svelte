@@ -91,10 +91,7 @@
 			{/if}
 		</div>
 		<div class="applicant">
-			<div class="name">{kyc.full_name}</div>
-			{#if kyc.business_name}
-				<div class="business-name">{kyc.business_name}</div>
-			{/if}
+			<div class="name">{kyc.name}</div>
 		</div>
 		<div>{kyc.country}</div>
 		<div><KycStatusTag status={kyc.status} /></div>
@@ -132,20 +129,28 @@
 	{#if opened}
 		<div class="details">
 			<div class="detail">
-				<span class="label">Business type</span>
-				<span class="value">{kyc.business_type}</span>
+				<span class="label">Account type</span>
+				<span class="value">{kyc.account_type}</span>
+			</div>
+			<div class="detail">
+				<span class="label">Content ownership</span>
+				<span class="value">{kyc.content_ownership.replace('_', ' ')}</span>
+			</div>
+			<div class="detail">
+				<span class="label">Sending type</span>
+				<span class="value">{kyc.sending_type.join(', ')}</span>
 			</div>
 			<div class="detail">
 				<span class="label">Address</span>
 				<span>{kyc.address}</span>
 			</div>
 			<div class="detail">
-				<span class="label">Phone</span>
-				<span>{kyc.phone}</span>
-			</div>
-			<div class="detail">
 				<span class="label">Website</span>
 				<a href={kyc.website} target="_blank" rel="noreferrer">{kyc.website}</a>
+			</div>
+			<div class="detail full">
+				<span class="label">Use case</span>
+				<span>{kyc.use_case}</span>
 			</div>
 		</div>
 	{/if}
@@ -171,10 +176,6 @@
 	}
 	.applicant .name {
 		font-weight: 600;
-	}
-	.applicant .business-name {
-		font-size: 12px;
-		color: var(--text-light);
 	}
 	.muted {
 		color: var(--text-light);
@@ -208,5 +209,8 @@
 	}
 	.detail .value {
 		text-transform: capitalize;
+	}
+	.detail.full {
+		grid-column: 1 / -1;
 	}
 </style>

@@ -73,13 +73,14 @@ class KycController extends AbstractController
         try {
             $kyc = $this->kycService->submit(
                 $organization->id,
-                $input->full_name,
-                $input->business_type,
-                $input->business_name,
+                $input->account_type,
+                $input->name,
                 $input->country,
                 $input->address,
-                $input->phone,
                 $input->website,
+                $input->content_ownership,
+                $input->sending_type,
+                $input->use_case,
             );
         } catch (KycAlreadyApprovedException | PaymentMethodRequiredException $e) {
             throw new BadRequestHttpException($e->getMessage(), previous: $e);

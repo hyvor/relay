@@ -2,33 +2,19 @@
 
 namespace App\Api\Console\Input\Kyc;
 
-use App\Entity\Type\KycBusinessType;
+use App\Entity\Type\KycAccountType;
+use App\Entity\Type\KycContentOwnership;
+use App\Entity\Type\KycSendingType;
 use App\Service\Kyc\Countries;
 use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 class KycSubmitInput
 {
+    public KycAccountType $account_type;
 
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
-    public string $full_name;
-
-    public KycBusinessType $business_type;
-
-    #[Assert\Length(max: 255)]
-    public ?string $business_name = null;
-
-    #[Assert\Callback]
-    public function validateBusinessName(ExecutionContextInterface $context): void
-    {
-        if ($this->business_type === KycBusinessType::COMPANY && trim((string)$this->business_name) === '') {
-            $context
-                ->buildViolation('Business name is required for companies.')
-                ->atPath('business_name')
-                ->addViolation();
-        }
-    }
+    public string $name;
 
     #[Assert\NotBlank]
     #[Assert\Choice(choices: Countries::NAMES, message: 'Please select a valid country.')]
@@ -39,13 +25,27 @@ class KycSubmitInput
     public string $address;
 
     #[Assert\NotBlank]
-    #[Assert\Length(max: 50)]
-    #[Assert\Regex(pattern: '/^\+?[0-9 ()\-]+$/', message: 'Please enter a valid phone number.')]
-    public string $phone;
-
-    #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
-    #[Assert\Url(message: 'Please enter a valid URL.')]
+    #[Assert\Regex(
+        pattern: '/^(https?:\/\/.+|([a-z0-9-]+\.)+[a-z]{2,}(\/.*)?)$/i',
+        message: 'Please enter a valid website.'
+    )]
     public string $website;
 
+    public KycContentOwnership $content_ownership;
+
+    /**
+     * @var list<string>
+     */
+    #[Assert\NotBlank]
+    #[Assert\Type('array')]
+    #[Assert\Count(min: 1, minMessage: 'Select at least one sending type.')]
+    #[Assert\All([
+        new Assert\Choice(enum: KycSendingType::class),
+    ])]
+    public array $sending_type;
+
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 5000)]
+    public string $use_case;
 }

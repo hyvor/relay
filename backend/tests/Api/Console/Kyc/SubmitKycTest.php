@@ -25,13 +25,14 @@ class SubmitKycTest extends WebTestCase
     private function validPayload(): array
     {
         return [
-            'full_name' => 'Nadil Karunarathna',
-            'business_type' => 'company',
-            'business_name' => 'HYVOR',
+            'name' => 'Nadil Karunarathna',
+            'account_type' => 'business',
             'country' => 'Sri Lanka',
             'address' => '123 Main Street, Colombo',
-            'phone' => '+94771234567',
             'website' => 'https://hyvor.com',
+            'content_ownership' => 'self',
+            'sending_type' => ['transactional'],
+            'use_case' => 'Sending order confirmation emails to our customers.',
         ];
     }
 
@@ -39,13 +40,6 @@ class SubmitKycTest extends WebTestCase
     {
         parent::setUp();
         $_ENV['DEPLOYMENT'] = 'cloud';
-        // Note: deliberately not faking the GetOrganizations (payment method) Comms
-        // response here. Doing so would resolve the CommsInterface service (and,
-        // transitively, InternalConfig) this early, which freezes the deployment
-        // value for the rest of the test - breaking tests that override
-        // $_ENV['DEPLOYMENT'] afterwards (e.g. test_returns_404_on_non_cloud_deployment).
-        // Each test that actually reaches KycService::submit()'s payment-method
-        // check calls fakeOrganizationHasPaymentMethod() itself instead.
     }
 
     private function fakeOrganizationHasPaymentMethod(bool $hasPaymentMethod): void
@@ -80,23 +74,22 @@ class SubmitKycTest extends WebTestCase
 
         /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertSame('Nadil Karunarathna', $json['full_name']);
-        $this->assertSame('company', $json['business_type']);
+        $this->assertSame('Nadil Karunarathna', $json['name']);
+        $this->assertSame('business', $json['account_type']);
+        $this->assertSame(['transactional'], $json['sending_type']);
         $this->assertSame('pending', $json['status']);
 
         $kyc = $this->em->getRepository(Kyc::class)->findOneBy(['organization_id' => 1]);
         $this->assertNotNull($kyc);
-        $this->assertSame('HYVOR', $kyc->getBusinessName());
         $this->assertSame('Sri Lanka', $kyc->getCountry());
 
         $this->getEd()->assertDispatched(KycSubmittedEvent::class);
     }
 
-    public function test_submits_as_individual_without_business_name(): void
+    public function test_submits_as_individual(): void
     {
         $payload = $this->validPayload();
-        $payload['business_type'] = 'individual';
-        unset($payload['business_name']);
+        $payload['account_type'] = 'individual';
 
         $this->fakeOrganizationHasPaymentMethod(true);
 
@@ -112,12 +105,64 @@ class SubmitKycTest extends WebTestCase
 
         /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertSame('individual', $json['business_type']);
-        $this->assertNull($json['business_name']);
+        $this->assertSame('individual', $json['account_type']);
 
         $kyc = $this->em->getRepository(Kyc::class)->findOneBy(['organization_id' => 1]);
         $this->assertNotNull($kyc);
-        $this->assertNull($kyc->getBusinessName());
+    }
+
+    public function test_submits_with_multiple_sending_types(): void
+    {
+        $payload = $this->validPayload();
+        $payload['sending_type'] = ['transactional', 'distributional'];
+
+        $this->fakeOrganizationHasPaymentMethod(true);
+
+        $response = $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            $payload,
+            useSession: true
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+
+        /** @var array<string, mixed> $json */
+        $json = $this->getJson();
+        $this->assertSame(['transactional', 'distributional'], $json['sending_type']);
+    }
+
+    public function test_fails_validation_when_sending_type_is_empty(): void
+    {
+        $payload = $this->validPayload();
+        $payload['sending_type'] = [];
+
+        $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            $payload,
+            useSession: true
+        );
+
+        $this->assertHasViolation('sending_type');
+    }
+
+    public function test_fails_validation_when_sending_type_has_invalid_value(): void
+    {
+        $payload = $this->validPayload();
+        $payload['sending_type'] = ['marketing'];
+
+        $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            $payload,
+            useSession: true
+        );
+
+        $this->assertHasViolation('sending_type[0]');
     }
 
     public function test_fails_validation_when_website_missing(): void
@@ -136,12 +181,30 @@ class SubmitKycTest extends WebTestCase
         $this->assertHasViolation('website');
     }
 
+    public function test_accepts_website_without_protocol(): void
+    {
+        $payload = $this->validPayload();
+        $payload['website'] = 'www.hyvor.com';
+
+        $this->fakeOrganizationHasPaymentMethod(true);
+
+        $response = $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            $payload,
+            useSession: true
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+    }
+
     public function test_resubmits_and_overwrites_previous_data(): void
     {
         KycFactory::createOne([
             'organization_id' => 1,
             'status' => KycStatus::REJECTED,
-            'full_name' => 'Old Name',
+            'name' => 'Old Name',
         ]);
 
         $this->fakeOrganizationHasPaymentMethod(true);
@@ -157,7 +220,7 @@ class SubmitKycTest extends WebTestCase
         $this->assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertSame('Nadil Karunarathna', $json['full_name']);
+        $this->assertSame('Nadil Karunarathna', $json['name']);
         $this->assertSame('pending', $json['status']);
 
         $count = count($this->em->getRepository(Kyc::class)->findBy(['organization_id' => 1]));
@@ -218,10 +281,10 @@ class SubmitKycTest extends WebTestCase
         $this->assertResponseFailed(400);
     }
 
-    public function test_fails_validation_when_full_name_missing(): void
+    public function test_fails_validation_when_name_missing(): void
     {
         $payload = $this->validPayload();
-        unset($payload['full_name']);
+        unset($payload['name']);
 
         $this->consoleApi(
             null,
@@ -231,13 +294,13 @@ class SubmitKycTest extends WebTestCase
             useSession: true
         );
 
-        $this->assertHasViolation('full_name');
+        $this->assertHasViolation('name');
     }
 
-    public function test_fails_validation_when_business_name_missing_for_company(): void
+    public function test_fails_validation_when_use_case_missing(): void
     {
         $payload = $this->validPayload();
-        $payload['business_name'] = '';
+        unset($payload['use_case']);
 
         $this->consoleApi(
             null,
@@ -247,7 +310,7 @@ class SubmitKycTest extends WebTestCase
             useSession: true
         );
 
-        $this->assertHasViolation('business_name');
+        $this->assertHasViolation('use_case');
     }
 
     public function test_fails_validation_when_country_is_not_a_known_country(): void

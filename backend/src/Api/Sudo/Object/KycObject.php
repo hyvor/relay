@@ -3,7 +3,9 @@
 namespace App\Api\Sudo\Object;
 
 use App\Entity\Kyc;
-use App\Entity\Type\KycBusinessType;
+use App\Entity\Type\KycAccountType;
+use App\Entity\Type\KycContentOwnership;
+use App\Entity\Type\KycSendingType;
 use App\Entity\Type\KycStatus;
 
 class KycObject
@@ -12,13 +14,19 @@ class KycObject
     public int $organization_id;
     public int $created_at;
     public int $updated_at;
-    public string $full_name;
-    public KycBusinessType $business_type;
-    public ?string $business_name;
+    public KycAccountType $account_type;
+    public string $name;
     public string $country;
     public string $address;
-    public string $phone;
     public string $website;
+    public KycContentOwnership $content_ownership;
+
+    /**
+     * @var KycSendingType[]
+     */
+    public array $sending_type;
+
+    public string $use_case;
     public KycStatus $status;
     public int $submitted_at;
 
@@ -28,13 +36,14 @@ class KycObject
         $this->organization_id = $kyc->getOrganizationId();
         $this->created_at = $kyc->getCreatedAt()->getTimestamp();
         $this->updated_at = $kyc->getUpdatedAt()->getTimestamp();
-        $this->full_name = $kyc->getFullName();
-        $this->business_type = $kyc->getBusinessType();
-        $this->business_name = $kyc->getBusinessName();
+        $this->account_type = $kyc->getAccountType();
+        $this->name = $kyc->getName();
         $this->country = $kyc->getCountry();
         $this->address = $kyc->getAddress();
-        $this->phone = $kyc->getPhone();
         $this->website = $kyc->getWebsite();
+        $this->content_ownership = $kyc->getContentOwnership();
+        $this->sending_type = $kyc->getSendingType();
+        $this->use_case = $kyc->getUseCase();
         $this->status = $kyc->getStatus();
         $this->submitted_at = $kyc->getSubmittedAt()->getTimestamp();
     }

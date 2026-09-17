@@ -3,7 +3,8 @@
 namespace App\Service\Kyc;
 
 use App\Entity\Kyc;
-use App\Entity\Type\KycBusinessType;
+use App\Entity\Type\KycAccountType;
+use App\Entity\Type\KycContentOwnership;
 use App\Entity\Type\KycStatus;
 use App\Repository\KycRepository;
 use App\Service\Kyc\Dto\KycApprovalResult;
@@ -96,17 +97,21 @@ class KycService
 
     /**
      * @throws KycAlreadyApprovedException if the organization's KYC is already approved
-     * @throws PaymentMethodRequiredException if the organization has no payment method on file
+     * @throws PaymentMethodRequiredException if the organization has no payment method added
+     */
+    /**
+     * @param string[] $sendingType
      */
     public function submit(
         int $organizationId,
-        string $fullName,
-        KycBusinessType $businessType,
-        ?string $businessName,
+        KycAccountType $accountType,
+        string $name,
         string $country,
         string $address,
-        string $phone,
-        string $website
+        string $website,
+        KycContentOwnership $contentOwnership,
+        array $sendingType,
+        string $useCase,
     ): Kyc {
         $kyc = $this->getByOrganizationId($organizationId);
 
@@ -123,13 +128,14 @@ class KycService
         }
 
         $kyc->setUpdatedAt($this->now());
-        $kyc->setFullName($fullName);
-        $kyc->setBusinessType($businessType);
-        $kyc->setBusinessName($businessName);
+        $kyc->setAccountType($accountType);
+        $kyc->setName($name);
         $kyc->setCountry($country);
         $kyc->setAddress($address);
-        $kyc->setPhone($phone);
         $kyc->setWebsite($website);
+        $kyc->setContentOwnership($contentOwnership);
+        $kyc->setSendingType($sendingType);
+        $kyc->setUseCase($useCase);
         $kyc->setStatus(KycStatus::PENDING);
         $kyc->setSubmittedAt($this->now());
 

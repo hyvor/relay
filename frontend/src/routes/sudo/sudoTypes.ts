@@ -224,7 +224,9 @@ export interface SudoProjectResponse {
 // KYC
 
 export type KycStatus = 'pending' | 'approved' | 'rejected';
-export type KycBusinessType = 'individual' | 'company';
+export type KycAccountType = 'individual' | 'business';
+export type KycContentOwnership = 'self' | 'third_party';
+export type KycSendingType = 'transactional' | 'distributional';
 export type KycSortBy = 'submitted_at' | 'status' | 'created_at';
 
 export interface SudoKyc {
@@ -232,13 +234,14 @@ export interface SudoKyc {
 	organization_id: number;
 	created_at: number;
 	updated_at: number;
-	full_name: string;
-	business_type: KycBusinessType;
-	business_name: string | null;
+	name: string;
+	account_type: KycAccountType;
 	country: string;
 	address: string;
-	phone: string;
 	website: string;
+	content_ownership: KycContentOwnership;
+	sending_type: KycSendingType[];
+	use_case: string;
 	status: KycStatus;
 	submitted_at: number;
 }

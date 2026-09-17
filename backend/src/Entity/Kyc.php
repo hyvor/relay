@@ -2,7 +2,9 @@
 
 namespace App\Entity;
 
-use App\Entity\Type\KycBusinessType;
+use App\Entity\Type\KycAccountType;
+use App\Entity\Type\KycContentOwnership;
+use App\Entity\Type\KycSendingType;
 use App\Entity\Type\KycStatus;
 use App\Repository\KycRepository;
 use Doctrine\ORM\Mapping as ORM;
@@ -26,13 +28,10 @@ class Kyc
     private int $organization_id;
 
     #[ORM\Column(length: 255)]
-    private string $full_name;
+    private string $name;
 
-    #[ORM\Column(enumType: KycBusinessType::class)]
-    private KycBusinessType $business_type;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $business_name = null;
+    #[ORM\Column(enumType: KycAccountType::class)]
+    private KycAccountType $account_type;
 
     #[ORM\Column(length: 255)]
     private string $country;
@@ -40,11 +39,20 @@ class Kyc
     #[ORM\Column(type: 'text')]
     private string $address;
 
-    #[ORM\Column(length: 50)]
-    private string $phone;
-
     #[ORM\Column(length: 255)]
     private string $website;
+
+    #[ORM\Column(enumType: KycContentOwnership::class)]
+    private KycContentOwnership $content_ownership;
+
+    /**
+     * @var KycSendingType[]
+     */
+    #[ORM\Column(type: 'json')]
+    private array $sending_type = [];
+
+    #[ORM\Column(type: 'text')]
+    private string $use_case;
 
     #[ORM\Column(enumType: KycStatus::class)]
     private KycStatus $status;
@@ -100,38 +108,26 @@ class Kyc
         return $this;
     }
 
-    public function getFullName(): string
+    public function getName(): string
     {
-        return $this->full_name;
+        return $this->name;
     }
 
-    public function setFullName(string $full_name): static
+    public function setName(string $name): static
     {
-        $this->full_name = $full_name;
+        $this->name = $name;
 
         return $this;
     }
 
-    public function getBusinessType(): KycBusinessType
+    public function getAccountType(): KycAccountType
     {
-        return $this->business_type;
+        return $this->account_type;
     }
 
-    public function setBusinessType(KycBusinessType $business_type): static
+    public function setAccountType(KycAccountType $account_type): static
     {
-        $this->business_type = $business_type;
-
-        return $this;
-    }
-
-    public function getBusinessName(): ?string
-    {
-        return $this->business_name;
-    }
-
-    public function setBusinessName(?string $business_name): static
-    {
-        $this->business_name = $business_name;
+        $this->account_type = $account_type;
 
         return $this;
     }
@@ -160,18 +156,6 @@ class Kyc
         return $this;
     }
 
-    public function getPhone(): string
-    {
-        return $this->phone;
-    }
-
-    public function setPhone(string $phone): static
-    {
-        $this->phone = $phone;
-
-        return $this;
-    }
-
     public function getWebsite(): string
     {
         return $this->website;
@@ -180,6 +164,48 @@ class Kyc
     public function setWebsite(string $website): static
     {
         $this->website = $website;
+
+        return $this;
+    }
+
+    public function getContentOwnership(): KycContentOwnership
+    {
+        return $this->content_ownership;
+    }
+
+    public function setContentOwnership(KycContentOwnership $content_ownership): static
+    {
+        $this->content_ownership = $content_ownership;
+
+        return $this;
+    }
+
+    /**
+     * @return KycSendingType[]
+     */
+    public function getSendingType(): array
+    {
+        return $this->sending_type;
+    }
+
+    /**
+     * @param KycSendingType[] $sending_type
+     */
+    public function setSendingType(array $sending_type): static
+    {
+        $this->sending_type = $sending_type;
+
+        return $this;
+    }
+
+    public function getUseCase(): string
+    {
+        return $this->use_case;
+    }
+
+    public function setUseCase(string $use_case): static
+    {
+        $this->use_case = $use_case;
 
         return $this;
     }

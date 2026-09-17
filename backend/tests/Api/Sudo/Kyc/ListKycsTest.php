@@ -40,8 +40,8 @@ class ListKycsTest extends WebTestCase
             AuthFake::generateOrganization(['id' => 200, 'name' => 'Globex']),
         );
 
-        KycFactory::createOne(['organization_id' => 100, 'full_name' => 'A']);
-        KycFactory::createOne(['organization_id' => 200, 'full_name' => 'B']);
+        KycFactory::createOne(['organization_id' => 100, 'name' => 'A']);
+        KycFactory::createOne(['organization_id' => 200, 'name' => 'B']);
 
         $response = $this->sudoApi('GET', '/kyc');
         $this->assertSame(200, $response->getStatusCode());

@@ -18,7 +18,13 @@ final class Version20260911100000 extends AbstractMigration
     {
         $this->addSql(
             <<<SQL
-            CREATE TYPE kyc_business_type_enum AS ENUM ('individual', 'company');
+            CREATE TYPE kyc_account_type_enum AS ENUM ('individual', 'business');
+        SQL
+        );
+
+        $this->addSql(
+            <<<SQL
+            CREATE TYPE kyc_content_ownership_enum AS ENUM ('self', 'third_party');
         SQL
         );
 
@@ -35,13 +41,14 @@ final class Version20260911100000 extends AbstractMigration
                 created_at TIMESTAMPTZ NOT NULL,
                 updated_at TIMESTAMPTZ NOT NULL,
                 organization_id BIGINT NOT NULL,
-                full_name VARCHAR(255) NOT NULL,
-                business_type kyc_business_type_enum NOT NULL,
-                business_name VARCHAR(255),
+                name VARCHAR(255) NOT NULL,
+                account_type kyc_account_type_enum NOT NULL,
                 country VARCHAR(255) NOT NULL,
                 address TEXT NOT NULL,
-                phone VARCHAR(50) NOT NULL,
                 website VARCHAR(255) NOT NULL,
+                content_ownership kyc_content_ownership_enum NOT NULL,
+                sending_type JSON NOT NULL,
+                use_case TEXT NOT NULL,
                 status kyc_status_enum NOT NULL DEFAULT 'pending',
                 submitted_at TIMESTAMPTZ NOT NULL,
                 UNIQUE (organization_id)
@@ -54,6 +61,7 @@ final class Version20260911100000 extends AbstractMigration
     {
         $this->addSql('DROP TABLE kyc');
         $this->addSql('DROP TYPE kyc_status_enum');
-        $this->addSql('DROP TYPE kyc_business_type_enum');
+        $this->addSql('DROP TYPE kyc_content_ownership_enum');
+        $this->addSql('DROP TYPE kyc_account_type_enum');
     }
 }
