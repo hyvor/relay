@@ -95,15 +95,12 @@ export type SendContent = {
 };
 
 export type SendRecipientStatus =
-	| 'queued'
-	| 'accepted'
-	| 'deferred'
-	| 'bounced'
-	| 'suppressed'
-	| 'failed'
-	| 'complained';
+	'queued' | 'accepted' | 'deferred' | 'bounced' | 'suppressed' | 'failed' | 'complained';
 
-export type SendRecipientStatusForAttempt = Omit<SendRecipientStatus, 'queued' | 'suppressed' | 'complained'>;
+export type SendRecipientStatusForAttempt = Omit<
+	SendRecipientStatus,
+	'queued' | 'suppressed' | 'complained'
+>;
 
 export interface SendRecipient {
 	id: number;
@@ -235,7 +232,11 @@ export interface AnalyticsStats {
 	complaint_rate: number;
 }
 
-export type KycBusinessType = 'individual' | 'company';
+export type KycAccountType = 'individual' | 'business';
+
+export type KycContentOwnership = 'self' | 'third_party';
+
+export type KycSendingType = 'transactional' | 'distributional';
 
 export type KycStatus = 'pending' | 'approved' | 'rejected';
 
@@ -243,12 +244,13 @@ export interface Kyc {
 	id: number;
 	created_at: number;
 	updated_at: number;
-	full_name: string;
-	business_type: KycBusinessType;
-	business_name: string | null;
+	account_type: KycAccountType;
+	name: string;
 	country: string;
 	address: string;
-	phone: string;
+	content_ownership: KycContentOwnership;
+	sending_type: KycSendingType[];
+	use_case: string;
 	website: string;
 	status: KycStatus;
 	submitted_at: number;
@@ -262,4 +264,3 @@ export interface ProjectUserMiniObject {
 	picture_url: string | null;
 	oidc_sub: string | null;
 }
-

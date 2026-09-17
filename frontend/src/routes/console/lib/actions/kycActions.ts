@@ -1,14 +1,15 @@
-import type { Kyc, KycBusinessType } from '../../types';
+import type { Kyc, KycAccountType, KycContentOwnership, KycSendingType } from '../../types';
 import consoleApi from '../consoleApi.svelte';
 
 export interface KycSubmitData {
-	full_name: string;
-	business_type: KycBusinessType;
-	business_name?: string;
+	account_type: KycAccountType;
+	name: string;
 	country: string;
 	address: string;
-	phone: string;
 	website: string;
+	content_ownership: KycContentOwnership;
+	sending_type: KycSendingType[];
+	use_case: string;
 }
 
 export function getKyc() {

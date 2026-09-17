@@ -13,15 +13,13 @@
 	interface Props {
 		onSuccess: (card: CollectedCard) => void;
 		onError: (message: string) => void;
+		cardAdded: boolean;
 	}
 
-	let { onSuccess, onError }: Props = $props();
+	let { onSuccess, onError, cardAdded = $bindable() }: Props = $props();
 
 	let wrap: HTMLDivElement | undefined = $state(undefined);
 
-	// Embeds HYVOR's card-collection component (built in core) the same way
-	// other products embed the billing plans component - see
-	// core/frontend/static/js/card-component-iframe.js for the counterpart.
 	onMount(() => {
 		if (!wrap) {
 			return;
@@ -35,6 +33,7 @@
 		function handleSuccess(event: Event) {
 			const card = (event as CustomEvent).detail?.card as CollectedCard | undefined;
 			if (card) {
+				cardAdded = true;
 				onSuccess(card);
 			}
 		}
@@ -44,12 +43,21 @@
 			onError(message || 'Failed to add card. Please try again.');
 		}
 
+		function handleExisting(event: Event) {
+			const card = (event as CustomEvent).detail?.card as CollectedCard | undefined;
+			if (card) {
+				cardAdded = true;
+			}
+		}
+
 		window.addEventListener('card-component-iframe-success', handleSuccess);
 		window.addEventListener('card-component-iframe-error', handleError);
+		window.addEventListener('card-component-iframe-existing', handleExisting);
 
 		return () => {
 			window.removeEventListener('card-component-iframe-success', handleSuccess);
 			window.removeEventListener('card-component-iframe-error', handleError);
+			window.removeEventListener('card-component-iframe-existing', handleExisting);
 			// eslint-disable-next-line svelte/no-dom-manipulating -- undo the appendChild above
 			wrap?.removeChild(script);
 		};

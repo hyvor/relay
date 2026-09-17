@@ -12,57 +12,63 @@
 		Callout,
 		Loader,
 		toast,
-		Tooltip
+		Tooltip,
+		InputGroup,
+		Radio,
+		Checkbox
+
 	} from '@hyvor/design/components';
 	import SingleBox from '../../@components/content/SingleBox.svelte';
 	import CardCollector from './CardCollector.svelte';
 	import { getAppConfig } from '../../lib/stores/consoleStore';
 	import { getKyc, submitKyc } from '../../lib/actions/kycActions';
 	import { COUNTRIES } from '../../lib/countries';
-	import type { Kyc, KycBusinessType } from '../../types';
+	import type { Kyc, KycAccountType, KycContentOwnership, KycSendingType } from '../../types';
 
 	let loading = $state(true);
 	let saving = $state(false);
 	let existingKyc = $state<Kyc | null>(null);
+
 	let currentStep = $state<1 | 2>(1);
-	// true once the details form has been validated and "Next" clicked in this session,
-	// so the user can move between steps without having submitted anything yet
+
 	let detailsConfirmed = $state(false);
-	// true once the card component has confirmed a card was added and saved -
-	// the KYC can't be (re)submitted before this
 	let cardAdded = $state(false);
 
-	let fullName = $state('');
-	let businessType = $state<KycBusinessType>('individual');
-	let businessName = $state('');
+	let accountType = $state<KycAccountType>('individual');
+	let name = $state('');
 	let country = $state('');
 	let address = $state('');
-	let phone = $state('');
 	let website = $state('');
+	let contentOwnership = $state<KycContentOwnership>('self');
+	let sendingType = $state<KycSendingType[]>([]);
+	let useCase = $state('');
 
 	let errors = $state<Record<string, string>>({});
-
-	const businessTypeOptions = [
-		{ value: 'individual', label: 'Individual' },
-		{ value: 'company', label: 'Company / Organization' }
-	];
 
 	const countryOptions = COUNTRIES.map((name) => ({ value: name, label: name }));
 
 	const isApproved = $derived(existingKyc?.status === 'approved');
 
 	function fillForm(kyc: Kyc) {
-		fullName = kyc.full_name;
-		businessType = kyc.business_type;
-		businessName = kyc.business_name ?? '';
+		name = kyc.name;
+		accountType = kyc.account_type;
 		country = kyc.country;
 		address = kyc.address;
-		phone = kyc.phone;
 		website = kyc.website;
+		contentOwnership = kyc.content_ownership;
+		sendingType = kyc.sending_type;
+		useCase = kyc.use_case;
+	}
+
+	function toggleSendingType(type: KycSendingType) {
+		if (sendingType.includes(type)) {
+			sendingType = sendingType.filter((t) => t !== type);
+		} else {
+			sendingType = [...sendingType, type];
+		}
 	}
 
 	function goToStep(step: 1 | 2) {
-		// step 2 (payment) only makes sense once the details step has been completed
 		if (step === 2 && !existingKyc && !detailsConfirmed) {
 			return;
 		}
@@ -81,10 +87,6 @@
 				if (res) {
 					fillForm(res);
 					detailsConfirmed = true;
-					// a previous submission only exists because a card was added and
-					// saved first (see handleSubmit), so this is safe to assume
-					cardAdded = true;
-					currentStep = 2;
 				}
 			})
 			.catch((error) => {
@@ -98,12 +100,12 @@
 	function validate(): boolean {
 		errors = {};
 
-		if (!fullName.trim()) {
-			errors.full_name = 'Full name is required';
+		if (!name.trim()) {
+			errors.name = 'Full name is required';
 		}
 
-		if (businessType === 'company' && !businessName.trim()) {
-			errors.business_name = 'Business name is required for companies';
+		if (accountType === 'business' && !name.trim()) {
+			errors.name = 'Business name is required for businesses';
 		}
 
 		if (!country) {
@@ -114,23 +116,26 @@
 			errors.address = 'Address is required';
 		}
 
-		if (!phone.trim()) {
-			errors.phone = 'Phone number is required';
-		} else if (!/^\+?[0-9 ()-]+$/.test(phone.trim())) {
-			errors.phone = 'Enter a valid phone number';
-		}
-
 		if (!website.trim()) {
 			errors.website = 'Website is required';
-		} else if (!/^https?:\/\/.+/i.test(website.trim())) {
-			errors.website = 'Enter a valid URL starting with http:// or https://';
+		} else if (
+			!/^https?:\/\/.+/i.test(website.trim()) &&
+			!/^([a-z0-9-]+\.)+[a-z]{2,}(\/.*)?$/i.test(website.trim())
+		) {
+			errors.website = 'Enter a valid website, e.g. https://example.com or www.example.com';
+		}
+
+		if (sendingType.length === 0) {
+			errors.sendingType = 'Select at least one sending type';
+		}
+
+		if (useCase.trim() === '') {
+			errors.useCase = 'Use case is required';
 		}
 
 		return Object.keys(errors).length === 0;
 	}
 
-	// step 1: just validates and moves on to the payment step. Nothing is saved yet -
-	// the KYC is only submitted once the payment step is also done (see handleSubmit).
 	function handleNext() {
 		if (!validate()) {
 			return;
@@ -140,7 +145,6 @@
 		currentStep = 2;
 	}
 
-	// step 2: this is where the KYC actually gets submitted, now that the card is added too.
 	function handleSubmit() {
 		if (saving || !cardAdded) {
 			return;
@@ -149,13 +153,14 @@
 		saving = true;
 
 		submitKyc({
-			full_name: fullName.trim(),
-			business_type: businessType,
-			business_name: businessName.trim() || undefined,
+			account_type: accountType,
+			name: name.trim(),
 			country,
 			address: address.trim(),
-			phone: phone.trim(),
-			website: website.trim()
+			website: website.trim(),
+			content_ownership: contentOwnership,
+			sending_type: sendingType,
+			use_case: useCase
 		})
 			.then((res) => {
 				existingKyc = res;
@@ -169,12 +174,9 @@
 			});
 	}
 
-	// called once the card component (embedded from core) confirms the card was
-	// added and verified - we then submit the KYC automatically
 	function handleCardAdded() {
 		cardAdded = true;
-		toast.success('Card added.');
-		handleSubmit();
+		toast.success('Card added successfully.');
 	}
 
 	function handleCardError(message: string) {
@@ -182,16 +184,13 @@
 	}
 </script>
 
-<svelte:head>
-	<title>KYC Verification | Hyvor Relay</title>
-</svelte:head>
-
 <SingleBox>
 	<div class="top">
 		<h1>KYC Verification</h1>
 		<p class="subtitle">
-			We need a few details about you or your business, and your payment details, to comply
-			with regulations before you can send emails on Hyvor Relay Cloud.
+			We need a few details about you or your business, along with your payment details, 
+			before you can send emails on Hyvor Relay Cloud. This helps us verify legitimate 
+			senders and prevent misuse of the platform.
 		</p>
 	</div>
 
@@ -228,8 +227,8 @@
 				{#if existingKyc?.status === 'pending'}
 					<div class="callout-wrap">
 						<Callout type="info">
-							Your KYC submission is under review. You can still update the details below
-							and resubmit while it's pending.
+							Your KYC submission is under review. You can still update the details
+							below and resubmit while it's pending.
 						</Callout>
 					</div>
 				{:else if existingKyc?.status === 'approved'}
@@ -246,54 +245,46 @@
 				{/if}
 
 				<div class="form">
-					<SplitControl label="Full name" caption="Your full legal name">
-						<FormControl>
-							<TextInput
-								bind:value={fullName}
-								block
-								disabled={isApproved}
-								placeholder="Jane Doe"
-							/>
-							{#if errors.full_name}
-								<Validation state="error">{errors.full_name}</Validation>
-							{/if}
-						</FormControl>
-					</SplitControl>
-
 					<SplitControl
 						label="Account type"
 						caption="Are you sending emails as an individual or a business?"
 					>
+						<InputGroup>
+							<span class="radio-wrap">
+								<Radio
+									name="account-type" 
+									value="individual" 
+									bind:group={accountType}
+									disabled={isApproved}
+								>Individual</Radio>
+								<Radio 
+									name="account-type" 
+									value="business" 
+									bind:group={accountType}
+									disabled={isApproved}
+								>Business</Radio>
+							</span>
+						</InputGroup>
+					</SplitControl>
+
+					<SplitControl 
+						label={accountType === 'individual' ? 'Full name' : 'Business name'} 
+						caption={accountType === 'individual' ? 'Your full legal name' : 'Your company or organization\'s legal name'}
+					>
 						<FormControl>
-							<Select
-								bind:value={businessType}
-								options={businessTypeOptions}
+							<TextInput
+								bind:value={name}
 								block
 								disabled={isApproved}
+								placeholder={accountType === 'individual' ? 'John Doe' : 'HYVOR'}
 							/>
+							{#if errors.name}
+								<Validation state="error">{errors.name}</Validation>
+							{/if}
 						</FormControl>
 					</SplitControl>
 
-					{#if businessType === 'company'}
-						<SplitControl
-							label="Business name"
-							caption="Your company or organization's legal name"
-						>
-							<FormControl>
-								<TextInput
-									bind:value={businessName}
-									block
-									disabled={isApproved}
-									placeholder="Acme Inc."
-								/>
-								{#if errors.business_name}
-									<Validation state="error">{errors.business_name}</Validation>
-								{/if}
-							</FormControl>
-						</SplitControl>
-					{/if}
-
-					<SplitControl label="Country" caption="Country of residence or incorporation">
+					<SplitControl label="Country" caption={'Country of ' + (accountType === 'individual' ? 'residence' : 'incorporation')}>
 						<FormControl>
 							<Select
 								bind:value={country}
@@ -309,7 +300,7 @@
 						</FormControl>
 					</SplitControl>
 
-					<SplitControl label="Address" caption="Your residential or business address">
+					<SplitControl label="Address" caption={'Your ' + (accountType === 'individual' ? 'residential' : 'business') + ' address'}>
 						<FormControl>
 							<Textarea
 								bind:value={address}
@@ -324,38 +315,105 @@
 						</FormControl>
 					</SplitControl>
 
-					<SplitControl label="Phone number" caption="A phone number we can reach you on">
-						<FormControl>
-							<TextInput
-								bind:value={phone}
-								block
-								disabled={isApproved}
-								placeholder="+1 234 567 8900"
-							/>
-							{#if errors.phone}
-								<Validation state="error">{errors.phone}</Validation>
-							{/if}
-						</FormControl>
-					</SplitControl>
-
-					<SplitControl label="Website" caption="A website related to your use case">
+					<SplitControl label="Website" caption={'Your ' + (accountType === 'individual' ? 'personal' : 'business') + ' website'}>
 						<FormControl>
 							<TextInput
 								bind:value={website}
 								block
 								disabled={isApproved}
-								placeholder="https://example.com"
+								placeholder={accountType === 'individual' ? 'https://yourpersonalwebsite.com' : 'https://yourbusinesswebsite.com'}
 							/>
 							{#if errors.website}
 								<Validation state="error">{errors.website}</Validation>
 							{/if}
 						</FormControl>
 					</SplitControl>
+
+					<SplitControl 
+						label="Content Ownership" 
+						caption="Who writes the content you send? You or anyone from your organization or a third party who uses your platform."
+					>
+						<InputGroup>
+							<span class="radio-wrap">
+								<Radio
+									name="content-ownership"
+									value="self"
+									bind:group={contentOwnership}
+									disabled={isApproved}
+								>Our-self</Radio>
+								<Radio
+									name="content-ownership"
+									value="third_party"
+									bind:group={contentOwnership}
+									disabled={isApproved}
+								>Third Party</Radio>
+							</span>
+						</InputGroup>
+
+						{#if contentOwnership === 'third_party'}
+							<div class="callout-wrap-top">
+								<Callout type="danger">
+									Hyvor Relay cloud version is currently not intended for use by third parties outside you or your organization's 
+									employees. For other use cases, please consider self-hosting Hyvor Relay instead.
+								</Callout>
+							</div>
+						{/if}
+					</SplitControl>
+
+					<SplitControl label="Sending Type" caption="Type of emails you plan to send.">
+						<FormControl>
+							<span class="radio-wrap">
+								<Checkbox
+									checked={sendingType.includes('transactional')}
+									disabled={isApproved}
+									on:change={() => toggleSendingType('transactional')}
+								>Transactional</Checkbox>
+								<Checkbox
+									checked={sendingType.includes('distributional')}
+									disabled={isApproved}
+									on:change={() => toggleSendingType('distributional')}
+								>Distributional</Checkbox>
+							</span>
+							{#if errors.sendingType}
+								<Validation state="error">{errors.sendingType}</Validation>
+							{/if}
+						</FormControl>
+					</SplitControl>
+
+					<SplitControl label="Use case" caption="Describe your use case for Hyvor Relay">
+					
+						{#if sendingType.includes('distributional')}
+							<div class="callout-wrap-bottom">
+								<Callout type="info">
+									Describe your use case in detail. Include the type of content you'll send (e.g.newsletters, announcements, 
+									marketing campaigns), how recipients opted in to receive emails, your expected sending volume and frequency, 
+									and the platform or application they'll be sent from.
+								</Callout>
+							</div>
+						{/if}
+
+						<Textarea
+							name="use-case"
+							bind:value={useCase}
+							disabled={isApproved}
+							block
+						/>
+						{#if errors.useCase}
+							<Validation state="error">{errors.useCase}</Validation>
+						{/if}
+
+					</SplitControl>
+
 				</div>
 
 				{#if !isApproved}
 					<div class="actions">
-						<Button color="accent" variant="fill" on:click={handleNext}>Next</Button>
+						<Button 
+							color="accent" 
+							variant="fill" 
+							on:click={handleNext} 
+							disabled={contentOwnership === 'third_party'}
+						>Next</Button>
 					</div>
 				{/if}
 			{:else}
@@ -363,41 +421,45 @@
 					{#if existingKyc?.status === 'rejected'}
 						<div class="callout-wrap">
 							<Callout type="danger">
-								Your KYC submission was rejected. Go back to Step 1 to update your details,
-								then submit again below.
+								Your KYC submission was rejected. Go back to Step 1 to update your
+								details, then submit again below.
 							</Callout>
 						</div>
 					{:else if existingKyc?.status === 'approved'}
 						<div class="callout-wrap">
 							<Callout type="success">
-								Your KYC has been approved. Your card will be charged automatically for
-								your subscription.
+								Your KYC has been approved. Your card will be charged automatically
+								for a Starter plan subscription. You may upgrade your plan at <a href="/billing">Billing</a>.
 							</Callout>
 						</div>
 					{:else if existingKyc?.status === 'pending'}
 						<div class="callout-wrap">
 							<Callout type="info">
-								Your KYC submission is under review. You can still update your payment
-								details below.
+								Your KYC submission is under review. You can still update your
+								payment details below.
 							</Callout>
 						</div>
 					{:else}
 						<div class="callout-wrap">
 							<Callout type="info">
 								Add your payment details below, then submit to complete your KYC
-								verification. Your card will be charged automatically once it's approved.
+								verification. Your card will be charged automatically for the Starter 
+								plan once it's approved. If your organization already has a payment method
+								added, you can continue with the existing payment method.
 							</Callout>
 						</div>
 					{/if}
 
 					{#if !isApproved}
 						<div class="payment-box">
-							<CardCollector onSuccess={handleCardAdded} onError={handleCardError} />
+							<CardCollector onSuccess={handleCardAdded} onError={handleCardError} bind:cardAdded={cardAdded} />
 						</div>
 					{/if}
 				</div>
+
 				<div class="actions space-between">
-					<Button variant="outline" color="gray" on:click={() => goToStep(1)}>Back</Button>
+					<Button variant="outline" color="gray" on:click={() => goToStep(1)}>Back</Button
+					>
 					{#if !isApproved}
 						<div class="submit-wrap">
 							<Tooltip text="Save your card to proceed" disabled={cardAdded}>
@@ -407,12 +469,13 @@
 									disabled={saving || !cardAdded}
 									on:click={handleSubmit}
 								>
-									{saving ? 'Submitting...' : existingKyc ? 'Resubmit KYC' : 'Submit KYC'}
+									{saving
+										? 'Submitting...'
+										: existingKyc
+											? 'Resubmit KYC'
+											: 'Submit KYC'}
 								</Button>
 							</Tooltip>
-							<!-- {#if !cardAdded}
-								<p class="submit-hint">Add and save your card above first.</p>
-							{/if} -->
 						</div>
 					{/if}
 				</div>
@@ -509,9 +572,20 @@
 		margin-bottom: 20px;
 	}
 
+	.radio-wrap {
+		display: flex; 
+		gap: 3rem;
+	}
+
+	.callout-wrap-top {
+		margin-top: 20px;
+	}
+
+	.callout-wrap-bottom {
+		margin-bottom: 20px;
+	}
+
 	.payment-box {
-		/* border: 1px solid var(--border);
-		border-radius: 8px; */
 		overflow: hidden;
 	}
 
@@ -529,12 +603,6 @@
 		display: flex;
 		flex-direction: column;
 		align-items: flex-end;
-	}
-
-	.submit-hint {
-		margin: 6px 0 0;
-		font-size: 12px;
-		color: var(--text-light);
 	}
 
 	.kyc-card-wrap {
