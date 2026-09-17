@@ -49,6 +49,34 @@
 
 	const isApproved = $derived(existingKyc?.status === 'approved');
 
+	const formUnchanged = $derived.by(() => {
+		const kyc = existingKyc;
+
+		if (!kyc) {
+			return false;
+		}
+
+		return (
+			accountType === kyc.account_type &&
+			name.trim() === kyc.name &&
+			country === kyc.country &&
+			address.trim() === kyc.address &&
+			website.trim() === kyc.website &&
+			contentOwnership === kyc.content_ownership &&
+			useCase.trim() === kyc.use_case &&
+			sendingType.length === kyc.sending_type.length &&
+			sendingType.every((type) => kyc.sending_type.includes(type))
+		);
+	});
+
+	const submitDisabledReason = $derived(
+		!cardAdded
+			? 'Save your card to proceed'
+			: formUnchanged
+				? 'Update your details before resubmitting'
+				: null
+	);
+
 	function fillForm(kyc: Kyc) {
 		name = kyc.name;
 		accountType = kyc.account_type;
@@ -146,7 +174,7 @@
 	}
 
 	function handleSubmit() {
-		if (saving || !cardAdded) {
+		if (saving || !cardAdded || formUnchanged) {
 			return;
 		}
 
@@ -418,7 +446,7 @@
 				{/if}
 			{:else}
 				<div class="kyc-card-wrap">
-					{#if existingKyc?.status === 'rejected'}
+					{#if existingKyc?.status === 'rejected' && formUnchanged}
 						<div class="callout-wrap">
 							<Callout type="danger">
 								Your KYC submission was rejected. Go back to Step 1 to update your
@@ -436,10 +464,10 @@
 						<div class="callout-wrap">
 							<Callout type="info">
 								Your KYC submission is under review. You can still update your
-								payment details below.
+								details and resubmit.
 							</Callout>
 						</div>
-					{:else}
+					{:else if !existingKyc}
 						<div class="callout-wrap">
 							<Callout type="info">
 								Add your payment details below, then submit to complete your KYC
@@ -462,11 +490,11 @@
 					>
 					{#if !isApproved}
 						<div class="submit-wrap">
-							<Tooltip text="Save your card to proceed" disabled={cardAdded}>
+							<Tooltip text={submitDisabledReason ?? ''} disabled={submitDisabledReason === null}>
 								<Button
 									color="accent"
 									variant="fill"
-									disabled={saving || !cardAdded}
+									disabled={saving || !cardAdded || formUnchanged}
 									on:click={handleSubmit}
 								>
 									{saving
