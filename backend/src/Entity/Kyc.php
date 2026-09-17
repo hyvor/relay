@@ -56,9 +56,6 @@ class Kyc
     #[ORM\Column(enumType: KycStatus::class)]
     private KycStatus $status;
 
-    #[ORM\Column]
-    private \DateTimeImmutable $submitted_at;
-
     public function getId(): int
     {
         return $this->id;
@@ -217,18 +214,6 @@ class Kyc
     public function setStatus(KycStatus $status): static
     {
         $this->status = $status;
-
-        return $this;
-    }
-
-    public function getSubmittedAt(): \DateTimeImmutable
-    {
-        return $this->submitted_at;
-    }
-
-    public function setSubmittedAt(\DateTimeImmutable $submitted_at): static
-    {
-        $this->submitted_at = $submitted_at;
 
         return $this;
     }

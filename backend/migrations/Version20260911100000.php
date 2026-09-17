@@ -49,8 +49,7 @@ final class Version20260911100000 extends AbstractMigration
                 content_ownership kyc_content_ownership_enum NOT NULL,
                 sending_type JSON NOT NULL,
                 use_case TEXT NOT NULL,
-                status kyc_status_enum NOT NULL DEFAULT 'pending',
-                submitted_at TIMESTAMPTZ NOT NULL
+                status kyc_status_enum NOT NULL DEFAULT 'pending'
             );
         SQL
         );

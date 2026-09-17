@@ -12,8 +12,11 @@ class GetKycsInput
     #[Assert\Choice(callback: [KycStatus::class, 'getValues'])]
     public ?string $status = null;
 
+    #[Assert\Positive]
+    public ?int $organization_id = null;
+
     #[Assert\Choice(choices: KycService::SORTABLE_COLUMNS)]
-    public string $sort_by = 'submitted_at';
+    public string $sort_by = 'created_at';
 
     #[Assert\Choice(choices: KycService::SORT_DIRECTIONS)]
     public string $sort = 'desc';

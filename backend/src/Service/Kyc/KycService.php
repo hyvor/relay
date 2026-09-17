@@ -30,7 +30,7 @@ class KycService
     // the plan a KYC-approved organization is automatically subscribed to
     public const string MINIMUM_PLAN = 'starter';
 
-    public const array SORTABLE_COLUMNS = ['status', 'submitted_at', 'created_at'];
+    public const array SORTABLE_COLUMNS = ['status', 'created_at'];
     public const array SORT_DIRECTIONS = ['asc', 'desc'];
 
     public function __construct(
@@ -65,7 +65,8 @@ class KycService
      */
     public function listAll(
         ?KycStatus $status,
-        string $sortBy = 'submitted_at',
+        ?int $organizationId = null,
+        string $sortBy = 'created_at',
         string $sort = 'desc',
         int $limit = 30,
         int $offset = 0,
@@ -79,7 +80,7 @@ class KycService
         }
 
         $qb = $this->em->getRepository(Kyc::class)->createQueryBuilder('k');
-        $this->applyStatusFilter($qb, $status);
+        $this->applyFilters($qb, $status, $organizationId);
 
         $qb->orderBy('k.' . $sortBy, $sort)
             ->setMaxResults($limit)
@@ -89,19 +90,23 @@ class KycService
         return $qb->getQuery()->getResult();
     }
 
-    public function countAll(?KycStatus $status): int
+    public function countAll(?KycStatus $status, ?int $organizationId = null): int
     {
         $qb = $this->em->getRepository(Kyc::class)->createQueryBuilder('k')->select('COUNT(k.id)');
-        $this->applyStatusFilter($qb, $status);
+        $this->applyFilters($qb, $status, $organizationId);
 
         return (int)$qb->getQuery()->getSingleScalarResult();
     }
 
-    private function applyStatusFilter(QueryBuilder $qb, ?KycStatus $status): void
+    private function applyFilters(QueryBuilder $qb, ?KycStatus $status, ?int $organizationId): void
     {
+        if ($organizationId !== null) {
+            $qb->andWhere('k.organization_id = :organizationId')->setParameter('organizationId', $organizationId);
+        }
+
         if ($status !== null) {
             $qb->andWhere('k.status = :status')->setParameter('status', $status);
-        } else {
+        } elseif ($organizationId === null) {
             $qb->andWhere('k.status != :stale')->setParameter('stale', KycStatus::STALE);
         }
     }
@@ -150,7 +155,6 @@ class KycService
         $kyc->setSendingType($sendingType);
         $kyc->setUseCase($useCase);
         $kyc->setStatus(KycStatus::PENDING);
-        $kyc->setSubmittedAt($this->now());
 
         $this->em->persist($kyc);
         $this->em->flush();

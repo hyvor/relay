@@ -252,6 +252,7 @@ export function getProjectById(id: number) {
 
 export function getKycs(opts: {
 	status: KycStatus | null;
+	organization_id: number | null;
 	sort_by: KycSortBy;
 	sort: 'asc' | 'desc';
 	limit: number;

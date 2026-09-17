@@ -95,7 +95,7 @@
 		</div>
 		<div>{kyc.country}</div>
 		<div><KycStatusTag status={kyc.status} /></div>
-		<div class="date"><RelativeTime unix={kyc.submitted_at} /></div>
+		<div class="date"><RelativeTime unix={kyc.created_at} /></div>
 		<div class="actions">
 			{#if kyc.status === 'pending'}
 				<Button

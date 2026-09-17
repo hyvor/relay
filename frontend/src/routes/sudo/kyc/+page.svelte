@@ -5,11 +5,13 @@
 		IconButton,
 		IconMessage,
 		LoadButton,
-		Loader
+		Loader,
+		TextInput
 	} from '@hyvor/design/components';
 	import IconCaretDown from '@hyvor/icons/IconCaretDown';
 	import IconSortDown from '@hyvor/icons/IconSortDown';
 	import IconSortUp from '@hyvor/icons/IconSortUp';
+	import IconX from '@hyvor/icons/IconX';
 	import SingleBox from '../SingleBox.svelte';
 	import KycRow from './KycRow.svelte';
 	import { getKycs } from '../sudoActions';
@@ -21,17 +23,19 @@
 		{ value: '', label: 'All' },
 		{ value: 'pending', label: 'Pending' },
 		{ value: 'approved', label: 'Approved' },
-		{ value: 'rejected', label: 'Rejected' }
+		{ value: 'rejected', label: 'Rejected' },
+		{ value: 'stale', label: 'Stale' }
 	];
 
 	const sortByOptions: { value: KycSortBy; label: string }[] = [
-		{ value: 'submitted_at', label: 'Submitted date' },
-		{ value: 'status', label: 'Status' },
-		{ value: 'created_at', label: 'Created date' }
+		{ value: 'created_at', label: 'Submitted date' },
+		{ value: 'status', label: 'Status' }
 	];
 
+	let orgIdInput = $state('');
+	let orgIdSearch = $state<number | null>(null);
 	let statusFilter = $state('');
-	let sortBy = $state<KycSortBy>('submitted_at');
+	let sortBy = $state<KycSortBy>('created_at');
 	let sortDirection = $state<'asc' | 'desc'>('desc');
 
 	let showStatusDropdown = $state(false);
@@ -54,6 +58,17 @@
 		showSortDropdown = false;
 	}
 
+	function applyOrgId() {
+		const trimmed = orgIdInput.trim();
+		const parsed = trimmed === '' ? null : Number(trimmed);
+		orgIdSearch = parsed !== null && Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+	}
+
+	function clearOrgId() {
+		orgIdInput = '';
+		orgIdSearch = null;
+	}
+
 	let kycs: SudoKyc[] = $state([]);
 	let orgsMap: Map<number, Organization> = $state(new Map());
 	let total = $state(0);
@@ -74,6 +89,7 @@
 
 		getKycs({
 			status: (statusFilter || null) as KycStatus | null,
+			organization_id: orgIdSearch,
 			sort_by: sortBy,
 			sort: sortDirection,
 			limit: PER_PAGE,
@@ -100,8 +116,6 @@
 			});
 	}
 
-	// load() reads statusFilter + sortBy + sortDirection, so this re-runs (from
-	// the first page) whenever the filter/sort controls change.
 	$effect(() => {
 		load();
 	});
@@ -118,6 +132,28 @@
 <SingleBox>
 	<div class="top">
 		<div class="filters">
+			<TextInput
+				bind:value={orgIdInput}
+				placeholder="Search by organization ID"
+				style="width:220px"
+				on:keydown={(e: KeyboardEvent) => e.key === 'Enter' && applyOrgId()}
+				on:blur={applyOrgId}
+				size="small"
+				block={false}
+			>
+				{#snippet end()}
+					{#if orgIdInput.trim() !== ''}
+						<IconButton variant="invisible" color="gray" size={16} on:click={clearOrgId}>
+							<IconX size={12} />
+						</IconButton>
+					{/if}
+				{/snippet}
+			</TextInput>
+
+			{#if String(orgIdSearch ?? '') !== orgIdInput.trim()}
+				<span class="press-enter">⏎</span>
+			{/if}
+
 			<Dropdown bind:show={showStatusDropdown} width={180}>
 				{#snippet trigger()}
 					<Button size="small" color="input">
@@ -230,6 +266,11 @@
 		flex-wrap: wrap;
 		gap: 10px;
 		align-items: center;
+	}
+	.press-enter {
+		color: var(--text-light);
+		font-size: 14px;
+		margin-left: 4px;
 	}
 	.name {
 		margin-right: 6px;

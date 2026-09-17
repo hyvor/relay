@@ -25,7 +25,6 @@ class KycObject
     public array $sending_type;
     public string $use_case;
     public KycStatus $status;
-    public int $submitted_at;
 
     public function __construct(Kyc $kyc)
     {
@@ -42,6 +41,5 @@ class KycObject
         $this->sending_type = $kyc->getSendingType();
         $this->use_case = $kyc->getUseCase();
         $this->status = $kyc->getStatus();
-        $this->submitted_at = $kyc->getSubmittedAt()->getTimestamp();
     }
 }

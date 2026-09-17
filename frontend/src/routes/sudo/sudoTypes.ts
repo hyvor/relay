@@ -227,7 +227,7 @@ export type KycStatus = 'pending' | 'approved' | 'rejected' | 'stale';
 export type KycAccountType = 'individual' | 'business';
 export type KycContentOwnership = 'self' | 'third_party';
 export type KycSendingType = 'transactional' | 'distributional';
-export type KycSortBy = 'submitted_at' | 'status' | 'created_at';
+export type KycSortBy = 'status' | 'created_at';
 
 export interface SudoKyc {
 	id: number;
@@ -243,7 +243,6 @@ export interface SudoKyc {
 	sending_type: KycSendingType[];
 	use_case: string;
 	status: KycStatus;
-	submitted_at: number;
 }
 
 export interface SudoKycsResponse {

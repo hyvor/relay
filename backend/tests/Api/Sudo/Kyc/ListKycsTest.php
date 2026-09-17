@@ -104,6 +104,49 @@ class ListKycsTest extends WebTestCase
         $this->assertSame('stale', $json['kycs'][0]['status']);
     }
 
+    public function test_filters_by_organization_id_and_includes_stale_versions(): void
+    {
+        $this->fakeAuth();
+        KycFactory::createOne(['organization_id' => 100, 'status' => KycStatus::STALE]);
+        KycFactory::createOne(['organization_id' => 100, 'status' => KycStatus::REJECTED]);
+        KycFactory::createOne(['organization_id' => 200, 'status' => KycStatus::PENDING]);
+
+        $response = $this->sudoApi('GET', '/kyc?organization_id=100');
+        $this->assertSame(200, $response->getStatusCode());
+
+        /** @var array{kycs: array<int, array<string, mixed>>, total: int} $json */
+        $json = $this->getJson();
+        $this->assertCount(2, $json['kycs']);
+        $this->assertSame(2, $json['total']);
+
+        $statuses = array_column($json['kycs'], 'status');
+        $this->assertContains('stale', $statuses);
+        $this->assertContains('rejected', $statuses);
+    }
+
+    public function test_filters_by_organization_id_and_status_together(): void
+    {
+        $this->fakeAuth();
+        KycFactory::createOne(['organization_id' => 100, 'status' => KycStatus::STALE]);
+        KycFactory::createOne(['organization_id' => 100, 'status' => KycStatus::REJECTED]);
+        KycFactory::createOne(['organization_id' => 200, 'status' => KycStatus::REJECTED]);
+
+        $response = $this->sudoApi('GET', '/kyc?organization_id=100&status=rejected');
+        $this->assertSame(200, $response->getStatusCode());
+
+        /** @var array{kycs: array<int, array<string, mixed>>} $json */
+        $json = $this->getJson();
+        $this->assertCount(1, $json['kycs']);
+        $this->assertSame('rejected', $json['kycs'][0]['status']);
+    }
+
+    public function test_fails_validation_on_invalid_organization_id(): void
+    {
+        $this->fakeAuth();
+        $this->sudoApi('GET', '/kyc?organization_id=0');
+        $this->assertHasViolation('organization_id');
+    }
+
     public function test_sorts_by_status(): void
     {
         $this->fakeAuth();

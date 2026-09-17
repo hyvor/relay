@@ -253,7 +253,6 @@ export interface Kyc {
 	use_case: string;
 	website: string;
 	status: KycStatus;
-	submitted_at: number;
 }
 
 export interface ProjectUserMiniObject {

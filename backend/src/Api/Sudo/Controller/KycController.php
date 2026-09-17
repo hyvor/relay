@@ -41,6 +41,7 @@ class KycController extends AbstractController
 
         $kycs = $this->kycService->listAll(
             $status,
+            $input->organization_id,
             $input->sort_by,
             $input->sort,
             $input->limit,
@@ -57,7 +58,7 @@ class KycController extends AbstractController
                     $organizations,
                 ),
             ),
-            'total' => $this->kycService->countAll($status),
+            'total' => $this->kycService->countAll($status, $input->organization_id),
         ]);
     }
 

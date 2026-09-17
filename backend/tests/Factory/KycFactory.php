@@ -42,7 +42,6 @@ final class KycFactory extends PersistentObjectFactory
             'sending_type' => [KycSendingType::TRANSACTIONAL->value],
             'use_case' => self::faker()->sentence(),
             'status' => KycStatus::PENDING,
-            'submitted_at' => new \DateTimeImmutable(),
         ];
     }
 
