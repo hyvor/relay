@@ -2,8 +2,9 @@
 
 namespace App\Api\Console\Resolver;
 
-use App\Api\Console\Authorization\AuthorizationListener;
 use App\Entity\Project;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleApiAuthorizationListenerAbstract;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleAuthResults;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ValueResolverInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
@@ -30,7 +31,12 @@ class ProjectResolver implements ValueResolverInterface
             return [];
         }
 
-        $project = $request->attributes->get(AuthorizationListener::RESOLVED_PROJECT_ATTRIBUTE_KEY);
+        $consoleAuthResults = $request->attributes->get(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY);
+        if (!$consoleAuthResults instanceof ConsoleAuthResults) {
+            return [];
+        }
+
+        $project = $consoleAuthResults->getResource();
         assert($project instanceof Project);
 
         return [$project];

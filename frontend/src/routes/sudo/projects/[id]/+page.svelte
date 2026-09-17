@@ -105,10 +105,6 @@
 					<div class="value"><Tag size="small">{project.send_type}</Tag></div>
 				</div>
 				<div class="field">
-					<div class="label">Owner (User ID)</div>
-					<div class="value">{project.user_id}</div>
-				</div>
-				<div class="field">
 					<div class="label">Created At</div>
 					<div class="value">{formatDate(project.created_at)}</div>
 				</div>

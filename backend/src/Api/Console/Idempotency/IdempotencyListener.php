@@ -2,7 +2,8 @@
 
 namespace App\Api\Console\Idempotency;
 
-use App\Api\Console\Authorization\AuthorizationListener;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleApiAuthorizationListenerAbstract;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleAuthResults;
 use App\Entity\Project;
 use App\Service\Idempotency\IdempotencyService;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
@@ -43,8 +44,10 @@ class IdempotencyListener
             throw new BadRequestException('This endpoint does not support idempotency. Retry without the "X-Idempotency-Key" header.');
         }
 
-        $project = $request->attributes->get(AuthorizationListener::RESOLVED_PROJECT_ATTRIBUTE_KEY);
+        $consoleAuthResults = $request->attributes->get(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY);
         // AuthorizationListener should have set this attribute
+        assert($consoleAuthResults instanceof ConsoleAuthResults);
+        $project = $consoleAuthResults->getResource();
         assert($project instanceof Project);
 
         $idempotencyRecord = $this->idempotencyService->getIdempotencyRecordByProjectEndpointAndKey(
@@ -93,7 +96,9 @@ class IdempotencyListener
         }
 
         $endpoint = $request->getPathInfo();
-        $project = $request->attributes->get(AuthorizationListener::RESOLVED_PROJECT_ATTRIBUTE_KEY);
+        $consoleAuthResults = $request->attributes->get(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY);
+        assert($consoleAuthResults instanceof ConsoleAuthResults);
+        $project = $consoleAuthResults->getResource();
         assert($project instanceof Project);
 
         $this->idempotencyService->createIdempotencyRecord(

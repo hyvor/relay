@@ -54,7 +54,6 @@ export interface ProjectUser {
 	scopes: Scope[];
 	project: Project;
 	user: ProjectUserMiniObject;
-	oidc_sub: string | null;
 }
 
 export type Project = {
@@ -261,5 +260,4 @@ export interface ProjectUserMiniObject {
 	email: string;
 	username: string | null;
 	picture_url: string | null;
-	oidc_sub: string | null;
 }

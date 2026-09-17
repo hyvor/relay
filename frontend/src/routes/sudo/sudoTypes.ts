@@ -159,6 +159,8 @@ export interface InfrastructureBounce {
 	smtp_enhanced_code: string;
 	smtp_message: string;
 	send_recipient_id: number;
+	send_uuid: string | null;
+	recipient_email: string | null;
 }
 
 export interface TlsCertificate {
@@ -194,7 +196,6 @@ export interface SudoSendResponse {
 
 export interface SudoProject {
 	id: number;
-	user_id: number;
 	name: string;
 	created_at: number;
 	updated_at: number;

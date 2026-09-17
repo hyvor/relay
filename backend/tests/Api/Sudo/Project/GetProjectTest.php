@@ -28,7 +28,7 @@ class GetProjectTest extends WebTestCase
             $this->container,
             ['id' => 1],
             new AuthUserOrganization(id: 1, name: 'Fake Organization', role: 'admin'),
-            organizationsDatabase: $organizations === [] ? null : $organizations
+            organizationsDatabase: $organizations === [] ? null : $organizations,
         );
     }
 
@@ -56,7 +56,6 @@ class GetProjectTest extends WebTestCase
         $this->assertSame($project->getId(), $jsonProject['id']);
         $this->assertSame('Marketing Campaigns', $jsonProject['name']);
         $this->assertSame(42, $jsonProject['organization_id']);
-        $this->assertArrayHasKey('user_id', $jsonProject);
         $this->assertArrayHasKey('created_at', $jsonProject);
         $this->assertArrayHasKey('updated_at', $jsonProject);
         $this->assertArrayHasKey('send_type', $jsonProject);

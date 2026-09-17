@@ -7,12 +7,17 @@
 		toast,
 		Checkbox,
 		Switch,
-		Button
+		Button,
+		Validation
 	} from '@hyvor/design/components';
 	import { createApiKey, updateApiKey } from '../../../lib/actions/apiKeyActions';
 	import type { ApiKey } from '../../../types';
 	import { getAppConfig } from '../../../lib/stores/consoleStore';
-	import { validateAllowedIpEntry } from './allowedIp';
+	import {
+		broadAllowedIpEntryWarning,
+		isBroadAllowedIpEntry,
+		validateAllowedIpEntry
+	} from './allowedIp';
 	import AddedIpRow from './AddedIpRow.svelte';
 
 	interface Props {
@@ -282,7 +287,7 @@
 
 		<SplitControl
 			label={sendsSendSelected ? 'Allowed IPs (required)' : 'Allowed IPs'}
-			caption={'Choose which IP addresses are allowed to use this API key (HTTP and SMTP). CIDR ranges are supported (max /24 for IPv4, /48 for IPv6).' +
+			caption={'Choose which IP addresses are allowed to use this API key (HTTP and SMTP). IPv4 and IPv6 addresses and CIDR ranges are supported.' +
 				(sendsSendSelected ? ' This is required when "sends.send" scope is enabled.' : '')}
 			error={errors.allowed_ips}
 			column
@@ -306,6 +311,13 @@
 			</div>
 			{#if ipError}
 				<div class="ip-error">{ipError}</div>
+			{/if}
+			{#if isBroadAllowedIpEntry(ipInput)}
+				<div class="ip-broad-warning">
+					<Validation state="warning">
+						This range may be too broad. {broadAllowedIpEntryWarning(ipInput)}.
+					</Validation>
+				</div>
 			{/if}
 			{#if allowedIps.length > 0}
 				<div class="ip-list">
@@ -404,6 +416,10 @@
 		margin-top: 6px;
 		font-size: 12px;
 		color: var(--red);
+	}
+
+	.ip-broad-warning {
+		margin-top: 6px;
 	}
 
 	.ip-list {
