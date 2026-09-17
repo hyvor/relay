@@ -46,11 +46,10 @@ class ListKycsTest extends WebTestCase
         $response = $this->sudoApi('GET', '/kyc');
         $this->assertSame(200, $response->getStatusCode());
 
-        /** @var array{kycs: array<int, array<string, mixed>>, orgs: array<int, array<string, mixed>>, total: int} $json */
+        /** @var array{kycs: array<int, array<string, mixed>>, orgs: array<int, array<string, mixed>>} $json */
         $json = $this->getJson();
         $this->assertCount(2, $json['kycs']);
         $this->assertCount(2, $json['orgs']);
-        $this->assertSame(2, $json['total']);
 
         $names = array_column($json['orgs'], 'name');
         $this->assertContains('Acme Inc', $names);
@@ -82,11 +81,10 @@ class ListKycsTest extends WebTestCase
         $response = $this->sudoApi('GET', '/kyc');
         $this->assertSame(200, $response->getStatusCode());
 
-        /** @var array{kycs: array<int, array<string, mixed>>, total: int} $json */
+        /** @var array{kycs: array<int, array<string, mixed>>} $json */
         $json = $this->getJson();
         $this->assertCount(1, $json['kycs']);
         $this->assertSame('pending', $json['kycs'][0]['status']);
-        $this->assertSame(1, $json['total']);
     }
 
     public function test_can_filter_to_stale_kycs(): void
@@ -114,10 +112,9 @@ class ListKycsTest extends WebTestCase
         $response = $this->sudoApi('GET', '/kyc?organization_id=100');
         $this->assertSame(200, $response->getStatusCode());
 
-        /** @var array{kycs: array<int, array<string, mixed>>, total: int} $json */
+        /** @var array{kycs: array<int, array<string, mixed>>} $json */
         $json = $this->getJson();
         $this->assertCount(2, $json['kycs']);
-        $this->assertSame(2, $json['total']);
 
         $statuses = array_column($json['kycs'], 'status');
         $this->assertContains('stale', $statuses);
@@ -160,8 +157,6 @@ class ListKycsTest extends WebTestCase
         /** @var array{kycs: array<int, array<string, mixed>>} $json */
         $json = $this->getJson();
         $statuses = array_column($json['kycs'], 'status');
-        // postgres orders enum columns by the CREATE TYPE declaration order
-        // (pending, approved, rejected - see the kyc migration), not alphabetically
         $this->assertSame(['pending', 'approved', 'rejected'], $statuses);
     }
 
@@ -173,10 +168,9 @@ class ListKycsTest extends WebTestCase
         $response = $this->sudoApi('GET', '/kyc?limit=2');
         $this->assertSame(200, $response->getStatusCode());
 
-        /** @var array{kycs: array<int, mixed>, total: int} $json */
+        /** @var array{kycs: array<int, mixed>} $json */
         $json = $this->getJson();
         $this->assertCount(2, $json['kycs']);
-        $this->assertSame(5, $json['total']);
     }
 
     public function test_fails_validation_on_invalid_status(): void

@@ -37,12 +37,8 @@
 
 		approveKyc(kyc.id)
 			.then((res) => {
-				onUpdate(res.kyc);
-				if (res.charge_success) {
-					toast.success('KYC approved and the starter plan was charged successfully.');
-				} else {
-					toast.warning('KYC approved, but charging the card failed: ' + res.charge_error);
-				}
+				onUpdate(res);
+				toast.success('KYC approved.');
 			})
 			.catch((err) => {
 				toast.error('Failed to approve KYC: ' + err.message);
@@ -69,7 +65,7 @@
 
 		rejectKyc(kyc.id)
 			.then((res) => {
-				onUpdate(res.kyc);
+				onUpdate(res);
 				toast.success('KYC rejected.');
 			})
 			.catch((err) => {

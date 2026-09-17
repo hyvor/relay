@@ -57,8 +57,7 @@ class KycController extends AbstractController
                     fn(Organization $org) => new OrganizationObject($org),
                     $organizations,
                 ),
-            ),
-            'total' => $this->kycService->countAll($status, $input->organization_id),
+            )
         ]);
     }
 
@@ -66,26 +65,22 @@ class KycController extends AbstractController
     public function approve(int $id): JsonResponse
     {
         $this->assertCloud();
-        $kyc = $this->getKycOr404($id);
+        $kyc = $this->getKyc($id);
 
         try {
-            $result = $this->kycService->approve($kyc);
+            $kyc = $this->kycService->approve($kyc);
         } catch (KycNotPendingException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
 
-        return $this->json([
-            'kyc' => new KycObject($result->kyc),
-            'charge_success' => $result->chargeSuccess,
-            'charge_error' => $result->chargeError,
-        ]);
+        return $this->json(new KycObject($kyc));
     }
 
     #[Route('/kyc/{id}/reject', requirements: ['id' => Requirement::DIGITS], methods: 'POST')]
     public function reject(int $id): JsonResponse
     {
         $this->assertCloud();
-        $kyc = $this->getKycOr404($id);
+        $kyc = $this->getKyc($id);
 
         try {
             $kyc = $this->kycService->reject($kyc);
@@ -93,12 +88,10 @@ class KycController extends AbstractController
             throw new BadRequestHttpException($e->getMessage());
         }
 
-        return $this->json([
-            'kyc' => new KycObject($kyc),
-        ]);
+        return $this->json(new KycObject($kyc));
     }
 
-    private function getKycOr404(int $id): Kyc
+    private function getKyc(int $id): Kyc
     {
         $kyc = $this->kycService->getById($id);
 

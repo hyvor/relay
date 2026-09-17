@@ -6,7 +6,6 @@ use App\Entity\Kyc;
 use App\Entity\Type\KycAccountType;
 use App\Entity\Type\KycContentOwnership;
 use App\Entity\Type\KycStatus;
-use App\Service\Kyc\Dto\KycApprovalResult;
 use App\Service\Kyc\Event\KycApprovedEvent;
 use App\Service\Kyc\Event\KycRejectedEvent;
 use App\Service\Kyc\Event\KycSubmittedEvent;
@@ -14,12 +13,12 @@ use App\Service\Kyc\Exception\KycAlreadyApprovedException;
 use App\Service\Kyc\Exception\KycNotPendingException;
 use App\Service\Kyc\Exception\PaymentMethodRequiredException;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\QueryBuilder;
 use Hyvor\Internal\Bundle\Comms\CommsInterface;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\Billing\CreateSubscription;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\GetOrganizations;
 use Hyvor\Internal\Bundle\Comms\Exception\CommsApiFailedException;
 use Hyvor\Internal\Component\Component;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -37,6 +36,7 @@ class KycService
         private EntityManagerInterface $em,
         private EventDispatcherInterface $eventDispatcher,
         private CommsInterface $comms,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -80,7 +80,19 @@ class KycService
         }
 
         $qb = $this->em->getRepository(Kyc::class)->createQueryBuilder('k');
-        $this->applyFilters($qb, $status, $organizationId);
+
+        if ($organizationId !== null) {
+            $qb->andWhere('k.organization_id = :organizationId')
+                ->setParameter('organizationId', $organizationId);
+        }
+
+        if ($status !== null) {
+            $qb->andWhere('k.status = :status')
+                ->setParameter('status', $status);
+        } elseif ($organizationId === null) {
+            $qb->andWhere('k.status != :stale')
+                ->setParameter('stale', KycStatus::STALE);
+        }
 
         $qb->orderBy('k.' . $sortBy, $sort)
             ->setMaxResults($limit)
@@ -88,27 +100,6 @@ class KycService
 
         /** @var Kyc[] */
         return $qb->getQuery()->getResult();
-    }
-
-    public function countAll(?KycStatus $status, ?int $organizationId = null): int
-    {
-        $qb = $this->em->getRepository(Kyc::class)->createQueryBuilder('k')->select('COUNT(k.id)');
-        $this->applyFilters($qb, $status, $organizationId);
-
-        return (int)$qb->getQuery()->getSingleScalarResult();
-    }
-
-    private function applyFilters(QueryBuilder $qb, ?KycStatus $status, ?int $organizationId): void
-    {
-        if ($organizationId !== null) {
-            $qb->andWhere('k.organization_id = :organizationId')->setParameter('organizationId', $organizationId);
-        }
-
-        if ($status !== null) {
-            $qb->andWhere('k.status = :status')->setParameter('status', $status);
-        } elseif ($organizationId === null) {
-            $qb->andWhere('k.status != :stale')->setParameter('stale', KycStatus::STALE);
-        }
     }
 
     /**
@@ -193,7 +184,7 @@ class KycService
      *
      * @throws KycNotPendingException
      */
-    public function approve(Kyc $kyc): KycApprovalResult
+    public function approve(Kyc $kyc): Kyc
     {
         if ($kyc->getStatus() !== KycStatus::PENDING) {
             throw new KycNotPendingException('Only pending KYC submissions can be approved.');
@@ -207,9 +198,21 @@ class KycService
 
         $this->eventDispatcher->dispatch(new KycApprovedEvent($kyc));
 
-        [$chargeSuccess, $chargeError] = $this->chargeMinimumSubscription($kyc->getOrganizationId());
+        try {
+            $this->comms->send(
+                new CreateSubscription($kyc->getOrganizationId(), Component::RELAY, self::MINIMUM_PLAN),
+            );
+        } catch (CommsApiFailedException $e) {
+            $this->logger->error(
+                'Failed to create subscription for organization ' . $kyc->getOrganizationId(),
+                [
+                    'exception' => $e, 
+                    'organizationId' => $kyc->getOrganizationId(),
+                ]
+            );
+        }
 
-        return new KycApprovalResult($kyc, $chargeSuccess, $chargeError);
+        return $kyc;
     }
 
     /**
@@ -230,21 +233,5 @@ class KycService
         $this->eventDispatcher->dispatch(new KycRejectedEvent($kyc));
 
         return $kyc;
-    }
-
-    /**
-     * @return array{0: bool, 1: ?string} [success, errorMessage]
-     */
-    private function chargeMinimumSubscription(int $organizationId): array
-    {
-        try {
-            $response = $this->comms->send(
-                new CreateSubscription($organizationId, Component::RELAY, self::MINIMUM_PLAN),
-            );
-        } catch (CommsApiFailedException $e) {
-            return [false, 'Unable to reach the billing service: ' . $e->getMessage()];
-        }
-
-        return [$response->isSuccess(), $response->getErrorMessage()];
     }
 }

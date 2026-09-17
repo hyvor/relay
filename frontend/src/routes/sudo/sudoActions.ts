@@ -19,7 +19,7 @@ import type {
 	SudoSendsResponse,
 	SudoSendResponse,
 	SudoKycsResponse,
-	SudoKycApprovalResponse,
+	SudoKyc,
 	KycStatus,
 	KycSortBy
 } from './sudoTypes';
@@ -265,13 +265,13 @@ export function getKycs(opts: {
 }
 
 export function approveKyc(id: number) {
-	return sudoApi.post<SudoKycApprovalResponse>({
+	return sudoApi.post<SudoKyc>({
 		endpoint: `/kyc/${id}/approve`
 	});
 }
 
 export function rejectKyc(id: number) {
-	return sudoApi.post<{ kyc: SudoKycApprovalResponse['kyc'] }>({
+	return sudoApi.post<SudoKyc>({
 		endpoint: `/kyc/${id}/reject`
 	});
 }

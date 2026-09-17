@@ -248,11 +248,4 @@ export interface SudoKyc {
 export interface SudoKycsResponse {
 	kycs: SudoKyc[];
 	orgs: Organization[];
-	total: number;
-}
-
-export interface SudoKycApprovalResponse {
-	kyc: SudoKyc;
-	charge_success: boolean;
-	charge_error: string | null;
 }

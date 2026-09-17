@@ -31,7 +31,7 @@ class ApproveKycTest extends WebTestCase
         $this->getComms()->addResponse(
             CreateSubscription::class,
             function (CreateSubscription $event) {
-                return new CreateSubscriptionResponse(true, 999, null);
+                return new CreateSubscriptionResponse(999);
             }
         );
 
@@ -40,10 +40,7 @@ class ApproveKycTest extends WebTestCase
 
         /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertIsArray($json['kyc']);
-        $this->assertSame('approved', $json['kyc']['status']);
-        $this->assertTrue($json['charge_success']);
-        $this->assertNull($json['charge_error']);
+        $this->assertSame('approved', $json['status']);
 
         $this->getComms()->assertSent(
             CreateSubscription::class,
@@ -58,6 +55,10 @@ class ApproveKycTest extends WebTestCase
         $kycEntity = $this->em->getRepository(Kyc::class)->find($kyc->getId());
         $this->assertNotNull($kycEntity);
         $this->assertSame(KycStatus::APPROVED, $kycEntity->getStatus());
+
+        $this->assertFalse(
+            $this->getTestLogger()->hasErrorThatContains('Failed to create subscription'),
+        );
     }
 
     public function test_approves_even_when_charge_fails(): void
@@ -67,7 +68,7 @@ class ApproveKycTest extends WebTestCase
         $this->getComms()->addResponse(
             CreateSubscription::class,
             function () {
-                return new CreateSubscriptionResponse(false, null, 'Card declined.');
+                throw new CommsApiFailedException('Card declined.');
             }
         );
 
@@ -76,10 +77,17 @@ class ApproveKycTest extends WebTestCase
 
         /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertIsArray($json['kyc']);
-        $this->assertSame('approved', $json['kyc']['status']);
-        $this->assertFalse($json['charge_success']);
-        $this->assertSame('Card declined.', $json['charge_error']);
+        $this->assertSame('approved', $json['status']);
+
+        $kycEntity = $this->em->getRepository(Kyc::class)->find($kyc->getId());
+        $this->assertNotNull($kycEntity);
+        $this->assertSame(KycStatus::APPROVED, $kycEntity->getStatus());
+
+        $this->assertTrue(
+            $this->getTestLogger()->hasErrorThatContains(
+                'Failed to create subscription for organization ' . $kyc->getOrganizationId(),
+            ),
+        );
     }
 
     public function test_approves_even_when_comms_fails(): void
@@ -98,9 +106,13 @@ class ApproveKycTest extends WebTestCase
 
         /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertIsArray($json['kyc']);
-        $this->assertSame('approved', $json['kyc']['status']);
-        $this->assertFalse($json['charge_success']);
+        $this->assertSame('approved', $json['status']);
+
+        $this->assertTrue(
+            $this->getTestLogger()->hasErrorThatContains(
+                'Failed to create subscription for organization ' . $kyc->getOrganizationId(),
+            ),
+        );
     }
 
     public function test_fails_when_not_pending(): void

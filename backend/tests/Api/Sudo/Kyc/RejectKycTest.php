@@ -29,8 +29,7 @@ class RejectKycTest extends WebTestCase
 
         /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertIsArray($json['kyc']);
-        $this->assertSame('rejected', $json['kyc']['status']);
+        $this->assertSame('rejected', $json['status']);
 
         $kycEntity = $this->em->getRepository(Kyc::class)->find($kyc->getId());
         $this->assertNotNull($kycEntity);

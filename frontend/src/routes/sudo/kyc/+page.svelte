@@ -71,12 +71,10 @@
 
 	let kycs: SudoKyc[] = $state([]);
 	let orgsMap: Map<number, Organization> = $state(new Map());
-	let total = $state(0);
+	let hasMore = $state(true);
 	let loading = $state(true);
 	let loadingMore = $state(false);
 	let error: string | null = $state(null);
-
-	const hasMore = $derived(kycs.length < total);
 
 	function load(more = false) {
 		if (more) {
@@ -104,7 +102,7 @@
 				}
 				orgsMap = newMap;
 
-				total = res.total;
+				hasMore = res.kycs.length === PER_PAGE;
 				error = null;
 			})
 			.catch((e) => {
