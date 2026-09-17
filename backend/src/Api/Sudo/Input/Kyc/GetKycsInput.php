@@ -2,13 +2,14 @@
 
 namespace App\Api\Sudo\Input\Kyc;
 
+use App\Entity\Type\KycStatus;
 use App\Service\Kyc\KycService;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class GetKycsInput
 {
 
-    #[Assert\Choice(callback: [KycService::class, 'getValues'])]
+    #[Assert\Choice(callback: [KycStatus::class, 'getValues'])]
     public ?string $status = null;
 
     #[Assert\Choice(choices: KycService::SORTABLE_COLUMNS)]
