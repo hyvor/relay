@@ -223,7 +223,7 @@ export interface SudoProjectResponse {
 
 // KYC
 
-export type KycStatus = 'pending' | 'approved' | 'rejected';
+export type KycStatus = 'pending' | 'approved' | 'rejected' | 'stale';
 export type KycAccountType = 'individual' | 'business';
 export type KycContentOwnership = 'self' | 'third_party';
 export type KycSendingType = 'transactional' | 'distributional';

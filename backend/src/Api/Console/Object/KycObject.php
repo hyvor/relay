@@ -5,7 +5,6 @@ namespace App\Api\Console\Object;
 use App\Entity\Kyc;
 use App\Entity\Type\KycAccountType;
 use App\Entity\Type\KycContentOwnership;
-use App\Entity\Type\KycSendingType;
 use App\Entity\Type\KycStatus;
 
 class KycObject
@@ -21,7 +20,7 @@ class KycObject
     public KycContentOwnership $content_ownership;
 
     /**
-     * @var KycSendingType[]
+     * @var string[]
      */
     public array $sending_type;
 

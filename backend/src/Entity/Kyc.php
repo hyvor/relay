@@ -4,7 +4,6 @@ namespace App\Entity;
 
 use App\Entity\Type\KycAccountType;
 use App\Entity\Type\KycContentOwnership;
-use App\Entity\Type\KycSendingType;
 use App\Entity\Type\KycStatus;
 use App\Repository\KycRepository;
 use Doctrine\ORM\Mapping as ORM;
@@ -24,7 +23,7 @@ class Kyc
     #[ORM\Column]
     private \DateTimeImmutable $updated_at;
 
-    #[ORM\Column(unique: true)]
+    #[ORM\Column]
     private int $organization_id;
 
     #[ORM\Column(length: 255)]
@@ -46,7 +45,7 @@ class Kyc
     private KycContentOwnership $content_ownership;
 
     /**
-     * @var KycSendingType[]
+     * @var string[]
      */
     #[ORM\Column(type: 'json')]
     private array $sending_type = [];
@@ -181,7 +180,7 @@ class Kyc
     }
 
     /**
-     * @return KycSendingType[]
+     * @return string[]
      */
     public function getSendingType(): array
     {
@@ -189,7 +188,7 @@ class Kyc
     }
 
     /**
-     * @param KycSendingType[] $sending_type
+     * @param string[] $sending_type
      */
     public function setSendingType(array $sending_type): static
     {

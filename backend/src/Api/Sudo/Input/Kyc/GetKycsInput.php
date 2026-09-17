@@ -8,7 +8,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 class GetKycsInput
 {
 
-    #[Assert\Choice(choices: ['pending', 'approved', 'rejected'])]
+    #[Assert\Choice(callback: [KycService::class, 'getValues'])]
     public ?string $status = null;
 
     #[Assert\Choice(choices: KycService::SORTABLE_COLUMNS)]

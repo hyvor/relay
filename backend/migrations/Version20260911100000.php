@@ -30,7 +30,7 @@ final class Version20260911100000 extends AbstractMigration
 
         $this->addSql(
             <<<SQL
-            CREATE TYPE kyc_status_enum AS ENUM ('pending', 'approved', 'rejected');
+            CREATE TYPE kyc_status_enum AS ENUM ('pending', 'approved', 'rejected', 'stale');
         SQL
         );
 
@@ -50,9 +50,22 @@ final class Version20260911100000 extends AbstractMigration
                 sending_type JSON NOT NULL,
                 use_case TEXT NOT NULL,
                 status kyc_status_enum NOT NULL DEFAULT 'pending',
-                submitted_at TIMESTAMPTZ NOT NULL,
-                UNIQUE (organization_id)
+                submitted_at TIMESTAMPTZ NOT NULL
             );
+        SQL
+        );
+
+        $this->addSql(
+            <<<SQL
+            CREATE INDEX kyc_organization_id_idx ON kyc (organization_id);
+        SQL
+        );
+
+        $this->addSql(
+            <<<SQL
+            CREATE UNIQUE INDEX kyc_active_per_organization_id
+                ON kyc (organization_id)
+                WHERE status != 'stale';
         SQL
         );
     }

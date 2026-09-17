@@ -73,6 +73,37 @@ class ListKycsTest extends WebTestCase
         $this->assertSame('approved', $json['kycs'][0]['status']);
     }
 
+    public function test_excludes_stale_kycs_by_default(): void
+    {
+        $this->fakeAuth();
+        KycFactory::createOne(['status' => KycStatus::STALE]);
+        KycFactory::createOne(['status' => KycStatus::PENDING]);
+
+        $response = $this->sudoApi('GET', '/kyc');
+        $this->assertSame(200, $response->getStatusCode());
+
+        /** @var array{kycs: array<int, array<string, mixed>>, total: int} $json */
+        $json = $this->getJson();
+        $this->assertCount(1, $json['kycs']);
+        $this->assertSame('pending', $json['kycs'][0]['status']);
+        $this->assertSame(1, $json['total']);
+    }
+
+    public function test_can_filter_to_stale_kycs(): void
+    {
+        $this->fakeAuth();
+        KycFactory::createOne(['status' => KycStatus::STALE]);
+        KycFactory::createOne(['status' => KycStatus::PENDING]);
+
+        $response = $this->sudoApi('GET', '/kyc?status=stale');
+        $this->assertSame(200, $response->getStatusCode());
+
+        /** @var array{kycs: array<int, array<string, mixed>>} $json */
+        $json = $this->getJson();
+        $this->assertCount(1, $json['kycs']);
+        $this->assertSame('stale', $json['kycs'][0]['status']);
+    }
+
     public function test_sorts_by_status(): void
     {
         $this->fakeAuth();

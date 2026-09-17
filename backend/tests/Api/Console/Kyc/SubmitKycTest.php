@@ -199,9 +199,9 @@ class SubmitKycTest extends WebTestCase
         $this->assertSame(200, $response->getStatusCode());
     }
 
-    public function test_resubmits_and_overwrites_previous_data(): void
+    public function test_resubmits_as_a_new_row_and_marks_previous_as_stale(): void
     {
-        KycFactory::createOne([
+        $previous = KycFactory::createOne([
             'organization_id' => 1,
             'status' => KycStatus::REJECTED,
             'name' => 'Old Name',
@@ -222,9 +222,15 @@ class SubmitKycTest extends WebTestCase
         $json = $this->getJson();
         $this->assertSame('Nadil Karunarathna', $json['name']);
         $this->assertSame('pending', $json['status']);
+        $this->assertNotSame($previous->getId(), $json['id']);
 
-        $count = count($this->em->getRepository(Kyc::class)->findBy(['organization_id' => 1]));
-        $this->assertSame(1, $count);
+        $all = $this->em->getRepository(Kyc::class)->findBy(['organization_id' => 1]);
+        $this->assertCount(2, $all);
+
+        $previousReloaded = $this->em->getRepository(Kyc::class)->find($previous->getId());
+        $this->assertNotNull($previousReloaded);
+        $this->assertSame(KycStatus::STALE, $previousReloaded->getStatus());
+        $this->assertSame('Old Name', $previousReloaded->getName());
     }
 
     public function test_fails_when_no_payment_method(): void

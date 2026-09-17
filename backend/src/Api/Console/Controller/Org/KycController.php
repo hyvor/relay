@@ -45,7 +45,7 @@ class KycController extends AbstractController
         $this->assertCloud();
 
         $organization = AuthorizationListener::getOrganization($request);
-        $kyc = $this->kycService->getByOrganizationId($organization->id);
+        $kyc = $this->kycService->getCurrentByOrganizationId($organization->id);
 
         return $this->json($kyc ? new KycObject($kyc) : null);
     }

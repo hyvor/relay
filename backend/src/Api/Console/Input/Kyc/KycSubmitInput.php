@@ -41,7 +41,7 @@ class KycSubmitInput
     #[Assert\Type('array')]
     #[Assert\Count(min: 1, minMessage: 'Select at least one sending type.')]
     #[Assert\All([
-        new Assert\Choice(enum: KycSendingType::class),
+        new Assert\Choice(callback: [KycSendingType::class, 'getValues'])
     ])]
     public array $sending_type;
 

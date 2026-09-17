@@ -6,7 +6,6 @@ use App\Entity\Kyc;
 use App\Entity\Type\KycAccountType;
 use App\Entity\Type\KycContentOwnership;
 use App\Entity\Type\KycStatus;
-use App\Repository\KycRepository;
 use App\Service\Kyc\Dto\KycApprovalResult;
 use App\Service\Kyc\Event\KycApprovedEvent;
 use App\Service\Kyc\Event\KycRejectedEvent;
@@ -15,6 +14,7 @@ use App\Service\Kyc\Exception\KycAlreadyApprovedException;
 use App\Service\Kyc\Exception\KycNotPendingException;
 use App\Service\Kyc\Exception\PaymentMethodRequiredException;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\QueryBuilder;
 use Hyvor\Internal\Bundle\Comms\CommsInterface;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\Billing\CreateSubscription;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\GetOrganizations;
@@ -34,21 +34,30 @@ class KycService
     public const array SORT_DIRECTIONS = ['asc', 'desc'];
 
     public function __construct(
-        private KycRepository $kycRepository,
         private EntityManagerInterface $em,
         private EventDispatcherInterface $eventDispatcher,
         private CommsInterface $comms,
     ) {
     }
 
-    public function getByOrganizationId(int $organizationId): ?Kyc
+    public function getCurrentByOrganizationId(int $organizationId): ?Kyc
     {
-        return $this->kycRepository->findOneBy(['organization_id' => $organizationId]);
+        /** @var Kyc|null $result */
+        $result = $this->em->getRepository(Kyc::class)
+            ->createQueryBuilder('k')
+            ->andWhere('k.organization_id = :organizationId')
+            ->andWhere('k.status != :stale')
+            ->setParameter('organizationId', $organizationId)
+            ->setParameter('stale', KycStatus::STALE)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $result;
     }
 
     public function getById(int $id): ?Kyc
     {
-        return $this->kycRepository->find($id);
+        return $this->em->getRepository(Kyc::class)->find($id);
     }
 
     /**
@@ -69,14 +78,10 @@ class KycService
             throw new \InvalidArgumentException("Invalid sort direction '$sort'.");
         }
 
-        $qb = $this->kycRepository->createQueryBuilder('k');
+        $qb = $this->em->getRepository(Kyc::class)->createQueryBuilder('k');
+        $this->applyStatusFilter($qb, $status);
 
-        if ($status !== null) {
-            $qb->andWhere('k.status = :status')->setParameter('status', $status);
-        }
-
-        $qb
-            ->orderBy('k.' . $sortBy, $sort)
+        $qb->orderBy('k.' . $sortBy, $sort)
             ->setMaxResults($limit)
             ->setFirstResult($offset);
 
@@ -86,21 +91,25 @@ class KycService
 
     public function countAll(?KycStatus $status): int
     {
-        $qb = $this->kycRepository->createQueryBuilder('k')->select('COUNT(k.id)');
-
-        if ($status !== null) {
-            $qb->andWhere('k.status = :status')->setParameter('status', $status);
-        }
+        $qb = $this->em->getRepository(Kyc::class)->createQueryBuilder('k')->select('COUNT(k.id)');
+        $this->applyStatusFilter($qb, $status);
 
         return (int)$qb->getQuery()->getSingleScalarResult();
     }
 
-    /**
-     * @throws KycAlreadyApprovedException if the organization's KYC is already approved
-     * @throws PaymentMethodRequiredException if the organization has no payment method added
-     */
+    private function applyStatusFilter(QueryBuilder $qb, ?KycStatus $status): void
+    {
+        if ($status !== null) {
+            $qb->andWhere('k.status = :status')->setParameter('status', $status);
+        } else {
+            $qb->andWhere('k.status != :stale')->setParameter('stale', KycStatus::STALE);
+        }
+    }
+
     /**
      * @param string[] $sendingType
+     * @throws KycAlreadyApprovedException if the organization's KYC is already approved
+     * @throws PaymentMethodRequiredException if the organization has no payment method added
      */
     public function submit(
         int $organizationId,
@@ -113,20 +122,24 @@ class KycService
         array $sendingType,
         string $useCase,
     ): Kyc {
-        $kyc = $this->getByOrganizationId($organizationId);
+        $current = $this->getCurrentByOrganizationId($organizationId);
 
-        if ($kyc !== null && $kyc->getStatus() === KycStatus::APPROVED) {
+        if ($current !== null && $current->getStatus() === KycStatus::APPROVED) {
             throw new KycAlreadyApprovedException('KYC for this organization has already been approved.');
         }
 
         $this->assertHasPaymentMethod($organizationId);
 
-        if ($kyc === null) {
-            $kyc = new Kyc();
-            $kyc->setCreatedAt($this->now());
-            $kyc->setOrganizationId($organizationId);
+        if ($current !== null) {
+            $current->setStatus(KycStatus::STALE);
+            $current->setUpdatedAt($this->now());
+            $this->em->persist($current);
+            $this->em->flush();
         }
 
+        $kyc = new Kyc();
+        $kyc->setCreatedAt($this->now());
+        $kyc->setOrganizationId($organizationId);
         $kyc->setUpdatedAt($this->now());
         $kyc->setAccountType($accountType);
         $kyc->setName($name);

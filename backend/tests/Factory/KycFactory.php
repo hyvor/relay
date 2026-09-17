@@ -39,7 +39,7 @@ final class KycFactory extends PersistentObjectFactory
             'address' => self::faker()->address(),
             'website' => self::faker()->url(),
             'content_ownership' => KycContentOwnership::SELF,
-            'sending_type' => [KycSendingType::TRANSACTIONAL],
+            'sending_type' => [KycSendingType::TRANSACTIONAL->value],
             'use_case' => self::faker()->sentence(),
             'status' => KycStatus::PENDING,
             'submitted_at' => new \DateTimeImmutable(),
