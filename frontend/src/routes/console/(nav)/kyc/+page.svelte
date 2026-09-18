@@ -21,8 +21,7 @@
 	import SingleBox from '../../@components/content/SingleBox.svelte';
 	import CardCollector from './CardCollector.svelte';
 	import { getAppConfig } from '../../lib/stores/consoleStore';
-	import { getKyc, submitKyc } from '../../lib/actions/kycActions';
-	import { COUNTRIES } from '../../lib/countries';
+	import { getKyc, getKycCountries, submitKyc } from '../../lib/actions/kycActions';
 	import type { Kyc, KycAccountType, KycContentOwnership, KycSendingType } from '../../types';
 
 	let loading = $state(true);
@@ -39,13 +38,15 @@
 	let country = $state('');
 	let address = $state('');
 	let website = $state('');
+	let email = $state('');
 	let contentOwnership = $state<KycContentOwnership>('self');
 	let sendingType = $state<KycSendingType[]>([]);
 	let useCase = $state('');
 
 	let errors = $state<Record<string, string>>({});
 
-	const countryOptions = COUNTRIES.map((name) => ({ value: name, label: name }));
+	let countries = $state<string[]>([]);
+	const countryOptions = $derived(countries.map((name) => ({ value: name, label: name })));
 
 	const isApproved = $derived(existingKyc?.status === 'approved');
 
@@ -62,6 +63,7 @@
 			country === kyc.country &&
 			address.trim() === kyc.address &&
 			website.trim() === kyc.website &&
+			email.trim() === kyc.email &&
 			contentOwnership === kyc.content_ownership &&
 			useCase.trim() === kyc.use_case &&
 			sendingType.length === kyc.sending_type.length &&
@@ -83,6 +85,7 @@
 		country = kyc.country;
 		address = kyc.address;
 		website = kyc.website;
+		email = kyc.email;
 		contentOwnership = kyc.content_ownership;
 		sendingType = kyc.sending_type;
 		useCase = kyc.use_case;
@@ -108,6 +111,14 @@
 			goto('/console');
 			return;
 		}
+
+		getKycCountries()
+			.then((res) => {
+				countries = res;
+			})
+			.catch((error) => {
+				toast.error('Failed to load countries: ' + error.message);
+			});
 
 		getKyc()
 			.then((res) => {
@@ -153,6 +164,12 @@
 			errors.website = 'Enter a valid website, e.g. https://example.com or www.example.com';
 		}
 
+		if (!email.trim()) {
+			errors.email = 'Email is required';
+		} else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+			errors.email = 'Enter a valid email address';
+		}
+
 		if (sendingType.length === 0) {
 			errors.sendingType = 'Select at least one sending type';
 		}
@@ -186,6 +203,7 @@
 			country,
 			address: address.trim(),
 			website: website.trim(),
+			email: email.trim(),
 			content_ownership: contentOwnership,
 			sending_type: sendingType,
 			use_case: useCase
@@ -266,8 +284,11 @@
 				{:else if existingKyc?.status === 'rejected'}
 					<div class="callout-wrap">
 						<Callout type="danger">
-							Your KYC submission was rejected. Please review the details below and
-							resubmit.
+							Your KYC submission was rejected.
+							{#if existingKyc.reject_reason}
+								Reason: {existingKyc.reject_reason}
+							{/if}
+							Please review the details below and resubmit.
 						</Callout>
 					</div>
 				{/if}
@@ -357,8 +378,23 @@
 						</FormControl>
 					</SplitControl>
 
-					<SplitControl 
-						label="Content Ownership" 
+					<SplitControl label="Contact email" caption="Who should we contact if there's an issue with your approval or we need more information?">
+						<FormControl>
+							<TextInput
+								bind:value={email}
+								block
+								disabled={isApproved}
+								type="email"
+								placeholder="you@example.com"
+							/>
+							{#if errors.email}
+								<Validation state="error">{errors.email}</Validation>
+							{/if}
+						</FormControl>
+					</SplitControl>
+
+					<SplitControl
+						label="Content Ownership"
 						caption="Who writes the content you send? You or anyone from your organization or a third party who uses your platform."
 					>
 						<InputGroup>
@@ -449,8 +485,11 @@
 					{#if existingKyc?.status === 'rejected' && formUnchanged}
 						<div class="callout-wrap">
 							<Callout type="danger">
-								Your KYC submission was rejected. Go back to Step 1 to update your
-								details, then submit again below.
+								Your KYC submission was rejected.
+								{#if existingKyc.reject_reason}
+									Reason: {existingKyc.reject_reason}
+								{/if}
+								Go back to Step 1 to update your details, then submit again below.
 							</Callout>
 						</div>
 					{:else if existingKyc?.status === 'approved'}

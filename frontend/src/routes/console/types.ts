@@ -237,7 +237,7 @@ export type KycContentOwnership = 'self' | 'third_party';
 
 export type KycSendingType = 'transactional' | 'distributional';
 
-export type KycStatus = 'pending' | 'approved' | 'rejected';
+export type KycStatus = 'pending' | 'approved' | 'rejected' | 'stale';
 
 export interface Kyc {
 	id: number;
@@ -251,7 +251,9 @@ export interface Kyc {
 	sending_type: KycSendingType[];
 	use_case: string;
 	website: string;
+	email: string;
 	status: KycStatus;
+	reject_reason: string | null;
 }
 
 export interface ProjectUserMiniObject {

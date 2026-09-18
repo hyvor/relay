@@ -264,14 +264,19 @@ export function getKycs(opts: {
 	});
 }
 
-export function approveKyc(id: number) {
+export function approveKyc(id: number, data: { note?: string | null } = {}) {
 	return sudoApi.post<SudoKyc>({
-		endpoint: `/kyc/${id}/approve`
+		endpoint: `/kyc/${id}/approve`,
+		data
 	});
 }
 
-export function rejectKyc(id: number) {
+export function rejectKyc(
+	id: number,
+	data: { note?: string | null; reject_reason?: string | null } = {}
+) {
 	return sudoApi.post<SudoKyc>({
-		endpoint: `/kyc/${id}/reject`
+		endpoint: `/kyc/${id}/reject`,
+		data
 	});
 }

@@ -240,10 +240,13 @@ export interface SudoKyc {
 	country: string;
 	address: string;
 	website: string;
+	email: string;
 	content_ownership: KycContentOwnership;
 	sending_type: KycSendingType[];
 	use_case: string;
 	status: KycStatus;
+	note: string | null;
+	reject_reason: string | null;
 }
 
 export interface SudoKycsResponse {

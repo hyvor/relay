@@ -63,7 +63,7 @@ class DevSeedCommand extends Command
         SudoUserFactory::createOne(['user_id' => 1]);
 
         $systemProject = ProjectFactory::createOne([
-            'user_id' => 1,
+            'organization_id' => 1,
             'name' => 'System'
         ]);
 
@@ -121,7 +121,7 @@ class DevSeedCommand extends Command
 
         $project = ProjectFactory::createOne([
             'name' => 'Test Project',
-            'user_id' => 1,
+            'organization_id' => 1,
         ]);
         ProjectUserFactory::createOne([
             'project' => $project,

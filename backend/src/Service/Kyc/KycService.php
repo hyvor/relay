@@ -109,6 +109,7 @@ class KycService
         string $country,
         string $address,
         string $website,
+        string $email,
         KycContentOwnership $contentOwnership,
         array $sendingType,
         string $useCase,
@@ -137,6 +138,7 @@ class KycService
         $kyc->setCountry($country);
         $kyc->setAddress($address);
         $kyc->setWebsite($website);
+        $kyc->setEmail($email);
         $kyc->setContentOwnership($contentOwnership);
         $kyc->setSendingType($sendingType);
         $kyc->setUseCase($useCase);
@@ -179,7 +181,7 @@ class KycService
      *
      * @throws KycNotPendingException
      */
-    public function approve(Kyc $kyc): Kyc
+    public function approve(Kyc $kyc, ?string $note = null): Kyc
     {
         if ($kyc->getStatus() !== KycStatus::PENDING) {
             throw new KycNotPendingException('Only pending KYC submissions can be approved.');
@@ -187,6 +189,7 @@ class KycService
 
         $kyc->setStatus(KycStatus::APPROVED);
         $kyc->setUpdatedAt($this->now());
+        $kyc->setNote($note);
 
         $this->em->persist($kyc);
         $this->em->flush();
@@ -213,7 +216,7 @@ class KycService
     /**
      * @throws KycNotPendingException
      */
-    public function reject(Kyc $kyc): Kyc
+    public function reject(Kyc $kyc, ?string $note = null, ?string $rejectReason = null): Kyc
     {
         if ($kyc->getStatus() !== KycStatus::PENDING) {
             throw new KycNotPendingException('Only pending KYC submissions can be rejected.');
@@ -221,6 +224,8 @@ class KycService
 
         $kyc->setStatus(KycStatus::REJECTED);
         $kyc->setUpdatedAt($this->now());
+        $kyc->setNote($note);
+        $kyc->setRejectReason($rejectReason);
 
         $this->em->persist($kyc);
         $this->em->flush();

@@ -36,6 +36,31 @@ class RejectKycTest extends WebTestCase
         $this->assertSame(KycStatus::REJECTED, $kycEntity->getStatus());
     }
 
+    public function test_rejects_with_a_private_note_and_reject_reason(): void
+    {
+        $kyc = KycFactory::createOne(['status' => KycStatus::PENDING]);
+
+        $response = $this->sudoApi(
+            'POST',
+            '/kyc/' . $kyc->getId() . '/reject',
+            [
+                'note' => 'Website looks fake.',
+                'reject_reason' => 'We could not verify your business website.',
+            ],
+        );
+        $this->assertSame(200, $response->getStatusCode());
+
+        /** @var array<string, mixed> $json */
+        $json = $this->getJson();
+        $this->assertSame('Website looks fake.', $json['note']);
+        $this->assertSame('We could not verify your business website.', $json['reject_reason']);
+
+        $kycEntity = $this->em->getRepository(Kyc::class)->find($kyc->getId());
+        $this->assertNotNull($kycEntity);
+        $this->assertSame('Website looks fake.', $kycEntity->getNote());
+        $this->assertSame('We could not verify your business website.', $kycEntity->getRejectReason());
+    }
+
     public function test_fails_when_not_pending(): void
     {
         $kyc = KycFactory::createOne(['status' => KycStatus::APPROVED]);

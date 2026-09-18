@@ -42,14 +42,17 @@ final class Version20260911100000 extends AbstractMigration
                 updated_at TIMESTAMPTZ NOT NULL,
                 organization_id BIGINT NOT NULL,
                 account_type kyc_account_type_enum NOT NULL,
-                name VARCHAR(255) NOT NULL,
-                country VARCHAR(255) NOT NULL,
+                name TEXT NOT NULL,
+                country TEXT NOT NULL,
                 address TEXT NOT NULL,
-                website VARCHAR(255) NOT NULL,
+                website TEXT NOT NULL,
+                email TEXT NOT NULL,
                 content_ownership kyc_content_ownership_enum NOT NULL,
                 sending_type JSON NOT NULL,
                 use_case TEXT NOT NULL,
-                status kyc_status_enum NOT NULL DEFAULT 'pending'
+                status kyc_status_enum NOT NULL DEFAULT 'pending',
+                note TEXT DEFAULT NULL,
+                reject_reason TEXT DEFAULT NULL
             );
         SQL
         );

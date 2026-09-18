@@ -41,6 +41,9 @@ class Kyc
     #[ORM\Column(length: 255)]
     private string $website;
 
+    #[ORM\Column(length: 255)]
+    private string $email;
+
     #[ORM\Column(enumType: KycContentOwnership::class)]
     private KycContentOwnership $content_ownership;
 
@@ -55,6 +58,12 @@ class Kyc
 
     #[ORM\Column(enumType: KycStatus::class)]
     private KycStatus $status;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $note = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $reject_reason = null;
 
     public function getId(): int
     {
@@ -164,6 +173,18 @@ class Kyc
         return $this;
     }
 
+    public function getEmail(): string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(string $email): static
+    {
+        $this->email = $email;
+
+        return $this;
+    }
+
     public function getContentOwnership(): KycContentOwnership
     {
         return $this->content_ownership;
@@ -214,6 +235,30 @@ class Kyc
     public function setStatus(KycStatus $status): static
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function getNote(): ?string
+    {
+        return $this->note;
+    }
+
+    public function setNote(?string $note): static
+    {
+        $this->note = $note;
+
+        return $this;
+    }
+
+    public function getRejectReason(): ?string
+    {
+        return $this->reject_reason;
+    }
+
+    public function setRejectReason(?string $reject_reason): static
+    {
+        $this->reject_reason = $reject_reason;
 
         return $this;
     }

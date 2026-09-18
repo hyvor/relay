@@ -4,6 +4,7 @@ namespace App\Api\Console\Controller\Org;
 
 use App\Api\Console\Input\Kyc\KycSubmitInput;
 use App\Api\Console\Object\KycObject;
+use App\Service\Kyc\Countries;
 use App\Service\Kyc\Exception\KycAlreadyApprovedException;
 use App\Service\Kyc\Exception\PaymentMethodRequiredException;
 use App\Service\Kyc\KycService;
@@ -41,6 +42,15 @@ class KycController extends AbstractController
         return $this->json($kyc ? new KycObject($kyc) : null);
     }
 
+    #[Route('/kyc/countries', methods: 'GET')]
+    #[OrgEndpoint]
+    public function countries(): JsonResponse
+    {
+        $this->assertCloud();
+
+        return $this->json(Countries::names());
+    }
+
     #[Route('/kyc', methods: 'POST')]
     #[OrgEndpoint]
     public function submit(
@@ -60,6 +70,7 @@ class KycController extends AbstractController
                 $input->country,
                 $input->address,
                 $input->website,
+                $input->email,
                 $input->content_ownership,
                 $input->sending_type,
                 $input->use_case,

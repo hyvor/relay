@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { Button, confirm, toast } from '@hyvor/design/components';
+	import { Button } from '@hyvor/design/components';
 	import IconCaretDown from '@hyvor/icons/IconCaretDown';
 	import IconCaretUp from '@hyvor/icons/IconCaretUp';
 	import RelativeTime from '../../console/@components/content/RelativeTime.svelte';
 	import KycStatusTag from './KycStatusTag.svelte';
-	import { approveKyc, rejectKyc } from '../sudoActions';
+	import KycActionModal from './KycActionModal.svelte';
 	import type { Organization, SudoKyc } from '../sudoTypes';
 
 	interface Props {
@@ -16,64 +16,15 @@
 	let { kyc, org, onUpdate }: Props = $props();
 
 	let opened = $state(false);
-	let approving = $state(false);
-	let rejecting = $state(false);
+	let modalOpen = $state(false);
+	let modalAction = $state<'approve' | 'reject'>('approve');
 
-	async function handleApprove(e: Event) {
+	const orgName = $derived(org?.name ?? 'organization #' + kyc.organization_id);
+
+	function openModal(action: 'approve' | 'reject', e: Event) {
 		e.stopPropagation();
-
-		const confirmed = await confirm({
-			title: 'Approve KYC',
-			content:
-				`Approve KYC for ${org?.name ?? 'organization #' + kyc.organization_id}? ` +
-				"Their card will be charged for the starter plan right away.",
-			confirmText: 'Approve & Charge',
-			cancelText: 'Cancel'
-		});
-
-		if (!confirmed) return;
-
-		approving = true;
-
-		approveKyc(kyc.id)
-			.then((res) => {
-				onUpdate(res);
-				toast.success('KYC approved.');
-			})
-			.catch((err) => {
-				toast.error('Failed to approve KYC: ' + err.message);
-			})
-			.finally(() => {
-				approving = false;
-			});
-	}
-
-	async function handleReject(e: Event) {
-		e.stopPropagation();
-
-		const confirmed = await confirm({
-			title: 'Reject KYC',
-			content: `Reject KYC for ${org?.name ?? 'organization #' + kyc.organization_id}?`,
-			confirmText: 'Reject',
-			cancelText: 'Cancel',
-			danger: true
-		});
-
-		if (!confirmed) return;
-
-		rejecting = true;
-
-		rejectKyc(kyc.id)
-			.then((res) => {
-				onUpdate(res);
-				toast.success('KYC rejected.');
-			})
-			.catch((err) => {
-				toast.error('Failed to reject KYC: ' + err.message);
-			})
-			.finally(() => {
-				rejecting = false;
-			});
+		modalAction = action;
+		modalOpen = true;
 	}
 </script>
 
@@ -94,22 +45,16 @@
 		<div class="date"><RelativeTime unix={kyc.created_at} /></div>
 		<div class="actions">
 			{#if kyc.status === 'pending'}
-				<Button
-					size="x-small"
-					color="green"
-					disabled={approving || rejecting}
-					on:click={handleApprove}
-				>
-					{approving ? 'Approving...' : 'Approve'}
+				<Button size="x-small" color="green" on:click={(e) => openModal('approve', e)}>
+					Approve
 				</Button>
 				<Button
 					size="x-small"
 					color="red"
 					variant="outline"
-					disabled={approving || rejecting}
-					on:click={handleReject}
+					on:click={(e) => openModal('reject', e)}
 				>
-					{rejecting ? 'Rejecting...' : 'Reject'}
+					Reject
 				</Button>
 			{/if}
 			<span class="caret">
@@ -144,12 +89,30 @@
 				<span class="label">Website</span>
 				<a href={kyc.website} target="_blank" rel="noreferrer">{kyc.website}</a>
 			</div>
+			<div class="detail">
+				<span class="label">Email</span>
+				<span>{kyc.email}</span>
+			</div>
 			<div class="detail full">
 				<span class="label">Use case</span>
 				<span>{kyc.use_case}</span>
 			</div>
+			{#if kyc.reject_reason}
+				<div class="detail full">
+					<span class="label">Rejection reason</span>
+					<span>{kyc.reject_reason}</span>
+				</div>
+			{/if}
+			{#if kyc.note}
+				<div class="detail full">
+					<span class="label">Private note</span>
+					<span>{kyc.note}</span>
+				</div>
+			{/if}
 		</div>
 	{/if}
+
+	<KycActionModal kyc={kyc} action={modalAction} {orgName} bind:show={modalOpen} onDone={onUpdate} />
 </div>
 
 <style>

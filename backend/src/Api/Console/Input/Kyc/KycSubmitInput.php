@@ -17,7 +17,7 @@ class KycSubmitInput
     public string $name;
 
     #[Assert\NotBlank]
-    #[Assert\Choice(choices: Countries::NAMES, message: 'Please select a valid country.')]
+    #[Assert\Choice(callback: [Countries::class, 'names'], message: 'Please select a valid country.')]
     public string $country;
 
     #[Assert\NotBlank]
@@ -28,6 +28,11 @@ class KycSubmitInput
     #[Assert\Length(max: 255)]
     #[Assert\Url]
     public string $website;
+
+    #[Assert\NotBlank]
+    #[Assert\Email]
+    #[Assert\Length(max: 255)]
+    public string $email;
 
     public KycContentOwnership $content_ownership;
 

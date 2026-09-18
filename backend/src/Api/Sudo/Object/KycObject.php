@@ -18,6 +18,7 @@ class KycObject
     public string $country;
     public string $address;
     public string $website;
+    public string $email;
     public KycContentOwnership $content_ownership;
     /**
      * @var string[]
@@ -25,6 +26,8 @@ class KycObject
     public array $sending_type;
     public string $use_case;
     public KycStatus $status;
+    public ?string $note;
+    public ?string $reject_reason;
 
     public function __construct(Kyc $kyc)
     {
@@ -37,9 +40,12 @@ class KycObject
         $this->country = $kyc->getCountry();
         $this->address = $kyc->getAddress();
         $this->website = $kyc->getWebsite();
+        $this->email = $kyc->getEmail();
         $this->content_ownership = $kyc->getContentOwnership();
         $this->sending_type = $kyc->getSendingType();
         $this->use_case = $kyc->getUseCase();
         $this->status = $kyc->getStatus();
+        $this->note = $kyc->getNote();
+        $this->reject_reason = $kyc->getRejectReason();
     }
 }

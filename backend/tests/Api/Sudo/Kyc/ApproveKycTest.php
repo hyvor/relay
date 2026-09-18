@@ -115,6 +115,33 @@ class ApproveKycTest extends WebTestCase
         );
     }
 
+    public function test_approves_with_a_private_note(): void
+    {
+        $kyc = KycFactory::createOne(['status' => KycStatus::PENDING]);
+
+        $this->getComms()->addResponse(
+            CreateSubscription::class,
+            function () {
+                return new CreateSubscriptionResponse(999);
+            }
+        );
+
+        $response = $this->sudoApi(
+            'POST',
+            '/kyc/' . $kyc->getId() . '/approve',
+            ['note' => 'Verified manually via a phone call.'],
+        );
+        $this->assertSame(200, $response->getStatusCode());
+
+        /** @var array<string, mixed> $json */
+        $json = $this->getJson();
+        $this->assertSame('Verified manually via a phone call.', $json['note']);
+
+        $kycEntity = $this->em->getRepository(Kyc::class)->find($kyc->getId());
+        $this->assertNotNull($kycEntity);
+        $this->assertSame('Verified manually via a phone call.', $kycEntity->getNote());
+    }
+
     public function test_fails_when_not_pending(): void
     {
         $kyc = KycFactory::createOne(['status' => KycStatus::APPROVED]);

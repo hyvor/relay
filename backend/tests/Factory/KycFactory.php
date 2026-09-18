@@ -38,6 +38,7 @@ final class KycFactory extends PersistentObjectFactory
             'country' => 'France',
             'address' => self::faker()->address(),
             'website' => self::faker()->url(),
+            'email' => self::faker()->email(),
             'content_ownership' => KycContentOwnership::SELF,
             'sending_type' => [KycSendingType::TRANSACTIONAL->value],
             'use_case' => self::faker()->sentence(),

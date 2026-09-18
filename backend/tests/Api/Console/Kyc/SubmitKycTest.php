@@ -31,6 +31,7 @@ class SubmitKycTest extends WebTestCase
             'country' => 'Sri Lanka',
             'address' => '123 Main Street, Colombo',
             'website' => 'https://hyvor.com',
+            'email' => 'nadil@hyvor.com',
             'content_ownership' => 'self',
             'sending_type' => [KycSendingType::TRANSACTIONAL->value],
             'use_case' => 'Sending order confirmation emails to our customers.',
@@ -180,6 +181,61 @@ class SubmitKycTest extends WebTestCase
         );
 
         $this->assertHasViolation('website');
+    }
+
+    public function test_fails_validation_when_email_missing(): void
+    {
+        $payload = $this->validPayload();
+        unset($payload['email']);
+
+        $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            $payload,
+            useSession: true
+        );
+
+        $this->assertHasViolation('email');
+    }
+
+    public function test_fails_validation_when_email_is_invalid(): void
+    {
+        $payload = $this->validPayload();
+        $payload['email'] = 'not-an-email';
+
+        $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            $payload,
+            useSession: true
+        );
+
+        $this->assertHasViolation('email');
+    }
+
+    public function test_persists_email(): void
+    {
+        $this->fakeOrganizationHasPaymentMethod(true);
+
+        $response = $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            $this->validPayload(),
+            useSession: true
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+
+        /** @var array<string, mixed> $json */
+        $json = $this->getJson();
+        $this->assertSame('nadil@hyvor.com', $json['email']);
+
+        $kyc = $this->em->getRepository(Kyc::class)->findOneBy(['organization_id' => 1]);
+        $this->assertNotNull($kyc);
+        $this->assertSame('nadil@hyvor.com', $kyc->getEmail());
     }
 
     public function test_accepts_website_without_protocol(): void

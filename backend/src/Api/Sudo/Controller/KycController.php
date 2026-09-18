@@ -2,7 +2,9 @@
 
 namespace App\Api\Sudo\Controller;
 
+use App\Api\Sudo\Input\Kyc\ApproveKycInput;
 use App\Api\Sudo\Input\Kyc\GetKycsInput;
+use App\Api\Sudo\Input\Kyc\RejectKycInput;
 use App\Api\Sudo\Object\KycObject;
 use App\Api\Sudo\Object\OrganizationObject;
 use App\Entity\Kyc;
@@ -17,6 +19,7 @@ use Hyvor\Internal\InternalConfig;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
@@ -62,13 +65,13 @@ class KycController extends AbstractController
     }
 
     #[Route('/kyc/{id}/approve', requirements: ['id' => Requirement::DIGITS], methods: 'POST')]
-    public function approve(int $id): JsonResponse
+    public function approve(int $id, #[MapRequestPayload] ApproveKycInput $input): JsonResponse
     {
         $this->assertCloud();
         $kyc = $this->getKyc($id);
 
         try {
-            $kyc = $this->kycService->approve($kyc);
+            $kyc = $this->kycService->approve($kyc, $input->note);
         } catch (KycNotPendingException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -77,13 +80,13 @@ class KycController extends AbstractController
     }
 
     #[Route('/kyc/{id}/reject', requirements: ['id' => Requirement::DIGITS], methods: 'POST')]
-    public function reject(int $id): JsonResponse
+    public function reject(int $id, #[MapRequestPayload] RejectKycInput $input): JsonResponse
     {
         $this->assertCloud();
         $kyc = $this->getKyc($id);
 
         try {
-            $kyc = $this->kycService->reject($kyc);
+            $kyc = $this->kycService->reject($kyc, $input->note, $input->reject_reason);
         } catch (KycNotPendingException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
