@@ -32,7 +32,7 @@ services:
       - ./backend:/app/backend
       - /app/backend/vendor
       - relay_media:/app/media
-      - #../internal:/app/backend/vendor/hyvor/internal:ro
+      #- ../internal:/app/backend/vendor/hyvor/internal:ro
     labels:
       traefik.enable: true
       traefik.http.routers.hyvor-relay-backend.rule: Host(`relay.hyvor.localhost`) && PathPrefix(`/api`)
