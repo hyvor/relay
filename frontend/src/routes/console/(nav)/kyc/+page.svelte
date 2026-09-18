@@ -457,7 +457,8 @@
 						<div class="callout-wrap">
 							<Callout type="success">
 								Your KYC has been approved. Your card will be charged automatically
-								for a Starter plan subscription. You may upgrade your plan at <a href="/billing">Billing</a>.
+								for a Starter plan subscription. You may upgrade your plan at <a href="/billing">
+								Billing</a> later.
 							</Callout>
 						</div>
 					{:else if existingKyc?.status === 'pending'}

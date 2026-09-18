@@ -26,10 +26,7 @@ class KycSubmitInput
 
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
-    #[Assert\Regex(
-        pattern: '/^(https?:\/\/.+|([a-z0-9-]+\.)+[a-z]{2,}(\/.*)?)$/i',
-        message: 'Please enter a valid website.'
-    )]
+    #[Assert\Url]
     public string $website;
 
     public KycContentOwnership $content_ownership;

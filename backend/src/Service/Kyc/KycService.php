@@ -71,13 +71,8 @@ class KycService
         int $limit = 30,
         int $offset = 0,
     ): array {
-        if (!in_array($sortBy, self::SORTABLE_COLUMNS, true)) {
-            throw new \InvalidArgumentException("Cannot sort by '$sortBy'.");
-        }
-
-        if (!in_array($sort, self::SORT_DIRECTIONS, true)) {
-            throw new \InvalidArgumentException("Invalid sort direction '$sort'.");
-        }
+        assert(in_array($sortBy, self::SORTABLE_COLUMNS, true));
+        assert(in_array($sort, self::SORT_DIRECTIONS, true));
 
         $qb = $this->em->getRepository(Kyc::class)->createQueryBuilder('k');
 

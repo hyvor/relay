@@ -2,16 +2,14 @@
 
 namespace App\Api\Console\Controller\Org;
 
-use App\Api\Console\Authorization\AuthorizationListener;
-use App\Api\Console\Authorization\OrganizationLevelEndpoint;
 use App\Api\Console\Input\Kyc\KycSubmitInput;
 use App\Api\Console\Object\KycObject;
 use App\Service\Kyc\Exception\KycAlreadyApprovedException;
 use App\Service\Kyc\Exception\PaymentMethodRequiredException;
 use App\Service\Kyc\KycService;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleAuthResults;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\OrgEndpoint;
 use Hyvor\Internal\InternalConfig;
-use Nelmio\ApiDocBundle\Attribute\Model;
-use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,50 +27,34 @@ class KycController extends AbstractController
     }
 
     #[Route('/kyc', methods: 'GET')]
-    #[OrganizationLevelEndpoint]
-    #[OA\Get(
-        summary: 'Get KYC',
-        description: 'Returns the KYC submission for the current organization, or null if none exists. ' .
-            'Only available on cloud deployments.'
-    )]
-    #[OA\Response(
-        response: 200,
-        description: 'The KYC submission, or null if the organization has not submitted one yet.',
-        content: new Model(type: KycObject::class)
-    )]
-    public function get(Request $request): JsonResponse
+    #[OrgEndpoint]
+    public function get(
+        Request $request,
+        ConsoleAuthResults $consoleAuth,
+    ): JsonResponse
     {
         $this->assertCloud();
 
-        $organization = AuthorizationListener::getOrganization($request);
-        $kyc = $this->kycService->getCurrentByOrganizationId($organization->id);
+        $organizationId = $consoleAuth->getOrganizationId();
+        $kyc = $this->kycService->getCurrentByOrganizationId($organizationId);
 
         return $this->json($kyc ? new KycObject($kyc) : null);
     }
 
     #[Route('/kyc', methods: 'POST')]
-    #[OrganizationLevelEndpoint]
-    #[OA\Post(
-        summary: 'Submit KYC',
-        description: 'Submits (or resubmits, if not yet approved) the KYC data for the current organization. ' .
-            'Only available on cloud deployments.'
-    )]
-    #[OA\Response(
-        response: 200,
-        description: 'Returns the saved KYC submission.',
-        content: new Model(type: KycObject::class)
-    )]
+    #[OrgEndpoint]
     public function submit(
         Request $request,
+        ConsoleAuthResults $consoleAuth,
         #[MapRequestPayload] KycSubmitInput $input
     ): JsonResponse {
         $this->assertCloud();
 
-        $organization = AuthorizationListener::getOrganization($request);
+        $organizationId = $consoleAuth->getOrganizationId();
 
         try {
             $kyc = $this->kycService->submit(
-                $organization->id,
+                $organizationId,
                 $input->account_type,
                 $input->name,
                 $input->country,
