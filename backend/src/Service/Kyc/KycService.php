@@ -19,7 +19,6 @@ use Hyvor\Internal\Bundle\Comms\Exception\CommsApiFailedException;
 use Hyvor\Internal\Component\Component;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class KycService
 {
@@ -33,7 +32,6 @@ class KycService
 
     public function __construct(
         private EntityManagerInterface $em,
-        private EventDispatcherInterface $eventDispatcher,
         private CommsInterface $comms,
         private LoggerInterface $logger,
         private BillingInterface $billing,
