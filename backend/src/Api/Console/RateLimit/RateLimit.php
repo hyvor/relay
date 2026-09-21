@@ -14,9 +14,8 @@ class RateLimit
 
     public function __construct(
         #[Autowire('%kernel.environment%')]
-        private readonly string $env = 'prod'
-    )
-    {
+        private readonly string $env = 'prod',
+    ) {
         $this->isDev = $this->env === 'dev';
     }
 
@@ -36,7 +35,7 @@ class RateLimit
     }
 
     /**
-     * Rate limit for an API key.
+     * Rate limit for an API key: product or cloud API key.
      * 100 per minute
      * @return RateLimitConfig
      */

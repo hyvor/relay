@@ -2,8 +2,8 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Authorization\ScopeRequired;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
 use App\Api\Console\Input\AnalyticsStatsInput;
 use App\Entity\Project;
 use App\Service\Send\SendAnalyticsService;
@@ -21,7 +21,7 @@ class AnalyticsController extends AbstractController
     }
 
     #[Route('/analytics/stats', methods: 'GET')]
-    #[ScopeRequired(Scope::ANALYTICS_READ)]
+    #[ScopeRequired(RelayScope::ANALYTICS_READ)]
     #[OA\Get(
         summary: 'Get analytics stats',
         description: 'Returns the total sends count, bounce rate, and complaint rate for the specified period.'
@@ -55,7 +55,7 @@ class AnalyticsController extends AbstractController
     }
 
     #[Route('/analytics/sends/chart', methods: 'GET')]
-    #[ScopeRequired(Scope::ANALYTICS_READ)]
+    #[ScopeRequired(RelayScope::ANALYTICS_READ)]
     #[OA\Get(
         summary: 'Get sends chart data',
         description: 'Returns daily send counts (total, bounced, complained, accepted, queued) for the last 30 days.'

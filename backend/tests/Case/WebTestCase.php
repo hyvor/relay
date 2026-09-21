@@ -2,7 +2,7 @@
 
 namespace App\Tests\Case;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Entity\Project;
 use App\Tests\Factory\ApiKeyFactory;
 use Doctrine\ORM\EntityManagerInterface;
@@ -41,8 +41,8 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
                 new AuthUserOrganization(
                     id: 1,
                     name: 'Fake Organization',
-                    role: 'admin'
-                )
+                    role: 'admin',
+                ),
             );
         }
 
@@ -81,7 +81,7 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         if ($response->getStatusCode() === 500) {
             throw new \Exception(
                 'API call failed with status code 500. ' .
-                    'Response: ' . $response->getContent()
+                'Response: ' . $response->getContent(),
             );
         }
 
@@ -92,7 +92,7 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
      * @param array<string, mixed> $data
      * @param array<string, mixed> $server
      * @param array<string, mixed> $parameters
-     * @param true|(string|Scope)[] $scopes
+     * @param true|(string|RelayScope)[] $scopes
      */
     public function consoleApi(
         Project|int|null $project,
@@ -102,8 +102,10 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         array $parameters = [],
         array $server = [],
         true|array $scopes = true,
-        bool $useSession = false
-    ): Response {
+        bool $useSession = false,
+        ?string $bearerToken = null, // custom token (to test cloud api mostly)
+    ): Response
+    {
         $project = is_int($project) ? $this->em->getRepository(Project::class)->find($project) : $project;
 
         if ($useSession) {
@@ -112,14 +114,16 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
                 $server['HTTP_X_PROJECT_ID'] = (string)$project->getId();
             }
             $server['HTTP_X_ORGANIZATION_ID'] ??= '1';
+        } elseif ($bearerToken) {
+            $server['HTTP_AUTHORIZATION'] = 'Bearer ' . $bearerToken;
         } else {
-            $apiKey = bin2hex(random_bytes(16));
+            $apiKey = bin2hex(random_bytes(\App\Service\ApiKey\ApiKeyService::API_KEY_LENGTH / 2));
             $apiKeyHashed = hash('sha256', $apiKey);
             $apiKeyFactory = ['key_hashed' => $apiKeyHashed, 'project' => $project];
             if ($scopes !== true) {
                 $apiKeyFactory['scopes'] = array_map(
-                    fn(Scope|string $scope) => is_string($scope) ? $scope : $scope->value,
-                    $scopes
+                    fn(RelayScope|string $scope) => is_string($scope) ? $scope : $scope->value,
+                    $scopes,
                 );
             }
             ApiKeyFactory::createOne($apiKeyFactory);
@@ -172,7 +176,7 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         if ($response->getStatusCode() === 500) {
             throw new \Exception(
                 'API call failed with status code 500. ' .
-                    'Response: ' . $response->getContent()
+                'Response: ' . $response->getContent(),
             );
         }
 
@@ -212,7 +216,7 @@ class WebTestCase extends \Symfony\Bundle\FrameworkBundle\Test\WebTestCase
         if ($response->getStatusCode() === 500) {
             throw new \Exception(
                 'API call failed with status code 500. ' .
-                    'Response: ' . $response->getContent()
+                'Response: ' . $response->getContent(),
             );
         }
 

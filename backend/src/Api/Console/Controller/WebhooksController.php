@@ -2,8 +2,8 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Authorization\ScopeRequired;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
 use App\Api\Console\Input\CreateWebhookInput;
 use App\Api\Console\Input\UpdateWebhookInput;
 use App\Api\Console\Object\WebhookDeliveryObject;
@@ -32,7 +32,7 @@ class WebhooksController extends AbstractController
     }
 
     #[Route('/webhooks', methods: 'GET')]
-    #[ScopeRequired(Scope::WEBHOOKS_READ)]
+    #[ScopeRequired(RelayScope::WEBHOOKS_READ)]
     #[OA\Get(
         summary: 'Get all webhooks',
         description: 'Returns all webhooks configured for the project, including their secrets.'
@@ -57,7 +57,7 @@ class WebhooksController extends AbstractController
     }
 
     #[Route('/webhooks', methods: 'POST')]
-    #[ScopeRequired(Scope::WEBHOOKS_WRITE)]
+    #[ScopeRequired(RelayScope::WEBHOOKS_WRITE)]
     #[OA\Post(
         summary: 'Create a webhook',
         description: 'Creates a new webhook for the project and returns its signing secret.'
@@ -80,7 +80,7 @@ class WebhooksController extends AbstractController
     }
 
     #[Route('/webhooks/{id}', methods: 'PATCH')]
-    #[ScopeRequired(Scope::WEBHOOKS_WRITE)]
+    #[ScopeRequired(RelayScope::WEBHOOKS_WRITE)]
     #[OA\Patch(
         summary: 'Update a webhook',
         description: 'Updates the URL, description, or events of a webhook.'
@@ -103,7 +103,7 @@ class WebhooksController extends AbstractController
     }
 
     #[Route('/webhooks/{id}', methods: 'DELETE')]
-    #[ScopeRequired(Scope::WEBHOOKS_WRITE)]
+    #[ScopeRequired(RelayScope::WEBHOOKS_WRITE)]
     #[OA\Delete(
         summary: 'Delete a webhook',
         description: 'Permanently deletes a webhook.'
@@ -121,7 +121,7 @@ class WebhooksController extends AbstractController
     }
 
     #[Route('/webhooks/deliveries', methods: 'GET')]
-    #[ScopeRequired(Scope::WEBHOOKS_READ)]
+    #[ScopeRequired(RelayScope::WEBHOOKS_READ)]
     #[OA\Get(
         summary: 'Get webhook deliveries',
         description: 'Returns delivery attempts for webhooks of the project.'

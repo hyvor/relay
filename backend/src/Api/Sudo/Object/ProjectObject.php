@@ -7,7 +7,6 @@ use App\Entity\Project;
 class ProjectObject
 {
     public int $id;
-    public int $user_id;
     public string $name;
     public int $created_at;
     public int $updated_at;
@@ -17,7 +16,6 @@ class ProjectObject
     public function __construct(Project $project)
     {
         $this->id = $project->getId();
-        $this->user_id = $project->getUserId();
         $this->name = $project->getName();
         $this->created_at = $project->getCreatedAt()->getTimestamp();
         $this->updated_at = $project->getUpdatedAt()->getTimestamp();

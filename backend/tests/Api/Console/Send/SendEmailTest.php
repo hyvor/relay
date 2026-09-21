@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\Send;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Api\Console\Controller\SendsController;
 use App\Api\Console\Input\SendEmail\SendEmailInput;
 use App\Api\Console\Input\SendEmail\UnableToDecodeAttachmentBase64Exception;
@@ -57,7 +57,7 @@ class SendEmailTest extends WebTestCase
                 'to' => 'test@example.com',
                 'body_text' => 'Test email',
             ],
-            scopes: [Scope::SENDS_READ] // Missing sends.send
+            scopes: [RelayScope::SENDS_READ] // Missing sends.send
         );
 
         $this->assertResponseStatusCodeSame(403);
@@ -420,7 +420,7 @@ class SendEmailTest extends WebTestCase
                     'Reply-To' => 'no-reply@hyvor.com', // bug #163
                 ],
             ],
-            scopes: [Scope::SENDS_SEND]
+            scopes: [RelayScope::SENDS_SEND]
         );
 
         $this->assertResponseStatusCodeSame(200);
@@ -556,7 +556,7 @@ class SendEmailTest extends WebTestCase
                 "subject" => "Test Email",
                 "body_text" => "This is a test email.",
             ],
-            scopes: [Scope::SENDS_SEND]
+            scopes: [RelayScope::SENDS_SEND]
         );
 
         $this->assertResponseStatusCodeSame(200);

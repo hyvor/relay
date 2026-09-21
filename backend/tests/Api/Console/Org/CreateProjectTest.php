@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Api\Console\Project;
+namespace App\Tests\Api\Console\Org;
 
 use App\Api\Console\Controller\Org\ProjectsController;
 use App\Api\Console\Object\ProjectObject;
@@ -28,15 +28,15 @@ class CreateProjectTest extends WebTestCase
 
     public function test_create_project_valid(): void
     {
-		AuthFake::enableForSymfony(
-			$this->container,
-			['id' => 1],
-			new AuthUserOrganization(
-				id: 1,
-				name: 'Fake Organization',
-				role: 'member'
-			)
-		);
+        AuthFake::enableForSymfony(
+            $this->container,
+            ['id' => 1],
+            new AuthUserOrganization(
+                id: 1,
+                name: 'Fake Organization',
+                role: 'member',
+            ),
+        );
 
         SudoUserFactory::createOne(['user_id' => 1]);
 
@@ -44,23 +44,27 @@ class CreateProjectTest extends WebTestCase
 
         $this->client->request(
             "POST",
-            "/api/console/project",
+            "/api/console/projects",
             [
                 'name' => 'Valid Project Name',
                 'send_type' => 'transactional',
             ],
             server: [
                 'HTTP_X_ORGANIZATION_ID' => '1',
-            ]
+            ],
         );
 
         $this->assertResponseStatusCodeSame(200);
 
         $json = $this->getJson();
         $this->assertArrayHasKey('project', $json);
-        $this->assertArrayHasKey('scopes', $json);
-        $project = $json['project'];
-        $scopes = $json['scopes'];
+        $this->assertArrayHasKey('project_user', $json);
+
+        $jsonProjectUser = $json['project_user'];
+        $this->assertIsArray($jsonProjectUser);
+        $this->assertArrayHasKey('scopes', $jsonProjectUser);
+        $project = $jsonProjectUser['project'];
+        $scopes = $jsonProjectUser['scopes'];
 
         $this->assertIsArray($project);
         $this->assertIsArray($scopes);
@@ -68,12 +72,13 @@ class CreateProjectTest extends WebTestCase
         $this->assertArrayHasKey('id', $project);
         $this->assertArrayHasKey('created_at', $project);
         $this->assertArrayHasKey('name', $project);
-        $this->assertSame(13, count($scopes));
+        $this->assertSame(14, count($scopes));
 
         $projectDb = $this->em->getRepository(Project::class)->find($project['id']);
         $this->assertNotNull($projectDb);
         $this->assertSame('Valid Project Name', $projectDb->getName());
         $this->assertSame(ProjectSendType::TRANSACTIONAL, $projectDb->getSendType());
+        $this->assertSame('session:', $projectDb->getCreatedBySource());
     }
 
     public function test_disallow_project_creation_for_non_sudo_users(): void
@@ -81,28 +86,28 @@ class CreateProjectTest extends WebTestCase
         // The non-sudo restriction only applies on cloud deployments.
         $_ENV['DEPLOYMENT'] = 'cloud';
 
-		AuthFake::enableForSymfony(
-			$this->container,
-			['id' => 99],
-			new AuthUserOrganization(
-				id: 1,
-				name: 'Fake Organization',
-				role: 'member'
-			)
-		);
+        AuthFake::enableForSymfony(
+            $this->container,
+            ['id' => 99],
+            new AuthUserOrganization(
+                id: 1,
+                name: 'Fake Organization',
+                role: 'member',
+            ),
+        );
 
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
 
         $this->client->request(
             "POST",
-            "/api/console/project",
+            "/api/console/projects",
             [
                 'name' => 'Valid Project Name',
                 'send_type' => 'transactional',
             ],
             server: [
                 'HTTP_X_ORGANIZATION_ID' => '1',
-            ]
+            ],
         );
 
         $this->assertResponseStatusCodeSame(400);

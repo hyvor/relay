@@ -36,7 +36,7 @@ class MetricsListenerTest extends WebTestCase
     public function test_increments_total_requests(): void
     {
         $project = ProjectFactory::createOne([
-            'user_id' => 1,
+            'organization_id' => 1,
         ]);
 
         $listener = $this->getContainer()->get(MetricsListener::class);
@@ -46,7 +46,7 @@ class MetricsListenerTest extends WebTestCase
             $project,
             'GET',
             '/sends/120',
-            useSession: true
+            useSession: true,
         );
 
         $metrics = $listener->getSamples();
@@ -62,7 +62,7 @@ class MetricsListenerTest extends WebTestCase
     {
         $response = $this->localApi(
             'GET',
-            '/metrics'
+            '/metrics',
         );
 
         $this->assertSame(200, $response->getStatusCode());
@@ -71,7 +71,7 @@ class MetricsListenerTest extends WebTestCase
         $this->assertIsString($content['metrics']);
         $this->assertStringContainsString(
             '# HELP php_info Information about the PHP environment.',
-            $content['metrics']
+            $content['metrics'],
         );
     }
 }
