@@ -10,10 +10,64 @@ use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\WarmupScheduleFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
+use function Zenstruck\Foundry\Persistence\refresh;
+
 #[CoversClass(IpSelector::class)]
 class IpSelectorTest extends KernelTestCase
 {
-    public function test_get_ip_falls_back_to_warming_with_capacity(): void
+
+    public function test_when_no_ips(): void
+    {
+        $queue = QueueFactory::createOne();
+
+        $selector = $this->getService(IpSelector::class);
+        $ip = $selector->selectForQueue($queue);
+
+        $this->assertNull($ip);
+    }
+
+    public function test_when_one_ip(): void
+    {
+        $queue = QueueFactory::createOne();
+
+        $ip = IpAddressFactory::createOne([
+            'queue' => $queue,
+        ]);
+
+        $selector = $this->getService(IpSelector::class);
+        $result = $selector->selectForQueue($queue);
+
+        $this->assertNotNull($result);
+        $this->assertSame($ip->getId(), $result->getId());
+    }
+
+    public function test_when_multiple_ips(): void
+    {
+        $queue = QueueFactory::createOne();
+
+        $ip1 = IpAddressFactory::createOne([
+            'queue' => $queue,
+        ]);
+
+        $ip2 = IpAddressFactory::createOne([
+            'queue' => $queue,
+        ]);
+
+        // no queue
+        IpAddressFactory::createOne();
+        // another queue
+        IpAddressFactory::createOne([
+            'queue' => QueueFactory::createOne(),
+        ]);
+
+        $selector = $this->getService(IpSelector::class);
+        $ip = $selector->selectForQueue($queue);
+
+        $this->assertNotNull($ip);
+        $this->assertContains($ip->getId(), [$ip1->getId(), $ip2->getId()]);
+    }
+
+    public function test_selects_warming_ip_and_updates_count(): void
     {
         $queue = QueueFactory::createOne();
 
@@ -21,7 +75,7 @@ class IpSelectorTest extends KernelTestCase
             'queue' => $queue,
         ]);
 
-        WarmupScheduleFactory::createOne([
+        $schedule = WarmupScheduleFactory::createOne([
             'ipAddress' => $warmingIp,
             'status' => WarmupStatus::WARMING,
             'started_date' => new \DateTimeImmutable('2026-06-01'),
@@ -30,12 +84,14 @@ class IpSelectorTest extends KernelTestCase
             'sent_today' => 500,
         ]);
 
-        /** @var IpSelector $selector */
-        $selector = $this->container->get(IpSelector::class);
+        $selector = $this->getService(IpSelector::class);
         $ip = $selector->selectForQueue($queue);
 
         $this->assertNotNull($ip);
         $this->assertSame($warmingIp->getId(), $ip->getId());
+
+        refresh($schedule);
+        $this->assertSame(501, $schedule->getSentToday());
     }
 
     public function test_get_ip_returns_null_when_all_at_capacity(): void
@@ -55,22 +111,10 @@ class IpSelectorTest extends KernelTestCase
             'sent_today' => 1000,
         ]);
 
-        /** @var IpSelector $selector */
-        $selector = $this->container->get(IpSelector::class);
+        $selector = $this->getService(IpSelector::class);
         $result = $selector->selectForQueue($queue);
 
         $this->assertNull($result);
-    }
-
-    public function test_get_ip_returns_null_when_no_ips(): void
-    {
-        $queue = QueueFactory::createOne();
-
-        /** @var IpSelector $selector */
-        $selector = $this->container->get(IpSelector::class);
-        $ip = $selector->selectForQueue($queue);
-
-        $this->assertNull($ip);
     }
 
     public function test_get_ip_skips_warming_ip_without_enough_capacity(): void
@@ -103,8 +147,7 @@ class IpSelectorTest extends KernelTestCase
             'sent_today' => 500,
         ]);
 
-        /** @var IpSelector $selector */
-        $selector = $this->container->get(IpSelector::class);
+        $selector = $this->getService(IpSelector::class);
 
         $ip = $selector->selectForQueue($queue, 10);
 
@@ -127,24 +170,7 @@ class IpSelectorTest extends KernelTestCase
             'schedule' => array_fill(0, 30, 100),
         ]);
 
-        /** @var IpSelector $selector */
-        $selector = $this->container->get(IpSelector::class);
-        $result = $selector->selectForQueue($queue);
-
-        $this->assertNotNull($result);
-        $this->assertSame($ip->getId(), $result->getId());
-    }
-
-    public function test_ip_without_warmup_schedule_is_returned(): void
-    {
-        $queue = QueueFactory::createOne();
-
-        $ip = IpAddressFactory::createOne([
-            'queue' => $queue,
-        ]);
-
-        /** @var IpSelector $selector */
-        $selector = $this->container->get(IpSelector::class);
+        $selector = $this->getService(IpSelector::class);
         $result = $selector->selectForQueue($queue);
 
         $this->assertNotNull($result);
