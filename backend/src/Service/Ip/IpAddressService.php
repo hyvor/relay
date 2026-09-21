@@ -8,7 +8,8 @@ use App\Entity\Server;
 use App\Service\Ip\Dto\PtrValidationDto;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
 use App\Service\Ip\Event\IpAddressUpdatedEvent;
-use App\Service\Ip\Event\IpRemovedEvent;
+use App\Service\Ip\Event\IpAddressCreatedEvent;
+use App\Service\Ip\Event\IpAddressRemovedEvent;
 use App\Service\Queue\QueueService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -105,6 +106,8 @@ class IpAddressService
             WarmupScheduleService::DEFAULT_SCHEDULE,
         );
 
+        $this->ed->dispatch(new IpAddressCreatedEvent($ipAddressEntity));
+
         return $ipAddressEntity;
     }
 
@@ -113,7 +116,7 @@ class IpAddressService
         $this->em->remove($ipAddress);
         $this->em->flush();
 
-        $this->ed->dispatch(new IpRemovedEvent($ipAddress));
+        $this->ed->dispatch(new IpAddressRemovedEvent($ipAddress));
     }
 
     public function updateIpAddress(
