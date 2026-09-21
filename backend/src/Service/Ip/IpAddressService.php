@@ -101,11 +101,6 @@ class IpAddressService
         $this->em->persist($ipAddressEntity);
         $this->em->flush();
 
-        $this->warmupScheduleService->createWarmupSchedule(
-            $ipAddressEntity,
-            WarmupScheduleService::DEFAULT_SCHEDULE,
-        );
-
         $this->ed->dispatch(new IpAddressCreatedEvent($ipAddressEntity));
 
         return $ipAddressEntity;
