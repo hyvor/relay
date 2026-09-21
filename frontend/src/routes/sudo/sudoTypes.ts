@@ -55,7 +55,6 @@ export interface Queue {
 	id: number;
 	created_at: number;
 	name: string;
-	ip_count: number;
 }
 
 export interface Blacklist {

@@ -2,6 +2,7 @@
 	import { Tag } from '@hyvor/design/components';
 	import type { Queue } from '../sudoTypes';
 	import IconExclamationCircle from '@hyvor/icons/IconExclamationCircle';
+	import { ipAddressesStore } from '../sudoStore';
 
 	interface Props {
 		queue: Queue;
@@ -9,7 +10,7 @@
 
 	let { queue }: Props = $props();
 
-	const ipCount = $derived(queue.ip_count);
+	const ipCount = $derived($ipAddressesStore.filter((ip) => ip.queue?.id === queue.id).length);
 </script>
 
 <div class="queue">

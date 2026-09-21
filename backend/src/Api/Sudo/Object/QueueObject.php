@@ -11,15 +11,13 @@ class QueueObject
     public int $created_at;
     public int $updated_at;
     public string $name;
-    public int $ip_count;
 
-    public function __construct(Queue $queue, int $ipCount = 0)
+    public function __construct(Queue $queue)
     {
         $this->id = $queue->getId();
         $this->created_at = $queue->getCreatedAt()->getTimestamp();
         $this->updated_at = $queue->getUpdatedAt()->getTimestamp();
         $this->name = $queue->getName();
-        $this->ip_count = $ipCount;
     }
 
 }

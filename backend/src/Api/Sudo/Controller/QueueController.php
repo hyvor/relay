@@ -24,12 +24,8 @@ class QueueController extends AbstractController
     {
         $queues = $this->queueService->getAllQueues();
 
-        $ipCounts = $this->queueService->getIpCountsForQueues(
-            array_map(fn(Queue $queue) => $queue->getId(), $queues)
-        );
-
         $queueObjects = array_map(
-            fn(Queue $queue) => new QueueObject($queue, $ipCounts[$queue->getId()] ?? 0),
+            fn(Queue $queue) => new QueueObject($queue),
             $queues
         );
 
