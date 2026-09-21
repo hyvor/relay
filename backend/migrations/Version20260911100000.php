@@ -60,9 +60,17 @@ final class Version20260911100000 extends AbstractMigration
 
         $this->addSql(
             <<<SQL
+            CREATE UNIQUE INDEX kyc_pending_per_organization_id
+                ON kyc (organization_id)
+                WHERE status = 'pending';
+        SQL
+        );
+
+        $this->addSql(
+            <<<SQL
             CREATE UNIQUE INDEX kyc_active_per_organization_id
                 ON kyc (organization_id)
-                WHERE status != 'stale';
+                WHERE status IN ('approved', 'rejected');
         SQL
         );
     }

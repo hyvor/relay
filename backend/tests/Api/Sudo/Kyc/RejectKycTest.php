@@ -61,6 +61,29 @@ class RejectKycTest extends WebTestCase
         $this->assertSame('We could not verify your business website.', $kycEntity->getRejectReason());
     }
 
+    public function test_rejecting_marks_the_organizations_previous_active_kyc_as_stale(): void
+    {
+        $previous = KycFactory::createOne([
+            'organization_id' => 1,
+            'status' => KycStatus::APPROVED,
+        ]);
+        $kyc = KycFactory::createOne([
+            'organization_id' => 1,
+            'status' => KycStatus::PENDING,
+        ]);
+
+        $response = $this->sudoApi('POST', '/kyc/' . $kyc->getId() . '/reject');
+        $this->assertSame(200, $response->getStatusCode());
+
+        $kycEntity = $this->em->getRepository(Kyc::class)->find($kyc->getId());
+        $this->assertNotNull($kycEntity);
+        $this->assertSame(KycStatus::REJECTED, $kycEntity->getStatus());
+
+        $previousReloaded = $this->em->getRepository(Kyc::class)->find($previous->getId());
+        $this->assertNotNull($previousReloaded);
+        $this->assertSame(KycStatus::STALE, $previousReloaded->getStatus());
+    }
+
     public function test_fails_when_not_pending(): void
     {
         $kyc = KycFactory::createOne(['status' => KycStatus::APPROVED]);

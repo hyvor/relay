@@ -49,8 +49,6 @@
 	let countries = $state<string[]>([]);
 	const countryOptions = $derived(countries.map((name) => ({ value: name, label: name })));
 
-	const isApproved = $derived(existingKyc?.status === 'approved');
-
 	const formUnchanged = $derived.by(() => {
 		const kyc = existingKyc;
 
@@ -287,7 +285,10 @@
 					</div>
 				{:else if existingKyc?.status === 'approved'}
 					<div class="callout-wrap">
-						<Callout type="success">Your KYC has been approved.</Callout>
+						<Callout type="success">
+							Your KYC has been approved. You can still update the details below
+							and resubmit if anything has changed.
+						</Callout>
 					</div>
 				{:else if existingKyc?.status === 'rejected'}
 					<div class="callout-wrap">
@@ -309,16 +310,14 @@
 						<InputGroup>
 							<span class="radio-wrap">
 								<Radio
-									name="account-type" 
-									value="individual" 
+									name="account-type"
+									value="individual"
 									bind:group={accountType}
-									disabled={isApproved}
 								>Individual</Radio>
-								<Radio 
-									name="account-type" 
-									value="business" 
+								<Radio
+									name="account-type"
+									value="business"
 									bind:group={accountType}
-									disabled={isApproved}
 								>Business</Radio>
 							</span>
 						</InputGroup>
@@ -332,7 +331,6 @@
 							<TextInput
 								bind:value={name}
 								block
-								disabled={isApproved}
 								placeholder={accountType === 'individual' ? 'John Doe' : 'HYVOR'}
 							/>
 							{#if errors.name}
@@ -348,7 +346,6 @@
 								options={countryOptions}
 								placeholder="Select a country"
 								block
-								disabled={isApproved}
 								state={errors.country ? 'error' : 'default'}
 							/>
 							{#if errors.country}
@@ -363,7 +360,6 @@
 								bind:value={address}
 								block
 								rows={3}
-								disabled={isApproved}
 								placeholder="123 Main Street, City, Postal Code"
 							/>
 							{#if errors.address}
@@ -377,7 +373,6 @@
 							<TextInput
 								bind:value={website}
 								block
-								disabled={isApproved}
 								placeholder={accountType === 'individual' ? 'https://yourpersonalwebsite.com' : 'https://yourbusinesswebsite.com'}
 							/>
 							{#if errors.website}
@@ -391,7 +386,6 @@
 							<TextInput
 								bind:value={email}
 								block
-								disabled={isApproved}
 								type="email"
 								placeholder="you@example.com"
 							/>
@@ -409,12 +403,10 @@
 							<span class="radio-wrap">
 								<Checkbox
 									checked={contentOwnership.includes('self')}
-									disabled={isApproved}
 									on:change={() => toggleContentOwnership('self')}
 								>Our-self</Checkbox>
 								<Checkbox
 									checked={contentOwnership.includes('third_party')}
-									disabled={isApproved}
 									on:change={() => toggleContentOwnership('third_party')}
 								>Third Party</Checkbox>
 							</span>
@@ -438,12 +430,10 @@
 							<span class="radio-wrap">
 								<Checkbox
 									checked={sendingTransactional}
-									disabled={isApproved}
 									on:change={() => (sendingTransactional = !sendingTransactional)}
 								>Transactional</Checkbox>
 								<Checkbox
 									checked={sendingDistributional}
-									disabled={isApproved}
 									on:change={() => (sendingDistributional = !sendingDistributional)}
 								>Distributional</Checkbox>
 							</span>
@@ -468,7 +458,6 @@
 						<Textarea
 							name="use-case"
 							bind:value={useCase}
-							disabled={isApproved}
 							block
 						/>
 						{#if errors.useCase}
@@ -479,16 +468,14 @@
 
 				</div>
 
-				{#if !isApproved}
-					<div class="actions">
-						<Button 
-							color="accent" 
-							variant="fill" 
-							on:click={handleNext} 
-							disabled={contentOwnership.includes('third_party')}
-						>Next</Button>
-					</div>
-				{/if}
+				<div class="actions">
+					<Button
+						color="accent"
+						variant="fill"
+						on:click={handleNext}
+						disabled={contentOwnership.includes('third_party')}
+					>Next</Button>
+				</div>
 			{:else}
 				<div class="kyc-card-wrap">
 					{#if existingKyc?.status === 'rejected' && formUnchanged}
@@ -501,12 +488,13 @@
 								Go back to Step 1 to update your details, then submit again below.
 							</Callout>
 						</div>
-					{:else if existingKyc?.status === 'approved'}
+					{:else if existingKyc?.status === 'approved' && formUnchanged}
 						<div class="callout-wrap">
 							<Callout type="success">
 								Your KYC has been approved. Your card will be charged automatically
 								for a Starter plan subscription. You may upgrade your plan at <a href="/billing">
-								Billing</a> later.
+								Billing</a> later. You can still update your details and resubmit if
+								anything has changed.
 							</Callout>
 						</div>
 					{:else if existingKyc?.status === 'pending'}
@@ -527,34 +515,30 @@
 						</div>
 					{/if}
 
-					{#if !isApproved}
-						<div class="payment-box">
-							<CardCollector onSuccess={handleCardAdded} onError={handleCardError} bind:cardAdded={cardAdded} />
-						</div>
-					{/if}
+					<div class="payment-box">
+						<CardCollector onSuccess={handleCardAdded} onError={handleCardError} bind:cardAdded={cardAdded} />
+					</div>
 				</div>
 
 				<div class="actions space-between">
 					<Button variant="outline" color="gray" on:click={() => goToStep(1)}>Back</Button
 					>
-					{#if !isApproved}
-						<div class="submit-wrap">
-							<Tooltip text={submitDisabledReason ?? ''} disabled={submitDisabledReason === null}>
-								<Button
-									color="accent"
-									variant="fill"
-									disabled={saving || !cardAdded || formUnchanged}
-									on:click={handleSubmit}
-								>
-									{saving
-										? 'Submitting...'
-										: existingKyc
-											? 'Resubmit KYC'
-											: 'Submit KYC'}
-								</Button>
-							</Tooltip>
-						</div>
-					{/if}
+					<div class="submit-wrap">
+						<Tooltip text={submitDisabledReason ?? ''} disabled={submitDisabledReason === null}>
+							<Button
+								color="accent"
+								variant="fill"
+								disabled={saving || !cardAdded || formUnchanged}
+								on:click={handleSubmit}
+							>
+								{saving
+									? 'Submitting...'
+									: existingKyc
+										? 'Resubmit KYC'
+										: 'Submit KYC'}
+							</Button>
+						</Tooltip>
+					</div>
 				</div>
 			{/if}
 		{/if}

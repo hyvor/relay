@@ -296,7 +296,7 @@ class SubmitKycTest extends WebTestCase
         $this->assertSame(200, $response->getStatusCode());
     }
 
-    public function test_resubmits_as_a_new_row_and_marks_previous_as_stale(): void
+    public function test_resubmits_as_a_new_pending_row_without_affecting_the_active_one(): void
     {
         $previous = KycFactory::createOne([
             'organization_id' => 1,
@@ -326,8 +326,75 @@ class SubmitKycTest extends WebTestCase
 
         $previousReloaded = $this->em->getRepository(Kyc::class)->find($previous->getId());
         $this->assertNotNull($previousReloaded);
-        $this->assertSame(KycStatus::STALE, $previousReloaded->getStatus());
+        $this->assertSame(KycStatus::REJECTED, $previousReloaded->getStatus());
         $this->assertSame('Old Name', $previousReloaded->getName());
+    }
+
+    public function test_updates_the_existing_pending_kyc_in_place_instead_of_creating_a_new_row(): void
+    {
+        $pending = KycFactory::createOne([
+            'organization_id' => 1,
+            'status' => KycStatus::PENDING,
+            'name' => 'Old Name',
+        ]);
+
+        $this->fakeOrganizationHasPaymentMethod(true);
+
+        $response = $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            $this->validPayload(),
+            useSession: true
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+        /** @var array<string, mixed> $json */
+        $json = $this->getJson();
+        $this->assertSame('Nadil Karunarathna', $json['name']);
+        $this->assertSame('pending', $json['status']);
+        $this->assertSame($pending->getId(), $json['id']);
+
+        $all = $this->em->getRepository(Kyc::class)->findBy(['organization_id' => 1]);
+        $this->assertCount(1, $all);
+    }
+
+    public function test_updates_the_pending_kyc_in_place_while_leaving_a_coexisting_approved_kyc_untouched(): void
+    {
+        $approved = KycFactory::createOne([
+            'organization_id' => 1,
+            'status' => KycStatus::APPROVED,
+            'name' => 'Approved Name',
+        ]);
+        $pending = KycFactory::createOne([
+            'organization_id' => 1,
+            'status' => KycStatus::PENDING,
+            'name' => 'Old Pending Name',
+        ]);
+
+        $this->fakeOrganizationHasPaymentMethod(true);
+
+        $response = $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            $this->validPayload(),
+            useSession: true
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+        /** @var array<string, mixed> $json */
+        $json = $this->getJson();
+        $this->assertSame('pending', $json['status']);
+        $this->assertSame($pending->getId(), $json['id']);
+
+        $approvedReloaded = $this->em->getRepository(Kyc::class)->find($approved->getId());
+        $this->assertNotNull($approvedReloaded);
+        $this->assertSame(KycStatus::APPROVED, $approvedReloaded->getStatus());
+        $this->assertSame('Approved Name', $approvedReloaded->getName());
+
+        $all = $this->em->getRepository(Kyc::class)->findBy(['organization_id' => 1]);
+        $this->assertCount(2, $all);
     }
 
     public function test_fails_when_no_payment_method(): void
@@ -366,12 +433,15 @@ class SubmitKycTest extends WebTestCase
         $this->assertSame(400, $response->getStatusCode());
     }
 
-    public function test_fails_when_already_approved(): void
+    public function test_allows_resubmission_when_already_approved_and_creates_a_new_pending_row(): void
     {
-        KycFactory::createOne([
+        $approved = KycFactory::createOne([
             'organization_id' => 1,
             'status' => KycStatus::APPROVED,
+            'name' => 'Old Approved Name',
         ]);
+
+        $this->fakeOrganizationHasPaymentMethod(true);
 
         $response = $this->consoleApi(
             null,
@@ -381,7 +451,19 @@ class SubmitKycTest extends WebTestCase
             useSession: true
         );
 
-        $this->assertResponseFailed(400);
+        $this->assertSame(200, $response->getStatusCode());
+        /** @var array<string, mixed> $json */
+        $json = $this->getJson();
+        $this->assertSame('pending', $json['status']);
+        $this->assertNotSame($approved->getId(), $json['id']);
+
+        $approvedReloaded = $this->em->getRepository(Kyc::class)->find($approved->getId());
+        $this->assertNotNull($approvedReloaded);
+        $this->assertSame(KycStatus::APPROVED, $approvedReloaded->getStatus());
+        $this->assertSame('Old Approved Name', $approvedReloaded->getName());
+
+        $all = $this->em->getRepository(Kyc::class)->findBy(['organization_id' => 1]);
+        $this->assertCount(2, $all);
     }
 
     public function test_fails_validation_when_name_missing(): void

@@ -5,7 +5,6 @@ namespace App\Api\Console\Controller\Org;
 use App\Api\Console\Input\Kyc\KycSubmitInput;
 use App\Api\Console\Object\KycObject;
 use App\Service\Kyc\Countries;
-use App\Service\Kyc\Exception\KycAlreadyApprovedException;
 use App\Service\Kyc\Exception\PaymentMethodRequiredException;
 use App\Service\Kyc\KycService;
 use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleAuthResults;
@@ -76,7 +75,7 @@ class KycController extends AbstractController
                 $input->sending_distributional,
                 $input->use_case,
             );
-        } catch (KycAlreadyApprovedException | PaymentMethodRequiredException $e) {
+        } catch (PaymentMethodRequiredException $e) {
             throw new BadRequestHttpException($e->getMessage(), previous: $e);
         }
 

@@ -5,7 +5,6 @@ namespace App\Service\Kyc;
 use App\Entity\Kyc;
 use App\Entity\Type\KycAccountType;
 use App\Entity\Type\KycStatus;
-use App\Service\Kyc\Exception\KycAlreadyApprovedException;
 use App\Service\Kyc\Exception\KycNotPendingException;
 use App\Service\Kyc\Exception\PaymentMethodRequiredException;
 use Doctrine\DBAL\LockMode;
@@ -43,13 +42,39 @@ class KycService
 
     public function getCurrentByOrganizationId(int $organizationId): ?Kyc
     {
+        return $this->getPendingByOrganizationId($organizationId)
+            ?? $this->getActiveByOrganizationId($organizationId);
+    }
+
+    public function getPendingByOrganizationId(int $organizationId, bool $lock = false): ?Kyc
+    {
+        $query = $this->em->getRepository(Kyc::class)
+            ->createQueryBuilder('k')
+            ->andWhere('k.organization_id = :organizationId')
+            ->andWhere('k.status = :pending')
+            ->setParameter('organizationId', $organizationId)
+            ->setParameter('pending', KycStatus::PENDING)
+            ->getQuery();
+
+        if ($lock) {
+            $query->setLockMode(LockMode::PESSIMISTIC_WRITE);
+        }
+
+        /** @var Kyc|null $result */
+        $result = $query->getOneOrNullResult();
+
+        return $result;
+    }
+
+    public function getActiveByOrganizationId(int $organizationId): ?Kyc
+    {
         /** @var Kyc|null $result */
         $result = $this->em->getRepository(Kyc::class)
             ->createQueryBuilder('k')
             ->andWhere('k.organization_id = :organizationId')
-            ->andWhere('k.status != :stale')
+            ->andWhere('k.status IN (:active)')
             ->setParameter('organizationId', $organizationId)
-            ->setParameter('stale', KycStatus::STALE)
+            ->setParameter('active', [KycStatus::APPROVED, KycStatus::REJECTED])
             ->getQuery()
             ->getOneOrNullResult();
 
@@ -100,7 +125,6 @@ class KycService
 
     /**
      * @param string[] $contentOwnership
-     * @throws KycAlreadyApprovedException if the organization's KYC is already approved
      * @throws PaymentMethodRequiredException if the organization has no payment method added
      */
     public function submit(
@@ -116,41 +140,48 @@ class KycService
         bool $sendingDistributional,
         string $useCase,
     ): Kyc {
-        $current = $this->getCurrentByOrganizationId($organizationId);
-
-        if ($current !== null && $current->getStatus() === KycStatus::APPROVED) {
-            throw new KycAlreadyApprovedException('KYC for this organization has already been approved.');
-        }
-
         $this->assertHasPaymentMethod($organizationId);
 
-        if ($current !== null) {
-            $current->setStatus(KycStatus::STALE);
-            $current->setUpdatedAt($this->now());
-            $this->em->persist($current);
+        return $this->em->wrapInTransaction(function () use (
+            $organizationId,
+            $accountType,
+            $name,
+            $country,
+            $address,
+            $website,
+            $email,
+            $contentOwnership,
+            $sendingTransactional,
+            $sendingDistributional,
+            $useCase,
+        ) {
+            $pending = $this->getPendingByOrganizationId($organizationId, lock: true);
+
+            $kyc = $pending ?? new Kyc();
+
+            if ($pending === null) {
+                $kyc->setCreatedAt($this->now());
+                $kyc->setOrganizationId($organizationId);
+                $kyc->setStatus(KycStatus::PENDING);
+            }
+
+            $kyc->setUpdatedAt($this->now());
+            $kyc->setAccountType($accountType);
+            $kyc->setName($name);
+            $kyc->setCountry($country);
+            $kyc->setAddress($address);
+            $kyc->setWebsite($website);
+            $kyc->setEmail($email);
+            $kyc->setContentOwnership($contentOwnership);
+            $kyc->setSendingTransactional($sendingTransactional);
+            $kyc->setSendingDistributional($sendingDistributional);
+            $kyc->setUseCase($useCase);
+
+            $this->em->persist($kyc);
             $this->em->flush();
-        }
 
-        $kyc = new Kyc();
-        $kyc->setCreatedAt($this->now());
-        $kyc->setOrganizationId($organizationId);
-        $kyc->setUpdatedAt($this->now());
-        $kyc->setAccountType($accountType);
-        $kyc->setName($name);
-        $kyc->setCountry($country);
-        $kyc->setAddress($address);
-        $kyc->setWebsite($website);
-        $kyc->setEmail($email);
-        $kyc->setContentOwnership($contentOwnership);
-        $kyc->setSendingTransactional($sendingTransactional);
-        $kyc->setSendingDistributional($sendingDistributional);
-        $kyc->setUseCase($useCase);
-        $kyc->setStatus(KycStatus::PENDING);
-
-        $this->em->persist($kyc);
-        $this->em->flush();
-
-        return $kyc;
+            return $kyc;
+        });
     }
 
     /**
@@ -193,6 +224,8 @@ class KycService
                 throw new KycNotPendingException('Only pending KYC submissions can be approved.');
             }
 
+            $this->staleActiveRecord($lockedKyc->getOrganizationId());
+
             $lockedKyc->setStatus(KycStatus::APPROVED);
             $lockedKyc->setUpdatedAt($this->now());
             $lockedKyc->setNote($note);
@@ -232,18 +265,37 @@ class KycService
      */
     public function reject(Kyc $kyc, ?string $note = null, ?string $rejectReason = null): Kyc
     {
-        if ($kyc->getStatus() !== KycStatus::PENDING) {
-            throw new KycNotPendingException('Only pending KYC submissions can be rejected.');
+        return $this->em->wrapInTransaction(function () use ($kyc, $note, $rejectReason) {
+
+            $lockedKyc = $this->em->find(Kyc::class, $kyc->getId(), LockMode::PESSIMISTIC_WRITE);
+            assert($lockedKyc !== null);
+
+            if ($lockedKyc->getStatus() !== KycStatus::PENDING) {
+                throw new KycNotPendingException('Only pending KYC submissions can be rejected.');
+            }
+
+            $this->staleActiveRecord($lockedKyc->getOrganizationId());
+
+            $lockedKyc->setStatus(KycStatus::REJECTED);
+            $lockedKyc->setUpdatedAt($this->now());
+            $lockedKyc->setNote($note);
+            $lockedKyc->setRejectReason($rejectReason);
+
+            $this->em->persist($lockedKyc);
+            $this->em->flush();
+
+            return $lockedKyc;
+        });
+    }
+
+    private function staleActiveRecord(int $organizationId): void
+    {
+        $active = $this->getActiveByOrganizationId($organizationId);
+
+        if ($active !== null) {
+            $active->setStatus(KycStatus::STALE);
+            $active->setUpdatedAt($this->now());
+            $this->em->persist($active);
         }
-
-        $kyc->setStatus(KycStatus::REJECTED);
-        $kyc->setUpdatedAt($this->now());
-        $kyc->setNote($note);
-        $kyc->setRejectReason($rejectReason);
-
-        $this->em->persist($kyc);
-        $this->em->flush();
-
-        return $kyc;
     }
 }

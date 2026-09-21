@@ -142,6 +142,36 @@ class ApproveKycTest extends WebTestCase
         $this->assertSame('Verified manually via a phone call.', $kycEntity->getNote());
     }
 
+    public function test_approving_marks_the_organizations_previous_active_kyc_as_stale(): void
+    {
+        $previous = KycFactory::createOne([
+            'organization_id' => 1,
+            'status' => KycStatus::REJECTED,
+        ]);
+        $kyc = KycFactory::createOne([
+            'organization_id' => 1,
+            'status' => KycStatus::PENDING,
+        ]);
+
+        $this->getComms()->addResponse(
+            CreateSubscription::class,
+            function () {
+                return new CreateSubscriptionResponse(999);
+            }
+        );
+
+        $response = $this->sudoApi('POST', '/kyc/' . $kyc->getId() . '/approve');
+        $this->assertSame(200, $response->getStatusCode());
+
+        $kycEntity = $this->em->getRepository(Kyc::class)->find($kyc->getId());
+        $this->assertNotNull($kycEntity);
+        $this->assertSame(KycStatus::APPROVED, $kycEntity->getStatus());
+
+        $previousReloaded = $this->em->getRepository(Kyc::class)->find($previous->getId());
+        $this->assertNotNull($previousReloaded);
+        $this->assertSame(KycStatus::STALE, $previousReloaded->getStatus());
+    }
+
     public function test_fails_when_not_pending(): void
     {
         $kyc = KycFactory::createOne(['status' => KycStatus::APPROVED]);
