@@ -19,16 +19,13 @@
 	badge="Open-Source & Self-Hosted"
 	title="Hyvor Relay"
 	subtitle="Email API for Developers"
+	fullHeight
 	buttons={[
 		{ href: '/hosting', label: 'Start Self-Hosting', size: 'x-large' },
 		{ href: '/docs', label: 'Product Docs', size: 'x-large', variant: 'outline' }
 	]}
 >
-	{#snippet after()}
-		<JoinWaitlist />
-	{/snippet}
 </Hero>
-
 <Features />
 <Enterprise />
 <FAQ />
