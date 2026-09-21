@@ -28,14 +28,15 @@ class RouteNullIpsMessageHandlerTest extends KernelTestCase
         $send = SendFactory::createOne([
             'queue' => $queue,
             'ip_address' => $ip1,
-		]);
+            'queued' => true,
+        ]);
 
-		SendRecipientFactory::createOne([
-			'send' => $send,
-			'status' => SendRecipientStatus::QUEUED,
-		]);
+        SendRecipientFactory::createOne([
+            'send' => $send,
+            'status' => SendRecipientStatus::QUEUED,
+        ]);
 
-        // Simulate IP removal (delete IP and nullify sends)
+        // delete IP and nullify sends
         $this->em->remove($ip1);
         $this->em->flush();
 
@@ -45,7 +46,6 @@ class RouteNullIpsMessageHandlerTest extends KernelTestCase
 
         $this->em->clear();
 
-        /** @var SendRepository $sendRepo */
         $sendRepo = $this->em->getRepository(Send::class);
         $updatedSend = $sendRepo->find($send->getId());
 
@@ -84,6 +84,7 @@ class RouteNullIpsMessageHandlerTest extends KernelTestCase
         $ip2 = IpAddressFactory::createOne(['queue' => $queue]);
 
         $send = SendFactory::createOne([
+            'queued' => true,
             'queue' => $queue,
             'ip_address' => $ip1,
         ]);

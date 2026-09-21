@@ -15,44 +15,62 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 class RouteNullIpsMessageHandler
 {
 
+    private const int BATCH_SIZE = 100;
+
     public function __construct(
         private IpSelector $ipSelector,
         private QueueService $queueService,
         private EntityManagerInterface $em,
-    ) {
-    }
+    ) {}
 
     public function __invoke(RouteNullIpsMessage $message): void
     {
-        $queue = $this->queueService->getQueueById($message->queueId);
+        $lastId = 0;
 
-        if ($queue === null) {
-            return;
-        }
+        do {
+            $queue = $this->queueService->getQueueById($message->queueId);
 
-        $sends = $this->em->getRepository(Send::class)->findBy([
-            'queue' => $queue,
-            'ip_address' => null,
-            'queued' => true,
-        ]);
-
-        foreach ($sends as $send) {
-            $recipientCount = $this->em->getRepository(SendRecipient::class)->count([
-                'send' => $send,
-                'status' => SendRecipientStatus::QUEUED,
-            ]);
-
-            if ($recipientCount === 0) {
-                continue;
+            if ($queue === null) {
+                return;
             }
 
-            $ip = $this->ipSelector->selectForQueue($queue, $recipientCount);
-            if ($ip !== null) {
-                $send->setIpAddress($ip);
-            }
-        }
+            /** @var Send[] $sends */
+            $sends = $this->em
+                ->createQueryBuilder()
+                ->select('s')
+                ->from(Send::class, 's')
+                ->where('s.queue = :queue')
+                ->andWhere('s.ip_address IS NULL')
+                ->andWhere('s.queued = true')
+                ->andWhere('s.id > :lastId')
+                ->orderBy('s.id', 'ASC')
+                ->setMaxResults(self::BATCH_SIZE)
+                ->setParameter('queue', $queue)
+                ->setParameter('lastId', $lastId)
+                ->getQuery()
+                ->getResult();
 
-        $this->em->flush();
+            foreach ($sends as $send) {
+                $lastId = $send->getId();
+
+                $recipientCount = $this->em->getRepository(SendRecipient::class)->count([
+                    'send' => $send,
+                    'status' => SendRecipientStatus::QUEUED,
+                ]);
+
+                if ($recipientCount === 0) {
+                    continue;
+                }
+
+                $ip = $this->ipSelector->selectForQueue($queue, $recipientCount);
+                if ($ip !== null) {
+                    $send->setIpAddress($ip);
+                }
+            }
+
+            $this->em->flush();
+            $this->em->clear();
+        } while (count($sends) === self::BATCH_SIZE);
     }
 
 }
