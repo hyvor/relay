@@ -150,7 +150,7 @@ class SubmitKycTest extends WebTestCase
             useSession: true
         );
 
-        $this->assertHasViolation('sending_transactional');
+        $this->assertHasViolation('', 'Select at least one sending type.');
     }
 
     public function test_submits_with_multiple_content_ownership_values(): void
@@ -278,14 +278,12 @@ class SubmitKycTest extends WebTestCase
         $this->assertSame('nadil@hyvor.com', $kyc->getEmail());
     }
 
-    public function test_accepts_website_without_protocol(): void
+    public function test_fails_validation_when_website_has_no_protocol(): void
     {
         $payload = $this->validPayload();
         $payload['website'] = 'www.hyvor.com';
 
-        $this->fakeOrganizationHasPaymentMethod(true);
-
-        $response = $this->consoleApi(
+        $this->consoleApi(
             null,
             'POST',
             '/kyc',
@@ -293,7 +291,7 @@ class SubmitKycTest extends WebTestCase
             useSession: true
         );
 
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertHasViolation('website');
     }
 
     public function test_resubmits_as_a_new_pending_row_without_affecting_the_active_one(): void

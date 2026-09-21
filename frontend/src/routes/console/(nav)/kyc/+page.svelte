@@ -158,11 +158,8 @@
 
 		if (!website.trim()) {
 			errors.website = 'Website is required';
-		} else if (
-			!/^https?:\/\/.+/i.test(website.trim()) &&
-			!/^([a-z0-9-]+\.)+[a-z]{2,}(\/.*)?$/i.test(website.trim())
-		) {
-			errors.website = 'Enter a valid website, e.g. https://example.com or www.example.com';
+		} else if (!/^https?:\/\/.+/i.test(website.trim())) {
+			errors.website = 'Enter a valid website starting with http:// or https://, e.g. https://example.com';
 		}
 
 		if (!email.trim()) {
@@ -373,7 +370,7 @@
 							<TextInput
 								bind:value={website}
 								block
-								placeholder={accountType === 'individual' ? 'https://yourpersonalwebsite.com' : 'https://yourbusinesswebsite.com'}
+								placeholder="https://example.com"
 							/>
 							{#if errors.website}
 								<Validation state="error">{errors.website}</Validation>
