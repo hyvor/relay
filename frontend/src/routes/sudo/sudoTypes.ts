@@ -227,7 +227,6 @@ export interface SudoProjectResponse {
 export type KycStatus = 'pending' | 'approved' | 'rejected' | 'stale';
 export type KycAccountType = 'individual' | 'business';
 export type KycContentOwnership = 'self' | 'third_party';
-export type KycSendingType = 'transactional' | 'distributional';
 export type KycSortBy = 'status' | 'created_at';
 
 export interface SudoKyc {
@@ -241,8 +240,9 @@ export interface SudoKyc {
 	address: string;
 	website: string;
 	email: string;
-	content_ownership: KycContentOwnership;
-	sending_type: KycSendingType[];
+	content_ownership: KycContentOwnership[];
+	sending_transactional: boolean;
+	sending_distributional: boolean;
 	use_case: string;
 	status: KycStatus;
 	note: string | null;

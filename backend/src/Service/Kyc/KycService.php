@@ -4,7 +4,6 @@ namespace App\Service\Kyc;
 
 use App\Entity\Kyc;
 use App\Entity\Type\KycAccountType;
-use App\Entity\Type\KycContentOwnership;
 use App\Entity\Type\KycStatus;
 use App\Service\Kyc\Event\KycApprovedEvent;
 use App\Service\Kyc\Event\KycRejectedEvent;
@@ -98,7 +97,7 @@ class KycService
     }
 
     /**
-     * @param string[] $sendingType
+     * @param string[] $contentOwnership
      * @throws KycAlreadyApprovedException if the organization's KYC is already approved
      * @throws PaymentMethodRequiredException if the organization has no payment method added
      */
@@ -110,8 +109,9 @@ class KycService
         string $address,
         string $website,
         string $email,
-        KycContentOwnership $contentOwnership,
-        array $sendingType,
+        array $contentOwnership,
+        bool $sendingTransactional,
+        bool $sendingDistributional,
         string $useCase,
     ): Kyc {
         $current = $this->getCurrentByOrganizationId($organizationId);
@@ -140,7 +140,8 @@ class KycService
         $kyc->setWebsite($website);
         $kyc->setEmail($email);
         $kyc->setContentOwnership($contentOwnership);
-        $kyc->setSendingType($sendingType);
+        $kyc->setSendingTransactional($sendingTransactional);
+        $kyc->setSendingDistributional($sendingDistributional);
         $kyc->setUseCase($useCase);
         $kyc->setStatus(KycStatus::PENDING);
 

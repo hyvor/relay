@@ -72,7 +72,8 @@ class KycController extends AbstractController
                 $input->website,
                 $input->email,
                 $input->content_ownership,
-                $input->sending_type,
+                $input->sending_transactional,
+                $input->sending_distributional,
                 $input->use_case,
             );
         } catch (KycAlreadyApprovedException | PaymentMethodRequiredException $e) {

@@ -235,8 +235,6 @@ export type KycAccountType = 'individual' | 'business';
 
 export type KycContentOwnership = 'self' | 'third_party';
 
-export type KycSendingType = 'transactional' | 'distributional';
-
 export type KycStatus = 'pending' | 'approved' | 'rejected' | 'stale';
 
 export interface Kyc {
@@ -247,8 +245,9 @@ export interface Kyc {
 	name: string;
 	country: string;
 	address: string;
-	content_ownership: KycContentOwnership;
-	sending_type: KycSendingType[];
+	content_ownership: KycContentOwnership[];
+	sending_transactional: boolean;
+	sending_distributional: boolean;
 	use_case: string;
 	website: string;
 	email: string;

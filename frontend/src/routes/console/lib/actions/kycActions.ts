@@ -1,4 +1,4 @@
-import type { Kyc, KycAccountType, KycContentOwnership, KycSendingType } from '../../types';
+import type { Kyc, KycAccountType, KycContentOwnership } from '../../types';
 import consoleApi from '../consoleApi.svelte';
 
 export interface KycSubmitData {
@@ -8,8 +8,9 @@ export interface KycSubmitData {
 	address: string;
 	website: string;
 	email: string;
-	content_ownership: KycContentOwnership;
-	sending_type: KycSendingType[];
+	content_ownership: KycContentOwnership[];
+	sending_transactional: boolean;
+	sending_distributional: boolean;
 	use_case: string;
 }
 

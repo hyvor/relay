@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use App\Entity\Type\KycAccountType;
-use App\Entity\Type\KycContentOwnership;
 use App\Entity\Type\KycStatus;
 use App\Repository\KycRepository;
 use Doctrine\ORM\Mapping as ORM;
@@ -44,14 +43,17 @@ class Kyc
     #[ORM\Column(length: 255)]
     private string $email;
 
-    #[ORM\Column(enumType: KycContentOwnership::class)]
-    private KycContentOwnership $content_ownership;
-
     /**
      * @var string[]
      */
     #[ORM\Column(type: 'json')]
-    private array $sending_type = [];
+    private array $content_ownership = [];
+
+    #[ORM\Column]
+    private bool $sending_transactional = false;
+
+    #[ORM\Column]
+    private bool $sending_distributional = false;
 
     #[ORM\Column(type: 'text')]
     private string $use_case;
@@ -185,32 +187,44 @@ class Kyc
         return $this;
     }
 
-    public function getContentOwnership(): KycContentOwnership
+    /**
+     * @return string[]
+     */
+    public function getContentOwnership(): array
     {
         return $this->content_ownership;
     }
 
-    public function setContentOwnership(KycContentOwnership $content_ownership): static
+    /**
+     * @param string[] $content_ownership
+     */
+    public function setContentOwnership(array $content_ownership): static
     {
         $this->content_ownership = $content_ownership;
 
         return $this;
     }
 
-    /**
-     * @return string[]
-     */
-    public function getSendingType(): array
+    public function isSendingTransactional(): bool
     {
-        return $this->sending_type;
+        return $this->sending_transactional;
     }
 
-    /**
-     * @param string[] $sending_type
-     */
-    public function setSendingType(array $sending_type): static
+    public function setSendingTransactional(bool $sending_transactional): static
     {
-        $this->sending_type = $sending_type;
+        $this->sending_transactional = $sending_transactional;
+
+        return $this;
+    }
+
+    public function isSendingDistributional(): bool
+    {
+        return $this->sending_distributional;
+    }
+
+    public function setSendingDistributional(bool $sending_distributional): static
+    {
+        $this->sending_distributional = $sending_distributional;
 
         return $this;
     }

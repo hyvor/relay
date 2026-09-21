@@ -4,7 +4,6 @@ namespace App\Tests\Api\Console\Kyc;
 
 use App\Api\Console\Controller\Org\KycController;
 use App\Entity\Kyc;
-use App\Entity\Type\KycSendingType;
 use App\Entity\Type\KycStatus;
 use App\Service\Kyc\Event\KycSubmittedEvent;
 use App\Service\Kyc\KycService;
@@ -32,8 +31,9 @@ class SubmitKycTest extends WebTestCase
             'address' => '123 Main Street, Colombo',
             'website' => 'https://hyvor.com',
             'email' => 'nadil@hyvor.com',
-            'content_ownership' => 'self',
-            'sending_type' => [KycSendingType::TRANSACTIONAL->value],
+            'content_ownership' => ['self'],
+            'sending_transactional' => true,
+            'sending_distributional' => false,
             'use_case' => 'Sending order confirmation emails to our customers.',
         ];
     }
@@ -78,7 +78,9 @@ class SubmitKycTest extends WebTestCase
         $json = $this->getJson();
         $this->assertSame('Nadil Karunarathna', $json['name']);
         $this->assertSame('business', $json['account_type']);
-        $this->assertSame([KycSendingType::TRANSACTIONAL->value], $json['sending_type']);
+        $this->assertSame(['self'], $json['content_ownership']);
+        $this->assertTrue($json['sending_transactional']);
+        $this->assertFalse($json['sending_distributional']);
         $this->assertSame('pending', $json['status']);
 
         $kyc = $this->em->getRepository(Kyc::class)->findOneBy(['organization_id' => 1]);
@@ -116,7 +118,8 @@ class SubmitKycTest extends WebTestCase
     public function test_submits_with_multiple_sending_types(): void
     {
         $payload = $this->validPayload();
-        $payload['sending_type'] = [KycSendingType::TRANSACTIONAL->value, KycSendingType::DISTRIBUTIONAL->value];
+        $payload['sending_transactional'] = true;
+        $payload['sending_distributional'] = true;
 
         $this->fakeOrganizationHasPaymentMethod(true);
 
@@ -132,13 +135,15 @@ class SubmitKycTest extends WebTestCase
 
         /** @var array<string, mixed> $json */
         $json = $this->getJson();
-        $this->assertSame([KycSendingType::TRANSACTIONAL->value, KycSendingType::DISTRIBUTIONAL->value], $json['sending_type']);
+        $this->assertTrue($json['sending_transactional']);
+        $this->assertTrue($json['sending_distributional']);
     }
 
-    public function test_fails_validation_when_sending_type_is_empty(): void
+    public function test_fails_validation_when_no_sending_type_selected(): void
     {
         $payload = $this->validPayload();
-        $payload['sending_type'] = [];
+        $payload['sending_transactional'] = false;
+        $payload['sending_distributional'] = false;
 
         $this->consoleApi(
             null,
@@ -148,13 +153,35 @@ class SubmitKycTest extends WebTestCase
             useSession: true
         );
 
-        $this->assertHasViolation('sending_type');
+        $this->assertHasViolation('sending_transactional');
     }
 
-    public function test_fails_validation_when_sending_type_has_invalid_value(): void
+    public function test_submits_with_multiple_content_ownership_values(): void
     {
         $payload = $this->validPayload();
-        $payload['sending_type'] = ['marketing'];
+        $payload['content_ownership'] = ['self', 'third_party'];
+
+        $this->fakeOrganizationHasPaymentMethod(true);
+
+        $response = $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            $payload,
+            useSession: true
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+
+        /** @var array<string, mixed> $json */
+        $json = $this->getJson();
+        $this->assertSame(['self', 'third_party'], $json['content_ownership']);
+    }
+
+    public function test_fails_validation_when_content_ownership_is_empty(): void
+    {
+        $payload = $this->validPayload();
+        $payload['content_ownership'] = [];
 
         $this->consoleApi(
             null,
@@ -164,7 +191,23 @@ class SubmitKycTest extends WebTestCase
             useSession: true
         );
 
-        $this->assertHasViolation('sending_type[0]');
+        $this->assertHasViolation('content_ownership');
+    }
+
+    public function test_fails_validation_when_content_ownership_has_invalid_value(): void
+    {
+        $payload = $this->validPayload();
+        $payload['content_ownership'] = ['invalid'];
+
+        $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            $payload,
+            useSession: true
+        );
+
+        $this->assertHasViolation('content_ownership[0]');
     }
 
     public function test_fails_validation_when_website_missing(): void

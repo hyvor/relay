@@ -4,7 +4,6 @@ namespace App\Api\Console\Object;
 
 use App\Entity\Kyc;
 use App\Entity\Type\KycAccountType;
-use App\Entity\Type\KycContentOwnership;
 use App\Entity\Type\KycStatus;
 
 class KycObject
@@ -18,11 +17,12 @@ class KycObject
     public string $address;
     public string $website;
     public string $email;
-    public KycContentOwnership $content_ownership;
     /**
      * @var string[]
      */
-    public array $sending_type;
+    public array $content_ownership;
+    public bool $sending_transactional;
+    public bool $sending_distributional;
     public string $use_case;
     public KycStatus $status;
     public ?string $reject_reason;
@@ -39,7 +39,8 @@ class KycObject
         $this->website = $kyc->getWebsite();
         $this->email = $kyc->getEmail();
         $this->content_ownership = $kyc->getContentOwnership();
-        $this->sending_type = $kyc->getSendingType();
+        $this->sending_transactional = $kyc->isSendingTransactional();
+        $this->sending_distributional = $kyc->isSendingDistributional();
         $this->use_case = $kyc->getUseCase();
         $this->status = $kyc->getStatus();
         $this->reject_reason = $kyc->getRejectReason();

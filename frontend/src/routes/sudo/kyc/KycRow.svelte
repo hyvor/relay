@@ -75,11 +75,18 @@
 			</div>
 			<div class="detail">
 				<span class="label">Content ownership</span>
-				<span class="value">{kyc.content_ownership.replace('_', ' ')}</span>
+				<span class="value">{kyc.content_ownership.map((v) => v.replace('_', ' ')).join(', ')}</span>
 			</div>
 			<div class="detail">
 				<span class="label">Sending type</span>
-				<span class="value">{kyc.sending_type.join(', ')}</span>
+				<span class="value">
+					{[
+						kyc.sending_transactional ? 'transactional' : null,
+						kyc.sending_distributional ? 'distributional' : null
+					]
+						.filter(Boolean)
+						.join(', ')}
+				</span>
 			</div>
 			<div class="detail">
 				<span class="label">Address</span>

@@ -22,7 +22,7 @@
 	import CardCollector from './CardCollector.svelte';
 	import { getAppConfig } from '../../lib/stores/consoleStore';
 	import { getKyc, getKycCountries, submitKyc } from '../../lib/actions/kycActions';
-	import type { Kyc, KycAccountType, KycContentOwnership, KycSendingType } from '../../types';
+	import type { Kyc, KycAccountType, KycContentOwnership } from '../../types';
 
 	let loading = $state(true);
 	let saving = $state(false);
@@ -39,8 +39,9 @@
 	let address = $state('');
 	let website = $state('');
 	let email = $state('');
-	let contentOwnership = $state<KycContentOwnership>('self');
-	let sendingType = $state<KycSendingType[]>([]);
+	let contentOwnership = $state<KycContentOwnership[]>([]);
+	let sendingTransactional = $state(false);
+	let sendingDistributional = $state(false);
 	let useCase = $state('');
 
 	let errors = $state<Record<string, string>>({});
@@ -64,10 +65,11 @@
 			address.trim() === kyc.address &&
 			website.trim() === kyc.website &&
 			email.trim() === kyc.email &&
-			contentOwnership === kyc.content_ownership &&
+			contentOwnership.length === kyc.content_ownership.length &&
+			contentOwnership.every((type) => kyc.content_ownership.includes(type)) &&
 			useCase.trim() === kyc.use_case &&
-			sendingType.length === kyc.sending_type.length &&
-			sendingType.every((type) => kyc.sending_type.includes(type))
+			sendingTransactional === kyc.sending_transactional &&
+			sendingDistributional === kyc.sending_distributional
 		);
 	});
 
@@ -87,15 +89,16 @@
 		website = kyc.website;
 		email = kyc.email;
 		contentOwnership = kyc.content_ownership;
-		sendingType = kyc.sending_type;
+		sendingTransactional = kyc.sending_transactional;
+		sendingDistributional = kyc.sending_distributional;
 		useCase = kyc.use_case;
 	}
 
-	function toggleSendingType(type: KycSendingType) {
-		if (sendingType.includes(type)) {
-			sendingType = sendingType.filter((t) => t !== type);
+	function toggleContentOwnership(type: KycContentOwnership) {
+		if (contentOwnership.includes(type)) {
+			contentOwnership = contentOwnership.filter((t) => t !== type);
 		} else {
-			sendingType = [...sendingType, type];
+			contentOwnership = [...contentOwnership, type];
 		}
 	}
 
@@ -170,7 +173,11 @@
 			errors.email = 'Enter a valid email address';
 		}
 
-		if (sendingType.length === 0) {
+		if (contentOwnership.length === 0) {
+			errors.contentOwnership = 'Select at least one option';
+		}
+
+		if (!sendingTransactional && !sendingDistributional) {
 			errors.sendingType = 'Select at least one sending type';
 		}
 
@@ -205,7 +212,8 @@
 			website: website.trim(),
 			email: email.trim(),
 			content_ownership: contentOwnership,
-			sending_type: sendingType,
+			sending_transactional: sendingTransactional,
+			sending_distributional: sendingDistributional,
 			use_case: useCase
 		})
 			.then((res) => {
@@ -397,27 +405,28 @@
 						label="Content Ownership"
 						caption="Who writes the content you send? You or anyone from your organization or a third party who uses your platform."
 					>
-						<InputGroup>
+						<FormControl>
 							<span class="radio-wrap">
-								<Radio
-									name="content-ownership"
-									value="self"
-									bind:group={contentOwnership}
+								<Checkbox
+									checked={contentOwnership.includes('self')}
 									disabled={isApproved}
-								>Our-self</Radio>
-								<Radio
-									name="content-ownership"
-									value="third_party"
-									bind:group={contentOwnership}
+									on:change={() => toggleContentOwnership('self')}
+								>Our-self</Checkbox>
+								<Checkbox
+									checked={contentOwnership.includes('third_party')}
 									disabled={isApproved}
-								>Third Party</Radio>
+									on:change={() => toggleContentOwnership('third_party')}
+								>Third Party</Checkbox>
 							</span>
-						</InputGroup>
+							{#if errors.contentOwnership}
+								<Validation state="error">{errors.contentOwnership}</Validation>
+							{/if}
+						</FormControl>
 
-						{#if contentOwnership === 'third_party'}
+						{#if contentOwnership.includes('third_party')}
 							<div class="callout-wrap-top">
 								<Callout type="danger">
-									Hyvor Relay cloud version is currently not intended for use by third parties outside you or your organization's 
+									Hyvor Relay cloud version is currently not intended for use by third parties outside you or your organization's
 									employees. For other use cases, please consider self-hosting Hyvor Relay instead.
 								</Callout>
 							</div>
@@ -428,14 +437,14 @@
 						<FormControl>
 							<span class="radio-wrap">
 								<Checkbox
-									checked={sendingType.includes('transactional')}
+									checked={sendingTransactional}
 									disabled={isApproved}
-									on:change={() => toggleSendingType('transactional')}
+									on:change={() => (sendingTransactional = !sendingTransactional)}
 								>Transactional</Checkbox>
 								<Checkbox
-									checked={sendingType.includes('distributional')}
+									checked={sendingDistributional}
 									disabled={isApproved}
-									on:change={() => toggleSendingType('distributional')}
+									on:change={() => (sendingDistributional = !sendingDistributional)}
 								>Distributional</Checkbox>
 							</span>
 							{#if errors.sendingType}
@@ -445,8 +454,8 @@
 					</SplitControl>
 
 					<SplitControl label="Use case" caption="Describe your use case for Hyvor Relay">
-					
-						{#if sendingType.includes('distributional')}
+
+						{#if sendingDistributional}
 							<div class="callout-wrap-bottom">
 								<Callout type="info">
 									Describe your use case in detail. Include the type of content you'll send (e.g.newsletters, announcements, 
@@ -476,7 +485,7 @@
 							color="accent" 
 							variant="fill" 
 							on:click={handleNext} 
-							disabled={contentOwnership === 'third_party'}
+							disabled={contentOwnership.includes('third_party')}
 						>Next</Button>
 					</div>
 				{/if}
