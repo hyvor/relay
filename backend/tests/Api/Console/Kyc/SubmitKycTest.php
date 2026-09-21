@@ -5,7 +5,6 @@ namespace App\Tests\Api\Console\Kyc;
 use App\Api\Console\Controller\Org\KycController;
 use App\Entity\Kyc;
 use App\Entity\Type\KycStatus;
-use App\Service\Kyc\Event\KycSubmittedEvent;
 use App\Service\Kyc\KycService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\KycFactory;
@@ -86,8 +85,6 @@ class SubmitKycTest extends WebTestCase
         $kyc = $this->em->getRepository(Kyc::class)->findOneBy(['organization_id' => 1]);
         $this->assertNotNull($kyc);
         $this->assertSame('Sri Lanka', $kyc->getCountry());
-
-        $this->getEd()->assertDispatched(KycSubmittedEvent::class);
     }
 
     public function test_submits_as_individual(): void

@@ -5,13 +5,14 @@ namespace App\Service\Kyc;
 use App\Entity\Kyc;
 use App\Entity\Type\KycAccountType;
 use App\Entity\Type\KycStatus;
-use App\Service\Kyc\Event\KycApprovedEvent;
-use App\Service\Kyc\Event\KycRejectedEvent;
-use App\Service\Kyc\Event\KycSubmittedEvent;
 use App\Service\Kyc\Exception\KycAlreadyApprovedException;
 use App\Service\Kyc\Exception\KycNotPendingException;
 use App\Service\Kyc\Exception\PaymentMethodRequiredException;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
+use Hyvor\Internal\Billing\BillingInterface;
+use Hyvor\Internal\Billing\License\RelayLicense;
+use Hyvor\Internal\Billing\License\Resolved\ResolvedLicenseType;
 use Hyvor\Internal\Bundle\Comms\CommsInterface;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\Billing\CreateSubscription;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\GetOrganizations;
@@ -36,6 +37,7 @@ class KycService
         private EventDispatcherInterface $eventDispatcher,
         private CommsInterface $comms,
         private LoggerInterface $logger,
+        private BillingInterface $billing,
     ) {
     }
 
@@ -148,8 +150,6 @@ class KycService
         $this->em->persist($kyc);
         $this->em->flush();
 
-        $this->eventDispatcher->dispatch(new KycSubmittedEvent($kyc));
-
         return $kyc;
     }
 
@@ -184,18 +184,31 @@ class KycService
      */
     public function approve(Kyc $kyc, ?string $note = null): Kyc
     {
-        if ($kyc->getStatus() !== KycStatus::PENDING) {
-            throw new KycNotPendingException('Only pending KYC submissions can be approved.');
+        $kyc = $this->em->wrapInTransaction(function () use ($kyc, $note) {
+
+            $lockedKyc = $this->em->find(Kyc::class, $kyc->getId(), LockMode::PESSIMISTIC_WRITE);
+            assert($lockedKyc !== null);
+
+            if ($lockedKyc->getStatus() !== KycStatus::PENDING) {
+                throw new KycNotPendingException('Only pending KYC submissions can be approved.');
+            }
+
+            $lockedKyc->setStatus(KycStatus::APPROVED);
+            $lockedKyc->setUpdatedAt($this->now());
+            $lockedKyc->setNote($note);
+
+            $this->em->persist($lockedKyc);
+            $this->em->flush();
+
+            return $lockedKyc;
+        });
+
+        $resolvedLicense = $this->billing->license($kyc->getOrganizationId());
+        $license = $resolvedLicense->license;
+
+        if ($resolvedLicense->type !== ResolvedLicenseType::TRIAL && $license instanceof RelayLicense) {
+            return $kyc;
         }
-
-        $kyc->setStatus(KycStatus::APPROVED);
-        $kyc->setUpdatedAt($this->now());
-        $kyc->setNote($note);
-
-        $this->em->persist($kyc);
-        $this->em->flush();
-
-        $this->eventDispatcher->dispatch(new KycApprovedEvent($kyc));
 
         try {
             $this->comms->send(
@@ -205,7 +218,7 @@ class KycService
             $this->logger->error(
                 'Failed to create subscription for organization ' . $kyc->getOrganizationId(),
                 [
-                    'exception' => $e, 
+                    'exception' => $e,
                     'organizationId' => $kyc->getOrganizationId(),
                 ]
             );
@@ -230,8 +243,6 @@ class KycService
 
         $this->em->persist($kyc);
         $this->em->flush();
-
-        $this->eventDispatcher->dispatch(new KycRejectedEvent($kyc));
 
         return $kyc;
     }
