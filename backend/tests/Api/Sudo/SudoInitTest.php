@@ -42,10 +42,14 @@ class SudoInitTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $json = $this->getJson();
 
+        $this->assertIsArray($json['servers']);
         $this->assertCount(1, $json['servers']);
+        $this->assertIsArray($json['servers'][0]);
         $this->assertEquals($server->getId(), $json['servers'][0]['id']);
 
+        $this->assertIsArray($json['ip_addresses']);
         $this->assertCount(1, $json['ip_addresses']);
+        $this->assertIsArray($json['ip_addresses'][0]);
         $this->assertEquals($ip->getId(), $json['ip_addresses'][0]['id']);
         $this->assertEquals('1.1.1.1', $json['ip_addresses'][0]['ip_address']);
     }

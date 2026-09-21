@@ -42,7 +42,7 @@ class GetQueuesTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(200);
 
-        /** @var array<array<string, mixed>> $json */
+        /** @var array<array{id: int, ip_count: int}> $json */
         $json = $this->getJson();
 
         $byId = [];
