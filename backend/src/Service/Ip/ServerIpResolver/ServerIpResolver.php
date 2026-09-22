@@ -14,10 +14,13 @@ class ServerIpResolver
      * @param callable $netGetInterfacesFunction
      */
     public function __construct(
+        private Config $appConfig,
         private ?PublicIpResolver $publicIpResolver = null,
         private LoggerInterface $logger = new NullLogger(),
-        private $netGetInterfacesFunction = 'net_get_interfaces',
-        private Config $appConfig,
+        /**
+         * @var callable
+         */
+        private string $netGetInterfacesFunction = 'net_get_interfaces',
     ) {}
 
     /**
