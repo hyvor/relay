@@ -43,6 +43,10 @@ class Send
     #[ORM\JoinColumn]
     private Queue $queue;
 
+    #[ORM\ManyToOne(targetEntity: IpAddress::class)]
+    #[ORM\JoinColumn(onDelete: "SET NULL")]
+    private ?IpAddress $ip_address = null;
+
     #[ORM\Column()]
     private string $queue_name; // denormalized for easier access
 
@@ -172,6 +176,17 @@ class Send
         return $this;
     }
 
+    public function getIpAddress(): ?IpAddress
+    {
+        return $this->ip_address;
+    }
+
+    public function setIpAddress(?IpAddress $ipAddress): static
+    {
+        $this->ip_address = $ipAddress;
+        return $this;
+    }
+
     public function getQueueName(): string
     {
         return $this->queue_name;
@@ -248,7 +263,10 @@ class Send
 
     public function addRecipient(SendRecipient $recipient): static
     {
-        $this->recipients[] = $recipient;
+        if (!$this->recipients->contains($recipient)) {
+            $this->recipients[] = $recipient;
+            $recipient->setSend($this);
+        }
         return $this;
     }
 

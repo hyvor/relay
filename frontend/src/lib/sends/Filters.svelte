@@ -2,7 +2,11 @@
 	import { ActionList, ActionListItem, TextInput, IconButton } from '@hyvor/design/components';
 	import IconX from '@hyvor/icons/IconX';
 	import Selector from '../../routes/console/@components/content/Selector.svelte';
-	import type { DateFilterPreset, SendRecipientStatus, StatusOption } from '../../routes/console/types';
+	import type {
+		DateFilterPreset,
+		SendRecipientStatus,
+		StatusOption
+	} from '../../routes/console/types';
 
 	interface Props {
 		statusOptions: StatusOption[];
@@ -26,9 +30,7 @@
 
 	let showStatus = $state(false);
 	let showDateFilter = $state(false);
-	let statusLabel = $derived(
-		statusOptions.find((opt) => opt.value === status)?.label ?? 'All'
-	);
+	let statusLabel = $derived(statusOptions.find((opt) => opt.value === status)?.label ?? 'All');
 
 	let fromSearchVal: string = $state(fromSearch);
 	let toSearchVal: string = $state(toSearch);
@@ -173,12 +175,7 @@
 	</ActionList>
 </Selector>
 
-<Selector
-	name="Date"
-	bind:show={showDateFilter}
-	value={dateFilterDisplayValue}
-	width={280}
->
+<Selector name="Date" bind:show={showDateFilter} value={dateFilterDisplayValue} width={280}>
 	<ActionList selection="single" selectionAlign="end">
 		<ActionListItem
 			on:click={() => selectDateFilter(null)}

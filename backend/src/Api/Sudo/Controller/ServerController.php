@@ -2,14 +2,17 @@
 
 namespace App\Api\Sudo\Controller;
 
+use App\Api\Sudo\Input\GetServersInput;
 use App\Api\Sudo\Input\UpdateServerInput;
 use App\Api\Sudo\Object\ServerObject;
+use App\Entity\Server;
 use App\Service\Server\Dto\UpdateServerDto;
 use App\Service\Server\ServerService;
 use App\Service\Sudo\SudoPermission;
 use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
@@ -23,12 +26,12 @@ class ServerController extends AbstractController
     ) {}
 
     #[Route('/servers', methods: 'GET')]
-    public function getServers(): JsonResponse
+    public function getServers(#[MapQueryString] GetServersInput $input): JsonResponse
     {
-        $servers = $this->serverService->getServers();
+        $servers = $this->serverService->getServers($input->search);
 
         $serverObjects = array_map(
-            fn($server) => new ServerObject($server),
+            fn(Server $server) => new ServerObject($server),
             $servers
         );
 

@@ -22,6 +22,7 @@ use App\Service\Send\SendService;
 use App\Service\Suppression\SuppressionService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
+use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\SuppressionFactory;
@@ -384,7 +385,8 @@ class SendEmailTest extends WebTestCase
     #[TestWith([false])]
     public function test_queues_mail(bool $useArrayAddress): void
     {
-        QueueFactory::createTransactional();
+        $queue = QueueFactory::createTransactional();
+        $ip = IpAddressFactory::createOne(['queue' => $queue]);
         $project = ProjectFactory::createOne();
 
         DomainFactory::createOne([
@@ -436,6 +438,7 @@ class SendEmailTest extends WebTestCase
 
         $send = $send[0];
         $this->assertSame(true, $send->getQueued());
+        $this->assertSame($ip->getId(), $send->getIpAddress()?->getId());
         $this->assertSame("Test Email", $send->getSubject());
         $this->assertSame($messageId, $send->getMessageId());
         $this->assertSame($fromAddress, $send->getFromAddress());
