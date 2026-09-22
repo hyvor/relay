@@ -55,6 +55,7 @@ class GetSendByUuidTest extends WebTestCase
 
         $this->assertArrayHasKey('id', $json);
         $this->assertSame($send->getId(), $json['id']);
+        $this->assertArrayHasKey('ip_address', $json);
 
         $attempts = $json['attempts'];
         $this->assertIsArray($attempts);

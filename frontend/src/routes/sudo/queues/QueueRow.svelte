@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { Tag } from '@hyvor/design/components';
 	import type { Queue } from '../sudoTypes';
-	import { ipAddressesStore } from '../sudoStore';
 	import IconExclamationCircle from '@hyvor/icons/IconExclamationCircle';
+	import { ipAddressesStore } from '../sudoStore';
 
 	interface Props {
 		queue: Queue;

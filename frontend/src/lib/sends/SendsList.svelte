@@ -15,13 +15,7 @@
 		perPage?: number;
 	}
 
-	let {
-		fetchSends,
-		hrefBuilder,
-		showProject = false,
-		queryKey,
-		perPage = 25
-	}: Props = $props();
+	let { fetchSends, hrefBuilder, showProject = false, queryKey, perPage = 25 }: Props = $props();
 
 	let loading = $state(true);
 	let hasMore = $state(true);

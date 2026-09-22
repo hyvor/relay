@@ -6,7 +6,11 @@
 		show: boolean;
 		failedRecipients: SendRecipient[];
 		loading: boolean;
-		onConfirm: (recipientIds: number[], mode: 'now' | 'schedule', scheduledDate?: string) => void;
+		onConfirm: (
+			recipientIds: number[],
+			mode: 'now' | 'schedule',
+			scheduledDate?: string
+		) => void;
 	}
 
 	let { show = $bindable(), failedRecipients, loading, onConfirm }: Props = $props();
@@ -56,18 +60,17 @@
 	title="Retry Failed Recipients"
 	footer={{
 		cancel: { text: 'Cancel' },
-		confirm: { text: mode === 'now' ? 'Retry Now' : 'Schedule Retry', props: { disabled: noneSelected } }
+		confirm: {
+			text: mode === 'now' ? 'Retry Now' : 'Schedule Retry',
+			props: { disabled: noneSelected }
+		}
 	}}
 	on:confirm={handleConfirm}
 >
 	<div class="modal-content">
 		<div class="mode-section">
-			<Radio bind:group={mode} value="now" name="retry-mode">
-				Retry now
-			</Radio>
-			<Radio bind:group={mode} value="schedule" name="retry-mode">
-				Schedule for later
-			</Radio>
+			<Radio bind:group={mode} value="now" name="retry-mode">Retry now</Radio>
+			<Radio bind:group={mode} value="schedule" name="retry-mode">Schedule for later</Radio>
 			{#if mode === 'schedule'}
 				<div class="schedule-input">
 					<TextInput type="datetime-local" bind:value={scheduledDate} block />

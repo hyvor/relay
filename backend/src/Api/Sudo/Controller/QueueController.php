@@ -3,6 +3,7 @@
 namespace App\Api\Sudo\Controller;
 
 use App\Api\Sudo\Object\QueueObject;
+use App\Entity\Queue;
 use App\Service\Queue\QueueService;
 use App\Service\Sudo\SudoPermission;
 use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
@@ -24,7 +25,7 @@ class QueueController extends AbstractController
         $queues = $this->queueService->getAllQueues();
 
         $queueObjects = array_map(
-            fn($queue) => new QueueObject($queue),
+            fn(Queue $queue) => new QueueObject($queue),
             $queues
         );
 

@@ -17,9 +17,15 @@ Run the following to reset the database and seed it with sample data:
 bin/console dev:reset --seed
 
 # or, from host machine:
-docker compose exec -it backend bash -c "bin/console dev:reset --seed"
+docker compose exec backend bash -c "bin/console dev:reset --seed"
 ```
 
+## Checks
+
+```bash
+# frontend: prettier
+docker compose exec frontend npm run format
+```
 
 ### Sending an email with curl
 

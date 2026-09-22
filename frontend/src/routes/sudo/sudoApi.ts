@@ -53,7 +53,9 @@ function getSudoApi() {
 			toThrow.data = e && e.data ? e.data : null;
 
 			if (e.violations) {
-				toThrow.message = e.violations.map((v: any) => v.property + ": " + v.message).join(', ');
+				toThrow.message = e.violations
+					.map((v: any) => v.property + ': ' + v.message)
+					.join(', ');
 			}
 
 			throw toThrow;

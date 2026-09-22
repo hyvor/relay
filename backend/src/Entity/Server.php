@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\ServerRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ServerRepository::class)]
@@ -39,6 +41,25 @@ class Server
 
     #[ORM\Column(type: "integer")]
     private int $incoming_workers = 0;
+
+    /**
+     * @var Collection<int, IpAddress>
+     */
+    #[ORM\OneToMany(targetEntity: IpAddress::class, mappedBy: 'server')]
+    private Collection $ipAddresses;
+
+    public function __construct()
+    {
+        $this->ipAddresses = new ArrayCollection();
+    }
+
+    /**
+     * @return Collection<int, IpAddress>
+     */
+    public function getIpAddresses(): Collection
+    {
+        return $this->ipAddresses;
+    }
 
     public function getCreatedAt(): \DateTimeImmutable
     {

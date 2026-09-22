@@ -2,7 +2,6 @@
 	import { Callout, Divider, Table, TableRow } from '@hyvor/design/components';
 	import { DocsImage } from '@hyvor/design/marketing';
 	import IconArrowLeftRight from '@hyvor/icons/IconArrowLeftRight';
-	import IconLightbulb from '@hyvor/icons/IconLightbulb';
 </script>
 
 <h1>Setup</h1>
@@ -227,51 +226,13 @@
 		<a href="/docs/send-emails">send emails</a>.
 	</li>
 	<li>
+		<a href="/hosting/management">Management</a> to learn how to manage sudo users, IP addresses,
+		and more.
+	</li>
+	<li>
 		<a href="/hosting/monitoring">Set up monitoring</a> to get alerts on issues.
 	</li>
 	<li>
 		See <a href="/hosting/scaling">Scaling</a> to learn how to scale Hyvor Relay.
-	</li>
-</ul>
-
-<Divider color="var(--gray-light)" margin={30} />
-
-<h2 id="system-project">System Project</h2>
-
-<p>
-	When Hyvor Relay is initialized, a special read-only <strong>System Project</strong> is
-	automatically created using the <a href="#instance-domain">instance domain</a>. It is used for
-	sending system emails (e.g. notifications). All sudo users are automatically granted read-only
-	access (<code>project.read</code>, <code>sends.read</code>, <code>domains.read</code>,
-	<code>analytics.read</code>) and this is kept in sync as sudo users are added or removed.
-</p>
-
-<Divider color="var(--gray-light)" margin={30} />
-
-<h2 id="sudo-users">Managing Sudo Users</h2>
-
-<p>You can add and remove sudo users from the command line.</p>
-
-<ul>
-	<li>SSH into one of the servers.</li>
-	<li>
-		<code>cd</code> into the Hyvor Relay deployment directory.
-	</li>
-	<li>
-		<code> docker compose exec -it relay bash </code> to enter the app container.
-	</li>
-	<li>
-		Then, use the following commands:
-		<ul style="margin-top: 8px">
-			<li>
-				<code>bin/console sudo:list</code>: List all sudo users.
-			</li>
-			<li>
-				<code>bin/console sudo:add {'<email>'}</code>: Add a new sudo user by email.
-			</li>
-			<li>
-				<code>bin/console sudo:remove {'<id>'}</code>: Remove a sudo user by ID.
-			</li>
-		</ul>
 	</li>
 </ul>
