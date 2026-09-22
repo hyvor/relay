@@ -4,27 +4,25 @@ namespace App\Tests\Service\Ip;
 
 use App\Service\Ip\ServerIpResolver\ServerIpResolver;
 use App\Service\Ip\ServerIpResolver\ResolvedIp;
+use App\Tests\Case\KernelTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ServerIpResolver::class)]
-class ServerIpTest extends TestCase
+class ServerIpResolverTest extends KernelTestCase
 {
 
     public function test_get_public_ips(): void
     {
-        $ipService = new ServerIpResolver();
-        $addresses = $ipService->getServerIpData();
-        // @phpstan-ignore-next-line
-        $this->assertIsArray($addresses);
+        $ipService = $this->getService(ServerIpResolver::class);
+        $addresses = $ipService->resolveIps();
+        $this->assertGreaterThanOrEqual(0, count($addresses));
     }
 
     public function test_get_public_ips_mocked(): void
     {
-        $ipService = new ServerIpResolver(
-            netGetInterfacesFunction: [$this, 'getMockedNetGetInterfaces'],
-        );
-        $addresses = $ipService->getServerIpData();
+        $ipService = $this->getService(ServerIpResolver::class);
+        $ipService->mockNetGetInterfacesFunction([$this, 'getMockedNetGetInterfaces']);
+        $addresses = $ipService->resolveIps();
         $this->assertSame(
             [
                 '54.12.34.56',

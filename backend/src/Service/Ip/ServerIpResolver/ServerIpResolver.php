@@ -4,24 +4,25 @@ namespace App\Service\Ip\ServerIpResolver;
 
 use App\Service\App\Config;
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use Symfony\Component\HttpFoundation\IpUtils;
 
 class ServerIpResolver
 {
-
     /**
-     * @param callable $netGetInterfacesFunction
+     * @var callable
      */
+    private $netGetInterfacesFunction = 'net_get_interfaces';
+
     public function __construct(
         private Config $appConfig,
-        private ?PublicIpResolver $publicIpResolver = null,
-        private LoggerInterface $logger = new NullLogger(),
-        /**
-         * @var callable
-         */
-        private string $netGetInterfacesFunction = 'net_get_interfaces',
+        private PublicIpResolver $publicIpResolver,
+        private LoggerInterface $logger,
     ) {}
+
+    public function mockNetGetInterfacesFunction(callable $function): void
+    {
+        $this->netGetInterfacesFunction = $function;
+    }
 
     /**
      * Resolves IP addresses of the server.
@@ -57,12 +58,15 @@ class ServerIpResolver
 
         $this->logger->info(
             'Resolved public IPs directly',
-            ['public_ips' => array_map(fn($ip) => $ip->getPublicIp(), $publicIps)],
+            ['public_ips' => array_map(fn(ResolvedIp $ip) => $ip->publicIp, $publicIps)],
         );
 
         return $publicIps;
     }
 
+    /**
+     * @return ResolvedIp[]
+     */
     private function resolveIpsBehindNat(): array
     {
         $natNetwork = $this->appConfig->getNatNetwork();
