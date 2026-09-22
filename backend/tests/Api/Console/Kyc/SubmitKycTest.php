@@ -4,10 +4,18 @@ namespace App\Tests\Api\Console\Kyc;
 
 use App\Api\Console\Controller\Org\KycController;
 use App\Entity\Kyc;
+use App\Entity\Send;
+use App\Entity\Type\DomainStatus;
 use App\Entity\Type\KycStatus;
+use App\Service\App\Config;
+use App\Service\Instance\InstanceService;
+use App\Service\Kyc\KycEmailService;
 use App\Service\Kyc\KycService;
 use App\Tests\Case\WebTestCase;
+use App\Tests\Factory\DomainFactory;
+use App\Tests\Factory\InstanceFactory;
 use App\Tests\Factory\KycFactory;
+use App\Tests\Factory\QueueFactory;
 use Hyvor\Internal\Auth\Dto\Organization;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\GetOrganizations;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\GetOrganizationsResponse;
@@ -16,8 +24,27 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(KycController::class)]
 #[CoversClass(KycService::class)]
+#[CoversClass(KycEmailService::class)]
 class SubmitKycTest extends WebTestCase
 {
+    private function seedSystemProjectInfra(): void
+    {
+        /** @var InstanceService $instanceService */
+        $instanceService = $this->container->get(InstanceService::class);
+        $instance = $instanceService->tryGetInstance() ?? InstanceFactory::new()->withDefaultDkim()->create();
+
+        /** @var Config $config */
+        $config = $this->container->get(Config::class);
+
+        DomainFactory::createOne([
+            'project' => $instance->getSystemProject(),
+            'domain' => $config->getInstanceDomain(),
+            'status' => DomainStatus::ACTIVE,
+        ]);
+
+        QueueFactory::createTransactional();
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -393,6 +420,30 @@ class SubmitKycTest extends WebTestCase
 
         $all = $this->em->getRepository(Kyc::class)->findBy(['organization_id' => 1]);
         $this->assertCount(2, $all);
+    }
+
+    public function test_sends_submission_received_email(): void
+    {
+        $this->seedSystemProjectInfra();
+        $this->fakeOrganizationHasPaymentMethod(true);
+
+        $response = $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            $this->validPayload(),
+            useSession: true
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+
+        $sends = $this->em->getRepository(Send::class)->findAll();
+        $this->assertCount(1, $sends);
+        $this->assertSame('Your KYC submission has been received', $sends[0]->getSubject());
+
+        $recipients = $sends[0]->getRecipients()->toArray();
+        $this->assertCount(1, $recipients);
+        $this->assertSame('nadil@hyvor.com', $recipients[0]->getAddress());
     }
 
     public function test_fails_when_no_payment_method(): void
