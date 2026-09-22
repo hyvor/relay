@@ -3,7 +3,6 @@
 namespace App\Service\Ip;
 
 use App\Entity\IpAddress;
-use App\Entity\Queue;
 use App\Entity\Server;
 use App\Service\Ip\Dto\PtrValidationDto;
 use App\Service\Ip\Dto\UpdateIpAddressDto;

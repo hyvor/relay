@@ -12,8 +12,22 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 class PublicIpResolver
 {
     private const RESOLVERS = [
-        'https://ifconfig.me/ip',
+        /**
+         * operated by Cloudflare currently, so cloudflare privacy practices apply
+         * requests will probably be logged somewhere, but the service is simple
+         */
         'https://icanhazip.com',
+
+        /**
+         * AWS service, simple service
+         */
+        'https://checkip.amazonaws.com',
+
+        /**
+         * run independency, DNS resolves through Google!
+         * has been around for a long time
+         */
+        'https://ifconfig.me/ip',
     ];
 
     public function __construct(

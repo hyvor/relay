@@ -1,5 +1,5 @@
 <script>
-	import { CodeBlock } from '@hyvor/design/components';
+    import {CodeBlock} from '@hyvor/design/components';
 </script>
 
 <h1>Environment Variables</h1>
@@ -7,7 +7,7 @@
 <p>These are the environment variables that you can set for Hyvor Relay.</p>
 
 <CodeBlock
-	code={`
+    code={`
 # Environment: prod, dev, or test
 # you probably want to use prod for a deployment
 APP_ENV=prod
@@ -73,10 +73,10 @@ PRIVATE_NETWORK=
 
 # Manual mapping of private IP to public IP for NAT.
 # If not set, the public IP is resolved automatically by binding to each private IP
-# and calling ifconfig.me / icanhazip.com.
-# Format: private_ip:public_ip (comma-separated for multiple)
-# Example: NAT_MAP=10.0.1.5:203.0.113.10,10.0.1.6:203.0.113.11
+# and calling  icanhazip.com / checkip.amazonaws.com / ifconfig.me.
+# Format: private_ip=public_ip (comma-separated for multiple)
+# Example: NAT_MAP=10.0.1.5=203.0.113.10,10.0.1.6=203.0.113.11
 NAT_MAP=
 `}
-	language="yaml"
+    language="yaml"
 />
