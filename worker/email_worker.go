@@ -16,6 +16,7 @@ type EmailWorkersPool struct {
 	cancelFunc context.CancelFunc
 	logger     *slog.Logger
 	metrics    *Metrics
+	cache      *SharedCache
 }
 
 func NewEmailWorkersPool(
@@ -32,7 +33,10 @@ func NewEmailWorkersPool(
 	go func() {
 		<-ctx.Done()
 		pool.logger.Info("Stopping email workers pool")
-		pool.StopWorkers()
+
+		pool.mu.Lock()
+		defer pool.mu.Unlock()
+		pool.stopWorkersLocked()
 	}()
 
 	return pool
@@ -44,11 +48,16 @@ func (pool *EmailWorkersPool) Set(
 	workersPerIp int,
 	instanceDomain string,
 ) {
-
-	pool.StopWorkers()
-
 	pool.mu.Lock()
 	defer pool.mu.Unlock()
+
+	pool.stopWorkersLocked()
+
+	db, err := sql.Open("postgres", LoadDBConfig().DSN())
+	if err != nil {
+		pool.logger.Error("Failed to open the shared cache database handle", "error", err)
+	}
+	pool.cache = NewSharedCache(db)
 
 	ctx, cancel := context.WithCancel(pool.ctx)
 	pool.cancelFunc = cancel
@@ -71,6 +80,7 @@ func (pool *EmailWorkersPool) Set(
 				pool.metrics,
 				ip,
 				instanceDomain,
+				pool.cache,
 			)
 			go worker.Start()
 		}
@@ -78,11 +88,8 @@ func (pool *EmailWorkersPool) Set(
 
 }
 
-func (pool *EmailWorkersPool) StopWorkers() {
-
-	pool.mu.Lock()
-	defer pool.mu.Unlock()
-
+// stopWorkersLocked requires pool.mu to be held.
+func (pool *EmailWorkersPool) stopWorkersLocked() {
 	if pool.cancelFunc != nil {
 		pool.cancelFunc()
 		pool.cancelFunc = nil
@@ -90,6 +97,10 @@ func (pool *EmailWorkersPool) StopWorkers() {
 
 	pool.wg.Wait()
 
+	if pool.cache != nil {
+		pool.cache.Close()
+		pool.cache = nil
+	}
 }
 
 type EmailWorker struct {
@@ -102,6 +113,7 @@ type EmailWorker struct {
 	ip             GoStateIp
 	instanceDomain string
 	contentStore   SendContentStore
+	cache          *SharedCache
 
 	// mocks
 	ProcessSendFunc         func(conn *sql.DB) error
@@ -115,6 +127,7 @@ type EmailWorker struct {
 		recipients []*RecipientRow,
 		sendTx *SendTransaction,
 	)
+	SendEmailContextFunc func(context.Context, *SendRow, []*RecipientRow, string, string, int, string, string) *SendResult
 }
 
 var NewEmailWorker = newEmailWorker
@@ -128,6 +141,7 @@ func newEmailWorker(
 	metrics *Metrics,
 	ip GoStateIp,
 	instanceDomain string,
+	cache *SharedCache,
 ) *EmailWorker {
 	contentStore, err := NewSendContentStore()
 	if err != nil {
@@ -147,11 +161,22 @@ func newEmailWorker(
 		ip:             ip,
 		instanceDomain: instanceDomain,
 		contentStore:   contentStore,
+		cache:          cache,
 	}
 
 	worker.FetchContentFunc = worker.fetchContent
 	worker.ProcessSendFunc = worker.processSend
 	worker.AttemptSendToDomainFunc = worker.attemptSendToDomain
+	worker.SendEmailContextFunc = func(
+		ctx context.Context,
+		send *SendRow,
+		recipients []*RecipientRow,
+		rcptDomain, instanceDomain string,
+		ipId int,
+		ip, ptr string,
+	) *SendResult {
+		return sendEmailHandlerContext(ctx, worker.cache, send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr)
+	}
 
 	return worker
 }
@@ -283,10 +308,13 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 	// otherwise it is set to the new try count for requeuing
 	requeingTryCount := 0
 
+	var attemptErr error
 	for attempt := range attemptCh {
 		if attempt.Error != nil {
-			sendTx.Rollback()
-			return attempt.Error
+			if attemptErr == nil {
+				attemptErr = attempt.Error
+			}
+			continue
 		} else {
 			sendAttemptIds = append(sendAttemptIds, attempt.SendAttemptId)
 
@@ -303,6 +331,10 @@ func (worker *EmailWorker) processSend(conn *sql.DB) error {
 				requeingTryCount = attempt.result.NewTryCount
 			}
 		}
+	}
+	if attemptErr != nil {
+		sendTx.Rollback()
+		return attemptErr
 	}
 
 	if requeingTryCount > 0 {
@@ -352,15 +384,7 @@ func (worker *EmailWorker) attemptSendToDomain(
 		"recipients", len(recipients),
 	)
 
-	result := sendEmail(
-		send,
-		recipients,
-		domain,
-		worker.instanceDomain,
-		worker.ip.Id,
-		worker.ip.Ip,
-		worker.ip.Ptr,
-	)
+	result := worker.SendEmailContextFunc(worker.ctx, send, recipients, domain, worker.instanceDomain, worker.ip.Id, worker.ip.Ip, worker.ip.Ptr)
 
 	// get the lock before calling the DB
 	domainQueryMutex.Lock()

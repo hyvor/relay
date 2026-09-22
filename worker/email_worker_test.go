@@ -46,10 +46,11 @@ func TestEmailWorkersPoolSet(t *testing.T) {
 		metrics *Metrics,
 		ip GoStateIp,
 		instanceDomain string,
+		cache *SharedCache,
 	) *EmailWorker {
 		numWorkersCreated++
 
-		return newEmailWorker(ctx, id, wg, dbConfig, logger, metrics, ip, instanceDomain)
+		return newEmailWorker(ctx, id, wg, dbConfig, logger, metrics, ip, instanceDomain, cache)
 	}
 
 	pool := &EmailWorkersPool{
@@ -79,7 +80,9 @@ func TestEmailWorkersPoolStopWorkers(t *testing.T) {
 		cancelFunc: cancelFunc,
 	}
 
-	pool.StopWorkers()
+	pool.mu.Lock()
+	pool.stopWorkersLocked()
+	pool.mu.Unlock()
 
 	time.Sleep(10 * time.Millisecond)
 
@@ -130,6 +133,7 @@ func TestEmailWorker_DatabaseConnectionFailure(t *testing.T) {
 		newMetrics(),
 		ip,
 		"relay.hyvor.com",
+		NewSharedCache(nil),
 	)
 	go emailWorker.Start()
 	go func() {
@@ -270,16 +274,16 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 					result: &SendResult{
 						RcptResults: []*RcptResult{
 							{
-								RecipientId: rcpt1Id,
-								Code:        250,
+								RecipientId:  rcpt1Id,
+								Code:         250,
 								EnhancedCode: [3]int{2, 0, 0},
-								Message:     "OK",
+								Message:      "OK",
 							},
 							{
-								RecipientId: rcpt2Id,
-								Code:        250,
+								RecipientId:  rcpt2Id,
+								Code:         250,
 								EnhancedCode: [3]int{2, 0, 0},
-								Message:     "OK",
+								Message:      "OK",
 							},
 						},
 					},
@@ -291,10 +295,10 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 					result: &SendResult{
 						RcptResults: []*RcptResult{
 							{
-								RecipientId: rcpt3Id,
-								Code:        250,
+								RecipientId:  rcpt3Id,
+								Code:         250,
 								EnhancedCode: [3]int{2, 0, 0},
-								Message: "OK",
+								Message:      "OK",
 							},
 						},
 					},
@@ -306,7 +310,6 @@ func TestEmailWorker_ProcessSend(t *testing.T) {
 	var localApiMethod string
 	var localApiEndpoint string
 	var localApiBody interface{}
-
 	originalCallLocalApi := CallLocalApi
 	defer func() { CallLocalApi = originalCallLocalApi }()
 
@@ -399,10 +402,10 @@ func TestEmailWorker_ProcessSend_Requeuing(t *testing.T) {
 				result: &SendResult{
 					RcptResults: []*RcptResult{
 						{
-							RecipientId: rcptId,
-							Code:        450,
+							RecipientId:  rcptId,
+							Code:         450,
 							EnhancedCode: [3]int{4, 2, 0},
-							Message:     "Try again later",
+							Message:      "Try again later",
 						},
 					},
 					NewTryCount: 1,
@@ -472,14 +475,26 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 	ipAddressId, err := factory.IpAddress()
 	assert.NoError(t, err)
 
+	workerContext := context.Background()
 	worker := &EmailWorker{
-		ctx:    context.Background(),
+		ctx:    workerContext,
 		logger: slogDiscard(),
 		ip: GoStateIp{
 			Id:      ipAddressId,
 			QueueId: send.QueueId,
 		},
 		metrics: newMetrics(),
+		SendEmailContextFunc: func(
+			ctx context.Context,
+			send *SendRow,
+			recipients []*RecipientRow,
+			rcptDomain, instanceDomain string,
+			ipId int,
+			ip, ptr string,
+		) *SendResult {
+			assert.Equal(t, workerContext, ctx)
+			return sendEmail(send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr)
+		},
 	}
 
 	sendEmail = func(
@@ -498,10 +513,10 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 			ResolvedMxHosts: []string{"mx1.hyvor.com", "mx2.hyvor.com"},
 			RcptResults: []*RcptResult{
 				{
-					RecipientId: recipientId,
-					Code:        250,
+					RecipientId:  recipientId,
+					Code:         250,
 					EnhancedCode: [3]int{2, 0, 0},
-					Message:     "OK",
+					Message:      "OK",
 				},
 			},
 		}

@@ -5,3 +5,14 @@ framework:
 #            cache.rate_limiter:
 #                adapter: cache.adapter.doctrine_dbal
 #                provider: App\Service\App\Cache\CacheProvider
+
+# cannot use cache.pools because it is not possible to override namespace (and marshaller in symfony 8.0)
+services:
+    cache.shared:
+        class: Symfony\Component\Cache\Adapter\DoctrineDbalAdapter
+        arguments:
+            - '@doctrine.dbal.default_connection'
+            - !php/const App\Service\App\Cache\SharedCache::NAMESPACE
+            - 0
+            - []
+            - '@App\Service\App\Cache\JsonMarshaller'
