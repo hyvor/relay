@@ -35,6 +35,7 @@ class KycService
         private CommsInterface $comms,
         private LoggerInterface $logger,
         private BillingInterface $billing,
+        private KycEmailService $kycEmailService,
     ) {
     }
 
@@ -140,7 +141,7 @@ class KycService
     ): Kyc {
         $this->assertHasPaymentMethod($organizationId);
 
-        return $this->em->wrapInTransaction(function () use (
+        [$kyc, $isResubmission] = $this->em->wrapInTransaction(function () use (
             $organizationId,
             $accountType,
             $name,
@@ -178,8 +179,12 @@ class KycService
             $this->em->persist($kyc);
             $this->em->flush();
 
-            return $kyc;
+            return [$kyc, $pending !== null];
         });
+
+        $this->kycEmailService->sendSubmitted($kyc, $isResubmission);
+
+        return $kyc;
     }
 
     /**
@@ -238,6 +243,7 @@ class KycService
         $license = $resolvedLicense->license;
 
         if ($resolvedLicense->type !== ResolvedLicenseType::TRIAL && $license instanceof RelayLicense) {
+            $this->kycEmailService->sendApproved($kyc, hasLicense: true);
             return $kyc;
         }
 
@@ -245,6 +251,7 @@ class KycService
             $this->comms->send(
                 new CreateSubscription($kyc->getOrganizationId(), Component::RELAY, self::MINIMUM_PLAN),
             );
+            $this->kycEmailService->sendApproved($kyc);
         } catch (CommsApiFailedException $e) {
             $this->logger->error(
                 'Failed to create subscription for organization ' . $kyc->getOrganizationId(),
@@ -253,6 +260,7 @@ class KycService
                     'organizationId' => $kyc->getOrganizationId(),
                 ]
             );
+            $this->kycEmailService->sendApproved($kyc, subscriptionFailed: true);
         }
 
         return $kyc;
@@ -263,7 +271,7 @@ class KycService
      */
     public function reject(Kyc $kyc, ?string $note = null, ?string $rejectReason = null): Kyc
     {
-        return $this->em->wrapInTransaction(function () use ($kyc, $note, $rejectReason) {
+        $kyc = $this->em->wrapInTransaction(function () use ($kyc, $note, $rejectReason) {
 
             $lockedKyc = $this->em->find(Kyc::class, $kyc->getId(), LockMode::PESSIMISTIC_WRITE);
             assert($lockedKyc !== null);
@@ -284,6 +292,10 @@ class KycService
 
             return $lockedKyc;
         });
+
+        $this->kycEmailService->sendRejected($kyc);
+
+        return $kyc;
     }
 
     private function staleActiveRecord(int $organizationId): void
