@@ -142,6 +142,40 @@ class ManagementInitCommandTest extends KernelTestCase
         $this->assertNull($updatedIp3);
     }
 
+    public function test_updates_private_ip_address_when_changed(): void
+    {
+        $server = ServerFactory::createOne([
+            'hostname' => 'hyvor-relay',
+        ]);
+
+        $ip = IpAddressFactory::createOne([
+            'server' => $server,
+            'ip_address' => '8.8.8.8',
+            'private_ip_address' => '10.0.1.1',
+        ]);
+        $ipId = $ip->getId();
+        $originalUpdatedAt = $ip->getUpdatedAt();
+
+        $serverIpMock = $this->createStub(ServerIpResolver::class);
+        $serverIpMock->method('resolveIps')->willReturn([
+            new ResolvedIp('8.8.8.8', '10.0.1.99'),
+        ]);
+        $this->container->set(ServerIpResolver::class, $serverIpMock);
+
+        $command = $this->commandTester('management:init');
+        $command->execute([]);
+        $command->assertCommandIsSuccessful();
+
+        $ips = $this->em->getRepository(IpAddress::class)->findBy(['server' => $server]);
+        $this->assertCount(1, $ips);
+
+        $updatedIp = $this->em->getRepository(IpAddress::class)->find($ipId);
+        $this->assertNotNull($updatedIp);
+        $this->assertSame('8.8.8.8', $updatedIp->getIpAddress());
+        $this->assertSame('10.0.1.99', $updatedIp->getPrivateIpAddress());
+        $this->assertNotEquals($originalUpdatedAt, $updatedIp->getUpdatedAt());
+    }
+
     public function test_adds_default_queues(): void
     {
         $command = $this->commandTester('management:init');
