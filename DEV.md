@@ -48,12 +48,13 @@ Note: the simulator can send back bounce (DSN) and complaint (ARF) messages back
 
 ### Sending an email with curl
 
-"Test Project" is seeded with an API key 'test-api-key', which you can use for testing. Then, check Sends in Console for
+"Test Project" is seeded with a test API key, which you can use for testing. Then, check
+Sends in Console for
 logs.
 
 ```bash
 curl -X POST https://relay.hyvor.localhost/api/console/sends \
-     -H "Authorization: Bearer test-api-key" \
+     -H "Authorization: Bearer aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
      -H "Content-Type: application/json" \
      -d '{
            "from": "test@hyvor.local.testing",
