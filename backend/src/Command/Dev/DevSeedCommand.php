@@ -63,8 +63,8 @@ class DevSeedCommand extends Command
         SudoUserFactory::createOne(['user_id' => 1]);
 
         $systemProject = ProjectFactory::createOne([
-            'user_id' => 1,
-            'name' => 'System'
+            'organization_id' => 1,
+            'name' => 'System',
         ]);
 
         $instance = $this->instanceService->createInstance();
@@ -121,23 +121,23 @@ class DevSeedCommand extends Command
 
         $project = ProjectFactory::createOne([
             'name' => 'Test Project',
-            'user_id' => 1,
+            'organization_id' => 1,
         ]);
         ProjectUserFactory::createOne([
             'project' => $project,
             'user_id' => 1,
-            'scopes' => RelayScope::all()
+            'scopes' => RelayScope::all(),
         ]);
 
         ApiKeyFactory::createOne([
             'project' => $project,
             'name' => 'Test API Key',
-            'key_hashed' => hash('sha256', 'test-api-key')
+            'key_hashed' => hash('sha256', 'test-api-key'),
         ]);
 
         DomainFactory::createOne(['project' => $project, 'domain' => 'hyvor.com']);
         $domain = DomainFactory::createOne(
-            ['project' => $project, 'domain' => 'hyvor.local.testing', 'status' => DomainStatus::ACTIVE]
+            ['project' => $project, 'domain' => 'hyvor.local.testing', 'status' => DomainStatus::ACTIVE],
         );
         DomainFactory::createMany(15, ['project' => $project]);
 
@@ -215,11 +215,11 @@ class DevSeedCommand extends Command
         ]);
 
         WebhookDeliveryFactory::createMany(5, [
-            'webhook' => $webhooks[0]
+            'webhook' => $webhooks[0],
         ]);
 
         WebhookDeliveryFactory::createMany(5, [
-            'webhook' => $webhooks[2]
+            'webhook' => $webhooks[2],
         ]);
 
         $output->writeln('<info>Database seeded with test data.</info>');

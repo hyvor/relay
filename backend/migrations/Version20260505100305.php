@@ -16,11 +16,13 @@ final class Version20260505100305 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE sends ADD ip_address_id INT DEFAULT NULL REFERENCES ip_addresses(id) ON DELETE SET NULL');
+        $this->addSql(
+            'ALTER TABLE sends ADD ip_address_id INT DEFAULT NULL REFERENCES ip_addresses(id) ON DELETE SET NULL',
+        );
 
         # now, the worker fetches by IP instead of queue
         $this->addSql('DROP INDEX IF EXISTS idx_sends_worker');
-        $this->addSql('CREATE INDEX idx_sends_worker ON sends (ip_address, send_after) WHERE queued = true');
+        $this->addSql('CREATE INDEX idx_sends_worker ON sends (ip_address_id, send_after) WHERE queued = true');
 
         $this->addSql('CREATE INDEX idx_sends_ip_address_id ON sends (ip_address_id)');
 
@@ -40,13 +42,15 @@ final class Version20260505100305 extends AbstractMigration
                 schedule JSON NOT NULL,
                 results JSON NOT NULL DEFAULT '[]'
             )
-            "
+            ",
         );
 
         $this->addSql("CREATE INDEX idx_warmup_schedules_status ON warmup_schedules (status)");
         $this->addSql("CREATE INDEX idx_warmup_schedules_ip_address_id ON warmup_schedules (ip_address_id)");
 
-        $this->addSql("CREATE UNIQUE INDEX uniq_warmup_schedules_ip_warming ON warmup_schedules (ip_address_id) WHERE status = 'warming'");
+        $this->addSql(
+            "CREATE UNIQUE INDEX uniq_warmup_schedules_ip_warming ON warmup_schedules (ip_address_id) WHERE status = 'warming'",
+        );
     }
 
     public function down(Schema $schema): void
