@@ -9,6 +9,7 @@ use App\Tests\Case\KernelTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ServerIpResolver::class)]
+#[CoversClass(ResolvedIp::class)]
 class ServerIpResolverTest extends KernelTestCase
 {
 
@@ -60,7 +61,8 @@ class ServerIpResolverTest extends KernelTestCase
         $this->setConfig('natMap', '');
 
         $publicIpResolverMock = $this->createMock(PublicIpResolver::class);
-        $publicIpResolverMock->expects($this->once())
+        $publicIpResolverMock
+            ->expects($this->once())
             ->method('resolve')
             ->with('10.0.1.5')
             ->willReturn('1.1.1.1');
@@ -85,7 +87,8 @@ class ServerIpResolverTest extends KernelTestCase
         $this->setConfig('natMap', '10.0.1.5=999.999.999.999, 10.0.1.6=9.9.9.9, badentry');
 
         $publicIpResolverMock = $this->createMock(PublicIpResolver::class);
-        $publicIpResolverMock->expects($this->exactly(2))
+        $publicIpResolverMock
+            ->expects($this->exactly(2))
             ->method('resolve')
             ->willReturnMap([
                 ['10.0.1.5', '4.2.2.1'],
