@@ -52,6 +52,7 @@ func TestSendEmail_Accepted(t *testing.T) {
 		"relay.com",
 		1,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -62,6 +63,105 @@ func TestSendEmail_Accepted(t *testing.T) {
 	assert.Equal(t, "OK", rcptResult.Message)
 
 	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
+
+}
+
+func TestSendEmail_UsesPrivateIpForBindWhenSet(t *testing.T) {
+
+	var boundIp string
+
+	originalSendEmailToHost := sendEmailToHost
+	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+		boundIp = ip
+		return &SmtpConversation{
+			NetworkError: nil,
+			RcptResults: []*RcptResult{
+				{
+					RecipientId:  1,
+					Code:         250,
+					EnhancedCode: [3]int{0, 0, 0},
+					Message:      "OK",
+				},
+			},
+			Steps: []*SmtpStep{},
+		}
+	}
+
+	mxCache.data["hyvor.com"] = mxCacheEntry{
+		Hosts:  []string{"mx.hyvor.com"},
+		Expiry: time.Now().Add(1 * time.Hour),
+	}
+
+	defer func() {
+		sendEmailToHost = originalSendEmailToHost
+		delete(mxCache.data, "hyvor.com")
+	}()
+
+	result := sendEmailHandler(
+		&SendRow{},
+		[]*RecipientRow{
+			{Id: 1},
+		},
+		"hyvor.com",
+		"relay.com",
+		1,
+		"1.1.1.1",
+		"10.0.1.5",
+		"smtp.relay.com",
+	)
+
+	assert.Equal(t, "10.0.1.5", boundIp)
+	// the reported "sent from" IP is always the public IP, regardless of the bind IP used
+	assert.Equal(t, "1.1.1.1", result.SentFromIp)
+
+}
+
+func TestSendEmail_UsesPublicIpForBindWhenPrivateIpNotSet(t *testing.T) {
+
+	var boundIp string
+
+	originalSendEmailToHost := sendEmailToHost
+	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+		boundIp = ip
+		return &SmtpConversation{
+			NetworkError: nil,
+			RcptResults: []*RcptResult{
+				{
+					RecipientId:  1,
+					Code:         250,
+					EnhancedCode: [3]int{0, 0, 0},
+					Message:      "OK",
+				},
+			},
+			Steps: []*SmtpStep{},
+		}
+	}
+
+	mxCache.data["hyvor.com"] = mxCacheEntry{
+		Hosts:  []string{"mx.hyvor.com"},
+		Expiry: time.Now().Add(1 * time.Hour),
+	}
+
+	defer func() {
+		sendEmailToHost = originalSendEmailToHost
+		delete(mxCache.data, "hyvor.com")
+	}()
+
+	result := sendEmailHandler(
+		&SendRow{},
+		[]*RecipientRow{
+			{Id: 1},
+		},
+		"hyvor.com",
+		"relay.com",
+		1,
+		"1.1.1.1",
+		"",
+		"smtp.relay.com",
+	)
+
+	assert.Equal(t, "1.1.1.1", boundIp)
+	assert.Equal(t, "1.1.1.1", result.SentFromIp)
 
 }
 
@@ -102,6 +202,7 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 		"relay.com",
 		1,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -152,6 +253,7 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 		"relay.com",
 		1,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -201,6 +303,7 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 		"relay.com",
 		5,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -243,6 +346,7 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 		"relay.com",
 		0,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -285,6 +389,7 @@ func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 		"relay.com",
 		0,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -328,6 +433,7 @@ func TestSendEmail_MxFailed(t *testing.T) {
 		"relay.com",
 		0,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 

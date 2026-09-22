@@ -264,11 +264,17 @@ func sendEmailHandler(
 	instanceDomain string,
 	ipId int,
 	ip string,
+	privateIp string,
 	ptr string,
 ) *SendResult {
 
 	startTime := time.Now()
 	tryCount := recipients[0].TryCount // all recipients of this domain should have the same try count
+
+	bindIp := ip
+	if privateIp != "" {
+		bindIp = privateIp
+	}
 
 	result := &SendResult{
 		SentFromIpId: ipId,
@@ -305,7 +311,7 @@ func sendEmailHandler(
 			recipients,
 			host,
 			instanceDomain,
-			ip,
+			bindIp,
 			ptr,
 		)
 
