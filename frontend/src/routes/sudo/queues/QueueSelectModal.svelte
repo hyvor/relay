@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Modal, TextInput, Button } from '@hyvor/design/components';
-	import { queuesStore, ipAddressesStore } from '../sudoStore';
+	import { queuesStore } from '../sudoStore';
 	import { getQueues, updateIpAddress } from '../sudoActions';
 	import type { Queue, IpAddress } from '../sudoTypes';
 	import { toast } from '@hyvor/design/components';
@@ -42,10 +42,6 @@
 		try {
 			const updatedIp = await updateIpAddress(ip.id, { queue_id: queueId });
 
-			ipAddressesStore.update((ips) =>
-				ips.map((existingIp) => (existingIp.id === ip.id ? updatedIp : existingIp))
-			);
-
 			onUpdate(updatedIp);
 			toast.success(successMessage);
 			handleClose();
@@ -59,7 +55,7 @@
 	async function handleQueueSelect(queue: Queue) {
 		await updateQueue(
 			queue.id,
-			`Queue "${queue.name}" assigned to IP ${ip?.ip_address}`,
+			`IP ${ip?.ip_address} assigned to the queue "${queue.name}"`,
 			'Failed to assign queue: '
 		);
 	}

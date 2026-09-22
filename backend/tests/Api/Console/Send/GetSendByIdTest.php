@@ -2,8 +2,8 @@
 
 namespace App\Tests\Api\Console\Send;
 
-use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Controller\SendController;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
+use App\Api\Console\Controller\SendsController;
 use App\Api\Console\Object\SendAttemptObject;
 use App\Api\Console\Object\SendAttemptRecipientObject;
 use App\Api\Console\Object\SendFeedbackObject;
@@ -22,7 +22,7 @@ use App\Tests\Factory\SendFeedbackFactory;
 use App\Tests\Factory\SendRecipientFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(SendController::class)]
+#[CoversClass(SendsController::class)]
 #[CoversClass(SendObject::class)]
 #[CoversClass(SendRecipientObject::class)]
 #[CoversClass(SendAttemptRecipientObject::class)]
@@ -40,7 +40,7 @@ class GetSendByIdTest extends WebTestCase
             $project,
             'GET',
             '/sends/123',
-            scopes: [Scope::SENDS_READ]
+            scopes: [RelayScope::SENDS_READ]
         );
 
         $this->assertSame(404, $response->getStatusCode());
@@ -81,7 +81,7 @@ class GetSendByIdTest extends WebTestCase
             $project,
             'GET',
             '/sends/' . $send->getId(),
-            scopes: [Scope::SENDS_READ]
+            scopes: [RelayScope::SENDS_READ]
         );
 
         $this->assertSame(200, $response->getStatusCode());

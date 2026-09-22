@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\ApiKey;
 
-use App\Api\Console\Controller\ApiKeyController;
+use App\Api\Console\Controller\ApiKeysController;
 use App\Api\Console\Input\UpdateApiKeyInput;
 use App\Api\Console\Object\ApiKeyObject;
 use App\Entity\ApiKey;
@@ -15,7 +15,7 @@ use App\Validator\AllowedIpsConstraint;
 use App\Validator\AllowedIpsConstraintValidator;
 use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(ApiKeyController::class)]
+#[CoversClass(ApiKeysController::class)]
 #[CoversClass(ApiKeyService::class)]
 #[CoversClass(ApiKeyObject::class)]
 #[CoversClass(UpdateApiKeyInput::class)]
@@ -92,6 +92,29 @@ class UpdateApiKeyTest extends WebTestCase
         $apiKeyDb = $this->em->getRepository(ApiKey::class)->find($apiKey->getId());
         $this->assertNotNull($apiKeyDb);
         $this->assertSame(['198.51.100.0/24', '2001:db8::/64'], $apiKeyDb->getAllowedIps());
+    }
+
+    public function test_update_accepts_broad_cidr(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $apiKey = ApiKeyFactory::createOne([
+            'project' => $project,
+            'scopes' => ['sends.send'],
+            'allowed_ips' => ['203.0.113.5'],
+        ]);
+
+        $response = $this->consoleApi(
+            $project,
+            'PATCH',
+            '/api-keys/' . $apiKey->getId(),
+            [
+                'allowed_ips' => ['0.0.0.0/0', '::/0'],
+            ]
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(['0.0.0.0/0', '::/0'], $this->getJson()['allowed_ips']);
     }
 
     public function test_update_rejects_clearing_ips_when_sends_send_active(): void

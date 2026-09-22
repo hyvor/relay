@@ -16,9 +16,13 @@ class AllowedIpTest extends TestCase
     public static function validEntries(): iterable
     {
         yield 'single ipv4' => ['203.0.113.5'];
+        yield 'ipv4 /0' => ['0.0.0.0/0'];
+        yield 'ipv4 /16' => ['203.0.113.0/16'];
         yield 'ipv4 /24' => ['203.0.113.0/24'];
         yield 'ipv4 /32' => ['203.0.113.5/32'];
         yield 'single ipv6' => ['2001:db8::1'];
+        yield 'ipv6 /0' => ['::/0'];
+        yield 'ipv6 /32' => ['2001:db8::/32'];
         yield 'ipv6 /48' => ['2001:db8::/48'];
         yield 'ipv6 /64' => ['2001:db8::/64'];
         yield 'ipv6 /128' => ['2001:db8::1/128'];
@@ -44,9 +48,7 @@ class AllowedIpTest extends TestCase
     {
         yield 'empty' => [''];
         yield 'gibberish' => ['not-an-ip'];
-        yield 'ipv4 too broad' => ['203.0.113.0/16'];
         yield 'ipv4 prefix too high' => ['203.0.113.5/33'];
-        yield 'ipv6 too broad' => ['2001:db8::/32'];
         yield 'ipv6 prefix too high' => ['2001:db8::/129'];
         yield 'invalid prefix non-numeric' => ['203.0.113.5/abc'];
         yield 'empty prefix' => ['203.0.113.5/'];

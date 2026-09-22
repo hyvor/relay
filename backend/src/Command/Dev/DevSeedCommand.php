@@ -2,7 +2,7 @@
 
 namespace App\Command\Dev;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Entity\Type\DomainStatus;
 use App\Entity\Type\SendAttemptStatus;
 use App\Entity\Type\SendFeedbackType;
@@ -63,8 +63,8 @@ class DevSeedCommand extends Command
         SudoUserFactory::createOne(['user_id' => 1]);
 
         $systemProject = ProjectFactory::createOne([
-            'user_id' => 1,
-            'name' => 'System'
+            'organization_id' => 1,
+            'name' => 'System',
         ]);
 
         $instance = $this->instanceService->createInstance();
@@ -73,10 +73,10 @@ class DevSeedCommand extends Command
             'project' => $instance->getSystemProject(),
             'user_id' => 1,
             'scopes' => [
-                Scope::PROJECT_READ,
-                Scope::SENDS_READ,
-                Scope::DOMAINS_READ,
-                Scope::ANALYTICS_READ,
+                RelayScope::PROJECT_READ,
+                RelayScope::SENDS_READ,
+                RelayScope::DOMAINS_READ,
+                RelayScope::ANALYTICS_READ,
             ],
         ]);
 
@@ -122,23 +122,23 @@ class DevSeedCommand extends Command
 
         $project = ProjectFactory::createOne([
             'name' => 'Test Project',
-            'user_id' => 1,
+            'organization_id' => 1,
         ]);
         ProjectUserFactory::createOne([
             'project' => $project,
             'user_id' => 1,
-            'scopes' => Scope::all()
+            'scopes' => RelayScope::all(),
         ]);
 
         ApiKeyFactory::createOne([
             'project' => $project,
             'name' => 'Test API Key',
-            'key_hashed' => hash('sha256', 'test-api-key')
+            'key_hashed' => hash('sha256', 'test-api-key'),
         ]);
 
         DomainFactory::createOne(['project' => $project, 'domain' => 'hyvor.com']);
         $domain = DomainFactory::createOne(
-            ['project' => $project, 'domain' => 'hyvor.local.testing', 'status' => DomainStatus::ACTIVE]
+            ['project' => $project, 'domain' => 'hyvor.local.testing', 'status' => DomainStatus::ACTIVE],
         );
         DomainFactory::createMany(15, ['project' => $project]);
 
@@ -154,6 +154,7 @@ class DevSeedCommand extends Command
         ]);
 
         $allSends = array_merge($sendsQueued, $sendsSent);
+        $allRecipients = [];
         foreach ($allSends as $send) {
             $bodyHtml = '<p>This is a test email.</p>';
             $raw = implode("\r\n", [
@@ -180,6 +181,8 @@ class DevSeedCommand extends Command
                         'type' => $type,
                     ]);
 
+                $allRecipients[] = $recipient[0];
+
                 SendFeedbackFactory::createOne([
                     'sendRecipient' => $recipient[0],
                     'type' => SendFeedbackType::cases()[array_rand(SendFeedbackType::cases())],
@@ -197,10 +200,15 @@ class DevSeedCommand extends Command
 
         DebugIncomingEmailFactory::createMany(2);
 
-        InfrastructureBounceFactory::createMany(5);
+        foreach (range(1, 5) as $i) {
+            InfrastructureBounceFactory::createOne([
+                'send_recipient_id' => $allRecipients[array_rand($allRecipients)]->getId(),
+            ]);
+        }
 
         InfrastructureBounceFactory::createOne([
-            'is_read' => true
+            'is_read' => true,
+            'send_recipient_id' => $allRecipients[0]->getId(),
         ]);
 
         $webhooks = WebhookFactory::createMany(5, [
@@ -208,11 +216,11 @@ class DevSeedCommand extends Command
         ]);
 
         WebhookDeliveryFactory::createMany(5, [
-            'webhook' => $webhooks[0]
+            'webhook' => $webhooks[0],
         ]);
 
         WebhookDeliveryFactory::createMany(5, [
-            'webhook' => $webhooks[2]
+            'webhook' => $webhooks[2],
         ]);
 
         $output->writeln('<info>Database seeded with test data.</info>');

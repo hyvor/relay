@@ -2,28 +2,42 @@
 
 namespace App\Api\Console\Controller;
 
-use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Authorization\ScopeRequired;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
 use App\Api\Console\Object\SuppressionObject;
 use App\Entity\Project;
 use App\Entity\Suppression;
 use App\Entity\Type\SuppressionReason;
 use App\Service\Suppression\SuppressionService;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
-class SuppressionController extends AbstractController
+
+class SuppressionsController extends AbstractController
 {
     public function __construct(
         private SuppressionService $suppressionService
-    )
-    {
+    ) {
     }
 
     #[Route('/suppressions', methods: 'GET')]
-    #[ScopeRequired(Scope::SUPPRESSIONS_READ)]
-    public function getSuppressions(Request $request, Project $project): JsonResponse
+    #[ScopeRequired(RelayScope::SUPPRESSIONS_READ)]
+    #[OA\Get(
+        summary: 'Get all suppressions',
+        description: 'Returns suppressed email addresses for the project.'
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'List of suppressions',
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: SuppressionObject::class))
+        )
+    )]
+    public function list(Request $request, Project $project): JsonResponse
     {
         $limit = $request->query->getInt("limit", 50);
         $offset = $request->query->getInt("offset", 0);
@@ -48,8 +62,17 @@ class SuppressionController extends AbstractController
     }
 
     #[Route('/suppressions/{id}', methods: 'DELETE')]
-    #[ScopeRequired(Scope::SUPPRESSIONS_WRITE)]
-    public function deleteSuppression(Suppression $suppression): JsonResponse
+    #[ScopeRequired(RelayScope::SUPPRESSIONS_WRITE)]
+    #[OA\Delete(
+        summary: 'Delete a suppression',
+        description: 'Removes an email address from the project suppressions list.'
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns an empty object on success.',
+        content: new OA\JsonContent()
+    )]
+    public function delete(Suppression $suppression): JsonResponse
     {
         $this->suppressionService->deleteSuppression($suppression);
 

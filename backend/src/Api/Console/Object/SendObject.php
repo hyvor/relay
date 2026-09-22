@@ -5,6 +5,8 @@ namespace App\Api\Console\Object;
 use App\Entity\Send;
 use App\Entity\SendAttempt;
 use App\Entity\SendFeedback;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use OpenApi\Attributes as OA;
 
 class SendObject
 {
@@ -17,20 +19,24 @@ class SendObject
     public int $size_bytes;
     public bool $queued;
     public int $send_after;
+    public ?string $ip_address;
 
     /**
-     * @var SendRecipientObject[]
+     * @var list<SendRecipientObject>
      */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: SendRecipientObject::class)))]
     public array $recipients = [];
 
     /**
-     * @var SendAttemptObject[]
+     * @var list<SendAttemptObject>
      */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: SendAttemptObject::class)))]
     public array $attempts = [];
 
     /**
-     * @var SendFeedbackObject[]
+     * @var list<SendFeedbackObject>
      */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: SendFeedbackObject::class)))]
     public array $feedback = [];
 
     /**
@@ -51,10 +57,19 @@ class SendObject
         $this->size_bytes = $send->getSizeBytes();
         $this->queued = $send->getQueued();
         $this->send_after = $send->getSendAfter()->getTimestamp();
+        $this->ip_address = $send->getIpAddress()?->getIpAddress();
 
-        $this->recipients = array_map(fn($recipient) => new SendRecipientObject($recipient),
-            $send->getRecipients()->toArray());
-        $this->attempts = array_map(fn(SendAttempt $attempt) => new SendAttemptObject($attempt), $attempts);
-        $this->feedback = array_map(fn(SendFeedback $fb) => new SendFeedbackObject($fb), $feedback);
+        $this->recipients = array_values(array_map(
+            fn($recipient) => new SendRecipientObject($recipient),
+            $send->getRecipients()->toArray()
+        ));
+        $this->attempts = array_values(array_map(
+            fn(SendAttempt $attempt) => new SendAttemptObject($attempt),
+            $attempts
+        ));
+        $this->feedback = array_values(array_map(
+            fn(SendFeedback $fb) => new SendFeedbackObject($fb),
+            $feedback
+        ));
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Api\Console\Input;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Util\OptionalPropertyTrait;
 use App\Validator\AllowedIpsConstraint;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -17,7 +17,7 @@ class UpdateApiKeyInput
     public bool $is_enabled;
 
     /**
-     * @var string[]
+     * @var list<string>
      */
     #[Assert\Type('array')]
     #[Assert\All([
@@ -26,7 +26,7 @@ class UpdateApiKeyInput
     public array $scopes;
 
     /**
-     * @var string[]
+     * @var list<string>
      */
     #[Assert\Type('array')]
     #[Assert\All([
@@ -36,10 +36,10 @@ class UpdateApiKeyInput
     public array $allowed_ips;
 
     /**
-     * @return string[]
+     * @return list<string>
      */
     public static function getScopeValues(): array
     {
-        return array_column(Scope::cases(), 'value');
+        return array_column(RelayScope::cases(), 'value');
     }
 }

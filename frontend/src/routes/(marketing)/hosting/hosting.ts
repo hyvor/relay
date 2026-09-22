@@ -10,6 +10,7 @@ import Dns from './content/Dns.svelte';
 import Scaling from './content/Scaling.svelte';
 import EmailProviders from './content/EmailProviders.svelte';
 import HealthChecks from './content/HealthChecks.svelte';
+import Management from './content/Management.svelte';
 import UpgradeGuide_0_1_0 from './content/upgrade/0.1.0.md';
 
 export const SECTIONS: NavSectionConfig[] = [
@@ -39,6 +40,12 @@ export const SECTIONS: NavSectionConfig[] = [
 				slug: 'setup',
 				name: 'Setup',
 				content: Setup
+			},
+			{
+				type: 'page',
+				slug: 'management',
+				name: 'Management',
+				content: Management
 			},
 			{
 				type: 'page',

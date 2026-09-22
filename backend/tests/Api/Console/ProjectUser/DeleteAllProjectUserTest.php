@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\ProjectUser;
 
-use App\Api\Console\Controller\ProjectUserController;
+use App\Api\Console\Controller\ProjectUsersController;
 use App\Entity\ProjectUser;
 use App\Service\ProjectUser\ProjectUserService;
 use App\Tests\Case\WebTestCase;
@@ -11,7 +11,7 @@ use App\Tests\Factory\ProjectUserFactory;
 use Hyvor\Internal\Auth\AuthFake;
 use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(ProjectUserController::class)]
+#[CoversClass(ProjectUsersController::class)]
 #[CoversClass(ProjectUserService::class)]
 class DeleteAllProjectUserTest extends WebTestCase
 {

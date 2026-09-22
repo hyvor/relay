@@ -3,6 +3,8 @@ import type { Send } from '../console/types';
 export interface SudoInitResponse {
 	config: SudoConfig;
 	instance: Instance;
+	servers: Server[];
+	ip_addresses: IpAddress[];
 }
 
 export interface SudoConfig {
@@ -10,6 +12,7 @@ export interface SudoConfig {
 	deployment: 'cloud' | 'on-prem';
 	instance: string;
 	blacklists: Blacklist[];
+	default_warmup_schedule: number[];
 	user: {
 		id: number;
 		name: string;
@@ -46,6 +49,7 @@ export interface IpAddress {
 	queue: Queue | null;
 	is_ptr_forward_valid: boolean;
 	is_ptr_reverse_valid: boolean;
+	current_warmup_schedule: WarmupSchedule | null;
 }
 
 export interface Queue {
@@ -168,6 +172,8 @@ export interface InfrastructureBounce {
 	smtp_enhanced_code: string;
 	smtp_message: string;
 	send_recipient_id: number;
+	send_uuid: string | null;
+	recipient_email: string | null;
 }
 
 export interface TlsCertificate {
@@ -203,7 +209,6 @@ export interface SudoSendResponse {
 
 export interface SudoProject {
 	id: number;
-	user_id: number;
 	name: string;
 	created_at: number;
 	updated_at: number;
@@ -228,4 +233,20 @@ export interface SudoProjectsResponse {
 export interface SudoProjectResponse {
 	project: SudoProject;
 	org: Organization | null;
+}
+
+export type WarmupStatus = 'warming' | 'warmed' | 'cancelled';
+
+export interface WarmupSchedule {
+	id: number;
+	ip_address: string;
+	status: WarmupStatus;
+	started_date: number;
+	sent_today: number;
+	max_today: number;
+	schedule: number[];
+	results: number[];
+	created_at: number;
+	updated_at: number;
+	ip_address_id: number;
 }

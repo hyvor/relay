@@ -7,6 +7,7 @@ use App\Api\Sudo\Object\IpAddressObject;
 use App\Service\App\Config;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
 use App\Service\Ip\IpAddressService;
+use App\Service\Ip\WarmupScheduleService;
 use App\Service\Queue\QueueService;
 use App\Service\Sudo\SudoPermission;
 use Hyvor\Internal\Bundle\Api\SudoPermissionRequired;
@@ -24,16 +25,22 @@ class IpAddressController extends AbstractController
         private IpAddressService $ipAddressService,
         private QueueService $queueService,
         private Config $appConfig,
+        private WarmupScheduleService $warmupScheduleService,
     ) {}
 
     #[Route('/ip-addresses', methods: 'GET')]
     public function getIpAddresses(): JsonResponse
     {
         $ipAddresses = $this->ipAddressService->getAllIpAddresses();
+        $warmupSchedules = $this->warmupScheduleService->getCurrentWarmupSchedulesByIpAddresses($ipAddresses);
 
         $ipAddressObjects = array_map(
-            fn($ipAddress) => new IpAddressObject($ipAddress, $this->appConfig->getInstanceDomain()),
-            $ipAddresses
+            fn($ipAddress) => new IpAddressObject(
+                $ipAddress,
+                $this->appConfig->getInstanceDomain(),
+                $warmupSchedules[$ipAddress->getId()] ?? null,
+            ),
+            $ipAddresses,
         );
 
         return $this->json($ipAddressObjects);
@@ -63,6 +70,12 @@ class IpAddressController extends AbstractController
 
         $ipAddress = $this->ipAddressService->updateIpAddress($ipAddress, $updates);
 
-        return $this->json(new IpAddressObject($ipAddress, $this->appConfig->getInstanceDomain()));
+        return $this->json(
+            new IpAddressObject(
+                $ipAddress,
+                $this->appConfig->getInstanceDomain(),
+                $this->warmupScheduleService->getCurrentWarmupSchedule($ipAddress),
+            ),
+        );
     }
 }

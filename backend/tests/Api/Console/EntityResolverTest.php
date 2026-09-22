@@ -2,13 +2,16 @@
 
 namespace App\Tests\Api\Console;
 
-use App\Api\Console\Controller\SendController;
+use App\Api\Console\Controller\SendsController;
 use App\Api\Console\Resolver\EntityResolver;
 use App\Api\Local\Controller\LocalController;
 use App\Entity\Send;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\SendFactory;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\AccessType;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleApiAuthorizationListenerAbstract;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleAuthResults;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
@@ -68,7 +71,7 @@ class EntityResolverTest extends KernelTestCase
         $request = Request::create('/');
         $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn(Send::class);
-        $argument->method('getControllerName')->willReturn(SendController::class);
+        $argument->method('getControllerName')->willReturn(SendsController::class);
 
         $this->expectException(BadRequestException::class);
         $resolver->resolve($request, $argument);
@@ -81,7 +84,7 @@ class EntityResolverTest extends KernelTestCase
         $request->attributes->set('id', "1");
         $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn(Send::class);
-        $argument->method('getControllerName')->willReturn(SendController::class);
+        $argument->method('getControllerName')->willReturn(SendsController::class);
 
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Entity for invalid not found');
@@ -95,7 +98,7 @@ class EntityResolverTest extends KernelTestCase
         $request->attributes->set('id', "9999");
         $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn(Send::class);
-        $argument->method('getControllerName')->willReturn(SendController::class);
+        $argument->method('getControllerName')->willReturn(SendsController::class);
 
         $this->expectException(NotFoundHttpException::class);
         $resolver->resolve($request, $argument);
@@ -109,11 +112,12 @@ class EntityResolverTest extends KernelTestCase
         $request->attributes->set('id', (string)$send->getId());
 
         $project1 = ProjectFactory::createOne();
-        $request->attributes->set('console_api_resolved_project', $project1);
+        $authResults = new ConsoleAuthResults(AccessType::PRODUCT_API_KEY, 1, $project1, productApiKey: new \stdClass());
+        $request->attributes->set(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY, $authResults);
 
         $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn(Send::class);
-        $argument->method('getControllerName')->willReturn(SendController::class);
+        $argument->method('getControllerName')->willReturn(SendsController::class);
 
         $this->expectException(AccessDeniedHttpException::class);
         $this->expectExceptionMessage('Entity does not belong to the project');
@@ -128,11 +132,12 @@ class EntityResolverTest extends KernelTestCase
         $request->attributes->set('id', (string)$send->getId());
 
         $project = $send->getProject();
-        $request->attributes->set('console_api_resolved_project', $project);
+        $authResults = new ConsoleAuthResults(AccessType::PRODUCT_API_KEY, 1, $project, productApiKey: new \stdClass());
+        $request->attributes->set(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY, $authResults);
 
         $argument = $this->createStub(ArgumentMetadata::class);
         $argument->method('getType')->willReturn(Send::class);
-        $argument->method('getControllerName')->willReturn(SendController::class);
+        $argument->method('getControllerName')->willReturn(SendsController::class);
 
         $result = $resolver->resolve($request, $argument);
         $this->assertCount(1, iterator_to_array($result));

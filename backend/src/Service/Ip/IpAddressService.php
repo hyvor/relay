@@ -3,12 +3,15 @@
 namespace App\Service\Ip;
 
 use App\Entity\IpAddress;
+use App\Entity\Queue;
 use App\Entity\Server;
 use App\Service\Ip\Dto\PtrValidationDto;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
 use App\Service\Ip\Event\IpAddressUpdatedEvent;
 use App\Service\Ip\ServerIpResolver\ServerIpResolver;
 use App\Service\Ip\ServerIpResolver\ResolvedIp;
+use App\Service\Ip\Event\IpAddressCreatedEvent;
+use App\Service\Ip\Event\IpAddressRemovedEvent;
 use App\Service\Queue\QueueService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -111,6 +114,8 @@ class IpAddressService
         $this->em->persist($ipAddressEntity);
         $this->em->flush();
 
+        $this->ed->dispatch(new IpAddressCreatedEvent($ipAddressEntity));
+
         return $ipAddressEntity;
     }
 
@@ -118,6 +123,8 @@ class IpAddressService
     {
         $this->em->remove($ipAddress);
         $this->em->flush();
+
+        $this->ed->dispatch(new IpAddressRemovedEvent($ipAddress));
     }
 
     public function updateIpAddress(
@@ -131,12 +138,10 @@ class IpAddressService
         }
 
         $ipAddress->setUpdatedAt($this->now());
-
         $this->em->persist($ipAddress);
         $this->em->flush();
 
-        $event = new IpAddressUpdatedEvent($ipAddressOld, $ipAddress, $updates);
-        $this->ed->dispatch($event);
+        $this->ed->dispatch(new IpAddressUpdatedEvent($ipAddressOld, $ipAddress, $updates));
 
         return $ipAddress;
     }
@@ -156,5 +161,4 @@ class IpAddressService
 
         return $validity;
     }
-
 }

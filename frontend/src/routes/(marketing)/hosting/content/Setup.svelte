@@ -226,7 +226,8 @@
 		<a href="/docs/send-emails">send emails</a>.
 	</li>
 	<li>
-		<a href="/hosting/monitoring">Set up monitoring</a> to get alerts on issues.
+		<a href="/hosting/management">Management</a> to learn how to manage sudo users, IP addresses,
+		and more.
 	</li>
 	<li>
 		See <a href="/hosting/scaling">Scaling</a> to learn how to scale Hyvor Relay.
@@ -305,17 +306,6 @@ NAT_MAP=10.0.1.5:203.0.113.10,10.0.1.6:203.0.113.11`}
 		<code> docker compose exec -it relay bash </code> to enter the app container.
 	</li>
 	<li>
-		Then, use the following commands:
-		<ul style="margin-top: 8px">
-			<li>
-				<code>bin/console sudo:list</code>: List all sudo users.
-			</li>
-			<li>
-				<code>bin/console sudo:add {'<email>'}</code>: Add a new sudo user by email.
-			</li>
-			<li>
-				<code>bin/console sudo:remove {'<id>'}</code>: Remove a sudo user by ID.
-			</li>
-		</ul>
+		See <a href="/hosting/scaling">Scaling</a> to learn how to scale Hyvor Relay.
 	</li>
 </ul>

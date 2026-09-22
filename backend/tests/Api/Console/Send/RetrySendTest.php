@@ -2,8 +2,8 @@
 
 namespace App\Tests\Api\Console\Send;
 
-use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Controller\SendController;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
+use App\Api\Console\Controller\SendsController;
 use App\Entity\Type\SendRecipientStatus;
 use App\Service\Send\SendService;
 use App\Tests\Case\WebTestCase;
@@ -16,7 +16,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 use function Zenstruck\Foundry\Persistence\refresh;
 
-#[CoversClass(SendController::class)]
+#[CoversClass(SendsController::class)]
 #[CoversClass(SendService::class)]
 class RetrySendTest extends WebTestCase
 {
@@ -54,7 +54,7 @@ class RetrySendTest extends WebTestCase
             $project,
             'POST',
             '/sends/' . $send->getId() . '/retry',
-            scopes: [Scope::SENDS_SEND]
+            scopes: [RelayScope::SENDS_SEND]
         );
 
         $this->assertResponseStatusCodeSame(200);
@@ -100,7 +100,7 @@ class RetrySendTest extends WebTestCase
             'POST',
             '/sends/' . $send->getId() . '/retry',
             data: ['send_after' => $sendAfter],
-            scopes: [Scope::SENDS_SEND]
+            scopes: [RelayScope::SENDS_SEND]
         );
 
         $this->assertResponseStatusCodeSame(200);
@@ -146,7 +146,7 @@ class RetrySendTest extends WebTestCase
             'POST',
             '/sends/' . $send->getId() . '/retry',
             data: ['recipient_ids' => [$recipient1->getId()]],
-            scopes: [Scope::SENDS_SEND]
+            scopes: [RelayScope::SENDS_SEND]
         );
 
         $this->assertResponseStatusCodeSame(200);
@@ -191,7 +191,7 @@ class RetrySendTest extends WebTestCase
             'POST',
             '/sends/' . $send->getId() . '/retry',
             data: ['recipient_ids' => [99999]],
-            scopes: [Scope::SENDS_SEND]
+            scopes: [RelayScope::SENDS_SEND]
         );
 
         $this->assertResponseStatusCodeSame(400);
@@ -224,7 +224,7 @@ class RetrySendTest extends WebTestCase
             $project,
             'POST',
             '/sends/' . $send->getId() . '/retry',
-            scopes: [Scope::SENDS_SEND]
+            scopes: [RelayScope::SENDS_SEND]
         );
 
         $this->assertResponseStatusCodeSame(200);
@@ -255,7 +255,7 @@ class RetrySendTest extends WebTestCase
             $project,
             'POST',
             '/sends/' . $send->getId() . '/retry',
-            scopes: [Scope::SENDS_SEND]
+            scopes: [RelayScope::SENDS_SEND]
         );
 
         $this->assertResponseStatusCodeSame(400);
@@ -286,7 +286,7 @@ class RetrySendTest extends WebTestCase
             'POST',
             '/sends/' . $send->getId() . '/retry',
             data: ['send_after' => $mockClock->now()->getTimestamp() - 3600],
-            scopes: [Scope::SENDS_SEND]
+            scopes: [RelayScope::SENDS_SEND]
         );
 
         $this->assertResponseStatusCodeSame(400);

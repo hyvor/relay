@@ -17,7 +17,9 @@ import type {
 	SudoProjectsResponse,
 	SudoProjectResponse,
 	SudoSendsResponse,
-	SudoSendResponse
+	SudoSendResponse,
+	WarmupSchedule,
+	WarmupStatus
 } from './sudoTypes';
 
 export function initSudo() {
@@ -26,9 +28,10 @@ export function initSudo() {
 	});
 }
 
-export function getServers() {
+export function getServers(search: string | null = null) {
 	return sudoApi.get<Server[]>({
-		endpoint: '/servers'
+		endpoint: '/servers',
+		data: { search }
 	});
 }
 
@@ -155,7 +158,7 @@ export function getInfrastructureBounces(limit: number = 20, offset: number = 0,
 }
 
 export function markInfrastructureBounceAsRead(id: number) {
-	return sudoApi.patch<InfrastructureBounce>({
+	return sudoApi.patch({
 		endpoint: `/infrastructure-bounces/${id}/mark-as-read`
 	});
 }
@@ -243,5 +246,41 @@ export function getProjectOrganizations(limit: number, before_id: number | null 
 export function getProjectById(id: number) {
 	return sudoApi.get<SudoProjectResponse>({
 		endpoint: `/projects/${id}`
+	});
+}
+
+export function getWarmupSchedules(ipAddressId?: number) {
+	return sudoApi.get<WarmupSchedule[]>({
+		endpoint: '/warmup-schedules',
+		data: ipAddressId !== undefined ? { ip_address_id: ipAddressId } : undefined
+	});
+}
+
+export function createWarmupSchedule(ipAddressId: number, schedule: number[]) {
+	return sudoApi.post<WarmupSchedule>({
+		endpoint: '/warmup-schedules',
+		data: {
+			ip_address_id: ipAddressId,
+			schedule
+		}
+	});
+}
+
+export function updateWarmupSchedule(
+	scheduleId: number,
+	data: {
+		status?: WarmupStatus;
+		schedule?: number[];
+	}
+) {
+	return sudoApi.patch<WarmupSchedule>({
+		endpoint: `/warmup-schedules/${scheduleId}`,
+		data
+	});
+}
+
+export function deleteWarmupSchedule(scheduleId: number) {
+	return sudoApi.delete({
+		endpoint: `/warmup-schedules/${scheduleId}`
 	});
 }

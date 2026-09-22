@@ -44,7 +44,7 @@ class IdempotencyTest extends WebTestCase
             "/sends",
             server: [
                 "HTTP_X_IDEMPOTENCY_KEY" => "idempotency-key-123",
-            ]
+            ],
         );
 
         $this->assertResponseStatusCodeSame(200);
@@ -62,7 +62,7 @@ class IdempotencyTest extends WebTestCase
         DomainFactory::createOne([
             "project" => $project,
             "domain" => "hyvor.com",
-            'status' => DomainStatus::ACTIVE
+            'status' => DomainStatus::ACTIVE,
         ]);
 
         $this->consoleApi(
@@ -76,7 +76,7 @@ class IdempotencyTest extends WebTestCase
             ],
             server: [
                 "HTTP_X_IDEMPOTENCY_KEY" => "idempotency-key-123",
-            ]
+            ],
         );
 
         $this->assertResponseStatusCodeSame(200);
@@ -104,7 +104,7 @@ class IdempotencyTest extends WebTestCase
             "/api-keys", // This endpoint doesn't have IdempotencySupported attribute
             server: [
                 "HTTP_X_IDEMPOTENCY_KEY" => "idempotency-key-123",
-            ]
+            ],
         );
 
         $this->assertResponseStatusCodeSame(400);
@@ -112,7 +112,7 @@ class IdempotencyTest extends WebTestCase
         $json = $this->getJson();
         $this->assertSame(
             'This endpoint does not support idempotency. Retry without the "X-Idempotency-Key" header.',
-            $json["message"]
+            $json["message"],
         );
     }
 
@@ -135,7 +135,7 @@ class IdempotencyTest extends WebTestCase
             0,
             $notJson ?
                 new Response('', $statusCode) :
-                new JsonResponse([], $statusCode)
+                new JsonResponse([], $statusCode),
         );
 
         $listener->onResponse($responseEvent);
@@ -156,7 +156,7 @@ class IdempotencyTest extends WebTestCase
         $limiter->consume(60);
         $limiter->consume(60);
 
-        $project = ProjectFactory::createOne(['user_id' => 1]);
+        $project = ProjectFactory::createOne(['organization_id' => 1]);
         ProjectUserFactory::createOne([
             'project' => $project,
             'user_id' => 1,
@@ -177,7 +177,7 @@ class IdempotencyTest extends WebTestCase
             server: [
                 "HTTP_X_IDEMPOTENCY_KEY" => "idempotency-key-123",
             ],
-            useSession: true
+            useSession: true,
         );
 
         $this->assertResponseStatusCodeSame(429);

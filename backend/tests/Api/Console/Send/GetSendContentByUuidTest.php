@@ -2,8 +2,8 @@
 
 namespace App\Tests\Api\Console\Send;
 
-use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Controller\SendController;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
+use App\Api\Console\Controller\SendsController;
 use App\Api\Console\Object\SendContentObject;
 use App\Service\Send\Dto\SendContent;
 use App\Service\Send\SendContentStorage;
@@ -14,7 +14,7 @@ use App\Tests\Factory\SendFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\Uid\Uuid;
 
-#[CoversClass(SendController::class)]
+#[CoversClass(SendsController::class)]
 #[CoversClass(SendService::class)]
 #[CoversClass(SendContentObject::class)]
 #[CoversClass(SendContentStorage::class)]
@@ -51,7 +51,7 @@ class GetSendContentByUuidTest extends WebTestCase
             $project,
             'GET',
             '/sends/uuid/' . $send->getUuid() . '/content',
-            scopes: [Scope::SENDS_READ]
+            scopes: [RelayScope::SENDS_READ]
         );
 
         $this->assertSame(200, $response->getStatusCode());
@@ -74,7 +74,7 @@ class GetSendContentByUuidTest extends WebTestCase
             $project,
             'GET',
             '/sends/uuid/' . $send->getUuid() . '/content',
-            scopes: [Scope::SENDS_READ]
+            scopes: [RelayScope::SENDS_READ]
         );
 
         $this->assertSame(404, $response->getStatusCode());
@@ -89,7 +89,7 @@ class GetSendContentByUuidTest extends WebTestCase
             $project,
             'GET',
             '/sends/uuid/' . $uuid . '/content',
-            scopes: [Scope::SENDS_READ]
+            scopes: [RelayScope::SENDS_READ]
         );
 
         $this->assertSame(404, $response->getStatusCode());
@@ -110,7 +110,7 @@ class GetSendContentByUuidTest extends WebTestCase
             $otherProject,
             'GET',
             '/sends/uuid/' . $send->getUuid() . '/content',
-            scopes: [Scope::SENDS_READ]
+            scopes: [RelayScope::SENDS_READ]
         );
 
         $this->assertSame(400, $response->getStatusCode());

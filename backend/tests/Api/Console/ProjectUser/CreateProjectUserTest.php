@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\ProjectUser;
 
-use App\Api\Console\Controller\ProjectUserController;
+use App\Api\Console\Controller\ProjectUsersController;
 use App\Api\Console\Object\ProjectUserObject;
 use App\Entity\ProjectUser;
 use App\Service\ProjectUser\ProjectUserService;
@@ -15,7 +15,7 @@ use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\VerifyMemberResponse;
 use Hyvor\Internal\Bundle\Comms\Exception\CommsApiFailedException;
 use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(ProjectUserController::class)]
+#[CoversClass(ProjectUsersController::class)]
 #[CoversClass(ProjectUserService::class)]
 #[CoversClass(ProjectUserObject::class)]
 class CreateProjectUserTest extends WebTestCase
@@ -33,11 +33,11 @@ class CreateProjectUserTest extends WebTestCase
             'id' => 1,
             'username' => 'supun',
             'name' => 'Supun Wimalasena',
-            'email' => 'supun@hyvor.com'
+            'email' => 'supun@hyvor.com',
         ]);
 
         $project = ProjectFactory::createOne([
-            'organization_id' => 1
+            'organization_id' => 1,
         ]);
 
         $this->consoleApi(
@@ -62,14 +62,14 @@ class CreateProjectUserTest extends WebTestCase
         });
 
         $project = ProjectFactory::createOne([
-            'organization_id' => 1
+            'organization_id' => 1,
         ]);
 
         AuthFake::databaseAdd([
             'id' => 1,
             'username' => 'supun',
             'name' => 'Supun Wimalasena',
-            'email' => 'supun@hyvor.com'
+            'email' => 'supun@hyvor.com',
         ]);
 
         $this->consoleApi(
@@ -89,7 +89,6 @@ class CreateProjectUserTest extends WebTestCase
         $this->assertArrayHasKey('created_at', $json);
         $this->assertArrayHasKey('scopes', $json);
         $this->assertArrayHasKey('user', $json);
-        $this->assertArrayHasKey('oidc_sub', $json);
 
         $projectUserDb = $this->em->getRepository(ProjectUser::class)->find($json['id']);
         $this->assertInstanceOf(ProjectUser::class, $projectUserDb);
@@ -103,7 +102,7 @@ class CreateProjectUserTest extends WebTestCase
         });
 
         $project = ProjectFactory::createOne([
-            'organization_id' => 1
+            'organization_id' => 1,
         ]);
         ProjectUserFactory::createOne([
             'project' => $project,
@@ -114,7 +113,7 @@ class CreateProjectUserTest extends WebTestCase
             'id' => 1,
             'username' => 'supun',
             'name' => 'Supun Wimalasena',
-            'email' => 'supun@hyvor.com'
+            'email' => 'supun@hyvor.com',
         ]);
 
         $this->consoleApi(
@@ -137,14 +136,14 @@ class CreateProjectUserTest extends WebTestCase
         });
 
         $project = ProjectFactory::createOne([
-            'organization_id' => 1
+            'organization_id' => 1,
         ]);
 
         AuthFake::databaseAdd([
             'id' => 1,
             'username' => 'supun',
             'name' => 'Supun Wimalasena',
-            'email' => 'supun@hyvor.com'
+            'email' => 'supun@hyvor.com',
         ]);
 
         $this->consoleApi(
@@ -167,14 +166,14 @@ class CreateProjectUserTest extends WebTestCase
         });
 
         $project = ProjectFactory::createOne([
-            'organization_id' => 1
+            'organization_id' => 1,
         ]);
 
         AuthFake::databaseAdd([
             'id' => 1,
             'username' => 'supun',
             'name' => 'Supun Wimalasena',
-            'email' => 'supun@hyvor.com'
+            'email' => 'supun@hyvor.com',
         ]);
 
         $this->consoleApi(

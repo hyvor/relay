@@ -2,7 +2,7 @@
 
 namespace App\Api\Console\Input;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Validator\AllowedIpsConstraint;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -14,7 +14,7 @@ class CreateApiKeyInput
     public string $name;
 
     /**
-     * @var string[]
+     * @var list<string>
      */
     #[Assert\NotBlank]
     #[Assert\Type('array')]
@@ -24,7 +24,7 @@ class CreateApiKeyInput
     public array $scopes;
 
     /**
-     * @var string[]
+     * @var list<string>
      */
     #[Assert\Type('array')]
     #[Assert\All([
@@ -34,11 +34,11 @@ class CreateApiKeyInput
     public array $allowed_ips = [];
 
     /**
-     * @return string[]
+     * @return list<string>
      */
     public static function getScopeValues(): array
     {
-        return array_column(Scope::cases(), 'value');
+        return array_column(RelayScope::cases(), 'value');
     }
 
     #[Assert\Callback]
@@ -48,7 +48,7 @@ class CreateApiKeyInput
             return;
         }
 
-        if (in_array(Scope::SENDS_SEND->value, $this->scopes, true) && count($this->allowed_ips) === 0) {
+        if (in_array(RelayScope::SENDS_SEND->value, $this->scopes, true) && count($this->allowed_ips) === 0) {
             $context->buildViolation('At least one allowed IP is required when the "sends.send" scope is enabled.')
                 ->atPath('allowed_ips')
                 ->addViolation();

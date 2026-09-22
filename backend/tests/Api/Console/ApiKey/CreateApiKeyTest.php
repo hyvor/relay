@@ -2,8 +2,7 @@
 
 namespace App\Tests\Api\Console\ApiKey;
 
-use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Controller\ApiKeyController;
+use App\Api\Console\Controller\ApiKeysController;
 use App\Api\Console\Input\CreateApiKeyInput;
 use App\Api\Console\Object\ApiKeyObject;
 use App\Entity\ApiKey;
@@ -16,9 +15,8 @@ use App\Validator\AllowedIpsConstraint;
 use App\Validator\AllowedIpsConstraintValidator;
 use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(ApiKeyController::class)]
+#[CoversClass(ApiKeysController::class)]
 #[CoversClass(ApiKeyService::class)]
-#[CoversClass(Scope::class)]
 #[CoversClass(CreateApiKeyInput::class)]
 #[CoversClass(ApiKeyObject::class)]
 #[CoversClass(AllowedIp::class)]
@@ -100,7 +98,7 @@ class CreateApiKeyTest extends WebTestCase
         $this->assertSame([], $content['allowed_ips']);
     }
 
-    public function test_create_api_key_rejects_too_broad_private_cidr(): void
+    public function test_create_api_key_accepts_broad_private_cidr(): void
     {
         $project = ProjectFactory::createOne();
 
@@ -115,11 +113,11 @@ class CreateApiKeyTest extends WebTestCase
             ]
         );
 
-        $this->assertSame(422, $response->getStatusCode());
-        $this->assertHasViolation('allowed_ips[0]', 'IPv4 CIDR prefix must be between');
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(['10.0.0.0/8'], $this->getJson()['allowed_ips']);
     }
 
-    public function test_create_api_key_rejects_too_broad_cidr(): void
+    public function test_create_api_key_accepts_broad_cidr(): void
     {
         $project = ProjectFactory::createOne();
 
@@ -134,8 +132,8 @@ class CreateApiKeyTest extends WebTestCase
             ]
         );
 
-        $this->assertSame(422, $response->getStatusCode());
-        $this->assertHasViolation('allowed_ips[0]', 'between /24 and /32');
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(['203.0.113.0/16'], $this->getJson()['allowed_ips']);
     }
 
     public function test_create_api_key_accepts_ipv6_cidr(): void
@@ -156,6 +154,25 @@ class CreateApiKeyTest extends WebTestCase
         $this->assertSame(200, $response->getStatusCode());
         $content = $this->getJson();
         $this->assertSame(['2001:db8::/64'], $content['allowed_ips']);
+    }
+
+    public function test_create_api_key_accepts_broad_ipv6_cidr(): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $response = $this->consoleApi(
+            $project,
+            'POST',
+            '/api-keys',
+            [
+                'name' => 'Broad IPv6',
+                'scopes' => ['sends.send'],
+                'allowed_ips' => ['2001:db8::/32'],
+            ]
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(['2001:db8::/32'], $this->getJson()['allowed_ips']);
     }
 
     public function test_create_api_key_without_name(): void
