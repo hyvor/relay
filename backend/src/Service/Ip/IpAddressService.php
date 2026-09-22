@@ -26,7 +26,6 @@ class IpAddressService
         private EventDispatcherInterface $ed,
         private Ptr $ptr,
         private QueueService $queueService,
-        private WarmupScheduleService $warmupScheduleService,
     ) {}
 
     /**
