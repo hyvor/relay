@@ -260,7 +260,7 @@ compose.yaml			# Docker Compose file
 		variables. This is recommended for scaling.
 	</li>
 	<li>
-		<code>PRIVATE_NETWORK</code> (optional): Set this if your servers are behind 1:1 NAT. See
+		<code>NAT_NETWORK</code> (optional): Set this if your servers are behind 1:1 NAT. See
 		<a href="/hosting/setup#nat">NAT Configuration</a> for details.
 	</li>
 </ul>
