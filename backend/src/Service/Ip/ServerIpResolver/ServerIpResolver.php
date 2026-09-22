@@ -26,18 +26,18 @@ class ServerIpResolver
     /**
      * Resolves IP addresses of the server.
      *
-     * If PRIVATE_NETWORK env is set, returns private IPs in those ranges,
+     * If NAT_NETWORK env is set, returns private IPs in those ranges,
      * public IP automatically resolved via NAT_MAP or external service.
      * Otherwise, returns public IPv4 addresses directly.
      *
-     * Important: this method depends on external services when PRIVATE_NETWORK is set
+     * Important: this method depends on external services when NAT_NETWORK is set
      * and NAT_MAP is not provided.
      *
      * @return ResolvedIp[]
      */
     public function resolveIps(): array
     {
-        return $this->appConfig->getPrivateNetwork() ?
+        return $this->appConfig->getNatNetwork() ?
             $this->resolveIpsBehindNat() :
             $this->resolveIpsDirect();
     }
@@ -65,11 +65,11 @@ class ServerIpResolver
 
     private function resolveIpsBehindNat(): array
     {
-        $privateNetwork = $this->appConfig->getPrivateNetwork();
-        $privateRanges = array_map('trim', explode(',', $privateNetwork));
+        $natNetwork = $this->appConfig->getNatNetwork();
+        $privateRanges = array_map('trim', explode(',', $natNetwork));
 
         $this->logger->info('NAT mode: scanning for private IPs in configured ranges', [
-            'private_network' => $privateNetwork,
+            'nat_network' => $natNetwork,
         ]);
 
         $allIps = $this->getAllIpAddressesOnServer();
@@ -78,7 +78,7 @@ class ServerIpResolver
         if (empty($privateIps)) {
             $this->logger->warning(
                 'NAT mode is enabled but no matching private IPv4 addresses were found on this server.',
-                ['private_network' => $privateNetwork, 'available_ips' => $allIps],
+                ['nat_network' => $natNetwork, 'available_ips' => $allIps],
             );
         }
 

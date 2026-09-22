@@ -256,17 +256,17 @@
 </p>
 
 <p>
-    To get started, set the <code>PRIVATE_NETWORK</code> environment variable to the CIDR range(s) of
+    To get started, set the <code>NAT_NETWORK</code> environment variable to the CIDR range(s) of
     your private network. Hyvor Relay will detect the server's private IP addresses within the given range(s)
     and resolve the corresponding public IP address for each.
 </p>
 
 <CodeBlock
     code={`# Single CIDR range
-PRIVATE_NETWORK=10.0.0.0/8
+NAT_NETWORK=10.0.0.0/8
 
 # Multiple ranges (comma-separated)
-PRIVATE_NETWORK=10.0.0.0/8,172.16.0.0/12`}
+NAT_NETWORK=10.0.0.0/8,172.16.0.0/12`}
     language="yaml"
 />
 

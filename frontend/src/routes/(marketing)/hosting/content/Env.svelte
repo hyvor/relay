@@ -65,11 +65,11 @@ S3_BUCKET=
 # NAT (1:1) Configuration
 # See: https://relay.hyvor.com/hosting/setup#nat
 
-# Private network CIDR range(s) to identify this server's private IP addresses.
+# NAT network CIDR range(s). Sending IP addresses are selected from the given range(s).
 # Use this when the server is behind 1:1 NAT
-# Example (single range): PRIVATE_NETWORK=10.0.0.0/8
-# Example (multiple, comma-separated): PRIVATE_NETWORK=10.0.0.0/8,172.16.0.0/12
-PRIVATE_NETWORK=
+# Example (single range): NAT_NETWORK=10.0.0.0/8
+# Example (multiple, comma-separated): NAT_NETWORK=10.0.0.0/8,172.16.0.0/12
+NAT_NETWORK=
 
 # Manual mapping of private IP to public IP for NAT.
 # If not set, the public IP is resolved automatically by binding to each private IP

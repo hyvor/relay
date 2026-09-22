@@ -22,8 +22,8 @@ class Config
         #[Autowire('%env(string:INSTANCE_DOMAIN)%')]
         private string $instanceDomain,
 
-        #[Autowire('%env(string:PRIVATE_NETWORK)%')]
-        private string $privateNetwork = '',
+        #[Autowire('%env(string:NAT_NETWORK)%')]
+        private string $natNetwork = '',
         #[Autowire('%env(string:NAT_MAP)%')]
         private string $natMap = '',
 
@@ -63,9 +63,9 @@ class Config
         return $this->instanceDomain;
     }
 
-    public function getPrivateNetwork(): string
+    public function getNatNetwork(): string
     {
-        return $this->privateNetwork;
+        return $this->natNetwork;
     }
 
     public function getNatMap(): string
