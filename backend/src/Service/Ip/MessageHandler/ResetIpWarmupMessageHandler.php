@@ -26,14 +26,17 @@ class ResetIpWarmupMessageHandler
         $now = new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
 
         foreach ($schedules as $schedule) {
-            $startedDate = $schedule->getStartedDate();
+            $dayIndex = (int)$schedule->getStartedDate()->setTime(0, 0)->diff($now)->days;
+
+            // idempotency (skip if already processed for today)
+            if ($dayIndex > 0 && count($schedule->getResults()) >= $dayIndex) {
+                continue;
+            }
+
             $plan = $schedule->getSchedule();
 
             $schedule->appendResult($schedule->getSentToday());
-
             $schedule->setSentToday(0);
-
-            $dayIndex = (int) $startedDate->setTime(0, 0)->diff($now)->days;
 
             if ($dayIndex >= 30) {
                 $schedule->setStatus(WarmupStatus::WARMED);

@@ -13,6 +13,7 @@ use App\Tests\Factory\WarmupScheduleFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 use function Zenstruck\Foundry\Persistence\refresh;
+use function Zenstruck\Foundry\Persistence\save;
 
 #[CoversClass(ResetIpWarmupMessageHandler::class)]
 class ResetIpWarmupMessageHandlerTest extends KernelTestCase
@@ -135,7 +136,7 @@ class ResetIpWarmupMessageHandlerTest extends KernelTestCase
         $warmup = WarmupScheduleFactory::createOne([
             'ipAddress' => $ip,
             'status' => WarmupStatus::WARMING,
-            'started_date' => new \DateTimeImmutable('-1 day', new \DateTimeZone('UTC')),
+            'started_date' => new \DateTimeImmutable('-2 days', new \DateTimeZone('UTC')),
             'schedule' => $schedule,
             'sent_today' => 75,
             'max_today' => 100,
@@ -149,6 +150,66 @@ class ResetIpWarmupMessageHandlerTest extends KernelTestCase
         refresh($warmup);
 
         $this->assertSame([42, 75], $warmup->getResults());
+    }
+
+    public function test_is_idempotent_when_run_twice(): void
+    {
+        $schedule = array_fill(0, 30, 100);
+        $schedule[1] = 200;
+
+        $warmup = WarmupScheduleFactory::createOne([
+            'ipAddress' => IpAddressFactory::createOne(),
+            'status' => WarmupStatus::WARMING,
+            'started_date' => new \DateTimeImmutable('-1 day', new \DateTimeZone('UTC')),
+            'schedule' => $schedule,
+            'sent_today' => 50,
+            'max_today' => 100,
+            'results' => [],
+        ]);
+
+        $transport = $this->transport(MessageTransport::ASYNC);
+        $transport->send(new ResetIpWarmupMessage());
+        $transport->throwExceptions()->process();
+
+        refresh($warmup);
+        $this->assertSame([50], $warmup->getResults());
+        $this->assertSame(200, $warmup->getMaxToday());
+
+        // simulate some sends after the first reset
+        $warmup->setSentToday(7);
+        save($warmup);
+
+        $transport->send(new ResetIpWarmupMessage());
+        $transport->throwExceptions()->process();
+
+        refresh($warmup);
+        $this->assertSame([50], $warmup->getResults());
+        $this->assertSame(7, $warmup->getSentToday());
+        $this->assertSame(200, $warmup->getMaxToday());
+        $this->assertSame(WarmupStatus::WARMING, $warmup->getStatus());
+    }
+
+    public function test_skips_schedules_already_reset_today(): void
+    {
+        // started -1 day => dayIndex is 1, and a result is already recorded
+        // for day index 1, so this schedule was already reset today.
+        $warmup = WarmupScheduleFactory::createOne([
+            'ipAddress' => IpAddressFactory::createOne(),
+            'status' => WarmupStatus::WARMING,
+            'started_date' => new \DateTimeImmutable('-1 day', new \DateTimeZone('UTC')),
+            'sent_today' => 20,
+            'max_today' => 100,
+            'results' => [5],
+        ]);
+
+        $transport = $this->transport(MessageTransport::ASYNC);
+        $transport->send(new ResetIpWarmupMessage());
+        $transport->throwExceptions()->process();
+
+        refresh($warmup);
+
+        $this->assertSame(20, $warmup->getSentToday());
+        $this->assertSame([5], $warmup->getResults());
     }
 
 }
