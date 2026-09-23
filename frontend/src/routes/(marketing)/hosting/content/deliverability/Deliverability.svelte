@@ -283,6 +283,16 @@
 		</a>: Send emails to real inboxes across various email providers to see if they land in the
 		inbox or spam folder.
 	</li>
+	<li>
+		<a
+			href="https://email-spam-tester.com?source=hyvor-relay"
+			target="_blank"
+			rel="nofollow noopener"
+		>
+			Email Spam Tester
+		</a>: Free placement test across twelve providers, with SPF, DKIM, and DMARC evaluated on the
+		delivered copy rather than on the published record. No account required.
+	</li>
 </ul>
 
 <p>For checking blacklists:</p>
