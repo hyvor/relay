@@ -8,7 +8,6 @@ use App\Service\Domain\DomainService;
 use App\Service\Instance\InstanceService;
 use App\Service\Queue\QueueService;
 use App\Service\Send\SendService;
-use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Component\Component;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mime\Address;
@@ -23,7 +22,6 @@ class KycEmailService
         private SendService $sendService,
         private Environment $twig,
         private Config $config,
-        private EntityManagerInterface $em,
         private LoggerInterface $logger,
     ) {
     }
@@ -141,7 +139,10 @@ class KycEmailService
 
 
         try {
-            $context['strings']['name'] = $kyc->getName();
+            $strings = $context['strings'];
+            assert(is_array($strings));
+            $strings['name'] = $kyc->getName();
+            $context['strings'] = $strings;
 
             $html = $this->twig->render('mail/kyc.twig', [
                 ...$context,

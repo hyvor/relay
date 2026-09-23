@@ -21,7 +21,7 @@ import type {
 	SudoKycsResponse,
 	SudoKyc,
 	KycStatus,
-	KycSortBy
+	KycSortBy,
 	WarmupSchedule,
 	WarmupStatus
 } from './sudoTypes';

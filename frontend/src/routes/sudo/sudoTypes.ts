@@ -256,6 +256,8 @@ export interface SudoKyc {
 export interface SudoKycsResponse {
 	kycs: SudoKyc[];
 	orgs: Organization[];
+}
+
 export type WarmupStatus = 'warming' | 'warmed' | 'cancelled';
 
 export interface WarmupSchedule {
