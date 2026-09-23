@@ -232,6 +232,30 @@ export interface AnalyticsStats {
 	complaint_rate: number;
 }
 
+export type KycAccountType = 'individual' | 'business';
+
+export type KycContentOwnership = 'self' | 'third_party';
+
+export type KycStatus = 'pending' | 'approved' | 'rejected' | 'stale';
+
+export interface Kyc {
+	id: number;
+	created_at: number;
+	updated_at: number;
+	account_type: KycAccountType;
+	name: string;
+	country: string;
+	address: string;
+	content_ownership: KycContentOwnership[];
+	sending_transactional: boolean;
+	sending_distributional: boolean;
+	use_case: string;
+	website: string;
+	email: string;
+	status: KycStatus;
+	reject_reason: string | null;
+}
+
 export interface ProjectUserMiniObject {
 	id: number;
 	name: string;
