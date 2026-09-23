@@ -147,6 +147,88 @@ func (r *DoHResolver) Lookup(ctx context.Context, name string, recordType uint16
 	}, nil
 }
 
+// dnsAnswerResponse and dnsResolveResponse mirror the classic Cloudflare/Google DoH JSON
+// shape, since that's what the PHP backend's ResolveResult::fromArray() already parses.
+type dnsAnswerResponse struct {
+	Name string `json:"name"`
+	Type uint16 `json:"type"`
+	TTL  uint32 `json:"TTL"`
+	Data string `json:"data"`
+}
+
+type dnsResolveResponse struct {
+	Status int                 `json:"Status"`
+	Answer []dnsAnswerResponse `json:"Answer,omitempty"`
+}
+
+// returns Google/Cloudflare JSON-formatted DNS response.
+func (r *DoHResolver) LookupAsJson(ctx context.Context, name string, recordType uint16) (dnsResolveResponse, error) {
+	result, err := r.Lookup(ctx, name, recordType)
+	if err != nil {
+		return dnsResolveResponse{}, err
+	}
+
+	return dnsMessageToResponse(result.Message), nil
+}
+
+func dnsMessageToResponse(message *dns.Msg) dnsResolveResponse {
+	answers := make([]dnsAnswerResponse, 0, len(message.Answer))
+
+	for _, rr := range message.Answer {
+		header := rr.Header()
+		answers = append(answers, dnsAnswerResponse{
+			Name: header.Name,
+			Type: header.Rrtype,
+			TTL:  header.Ttl,
+			Data: dnsRDataString(rr),
+		})
+	}
+
+	return dnsResolveResponse{
+		Status: message.Rcode,
+		Answer: answers,
+	}
+}
+
+func dnsRDataString(rr dns.RR) string {
+	switch record := rr.(type) {
+	case *dns.A:
+		return record.A.String()
+	case *dns.AAAA:
+		return record.AAAA.String()
+	case *dns.MX:
+		return fmt.Sprintf("%d %s", record.Preference, record.Mx)
+	case *dns.TXT:
+		chunks := make([]string, len(record.Txt))
+		for i, chunk := range record.Txt {
+			chunks[i] = quoteTxtChunk(chunk)
+		}
+		return strings.Join(chunks, " ")
+	case *dns.PTR:
+		return record.Ptr
+	case *dns.CNAME:
+		return record.Target
+	case *dns.NS:
+		return record.Ns
+	default:
+		return rr.String()
+	}
+}
+
+func quoteTxtChunk(chunk string) string {
+	var b strings.Builder
+	b.WriteByte('"')
+	for i := 0; i < len(chunk); i++ {
+		c := chunk[i]
+		if c == '\\' || c == '"' {
+			b.WriteByte('\\')
+		}
+		b.WriteByte(c)
+	}
+	b.WriteByte('"')
+	return b.String()
+}
+
 func dnsMessageTTL(message *dns.Msg) time.Duration {
 	negative := message.Rcode != dns.RcodeSuccess
 	if message.Rcode == dns.RcodeSuccess {

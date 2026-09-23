@@ -3,16 +3,27 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
+
+func withOutboundDNSResolver(t *testing.T, resolver *DoHResolver) {
+	original := outboundDNSResolver
+	outboundDNSResolver = resolver
+	t.Cleanup(func() {
+		outboundDNSResolver = original
+	})
+}
 
 func TestPingAndReady(t *testing.T) {
 
@@ -160,5 +171,215 @@ func TestDebugParseFbl(t *testing.T) {
 	assert.Contains(t, string(body), "somespammer@example.net")
 	assert.Contains(t, string(body), "8787KJKJ3K4J3K4J3K4J3.mail@example.net")
 	assert.Contains(t, string(body), "This is an email abuse report for an email message received from IP")
+
+}
+
+// ========== /dns/resolve ==========
+//
+// These drive the endpoint end-to-end through outboundDNSResolver.LookupAsJson, using the same
+// fake wireformat DoH server helpers (dohTestServer/dohResponse) as doh_test.go, rather than
+// mocking lookupDNSFunc (that indirection is only used by the outbound-mail codepath in
+// mx.go/tlsa.go/mta_sts.go).
+
+func TestDnsResolveARecord(t *testing.T) {
+
+	localHttpPort = ":43006"
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	serviceState := &ServiceState{
+		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+	StartHttpServer(ctx, serviceState)
+
+	time.Sleep(100 * time.Millisecond)
+
+	server := dohTestServer(t, func(writer http.ResponseWriter, query *dns.Msg) {
+		assert.Equal(t, "example.com.", query.Question[0].Name)
+		assert.Equal(t, dns.TypeA, query.Question[0].Qtype)
+
+		record := &dns.A{
+			Hdr: dns.RR_Header{Name: "example.com.", Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 300},
+			A:   net.ParseIP("1.2.3.4"),
+		}
+		writer.Header().Set("Content-Type", "application/dns-message")
+		_, err := writer.Write(dohResponse(t, query, false, record))
+		assert.NoError(t, err)
+	})
+	withOutboundDNSResolver(t, &DoHResolver{URL: server.URL, Client: server.Client()})
+
+	resp, err := http.Post(
+		"http://localhost"+localHttpPort+"/dns/resolve",
+		"application/json",
+		strings.NewReader(`{"name": "example.com", "type": "A"}`),
+	)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var decoded dnsResolveResponse
+	assert.NoError(t, json.NewDecoder(resp.Body).Decode(&decoded))
+	assert.Equal(t, 0, decoded.Status)
+	assert.Len(t, decoded.Answer, 1)
+	assert.Equal(t, "1.2.3.4", decoded.Answer[0].Data)
+	assert.Equal(t, uint16(dns.TypeA), decoded.Answer[0].Type)
+	assert.Equal(t, uint32(300), decoded.Answer[0].TTL)
+
+}
+
+func TestDnsResolveTxtRecord(t *testing.T) {
+
+	localHttpPort = ":43007"
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	serviceState := &ServiceState{
+		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+	StartHttpServer(ctx, serviceState)
+
+	time.Sleep(100 * time.Millisecond)
+
+	server := dohTestServer(t, func(writer http.ResponseWriter, query *dns.Msg) {
+		assert.Equal(t, dns.TypeTXT, query.Question[0].Qtype)
+
+		record := &dns.TXT{
+			Hdr: dns.RR_Header{Name: "example.com.", Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: 60},
+			Txt: []string{"v=DKIM1; k=rsa"},
+		}
+		writer.Header().Set("Content-Type", "application/dns-message")
+		_, err := writer.Write(dohResponse(t, query, false, record))
+		assert.NoError(t, err)
+	})
+	withOutboundDNSResolver(t, &DoHResolver{URL: server.URL, Client: server.Client()})
+
+	resp, err := http.Post(
+		"http://localhost"+localHttpPort+"/dns/resolve",
+		"application/json",
+		strings.NewReader(`{"name": "example.com", "type": "TXT"}`),
+	)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var decoded dnsResolveResponse
+	assert.NoError(t, json.NewDecoder(resp.Body).Decode(&decoded))
+	assert.Equal(t, `"v=DKIM1; k=rsa"`, decoded.Answer[0].Data)
+
+}
+
+func TestDnsResolveNxdomain(t *testing.T) {
+
+	localHttpPort = ":43008"
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	serviceState := &ServiceState{
+		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+	StartHttpServer(ctx, serviceState)
+
+	time.Sleep(100 * time.Millisecond)
+
+	server := dohTestServer(t, func(writer http.ResponseWriter, query *dns.Msg) {
+		response := new(dns.Msg)
+		response.SetReply(query)
+		response.Rcode = dns.RcodeNameError
+		encoded, err := response.Pack()
+		assert.NoError(t, err)
+		writer.Header().Set("Content-Type", "application/dns-message")
+		_, err = writer.Write(encoded)
+		assert.NoError(t, err)
+	})
+	withOutboundDNSResolver(t, &DoHResolver{URL: server.URL, Client: server.Client()})
+
+	resp, err := http.Post(
+		"http://localhost"+localHttpPort+"/dns/resolve",
+		"application/json",
+		strings.NewReader(`{"name": "nonexistent.example", "type": "A"}`),
+	)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var decoded dnsResolveResponse
+	assert.NoError(t, json.NewDecoder(resp.Body).Decode(&decoded))
+	assert.Equal(t, dns.RcodeNameError, decoded.Status)
+	assert.Empty(t, decoded.Answer)
+
+}
+
+func TestDnsResolveUnsupportedType(t *testing.T) {
+
+	localHttpPort = ":43009"
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	serviceState := &ServiceState{
+		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+	StartHttpServer(ctx, serviceState)
+
+	time.Sleep(100 * time.Millisecond)
+
+	resp, err := http.Post(
+		"http://localhost"+localHttpPort+"/dns/resolve",
+		"application/json",
+		strings.NewReader(`{"name": "example.com", "type": "BOGUS"}`),
+	)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+}
+
+func TestDnsResolveLookupFailure(t *testing.T) {
+
+	localHttpPort = ":43010"
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	serviceState := &ServiceState{
+		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+	StartHttpServer(ctx, serviceState)
+
+	time.Sleep(100 * time.Millisecond)
+
+	// A resolver whose URL isn't HTTPS fails fast in Lookup without touching the network.
+	withOutboundDNSResolver(t, &DoHResolver{URL: "http://example.com", Client: http.DefaultClient})
+
+	resp, err := http.Post(
+		"http://localhost"+localHttpPort+"/dns/resolve",
+		"application/json",
+		strings.NewReader(`{"name": "example.com", "type": "A"}`),
+	)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+	assert.Equal(t, http.StatusBadGateway, resp.StatusCode)
+
+}
+
+func TestDnsResolveInvalidBody(t *testing.T) {
+
+	localHttpPort = ":43011"
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	serviceState := &ServiceState{
+		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+	StartHttpServer(ctx, serviceState)
+
+	time.Sleep(100 * time.Millisecond)
+
+	resp, err := http.Post(
+		"http://localhost"+localHttpPort+"/dns/resolve",
+		"application/json",
+		strings.NewReader(`{"name": ""}`),
+	)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 }

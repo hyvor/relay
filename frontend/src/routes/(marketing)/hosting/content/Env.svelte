@@ -1,5 +1,5 @@
 <script>
-    import {CodeBlock} from '@hyvor/design/components';
+	import { CodeBlock } from '@hyvor/design/components';
 </script>
 
 <h1>Environment Variables</h1>
@@ -7,7 +7,7 @@
 <p>These are the environment variables that you can set for Hyvor Relay.</p>
 
 <CodeBlock
-        code={`
+	code={`
 # Environment: prod, dev, or test
 # you probably want to use prod for a deployment
 APP_ENV=prod
@@ -49,12 +49,6 @@ TRUSTED_PROXIES=
 # Default: info
 LOG_LEVEL=info
 
-# DNS over HTTPS resolver endpoint.
-# The backend queries it with the JSON API and the worker with the wire format,
-# so the endpoint must serve both at this URL.
-# Default: https://cloudflare-dns.com/dns-query
-DNS_OVER_HTTPS_URL=https://cloudflare-dns.com/dns-query
-
 # Storage backend for email contents (raw .eml).
 # One of: file, s3
 # Default: file
@@ -67,6 +61,11 @@ S3_REGION=
 S3_KEY=
 S3_SECRET=
 S3_BUCKET=
+
+# DNS over HTTPS resolver endpoint.
+# Used by the Go worker only. The backend resolves DNS by calling the worker's internal API.
+# Default: https://cloudflare-dns.com/dns-query
+DNS_OVER_HTTPS_URL=
 `}
-        language="yaml"
+	language="yaml"
 />
