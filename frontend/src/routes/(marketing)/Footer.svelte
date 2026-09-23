@@ -12,7 +12,7 @@
 	languageToggle={false}
 >
 	<FooterLinkList title="Product">
-		<a href="/#pricing">Pricing</a>
+		<a href="/pricing">Pricing</a>
 		<a href="/docs">Docs</a>
 		<a href="/hosting">Hosting</a>
 	</FooterLinkList>
