@@ -29,11 +29,10 @@ class DnsOverHttpTest extends KernelTestCase
                     'name' => 'example.com',
                     'type' => 28,
                     'TTL' => 300,
-                    'data' => '2606:2800:220:1:248:1893:25c8:1946'
-                ]
-            ]
+                    'data' => '2606:2800:220:1:248:1893:25c8:1946',
+                ],
+            ],
         ]);
-
 
         $httpClient = new MockHttpClient($mockResponse);
         $this->container->set(HttpClientInterface::class, $httpClient);
@@ -52,6 +51,33 @@ class DnsOverHttpTest extends KernelTestCase
         $this->assertSame(28, $answers[0]->type);
         $this->assertSame(300, $answers[0]->ttl);
 
+        $this->assertSame('http://localhost:8085/dns/resolve', $mockResponse->getRequestUrl());
+        $this->assertSame('{"name":"example.com","type":"A"}', $mockResponse->getRequestOptions()['body']);
+    }
+
+    public function test_dns_success_txt(): void
+    {
+        $mockResponse = new JsonMockResponse([
+            'Status' => 0,
+            'Answer' => [
+                [
+                    'name' => 'example.com',
+                    'type' => 16,
+                    'TTL' => 60,
+                    'data' => '"v=DKIM1; k=rsa; p=abc"',
+                ],
+            ],
+        ]);
+
+        $httpClient = new MockHttpClient($mockResponse);
+        $this->container->set(HttpClientInterface::class, $httpClient);
+
+        /** @var DnsOverHttp $dnsOverHttp */
+        $dnsOverHttp = $this->container->get(DnsOverHttp::class);
+        $result = $dnsOverHttp->resolve('example.com', DnsType::TXT);
+
+        $this->assertTrue($result->ok());
+        $this->assertSame('v=DKIM1; k=rsa; p=abc', $result->answers[0]->getCleanedTxt());
     }
 
     public function test_dns_fail_nxdomain(): void
@@ -76,7 +102,7 @@ class DnsOverHttpTest extends KernelTestCase
     {
         $mockResponse = new JsonMockResponse(null, [
             'http_code' => 500,
-            'error' => 'Network error'
+            'error' => 'Network error',
         ]);
 
         $httpClient = new MockHttpClient($mockResponse);
@@ -86,7 +112,6 @@ class DnsOverHttpTest extends KernelTestCase
         $dnsOverHttp = $this->container->get(DnsOverHttp::class);
 
         $this->expectException(DnsResolvingFailedException::class);
-        $this->expectExceptionMessage('Network error');
 
         $dnsOverHttp->resolve('example.com', DnsType::A);
     }

@@ -62,10 +62,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->alias(DnsResolveInterface::class, DnsOverHttp::class);
 
     $services
-        ->set(DnsOverHttp::class)
-        ->arg('$dnsQueryUrl', '%env(string:DNS_OVER_HTTPS_URL)%');
-
-    $services
         ->set(SharedCache::class)
         ->public()
         ->arg('$pool', service('cache.shared'));
