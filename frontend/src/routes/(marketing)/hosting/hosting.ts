@@ -12,6 +12,9 @@ import EmailProviders from './content/EmailProviders.svelte';
 import HealthChecks from './content/HealthChecks.svelte';
 import Management from './content/Management.svelte';
 import UpgradeGuide_0_1_0 from './content/upgrade/0.1.0.md';
+import FblYahoo from './content/feedback-loops/Yahoo.svelte';
+import FblGoogle from './content/feedback-loops/Google.svelte';
+import FblMicrosoft from './content/feedback-loops/Microsoft.svelte';
 
 export const SECTIONS: NavSectionConfig[] = [
 	{
@@ -108,6 +111,34 @@ export const SECTIONS: NavSectionConfig[] = [
 				slug: 'providers',
 				name: 'Email Providers',
 				content: EmailProviders
+			},
+			{
+				type: 'sub-section',
+				name: 'Feedback Loops',
+				sections: [
+					{
+						navs: [
+							{
+								type: 'page',
+								slug: 'fbl-yahoo',
+								name: 'Yahoo',
+								content: FblYahoo
+							},
+							{
+								type: 'page',
+								slug: 'fbl-google',
+								name: 'Google',
+								content: FblGoogle
+							},
+							{
+								type: 'page',
+								slug: 'fbl-microsoft',
+								name: 'Microsoft',
+								content: FblMicrosoft
+							}
+						]
+					}
+				]
 			},
 			{
 				type: 'page',

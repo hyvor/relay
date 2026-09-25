@@ -101,6 +101,7 @@ class IncomingMailService
 
                 $this->sendFeedbackService->createSendFeedback(
                     SendFeedbackType::BOUNCE,
+                    $send,
                     $sendRecipient,
                     $debugIncomingEmail
                 );
@@ -147,6 +148,16 @@ class IncomingMailService
         }
 
         $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $arfInput->OriginalRcptTo);
+
+        $this->sendFeedbackService->createSendFeedback(
+            SendFeedbackType::COMPLAINT,
+            $send,
+            $sendRecipient,
+            $debugIncomingEmail,
+            $send->getIpAddress(),
+            $arfInput->FeedbackType
+        );
+
         if ($sendRecipient === null) {
             // @codeCoverageIgnoreStart
             $this->logger->error('Failed to get send recipient by email', [
@@ -164,12 +175,6 @@ class IncomingMailService
             $arfInput->OriginalRcptTo,
             SuppressionReason::COMPLAINT,
             $arfInput->ReadableText
-        );
-
-        $this->sendFeedbackService->createSendFeedback(
-            SendFeedbackType::COMPLAINT,
-            $sendRecipient,
-            $debugIncomingEmail
         );
 
         $complaintObject = new ComplaintDto($arfInput->ReadableText, $arfInput->FeedbackType);

@@ -24,9 +24,24 @@ class SendFeedback
     #[ORM\Column(type: "string", enumType: SendFeedbackType::class)]
     private SendFeedbackType $type;
 
-    #[ORM\ManyToOne(targetEntity: SendRecipient::class)]
+    #[ORM\ManyToOne(targetEntity: Project::class)]
     #[ORM\JoinColumn]
-    private SendRecipient $send_recipient;
+    private Project $project;
+
+    #[ORM\ManyToOne(targetEntity: Send::class)]
+    #[ORM\JoinColumn]
+    private Send $send;
+
+    #[ORM\ManyToOne(targetEntity: SendRecipient::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?SendRecipient $send_recipient = null;
+
+    #[ORM\ManyToOne(targetEntity: IpAddress::class)]
+    #[ORM\JoinColumn(onDelete: "SET NULL")]
+    private ?IpAddress $ip_address = null;
+
+    #[ORM\Column(type: "text", nullable: true)]
+    private ?string $detail = null;
 
     #[ORM\OneToOne(targetEntity: DebugIncomingEmail::class)]
     #[ORM\JoinColumn]
@@ -76,14 +91,58 @@ class SendFeedback
         return $this;
     }
 
-    public function getSendRecipient(): SendRecipient
+    public function getProject(): Project
+    {
+        return $this->project;
+    }
+
+    public function setProject(Project $project): static
+    {
+        $this->project = $project;
+        return $this;
+    }
+
+    public function getSend(): Send
+    {
+        return $this->send;
+    }
+
+    public function setSend(Send $send): static
+    {
+        $this->send = $send;
+        return $this;
+    }
+
+    public function getSendRecipient(): ?SendRecipient
     {
         return $this->send_recipient;
     }
 
-    public function setSendRecipient(SendRecipient $send_recipient): static
+    public function setSendRecipient(?SendRecipient $send_recipient): static
     {
         $this->send_recipient = $send_recipient;
+        return $this;
+    }
+
+    public function getIpAddress(): ?IpAddress
+    {
+        return $this->ip_address;
+    }
+
+    public function setIpAddress(?IpAddress $ipAddress): static
+    {
+        $this->ip_address = $ipAddress;
+        return $this;
+    }
+
+    public function getDetail(): ?string
+    {
+        return $this->detail;
+    }
+
+    public function setDetail(?string $detail): static
+    {
+        $this->detail = $detail;
         return $this;
     }
 

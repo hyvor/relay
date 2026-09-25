@@ -6,9 +6,11 @@ use App\Api\Local\Controller\LocalController;
 use App\Api\Local\Input\ArfInput;
 use App\Api\Local\Input\IncomingInput;
 use App\Entity\DebugIncomingEmail;
+use App\Entity\SendFeedback;
 use App\Entity\Suppression;
 use App\Entity\Type\DebugIncomingEmailStatus;
 use App\Entity\Type\DebugIncomingEmailType;
+use App\Entity\Type\SendFeedbackType;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SuppressionReason;
 use App\Service\IncomingMail\Dto\ComplaintDto;
@@ -17,6 +19,7 @@ use App\Service\IncomingMail\Event\IncomingComplaintEvent;
 use App\Service\IncomingMail\IncomingMailService;
 use App\Service\SendFeedback\SendFeedbackService;
 use App\Tests\Case\WebTestCase;
+use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\SendFactory;
 use App\Tests\Factory\SendRecipientFactory;
@@ -34,8 +37,10 @@ class IncomingComplaintTest extends WebTestCase
     public function test_incoming_complaint(): void
     {
         $project = ProjectFactory::createOne();
+        $ipAddress = IpAddressFactory::createOne();
         $send = SendFactory::createOne([
-            'project' => $project
+            'project' => $project,
+            'ip_address' => $ipAddress,
         ]);
         $recipient = SendRecipientFactory::createOne([
             'send' => $send,
@@ -46,7 +51,7 @@ class IncomingComplaintTest extends WebTestCase
             'POST',
             '/incoming',
             [
-                'type' => 'complaint',
+                'type' => 'fbl',
                 'arf' => [
                     'ReadableText' => 'This is a test ARF',
                     'FeedbackType' => 'abuse',
@@ -83,6 +88,15 @@ class IncomingComplaintTest extends WebTestCase
         $this->assertNull($debugIncomingEmail->getErrorMessage());
 
         $this->assertSame(SendRecipientStatus::COMPLAINED, $recipient->getStatus());
+
+        $feedback = $this->em->getRepository(SendFeedback::class)->findOneBy(['send' => $send]);
+        $this->assertNotNull($feedback);
+        $this->assertSame(SendFeedbackType::COMPLAINT, $feedback->getType());
+        $this->assertSame($project->getId(), $feedback->getProject()->getId());
+        $this->assertSame($recipient->getId(), $feedback->getSendRecipient()?->getId());
+        $this->assertSame($ipAddress->getId(), $feedback->getIpAddress()?->getId());
+        $this->assertSame('abuse', $feedback->getDetail());
+        $this->assertSame($debugIncomingEmail->getId(), $feedback->getDebugIncomingEmail()->getId());
     }
 
     public function test_incoming_complaint_arf_missing_error_provided(): void
@@ -92,7 +106,7 @@ class IncomingComplaintTest extends WebTestCase
             'POST',
             '/incoming',
             [
-                'type' => 'complaint',
+                'type' => 'fbl',
                 'error' => 'ARF missing',
                 'raw_email' => 'raw',
                 'mail_from' => 'from@example.com',
@@ -124,7 +138,7 @@ class IncomingComplaintTest extends WebTestCase
             'POST',
             '/incoming',
             [
-                'type' => 'complaint',
+                'type' => 'fbl',
                 'arf' => [
                     'ReadableText' => 'Invalid MessageId',
                     'FeedbackType' => 'abuse',
@@ -160,7 +174,7 @@ class IncomingComplaintTest extends WebTestCase
             'POST',
             '/incoming',
             [
-                'type' => 'complaint',
+                'type' => 'fbl',
                 'arf' => [
                     'ReadableText' => 'Send not found',
                     'FeedbackType' => 'abuse',
