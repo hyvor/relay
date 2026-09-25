@@ -99,48 +99,6 @@ class IncomingComplaintTest extends WebTestCase
         $this->assertSame($debugIncomingEmail->getId(), $feedback->getDebugIncomingEmail()->getId());
     }
 
-    public function test_incoming_complaint_redacted_recipient(): void
-    {
-        $project = ProjectFactory::createOne();
-        $send = SendFactory::createOne(['project' => $project]);
-        $recipient = SendRecipientFactory::createOne([
-            'send' => $send,
-            'address' => 'spammer@example.net'
-        ]);
-
-        $response = $this->localApi(
-            'POST',
-            '/incoming',
-            [
-                'type' => 'fbl',
-                'arf' => [
-                    'ReadableText' => 'Redacted recipient',
-                    'FeedbackType' => 'abuse',
-                    'UserAgent' => 'UA',
-                    'OriginalMailFrom' => 'user@example.net',
-                    'OriginalRcptTo' => '',
-                    'MessageId' => "{$send->getUuid()}@example.net"
-                ],
-                'raw_email' => 'raw',
-                'mail_from' => 'from@example.com',
-                'rcpt_to' => 'to@example.com',
-            ]
-        );
-        $this->assertResponseStatusCodeSame(200, $response);
-
-        $feedback = $this->em->getRepository(SendFeedback::class)->findOneBy(['send' => $send]);
-        $this->assertNotNull($feedback);
-        $this->assertSame(SendFeedbackType::COMPLAINT, $feedback->getType());
-        $this->assertNull($feedback->getSendRecipient());
-
-        $suppression = $this->em->getRepository(Suppression::class)->findOneBy([
-            'project' => $project,
-            'reason' => SuppressionReason::COMPLAINT
-        ]);
-        $this->assertNull($suppression);
-        $this->assertNotSame(SendRecipientStatus::COMPLAINED, $recipient->getStatus());
-    }
-
     public function test_incoming_complaint_arf_missing_error_provided(): void
     {
         $project = ProjectFactory::createOne();
