@@ -58,6 +58,7 @@ class GetSendByUuidTest extends WebTestCase
         ]);
 
         SendFeedbackFactory::createOne([
+            'send' => $sendEntity,
             'sendRecipient' => $recipient,
         ]);
 

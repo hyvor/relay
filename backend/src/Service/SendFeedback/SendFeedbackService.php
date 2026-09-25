@@ -3,6 +3,7 @@
 namespace App\Service\SendFeedback;
 
 use App\Entity\DebugIncomingEmail;
+use App\Entity\IpAddress;
 use App\Entity\Send;
 use App\Entity\SendFeedback;
 use App\Entity\SendRecipient;
@@ -27,8 +28,7 @@ class SendFeedbackService
         $qb = $this->em->createQueryBuilder();
         $qb->select('sf')
             ->from(SendFeedback::class, 'sf')
-            ->join('sf.send_recipient', 'sr')
-            ->where('sr.send = :send')
+            ->where('sf.send = :send')
             ->setParameter('send', $send);
 
         /** @var SendFeedback[] $result */
@@ -39,14 +39,21 @@ class SendFeedbackService
 
     public function createSendFeedback(
         SendFeedbackType $type,
-        SendRecipient $recipient,
-        DebugIncomingEmail $debugIncomingEmail
+        Send $send,
+        ?SendRecipient $recipient,
+        DebugIncomingEmail $debugIncomingEmail,
+        ?IpAddress $ipAddress = null,
+        ?string $detail = null,
     ): SendFeedback {
         $sendFeedback = new SendFeedback();
         $sendFeedback->setCreatedAt(new \DateTimeImmutable());
         $sendFeedback->setUpdatedAt(new \DateTimeImmutable());
         $sendFeedback->setType($type);
+        $sendFeedback->setProject($send->getProject());
+        $sendFeedback->setSend($send);
         $sendFeedback->setSendRecipient($recipient);
+        $sendFeedback->setIpAddress($ipAddress);
+        $sendFeedback->setDetail($detail);
         $sendFeedback->setDebugIncomingEmail($debugIncomingEmail);
 
         $this->em->persist($sendFeedback);
