@@ -27,6 +27,7 @@ final class Version20260610074736 extends AbstractMigration
                 deferred INT DEFAULT 0,
                 bounced_recipient INT DEFAULT 0,
                 bounced_infrastructure INT DEFAULT 0,
+                bounced_unknown INT DEFAULT 0,
                 complained INT DEFAULT 0,
                 suppressed INT DEFAULT 0,
                 failed INT DEFAULT 0,
@@ -34,6 +35,7 @@ final class Version20260610074736 extends AbstractMigration
                 deferred_rate NUMERIC(6,4),
                 bounced_recipient_rate NUMERIC(6,4),
                 bounced_infrastructure_rate NUMERIC(6,4),
+                bounced_unknown_rate NUMERIC(6,4),
                 complained_rate NUMERIC(6,4),
                 suppressed_rate NUMERIC(6,4),
                 failed_rate NUMERIC(6,4),
@@ -52,6 +54,7 @@ final class Version20260610074736 extends AbstractMigration
                 deferred INT DEFAULT 0,
                 bounced_recipient INT DEFAULT 0,
                 bounced_infrastructure INT DEFAULT 0,
+                bounced_unknown INT DEFAULT 0,
                 complained INT DEFAULT 0,
                 suppressed INT DEFAULT 0,
                 failed INT DEFAULT 0,
@@ -59,6 +62,7 @@ final class Version20260610074736 extends AbstractMigration
                 deferred_rate NUMERIC(6,4),
                 bounced_recipient_rate NUMERIC(6,4),
                 bounced_infrastructure_rate NUMERIC(6,4),
+                bounced_unknown_rate NUMERIC(6,4),
                 complained_rate NUMERIC(6,4),
                 suppressed_rate NUMERIC(6,4),
                 failed_rate NUMERIC(6,4),
@@ -74,9 +78,11 @@ final class Version20260610074736 extends AbstractMigration
                 sent INT DEFAULT 0,
                 bounced_recipient INT DEFAULT 0,
                 bounced_infrastructure INT DEFAULT 0,
+                bounced_unknown INT DEFAULT 0,
                 complained INT DEFAULT 0,
                 bounced_recipient_rate NUMERIC(6,4),
                 bounced_infrastructure_rate NUMERIC(6,4),
+                bounced_unknown_rate NUMERIC(6,4),
                 complained_rate NUMERIC(6,4),
                 PRIMARY KEY (ip_address_id, project_id, stat_date)
             )
@@ -93,6 +99,7 @@ final class Version20260610074736 extends AbstractMigration
                 accepted INT DEFAULT 0,
                 bounced_recipient INT DEFAULT 0,
                 bounced_infrastructure INT DEFAULT 0,
+                bounced_unknown INT DEFAULT 0,
                 complained INT DEFAULT 0,
                 PRIMARY KEY (project_id, ip_address_id, recipient_domain, stat_date)
             )

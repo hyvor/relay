@@ -256,6 +256,56 @@ class IncomingBounceTest extends WebTestCase
 
         $logger = $this->getTestLogger();
         $this->assertTrue(
+            $logger->hasInfoThatContains('Received failed DSN that is not a bounce')
+        );
+    }
+
+    public function test_unknown_bounce_recorded_without_suppression(): void
+    {
+        $project = ProjectFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project]);
+        $sendRecipient = SendRecipientFactory::createOne(['send' => $send, 'address' => 'nadil@hyvor.com']);
+
+        $response = $this->localApi(
+            'POST',
+            '/incoming',
+            [
+                'type' => 'bounce',
+                'dsn' => [
+                    'ReadableText' => 'Unclassified',
+                    'Recipients' => [
+                        [
+                            'EmailAddress' => 'nadil@hyvor.com',
+                            'Status' => '5.3.0',
+                            'Action' => 'failed',
+                            'BounceReason' => 'unknown',
+                        ]
+                    ]
+                ],
+                'bounce_uuid' => $send->getUuid(),
+                'raw_email' => 'raw',
+                'mail_from' => 'from@example.com',
+                'rcpt_to' => 'to@example.com'
+            ]
+        );
+        $this->assertSame(200, $response->getStatusCode());
+
+        $suppressions = $this->em->getRepository(Suppression::class)->findBy([
+            'project' => $project,
+            'reason' => SuppressionReason::BOUNCE
+        ]);
+        $this->assertCount(0, $suppressions);
+
+        $infrastructureBounces = $this->em->getRepository(InfrastructureBounce::class)->findBy([
+            'send_recipient_id' => $sendRecipient->getId()
+        ]);
+        $this->assertCount(0, $infrastructureBounces);
+
+        $this->assertSame(SendRecipientStatus::BOUNCED, $sendRecipient->getStatus());
+        $this->assertSame(BounceReason::UNKNOWN, $sendRecipient->getBouncedReason());
+
+        $logger = $this->getTestLogger();
+        $this->assertTrue(
             $logger->hasInfoThatContains('Received bounce that is not a recipient bounce or infrastructure error')
         );
     }
