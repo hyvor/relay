@@ -7,6 +7,7 @@ import (
 	"mime"
 	"mime/multipart"
 	"net/mail"
+	"strings"
 )
 
 // ARF (Abuse Reporting Format) is RFC5965
@@ -78,7 +79,7 @@ func ParseArf(input []byte) (*Arf, error) {
 	if err != nil {
 		return nil, err
 	}
-	arf.MessageId = part3.Header.Get("Message-ID")
+	arf.MessageId = strings.Trim(part3.Header.Get("Message-ID"), "<> ")
 
 	return arf, nil
 }
