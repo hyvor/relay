@@ -231,6 +231,9 @@ Objects:
 <li>
 <a href="#send-attempt-object">SendAttempt Object</a>
 </li>
+<li>
+<a href="#send-feedback-object">SendFeedback Object</a>
+</li>
 </ul>
 
 <h4 id="send-email">Send Email</h4>
@@ -723,6 +726,19 @@ Endpoints:
 	error: string | null;
         }
     
+```
+
+<h3 id="send-feedback-object">SendFeedback Object</h3>
+
+```ts
+interface SendFeedback {
+	id: number;
+	created_at: number;
+	type: 'bounce' | 'complaint';
+	recipient_id: number | null; // null when the provider redacted the recipient
+	debug_incoming_email_id: number;
+	bounce_reason: 'recipient' | 'infrastructure' | 'unknown' | null;
+}
 ```
 
 <h3 id="bounce-object">Bounce Object</h3>
