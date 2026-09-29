@@ -6,10 +6,6 @@ use App\Service\App\MessageTransport;
 use Symfony\Component\Messenger\Attribute\AsMessage;
 
 #[AsMessage(MessageTransport::ASYNC)]
-readonly class UpdateStatsIpProjectMessage
+readonly class UpdateStatsMessage
 {
-    public function __construct(
-        public bool $forLastDay = false,
-    ) {
-    }
 }
