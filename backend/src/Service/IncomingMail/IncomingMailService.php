@@ -62,12 +62,20 @@ class IncomingMailService
 
             $bounceReason = $recipient->BounceReason;
             if ($bounceReason === null) {
-                $this->logger->info('Received bounce that is not a recipient bounce or infrastructure error', [
+                $this->logger->info('Received failed DSN that is not a bounce', [
                     'uuid' => $bounceUuid,
                     'recipient' => $recipient->EmailAddress,
                     'status' => $recipient->Status,
                 ]);
                 return;
+            }
+
+            if ($bounceReason === BounceReason::UNKNOWN) {
+                $this->logger->info('Received bounce that is not a recipient bounce or infrastructure error', [
+                    'uuid' => $bounceUuid,
+                    'recipient' => $recipient->EmailAddress,
+                    'status' => $recipient->Status,
+                ]);
             }
 
             $send = $this->sendService->getSendByUuid($bounceUuid);
