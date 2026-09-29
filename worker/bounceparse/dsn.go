@@ -32,7 +32,7 @@ type DsnRecipient struct {
 	EmailAddress string       // The email address of the recipient
 	Status       DsnStatus    // The status code for this recipient, e.g., {5,1,1} for permanent failure
 	Action       string       // Action taken, e.g., "failed", "delayed", "delivered" (https://datatracker.ietf.org/doc/html/rfc3464#section-2.3.3)
-	BounceReason string       `json:"BounceReason,omitempty"` // computed bounce reason ("recipient"/"infrastructure"), empty if not a bounce
+	BounceReason string       `json:"BounceReason,omitempty"` // computed bounce reason ("recipient"/"infrastructure"/"unknown"), empty if not a bounce
 }
 
 var ErrNotDsnReport = errors.New("not a DSN report")

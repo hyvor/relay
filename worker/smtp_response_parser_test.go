@@ -37,6 +37,9 @@ func TestSmtpResponseParser_BounceReason(t *testing.T) {
 	assert.Equal(t, BounceReasonInfrastructure, NewSmtpResponseParser(550, [3]int{5, 7, 1}, "Spam").BounceReason())
 	assert.Equal(t, BounceReason(""), NewSmtpResponseParser(250, [3]int{2, 0, 0}, "OK").BounceReason())
 	assert.Equal(t, BounceReason(""), NewSmtpResponseParser(450, [3]int{4, 2, 1}, "Try later").BounceReason())
+	// bounce, but the reason cannot be classified as recipient or infrastructure
+	assert.Equal(t, BounceReasonUnknown, NewSmtpResponseParser(550, [3]int{5, 3, 0}, "Unclassified").BounceReason())
+	assert.Equal(t, BounceReasonUnknown, NewSmtpResponseParser(550, [3]int{0, 0, 0}, "No enhanced code").BounceReason())
 }
 
 func TestSmtpResponseParser_GetFullMessage(t *testing.T) {
