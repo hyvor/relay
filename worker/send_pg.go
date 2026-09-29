@@ -222,6 +222,15 @@ func (b *SendTransaction) RecordAttempt(
 			}
 		}
 
+		var bounceReason sql.NullString
+
+		if reason := rcptResult.GetBounceReason(); reason != "" {
+			bounceReason = sql.NullString{
+				String: string(reason),
+				Valid:  true,
+			}
+		}
+
 		// record current results in send_attempt_recipients
 		_, err = b.tx.ExecContext(b.ctx, `
 			INSERT INTO send_attempt_recipients (
@@ -232,7 +241,8 @@ func (b *SendTransaction) RecordAttempt(
 				recipient_status,
 				smtp_code,
 				smtp_enhanced_code,
-				smtp_message
+				smtp_message,
+				bounce_reason
 			)
 			VALUES (
 				NOW(),
@@ -242,9 +252,10 @@ func (b *SendTransaction) RecordAttempt(
 				$3,
 				$4,
 				$5,
-				$6
+				$6,
+				$7
 			)
-		`, attemptId, rcptResult.RecipientId, rcptResult.ToRecipientStatus().ToString(), rcptResult.Code, enhancedCode, rcptResult.Message)
+		`, attemptId, rcptResult.RecipientId, rcptResult.ToRecipientStatus().ToString(), rcptResult.Code, enhancedCode, rcptResult.Message, bounceReason)
 
 		if err != nil {
 			return 0, fmt.Errorf("failed to insert send attempt recipient for recipient ID %d: %w", rcptResult.RecipientId, err)
@@ -255,9 +266,10 @@ func (b *SendTransaction) RecordAttempt(
 			UPDATE send_recipients
 			SET 
 				status = $1,
-				try_count = $2
-			WHERE id = $3
-		`, rcptResult.ToRecipientStatus().ToString(), sendResult.NewTryCount, rcptResult.RecipientId)
+				try_count = $2,
+				bounce_reason = $3
+			WHERE id = $4
+		`, rcptResult.ToRecipientStatus().ToString(), sendResult.NewTryCount, bounceReason, rcptResult.RecipientId)
 
 		if err != nil {
 			return 0, fmt.Errorf("failed to update recipient ID %d status: %w", rcptResult.RecipientId, err)
