@@ -9,6 +9,8 @@ use App\Api\Console\Object\SendObject;
 use App\Api\Console\Object\SendRecipientObject;
 use App\Api\Sudo\Controller\SendController;
 use App\Api\Sudo\Object\SendProjectSummaryObject;
+use App\Entity\Type\BounceReason;
+use App\Entity\Type\SendRecipientStatus;
 use App\Service\Send\SendService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
@@ -46,6 +48,8 @@ class GetSendByUuidTest extends WebTestCase
 
         $recipient = SendRecipientFactory::createOne([
             'send' => $sendEntity,
+            'status' => SendRecipientStatus::BOUNCED,
+            'bounced_reason' => BounceReason::INFRASTRUCTURE,
         ]);
 
         $attempt = SendAttemptFactory::createOne([
@@ -58,6 +62,7 @@ class GetSendByUuidTest extends WebTestCase
         ]);
 
         SendFeedbackFactory::createOne([
+            'send' => $sendEntity,
             'sendRecipient' => $recipient,
         ]);
 
@@ -91,6 +96,10 @@ class GetSendByUuidTest extends WebTestCase
 
         $this->assertIsArray($jsonSend['feedback']);
         $this->assertCount(1, $jsonSend['feedback']);
+        /** @var array<string, mixed> $feedback */
+        $feedback = $jsonSend['feedback'][0];
+        $this->assertSame($recipient->getId(), $feedback['recipient_id']);
+        $this->assertSame('infrastructure', $feedback['bounce_reason']);
 
         $this->assertSame($project->getId(), $jsonProject['id']);
         $this->assertSame($project->getName(), $jsonProject['name']);

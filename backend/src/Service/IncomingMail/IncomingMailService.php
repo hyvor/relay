@@ -15,6 +15,7 @@ use App\Service\IncomingMail\Event\IncomingBounceEvent;
 use App\Service\IncomingMail\Event\IncomingComplaintEvent;
 use App\Service\InfrastructureBounce\InfrastructureBounceService;
 use App\Service\Send\SendService;
+use App\Service\SendAttempt\SendAttemptService;
 use App\Service\SendFeedback\SendFeedbackService;
 use App\Service\SendRecipient\SendRecipientService;
 use App\Service\Suppression\SuppressionService;
@@ -27,6 +28,7 @@ class IncomingMailService
         private SendService $sendService,
         private SuppressionService $suppressionService,
         private SendRecipientService $sendRecipientService,
+        private SendAttemptService $sendAttemptService,
         private SendFeedbackService $sendFeedbackService,
         private InfrastructureBounceService $infrastructureBounceService,
         private LoggerInterface $logger,
@@ -99,18 +101,20 @@ class IncomingMailService
 
             $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::BOUNCED, $bounceReason);
 
+            $this->sendFeedbackService->createSendFeedback(
+                SendFeedbackType::BOUNCE,
+                $send,
+                $sendRecipient,
+                $debugIncomingEmail,
+                $this->sendAttemptService->getAcceptedSendAttemptOfRecipient($sendRecipient)?->getIpAddress(),
+            );
+
             if ($bounceReason === BounceReason::RECIPIENT) {
                 $this->suppressionService->createSuppression(
                     $send->getProject(),
                     $recipient->EmailAddress,
                     SuppressionReason::BOUNCE,
                     $dsnInput->ReadableText
-                );
-
-                $this->sendFeedbackService->createSendFeedback(
-                    SendFeedbackType::BOUNCE,
-                    $sendRecipient,
-                    $debugIncomingEmail
                 );
 
                 $bounceObject = new BounceDto($dsnInput->ReadableText, $recipient->Status);
@@ -154,6 +158,27 @@ class IncomingMailService
             return;
         }
 
+        if ($arfInput->OriginalRcptTo === '') {
+            // Redacted reports do not identify the recipient, so every redacted complaint
+            // on a send is treated as a duplicate of the first one
+            if ($this->sendFeedbackService->hasComplaint($send, null)) {
+                $this->logger->info('Received duplicate redacted complaint', [
+                    'uuid' => $uuid,
+                ]);
+                return;
+            }
+
+            $this->sendFeedbackService->createSendFeedback(
+                SendFeedbackType::COMPLAINT,
+                $send,
+                null,
+                $debugIncomingEmail,
+                $send->getIpAddress(),
+                $arfInput->FeedbackType
+            );
+            return;
+        }
+
         $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $arfInput->OriginalRcptTo);
         if ($sendRecipient === null) {
             // @codeCoverageIgnoreStart
@@ -163,6 +188,14 @@ class IncomingMailService
             ]);
             return;
             // @codeCoverageIgnoreEnd
+        }
+
+        if ($this->sendFeedbackService->hasComplaint($send, $sendRecipient)) {
+            $this->logger->info('Received duplicate complaint', [
+                'uuid' => $uuid,
+                'recipient' => $arfInput->OriginalRcptTo,
+            ]);
+            return;
         }
 
         $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::COMPLAINED);
@@ -176,8 +209,11 @@ class IncomingMailService
 
         $this->sendFeedbackService->createSendFeedback(
             SendFeedbackType::COMPLAINT,
+            $send,
             $sendRecipient,
-            $debugIncomingEmail
+            $debugIncomingEmail,
+            $this->sendAttemptService->getAcceptedSendAttemptOfRecipient($sendRecipient)?->getIpAddress(),
+            $arfInput->FeedbackType
         );
 
         $complaintObject = new ComplaintDto($arfInput->ReadableText, $arfInput->FeedbackType);

@@ -27,7 +27,7 @@ class IncomingInput
 
     // Complaint
     #[Assert\When(
-        expression: 'this.type.value === "complaint" && this.error === null',
+        expression: 'this.type.value === "fbl" && this.error === null',
         constraints: [
             new Assert\NotBlank(),
         ]
