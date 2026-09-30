@@ -99,7 +99,7 @@ class IncomingMailService
                 return;
             }
 
-            $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::BOUNCED, $bounceReason);
+            $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::BOUNCED);
 
             $this->sendFeedbackService->createSendFeedback(
                 SendFeedbackType::BOUNCE,
@@ -107,6 +107,7 @@ class IncomingMailService
                 $sendRecipient,
                 $debugIncomingEmail,
                 $this->sendAttemptService->getAcceptedSendAttemptOfRecipient($sendRecipient)?->getIpAddress(),
+                $bounceReason->value,
             );
 
             if ($bounceReason === BounceReason::RECIPIENT) {
@@ -158,36 +159,20 @@ class IncomingMailService
             return;
         }
 
-        if ($arfInput->OriginalRcptTo === '') {
-            // Redacted reports do not identify the recipient, so every redacted complaint
-            // on a send is treated as a duplicate of the first one
-            if ($this->sendFeedbackService->hasComplaint($send, null)) {
-                $this->logger->info('Received duplicate redacted complaint', [
+        // Redacted reports do not identify the recipient, so every redacted complaint
+        // on a send is treated as a duplicate of the first one
+        $sendRecipient = null;
+        if ($arfInput->OriginalRcptTo !== '') {
+            $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $arfInput->OriginalRcptTo);
+            if ($sendRecipient === null) {
+                // @codeCoverageIgnoreStart
+                $this->logger->error('Failed to get send recipient by email', [
                     'uuid' => $uuid,
+                    'recipient' => $arfInput->OriginalRcptTo,
                 ]);
                 return;
+                // @codeCoverageIgnoreEnd
             }
-
-            $this->sendFeedbackService->createSendFeedback(
-                SendFeedbackType::COMPLAINT,
-                $send,
-                null,
-                $debugIncomingEmail,
-                $send->getIpAddress(),
-                $arfInput->FeedbackType
-            );
-            return;
-        }
-
-        $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $arfInput->OriginalRcptTo);
-        if ($sendRecipient === null) {
-            // @codeCoverageIgnoreStart
-            $this->logger->error('Failed to get send recipient by email', [
-                'uuid' => $uuid,
-                'recipient' => $arfInput->OriginalRcptTo,
-            ]);
-            return;
-            // @codeCoverageIgnoreEnd
         }
 
         if ($this->sendFeedbackService->hasComplaint($send, $sendRecipient)) {
@@ -198,6 +183,23 @@ class IncomingMailService
             return;
         }
 
+        $ipAddress = $sendRecipient === null
+            ? $send->getIpAddress()
+            : $this->sendAttemptService->getAcceptedSendAttemptOfRecipient($sendRecipient)?->getIpAddress();
+
+        $this->sendFeedbackService->createSendFeedback(
+            SendFeedbackType::COMPLAINT,
+            $send,
+            $sendRecipient,
+            $debugIncomingEmail,
+            $ipAddress,
+            $arfInput->FeedbackType
+        );
+
+        if ($sendRecipient === null) {
+            return;
+        }
+
         $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::COMPLAINED);
 
         $this->suppressionService->createSuppression(
@@ -205,15 +207,6 @@ class IncomingMailService
             $arfInput->OriginalRcptTo,
             SuppressionReason::COMPLAINT,
             $arfInput->ReadableText
-        );
-
-        $this->sendFeedbackService->createSendFeedback(
-            SendFeedbackType::COMPLAINT,
-            $send,
-            $sendRecipient,
-            $debugIncomingEmail,
-            $this->sendAttemptService->getAcceptedSendAttemptOfRecipient($sendRecipient)?->getIpAddress(),
-            $arfInput->FeedbackType
         );
 
         $complaintObject = new ComplaintDto($arfInput->ReadableText, $arfInput->FeedbackType);

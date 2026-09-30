@@ -1,0 +1,28 @@
+<?php
+
+declare(strict_types=1);
+
+namespace DoctrineMigrations;
+
+use Doctrine\DBAL\Schema\Schema;
+use Doctrine\Migrations\AbstractMigration;
+
+final class Version20260610074733 extends AbstractMigration
+{
+    public function getDescription(): string
+    {
+        return 'Add bounce_reason to send_attempt_recipients';
+    }
+
+    public function up(Schema $schema): void
+    {
+        $this->addSql("CREATE TYPE bounce_reason AS ENUM ('recipient', 'infrastructure', 'unknown')");
+        $this->addSql("ALTER TABLE send_attempt_recipients ADD COLUMN bounce_reason bounce_reason NULL");
+    }
+
+    public function down(Schema $schema): void
+    {
+        $this->addSql("ALTER TABLE send_attempt_recipients DROP COLUMN bounce_reason");
+        $this->addSql("DROP TYPE bounce_reason");
+    }
+}

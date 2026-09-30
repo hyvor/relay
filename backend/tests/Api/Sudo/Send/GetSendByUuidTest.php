@@ -49,7 +49,6 @@ class GetSendByUuidTest extends WebTestCase
         $recipient = SendRecipientFactory::createOne([
             'send' => $sendEntity,
             'status' => SendRecipientStatus::BOUNCED,
-            'bounced_reason' => BounceReason::INFRASTRUCTURE,
         ]);
 
         $attempt = SendAttemptFactory::createOne([
@@ -64,6 +63,7 @@ class GetSendByUuidTest extends WebTestCase
         SendFeedbackFactory::createOne([
             'send' => $sendEntity,
             'sendRecipient' => $recipient,
+            'detail' => BounceReason::INFRASTRUCTURE->value,
         ]);
 
         $response = $this->sudoApi('GET', '/sends/uuid/' . $sendEntity->getUuid());
