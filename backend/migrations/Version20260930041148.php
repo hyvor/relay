@@ -11,7 +11,7 @@ final class Version20260930041148 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'Extend send_feedback and index send attempts for stats';
+        return 'Store complaint feedback and provider metrics';
     }
 
     public function up(Schema $schema): void
@@ -45,6 +45,26 @@ final class Version20260930041148 extends AbstractMigration
 
         $this->addSql('CREATE INDEX idx_send_attempts_created_at ON send_attempts (created_at)');
         $this->addSql('CREATE INDEX idx_send_attempt_recipients_send_attempt_id ON send_attempt_recipients (send_attempt_id)');
+
+        $this->addSql("CREATE TYPE provider_metric_source AS ENUM ('google')");
+
+        $this->addSql(
+            '
+            CREATE TABLE provider_metrics (
+                id SERIAL PRIMARY KEY,
+                created_at TIMESTAMPTZ NOT NULL,
+                source provider_metric_source NOT NULL,
+                project_id BIGINT DEFAULT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                ip_address_id BIGINT DEFAULT NULL REFERENCES ip_addresses(id) ON DELETE CASCADE,
+                metric_date DATE NOT NULL,
+                value NUMERIC NOT NULL,
+                processed_at TIMESTAMPTZ DEFAULT NULL
+            )
+            ',
+        );
+
+        $this->addSql('CREATE INDEX idx_provider_metrics_metric_date ON provider_metrics (metric_date)');
+        $this->addSql('CREATE INDEX idx_provider_metrics_unprocessed ON provider_metrics (id) WHERE processed_at IS NULL');
     }
 
     public function down(Schema $schema): void
