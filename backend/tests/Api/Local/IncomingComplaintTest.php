@@ -58,7 +58,7 @@ class IncomingComplaintTest extends WebTestCase
             'POST',
             '/incoming',
             [
-                'type' => 'fbl',
+                'type' => 'complaint',
                 'arf' => [
                     'ReadableText' => 'This is a test ARF',
                     'FeedbackType' => 'abuse',
@@ -115,7 +115,7 @@ class IncomingComplaintTest extends WebTestCase
         ]);
 
         $payload = [
-            'type' => 'fbl',
+            'type' => 'complaint',
             'arf' => [
                 'ReadableText' => 'This is a test ARF',
                 'FeedbackType' => 'abuse',
@@ -158,7 +158,7 @@ class IncomingComplaintTest extends WebTestCase
         ]);
 
         $payload = [
-            'type' => 'fbl',
+            'type' => 'complaint',
             'arf' => [
                 'ReadableText' => 'Redacted ARF',
                 'FeedbackType' => 'abuse',
@@ -203,7 +203,7 @@ class IncomingComplaintTest extends WebTestCase
             'POST',
             '/incoming',
             [
-                'type' => 'fbl',
+                'type' => 'complaint',
                 'arf' => [
                     'ReadableText' => 'Redacted ARF',
                     'FeedbackType' => 'abuse',
@@ -231,7 +231,7 @@ class IncomingComplaintTest extends WebTestCase
             'POST',
             '/incoming',
             [
-                'type' => 'fbl',
+                'type' => 'complaint',
                 'error' => 'ARF missing',
                 'raw_email' => 'raw',
                 'mail_from' => 'from@example.com',
@@ -263,7 +263,7 @@ class IncomingComplaintTest extends WebTestCase
             'POST',
             '/incoming',
             [
-                'type' => 'fbl',
+                'type' => 'complaint',
                 'arf' => [
                     'ReadableText' => 'Invalid MessageId',
                     'FeedbackType' => 'abuse',
@@ -299,7 +299,7 @@ class IncomingComplaintTest extends WebTestCase
             'POST',
             '/incoming',
             [
-                'type' => 'fbl',
+                'type' => 'complaint',
                 'arf' => [
                     'ReadableText' => 'Send not found',
                     'FeedbackType' => 'abuse',
