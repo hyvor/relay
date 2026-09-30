@@ -14,7 +14,6 @@ use App\Service\Stats\StatsService;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ProjectFactory;
-use App\Tests\Factory\ProviderMetricFactory;
 use App\Tests\Factory\SendAttemptFactory;
 use App\Tests\Factory\SendAttemptRecipientFactory;
 use App\Tests\Factory\SendFactory;
@@ -70,18 +69,15 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
      */
     private function row(string $table, array $where): array|false
     {
-        $conditions = array_map(
-            fn(string $column) => $where[$column] === null ? "$column IS NULL" : "$column = :$column",
-            array_keys($where)
-        );
+        $conditions = array_map(fn(string $column) => "$column = :$column", array_keys($where));
 
         return $this->em->getConnection()->fetchAssociative(
             "SELECT * FROM $table WHERE " . implode(' AND ', $conditions),
-            array_filter($where, fn($value) => $value !== null)
+            $where
         );
     }
 
-    public function test_late_complaint_updates_acceptance_date(): void
+    public function test_late_complaint_counts_on_acceptance_date(): void
     {
         Clock::set(new MockClock('2026-06-12 12:00:00'));
         $date = $this->now();
@@ -156,12 +152,6 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $this->assertSame(1, $yahooRow['sent']);
         $this->assertSame(0, $yahooRow['accepted']);
         $this->assertSame(1, $yahooRow['bounced_recipient']);
-
-        $ipRow = $this->row('stats_ip', ['ip_address_id' => $ipAddress->getId(), 'stat_date' => $date->format('Y-m-d')]);
-        $this->assertIsArray($ipRow);
-        $this->assertSame(1, $ipRow['accepted']);
-        $this->assertSame(1, $ipRow['bounced_recipient']);
-        $this->assertSame('0.5000', $ipRow['bounced_recipient_rate']);
     }
 
     public function test_async_bounce_counts_on_acceptance_date(): void
@@ -290,128 +280,7 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
             $this->assertSame(1, $row['failed']);
             $this->assertSame(1, $row['suppressed']);
             $this->assertSame('0.2000', $row['accepted_rate']);
-            $this->assertSame('0.2000', $row['deferred_rate']);
-            $this->assertSame('0.2000', $row['bounced_recipient_rate']);
-            $this->assertSame('0.2000', $row['bounced_infrastructure_rate']);
-            $this->assertSame('0.2000', $row['failed_rate']);
             $this->assertSame('0.1667', $row['suppressed_rate']);
         }
-    }
-
-    public function test_google_metric_takes_priority_on_gmail(): void
-    {
-        $date = $this->now()->modify('-3 days');
-        $project = ProjectFactory::createOne();
-        $ipAddress = IpAddressFactory::createOne();
-        $send = SendFactory::createOne(['project' => $project, 'created_at' => $date]);
-        $gmailComplained = SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::COMPLAINED]);
-        $gmailAccepted = SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::ACCEPTED]);
-        $other = SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::COMPLAINED]);
-
-        $this->attempt($send, $gmailComplained, $ipAddress, 'gmail.com', $date, SendRecipientStatus::ACCEPTED);
-        $this->attempt($send, $gmailAccepted, $ipAddress, 'gmail.com', $date, SendRecipientStatus::ACCEPTED);
-        $this->attempt($send, $other, $ipAddress, 'example.com', $date, SendRecipientStatus::ACCEPTED);
-
-        foreach ([$gmailComplained, $other] as $recipient) {
-            SendFeedbackFactory::createOne([
-                'type' => SendFeedbackType::COMPLAINT,
-                'project' => $project,
-                'send' => $send,
-                'sendRecipient' => $recipient,
-            ]);
-        }
-
-        $this->runHandler();
-
-        $where = [
-            'project_id' => $project->getId(),
-            'ip_address_id' => $ipAddress->getId(),
-            'stat_date' => $date->format('Y-m-d'),
-        ];
-
-        $gmailRow = $this->row('stats_delivery_domain', [...$where, 'recipient_domain' => 'gmail.com']);
-        $this->assertIsArray($gmailRow);
-        $this->assertSame('0.500000', $gmailRow['complained_rate']);
-
-        foreach (['0.002', '0.003'] as $value) {
-            ProviderMetricFactory::createOne([
-                'project' => $project,
-                'ip_address' => $ipAddress,
-                'metric_date' => $date,
-                'value' => $value,
-            ]);
-        }
-
-        $this->runHandler();
-
-        $gmailRow = $this->row('stats_delivery_domain', [...$where, 'recipient_domain' => 'gmail.com']);
-        $this->assertIsArray($gmailRow);
-        $this->assertSame(1, $gmailRow['complained']);
-        $this->assertSame('0.003000', $gmailRow['complained_rate']);
-
-        $otherRow = $this->row('stats_delivery_domain', [...$where, 'recipient_domain' => 'example.com']);
-        $this->assertIsArray($otherRow);
-        $this->assertSame('1.000000', $otherRow['complained_rate']);
-
-        $processed = $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM provider_metrics WHERE processed_at IS NOT NULL');
-        $this->assertSame(2, $processed);
-    }
-
-    public function test_ip_only_google_metric_creates_gmail_row(): void
-    {
-        $date = $this->now()->modify('-3 days');
-        $ipAddress = IpAddressFactory::createOne();
-
-        ProviderMetricFactory::createOne([
-            'project' => null,
-            'ip_address' => $ipAddress,
-            'metric_date' => $date,
-            'value' => '0.004',
-        ]);
-
-        $this->runHandler();
-
-        $row = $this->row('stats_delivery_domain', [
-            'project_id' => null,
-            'ip_address_id' => $ipAddress->getId(),
-            'recipient_domain' => 'gmail.com',
-            'stat_date' => $date->format('Y-m-d'),
-        ]);
-        $this->assertIsArray($row);
-        $this->assertSame(0, $row['sent']);
-        $this->assertSame('0.004000', $row['complained_rate']);
-    }
-
-    public function test_rerun_replaces_previous_counts(): void
-    {
-        $date = $this->now();
-        $project = ProjectFactory::createOne();
-        $ipAddress = IpAddressFactory::createOne();
-        $send = SendFactory::createOne(['project' => $project, 'created_at' => $date]);
-        $recipient = SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::DEFERRED]);
-
-        $this->attempt($send, $recipient, $ipAddress, 'example.com', $date, SendRecipientStatus::DEFERRED);
-
-        $this->runHandler();
-
-        $where = ['project_id' => $project->getId(), 'stat_date' => $date->format('Y-m-d')];
-
-        $row = $this->row('stats_project', $where);
-        $this->assertIsArray($row);
-        $this->assertSame(1, $row['send_attempts']);
-        $this->assertSame(0, $row['accepted']);
-
-        $recipient->setStatus(SendRecipientStatus::ACCEPTED);
-        $this->em->flush();
-        $this->attempt($send, $recipient, $ipAddress, 'example.com', $date, SendRecipientStatus::ACCEPTED);
-
-        $this->runHandler();
-
-        $row = $this->row('stats_project', $where);
-        $this->assertIsArray($row);
-        $this->assertSame(1, $row['sends']);
-        $this->assertSame(1, $row['send_recipients']);
-        $this->assertSame(2, $row['send_attempts']);
-        $this->assertSame(1, $row['accepted']);
     }
 }

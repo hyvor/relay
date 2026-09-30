@@ -11,8 +11,6 @@ class StatsService
 {
     use ClockAwareTrait;
 
-    public const string GOOGLE_RECIPIENT_DOMAIN = 'gmail.com';
-
     private const string ATTEMPTED_CTE = <<<SQL
         attempted AS (
             SELECT
@@ -74,20 +72,7 @@ class StatsService
     }
 
     /**
-     * @return int[]
-     */
-    public function getUnprocessedProviderMetricIds(): array
-    {
-        /** @var int[] $ids */
-        $ids = $this->em->getConnection()->fetchFirstColumn(
-            'SELECT id FROM provider_metrics WHERE processed_at IS NULL'
-        );
-
-        return $ids;
-    }
-
-    /**
-     * Complaints and bounces affect the date their delivery was accepted
+     * Complaints and async bounces are counted on the date the delivery was accepted
      *
      * @param int[] $feedbackIds
      * @return string[]
@@ -121,34 +106,6 @@ class StatsService
         $this->em->getConnection()->executeStatement(
             'UPDATE send_feedback SET processed_at = :now WHERE id IN (:ids)',
             ['now' => $this->now()->format('Y-m-d H:i:sP'), 'ids' => $feedbackIds],
-            ['ids' => ArrayParameterType::INTEGER]
-        );
-    }
-
-    /**
-     * @param int[] $providerMetricIds
-     * @return string[]
-     */
-    public function getProviderMetricDates(array $providerMetricIds): array
-    {
-        /** @var string[] $dates */
-        $dates = $this->em->getConnection()->fetchFirstColumn(
-            'SELECT DISTINCT metric_date FROM provider_metrics WHERE id IN (:ids)',
-            ['ids' => $providerMetricIds],
-            ['ids' => ArrayParameterType::INTEGER]
-        );
-
-        return $dates;
-    }
-
-    /**
-     * @param int[] $providerMetricIds
-     */
-    public function markProviderMetricsProcessed(array $providerMetricIds): void
-    {
-        $this->em->getConnection()->executeStatement(
-            'UPDATE provider_metrics SET processed_at = :now WHERE id IN (:ids)',
-            ['now' => $this->now()->format('Y-m-d H:i:sP'), 'ids' => $providerMetricIds],
             ['ids' => ArrayParameterType::INTEGER]
         );
     }
@@ -443,16 +400,6 @@ class StatsService
                     COUNT(DISTINCT send_recipient_id) FILTER (WHERE complained) AS complained
                 FROM attempted
                 GROUP BY project_id, ip_address_id, domain
-            ),
-            google AS (
-                SELECT DISTINCT ON (project_id, ip_address_id)
-                    project_id,
-                    ip_address_id,
-                    :googleRecipientDomain AS recipient_domain,
-                    value
-                FROM provider_metrics
-                WHERE source = 'google' AND metric_date = :date
-                ORDER BY project_id, ip_address_id, id DESC
             )
             INSERT INTO stats_delivery_domain (
                 project_id, ip_address_id, recipient_domain, stat_date,
@@ -460,22 +407,10 @@ class StatsService
                 complained_rate
             )
             SELECT
-                COALESCE(d.project_id, g.project_id),
-                COALESCE(d.ip_address_id, g.ip_address_id),
-                COALESCE(d.recipient_domain, g.recipient_domain),
-                :date,
-                COALESCE(d.sent, 0),
-                COALESCE(d.accepted, 0),
-                COALESCE(d.bounced_recipient, 0),
-                COALESCE(d.bounced_infrastructure, 0),
-                COALESCE(d.bounced_unknown, 0),
-                COALESCE(d.complained, 0),
-                COALESCE(g.value, ROUND(d.complained::NUMERIC / NULLIF(d.accepted, 0), 6))
-            FROM delivered d
-            FULL JOIN google g
-                ON g.project_id = d.project_id
-                AND g.ip_address_id = d.ip_address_id
-                AND g.recipient_domain = d.recipient_domain
-        SQL, ['date' => $date, 'nextDate' => $nextDate, 'googleRecipientDomain' => self::GOOGLE_RECIPIENT_DOMAIN]);
+                project_id, ip_address_id, recipient_domain, :date,
+                sent, accepted, bounced_recipient, bounced_infrastructure, bounced_unknown, complained,
+                ROUND(complained::NUMERIC / NULLIF(accepted, 0), 6)
+            FROM delivered
+        SQL, ['date' => $date, 'nextDate' => $nextDate]);
     }
 }

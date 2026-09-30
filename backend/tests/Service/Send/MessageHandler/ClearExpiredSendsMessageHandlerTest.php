@@ -2,12 +2,10 @@
 
 namespace App\Tests\Service\Send\MessageHandler;
 
-use App\Entity\ProviderMetric;
 use App\Entity\Send;
 use App\Service\Send\Message\ClearExpiredSendsMessage;
 use App\Service\Send\MessageHandler\ClearExpiredSendsMessageHandler;
 use App\Tests\Case\KernelTestCase;
-use App\Tests\Factory\ProviderMetricFactory;
 use App\Tests\Factory\SendFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
@@ -33,20 +31,6 @@ class ClearExpiredSendsMessageHandlerTest extends KernelTestCase
         $sendsIds = array_map(fn(Send $send) => $send->getId(), $sends);
         $this->assertContains($send4->getId(), $sendsIds);
         $this->assertContains($send5->getId(), $sendsIds);
-    }
-
-    public function test_deletes_old_metrics(): void
-    {
-        ProviderMetricFactory::createOne(['metric_date' => new \DateTimeImmutable('-31 days')]);
-        $recent = ProviderMetricFactory::createOne(['metric_date' => new \DateTimeImmutable('-1 day')]);
-
-        $transport = $this->transport('scheduler_default');
-        $transport->send(new ClearExpiredSendsMessage());
-        $transport->throwExceptions()->process();
-
-        $metrics = $this->em->getRepository(ProviderMetric::class)->findAll();
-        $this->assertCount(1, $metrics);
-        $this->assertSame($recent->getId(), $metrics[0]->getId());
     }
 
 }
