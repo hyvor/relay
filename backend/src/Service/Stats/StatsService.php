@@ -22,8 +22,13 @@ class StatsService
                 sar.send_recipient_id,
                 sar.recipient_status,
                 CASE
-                    WHEN sar.recipient_status = 'bounced' THEN sar.bounce_reason
-                    WHEN sar.recipient_status = 'accepted' AND sr.status = 'bounced' THEN sr.bounce_reason
+                    WHEN sar.recipient_status = 'bounced' THEN sar.bounce_reason::TEXT
+                    WHEN sar.recipient_status = 'accepted' THEN (
+                        SELECT sf.detail FROM send_feedback sf
+                        WHERE sf.send_recipient_id = sar.send_recipient_id AND sf.type = 'bounce'
+                        ORDER BY sf.id DESC
+                        LIMIT 1
+                    )
                 END AS bounce_reason,
                 sar.recipient_status = 'accepted' AND EXISTS (
                     SELECT 1 FROM send_feedback sf
@@ -32,8 +37,7 @@ class StatsService
             FROM send_attempt_recipients sar
             JOIN send_attempts sa ON sa.id = sar.send_attempt_id
             JOIN sends s ON s.id = sa.send_id
-            JOIN send_recipients sr ON sr.id = sar.send_recipient_id
-            WHERE sa.created_at::DATE = :date
+            WHERE sa.created_at >= :date AND sa.created_at < :nextDate
         )
     SQL;
 
@@ -151,15 +155,17 @@ class StatsService
 
     public function rebuildDate(string $date): void
     {
-        $this->em->getConnection()->transactional(function (Connection $connection) use ($date) {
-            $this->rebuildProjectStats($connection, $date);
-            $this->rebuildIpStats($connection, $date);
-            $this->rebuildIpProjectStats($connection, $date);
-            $this->rebuildDeliveryDomainStats($connection, $date);
+        $nextDate = new \DateTimeImmutable($date)->modify('+1 day')->format('Y-m-d');
+
+        $this->em->getConnection()->transactional(function (Connection $connection) use ($date, $nextDate) {
+            $this->rebuildProjectStats($connection, $date, $nextDate);
+            $this->rebuildIpStats($connection, $date, $nextDate);
+            $this->rebuildIpProjectStats($connection, $date, $nextDate);
+            $this->rebuildDeliveryDomainStats($connection, $date, $nextDate);
         });
     }
 
-    private function rebuildProjectStats(Connection $connection, string $date): void
+    private function rebuildProjectStats(Connection $connection, string $date, string $nextDate): void
     {
         $connection->executeStatement('DELETE FROM stats_project WHERE stat_date = :date', ['date' => $date]);
 
@@ -178,14 +184,14 @@ class StatsService
                     COUNT(sr.id) FILTER (WHERE sr.status = 'suppressed') AS suppressed
                 FROM sends s
                 JOIN send_recipients sr ON sr.send_id = s.id
-                WHERE s.created_at::DATE = :date
+                WHERE s.created_at >= :date AND s.created_at < :nextDate
                 GROUP BY s.project_id
             ),
             attempts AS (
                 SELECT s.project_id, COUNT(sa.id) AS send_attempts
                 FROM send_attempts sa
                 JOIN sends s ON s.id = sa.send_id
-                WHERE sa.created_at::DATE = :date
+                WHERE sa.created_at >= :date AND sa.created_at < :nextDate
                 GROUP BY s.project_id
             ),
             delivered AS (
@@ -254,10 +260,10 @@ class StatsService
                 ROUND(suppressed::NUMERIC / NULLIF(send_recipients, 0), 4),
                 ROUND(failed::NUMERIC / NULLIF(attempted, 0), 4)
             FROM counts
-        SQL, ['date' => $date]);
+        SQL, ['date' => $date, 'nextDate' => $nextDate]);
     }
 
-    private function rebuildIpStats(Connection $connection, string $date): void
+    private function rebuildIpStats(Connection $connection, string $date, string $nextDate): void
     {
         $connection->executeStatement('DELETE FROM stats_ip WHERE stat_date = :date', ['date' => $date]);
 
@@ -276,13 +282,13 @@ class StatsService
                     COUNT(sr.id) FILTER (WHERE sr.status = 'suppressed') AS suppressed
                 FROM sends s
                 JOIN send_recipients sr ON sr.send_id = s.id
-                WHERE s.created_at::DATE = :date AND s.ip_address_id IS NOT NULL
+                WHERE s.created_at >= :date AND s.created_at < :nextDate AND s.ip_address_id IS NOT NULL
                 GROUP BY s.ip_address_id
             ),
             attempts AS (
                 SELECT ip_address_id, COUNT(id) AS send_attempts
                 FROM send_attempts
-                WHERE created_at::DATE = :date
+                WHERE created_at >= :date AND created_at < :nextDate
                 GROUP BY ip_address_id
             ),
             delivered AS (
@@ -352,10 +358,10 @@ class StatsService
                 ROUND(suppressed::NUMERIC / NULLIF(send_recipients, 0), 4),
                 ROUND(failed::NUMERIC / NULLIF(attempted, 0), 4)
             FROM counts
-        SQL, ['date' => $date]);
+        SQL, ['date' => $date, 'nextDate' => $nextDate]);
     }
 
-    private function rebuildIpProjectStats(Connection $connection, string $date): void
+    private function rebuildIpProjectStats(Connection $connection, string $date, string $nextDate): void
     {
         $connection->executeStatement('DELETE FROM stats_ip_project WHERE stat_date = :date', ['date' => $date]);
 
@@ -412,10 +418,10 @@ class StatsService
                 ROUND(bounced_unknown::NUMERIC / NULLIF(sent, 0), 4),
                 ROUND(complained::NUMERIC / NULLIF(accepted, 0), 6)
             FROM counts
-        SQL, ['date' => $date]);
+        SQL, ['date' => $date, 'nextDate' => $nextDate]);
     }
 
-    private function rebuildDeliveryDomainStats(Connection $connection, string $date): void
+    private function rebuildDeliveryDomainStats(Connection $connection, string $date, string $nextDate): void
     {
         $connection->executeStatement('DELETE FROM stats_delivery_domain WHERE stat_date = :date', ['date' => $date]);
 
@@ -470,6 +476,6 @@ class StatsService
                 ON g.project_id = d.project_id
                 AND g.ip_address_id = d.ip_address_id
                 AND g.recipient_domain = d.recipient_domain
-        SQL, ['date' => $date, 'googleRecipientDomain' => self::GOOGLE_RECIPIENT_DOMAIN]);
+        SQL, ['date' => $date, 'nextDate' => $nextDate, 'googleRecipientDomain' => self::GOOGLE_RECIPIENT_DOMAIN]);
     }
 }
