@@ -12,8 +12,8 @@ import (
 type IncomingMailType string
 
 const (
-	IncomingMailTypeBounce IncomingMailType = "bounce"
-	IncomingMailTypeFbl    IncomingMailType = "fbl"
+	IncomingMailTypeBounce    IncomingMailType = "bounce"
+	IncomingMailTypeComplaint IncomingMailType = "complaint"
 )
 
 type IncomingMail struct {
@@ -69,7 +69,7 @@ func (m *IncomingMail) Handle(ctx context.Context, logger *slog.Logger, metrics 
 			payload["bounce_uuid"] = bounceUuid
 		}
 	} else if isFbl {
-		debugType = IncomingMailTypeFbl
+		debugType = IncomingMailTypeComplaint
 		arf, err := bounceparse.ParseArf(m.Data)
 
 		if err != nil {
