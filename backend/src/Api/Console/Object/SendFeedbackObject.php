@@ -24,7 +24,7 @@ class SendFeedbackObject
         $this->recipient_id = $sendFeedback->getSendRecipient()?->getId();
         $this->debug_incoming_email_id = $sendFeedback->getDebugIncomingEmail()->getId();
         $this->bounce_reason = $sendFeedback->getType() === SendFeedbackType::BOUNCE
-            ? $sendFeedback->getSendRecipient()?->getBouncedReason()
+            ? BounceReason::tryFrom((string) $sendFeedback->getDetail())
             : null;
     }
 
