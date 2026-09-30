@@ -8,6 +8,7 @@ use App\Api\Local\Input\DsnRecipientsInput;
 use App\Api\Local\Input\IncomingInput;
 use App\Entity\DebugIncomingEmail;
 use App\Entity\InfrastructureBounce;
+use App\Entity\SendFeedback;
 use App\Entity\Suppression;
 use App\Entity\Type\BounceReason;
 use App\Entity\Type\DebugIncomingEmailStatus;
@@ -102,9 +103,11 @@ class IncomingBounceTest extends WebTestCase
         $this->assertNull($debugIncomingEmail->getErrorMessage());
 
         $this->assertSame(SendRecipientStatus::BOUNCED, $recipient1->getStatus());
-        $this->assertSame(BounceReason::RECIPIENT, $recipient1->getBouncedReason());
+        $feedback = $this->em->getRepository(SendFeedback::class)->findOneBy(['send_recipient' => $recipient1]);
+        $this->assertSame(BounceReason::RECIPIENT->value, $feedback?->getDetail());
         $this->assertSame(SendRecipientStatus::BOUNCED, $recipient2->getStatus());
-        $this->assertSame(BounceReason::RECIPIENT, $recipient2->getBouncedReason());
+        $feedback = $this->em->getRepository(SendFeedback::class)->findOneBy(['send_recipient' => $recipient2]);
+        $this->assertSame(BounceReason::RECIPIENT->value, $feedback?->getDetail());
     }
 
     public function test_incoming_bounce_dsn_missing(): void
@@ -302,7 +305,8 @@ class IncomingBounceTest extends WebTestCase
         $this->assertCount(0, $infrastructureBounces);
 
         $this->assertSame(SendRecipientStatus::BOUNCED, $sendRecipient->getStatus());
-        $this->assertSame(BounceReason::UNKNOWN, $sendRecipient->getBouncedReason());
+        $feedback = $this->em->getRepository(SendFeedback::class)->findOneBy(['send_recipient' => $sendRecipient]);
+        $this->assertSame(BounceReason::UNKNOWN->value, $feedback?->getDetail());
 
         $logger = $this->getTestLogger();
         $this->assertTrue(
@@ -439,7 +443,8 @@ class IncomingBounceTest extends WebTestCase
         $this->assertFalse($infrastructureBounce->isRead());
 
         $this->assertSame(SendRecipientStatus::BOUNCED, $sendRecipient->getStatus());
-        $this->assertSame(BounceReason::INFRASTRUCTURE, $sendRecipient->getBouncedReason());
+        $feedback = $this->em->getRepository(SendFeedback::class)->findOneBy(['send_recipient' => $sendRecipient]);
+        $this->assertSame(BounceReason::INFRASTRUCTURE->value, $feedback?->getDetail());
 
         $debugIncomingEmail = $this->em->getRepository(DebugIncomingEmail::class)->findOneBy([
             'type' => DebugIncomingEmailType::BOUNCE,
