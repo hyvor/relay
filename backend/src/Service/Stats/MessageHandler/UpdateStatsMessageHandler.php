@@ -19,11 +19,13 @@ class UpdateStatsMessageHandler
     public function __invoke(UpdateStatsMessage $message): void
     {
         $feedbackIds = $this->statsService->getUnprocessedFeedbackIds();
+        $providerMetricIds = $this->statsService->getUnprocessedProviderMetricIds();
 
         $dates = array_unique([
             $this->now()->format('Y-m-d'),
             $this->now()->modify('-1 day')->format('Y-m-d'),
             ...$this->statsService->getFeedbackDates($feedbackIds),
+            ...$this->statsService->getProviderMetricDates($providerMetricIds),
         ]);
 
         foreach ($dates as $date) {
@@ -31,5 +33,6 @@ class UpdateStatsMessageHandler
         }
 
         $this->statsService->markFeedbackProcessed($feedbackIds);
+        $this->statsService->markProviderMetricsProcessed($providerMetricIds);
     }
 }
