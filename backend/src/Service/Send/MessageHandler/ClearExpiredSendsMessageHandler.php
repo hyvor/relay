@@ -73,6 +73,13 @@ class ClearExpiredSendsMessageHandler
                 );
             }
         } while (count($sends) === self::BATCH_SIZE);
+
+        $this->em->createQuery(<<<DQL
+            DELETE FROM App\Entity\ProviderMetric pm
+            WHERE pm.metric_date <= :date
+        DQL)
+            ->setParameter('date', $cutoff)
+            ->execute();
     }
 
 }
