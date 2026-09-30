@@ -186,7 +186,7 @@ Return-Path: <return@hyvor.com>
 	bodyMap, ok := calledBody.(map[string]interface{})
 	assert.True(t, ok)
 
-	assert.Equal(t, IncomingMailTypeFbl, bodyMap["type"])
+	assert.Equal(t, IncomingMailTypeComplaint, bodyMap["type"])
 	assert.Contains(t, bodyMap, "arf")
 	assert.Equal(t, "sender@example.org", bodyMap["mail_from"])
 	assert.Equal(t, "fbl@relay.com", bodyMap["rcpt_to"])
