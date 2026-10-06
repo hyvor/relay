@@ -377,11 +377,10 @@ func (f *TestFactory) GetSendRecipientById(id int) (*FactorySendRecipient, error
 	var recipient FactorySendRecipient
 	row := f.conn.QueryRow(`
 		SELECT 
-			id, type, status, address, name, try_count, bounce_reason
+			id, type, status, address, name, try_count
 		FROM send_recipients WHERE id = $1
 	`, id)
 
-	var bounceReason sql.NullString
 	err := row.Scan(
 		&recipient.Id,
 		&recipient.Type,
@@ -389,7 +388,6 @@ func (f *TestFactory) GetSendRecipientById(id int) (*FactorySendRecipient, error
 		&recipient.Address,
 		&recipient.Name,
 		&recipient.TryCount,
-		&bounceReason,
 	)
 
 	if err != nil {
