@@ -22,6 +22,7 @@ use App\Tests\Factory\SendRecipientFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\Clock\Clock;
 use Symfony\Component\Clock\MockClock;
+use Symfony\Component\Lock\LockFactory;
 
 #[CoversClass(UpdateStatsMessageHandler::class)]
 #[CoversClass(StatsService::class)]
@@ -235,6 +236,69 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         ]);
         $this->assertIsArray($domainRow);
         $this->assertSame(0, $domainRow['complained']);
+    }
+
+    public function test_skips_when_another_run_holds_the_lock(): void
+    {
+        $date = $this->now();
+        $project = ProjectFactory::createOne();
+        $ipAddress = IpAddressFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project, 'created_at' => $date]);
+        $recipient = SendRecipientFactory::createOne(['send' => $send]);
+        $this->attempt($send, $recipient, $ipAddress, 'example.com', $date, SendRecipientStatus::ACCEPTED);
+
+        /** @var LockFactory $lockFactory */
+        $lockFactory = $this->container->get(LockFactory::class);
+        $lock = $lockFactory->createLock(UpdateStatsMessageHandler::LOCK_NAME);
+        $this->assertTrue($lock->acquire());
+
+        try {
+            $this->runHandler();
+        } finally {
+            $lock->release();
+        }
+
+        $where = ['project_id' => $project->getId(), 'stat_date' => $date->format('Y-m-d')];
+        $this->assertFalse($this->row('stats_project', $where));
+
+        $this->runHandler();
+
+        $row = $this->row('stats_project', $where);
+        $this->assertIsArray($row);
+        $this->assertSame(1, $row['accepted']);
+    }
+
+    public function test_does_not_rebuild_dates_past_retention_window(): void
+    {
+        $oldDate = $this->now()->modify('-' . (UpdateStatsMessageHandler::MAX_REBUILD_AGE_DAYS + 1) . ' days');
+        $project = ProjectFactory::createOne();
+        $ipAddress = IpAddressFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project, 'created_at' => $oldDate]);
+        $recipient = SendRecipientFactory::createOne(['send' => $send]);
+        $this->attempt($send, $recipient, $ipAddress, 'example.com', $oldDate, SendRecipientStatus::ACCEPTED);
+
+        $this->em->getConnection()->insert('stats_project', [
+            'project_id' => $project->getId(),
+            'stat_date' => $oldDate->format('Y-m-d'),
+            'accepted' => 10,
+        ]);
+
+        $feedback = SendFeedbackFactory::createOne([
+            'type' => SendFeedbackType::COMPLAINT,
+            'project' => $project,
+            'send' => $send,
+            'sendRecipient' => $recipient,
+        ]);
+
+        $this->runHandler();
+
+        $row = $this->row('stats_project', ['project_id' => $project->getId(), 'stat_date' => $oldDate->format('Y-m-d')]);
+        $this->assertIsArray($row);
+        $this->assertSame(10, $row['accepted']);
+        $this->assertSame(0, $row['complained']);
+
+        $this->em->refresh($feedback);
+        $this->assertNotNull($feedback->getProcessedAt());
     }
 
     public function test_counts_each_delivery_outcome(): void
