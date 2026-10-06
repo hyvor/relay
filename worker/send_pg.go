@@ -266,10 +266,9 @@ func (b *SendTransaction) RecordAttempt(
 			UPDATE send_recipients
 			SET 
 				status = $1,
-				try_count = $2,
-				bounce_reason = $3
-			WHERE id = $4
-		`, rcptResult.ToRecipientStatus().ToString(), sendResult.NewTryCount, bounceReason, rcptResult.RecipientId)
+				try_count = $2
+			WHERE id = $3
+		`, rcptResult.ToRecipientStatus().ToString(), sendResult.NewTryCount, rcptResult.RecipientId)
 
 		if err != nil {
 			return 0, fmt.Errorf("failed to update recipient ID %d status: %w", rcptResult.RecipientId, err)

@@ -10,6 +10,8 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 class ClearExpiredSendsMessageHandler
 {
 
+    public const int RETENTION_DAYS = 30;
+
     public function __construct(private EntityManagerInterface $em)
     {
     }
@@ -21,7 +23,7 @@ class ClearExpiredSendsMessageHandler
             DELETE FROM App\Entity\Send s
             WHERE s.created_at <= :date
         DQL)
-            ->setParameter('date', new \DateTimeImmutable('-30 days'))
+            ->setParameter('date', new \DateTimeImmutable('-' . self::RETENTION_DAYS . ' days'))
             ->execute();
 
     }
