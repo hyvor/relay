@@ -2,12 +2,14 @@
 
 namespace App\Tests\Service\Stats\MessageHandler;
 
+use App\Entity\Instance;
 use App\Entity\IpAddress;
 use App\Entity\Send;
 use App\Entity\SendRecipient;
 use App\Entity\Type\BounceReason;
 use App\Entity\Type\SendFeedbackType;
 use App\Entity\Type\SendRecipientStatus;
+use App\Service\Instance\InstanceService;
 use App\Service\Stats\Message\UpdateStatsMessage;
 use App\Service\Stats\MessageHandler\UpdateStatsMessageHandler;
 use App\Service\Stats\StatsService;
@@ -76,6 +78,13 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
             "SELECT * FROM $table WHERE " . implode(' AND ', $conditions),
             $where
         );
+    }
+
+    private function getInstance(): Instance
+    {
+        /** @var InstanceService $instanceService */
+        $instanceService = $this->container->get(InstanceService::class);
+        return $instanceService->getInstance();
     }
 
     public function test_late_complaint_counts_on_acceptance_date(): void
@@ -200,7 +209,7 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $this->attempt($send, $first, $ipAddress, 'example.com', $date, SendRecipientStatus::ACCEPTED);
         $this->attempt($send, $second, $ipAddress, 'example.com', $date, SendRecipientStatus::ACCEPTED);
 
-        SendFeedbackFactory::createOne([
+        $feedback = SendFeedbackFactory::createOne([
             'type' => SendFeedbackType::COMPLAINT,
             'project' => $project,
             'send' => $send,
@@ -211,6 +220,9 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $this->runHandler();
 
         $statDate = $date->format('Y-m-d');
+
+        $this->em->refresh($feedback);
+        $this->assertSame($statDate, $feedback->getStatDate()?->format('Y-m-d'));
 
         $projectRow = $this->row('stats_project', ['project_id' => $project->getId(), 'stat_date' => $statDate]);
         $this->assertIsArray($projectRow);
@@ -299,6 +311,57 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
 
         $this->em->refresh($feedback);
         $this->assertNotNull($feedback->getProcessedAt());
+    }
+
+    public function test_catches_up_on_dates_missed_while_scheduler_was_down(): void
+    {
+        Clock::set(new MockClock('2026-06-10 12:00:00'));
+        $this->runHandler();
+
+        $instance = $this->getInstance();
+        $this->assertSame('2026-06-10 12:00:00', $instance->getStatsRebuiltAt()?->format('Y-m-d H:i:s'));
+
+        $project = ProjectFactory::createOne();
+        $ipAddress = IpAddressFactory::createOne();
+
+        foreach (['2026-06-10 18:00:00', '2026-06-12 09:00:00'] as $time) {
+            $date = new \DateTimeImmutable($time);
+            $send = SendFactory::createOne(['project' => $project, 'created_at' => $date]);
+            $recipient = SendRecipientFactory::createOne(['send' => $send]);
+            $this->attempt($send, $recipient, $ipAddress, 'example.com', $date, SendRecipientStatus::ACCEPTED);
+        }
+
+        Clock::set(new MockClock('2026-06-15 12:00:00'));
+        $this->runHandler();
+
+        foreach (['2026-06-10', '2026-06-12'] as $statDate) {
+            $row = $this->row('stats_project', ['project_id' => $project->getId(), 'stat_date' => $statDate]);
+            $this->assertIsArray($row, "missing stats for $statDate");
+            $this->assertSame(1, $row['accepted']);
+        }
+
+        $this->em->refresh($instance);
+        $this->assertSame('2026-06-15 12:00:00', $instance->getStatsRebuiltAt()?->format('Y-m-d H:i:s'));
+    }
+
+    public function test_catch_up_is_limited_to_rebuild_window(): void
+    {
+        $instance = $this->getInstance();
+        $instance->setStatsRebuiltAt($this->now()->modify('-60 days'));
+        $this->em->flush();
+
+        $oldDate = $this->now()->modify('-' . (UpdateStatsMessageHandler::MAX_REBUILD_AGE_DAYS + 1) . ' days');
+        $project = ProjectFactory::createOne();
+        $ipAddress = IpAddressFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project, 'created_at' => $oldDate]);
+        $recipient = SendRecipientFactory::createOne(['send' => $send]);
+        $this->attempt($send, $recipient, $ipAddress, 'example.com', $oldDate, SendRecipientStatus::ACCEPTED);
+
+        $this->runHandler();
+
+        $this->assertFalse(
+            $this->row('stats_project', ['project_id' => $project->getId(), 'stat_date' => $oldDate->format('Y-m-d')])
+        );
     }
 
     public function test_counts_each_delivery_outcome(): void

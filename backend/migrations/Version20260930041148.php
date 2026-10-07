@@ -11,7 +11,7 @@ final class Version20260930041148 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'Extend send_feedback and index send attempts for stats';
+        return 'Extend send_feedback, add stats rebuild checkpoint to instances, and index send attempts for stats';
     }
 
     public function up(Schema $schema): void
@@ -24,8 +24,16 @@ final class Version20260930041148 extends AbstractMigration
                 ADD COLUMN ip_address_id BIGINT DEFAULT NULL REFERENCES ip_addresses(id) ON DELETE CASCADE,
                 ADD COLUMN detail TEXT DEFAULT NULL,
                 ADD COLUMN processed_at TIMESTAMPTZ DEFAULT NULL,
+                ADD COLUMN stat_date DATE DEFAULT NULL,
                 ALTER COLUMN send_recipient_id DROP NOT NULL
             ',
+        );
+
+        $this->addSql(
+            '
+            ALTER TABLE instances
+                ADD COLUMN stats_rebuilt_at TIMESTAMPTZ DEFAULT NULL
+            '
         );
 
         $this->addSql(
@@ -38,10 +46,17 @@ final class Version20260930041148 extends AbstractMigration
             ',
         );
 
-        $this->addSql("UPDATE send_feedback SET detail = 'recipient' WHERE type = 'bounce'");
+        $this->addSql(
+            "
+            UPDATE send_feedback
+            SET detail = 'recipient'
+            WHERE type = 'bounce'
+            "
+        );
 
         $this->addSql('CREATE INDEX idx_send_feedback_send_id ON send_feedback (send_id)');
         $this->addSql('CREATE INDEX idx_send_feedback_unprocessed ON send_feedback (id) WHERE processed_at IS NULL');
+        $this->addSql("CREATE INDEX idx_send_feedback_redacted_complaints ON send_feedback (stat_date) WHERE type = 'complaint' AND send_recipient_id IS NULL");
 
         $this->addSql('CREATE INDEX idx_send_attempts_created_at ON send_attempts (created_at)');
         $this->addSql('CREATE INDEX idx_send_attempt_recipients_send_attempt_id ON send_attempt_recipients (send_attempt_id)');

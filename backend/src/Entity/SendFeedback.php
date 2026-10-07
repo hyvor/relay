@@ -50,6 +50,9 @@ class SendFeedback
     #[ORM\Column(type: "datetime_immutable", nullable: true)]
     private ?\DateTimeImmutable $processed_at = null;
 
+    #[ORM\Column(type: "date_immutable", nullable: true)]
+    private ?\DateTimeImmutable $stat_date = null;
+
     public function getId(): int
     {
         return $this->id;
@@ -168,6 +171,17 @@ class SendFeedback
     public function setProcessedAt(?\DateTimeImmutable $processedAt): static
     {
         $this->processed_at = $processedAt;
+        return $this;
+    }
+
+    public function getStatDate(): ?\DateTimeImmutable
+    {
+        return $this->stat_date;
+    }
+
+    public function setStatDate(?\DateTimeImmutable $statDate): static
+    {
+        $this->stat_date = $statDate;
         return $this;
     }
 }
