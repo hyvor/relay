@@ -30,6 +30,13 @@ class Config
         // usually only needed in DEV where Go is not running on localhost
         #[Autowire('%env(GO_HOST)%')]
         private ?string $goHost = null,
+
+        #[Autowire('%env(GOOGLE_POSTMASTER_CLIENT_ID)%')]
+        private ?string $googlePostmasterClientId = null,
+        #[Autowire('%env(GOOGLE_POSTMASTER_CLIENT_SECRET)%')]
+        private ?string $googlePostmasterClientSecret = null,
+        #[Autowire('%env(GOOGLE_POSTMASTER_REFRESH_TOKEN)%')]
+        private ?string $googlePostmasterRefreshToken = null,
     ) {}
 
     public function getAppVersion(): string
@@ -76,6 +83,21 @@ class Config
     public function getGoHost(): ?string
     {
         return $this->goHost;
+    }
+
+    public function getGooglePostmasterClientId(): ?string
+    {
+        return $this->googlePostmasterClientId;
+    }
+
+    public function getGooglePostmasterClientSecret(): ?string
+    {
+        return $this->googlePostmasterClientSecret;
+    }
+
+    public function getGooglePostmasterRefreshToken(): ?string
+    {
+        return $this->googlePostmasterRefreshToken;
     }
 
 }
