@@ -64,6 +64,11 @@ S3_BUCKET=
 
 # DNS over HTTPS resolver endpoint.
 DNS_OVER_HTTPS_URL=https://cloudflare-dns.com/dns-query
+
+# When set, Gmail spam rates are fetched periodically.
+GOOGLE_POSTMASTER_CLIENT_ID=
+GOOGLE_POSTMASTER_CLIENT_SECRET=
+GOOGLE_POSTMASTER_REFRESH_TOKEN=
 `}
 	language="yaml"
 />
