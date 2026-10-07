@@ -43,7 +43,7 @@ To: <Undisclosed Recipients>
 Subject: Earn money
 MIME-Version: 1.0
 Content-type: text/plain
-Message-ID: 8787KJKJ3K4J3K4J3K4J3.mail@example.net
+Message-ID: <8787KJKJ3K4J3K4J3K4J3.mail@example.net>
 Date: Thu, 2 Sep 2004 12:31:03 -0500
 
 Spam Spam Spam

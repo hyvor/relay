@@ -14,8 +14,7 @@ class ArfInput
     public string $UserAgent;
     #[Assert\NotBlank]
     public string $OriginalMailFrom;
-    #[Assert\NotBlank]
-    public string $OriginalRcptTo;
+    public string $OriginalRcptTo = '';
     #[Assert\NotBlank]
     public string $MessageId;
 }
