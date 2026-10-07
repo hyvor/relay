@@ -61,6 +61,11 @@ S3_REGION=
 S3_KEY=
 S3_SECRET=
 S3_BUCKET=
+
+# When set, Gmail spam rates are fetched periodically.
+GOOGLE_POSTMASTER_CLIENT_ID=
+GOOGLE_POSTMASTER_CLIENT_SECRET=
+GOOGLE_POSTMASTER_REFRESH_TOKEN=
 `}
         language="yaml"
 />

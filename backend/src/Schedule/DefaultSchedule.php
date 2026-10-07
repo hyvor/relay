@@ -8,6 +8,7 @@ use App\Service\Domain\Message\ReverifyDomainsMessage;
 use App\Service\Idempotency\Message\ClearExpiredIdempotencyRecordsMessage;
 use App\Service\InfrastructureBounce\Message\ClearOldInfrastructureBouncesMessage;
 use App\Service\Management\Message\RunHealthChecksMessage;
+use App\Service\ProviderMetric\Message\FetchGooglePostmasterMetricsMessage;
 use App\Service\Send\Message\ClearExpiredSendsMessage;
 use App\Service\Stats\Message\UpdateStatsMessage;
 use App\Service\Tls\Message\CheckMailCertificateValidityMessage;
@@ -78,6 +79,9 @@ class DefaultSchedule implements ScheduleProviderInterface
 
             // stats rollup
             ->add(RecurringMessage::every('10 minutes', new UpdateStatsMessage))
+
+            // provider metrics
+            ->add(RecurringMessage::every('6 hours', new FetchGooglePostmasterMetricsMessage))
 
             // global lock
             ->lock($this->lockFactory->createLock('global-schedule', 20))

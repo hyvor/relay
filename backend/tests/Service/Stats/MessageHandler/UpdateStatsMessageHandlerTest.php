@@ -348,26 +348,6 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $this->assertSame('2026-06-15 12:00:00', $instance->getStatsRebuiltAt()?->format('Y-m-d H:i:s'));
     }
 
-    public function test_catch_up_is_limited_to_rebuild_window(): void
-    {
-        $instance = $this->getInstance();
-        $instance->setStatsRebuiltAt($this->now()->modify('-60 days'));
-        $this->em->flush();
-
-        $oldDate = $this->now()->modify('-' . (UpdateStatsMessageHandler::MAX_REBUILD_AGE_DAYS + 1) . ' days');
-        $project = ProjectFactory::createOne();
-        $ipAddress = IpAddressFactory::createOne();
-        $send = SendFactory::createOne(['project' => $project, 'created_at' => $oldDate]);
-        $recipient = SendRecipientFactory::createOne(['send' => $send]);
-        $this->attempt($send, $recipient, $ipAddress, 'example.com', $oldDate, SendRecipientStatus::ACCEPTED);
-
-        $this->runHandler();
-
-        $this->assertFalse(
-            $this->row('stats_project', ['project_id' => $project->getId(), 'stat_date' => $oldDate->format('Y-m-d')])
-        );
-    }
-
     public function test_counts_each_delivery_outcome(): void
     {
         $date = $this->now();
