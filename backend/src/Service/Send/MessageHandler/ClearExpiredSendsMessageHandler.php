@@ -18,12 +18,20 @@ class ClearExpiredSendsMessageHandler
 
     public function __invoke(ClearExpiredSendsMessage $message): void
     {
+        $date = new \DateTimeImmutable('-' . self::RETENTION_DAYS . ' days');
 
         $this->em->createQuery(<<<DQL
             DELETE FROM App\Entity\Send s
             WHERE s.created_at <= :date
         DQL)
-            ->setParameter('date', new \DateTimeImmutable('-' . self::RETENTION_DAYS . ' days'))
+            ->setParameter('date', $date)
+            ->execute();
+
+        $this->em->createQuery(<<<DQL
+            DELETE FROM App\Entity\ProviderMetric pm
+            WHERE pm.metric_date <= :date
+        DQL)
+            ->setParameter('date', $date)
             ->execute();
 
     }

@@ -85,6 +85,9 @@ class EmailBuilder
         // mailer header
         $email->getHeaders()->addTextHeader('X-Mailer', 'Hyvor Relay v' . $this->config->getAppVersion());
 
+        // gmail header
+        $email->getHeaders()->addTextHeader('Feedback-ID', $domain->getProject()->getId() . ':hyvorrelay');
+
         /**
          * Here we check the email size before signing it because
          * DKIM signing is expensive and slow. It will only add a couple of KBs at most,
