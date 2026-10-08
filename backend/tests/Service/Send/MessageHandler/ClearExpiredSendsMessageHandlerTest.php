@@ -5,6 +5,7 @@ namespace App\Tests\Service\Send\MessageHandler;
 use App\Entity\Send;
 use App\Service\Send\Message\ClearExpiredSendsMessage;
 use App\Service\Send\MessageHandler\ClearExpiredSendsMessageHandler;
+use App\Service\Send\SendContentStorage;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\SendFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -15,11 +16,18 @@ class ClearExpiredSendsMessageHandlerTest extends KernelTestCase
 
     public function test_deletes(): void
     {
+        $storage = $this->container->get(SendContentStorage::class);
+        $this->assertInstanceOf(SendContentStorage::class, $storage);
+
         $send1 = SendFactory::createOne(['createdAt' => new \DateTimeImmutable('-2 years')]);
         $send2 = SendFactory::createOne(['createdAt' => new \DateTimeImmutable('-2 months')]);
         $send3 = SendFactory::createOne(['createdAt' => new \DateTimeImmutable('-30 days')]);
         $send4 = SendFactory::createOne(['createdAt' => new \DateTimeImmutable('-1 week')]);
         $send5 = SendFactory::createOne(['createdAt' => new \DateTimeImmutable('-1 day')]);
+
+        foreach ([$send1, $send2, $send3, $send4, $send5] as $send) {
+            $storage->store($send->getUuid(), 'raw');
+        }
 
         $transport = $this->transport('scheduler_default');
         $transport->send(new ClearExpiredSendsMessage());
@@ -31,6 +39,12 @@ class ClearExpiredSendsMessageHandlerTest extends KernelTestCase
         $sendsIds = array_map(fn(Send $send) => $send->getId(), $sends);
         $this->assertContains($send4->getId(), $sendsIds);
         $this->assertContains($send5->getId(), $sendsIds);
+
+        $this->assertNull($storage->getRaw($send1->getUuid()));
+        $this->assertNull($storage->getRaw($send2->getUuid()));
+        $this->assertNull($storage->getRaw($send3->getUuid()));
+        $this->assertNotNull($storage->getRaw($send4->getUuid()));
+        $this->assertNotNull($storage->getRaw($send5->getUuid()));
     }
 
 }
