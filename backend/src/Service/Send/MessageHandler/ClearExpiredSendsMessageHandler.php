@@ -4,6 +4,7 @@ namespace App\Service\Send\MessageHandler;
 
 use App\Service\Send\Message\ClearExpiredSendsMessage;
 use App\Service\Send\SendContentStorage;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -25,26 +26,34 @@ class ClearExpiredSendsMessageHandler
     {
         $cutoff = new \DateTimeImmutable('-' . self::RETENTION_DAYS . ' days');
 
+        $connection = $this->em->getConnection();
+
         do {
-            /** @var string[] $uuids */
-            $uuids = $this->em->getConnection()->fetchFirstColumn(
+            /** @var array<array{id: int, uuid: string}> $sends */
+            $sends = $connection->fetchAllAssociative(
                 <<<SQL
-                DELETE FROM sends
-                WHERE id IN (
-                    SELECT id FROM sends
-                    WHERE created_at <= :date
-                    LIMIT :limit
-                )
-                RETURNING uuid
+                SELECT id, uuid FROM sends
+                WHERE created_at <= :date
+                LIMIT :limit
                 SQL,
                 ['date' => $cutoff, 'limit' => self::BATCH_SIZE],
                 ['date' => Types::DATETIME_IMMUTABLE, 'limit' => Types::INTEGER]
             );
 
-            foreach ($uuids as $uuid) {
-                $this->sendContentStorage->delete($uuid);
+            if (count($sends) === 0) {
+                break;
             }
-        } while (count($uuids) === self::BATCH_SIZE);
+
+            foreach ($sends as $send) {
+                $this->sendContentStorage->delete($send['uuid']);
+            }
+
+            $connection->executeStatement(
+                'DELETE FROM sends WHERE id IN (:ids)',
+                ['ids' => array_column($sends, 'id')],
+                ['ids' => ArrayParameterType::INTEGER]
+            );
+        } while (count($sends) === self::BATCH_SIZE);
     }
 
 }
