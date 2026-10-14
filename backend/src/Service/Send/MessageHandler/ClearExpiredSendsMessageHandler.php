@@ -2,11 +2,13 @@
 
 namespace App\Service\Send\MessageHandler;
 
+use App\Service\Send\Exception\SendContentStorageException;
 use App\Service\Send\Message\ClearExpiredSendsMessage;
 use App\Service\Send\SendContentStorage;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
@@ -19,6 +21,7 @@ class ClearExpiredSendsMessageHandler
     public function __construct(
         private EntityManagerInterface $em,
         private SendContentStorage $sendContentStorage,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -27,32 +30,48 @@ class ClearExpiredSendsMessageHandler
         $cutoff = new \DateTimeImmutable('-' . self::RETENTION_DAYS . ' days');
 
         $connection = $this->em->getConnection();
+        $lastId = 0;
 
         do {
             /** @var array<array{id: int, uuid: string}> $sends */
             $sends = $connection->fetchAllAssociative(
                 <<<SQL
                 SELECT id, uuid FROM sends
-                WHERE created_at <= :date
+                WHERE created_at <= :date AND id > :lastId
+                ORDER BY id
                 LIMIT :limit
                 SQL,
-                ['date' => $cutoff, 'limit' => self::BATCH_SIZE],
-                ['date' => Types::DATETIME_IMMUTABLE, 'limit' => Types::INTEGER]
+                ['date' => $cutoff, 'lastId' => $lastId, 'limit' => self::BATCH_SIZE],
+                ['date' => Types::DATETIME_IMMUTABLE, 'lastId' => Types::INTEGER, 'limit' => Types::INTEGER]
             );
 
             if (count($sends) === 0) {
                 break;
             }
 
+            $lastId = $sends[count($sends) - 1]['id'];
+
+            $deletedIds = [];
             foreach ($sends as $send) {
-                $this->sendContentStorage->delete($send['uuid']);
+                try {
+                    $this->sendContentStorage->delete($send['uuid']);
+                    $deletedIds[] = $send['id'];
+                } catch (SendContentStorageException $e) {
+                    $this->logger->error('Failed to delete send content', [
+                        'send_id' => $send['id'],
+                        'uuid' => $send['uuid'],
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
 
-            $connection->executeStatement(
-                'DELETE FROM sends WHERE id IN (:ids)',
-                ['ids' => array_column($sends, 'id')],
-                ['ids' => ArrayParameterType::INTEGER]
-            );
+            if ($deletedIds) {
+                $connection->executeStatement(
+                    'DELETE FROM sends WHERE id IN (:ids)',
+                    ['ids' => $deletedIds],
+                    ['ids' => ArrayParameterType::INTEGER]
+                );
+            }
         } while (count($sends) === self::BATCH_SIZE);
     }
 
