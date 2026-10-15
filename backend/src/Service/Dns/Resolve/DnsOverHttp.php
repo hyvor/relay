@@ -7,16 +7,15 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Calls DNS over Cloudflare's HTTP JSON API.
+ * Resolves DNS over the JSON API of the endpoint set in DNS_OVER_HTTPS_URL.
  */
 class DnsOverHttp implements DnsResolveInterface
 {
 
-    public const CLOUDFLARE_DNS_QUERY_URL = "https://cloudflare-dns.com/dns-query";
-
     public function __construct(
         private HttpClientInterface $httpClient,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
+        private string $dnsQueryUrl,
     ) {
     }
 
@@ -26,7 +25,7 @@ class DnsOverHttp implements DnsResolveInterface
     public function resolve(string $domain, DnsType $dnsType): ResolveResult
     {
         $type = $dnsType->value;
-        $url = self::CLOUDFLARE_DNS_QUERY_URL . "?name=$domain&type=$type";
+        $url = $this->dnsQueryUrl . "?name=$domain&type=$type";
 
         try {
             $response = $this->httpClient->request(
@@ -44,7 +43,7 @@ class DnsOverHttp implements DnsResolveInterface
             return ResolveResult::fromArray($data);
         } catch (ExceptionInterface $e) {
             $this->logger->error(
-                'Cloudflare DoH failed: ' . $e->getMessage(),
+                'DNS over HTTPS failed: ' . $e->getMessage(),
                 [
                     'url' => $url
                 ]
