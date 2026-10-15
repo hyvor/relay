@@ -192,12 +192,28 @@ func TestMxLookupRejectsIncompleteCnameChain(t *testing.T) {
 	assert.ErrorIs(t, err, ErrSmtpMxLookupFailed)
 }
 
-func TestMxLookupRejectsInvalidHost(t *testing.T) {
+func TestMxLookupSkipsInvalidHosts(t *testing.T) {
 	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
 		require.Equal(t, dns.TypeMX, recordType)
 		return DNSLookupResult{Message: mxMessage("example.com",
 			&dns.MX{Hdr: dns.RR_Header{Rrtype: dns.TypeMX}, Mx: "mx.example.", Preference: 10},
 			&dns.MX{Hdr: dns.RR_Header{Rrtype: dns.TypeMX}, Mx: "user@mx.example.", Preference: 20},
+		), TTL: time.Minute}, nil
+	})
+
+	cache := NewSharedCache(nil)
+	hosts, err := getMxHostsFromDomainContext(context.Background(), cache, "example.com")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"mx.example"}, hosts)
+	assert.NotNil(t, cache.memory.Get(dnsCacheKey("mx", "example.com")))
+}
+
+func TestMxLookupFailsWhenAllHostsInvalid(t *testing.T) {
+	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
+		require.Equal(t, dns.TypeMX, recordType)
+		return DNSLookupResult{Message: mxMessage("example.com",
+			&dns.MX{Hdr: dns.RR_Header{Rrtype: dns.TypeMX}, Mx: "user@mx.example.", Preference: 10},
+			&dns.MX{Hdr: dns.RR_Header{Rrtype: dns.TypeMX}, Mx: "mx.example:25.", Preference: 20},
 		), TTL: time.Minute}, nil
 	})
 

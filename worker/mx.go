@@ -40,7 +40,8 @@ func getMxValueFromDomainContext(ctx context.Context, cache *SharedCache, domain
 	var cached MxCacheValue
 	cacheKey := dnsCacheKey("mx", domain)
 	if found, err := cache.Get(ctx, cacheKey, &cached); err == nil && found {
-		if validMxCacheValue(cached) {
+		cached.Records = validMxRecords(cached.Records)
+		if len(cached.Records) > 0 {
 			return cached, nil
 		}
 		_ = cache.Delete(ctx, cacheKey)
@@ -67,8 +68,9 @@ func getMxValueFromDomainContext(ctx context.Context, cache *SharedCache, domain
 		return MxCacheValue{}, fmt.Errorf("%w: %w: null MX record for %s", ErrSmtpMxPermanent, ErrSmtpMxLookupFailed, domain)
 	}
 	if len(value.Records) > 0 {
-		if !validMxCacheValue(value) {
-			return MxCacheValue{}, fmt.Errorf("%w: invalid MX host for %s", ErrSmtpMxLookupFailed, domain)
+		value.Records = validMxRecords(value.Records)
+		if len(value.Records) == 0 {
+			return MxCacheValue{}, fmt.Errorf("%w: no valid MX hosts for %s", ErrSmtpMxLookupFailed, domain)
 		}
 		cacheMxValue(ctx, cache, domain, value, mxResult.TTL)
 		return value, nil
@@ -100,7 +102,7 @@ func getMxValueFromDomainContext(ctx context.Context, cache *SharedCache, domain
 	}
 
 	value = MxCacheValue{Records: []MxRecord{{Host: addressHost, Priority: 0}}, Secure: mxResult.Secure}
-	if !validMxCacheValue(value) {
+	if !validMxHost(addressHost) {
 		return MxCacheValue{}, fmt.Errorf("%w: invalid address host for %s", ErrSmtpMxLookupFailed, domain)
 	}
 	ttl := mxResult.TTL
@@ -149,17 +151,19 @@ func getMxCacheValueFromDNS(message *dns.Msg, domain string, secure bool) (MxCac
 	return MxCacheValue{Records: records, Secure: secure}, nullMx, false
 }
 
-func validMxCacheValue(value MxCacheValue) bool {
-	if len(value.Records) == 0 {
-		return false
-	}
-	for _, record := range value.Records {
-		if record.Host == "" || record.Host == "." ||
-			normalizeDNSHost(record.Host) != record.Host || strings.ContainsAny(record.Host, " /:@") {
-			return false
+func validMxRecords(records []MxRecord) []MxRecord {
+	valid := make([]MxRecord, 0, len(records))
+	for _, record := range records {
+		if validMxHost(record.Host) {
+			valid = append(valid, record)
 		}
 	}
-	return true
+	return valid
+}
+
+func validMxHost(host string) bool {
+	return host != "" && host != "." &&
+		normalizeDNSHost(host) == host && !strings.ContainsAny(host, " /:@")
 }
 
 func getHostsFromMxCacheValue(value MxCacheValue) []string {
