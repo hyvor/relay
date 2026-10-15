@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/hyvor/relay/worker/bounceparse"
+	"github.com/miekg/dns"
 )
 
 var localHttpPort = ":8085"
@@ -26,6 +28,7 @@ func StartHttpServer(
 	mux.HandleFunc("/ready", handleReady(serviceState)) // alias for /ping
 	mux.HandleFunc("/state", handleSetState(serviceState, httpServerLogger))
 	mux.HandleFunc("/debug/parse-bounce-fbl", handleParseBounceFBL())
+	mux.HandleFunc("/dns/resolve", handleDnsResolve())
 
 	var handler http.Handler = mux
 
@@ -133,6 +136,41 @@ func handleParseBounceFBL() http.HandlerFunc {
 		}
 
 		writeJsonResponse(w, parsed)
+	}
+
+}
+
+func handleDnsResolve() http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		type DnsResolveRequest struct {
+			Name string `json:"name"`
+			Type string `json:"type"`
+		}
+
+		var request DnsResolveRequest
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&request)
+
+		if err != nil || request.Name == "" {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		recordType, ok := dns.StringToType[strings.ToUpper(request.Type)]
+		if !ok {
+			http.Error(w, "Unsupported DNS record type: "+request.Type, http.StatusBadRequest)
+			return
+		}
+
+		response, err := outboundDNSResolver.LookupAsJson(r.Context(), request.Name, recordType)
+		if err != nil {
+			http.Error(w, "DNS lookup failed: "+err.Error(), http.StatusBadGateway)
+			return
+		}
+
+		writeJsonResponse(w, response)
 	}
 
 }

@@ -4,6 +4,7 @@ namespace App\Service\Go;
 
 use App\Entity\Type\DebugIncomingEmailType;
 use App\Service\App\Config;
+use App\Service\Dns\Resolve\DnsType;
 use App\Service\Management\GoState\GoState;
 use App\Service\Go\Exception\GoHttpCallException;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
@@ -40,11 +41,21 @@ class GoHttpApi
             );
             return $response->toArray();
         } catch (ExceptionInterface $e) {
+            $responseBody = '';
+            if (isset($response)) {
+                try {
+                    $responseBody = $response->getContent(false);
+                } catch (ExceptionInterface) {
+                    // getContent() still throws for transport-level failures (e.g. connection
+                    // refused) even with $throw=false, which only suppresses HTTP status errors.
+                }
+            }
+
             throw new GoHttpCallException(
                 sprintf(
                     'Failed to call go HTTP API: %s %s',
                     $e->getMessage(),
-                    isset($response) ? 'Response: ' . $response->getContent(false) : ''
+                    $responseBody !== '' ? 'Response: ' . $responseBody : ''
                 ),
                 previous: $e
             );
@@ -68,6 +79,18 @@ class GoHttpApi
         return $this->callApi('/debug/parse-bounce-fbl', [
             'raw' => base64_encode($raw),
             'type' => $type->value,
+        ]);
+    }
+
+    /**
+     * @return array<mixed>
+     * @throws GoHttpCallException
+     */
+    public function resolveDns(string $domain, DnsType $dnsType): array
+    {
+        return $this->callApi('/dns/resolve', [
+            'name' => $domain,
+            'type' => $dnsType->value,
         ]);
     }
 
