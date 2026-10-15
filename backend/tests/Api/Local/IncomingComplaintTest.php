@@ -6,9 +6,12 @@ use App\Api\Local\Controller\LocalController;
 use App\Api\Local\Input\ArfInput;
 use App\Api\Local\Input\IncomingInput;
 use App\Entity\DebugIncomingEmail;
+use App\Entity\Send;
+use App\Entity\SendFeedback;
 use App\Entity\Suppression;
 use App\Entity\Type\DebugIncomingEmailStatus;
 use App\Entity\Type\DebugIncomingEmailType;
+use App\Entity\Type\SendFeedbackType;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SuppressionReason;
 use App\Service\IncomingMail\Dto\ComplaintDto;
@@ -17,7 +20,10 @@ use App\Service\IncomingMail\Event\IncomingComplaintEvent;
 use App\Service\IncomingMail\IncomingMailService;
 use App\Service\SendFeedback\SendFeedbackService;
 use App\Tests\Case\WebTestCase;
+use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ProjectFactory;
+use App\Tests\Factory\SendAttemptFactory;
+use App\Tests\Factory\SendAttemptRecipientFactory;
 use App\Tests\Factory\SendFactory;
 use App\Tests\Factory\SendRecipientFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -34,12 +40,18 @@ class IncomingComplaintTest extends WebTestCase
     public function test_incoming_complaint(): void
     {
         $project = ProjectFactory::createOne();
+        $ipAddress = IpAddressFactory::createOne();
         $send = SendFactory::createOne([
-            'project' => $project
+            'project' => $project,
         ]);
         $recipient = SendRecipientFactory::createOne([
             'send' => $send,
             'address' => 'spammer@example.net'
+        ]);
+        SendAttemptRecipientFactory::createOne([
+            'send_attempt' => SendAttemptFactory::createOne(['send' => $send, 'ip_address' => $ipAddress]),
+            'send_recipient_id' => $recipient->getId(),
+            'recipient_status' => SendRecipientStatus::ACCEPTED,
         ]);
 
         $response = $this->localApi(
@@ -83,6 +95,136 @@ class IncomingComplaintTest extends WebTestCase
         $this->assertNull($debugIncomingEmail->getErrorMessage());
 
         $this->assertSame(SendRecipientStatus::COMPLAINED, $recipient->getStatus());
+
+        $feedback = $this->em->getRepository(SendFeedback::class)->findOneBy(['send' => $send]);
+        $this->assertNotNull($feedback);
+        $this->assertSame(SendFeedbackType::COMPLAINT, $feedback->getType());
+        $this->assertSame($project->getId(), $feedback->getProject()?->getId());
+        $this->assertSame($recipient->getId(), $feedback->getSendRecipient()?->getId());
+        $this->assertSame($ipAddress->getId(), $feedback->getIpAddress()?->getId());
+        $this->assertSame('abuse', $feedback->getDetail());
+        $this->assertSame($debugIncomingEmail->getId(), $feedback->getDebugIncomingEmail()->getId());
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function complaintPayload(Send $send, string $originalRcptTo): array
+    {
+        return [
+            'type' => 'complaint',
+            'arf' => [
+                'ReadableText' => 'This is a test ARF',
+                'FeedbackType' => 'abuse',
+                'UserAgent' => 'SomeUserAgent/1.0',
+                'OriginalMailFrom' => 'user@example.net',
+                'OriginalRcptTo' => $originalRcptTo,
+                'MessageId' => "{$send->getUuid()}@example.net"
+            ],
+            'raw_email' => 'raw',
+            'mail_from' => 'from@example.com',
+            'rcpt_to' => 'to@example.com'
+        ];
+    }
+
+    public function test_duplicate_complaint_is_ignored(): void
+    {
+        $project = ProjectFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project]);
+        $recipient = SendRecipientFactory::createOne([
+            'send' => $send,
+            'address' => 'spammer@example.net'
+        ]);
+
+        $payload = $this->complaintPayload($send, 'spammer@example.net');
+
+        $this->client->disableReboot();
+
+        $response = $this->localApi('POST', '/incoming', $payload);
+        $this->assertResponseStatusCodeSame(200, $response);
+
+        $response = $this->localApi('POST', '/incoming', $payload);
+        $this->assertResponseStatusCodeSame(200, $response);
+
+        $feedback = $this->em->getRepository(SendFeedback::class)->findBy(['send_recipient' => $recipient]);
+        $this->assertCount(1, $feedback);
+
+        $suppressions = $this->em->getRepository(Suppression::class)->findBy([
+            'project' => $project,
+            'reason' => SuppressionReason::COMPLAINT
+        ]);
+        $this->assertCount(1, $suppressions);
+    }
+
+    public function test_redacted_complaint(): void
+    {
+        $project = ProjectFactory::createOne();
+        $ipAddress = IpAddressFactory::createOne();
+        $send = SendFactory::createOne([
+            'project' => $project,
+            'ip_address' => $ipAddress,
+        ]);
+        $recipient = SendRecipientFactory::createOne([
+            'send' => $send,
+            'address' => 'spammer@example.net',
+            'status' => SendRecipientStatus::ACCEPTED,
+        ]);
+
+        $payload = [
+            'type' => 'complaint',
+            'arf' => [
+                'ReadableText' => 'Redacted ARF',
+                'FeedbackType' => 'abuse',
+                'UserAgent' => 'SomeUserAgent/1.0',
+                'OriginalMailFrom' => 'user@example.net',
+                'OriginalRcptTo' => '',
+                'MessageId' => "{$send->getUuid()}@example.net"
+            ],
+            'raw_email' => 'raw',
+            'mail_from' => 'from@example.com',
+            'rcpt_to' => 'to@example.com'
+        ];
+
+        $response = $this->localApi('POST', '/incoming', $payload);
+        $this->assertResponseStatusCodeSame(200, $response);
+
+        $feedback = $this->em->getRepository(SendFeedback::class)->findBy(['send' => $send]);
+        $this->assertCount(1, $feedback);
+        $this->assertSame(SendFeedbackType::COMPLAINT, $feedback[0]->getType());
+        $this->assertNull($feedback[0]->getSendRecipient());
+        $this->assertSame($ipAddress->getId(), $feedback[0]->getIpAddress()?->getId());
+
+        $this->assertSame(SendRecipientStatus::ACCEPTED, $recipient->getStatus());
+        $suppression = $this->em->getRepository(Suppression::class)->findOneBy([
+            'project' => $project,
+            'reason' => SuppressionReason::COMPLAINT
+        ]);
+        $this->assertNull($suppression);
+    }
+
+    public function test_duplicate_redacted_complaint_is_ignored(): void
+    {
+        $project = ProjectFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project]);
+
+        $payload = $this->complaintPayload($send, '');
+
+        $this->client->disableReboot();
+
+        $response = $this->localApi('POST', '/incoming', $payload);
+        $this->assertResponseStatusCodeSame(200, $response);
+
+        $response = $this->localApi('POST', '/incoming', $payload);
+        $this->assertResponseStatusCodeSame(200, $response);
+
+        $feedback = $this->em->getRepository(SendFeedback::class)->findBy(['send' => $send]);
+        $this->assertCount(1, $feedback);
+
+        $suppression = $this->em->getRepository(Suppression::class)->findOneBy([
+            'project' => $project,
+            'reason' => SuppressionReason::COMPLAINT
+        ]);
+        $this->assertNull($suppression);
     }
 
     public function test_incoming_complaint_arf_missing_error_provided(): void

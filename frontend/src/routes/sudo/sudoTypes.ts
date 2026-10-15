@@ -146,7 +146,7 @@ export type DnsRecordType = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT';
 export interface DebugIncomingEmail {
 	id: number;
 	created_at: number;
-	type: 'bounce' | 'fbl';
+	type: 'bounce' | 'complaint';
 	status: 'success' | 'failed';
 	raw_email: string;
 	mail_from: string;
