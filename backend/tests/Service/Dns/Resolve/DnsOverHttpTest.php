@@ -112,6 +112,7 @@ class DnsOverHttpTest extends KernelTestCase
         $dnsOverHttp = $this->container->get(DnsOverHttp::class);
 
         $this->expectException(DnsResolvingFailedException::class);
+        $this->expectExceptionMessage('Network error');
 
         $dnsOverHttp->resolve('example.com', DnsType::A);
     }

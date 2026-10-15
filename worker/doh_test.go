@@ -109,6 +109,50 @@ func TestDoHResolverLookupAsJson(t *testing.T) {
 	assert.Equal(t, `"v=DKIM1; k=rsa"`, response.Answer[0].Data)
 }
 
+func TestDoHResolverLookupAsJsonTxtWithSpecialCharacters(t *testing.T) {
+	server := dohTestServer(t, func(writer http.ResponseWriter, query *dns.Msg) {
+		record := &dns.TXT{
+			Hdr: dns.RR_Header{Name: "example.com.", Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: 60},
+			Txt: []string{`say \"hi\" \\ ok`},
+		}
+		writer.Header().Set("Content-Type", "application/dns-message")
+		_, err := writer.Write(dohResponse(t, query, false, record))
+		assert.NoError(t, err)
+	})
+
+	resolver := &DoHResolver{URL: server.URL, Client: server.Client()}
+	response, err := resolver.LookupAsJson(context.Background(), "example.com", dns.TypeTXT)
+	require.NoError(t, err)
+	require.Len(t, response.Answer, 1)
+	assert.Equal(t, `"say \"hi\" \\ ok"`, response.Answer[0].Data)
+}
+
+func TestDoHResolverLookupAsJsonSkipsRRSIG(t *testing.T) {
+	server := dohTestServer(t, func(writer http.ResponseWriter, query *dns.Msg) {
+		record := &dns.A{
+			Hdr: dns.RR_Header{Name: "example.com.", Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 60},
+			A:   []byte{192, 0, 2, 1},
+		}
+		signature := &dns.RRSIG{
+			Hdr:         dns.RR_Header{Name: "example.com.", Rrtype: dns.TypeRRSIG, Class: dns.ClassINET, Ttl: 60},
+			TypeCovered: dns.TypeA,
+			Algorithm:   dns.ECDSAP256SHA256,
+			SignerName:  "example.com.",
+			Signature:   "AAAA",
+		}
+		writer.Header().Set("Content-Type", "application/dns-message")
+		_, err := writer.Write(dohResponse(t, query, true, record, signature))
+		assert.NoError(t, err)
+	})
+
+	resolver := &DoHResolver{URL: server.URL, Client: server.Client()}
+	response, err := resolver.LookupAsJson(context.Background(), "example.com", dns.TypeA)
+	require.NoError(t, err)
+	require.Len(t, response.Answer, 1)
+	assert.Equal(t, uint16(dns.TypeA), response.Answer[0].Type)
+	assert.Equal(t, "192.0.2.1", response.Answer[0].Data)
+}
+
 func TestDoHResolverLookupAsJsonPropagatesError(t *testing.T) {
 	resolver := &DoHResolver{URL: "http://example.com", Client: http.DefaultClient}
 	_, err := resolver.LookupAsJson(context.Background(), "example.com", dns.TypeA)

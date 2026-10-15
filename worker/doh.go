@@ -175,12 +175,16 @@ func dnsMessageToResponse(message *dns.Msg) dnsResolveResponse {
 	answers := make([]dnsAnswerResponse, 0, len(message.Answer))
 
 	for _, rr := range message.Answer {
+		data, ok := dnsRDataString(rr)
+		if !ok {
+			continue
+		}
 		header := rr.Header()
 		answers = append(answers, dnsAnswerResponse{
 			Name: header.Name,
 			Type: header.Rrtype,
 			TTL:  header.Ttl,
-			Data: dnsRDataString(rr),
+			Data: data,
 		})
 	}
 
@@ -190,43 +194,28 @@ func dnsMessageToResponse(message *dns.Msg) dnsResolveResponse {
 	}
 }
 
-func dnsRDataString(rr dns.RR) string {
+func dnsRDataString(rr dns.RR) (string, bool) {
 	switch record := rr.(type) {
 	case *dns.A:
-		return record.A.String()
+		return record.A.String(), true
 	case *dns.AAAA:
-		return record.AAAA.String()
+		return record.AAAA.String(), true
 	case *dns.MX:
-		return fmt.Sprintf("%d %s", record.Preference, record.Mx)
+		return fmt.Sprintf("%d %s", record.Preference, record.Mx), true
 	case *dns.TXT:
 		chunks := make([]string, len(record.Txt))
 		for i, chunk := range record.Txt {
-			chunks[i] = quoteTxtChunk(chunk)
+			chunks[i] = `"` + chunk + `"`
 		}
-		return strings.Join(chunks, " ")
+		return strings.Join(chunks, " "), true
 	case *dns.PTR:
-		return record.Ptr
+		return record.Ptr, true
 	case *dns.CNAME:
-		return record.Target
+		return record.Target, true
 	case *dns.NS:
-		return record.Ns
-	default:
-		return rr.String()
+		return record.Ns, true
 	}
-}
-
-func quoteTxtChunk(chunk string) string {
-	var b strings.Builder
-	b.WriteByte('"')
-	for i := 0; i < len(chunk); i++ {
-		c := chunk[i]
-		if c == '\\' || c == '"' {
-			b.WriteByte('\\')
-		}
-		b.WriteByte(c)
-	}
-	b.WriteByte('"')
-	return b.String()
+	return "", false
 }
 
 func dnsMessageTTL(message *dns.Msg) time.Duration {

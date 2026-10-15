@@ -63,9 +63,7 @@ S3_SECRET=
 S3_BUCKET=
 
 # DNS over HTTPS resolver endpoint.
-# Used by the Go worker only. The backend resolves DNS by calling the worker's internal API.
-# Default: https://cloudflare-dns.com/dns-query
-DNS_OVER_HTTPS_URL=
+DNS_OVER_HTTPS_URL=https://cloudflare-dns.com/dns-query
 `}
 	language="yaml"
 />
