@@ -6,7 +6,7 @@ export function createProject(name: string, sendType: 'transactional' | 'distrib
 		project: Project;
 		project_user: ProjectUser;
 	}>({
-		endpoint: 'project',
+		endpoint: 'projects',
 		userApi: true,
 		data: {
 			name,
