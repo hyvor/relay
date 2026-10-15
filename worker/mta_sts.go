@@ -18,6 +18,7 @@ import (
 const (
 	mtaSTSHTTPTimeout  = 5 * time.Second
 	mtaSTSMaxBodyBytes = 64 * 1024
+	mtaSTSFailureTTL   = 5 * time.Minute
 )
 
 var ErrMTASTSLookup = errors.New("MTA-STS lookup failed")
@@ -39,8 +40,13 @@ type mtaSTSResult struct {
 }
 
 type mtaSTSCacheValue struct {
+	ID         string   `json:"id"`
 	Enforce    bool     `json:"enforce"`
 	MXPatterns []string `json:"mx_patterns,omitempty"`
+}
+
+func (v mtaSTSCacheValue) result() mtaSTSResult {
+	return mtaSTSResult{Enforce: v.Enforce, MXPatterns: v.MXPatterns}
 }
 
 func (r mtaSTSResult) AllowsMX(host string) bool {
@@ -74,32 +80,64 @@ func lookupMTASTS(ctx context.Context, cache *SharedCache, domain string) (mtaST
 
 	cacheKey := dnsCacheKey("mta_sts", domain)
 	var cached mtaSTSCacheValue
-	if found, err := cache.Get(ctx, cacheKey, &cached); err == nil && found {
-		return mtaSTSResult(cached), nil
+	found, err := cache.Get(ctx, cacheKey, &cached)
+	hasCached := err == nil && found
+
+	// a cached policy stays valid until max_age even if the TXT record goes
+	// away or the new policy cant be fetched
+	id, err := lookupMTASTSID(ctx, cache, domain)
+	if err != nil && !hasCached {
+		return mtaSTSResult{}, err
+	}
+	if err != nil || id == "" || id == cached.ID {
+		return cached.result(), nil
+	}
+
+	failureKey := dnsCacheKey("mta_sts_failure", domain)
+	var failedID string
+	if found, err := cache.Get(ctx, failureKey, &failedID); err == nil && found && failedID == id {
+		return cached.result(), nil
+	}
+
+	policy, err := fetchMTASTSPolicy(ctx, domain)
+	if err != nil {
+		_ = cache.Set(ctx, failureKey, id, mtaSTSFailureTTL)
+		if hasCached {
+			return cached.result(), nil
+		}
+		return mtaSTSResult{}, err
+	}
+
+	value := mtaSTSCacheValue{ID: id, Enforce: policy.Mode == "enforce", MXPatterns: policy.MXPatterns}
+	cacheMTASTSValue(ctx, cache, cacheKey, value, time.Duration(policy.MaxAge)*time.Second)
+	return value.result(), nil
+}
+
+func lookupMTASTSID(ctx context.Context, cache *SharedCache, domain string) (string, error) {
+	cacheKey := dnsCacheKey("mta_sts_txt", domain)
+	var cachedID string
+	if found, err := cache.Get(ctx, cacheKey, &cachedID); err == nil && found {
+		return cachedID, nil
 	}
 
 	queryName := "_mta-sts." + domain
 	var txtResult DNSLookupResult
+	id := ""
 	for redirects := 0; redirects < 8; redirects++ {
 		var err error
 		txtResult, err = lookupDNSFunc(ctx, queryName, dns.TypeTXT)
 		if err != nil {
-			return mtaSTSResult{}, fmt.Errorf("%w: TXT lookup: %v", ErrMTASTSLookup, err)
+			return "", fmt.Errorf("%w: TXT lookup: %v", ErrMTASTSLookup, err)
 		}
 		if txtResult.Message == nil {
-			return mtaSTSResult{}, fmt.Errorf("%w: empty TXT response", ErrMTASTSLookup)
+			return "", fmt.Errorf("%w: empty TXT response", ErrMTASTSLookup)
 		}
 		if txtResult.Message.Rcode != dns.RcodeSuccess && txtResult.Message.Rcode != dns.RcodeNameError {
-			return mtaSTSResult{}, fmt.Errorf("%w: TXT response code %s", ErrMTASTSLookup, dns.RcodeToString[txtResult.Message.Rcode])
+			return "", fmt.Errorf("%w: TXT response code %s", ErrMTASTSLookup, dns.RcodeToString[txtResult.Message.Rcode])
 		}
-		if _, found := mtaSTSDiscovery(txtResult.Message, queryName); found {
-			policy, err := fetchMTASTSPolicy(ctx, domain)
-			if err != nil {
-				return mtaSTSResult{}, err
-			}
-			value := mtaSTSCacheValue{Enforce: policy.Mode == "enforce", MXPatterns: policy.MXPatterns}
-			cacheMTASTSValue(ctx, cache, cacheKey, value, time.Duration(policy.MaxAge)*time.Second)
-			return mtaSTSResult(value), nil
+		if discovery, found := mtaSTSDiscovery(txtResult.Message, queryName); found {
+			id = discovery.ID
+			break
 		}
 		if target, ok := mtaSTSRedirectTarget(txtResult.Message, queryName); ok {
 			queryName = target
@@ -107,10 +145,11 @@ func lookupMTASTS(ctx context.Context, cache *SharedCache, domain string) (mtaST
 		}
 		break
 	}
-	if txtResult.Message.Rcode == dns.RcodeNameError {
-		cacheMTASTSValue(ctx, cache, cacheKey, mtaSTSCacheValue{}, txtResult.TTL)
+
+	if txtResult.TTL > 0 {
+		_ = cache.Set(ctx, cacheKey, id, txtResult.TTL)
 	}
-	return mtaSTSResult{}, nil
+	return id, nil
 }
 
 type mtaSTSDiscoveryValue struct {

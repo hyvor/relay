@@ -51,11 +51,17 @@ func (pool *EmailWorkersPool) Set(
 	pool.mu.Lock()
 	defer pool.mu.Unlock()
 
+	if pool.ctx.Err() != nil {
+		return
+	}
+
 	pool.stopWorkersLocked()
 
 	db, err := sql.Open("postgres", LoadDBConfig().DSN())
 	if err != nil {
 		pool.logger.Error("Failed to open the shared cache database handle", "error", err)
+	} else {
+		db.SetMaxOpenConns(sharedCacheMaxOpenConns)
 	}
 	pool.cache = NewSharedCache(db)
 

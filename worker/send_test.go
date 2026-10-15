@@ -446,6 +446,31 @@ func (f fakeConn) SetDeadline(time.Time) error      { return nil }
 func (f fakeConn) SetReadDeadline(time.Time) error  { return nil }
 func (f fakeConn) SetWriteDeadline(time.Time) error { return nil }
 
+func newFakeConn(server string) fakeConn {
+	return fakeConn{ReadWriter: struct {
+		io.Reader
+		io.Writer
+	}{strings.NewReader(strings.ReplaceAll(server, "\n", "\r\n")), &bytes.Buffer{}}}
+}
+
+type deadlineCountingConn struct {
+	fakeConn
+	deadlines *int
+}
+
+func (c deadlineCountingConn) SetDeadline(time.Time) error {
+	*c.deadlines++
+	return nil
+}
+
+func stepNames(conversation *SmtpConversation) []SmtpStepName {
+	names := make([]SmtpStepName, 0, len(conversation.Steps))
+	for _, step := range conversation.Steps {
+		names = append(names, step.Name)
+	}
+	return names
+}
+
 func TestSendEmailToHost_OneRecipientFails(t *testing.T) {
 
 	server := `220 somedomain.com at your service
@@ -744,4 +769,80 @@ func TestSendAfterInterval(t *testing.T) {
 
 	assert.Equal(t, "1 day", getSendAfterInterval(10))
 
+}
+
+func TestSendEmailToHost_TLSFailureKeepsStepsOnRetry(t *testing.T) {
+	conns := []fakeConn{
+		newFakeConn("220 mx ready\n250-mx\n250 STARTTLS\n220 go ahead\n"),
+		newFakeConn("220 mx ready\n250 mx\n250 Sender OK\n250 Recipient OK\n354 Body\n250 Queued\n221 Bye\n"),
+	}
+	dials := 0
+	createSmtpClientBackup := createSmtpClientContext
+	createSmtpClientContext = func(_ context.Context, host string, _ string) (*smtp.Client, error) {
+		conn := conns[dials]
+		dials++
+		return smtp.NewClient(conn, host)
+	}
+	defer func() {
+		createSmtpClientContext = createSmtpClientBackup
+	}()
+
+	convo := sendEmailToHostHandler(
+		&SendRow{Uuid: "test-uuid", RawEmail: "Subject: Test Email"},
+		[]*RecipientRow{{Id: 1, Address: "user@example.com"}},
+		"mx.example.com",
+		"relay.com",
+		"127.0.0.1",
+		"smtp.relay.com",
+		false,
+	)
+
+	assert.NoError(t, convo.NetworkError)
+	assert.Equal(t, []SmtpStepName{
+		SmtpStepDial, SmtpStepHello, SmtpStepStartTLS,
+		SmtpStepDial, SmtpStepHello, SmtpStepMail, SmtpStepRcpt, SmtpStepData, SmtpStepDataClose, SmtpStepQuit,
+	}, stepNames(convo))
+	assert.Equal(t, 220, convo.Steps[2].ReplyCode)
+	assert.NotEmpty(t, convo.Steps[2].ReplyText)
+	assert.Equal(t, 250, convo.RcptResults[0].Code)
+}
+
+func TestSendEmailToHost_RejectedStartTLSHasNoEhloStep(t *testing.T) {
+	createSmtpClientBackup := createSmtpClientContext
+	createSmtpClientContext = func(_ context.Context, host string, _ string) (*smtp.Client, error) {
+		return smtp.NewClient(newFakeConn("220 mx ready\n250-mx\n250 STARTTLS\n454 TLS not available\n250 Sender OK\n250 Recipient OK\n354 Body\n250 Queued\n221 Bye\n"), host)
+	}
+	defer func() {
+		createSmtpClientContext = createSmtpClientBackup
+	}()
+
+	convo := sendEmailToHostHandler(
+		&SendRow{Uuid: "test-uuid", RawEmail: "Subject: Test Email"},
+		[]*RecipientRow{{Id: 1, Address: "user@example.com"}},
+		"mx.example.com",
+		"relay.com",
+		"127.0.0.1",
+		"smtp.relay.com",
+		false,
+	)
+
+	assert.NoError(t, convo.NetworkError)
+	assert.Equal(t, []SmtpStepName{
+		SmtpStepDial, SmtpStepHello, SmtpStepStartTLS,
+		SmtpStepMail, SmtpStepRcpt, SmtpStepData, SmtpStepDataClose, SmtpStepQuit,
+	}, stepNames(convo))
+}
+
+func TestWriteSmtpDataResetsDeadlinePerChunk(t *testing.T) {
+	deadlines := 0
+	conn := deadlineCountingConn{fakeConn: newFakeConn("220 mx ready\n"), deadlines: &deadlines}
+	c, err := smtp.NewClient(conn, "mx.example.com")
+	assert.NoError(t, err)
+
+	data := strings.Repeat("a", 3*smtpDataChunkSize+1)
+	var written bytes.Buffer
+	assert.NoError(t, writeSmtpData(c, &written, data))
+
+	assert.Equal(t, 4, deadlines)
+	assert.Equal(t, data, written.String())
 }

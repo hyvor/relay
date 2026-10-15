@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand/v2"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -65,6 +67,9 @@ func getMxValueFromDomainContext(ctx context.Context, cache *SharedCache, domain
 		return MxCacheValue{}, fmt.Errorf("%w: %w: null MX record for %s", ErrSmtpMxPermanent, ErrSmtpMxLookupFailed, domain)
 	}
 	if len(value.Records) > 0 {
+		if !validMxCacheValue(value) {
+			return MxCacheValue{}, fmt.Errorf("%w: invalid MX host for %s", ErrSmtpMxLookupFailed, domain)
+		}
 		cacheMxValue(ctx, cache, domain, value, mxResult.TTL)
 		return value, nil
 	}
@@ -95,6 +100,9 @@ func getMxValueFromDomainContext(ctx context.Context, cache *SharedCache, domain
 	}
 
 	value = MxCacheValue{Records: []MxRecord{{Host: addressHost, Priority: 0}}, Secure: mxResult.Secure}
+	if !validMxCacheValue(value) {
+		return MxCacheValue{}, fmt.Errorf("%w: invalid address host for %s", ErrSmtpMxLookupFailed, domain)
+	}
 	ttl := mxResult.TTL
 	if mxResult.TTL <= 0 || addressResult.TTL <= 0 {
 		ttl = 0
@@ -155,8 +163,16 @@ func validMxCacheValue(value MxCacheValue) bool {
 }
 
 func getHostsFromMxCacheValue(value MxCacheValue) []string {
-	hosts := make([]string, 0, len(value.Records))
-	for _, record := range value.Records {
+	records := slices.Clone(value.Records)
+	rand.Shuffle(len(records), func(i, j int) {
+		records[i], records[j] = records[j], records[i]
+	})
+	sort.SliceStable(records, func(i, j int) bool {
+		return records[i].Priority < records[j].Priority
+	})
+
+	hosts := make([]string, 0, len(records))
+	for _, record := range records {
 		hosts = append(hosts, record.Host)
 	}
 	return hosts

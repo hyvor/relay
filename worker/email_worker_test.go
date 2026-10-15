@@ -91,6 +91,25 @@ func TestEmailWorkersPoolStopWorkers(t *testing.T) {
 
 }
 
+func TestEmailWorkersPoolSetAfterShutdown(t *testing.T) {
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	pool := &EmailWorkersPool{
+		ctx:    ctx,
+		logger: slogDiscard(),
+	}
+
+	pool.Set([]GoStateIp{
+		{Ip: "1.1.1.1", QueueId: 1, QueueName: "transactional"},
+	}, 2, "relay.hyvor.com")
+
+	assert.Nil(t, pool.cache)
+	assert.Nil(t, pool.cancelFunc)
+
+}
+
 // worker testing
 
 func TestEmailWorker_DatabaseConnectionFailure(t *testing.T) {

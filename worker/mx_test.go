@@ -191,3 +191,35 @@ func TestMxLookupRejectsIncompleteCnameChain(t *testing.T) {
 	_, err := getMxHostsFromDomainContext(context.Background(), NewSharedCache(nil), "example.com")
 	assert.ErrorIs(t, err, ErrSmtpMxLookupFailed)
 }
+
+func TestMxLookupRejectsInvalidHost(t *testing.T) {
+	withDNSLookupStub(t, func(_ context.Context, _ string, recordType uint16) (DNSLookupResult, error) {
+		require.Equal(t, dns.TypeMX, recordType)
+		return DNSLookupResult{Message: mxMessage("example.com",
+			&dns.MX{Hdr: dns.RR_Header{Rrtype: dns.TypeMX}, Mx: "mx.example.", Preference: 10},
+			&dns.MX{Hdr: dns.RR_Header{Rrtype: dns.TypeMX}, Mx: "user@mx.example.", Preference: 20},
+		), TTL: time.Minute}, nil
+	})
+
+	cache := NewSharedCache(nil)
+	_, err := getMxHostsFromDomainContext(context.Background(), cache, "example.com")
+	assert.ErrorIs(t, err, ErrSmtpMxLookupFailed)
+	assert.Nil(t, cache.memory.Get(dnsCacheKey("mx", "example.com")))
+}
+
+func TestMxHostsWithEqualPriorityAreRandomised(t *testing.T) {
+	value := MxCacheValue{Records: []MxRecord{
+		{Host: "a.example", Priority: 10},
+		{Host: "b.example", Priority: 10},
+		{Host: "c.example", Priority: 20},
+	}}
+
+	seen := make(map[string]bool)
+	for range 100 {
+		hosts := getHostsFromMxCacheValue(value)
+		assert.ElementsMatch(t, []string{"a.example", "b.example"}, hosts[:2])
+		assert.Equal(t, "c.example", hosts[2])
+		seen[hosts[0]] = true
+	}
+	assert.Len(t, seen, 2)
+}

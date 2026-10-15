@@ -16,6 +16,7 @@ const (
 	sharedCacheMemoryCapacity = 10_000
 	sharedCacheMemoryMaxCost  = 32 * 1024 * 1024
 	sharedCacheMaxValueSize   = 1024 * 1024
+	sharedCacheMaxOpenConns   = 4
 )
 
 var ErrCacheValueTooLarge = errors.New("cache value is too large")

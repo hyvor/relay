@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net"
 	"os"
@@ -403,9 +404,26 @@ const smtpClientConnectionTimeout = 8 * time.Second
 const smtpClientKeepAlive = 8 * time.Second
 const smtpOperationTimeout = 30 * time.Second
 const smtpDataResponseTimeout = 10 * time.Minute
+const smtpDataChunkTimeout = 3 * time.Minute
+const smtpDataChunkSize = 64 * 1024
 
 func setSmtpDeadline(c *smtp.Client, timeout time.Duration) error {
 	return c.SetDeadline(time.Now().Add(timeout))
+}
+
+// deadline is reset for each chunk so a message only times out if it stops making progress.
+func writeSmtpData(c *smtp.Client, w io.Writer, data string) error {
+	for len(data) > 0 {
+		size := min(len(data), smtpDataChunkSize)
+		if err := setSmtpDeadline(c, smtpDataChunkTimeout); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, data[:size]); err != nil {
+			return err
+		}
+		data = data[size:]
+	}
+	return nil
 }
 
 var createSmtpClientContext = createSmtpClientContextHandler
@@ -540,14 +558,19 @@ func sendEmailToHostHandlerContextAttempt(
 			if tlsErr := firstError(startTlsResult.Err, ehloResult.Err); tlsErr != nil {
 				if !tlsRequired && ctx.Err() == nil {
 					_ = c.Close()
-					return sendEmailToHostHandlerContextAttempt(ctx, cache, send, recipients, host, instanceDomain, ip, ptr, secureMx, false, false, referenceNames...)
+					conversation.AddStep(SmtpStepStartTLS, startTlsResult.Command, startTlsResult.Reply.Code, tlsErr.Error())
+
+					retry := sendEmailToHostHandlerContextAttempt(ctx, cache, send, recipients, host, instanceDomain, ip, ptr, secureMx, false, false, referenceNames...)
+					retry.StartTime = conversation.StartTime
+					retry.Duration = time.Since(conversation.StartTime)
+					retry.Steps = append(conversation.Steps, retry.Steps...)
+					return retry
 				}
 				conversation.NetworkError = tlsErr
 				return conversation
 			}
 
 			conversation.AddStepFromResult(SmtpStepStartTLS, &startTlsResult)
-			conversation.AddStepFromResult(SmtpStepHello, &ehloResult)
 
 			if !startTlsResult.CodeValid(220) {
 				if tlsRequired {
@@ -555,8 +578,9 @@ func sendEmailToHostHandlerContextAttempt(
 					return conversation
 				}
 				// STARTTLS was rejected, so continue with plaintext when policy is
-				// opportunistic. A failed TLS handshake cannot safely fall back.
+				// opportunistic.
 			} else {
+				conversation.AddStepFromResult(SmtpStepHello, &ehloResult)
 				if !ehloResult.CodeValid(250) {
 					if tlsRequired {
 						conversation.NetworkError = fmt.Errorf("%w: post-STARTTLS EHLO failed for %s", tlsRequiredError(daneRequired), host)
@@ -641,12 +665,7 @@ func sendEmailToHostHandlerContextAttempt(
 		conversation.SetRcptResults(acceptedRecipients, &dataResult)
 		return conversation
 	}
-	if err := setSmtpDeadline(c, smtpOperationTimeout); err != nil {
-		conversation.NetworkError = err
-		return conversation
-	}
-	_, err = w.Write([]byte(send.RawEmail))
-	if err != nil {
+	if err := writeSmtpData(c, w, send.RawEmail); err != nil {
 		conversation.NetworkError = err
 		return conversation
 	}
