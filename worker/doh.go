@@ -22,6 +22,7 @@ import (
 const (
 	dohRequestTimeout   = 5 * time.Second
 	dohMaxDnsMessageLen = 65535
+	dohDefaultURL       = "https://cloudflare-dns.com/dns-query"
 )
 
 var ErrDoHLookup = errors.New("DNS lookup failed")
@@ -40,7 +41,7 @@ type DNSLookupResult struct {
 func NewDoHResolver() *DoHResolver {
 	endpoint := os.Getenv("DNS_OVER_HTTPS_URL")
 	if endpoint == "" {
-		panic("DNS_OVER_HTTPS_URL is not set")
+		endpoint = dohDefaultURL
 	}
 
 	return &DoHResolver{
