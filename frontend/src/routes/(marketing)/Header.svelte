@@ -25,6 +25,13 @@
 			>
 			<Button
 				size="small"
+				color="accent"
+				variant={page.url.pathname.startsWith('/pricing') ? 'fill-light' : 'invisible'}
+				as="a"
+				href="/pricing">Pricing</Button
+			>
+			<Button
+				size="small"
 				as="a"
 				href="https://github.com/hyvor/relay"
 				target="_blank"

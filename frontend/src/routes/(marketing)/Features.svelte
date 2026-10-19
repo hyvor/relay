@@ -1,129 +1,187 @@
 <script>
-    import Feature from './Feature.svelte';
-    import IconSend from '@hyvor/icons/IconSend';
-    import IconCode from '@hyvor/icons/IconCode';
-    import IconArrowsAngleExpand from '@hyvor/icons/IconArrowsAngleExpand';
-    import IconDatabase from '@hyvor/icons/IconDatabase';
-    import IconTruck from '@hyvor/icons/IconTruck';
-    import IconEnvelope from '@hyvor/icons/IconEnvelope';
-    import IconEnvelopeExclamation from '@hyvor/icons/IconEnvelopeExclamation';
-    import IconCardList from '@hyvor/icons/IconCardList';
-    import IconGear from '@hyvor/icons/IconGear';
-    import IconFiles from '@hyvor/icons/IconFiles';
-    import IconShieldLock from '@hyvor/icons/IconShieldLock';
-    import IconBuilding from '@hyvor/icons/IconBuilding';
-    import IconActivity from '@hyvor/icons/IconActivity';
-    import IconGraphUp from '@hyvor/icons/IconGraphUp';
+	import { FeatureSplit, SpotlightSplit, AllFeaturesAccordion } from '@hyvor/design/marketing';
+	import IconGear from '@hyvor/icons/IconGear';
+	import IconSend from '@hyvor/icons/IconSend';
+	import IconEnvelopeExclamation from '@hyvor/icons/IconEnvelopeExclamation';
+	import IconFiles from '@hyvor/icons/IconFiles';
+	import IconCode from '@hyvor/icons/IconCode';
+	import IconBuilding from '@hyvor/icons/IconBuilding';
+	import IconDatabase from '@hyvor/icons/IconDatabase';
+	import IconActivity from '@hyvor/icons/IconActivity';
+	import IconTruck from '@hyvor/icons/IconTruck';
+	import IconGraphUp from '@hyvor/icons/IconGraphUp';
+
+	const categories = [
+		{
+			label: 'Sending',
+			icon: IconSend,
+			color: 'var(--green)',
+			features: [
+				{
+					icon: IconGear,
+					title: 'Automate Everything',
+					description:
+						'Control your email sending with a powerful, scope-based REST API. Automate domain setup, suppressions, API keys, and webhooks in seconds.'
+				},
+				{
+					icon: IconSend,
+					title: 'Webhooks for Events',
+					description:
+						'Stay in sync with real-time event webhooks. Get notified on deliveries, bounces, domain verifications, and more.'
+				},
+				{
+					icon: IconEnvelopeExclamation,
+					title: 'Bounce & Complaint Handling',
+					description:
+						'Stop worrying about bad addresses. Hyvor Relay automatically manages bounces, complaints, and suppressions for you.'
+				},
+				{
+					icon: IconFiles,
+					title: 'Project Management',
+					description:
+						'Organize your work the developer way. Create isolated projects, each with its own domains, keys, and webhooks.'
+				}
+			]
+		},
+		{
+			label: 'Self-Hosting',
+			icon: IconCode,
+			color: 'var(--blue)',
+			features: [
+				{
+					icon: IconCode,
+					title: 'Open-Source',
+					description:
+						'Fully open-source under AGPL-3.0. Deploy, inspect, and modify Hyvor Relay on your own infrastructure with zero vendor lock-in.'
+				},
+				{
+					icon: IconBuilding,
+					title: 'Commercial Support',
+					description:
+						'Self-hosted, enterprise-ready. Get priority updates and expert support directly from the HYVOR team with an enterprise license.'
+				},
+				{
+					icon: IconDatabase,
+					title: 'In-built DNS Server',
+					description:
+						'Hyvor Relay comes with a DNS server that handles DNS queries for the instance domain and its subdomains — DNS automation, done right.'
+				},
+				{
+					icon: IconActivity,
+					title: 'Health Checks',
+					description:
+						'One of the unique features of Hyvor Relay: built-in health checks for all components to ensure smooth operation.'
+				}
+			]
+		},
+		{
+			label: 'Reliability & Observability',
+			icon: IconGraphUp,
+			features: [
+				{
+					icon: IconTruck,
+					title: 'Deliverability',
+					description:
+						'Deliverability is the ability of an email to reach the inbox without being blocked or marked as spam. SPF, reverse DNS, multiple IPs, and queue isolation - baked in from day one.'
+				},
+				{
+					icon: IconGraphUp,
+					title: 'Observability',
+					description:
+						'Industry-grade monitoring with built-in Prometheus metrics and a pre-configured Grafana dashboard for performance, alerts, and logs.'
+				}
+			]
+		}
+	];
 </script>
 
-<div class="hds-container">
-    <h3 id="features">Features</h3>
+<FeatureSplit
+	eyebrow="Email API"
+	title="Send reliable emails with a clean REST API"
+	description="Send reliable emails with a clean, idempotent REST API — then see exactly what happened to every message, with full delivery logs and SMTP traces."
+	bullets={[
+		'HTML and plain text, attachments, custom headers, multiple recipients',
+		'Idempotent sends prevent accidental duplicate emails',
+		'30 days of full delivery logs, including SMTP traces'
+	]}
+	button={{ href: '/docs/send-emails', label: 'Read the API docs' }}
+>
+	{#snippet visual()}
+		<div class="hds-box screenshot">
+			<img
+				src="/img/docs/intro-sends.png"
+				alt="Email delivery log with SMTP trace in Hyvor Relay"
+			/>
+		</div>
+	{/snippet}
+</FeatureSplit>
 
-    <div class="features">
-        <Feature title="Email API" icon={IconEnvelope} docsLink="/docs/send-emails">
-            Send reliable emails with a clean, idempotent REST API. Supports HTML and plain text,
-            attachments, custom headers, and multiple recipients.
-        </Feature>
-        <Feature title="Automate Everything" icon={IconGear} docsLink="/docs/api-console">
-            Control your email sending with a powerful, scope-based REST API. Automate domain setup,
-            suppressions, API keys, and webhooks in seconds.
-        </Feature>
-        <Feature title="Webhooks for Events" icon={IconSend} docsLink="/docs/webhooks">
-            Stay in sync with real-time event webhooks. Get notified on deliveries, bounces, domain
-            verifications, and more.
-        </Feature>
-        <Feature title="Domains & DKIM" icon={IconShieldLock} docsLink="/docs/domains">
-            Send from any domain with confidence. Manage multiple domains with enforced DKIM signing
-            for maximum deliverability and trust.
-        </Feature>
-        <Feature title="Project Management" icon={IconFiles}>
-            Organize your work the developer way. Create isolated projects, each with its own
-            domains, keys, and webhooks. All under one account.
-        </Feature>
-        <Feature title="Bounce & Complaint Handling" icon={IconEnvelopeExclamation}>
-            Stop worrying about bad addresses. Hyvor Relay automatically manages bounces,
-            complaints, and suppressions for you.
-        </Feature>
-        <Feature title="Email Logs" icon={IconCardList}>
-            See everything that happens after “Send.” Search full delivery logs (headers, status,
-            and SMTP traces) with 30 days of retention.
-        </Feature>
-    </div>
+<FeatureSplit
+	eyebrow="Domains"
+	title="Send from any domain, fully verified"
+	description="Hyvor Relay automates DKIM, SPF, PTR, and the other DNS records required for SMTP & TLS, so every domain you add is cryptographically signed and verifiable."
+	bullets={[
+		'DKIM signing enforced on every domain',
+		'SPF and PTR records configured automatically',
+		'Verify ownership with a single DNS TXT record'
+	]}
+	button={{ href: '/docs/domains', label: 'Read the docs' }}
+	flip
+>
+	{#snippet visual()}
+		<div class="hds-box screenshot">
+			<img
+				src="/img/docs/domains-dns.png"
+				alt="DKIM DNS record verification modal in Hyvor Relay"
+			/>
+		</div>
+	{/snippet}
+</FeatureSplit>
 
-    <h3 id="features">Self-Hosting</h3>
+<SpotlightSplit
+	title="Built to scale on your own infrastructure."
+	description="Designed to scale horizontally by adding more servers and workers. Deploy with Docker Compose or Docker Swarm — Hyvor Relay load balances email sending across every app server."
+	stats={['Horizontal scaling', 'Docker Swarm ready']}
+	button={{ href: '/hosting/scaling', label: 'Learn about scaling' }}
+	background="#243660"
+	highlightColor="rgba(200, 220, 255, 0.9)"
+>
+	{#snippet content()}
+		<div class="hds-box arch-visual">
+			<img
+				src="/img/docs/intro-arch.png"
+				alt="Hyvor Relay self-hosted architecture diagram"
+			/>
+		</div>
+	{/snippet}
+</SpotlightSplit>
 
-    <div class="features">
-        <Feature
-                title="Open-Source"
-                icon={IconCode}
-                docsLink="https://github.com/hyvor/relay"
-                docsText="View on GitHub"
-                docsBlank={true}
-        >
-            Fully open-source under AGPL-3.0. Built for developers who want control. Deploy,
-            inspect, and modify Hyvor Relay on your own infrastructure with zero vendor lock-in.
-        </Feature>
-        <Feature
-                title="Commercial Support"
-                icon={IconBuilding}
-                docsLink="https://hyvor.com/docs/hosting-license"
-                docsText="Why an Enterprise License?"
-                docsBlank={true}
-        >
-            Self-hosted, enterprise-ready. Get priority updates and expert support directly from the
-            HYVOR team with an enterprise license.
-        </Feature>
-        <Feature
-                title="Deliverability"
-                icon={IconTruck}
-                docsLink="/hosting/deliverability"
-                docsText="Learn more"
-        >
-            Deliver every email that matters. SPF, reverse DNS, multiple IPs, queue isolation -
-            industry best practices baked in from day one.
-        </Feature>
-        <Feature title="Health Checks" icon={IconActivity}>
-            Know before anything breaks. Get instant alerts for server issues, DNS errors, or IP
-            reputation drops so you can fix them fast.
-        </Feature>
-        <Feature title="Scalability" icon={IconArrowsAngleExpand} docsLink="/hosting/scaling">
-            Built to grow with your workloads. Scale horizontally on any cloud or on-prem setup with
-            Docker Swarm.
-        </Feature>
-        <Feature title="In-built DNS Server" icon={IconDatabase}>
-            DNS automation, done right. Relay includes an integrated DNS server that manages forward
-            records, MX, SPF, and DKIM - no manual setup required.
-        </Feature>
-        <Feature title="Observability" icon={IconGraphUp} docsLink="/hosting/monitoring">
-            Visibility for every metric that matters. Native integrations with Prometheus and
-            Grafana let you monitor performance, alerts, and logs in one place.
-        </Feature>
-    </div>
-</div>
+<AllFeaturesAccordion
+	description="Everything else you need to run production email at scale."
+	{categories}
+/>
 
 <style>
-    h3 {
-        font-size: 32px;
-        line-height: 40px;
-        margin-top: 60px;
-        margin-bottom: 40px;
-    }
+	.screenshot {
+		padding: 12px;
+		overflow: hidden;
+	}
 
-    .features {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 24px;
-    }
+	.screenshot img {
+		display: block;
+		width: 100%;
+		border-radius: 8px;
+	}
 
-    /*	mobile style */
-    @media (max-width: 976px) {
-        .features {
-            grid-template-columns: 1fr;
-            justify-content: center;
-        }
+	.arch-visual {
+		width: 460px;
+		max-width: 100%;
+		padding: 20px;
+		box-sizing: border-box;
+	}
 
-        h3 {
-            text-align: center;
-        }
-    }
+	.arch-visual img {
+		display: block;
+		width: 100%;
+	}
 </style>
