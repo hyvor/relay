@@ -91,8 +91,8 @@ func TestSendEmail_UsesPrivateIpForBindWhenSet(t *testing.T) {
 
 	var boundIp string
 
-	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+	originalSendEmailToHost := sendEmailToHostContext
+	sendEmailToHostContext = func(_ context.Context, _ *SharedCache, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
 		boundIp = ip
 		return &SmtpConversation{
 			NetworkError: nil,
@@ -108,14 +108,10 @@ func TestSendEmail_UsesPrivateIpForBindWhenSet(t *testing.T) {
 		}
 	}
 
-	mxCache.data["hyvor.com"] = mxCacheEntry{
-		Hosts:  []string{"mx.hyvor.com"},
-		Expiry: time.Now().Add(1 * time.Hour),
-	}
+	seedTestMxCache(t)
 
 	defer func() {
-		sendEmailToHost = originalSendEmailToHost
-		delete(mxCache.data, "hyvor.com")
+		sendEmailToHostContext = originalSendEmailToHost
 	}()
 
 	result := sendEmailHandler(
@@ -141,8 +137,8 @@ func TestSendEmail_UsesPublicIpForBindWhenPrivateIpNotSet(t *testing.T) {
 
 	var boundIp string
 
-	originalSendEmailToHost := sendEmailToHost
-	sendEmailToHost = func(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string) *SmtpConversation {
+	originalSendEmailToHost := sendEmailToHostContext
+	sendEmailToHostContext = func(_ context.Context, _ *SharedCache, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
 		boundIp = ip
 		return &SmtpConversation{
 			NetworkError: nil,
@@ -158,14 +154,10 @@ func TestSendEmail_UsesPublicIpForBindWhenPrivateIpNotSet(t *testing.T) {
 		}
 	}
 
-	mxCache.data["hyvor.com"] = mxCacheEntry{
-		Hosts:  []string{"mx.hyvor.com"},
-		Expiry: time.Now().Add(1 * time.Hour),
-	}
+	seedTestMxCache(t)
 
 	defer func() {
-		sendEmailToHost = originalSendEmailToHost
-		delete(mxCache.data, "hyvor.com")
+		sendEmailToHostContext = originalSendEmailToHost
 	}()
 
 	result := sendEmailHandler(
