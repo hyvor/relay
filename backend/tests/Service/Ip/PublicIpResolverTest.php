@@ -92,7 +92,7 @@ class PublicIpResolverTest extends KernelTestCase
         $resolver = $this->getService(PublicIpResolver::class);
         $resolver->resolve('10.0.1.5');
 
-        $this->assertSame('10.0.1.5', $mockResponse->getRequestOptions()['local_ip']);
+        $this->assertSame('10.0.1.5:0', $mockResponse->getRequestOptions()['bindto']);
     }
 
 }

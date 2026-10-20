@@ -34,7 +34,7 @@ class IpAddress
     #[ORM\JoinColumn()]
     private ?Queue $queue;
 
-    #[ORM\Column(type: 'string', length: 45, nullable: true)]
+    #[ORM\Column(type: 'string', nullable: true)]
     private ?string $private_ip_address = null;
 
     #[ORM\Column(type: 'boolean')]

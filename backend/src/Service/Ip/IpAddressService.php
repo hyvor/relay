@@ -68,36 +68,52 @@ class IpAddressService
      */
     public function updateIpAddressesOfServer(Server $server): void
     {
-        $currentEntitiesInDb = $this->getIpAddressesOfServer($server);
-
-        /** @var array<string, IpAddress> $entitiesByPublicIp */
-        $entitiesByPublicIp = [];
-        foreach ($currentEntitiesInDb as $entity) {
-            $entitiesByPublicIp[$entity->getIpAddress()] = $entity;
-        }
-
         $serverIpData = $this->serverIpResolver->resolveIps();
 
-        $serverPublicIps = array_map(fn(ResolvedIp $r) => $r->publicIp, $serverIpData);
+        $this->em->wrapInTransaction(function () use ($server, $serverIpData) {
+            $currentEntitiesInDb = $this->getIpAddressesOfServer($server);
 
-        foreach ($serverIpData as $result) {
-            if (!isset($entitiesByPublicIp[$result->publicIp])) {
-                $this->createIpAddress($server, $result->publicIp, $result->privateIp);
-            } elseif ($entitiesByPublicIp[$result->publicIp]->getPrivateIpAddress() !== $result->privateIp) {
+            /** @var array<string, IpAddress> $entitiesByPublicIp */
+            $entitiesByPublicIp = [];
+            foreach ($currentEntitiesInDb as $entity) {
+                $entitiesByPublicIp[$entity->getIpAddress()] = $entity;
+            }
+
+            $serverPublicIps = array_map(fn(ResolvedIp $r) => $r->publicIp, $serverIpData);
+
+            foreach ($currentEntitiesInDb as $entity) {
+                if (!in_array($entity->getIpAddress(), $serverPublicIps)) {
+                    $this->deleteIpAddress($entity);
+                }
+            }
+
+            /** @var ResolvedIp[] $changedIps */
+            $changedIps = [];
+            foreach ($serverIpData as $result) {
+                $entity = $entitiesByPublicIp[$result->publicIp] ?? null;
+                if ($entity !== null && $entity->getPrivateIpAddress() !== $result->privateIp) {
+                    $changedIps[] = $result;
+                }
+            }
+
+            foreach ($changedIps as $result) {
+                $entitiesByPublicIp[$result->publicIp]->setPrivateIpAddress(null);
+            }
+            $this->em->flush();
+
+            foreach ($changedIps as $result) {
                 $entity = $entitiesByPublicIp[$result->publicIp];
                 $entity->setPrivateIpAddress($result->privateIp);
                 $entity->setUpdatedAt($this->now());
-                $this->em->persist($entity);
-                $this->em->flush();
             }
-        }
+            $this->em->flush();
 
-        // Delete IP addresses no longer on the server
-        foreach ($currentEntitiesInDb as $entity) {
-            if (!in_array($entity->getIpAddress(), $serverPublicIps)) {
-                $this->deleteIpAddress($entity);
+            foreach ($serverIpData as $result) {
+                if (!isset($entitiesByPublicIp[$result->publicIp])) {
+                    $this->createIpAddress($server, $result->publicIp, $result->privateIp);
+                }
             }
-        }
+        });
     }
 
     public function createIpAddress(Server $server, string $ipAddress, ?string $privateIpAddress = null): IpAddress
