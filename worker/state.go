@@ -28,8 +28,8 @@ type GoState struct {
 }
 
 type GoStateMailTls struct {
-	Enabled    bool   `json:"enabled"`
-	PrivateKey string `json:"privateKey"`
+	Enabled     bool   `json:"enabled"`
+	PrivateKey  string `json:"privateKey"`
 	Certificate string `json:"certificate"`
 }
 
@@ -55,6 +55,7 @@ func (g GoState) IpQueueMapString() string {
 type GoStateIp struct {
 	Id        int    `json:"id"`
 	Ip        string `json:"ip"`
+	PrivateIp string `json:"privateIp"`
 	Ptr       string `json:"ptr"`
 	QueueId   int    `json:"queueId"`
 	QueueName string `json:"queueName"`

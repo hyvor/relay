@@ -19,8 +19,7 @@ class GoStateFactory
         private Config $config,
         private GoStateDnsRecordsService $goStateService,
         private TlsCertificateService $tlsCertificateService
-    ) {
-    }
+    ) {}
 
     public function create(): GoState
     {
@@ -48,6 +47,7 @@ class GoStateFactory
             $ips[] = new GoStateIp(
                 id: $ip->getId(),
                 ip: $ip->getIpAddress(),
+                privateIp: $ip->getPrivateIpAddress(),
                 ptr: Ptr::getPtrDomain($ip, $this->config->getInstanceDomain()),
                 queueId: $queue->getId(),
                 queueName: $queue->getName(),
@@ -88,5 +88,4 @@ class GoStateFactory
             version: $this->config->getAppVersion(),
         );
     }
-
 }
