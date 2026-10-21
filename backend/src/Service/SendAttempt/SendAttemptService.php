@@ -4,8 +4,10 @@ namespace App\Service\SendAttempt;
 
 use App\Entity\Send;
 use App\Entity\SendAttempt;
+use App\Entity\SendRecipient;
 use App\Entity\Type\BounceReason;
 use App\Entity\Type\SendAttemptStatus;
+use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SuppressionReason;
 use App\Service\InfrastructureBounce\InfrastructureBounceService;
 use App\Service\SendRecipient\SendRecipientService;
@@ -36,6 +38,23 @@ class SendAttemptService
     public function getSendAttemptById(int $id): ?SendAttempt
     {
         return $this->em->getRepository(SendAttempt::class)->find($id);
+    }
+
+    public function getAcceptedSendAttemptOfRecipient(SendRecipient $sendRecipient): ?SendAttempt
+    {
+        /** @var ?SendAttempt $sendAttempt */
+        $sendAttempt = $this->em->createQuery(<<<DQL
+            SELECT sa FROM App\Entity\SendAttempt sa
+            JOIN sa.recipients sar
+            WHERE sar.send_recipient_id = :sendRecipientId
+            AND sar.recipient_status = :status
+        DQL)
+            ->setParameter('sendRecipientId', $sendRecipient->getId())
+            ->setParameter('status', SendRecipientStatus::ACCEPTED)
+            ->setMaxResults(1)
+            ->getOneOrNullResult();
+
+        return $sendAttempt;
     }
 
     /**
