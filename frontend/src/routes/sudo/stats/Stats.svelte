@@ -43,9 +43,9 @@
 		const labels = {
 			'30d': 'Last 30 days',
 			'7d': 'Last 7 days',
-			'24h': 'Last 24 hours'
+			'24h': 'Today'
 		};
-		return labels[period as keyof typeof labels] || 'Last 24 hours';
+		return labels[period as keyof typeof labels] || 'Today';
 	}
 
 	function getRateColor(value: number): string {
@@ -66,7 +66,7 @@
 			variant={selectedPeriod === '24h' ? 'fill' : 'outline'}
 			onclick={() => setPeriod('24h')}
 		>
-			24h
+			Today
 		</Button>
 		<Button
 			size="x-small"
