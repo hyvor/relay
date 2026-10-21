@@ -642,6 +642,16 @@ func TestEmailWorker_AttemptSendToDomain_BounceReason(t *testing.T) {
 			QueueId: send.QueueId,
 		},
 		metrics: newMetrics(),
+		SendEmailContextFunc: func(
+			ctx context.Context,
+			send *SendRow,
+			recipients []*RecipientRow,
+			rcptDomain, instanceDomain string,
+			ipId int,
+			ip, ptr string,
+		) *SendResult {
+			return sendEmail(send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr)
+		},
 	}
 
 	// Test recipient bounce (5.1.1)
@@ -743,6 +753,16 @@ func TestEmailWorker_AttemptSendToDomain_BounceReason(t *testing.T) {
 			QueueId: send2.QueueId,
 		},
 		metrics: newMetrics(),
+		SendEmailContextFunc: func(
+			ctx context.Context,
+			send *SendRow,
+			recipients []*RecipientRow,
+			rcptDomain, instanceDomain string,
+			ipId int,
+			ip, ptr string,
+		) *SendResult {
+			return sendEmail(send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr)
+		},
 	}
 
 	sendEmail = func(
