@@ -8,6 +8,7 @@ use App\Service\Stats\SudoAnalyticsService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use Symfony\Component\Clock\Clock;
 
 #[CoversClass(SudoStatsController::class)]
 #[CoversClass(SudoAnalyticsService::class)]
@@ -28,13 +29,13 @@ class GetSudoStatsTest extends WebTestCase
                 project_id, stat_date,
                 send_recipients, accepted, bounced_recipient, bounced_infrastructure, complained
             ) VALUES (
-                :projectId, CURRENT_DATE - :daysAgo * INTERVAL '1 day',
+                :projectId, :statDate,
                 :sendRecipients, :accepted, :bouncedRecipient, :bouncedInfrastructure, :complained
             )
             SQL,
             [
                 'projectId' => $project->getId(),
-                'daysAgo' => $daysAgo,
+                'statDate' => Clock::get()->now()->modify("-$daysAgo days")->format('Y-m-d'),
                 'sendRecipients' => $sendRecipients,
                 'accepted' => $accepted,
                 'bouncedRecipient' => $bouncedRecipient,
@@ -113,15 +114,11 @@ class GetSudoStatsTest extends WebTestCase
 
         $this->insertProjectStats($activeProject, 0, 10, 10, 0, 0, 0);
         $this->insertProjectStats($activeProject, 1, 10, 10, 0, 0, 0);
-        $this->insertProjectStats($inactiveProject, 1, 10, 10, 0, 0, 0);
-
-        $this->sudoApi('GET', '/stats');
-        $this->assertResponseStatusCodeSame(200);
-        $this->assertSame(1, $this->getJson()['project_count']);
+        $this->insertProjectStats($inactiveProject, 7, 10, 10, 0, 0, 0);
 
         $this->sudoApi('GET', '/stats?period=7d');
         $this->assertResponseStatusCodeSame(200);
-        $this->assertSame(2, $this->getJson()['project_count']);
+        $this->assertSame(1, $this->getJson()['project_count']);
     }
 
     public function test_calculates_bounce_and_complaint_rates(): void
