@@ -24,7 +24,9 @@ class SudoAnalyticsService
         $result = $this->em->getConnection()->executeQuery(
             <<<SQL
             SELECT
+                COUNT(DISTINCT project_id) AS project_count,
                 COALESCE(SUM(send_recipients), 0) AS total_send_recipients,
+                COALESCE(SUM(accepted), 0) AS total_accepted,
                 COALESCE(SUM(bounced_recipient + bounced_infrastructure + bounced_unknown), 0) AS total_bounced,
                 COALESCE(SUM(complained), 0) AS total_complained
             FROM stats_project
@@ -36,30 +38,25 @@ class SudoAnalyticsService
         /** @var array<string, int|string> $globalStats */
         $globalStats = $result->fetchAssociative();
 
-        $projectCount = $this->em->getConnection()->fetchOne(
-            'SELECT COUNT(*) FROM projects'
-        );
-        $projectCount = is_scalar($projectCount) ? (int) $projectCount : 0;
-
         $totalRecipients = (int) $globalStats['total_send_recipients'];
+        $totalAccepted = (int) $globalStats['total_accepted'];
         $totalBounced = (int) $globalStats['total_bounced'];
         $totalComplained = (int) $globalStats['total_complained'];
 
         return [
-            'project_count' => $projectCount,
+            'project_count' => (int) $globalStats['project_count'],
             'sends' => $totalRecipients,
             'bounce_rate' => $totalRecipients > 0 ? round($totalBounced / $totalRecipients, 4) : 0.0,
-            'complaint_rate' => $totalRecipients > 0 ? round($totalComplained / $totalRecipients, 4) : 0.0,
+            'complaint_rate' => $totalAccepted > 0 ? round($totalComplained / $totalAccepted, 4) : 0.0,
         ];
     }
 
     private function getPeriodDateModifier(string $period): string
     {
         return match ($period) {
-            '24h' => '-1 day',
-            '7d' => '-7 days',
-            '30d' => '-30 days',
-            default => '-1 day',
+            '7d' => '-6 days',
+            '30d' => '-29 days',
+            default => 'today',
         };
     }
 }
