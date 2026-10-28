@@ -129,6 +129,26 @@ class ServerIpResolverTest extends KernelTestCase
         $this->assertSame([], $addresses);
     }
 
+    public function test_resolve_ips_behind_nat_throws_when_private_ips_share_a_public_ip(): void
+    {
+        $this->setConfig('natNetwork', '10.0.0.0/8');
+        $this->setConfig('natMap', '');
+
+        $publicIpResolverStub = $this->createStub(PublicIpResolver::class);
+        $publicIpResolverStub->method('resolve')->willReturn('1.1.1.1');
+        $this->container->set(PublicIpResolver::class, $publicIpResolverStub);
+
+        $ipService = $this->getService(ServerIpResolver::class);
+        $ipService->mockNetGetInterfacesFunction(fn() => $this->fakeInterfaces(['10.0.1.5', '10.0.1.6']));
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage(
+            'Only 1:1 NAT is supported, but private IPs 10.0.1.5 and 10.0.1.6 both map to public IP 1.1.1.1.',
+        );
+
+        $ipService->resolveIps();
+    }
+
     /**
      * @param string[] $addresses
      * @return array<mixed>

@@ -91,6 +91,9 @@ class ServerIpResolver
         $natMap = $this->parseNatMap();
         $results = [];
 
+        /** @var array<string, string> $privateIpByPublicIp */
+        $privateIpByPublicIp = [];
+
         foreach ($privateIps as $privateIp) {
             $publicIp = $natMap[$privateIp] ?? $this->publicIpResolver->resolve($privateIp);
 
@@ -99,6 +102,14 @@ class ServerIpResolver
                 'public_ip' => $publicIp,
                 'method' => isset($natMap[$privateIp]) ? 'NAT Map' : 'External Resolver',
             ]);
+
+            if (isset($privateIpByPublicIp[$publicIp])) {
+                throw new \RuntimeException(
+                    "Only 1:1 NAT is supported, but private IPs {$privateIpByPublicIp[$publicIp]} and $privateIp " .
+                    "both map to public IP $publicIp. Each private IP in NAT_NETWORK must map to a distinct public IP.",
+                );
+            }
+            $privateIpByPublicIp[$publicIp] = $privateIp;
 
             $results[] = new ResolvedIp($publicIp, $privateIp);
         }
