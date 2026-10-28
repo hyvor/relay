@@ -3,8 +3,9 @@
 namespace App\Service\InfrastructureBounce;
 
 use App\Entity\InfrastructureBounce;
-use Doctrine\Common\Collections\ArrayCollection;
+use App\Entity\SendRecipient;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Query\Expr\Join;
 
 class InfrastructureBounceService
 {
@@ -46,13 +47,15 @@ class InfrastructureBounceService
      * @param int $limit
      * @param int $offset
      * @param bool|null $isRead
-     * @return ArrayCollection<int, InfrastructureBounce>
+     * @return array<int, array{bounce: InfrastructureBounce, send_uuid: ?string, recipient_email: ?string}>
      */
-    public function getInfrastructureBounces(int $limit, int $offset, ?bool $isRead = null): ArrayCollection
+    public function getInfrastructureBounces(int $limit, int $offset, ?bool $isRead = null): array
     {
         $qb = $this->em->createQueryBuilder();
-        $qb->select('ib')
+        $qb->select('ib', 'sr.address AS recipientEmail', 's.uuid AS sendUuid')
             ->from(InfrastructureBounce::class, 'ib')
+            ->leftJoin(SendRecipient::class, 'sr', Join::WITH, 'sr.id = ib.send_recipient_id')
+            ->leftJoin('sr.send', 's')
             ->orderBy('ib.id', 'DESC')
             ->setMaxResults($limit)
             ->setFirstResult($offset);
@@ -62,10 +65,14 @@ class InfrastructureBounceService
                 ->setParameter('isRead', $isRead);
         }
 
-        /** @var InfrastructureBounce[] $results */
-        $results = $qb->getQuery()->getResult();
+        /** @var array<int, array{0: InfrastructureBounce, sendUuid: ?string, recipientEmail: ?string}> $rows */
+        $rows = $qb->getQuery()->getResult();
 
-        return new ArrayCollection($results);
+        return array_map(fn(array $row) => [
+            'bounce' => $row[0],
+            'send_uuid' => $row['sendUuid'],
+            'recipient_email' => $row['recipientEmail'],
+        ], $rows);
     }
 
     public function getInfrastructureBounceById(int $id): ?InfrastructureBounce

@@ -18,7 +18,7 @@
 	import InstanceDomain from './InstanceDomain.svelte';
 	import { onMount } from 'svelte';
 	import { initSudo } from './sudoActions';
-	import { instanceStore, sudoConfigStore } from './sudoStore';
+	import { instanceStore, ipAddressesStore, serversStore, sudoConfigStore } from './sudoStore';
 	import IconGear from '@hyvor/icons/IconGear';
 	import IconBug from '@hyvor/icons/IconBug';
 	import IconHouse from '@hyvor/icons/IconHouse';
@@ -39,6 +39,8 @@
 			.then((res) => {
 				sudoConfigStore.set(res.config);
 				instanceStore.set(res.instance);
+				serversStore.set(res.servers);
+				ipAddressesStore.set(res.ip_addresses);
 				loading = false;
 			})
 			.catch((err) => {
@@ -75,7 +77,8 @@
 					type: 'none',
 					subscription: null,
 					license: null,
-					trial_ends_at: null
+					trial_ends_at: null,
+					complimentary_licenses: []
 				},
 				organization: null,
 				user: $sudoConfigStore.user,
@@ -84,7 +87,7 @@
 				}
 			}}
 		>
-			<HyvorBar />
+			<HyvorBar logo="/img/logo.svg" />
 			<main>
 				<div id="wrap">
 					<nav>

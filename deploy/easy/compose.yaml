@@ -29,6 +29,9 @@ services:
     network_mode: "host"
     env_file:
       - .env
+    volumes:
+      - relay_media:/app/media
 
 volumes:
   postgres_data:
+  relay_media:

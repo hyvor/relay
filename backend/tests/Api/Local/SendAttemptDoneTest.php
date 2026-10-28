@@ -21,6 +21,7 @@ use App\Tests\Factory\SendFactory;
 use App\Tests\Factory\SendRecipientFactory;
 use Hyvor\Internal\Bundle\Testing\TestEventDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
+use function Zenstruck\Foundry\Persistence\refresh;
 
 #[CoversClass(LocalController::class)]
 #[CoversClass(SendService::class)]
@@ -106,6 +107,8 @@ class SendAttemptDoneTest extends WebTestCase
             'smtp_enhanced_code' => '5.7.1',
             'smtp_message' => 'User unknown',
         ]);
+
+        refresh($send);
 
         $this->localApi(
             "POST",

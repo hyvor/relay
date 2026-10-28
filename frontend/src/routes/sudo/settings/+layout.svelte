@@ -3,6 +3,7 @@
 	import { NavLink, NavLinkGroup } from '@hyvor/design/components';
 	import IconCardText from '@hyvor/icons/IconCardText';
 	import IconGlobe2 from '@hyvor/icons/IconGlobe';
+	import IconThermometerHigh from '@hyvor/icons/IconThermometerHigh';
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -28,6 +29,16 @@
 					<IconGlobe2 />
 				{/snippet}
 				DNS
+			</NavLink>
+
+			<NavLink
+				href="/sudo/settings/ip-warmups"
+				active={page.url.pathname.startsWith('/sudo/settings/ip-warmups')}
+			>
+				{#snippet start()}
+					<IconThermometerHigh />
+				{/snippet}
+				IP Warmups
 			</NavLink>
 
 			<div class="section-div"></div>

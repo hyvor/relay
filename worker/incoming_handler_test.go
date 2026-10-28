@@ -80,6 +80,9 @@ This is a test email message.
 	var calledEndpoint string
 	var calledBody interface{}
 
+	originalCallLocalApi := CallLocalApi
+	defer func() { CallLocalApi = originalCallLocalApi }()
+
 	CallLocalApi = func(
 		ctx context.Context,
 		method,
@@ -147,6 +150,9 @@ Return-Path: <return@hyvor.com>
 	var calledMethod string
 	var calledEndpoint string
 	var calledBody interface{}
+
+	originalCallLocalApi2 := CallLocalApi
+	defer func() { CallLocalApi = originalCallLocalApi2 }()
 
 	CallLocalApi = func(
 		ctx context.Context,

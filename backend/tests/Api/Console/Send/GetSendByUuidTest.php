@@ -2,8 +2,8 @@
 
 namespace App\Tests\Api\Console\Send;
 
-use App\Api\Console\Authorization\Scope;
-use App\Api\Console\Controller\SendController;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
+use App\Api\Console\Controller\SendsController;
 use App\Api\Console\Object\SendAttemptObject;
 use App\Api\Console\Object\SendObject;
 use App\Service\Send\SendService;
@@ -16,7 +16,7 @@ use App\Tests\Factory\SendFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\Uid\Uuid;
 
-#[CoversClass(SendController::class)]
+#[CoversClass(SendsController::class)]
 #[CoversClass(SendService::class)]
 #[CoversClass(SendObject::class)]
 #[CoversClass(SendAttemptObject::class)]
@@ -46,7 +46,7 @@ class GetSendByUuidTest extends WebTestCase
             $project,
             'GET',
             '/sends/uuid/' . $send->getUuid(),
-            scopes: [Scope::SENDS_READ]
+            scopes: [RelayScope::SENDS_READ]
         );
 
         $this->assertSame(200, $response->getStatusCode());
@@ -55,6 +55,7 @@ class GetSendByUuidTest extends WebTestCase
 
         $this->assertArrayHasKey('id', $json);
         $this->assertSame($send->getId(), $json['id']);
+        $this->assertArrayHasKey('ip_address', $json);
 
         $attempts = $json['attempts'];
         $this->assertIsArray($attempts);
@@ -70,7 +71,7 @@ class GetSendByUuidTest extends WebTestCase
             $project,
             'GET',
             '/sends/uuid/' . $uuid,
-            scopes: [Scope::SENDS_READ]
+            scopes: [RelayScope::SENDS_READ]
         );
 
         $this->assertSame(404, $response->getStatusCode());
@@ -96,7 +97,7 @@ class GetSendByUuidTest extends WebTestCase
             $otherProject,
             'GET',
             '/sends/uuid/' . $send->getUuid(),
-            scopes: [Scope::SENDS_READ]
+            scopes: [RelayScope::SENDS_READ]
         );
 
         $this->assertSame(400, $response->getStatusCode());

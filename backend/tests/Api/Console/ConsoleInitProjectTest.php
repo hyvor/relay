@@ -17,7 +17,7 @@ class ConsoleInitProjectTest extends WebTestCase
     public function test_init_project(): void
     {
         $project = ProjectFactory::createOne([
-            'user_id' => 1,
+            'organization_id' => 1,
         ]);
 
         $response = $this->consoleApi(

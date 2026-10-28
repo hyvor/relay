@@ -24,11 +24,8 @@
 	}
 </script>
 
-<div class="wrap hds-box" class:dead={!server.is_alive}>
+<div class="wrap" class:dead={!server.is_alive}>
 	<div class="row">
-		<div class="id">
-			({server.id})
-		</div>
 		<div class="hostname">
 			{server.hostname}
 
@@ -52,8 +49,14 @@
 
 	<div class="tabs">
 		<TabNav>
-			<TabNavItem name="ips" active={activeTab === 'ips'} onclick={() => activeTab= 'ips'}>Ip Addresses</TabNavItem>
-			<TabNavItem name="settings" active={activeTab === 'settings'} onclick={() => activeTab= 'settings'}>Settings</TabNavItem>
+			<TabNavItem name="ips" active={activeTab === 'ips'} onclick={() => (activeTab = 'ips')}
+				>Ip Addresses</TabNavItem
+			>
+			<TabNavItem
+				name="settings"
+				active={activeTab === 'settings'}
+				onclick={() => (activeTab = 'settings')}>Settings</TabNavItem
+			>
 		</TabNav>
 	</div>
 
@@ -72,6 +75,7 @@
 								<IconBoxArrowUpRight size={12} />
 							</a>
 						</th>
+						<th>Warmup</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -97,7 +101,7 @@
 	.wrap {
 		padding: 25px 35px;
 		border-right: 25px solid var(--green-light);
-		margin-bottom: 20px;
+		border-bottom: 1px solid var(--border);
 	}
 	.wrap.dead {
 		border-right-color: var(--red-light);
@@ -107,11 +111,6 @@
 		align-items: center;
 		margin-bottom: 15px;
 		border-radius: 20px;
-	}
-	.id {
-		margin-right: 8px;
-		color: var(--text-light);
-		font-size: 14px;
 	}
 	.hostname {
 		flex: 1;

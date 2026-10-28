@@ -21,20 +21,20 @@ class DomainObject
     public ?int $dkim_checked_at;
     public ?string $dkim_error_message;
 
-    public function __construct(Domain $domain)
+    public function __construct(Domain $domainEntity)
     {
-        $this->id = $domain->getId();
-        $this->created_at = $domain->getCreatedAt()->getTimestamp();
-        $this->domain = $domain->getDomain();
-        $this->status = $domain->getStatus();
-        $this->status_changed_at = $domain->getStatusChangedAt()->getTimestamp();
+        $this->id = $domainEntity->getId();
+        $this->created_at = $domainEntity->getCreatedAt()->getTimestamp();
+        $this->domain = $domainEntity->getDomain();
+        $this->status = $domainEntity->getStatus();
+        $this->status_changed_at = $domainEntity->getStatusChangedAt()->getTimestamp();
 
-        $this->dkim_selector = $domain->getDkimSelector();
-        $this->dkim_host = Dkim::dkimHost($domain->getDkimSelector(), $domain->getDomain());
-        $this->dkim_public_key = $domain->getDkimPublicKey();
-        $this->dkim_txt_value = Dkim::dkimTxtValue($domain->getDkimPublicKey());
-        $this->dkim_checked_at = $domain->getDkimCheckedAt()?->getTimestamp();
-        $this->dkim_error_message = $domain->getDkimErrorMessage();
+        $this->dkim_selector = $domainEntity->getDkimSelector();
+        $this->dkim_host = Dkim::dkimHost($domainEntity->getDkimSelector(), $domainEntity->getDomain());
+        $this->dkim_public_key = $domainEntity->getDkimPublicKey();
+        $this->dkim_txt_value = Dkim::dkimTxtValue($domainEntity->getDkimPublicKey());
+        $this->dkim_checked_at = $domainEntity->getDkimCheckedAt()?->getTimestamp();
+        $this->dkim_error_message = $domainEntity->getDkimErrorMessage();
     }
 
 }

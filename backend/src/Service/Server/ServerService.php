@@ -25,9 +25,20 @@ class ServerService
     /**
      * @return Server[]
      */
-    public function getServers(): array
+    public function getServers(?string $search = null): array
     {
-        return $this->em->getRepository(Server::class)->findBy([], orderBy: ['id' => 'ASC']);
+        $qb = $this->em->createQueryBuilder()
+            ->select('s')
+            ->from(Server::class, 's')
+            ->orderBy('s.id', 'DESC');
+
+        if ($search !== null && $search !== '') {
+            $qb->andWhere('LOWER(s.hostname) LIKE LOWER(:search)')
+                ->setParameter('search', '%' . $search . '%');
+        }
+
+        /** @var Server[] */
+        return $qb->getQuery()->getResult();
     }
 
     public function getServersCount(): int

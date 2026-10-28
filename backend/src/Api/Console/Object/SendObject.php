@@ -5,6 +5,8 @@ namespace App\Api\Console\Object;
 use App\Entity\Send;
 use App\Entity\SendAttempt;
 use App\Entity\SendFeedback;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use OpenApi\Attributes as OA;
 
 class SendObject
 {
@@ -14,28 +16,27 @@ class SendObject
     public string $from_address;
     public ?string $from_name;
     public ?string $subject;
-    public ?string $body_html;
-    public ?string $body_text;
-    /** @var array<string, string> */
-    public array $headers;
-    public string $raw;
     public int $size_bytes;
     public bool $queued;
     public int $send_after;
+    public ?string $ip_address;
 
     /**
-     * @var SendRecipientObject[]
+     * @var list<SendRecipientObject>
      */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: SendRecipientObject::class)))]
     public array $recipients = [];
 
     /**
-     * @var SendAttemptObject[]
+     * @var list<SendAttemptObject>
      */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: SendAttemptObject::class)))]
     public array $attempts = [];
 
     /**
-     * @var SendFeedbackObject[]
+     * @var list<SendFeedbackObject>
      */
+    #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: SendFeedbackObject::class)))]
     public array $feedback = [];
 
     /**
@@ -46,7 +47,6 @@ class SendObject
         Send $send,
         array $attempts = [],
         array $feedback = [],
-        bool $content = false
     ) {
         $this->id = $send->getId();
         $this->uuid = $send->getUuid();
@@ -54,17 +54,22 @@ class SendObject
         $this->from_address = $send->getFromAddress();
         $this->from_name = $send->getFromName();
         $this->subject = $send->getSubject();
-        $this->body_html = $content ? $send->getBodyHtml() : null;
-        $this->body_text = $content ? $send->getBodyText() : null;
-        $this->headers = $send->getHeaders();
-        $this->raw = $content ? $send->getRaw() : '';
         $this->size_bytes = $send->getSizeBytes();
         $this->queued = $send->getQueued();
         $this->send_after = $send->getSendAfter()->getTimestamp();
+        $this->ip_address = $send->getIpAddress()?->getIpAddress();
 
-        $this->recipients = array_map(fn($recipient) => new SendRecipientObject($recipient),
-            $send->getRecipients()->toArray());
-        $this->attempts = array_map(fn(SendAttempt $attempt) => new SendAttemptObject($attempt), $attempts);
-        $this->feedback = array_map(fn(SendFeedback $fb) => new SendFeedbackObject($fb), $feedback);
+        $this->recipients = array_values(array_map(
+            fn($recipient) => new SendRecipientObject($recipient),
+            $send->getRecipients()->toArray()
+        ));
+        $this->attempts = array_values(array_map(
+            fn(SendAttempt $attempt) => new SendAttemptObject($attempt),
+            $attempts
+        ));
+        $this->feedback = array_values(array_map(
+            fn(SendFeedback $fb) => new SendFeedbackObject($fb),
+            $feedback
+        ));
     }
 }

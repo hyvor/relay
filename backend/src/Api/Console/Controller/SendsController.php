@@ -1,0 +1,391 @@
+<?php
+
+namespace App\Api\Console\Controller;
+
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ScopeRequired;
+use App\Api\Console\Idempotency\IdempotencySupported;
+use App\Api\Console\Input\RetrySendInput;
+use App\Api\Console\Input\SendEmail\SendEmailInput;
+use App\Api\Console\Input\SendEmail\UnableToDecodeAttachmentBase64Exception;
+use App\Api\Console\Object\SendContentObject;
+use App\Api\Console\Object\SendObject;
+use App\Entity\Project;
+use App\Entity\Send;
+use App\Entity\Type\ProjectSendType;
+use App\Entity\Type\SendRecipientStatus;
+use App\Service\Domain\DomainService;
+use App\Service\Queue\QueueService;
+use App\Service\Send\EmailAddressFormat;
+use App\Service\Send\Exception\EmailTooLargeException;
+use App\Service\Send\Exception\SendContentStorageException;
+use App\Service\Send\SendContentStorage;
+use App\Service\Send\SendLimits;
+use App\Service\Send\SendService;
+use App\Service\SendAttempt\SendAttemptService;
+use App\Service\SendFeedback\SendFeedbackService;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use OpenApi\Attributes as OA;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Clock\ClockAwareTrait;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
+
+class SendsController extends AbstractController
+{
+    use ClockAwareTrait;
+
+    public function __construct(
+        private SendService $sendService,
+        private SendContentStorage $sendContentStorage,
+        private SendAttemptService $sendAttemptService,
+        private SendFeedbackService $sendFeedbackService,
+        private DomainService $domainService,
+        private QueueService $queueService,
+    ) {}
+
+    #[Route("/sends", methods: "POST")]
+    #[ScopeRequired(RelayScope::SENDS_SEND)]
+    #[IdempotencySupported]
+    #[OA\Post(
+        summary: 'Send an email',
+        description: 'Sends an email from the project. Supports To, Cc, Bcc, attachments, and custom headers.'
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns the created send ID and Message-ID.',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'id', type: 'integer'),
+                new OA\Property(property: 'message_id', type: 'string'),
+            ]
+        )
+    )]
+    public function send(
+        Project $project,
+        #[MapRequestPayload] SendEmailInput $sendEmailInput
+    ): JsonResponse {
+        $fromAddress = $sendEmailInput->getFromAddress();
+
+        $domainName = EmailAddressFormat::getDomainFromEmail($fromAddress->getAddress());
+        $domain = $this->domainService->getDomainByProjectAndName(
+            $project,
+            $domainName
+        );
+
+        if ($domain === null) {
+            throw new BadRequestException(
+                "Domain $domainName is not registered for this project"
+            );
+        }
+
+        if ($domain->getStatus()->canSendEmails() !== true) {
+            throw new BadRequestException(
+                "Domain $domainName is not allowed to send emails (status: {$domain->getStatus()->value})"
+            );
+        }
+
+        $to = $sendEmailInput->getToAddresses();
+        $cc = $sendEmailInput->getCcAddresses();
+        $bcc = $sendEmailInput->getBccAddresses();
+
+        $totalRecipientsCount = count($to) + count($cc) + count($bcc);
+        $maxRecipients = SendLimits::MAX_RECIPIENTS_PER_SEND;
+        if ($totalRecipientsCount > $maxRecipients) {
+            throw new BadRequestException(
+                "Total number of recipients (To, Cc, Bcc) exceeds the maximum allowed limit of $maxRecipients."
+            );
+        }
+
+        $queue = $project->getSendType() === ProjectSendType::TRANSACTIONAL ?
+            $this->queueService->getTransactionalQueue() :
+            $this->queueService->getDistributionalQueue();
+        assert($queue !== null, 'Transactional or Distributional should be set');
+
+        try {
+            $attachments = $sendEmailInput->getAttachments();
+        } catch (UnableToDecodeAttachmentBase64Exception $exception) {
+            throw new BadRequestException(
+                "Base64 decoding of attachment failed: index $exception->attachmentIndex"
+            );
+        }
+
+        try {
+            $send = $this->sendService->createSend(
+                $project,
+                $domain,
+                $queue,
+                $fromAddress,
+                $to,
+                $cc,
+                $bcc,
+                $sendEmailInput->subject,
+                $sendEmailInput->body_html,
+                $sendEmailInput->body_text,
+                $sendEmailInput->headers,
+                $attachments
+            );
+        } catch (EmailTooLargeException) {
+            throw new BadRequestException(
+                "Email size exceeds the maximum allowed size of 10MB."
+            );
+        } catch (SendContentStorageException) {
+            throw new ServiceUnavailableHttpException(
+                message: "Failed to store email content. Please try again later."
+            );
+        }
+
+        return new JsonResponse([
+            'id' => $send->getId(),
+            'message_id' => $send->getMessageId(),
+        ]);
+    }
+
+    #[Route("/sends", methods: "GET")]
+    #[ScopeRequired(RelayScope::SENDS_READ)]
+    #[OA\Get(
+        summary: 'Get all sends',
+        description: 'Returns a paginated list of emails sent from the project.'
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'List of sends',
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: SendObject::class))
+        )
+    )]
+    public function list(Request $request, Project $project): JsonResponse
+    {
+        $limit = $request->query->getInt("limit", 50);
+        $beforeId = $request->query->has("before_id")
+            ? $request->query->getInt("before_id")
+            : null;
+
+        $status = null;
+        if ($request->query->has("status")) {
+            $status = SendRecipientStatus::tryFrom($request->query->getString("status"));
+        }
+
+        $fromSearch = null;
+        if ($request->query->has("from_search")) {
+            $fromSearch = $request->query->getString("from_search");
+        }
+
+        $toSearch = null;
+        if ($request->query->has("to_search")) {
+            $toSearch = $request->query->getString("to_search");
+        }
+
+        $subjectSearch = null;
+        if ($request->query->has("subject_search")) {
+            $subjectSearch = $request->query->getString("subject_search");
+        }
+
+        $dateFromSearch = null;
+        if ($request->query->has("date_from_search")) {
+            $dateFromSearch = $request->query->getString("date_from_search");
+        }
+
+        $dateToSearch = null;
+        if ($request->query->has("date_to_search")) {
+            $dateToSearch = $request->query->getString("date_to_search");
+        }
+
+        $sends = $this->sendService
+            ->getSends(
+                $project,
+                $status,
+                $fromSearch,
+                $toSearch,
+                $subjectSearch,
+                $dateFromSearch,
+                $dateToSearch,
+                $limit,
+                $beforeId
+            )
+            ->map(fn($send) => new SendObject($send));
+
+        return $this->json($sends);
+    }
+
+    #[Route("/sends/{id}", methods: "GET")]
+    #[ScopeRequired(RelayScope::SENDS_READ)]
+    #[OA\Get(
+        summary: 'Get a send by ID',
+        description: 'Returns a single send including its recipients, attempts, and feedback.'
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns the send object.',
+        content: new Model(type: SendObject::class)
+    )]
+    public function get(Send $send): JsonResponse
+    {
+        $attempts = $this->sendAttemptService->getSendAttemptsOfSend($send);
+        $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
+
+        return $this->json(
+            new SendObject(
+                $send,
+                attempts: $attempts,
+                feedback: $feedback,
+            )
+        );
+    }
+
+    #[Route("/sends/{id}/retry", methods: "POST")]
+    #[ScopeRequired(RelayScope::SENDS_SEND)]
+    #[OA\Post(
+        summary: 'Retry a failed send',
+        description: 'Retries sending to failed recipients of a send. Already queued sends are rescheduled to now.'
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns the number of retried recipients and the updated send object.',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'retried_recipients', type: 'integer'),
+                new OA\Property(property: 'send', ref: new Model(type: SendObject::class)),
+            ]
+        )
+    )]
+    public function retry(
+        Send $send,
+        #[MapRequestPayload] RetrySendInput $input
+    ): JsonResponse {
+        if ($send->getQueued()) {
+            // Send is already queued, update send_after to now
+            $this->sendService->sendNow($send);
+
+            $attempts = $this->sendAttemptService->getSendAttemptsOfSend($send);
+            $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
+
+            return $this->json([
+                'retried_recipients' => 0,
+                'send' => new SendObject(
+                    $send,
+                    attempts: $attempts,
+                    feedback: $feedback,
+                ),
+            ]);
+        }
+
+        $hasFailedRecipients = $send->getRecipients()->exists(
+            fn(int $key, \App\Entity\SendRecipient $r) => $r->getStatus() === SendRecipientStatus::FAILED
+        );
+        if (!$hasFailedRecipients) {
+            throw new BadRequestHttpException('No failed recipients to retry');
+        }
+
+        $sendAfter = null;
+        if ($input->send_after !== null) {
+            if ($input->send_after <= $this->now()->getTimestamp()) {
+                throw new BadRequestHttpException('You cannot schedule a retry in the past');
+            }
+            $sendAfter = $this->now()->setTimestamp($input->send_after);
+        }
+
+        $retriedCount = $this->sendService->retrySend($send, $sendAfter, $input->recipient_ids);
+
+        if ($input->recipient_ids !== null && $retriedCount === 0) {
+            throw new BadRequestHttpException('No matching failed recipients found for the provided IDs');
+        }
+
+        $attempts = $this->sendAttemptService->getSendAttemptsOfSend($send);
+        $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
+
+        return $this->json([
+            'retried_recipients' => $retriedCount,
+            'send' => new SendObject(
+                $send,
+                attempts: $attempts,
+                feedback: $feedback,
+            ),
+        ]);
+    }
+
+    #[Route("/sends/uuid/{uuid}", requirements: ['uuid' => Requirement::UUID], methods: "GET")]
+    #[ScopeRequired(RelayScope::SENDS_READ)]
+    #[OA\Get(
+        summary: 'Get a send by UUID',
+        description: 'Returns a single send by its public UUID.'
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns the send object.',
+        content: new Model(type: SendObject::class)
+    )]
+    public function getByUuid(Project $project, string $uuid): JsonResponse
+    {
+        $send = $this->sendService->getSendByUuid($uuid);
+
+        if ($send === null) {
+            throw new NotFoundHttpException("Send with UUID $uuid not found");
+        }
+
+        if ($send->getProject()->getId() !== $project->getId()) {
+            throw new BadRequestException(
+                "Send with UUID $uuid does not belong to project"
+            );
+        }
+
+        $attempts = $this->sendAttemptService->getSendAttemptsOfSend($send);
+        $feedback = $this->sendFeedbackService->getFeedbackOfSend($send);
+
+        return $this->json(
+            new SendObject(
+                $send,
+                attempts: $attempts,
+                feedback: $feedback,
+            )
+        );
+    }
+
+    #[Route("/sends/uuid/{uuid}/content", requirements: ['uuid' => Requirement::UUID], methods: "GET")]
+    #[ScopeRequired(RelayScope::SENDS_READ)]
+    #[OA\Get(
+        summary: 'Get send content by UUID',
+        description: 'Returns the stored content (HTML, text, headers, and raw) of a send by its UUID.'
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns the send content object.',
+        content: new Model(type: SendContentObject::class)
+    )]
+    public function getContent(Project $project, string $uuid): JsonResponse
+    {
+        $send = $this->sendService->getSendByUuid($uuid);
+
+        if ($send === null) {
+            throw new NotFoundHttpException("Send with UUID $uuid not found");
+        }
+
+        if ($send->getProject()->getId() !== $project->getId()) {
+            throw new BadRequestException(
+                "Send with UUID $uuid does not belong to project"
+            );
+        }
+
+        try {
+            $content = $this->sendContentStorage->get($uuid);
+        } catch (SendContentStorageException) {
+            throw new ServiceUnavailableHttpException(
+                message: "Failed to retrieve email content. Please try again later."
+            );
+        }
+
+        if ($content === null) {
+            throw new NotFoundHttpException("Content for send with UUID $uuid not found");
+        }
+
+        return $this->json(new SendContentObject($content));
+    }
+}

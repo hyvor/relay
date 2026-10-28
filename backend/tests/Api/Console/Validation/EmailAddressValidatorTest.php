@@ -28,7 +28,7 @@ class EmailAddressValidatorTest extends ConstraintValidatorTestCase
     {
         $this->expectException(UnexpectedTypeException::class);
 
-        $wrongConstraint = $this->createMock(Constraint::class);
+        $wrongConstraint = $this->createStub(Constraint::class);
         $this->validator->validate("test@example.com", $wrongConstraint);
     }
 

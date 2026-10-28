@@ -1,5 +1,4 @@
-
-import type { Component } from 'svelte';
+import type { NavSectionConfig } from '@hyvor/design/marketing';
 import Introduction from './content/Introduction.svelte';
 import SendEmails from './content/SendEmails.svelte';
 import Webhooks from './content/Webhooks.svelte';
@@ -7,60 +6,52 @@ import ConsoleApi from './content/ConsoleApi.svelte';
 import Domains from './content/Domains.svelte';
 import SendEmailsSmtp from './content/SendEmailsSmtp.svelte';
 
-export const categories: Category[] = [
+export const SECTIONS: NavSectionConfig[] = [
 	{
-		name: 'Intro',
-		pages: [
+		name: '',
+		navs: [
 			{
+				type: 'page',
 				slug: '',
 				name: 'Getting Started',
-				component: Introduction
+				content: Introduction
 			},
 			{
+				type: 'page',
 				slug: 'domains',
 				name: 'Domains',
-				component: Domains
+				content: Domains
 			},
 			{
+				type: 'page',
 				slug: 'send-emails',
 				name: 'Send Emails via API',
-				component: SendEmails
+				content: SendEmails
 			},
 			{
+				type: 'page',
 				slug: 'send-emails-smtp',
 				name: 'Send Emails via SMTP',
-				component: SendEmailsSmtp,
-			},
+				content: SendEmailsSmtp
+			}
 		]
 	},
 
 	{
 		name: 'API',
-		pages: [
+		navs: [
 			{
+				type: 'page',
 				slug: 'api-console',
 				name: 'Console API',
-				component: ConsoleApi
+				content: ConsoleApi
 			},
 			{
+				type: 'page',
 				slug: 'webhooks',
 				name: 'Webhooks',
-				component: Webhooks
+				content: Webhooks
 			}
 		]
-	},
+	}
 ];
-
-export const pages = categories.reduce((acc, category) => acc.concat(category.pages), [] as Page[]);
-
-interface Category {
-	name: string;
-	pages: Page[];
-}
-
-interface Page {
-	slug: string;
-	name: string;
-	component?: Component;
-	parent?: string;
-}

@@ -21,11 +21,11 @@ class GlobalScheduleTest extends TestCase
     public function test_global_schedule(): void
     {
         $schedule = new DefaultSchedule(
-            $this->createMock(LockFactory::class), $this->createMock(CacheInterface::class)
+            $this->createStub(LockFactory::class), $this->createStub(CacheInterface::class)
         );
         $s = $schedule->getSchedule();
         $messages = $s->getRecurringMessages();
-        $this->assertCount(9, $messages);
+        $this->assertCount(10, $messages);
 
         $verifyDomainMessages = $this->getMessagesOfType($schedule, ReverifyDomainsMessage::class);
         $this->assertCount(2, $verifyDomainMessages);

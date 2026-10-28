@@ -82,9 +82,17 @@
 	<div class="header">
 		<div class="header-left">
 			<TabNav>
-				<TabNavItem name="all"  active={filter === 'all'} onclick={() => filter = 'all'}>All</TabNavItem>
-				<TabNavItem name="unread"  active={filter === 'unread'} onclick={() => filter = 'unread'}>Unread</TabNavItem>
-				<TabNavItem name="read"  active={filter === 'read'} onclick={() => filter = 'read'}>Read</TabNavItem>
+				<TabNavItem name="all" active={filter === 'all'} onclick={() => (filter = 'all')}
+					>All</TabNavItem
+				>
+				<TabNavItem
+					name="unread"
+					active={filter === 'unread'}
+					onclick={() => (filter = 'unread')}>Unread</TabNavItem
+				>
+				<TabNavItem name="read" active={filter === 'read'} onclick={() => (filter = 'read')}
+					>Read</TabNavItem
+				>
 			</TabNav>
 		</div>
 		<Button color="accent" size="small" onclick={handleMarkAllAsRead} disabled={markingAll}>

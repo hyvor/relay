@@ -2,7 +2,9 @@
 
 namespace App\Service\Cloud;
 
-use App\Api\Console\Authorization\AuthorizationListener;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\AccessType;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleApiAuthorizationListenerAbstract;
+use Hyvor\Internal\CloudApi\ConsoleApiAuth\ConsoleAuthResults;
 use App\Service\Project\Event\ProjectCreatingEvent;
 use Hyvor\Internal\InternalConfig;
 use Hyvor\Internal\Sudo\SudoUserService;
@@ -22,8 +24,7 @@ class ProjectListener
         private RequestStack $requestStack,
         private SudoUserService $sudoUserService,
         private InternalConfig $internalConfig,
-    ) {
-    }
+    ) {}
 
     public function onProjectCreation(ProjectCreatingEvent $event): void
     {
@@ -41,14 +42,14 @@ class ProjectListener
             return;
         }
 
-        if (!AuthorizationListener::hasUser($request)) {
-            return;
-        }
+        $consoleAuthResults = $request->attributes->get(ConsoleApiAuthorizationListenerAbstract::ATTRIBUTE_KEY);
+        assert($consoleAuthResults instanceof ConsoleAuthResults);
 
-        $user = AuthorizationListener::getUser($request);
-		$isSudo = $this->sudoUserService->exists($user->id);
-
-        if (!$isSudo) {
+        if (
+            $consoleAuthResults->getAccessType() !== AccessType::SESSION ||
+            ($user = $consoleAuthResults->getNullableUser()) === null ||
+            !$this->sudoUserService->exists($user->id)
+        ) {
             throw new BadRequestHttpException('Currently not available for public usage.');
         }
     }

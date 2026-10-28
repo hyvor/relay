@@ -2,7 +2,7 @@
 
 namespace App\Service\Project;
 
-use App\Api\Console\Authorization\Scope;
+use Hyvor\Internal\CloudApi\Scope\RelayScope;
 use App\Service\Instance\InstanceService;
 use App\Service\ProjectUser\ProjectUserService;
 use Hyvor\Internal\Sudo\SudoUserService;
@@ -35,10 +35,10 @@ class SystemProjectListener
         $systemProject = $this->instanceService->getInstance()->getSystemProject();
         $allSudo = $this->sudoUserService->getAll();
         $scopes = [
-            Scope::PROJECT_READ,
-            Scope::SENDS_READ,
-            Scope::DOMAINS_READ,
-            Scope::ANALYTICS_READ,
+            RelayScope::PROJECT_READ,
+            RelayScope::SENDS_READ,
+            RelayScope::DOMAINS_READ,
+            RelayScope::ANALYTICS_READ,
         ];
         $scopes = array_map(fn($scope) => $scope->value, $scopes);
 

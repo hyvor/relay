@@ -4,12 +4,12 @@ namespace App\Tests\Factory;
 
 use App\Entity\Suppression;
 use App\Entity\Type\SuppressionReason;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<Suppression>
+ * @extends PersistentObjectFactory<Suppression>
  */
-final class SuppressionFactory extends PersistentProxyObjectFactory
+final class SuppressionFactory extends PersistentObjectFactory
 {
     public function __construct()
     {

@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/textproto"
 	"strings"
+	"time"
 )
 
 // A Client represents a client connection to an SMTP server.
@@ -30,6 +31,12 @@ type Client struct {
 	localName   string        // the name to use in HELO/EHLO
 	helloResult CommandResult // result of the last hello command
 	didHello    bool          // whether we've said HELO/EHLO
+}
+
+// SetDeadline limits the next SMTP operation, including TLS handshakes and
+// DATA writes. Callers should refresh it before each operation.
+func (c *Client) SetDeadline(deadline time.Time) error {
+	return c.conn.SetDeadline(deadline)
 }
 
 // Dial returns a new [Client] connected to an SMTP server at addr.
@@ -157,7 +164,7 @@ func (c *Client) ehlo() CommandResult {
 func (c *Client) StartTLS(config *tls.Config) (CommandResult, CommandResult) {
 	tlsResult := c.cmd("STARTTLS")
 
-	if tlsResult.Err != nil {
+	if tlsResult.Err != nil || !tlsResult.CodeValid(220) {
 		return tlsResult, CommandResult{}
 	}
 

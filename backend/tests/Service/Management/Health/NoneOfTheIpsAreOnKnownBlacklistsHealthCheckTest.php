@@ -52,7 +52,7 @@ class NoneOfTheIpsAreOnKnownBlacklistsHealthCheckTest extends KernelTestCase
         $ip4 = IpAddressFactory::createOne(['ip_address' => '10.0.0.3', 'queue' => null]); // ignored
 
 
-        $dnsResolver = $this->createMock(DnsResolveInterface::class);
+        $dnsResolver = $this->createStub(DnsResolveInterface::class);
         $dnsResolver->method('resolve')
             ->willReturnCallback(function (string $query, DnsType $type) {
                 return new ResolveResult(3, []);
@@ -100,7 +100,7 @@ class NoneOfTheIpsAreOnKnownBlacklistsHealthCheckTest extends KernelTestCase
         $ip1 = IpAddressFactory::createOne(['ip_address' => '10.0.0.0', 'queue' => $queue]);
         $ip2 = IpAddressFactory::createOne(['ip_address' => '10.0.0.1', 'queue' => $queue]);
 
-        $dnsResolver = $this->createMock(DnsResolveInterface::class);
+        $dnsResolver = $this->createStub(DnsResolveInterface::class);
         $dnsResolver->method('resolve')
             ->willReturnCallback(function (string $query, DnsType $type) {
                 if ($query === '0.0.0.10.b.barracudacentral.org') {
@@ -138,7 +138,7 @@ class NoneOfTheIpsAreOnKnownBlacklistsHealthCheckTest extends KernelTestCase
         $ip1 = IpAddressFactory::createOne(['ip_address' => '10.0.0.0', 'queue' => $queue]);
         $ip2 = IpAddressFactory::createOne(['ip_address' => '10.0.0.1', 'queue' => $queue]);
 
-        $dnsResolver = $this->createMock(DnsResolveInterface::class);
+        $dnsResolver = $this->createStub(DnsResolveInterface::class);
         $dnsResolver->method('resolve')
             ->willReturnCallback(function (string $query, DnsType $type) {
                 if ($query === '0.0.0.10.b.barracudacentral.org') {

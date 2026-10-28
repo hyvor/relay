@@ -31,7 +31,7 @@ class InstanceDkimCorrectHealthCheckTest extends KernelTestCase
         /** @var InstanceService $instanceService */
         $instanceService = $this->container->get(InstanceService::class);
 
-        $resolver = $this->createMock(DnsResolveInterface::class);
+        $resolver = $this->createStub(DnsResolveInterface::class);
         if ($result === true) {
             $resolver->method('resolve')->willThrowException(new DnsResolvingFailedException('bad request'));
         } else {

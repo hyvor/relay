@@ -4,12 +4,12 @@ namespace App\Tests\Factory;
 
 use App\Entity\Project;
 use App\Entity\Type\ProjectSendType;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<Project>
+ * @extends PersistentObjectFactory<Project>
  */
-final class ProjectFactory extends PersistentProxyObjectFactory
+final class ProjectFactory extends PersistentObjectFactory
 {
 
     public function __construct()
@@ -28,7 +28,6 @@ final class ProjectFactory extends PersistentProxyObjectFactory
     protected function defaults(): array
     {
         return [
-            'user_id' => self::faker()->numberBetween(1, 10000),
             'organization_id' => 1,
             'name' => self::faker()->words(2, true),
             'created_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),

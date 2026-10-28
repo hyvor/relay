@@ -34,10 +34,10 @@ class ManagementInitCommandTest extends KernelTestCase
 
     public function test_creates_instance_server_and_adds_ips(): void
     {
-        $serverIpMock = $this->createMock(ServerIp::class);
+        $serverIpMock = $this->createStub(ServerIp::class);
         $serverIpMock->method('getPublicV4IpAddresses')->willReturn([
             '8.8.8.8',
-            '9.9.9.9'
+            '9.9.9.9',
         ]);
         $this->container->set(ServerIp::class, $serverIpMock);
 
@@ -61,7 +61,6 @@ class ManagementInitCommandTest extends KernelTestCase
         // SYSTEM PROJECT
         $systemProject = $instance->getSystemProject();
         $this->assertSame('System', $systemProject->getName());
-        $this->assertSame(0, $systemProject->getUserId());
         $this->assertSame(ProjectSendType::TRANSACTIONAL, $systemProject->getSendType());
 
         // SYSTEM PROJECT DOMAIN
@@ -72,7 +71,7 @@ class ManagementInitCommandTest extends KernelTestCase
         $this->assertSame($instance->getDkimPublicKey(), $domain->getDkimPublicKey());
         $this->assertSame(
             $encryption->decryptString($instance->getDkimPrivateKeyEncrypted()),
-            $encryption->decryptString($domain->getDkimPrivateKeyEncrypted())
+            $encryption->decryptString($domain->getDkimPrivateKeyEncrypted()),
         );
 
         // QUEUES
@@ -99,7 +98,7 @@ class ManagementInitCommandTest extends KernelTestCase
     public function test_deletes_ip_addresses(): void
     {
         $server = ServerFactory::createOne([
-            'hostname' => 'hyvor-relay'
+            'hostname' => 'hyvor-relay',
         ]);
 
         $ip1 = IpAddressFactory::createOne([
@@ -119,10 +118,10 @@ class ManagementInitCommandTest extends KernelTestCase
         ]);
         $ip3Id = $ip3->getId();
 
-        $serverIpMock = $this->createMock(ServerIp::class);
+        $serverIpMock = $this->createStub(ServerIp::class);
         $serverIpMock->method('getPublicV4IpAddresses')->willReturn([
             '8.8.8.8',
-            '9.9.9.9'
+            '9.9.9.9',
         ]);
         $this->container->set(ServerIp::class, $serverIpMock);
 

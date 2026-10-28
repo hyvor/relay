@@ -10,6 +10,7 @@ use App\Service\Ip\IpAddressService;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\QueueFactory;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 
@@ -46,6 +47,7 @@ class AllActiveIpsHaveCorrectPtrHealthCheckTest extends KernelTestCase
         $this->assertEmpty($this->healthCheck->getData());
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testCheckReturnsTrueWhenAllActiveIpsHaveCorrectPtr(): void
     {
         $ip = IpAddressFactory::createOne([
@@ -66,6 +68,7 @@ class AllActiveIpsHaveCorrectPtrHealthCheckTest extends KernelTestCase
         $this->assertEmpty($this->healthCheck->getData());
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testCheckReturnsFalseWhenSomeActiveIpsHaveIncorrectPtr(): void
     {
         $ip1 = IpAddressFactory::createOne([

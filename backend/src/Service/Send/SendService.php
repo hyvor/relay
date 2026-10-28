@@ -10,8 +10,10 @@ use App\Entity\SendRecipient;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
 use App\Repository\SendRepository;
+use App\Service\Ip\IpSelector;
 use App\Service\Send\Dto\SendingAttachment;
 use App\Service\Send\Exception\EmailTooLargeException;
+use App\Service\Send\Exception\SendContentStorageException;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -28,8 +30,9 @@ class SendService
         private EmailBuilder $emailBuilder,
         private SendRepository $sendRepository,
         private RecipientFactory $recipientFactory,
-    ) {
-    }
+        private IpSelector $ipSelector,
+        private SendContentStorage $sendContentStorage,
+    ) {}
 
     /**
      * @return ArrayCollection<int, Send>
@@ -49,6 +52,8 @@ class SendService
 
         $qb
             ->distinct()
+            ->leftJoin('s.ip_address', 'ip')
+            ->addSelect('ip')
             ->setMaxResults($limit)
             ->orderBy('s.id', 'DESC');
 
@@ -62,7 +67,7 @@ class SendService
 
         if ($beforeId !== null) {
             $qb->andWhere('s.id < :beforeId')
-               ->setParameter('beforeId', $beforeId);
+                ->setParameter('beforeId', $beforeId);
         }
 
         if ($status !== null) {
@@ -115,6 +120,7 @@ class SendService
      * @param array<string, string> $customHeaders
      * @param array<SendingAttachment> $attachments
      * @throws EmailTooLargeException
+     * @throws SendContentStorageException
      */
     public function createSend(
         Project $project,
@@ -159,12 +165,10 @@ class SendService
         $send->setFromAddress($from->getAddress());
         $send->setFromName($from->getName());
         $send->setSubject($subject);
-        $send->setBodyHtml($bodyHtml);
-        $send->setBodyText($bodyText);
-        $send->setHeaders($customHeaders);
         $send->setMessageId($messageId);
-        $send->setRaw($rawEmail);
         $send->setSizeBytes(strlen($rawEmail));
+
+        $this->sendContentStorage->store($uuid, $rawEmail);
 
         $this->em->persist($send);
 
@@ -177,6 +181,12 @@ class SendService
             ],
         );
         $send->setQueued($shouldQueue);
+
+        $recipientCount = $send->getRecipients()->filter(
+            fn(SendRecipient $r) => $r->getStatus() === SendRecipientStatus::QUEUED
+        )->count();
+
+        $send->setIpAddress($this->ipSelector->selectForQueue($queue, $recipientCount));
 
         $this->em->flush();
 
@@ -236,7 +246,7 @@ class SendService
         SELECT
             -- Sends in last 24h
             COUNT(DISTINCT s.id) AS sends_24h_count,
-            
+
             -- Recipients by status in last 24h
             COUNT(r.id) AS recipients_24h_count,
             COUNT(CASE WHEN r.status = 'accepted'   THEN 1 END) AS recipients_24h_accepted_count,
@@ -264,6 +274,4 @@ class SendService
             'recipients_24h_suppressed_count' => $data['recipients_24h_suppressed_count'] ?? 0,
         ];
     }
-
-
 }

@@ -19,9 +19,8 @@ class SudoSendObject extends SendObject
         Send $send,
         array $attempts = [],
         array $feedback = [],
-        bool $content = false
     ) {
-        parent::__construct($send, $attempts, $feedback, $content);
+        parent::__construct($send, $attempts, $feedback);
         $this->project_id = $send->getProject()->getId();
     }
 }

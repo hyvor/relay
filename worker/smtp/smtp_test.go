@@ -682,3 +682,21 @@ qgkeluku4GjxRlDMBuXk94xOBEinUs+p/hwP1Alll80Tpg==
 -----END RSA TESTING KEY-----`))
 
 func testingKey(s string) string { return strings.ReplaceAll(s, "TESTING KEY", "PRIVATE KEY") }
+
+func TestStartTLSRejectedKeepsPlaintext(t *testing.T) {
+	server := strings.Join(strings.Split("454 TLS not available\n", "\n"), "\r\n")
+	var cmdbuf strings.Builder
+	bcmdbuf := bufio.NewWriter(&cmdbuf)
+	var fake faker
+	fake.ReadWriter = bufio.NewReadWriter(bufio.NewReader(strings.NewReader(server)), bcmdbuf)
+	c := &Client{Text: textproto.NewConn(fake), conn: fake, localName: "localhost"}
+
+	startTlsResult, _ := c.StartTLS(&tls.Config{})
+
+	if startTlsResult.CodeValid(220) {
+		t.Fatal("expected STARTTLS to be rejected")
+	}
+	if c.tls {
+		t.Error("client switched to TLS after the server rejected STARTTLS")
+	}
+}

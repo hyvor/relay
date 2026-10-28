@@ -4,7 +4,7 @@
 	</div>
 </div>
 
-<style lang="scss">
+<style>
 	.single-box {
 		height: 100%;
 		flex: 1;

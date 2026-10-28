@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, ButtonGroup, Loader, toast } from '@hyvor/design/components';
+	import { Button, Loader, toast } from '@hyvor/design/components';
 	import IconCheck from '@hyvor/icons/IconCheck';
 
 	import { getContext, onMount } from 'svelte';
@@ -69,10 +69,10 @@
 	<div class="save">
 		<div class="note">Make sure you save your changes</div>
 
-		<ButtonGroup>
+		<div class="actions">
 			<Button color="gray" variant="invisible" on:click={ondiscard}>Discard</Button>
 			<Button on:click={save}>Save</Button>
-		</ButtonGroup>
+		</div>
 
 		{#if loading}
 			<div class="loader">
@@ -147,5 +147,10 @@
 		border-right: 1px solid var(--accent);
 		height: 100%;
 		padding-right: 15px;
+	}
+	.actions {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
 	}
 </style>

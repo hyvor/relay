@@ -5,12 +5,12 @@ namespace App\Tests\Factory;
 use App\Entity\SendFeedback;
 use App\Entity\Type\SendAttemptStatus;
 use App\Entity\Type\SendFeedbackType;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<SendFeedback>
+ * @extends PersistentObjectFactory<SendFeedback>
  */
-final class SendFeedbackFactory extends PersistentProxyObjectFactory
+final class SendFeedbackFactory extends PersistentObjectFactory
 {
     public function __construct()
     {

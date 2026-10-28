@@ -2,56 +2,42 @@
 
 namespace App\Service\Dns\Resolve;
 
+use App\Service\Go\Exception\GoHttpCallException;
+use App\Service\Go\GoHttpApi;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Calls DNS over Cloudflare's HTTP JSON API.
+ * Resolves DNS by delegating to the Go worker's DNS-over-HTTPS wireformat client
+ * (worker/doh.go)
  */
 class DnsOverHttp implements DnsResolveInterface
 {
 
-    public const CLOUDFLARE_DNS_QUERY_URL = "https://cloudflare-dns.com/dns-query";
-
     public function __construct(
-        private HttpClientInterface $httpClient,
-        private LoggerInterface $logger
-    ) {
-    }
+        private GoHttpApi $goHttpApi,
+        private LoggerInterface $logger,
+    ) {}
 
     /**
      * {@inheritDoc}
      */
     public function resolve(string $domain, DnsType $dnsType): ResolveResult
     {
-        $type = $dnsType->value;
-        $url = self::CLOUDFLARE_DNS_QUERY_URL . "?name=$domain&type=$type";
-
         try {
-            $response = $this->httpClient->request(
-                'GET',
-                $url,
-                [
-                    'headers' => [
-                        'Accept' => 'application/dns-json'
-                    ]
-                ]
-            );
-
-            $data = $response->toArray();
-
-            return ResolveResult::fromArray($data);
-        } catch (ExceptionInterface $e) {
+            $data = $this->goHttpApi->resolveDns($domain, $dnsType);
+        } catch (GoHttpCallException $e) {
             $this->logger->error(
-                'Cloudflare DoH failed: ' . $e->getMessage(),
+                'DNS resolution via Go worker failed: ' . $e->getMessage(),
                 [
-                    'url' => $url
-                ]
+                    'domain' => $domain,
+                    'type' => $dnsType->value,
+                ],
             );
 
             throw new DnsResolvingFailedException($e->getMessage(), previous: $e);
         }
+
+        return ResolveResult::fromArray($data);
     }
 
 }

@@ -1,5 +1,5 @@
 <script>
-	import { Accordion } from '@hyvor/design/components';
+	import { Accordion } from '@hyvor/design/marketing';
 	import IconCloud from '@hyvor/icons/IconCloud';
 	import IconPiggyBank from '@hyvor/icons/IconPiggyBank';
 	import IconStar from '@hyvor/icons/IconStar';

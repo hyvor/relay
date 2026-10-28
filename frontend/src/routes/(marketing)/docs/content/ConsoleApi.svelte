@@ -77,6 +77,9 @@ Authorization: Bearer <your_api_key>
 	<li>
 		<strong>analytics.read</strong>
 	</li>
+	<li>
+		<strong>org.projects.create</strong>
+	</li>
 </ul>
 
 <p>Each endpoint requires specific scopes to be included in the API key.</p>
@@ -172,6 +175,9 @@ type ErrorResponse = {
 
 <ul>
 	<li>
+		<a href="#projects">Projects</a>
+	</li>
+	<li>
 		<a href="#sends">Sends</a> (Emails)
 	</li>
 	<li>
@@ -190,6 +196,34 @@ type ErrorResponse = {
 		<a href="#analytics">Analytics</a>
 	</li>
 </ul>
+
+<h3 id="projects">Projects</h3>
+
+<p>Endpoints:</p>
+
+<ul>
+	<li>
+		<a href="#create-project">POST /projects</a>
+		<Scope>Organization Endpoint</Scope> - Create a new project
+	</li>
+</ul>
+
+<h4 id="create-project">Create Project</h4>
+
+<p>
+	<code>POST /projects</code> (scope: <strong>org.projects.create</strong>) <Scope>Organization Endpoint</Scope>
+</p>
+
+<CodeBlock
+	code={`
+type Request = {
+	name: string,
+	send_type: 'transactional' | 'distributional'
+}
+type Response = ProjectUser
+`}
+	language="ts"
+/>
 
 <h3 id="sends">Sends (Emails)</h3>
 

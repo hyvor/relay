@@ -3,12 +3,12 @@
 namespace App\Tests\Factory;
 
 use App\Entity\InfrastructureBounce;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<InfrastructureBounce>
+ * @extends PersistentObjectFactory<InfrastructureBounce>
  */
-final class InfrastructureBounceFactory extends PersistentProxyObjectFactory
+final class InfrastructureBounceFactory extends PersistentObjectFactory
 {
     public function __construct()
     {

@@ -4,12 +4,12 @@ namespace App\Tests\Factory;
 
 use App\Entity\Send;
 use App\Entity\Type\SendRecipientStatus;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<Send>
+ * @extends PersistentObjectFactory<Send>
  */
-final class SendFactory extends PersistentProxyObjectFactory
+final class SendFactory extends PersistentObjectFactory
 {
     public function __construct()
     {
@@ -36,9 +36,6 @@ final class SendFactory extends PersistentProxyObjectFactory
             "from_address" => self::faker()->email(),
             "from_name" => self::faker()->optional(0.7)->name(),
             "subject" => self::faker()->optional(0.8)->sentence(),
-            "body_html" => self::faker()->optional(0.8)->randomHtml(),
-            "body_text" => self::faker()->optional(0.7)->text(500),
-            "raw" => self::faker()->text(1000),
             'size_bytes' => rand(),
             'message_id' => self::faker()->uuid(),
             "created_at" => \DateTimeImmutable::createFromMutable(

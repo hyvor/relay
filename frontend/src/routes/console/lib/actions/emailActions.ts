@@ -1,4 +1,4 @@
-import type { Send, SendRecipientStatus } from "../../types";
+import type { Send, SendContent, SendRecipientStatus } from "../../types";
 import consoleApi from "../consoleApi.svelte";
 
 export function getSends(
@@ -29,6 +29,12 @@ export function getSends(
 export function getEmailByUuid(uuid: string) {
 	return consoleApi.get<Send>({
 		endpoint: `sends/uuid/${uuid}`
+	});
+}
+
+export function getEmailContent(uuid: string) {
+	return consoleApi.get<SendContent>({
+		endpoint: `sends/uuid/${uuid}/content`
 	});
 }
 

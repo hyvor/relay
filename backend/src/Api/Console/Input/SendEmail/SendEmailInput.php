@@ -7,6 +7,7 @@ use App\Api\Console\Validation\Headers;
 use App\Service\Send\Dto\SendingAttachment;
 use App\Service\Send\EmailAddressFormat;
 use App\Service\Send\SendLimits;
+use Nelmio\ApiDocBundle\Attribute\Ignore;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -70,7 +71,7 @@ class SendEmailInput
     public array $headers = [];
 
     /**
-     * @var array<array{content: string, name: ?string, content_type: ?string}>
+     * @var list<array{content: string, name: ?string, content_type: ?string}>
      */
     #[Assert\All([
         new Assert\Collection(
@@ -92,6 +93,7 @@ class SendEmailInput
     #[Assert\Count(max: 10, maxMessage: 'You can attach a maximum of 10 files.')]
     public array $attachments = [];
 
+    #[Ignore]
     public function getFromAddress(): Address
     {
         return EmailAddressFormat::createAddressFromInput($this->from);
@@ -100,6 +102,7 @@ class SendEmailInput
     /**
      * @return Address[]
      */
+    #[Ignore]
     public function getToAddresses(): array
     {
         return EmailAddressFormat::createAddressesFromInput($this->to);
@@ -108,6 +111,7 @@ class SendEmailInput
     /**
      * @return Address[]
      */
+    #[Ignore]
     public function getCcAddresses(): array
     {
         return EmailAddressFormat::createAddressesFromInput($this->cc);
@@ -116,6 +120,7 @@ class SendEmailInput
     /**
      * @return Address[]
      */
+    #[Ignore]
     public function getBccAddresses(): array
     {
         return EmailAddressFormat::createAddressesFromInput($this->bcc);

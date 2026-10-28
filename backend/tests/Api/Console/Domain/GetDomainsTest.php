@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\Console\Domain;
 
-use App\Api\Console\Controller\DomainController;
+use App\Api\Console\Controller\DomainsController;
 use App\Api\Console\Object\DomainObject;
 use App\Service\Domain\DomainService;
 use App\Tests\Case\WebTestCase;
@@ -10,7 +10,7 @@ use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\ProjectFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(DomainController::class)]
+#[CoversClass(DomainsController::class)]
 #[CoversClass(DomainService::class)]
 #[CoversClass(DomainObject::class)]
 class GetDomainsTest extends WebTestCase

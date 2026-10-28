@@ -22,7 +22,7 @@
 	</div>
 {/if} -->
 
-<style lang="scss">
+<style>
 	.wrap {
 		padding: 10px 0;
 		margin-bottom: 15px;

@@ -3,12 +3,12 @@
 namespace App\Tests\Factory;
 
 use App\Entity\Webhook;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<Webhook>
+ * @extends PersistentObjectFactory<Webhook>
  */
-final class WebhookFactory extends PersistentProxyObjectFactory
+final class WebhookFactory extends PersistentObjectFactory
 {
     public function __construct()
     {

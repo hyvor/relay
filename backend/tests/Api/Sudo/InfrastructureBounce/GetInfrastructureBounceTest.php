@@ -7,6 +7,7 @@ use App\Api\Sudo\Object\InfrastructureBounceObject;
 use App\Service\InfrastructureBounce\InfrastructureBounceService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\InfrastructureBounceFactory;
+use App\Tests\Factory\SendRecipientFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(InfrastructureBounceService::class)]
@@ -98,5 +99,40 @@ class GetInfrastructureBounceTest extends WebTestCase
         $this->assertSame(200, $response->getStatusCode());
         $json = $this->getJson();
         $this->assertCount(10, $json);
+    }
+
+    public function test_includes_send_uuid_and_recipient_email_when_recipient_exists(): void
+    {
+        $recipient = SendRecipientFactory::createOne();
+        InfrastructureBounceFactory::createOne([
+            'send_recipient_id' => $recipient->getId(),
+        ]);
+        InfrastructureBounceFactory::createOne([
+            'send_recipient_id' => 999999,
+        ]);
+
+        $this->sudoApi('GET', '/infrastructure-bounces');
+
+        $this->assertResponseStatusCodeSame(200);
+        /** @var array<int, array<string, mixed>> $json */
+        $json = $this->getJson();
+        $this->assertCount(2, $json);
+
+        $byRecipientId = [];
+        foreach ($json as $bounce) {
+            $this->assertIsInt($bounce['send_recipient_id']);
+            $byRecipientId[$bounce['send_recipient_id']] = $bounce;
+        }
+
+        $this->assertSame(
+            $recipient->getSend()->getUuid(),
+            $byRecipientId[$recipient->getId()]['send_uuid']
+        );
+        $this->assertSame(
+            $recipient->getAddress(),
+            $byRecipientId[$recipient->getId()]['recipient_email']
+        );
+        $this->assertNull($byRecipientId[999999]['send_uuid']);
+        $this->assertNull($byRecipientId[999999]['recipient_email']);
     }
 }

@@ -59,7 +59,7 @@ class UpdateServerTest extends WebTestCase
         $this->assertEquals(5, $response['incoming_workers']);
 
         // Assert task has been created into DB
-        $taskServer = $this->em->getRepository(ServerTask::class)->findOneBy(['server' => $server->_real()]
+        $taskServer = $this->em->getRepository(ServerTask::class)->findOneBy(['server' => $server]
         )?->getServer();
         $this->assertSame($server->getId(), $taskServer?->getId());
     }

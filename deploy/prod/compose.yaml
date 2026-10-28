@@ -10,6 +10,9 @@ services:
     env_file:
       - .env
 
+    volumes:
+      - relay_media:/app/media
+
     # swarm does not support network_mode: host directly
     # so we create an external network that maps to host
     networks:
@@ -20,3 +23,6 @@ networks:
   hostnet:
     name: "host"
     external: true
+
+volumes:
+  relay_media:

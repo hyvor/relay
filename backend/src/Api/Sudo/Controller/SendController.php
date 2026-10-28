@@ -2,11 +2,14 @@
 
 namespace App\Api\Sudo\Controller;
 
+use App\Api\Console\Object\SendContentObject;
 use App\Api\Console\Object\SendObject;
 use App\Api\Sudo\Object\SendProjectSummaryObject;
 use App\Api\Sudo\Object\SudoSendObject;
 use App\Entity\Type\SendRecipientStatus;
 use App\Service\Project\ProjectService;
+use App\Service\Send\Exception\SendContentStorageException;
+use App\Service\Send\SendContentStorage;
 use App\Service\Send\SendService;
 use App\Service\SendAttempt\SendAttemptService;
 use App\Service\SendFeedback\SendFeedbackService;
@@ -16,6 +19,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 
@@ -27,6 +31,7 @@ class SendController extends AbstractController
         private ProjectService $projectService,
         private SendAttemptService $sendAttemptService,
         private SendFeedbackService $sendFeedbackService,
+        private SendContentStorage $sendContentStorage,
     ) {}
 
     #[Route('/sends', methods: 'GET')]
@@ -122,9 +127,32 @@ class SendController extends AbstractController
                 $send,
                 attempts: $attempts,
                 feedback: $feedback,
-                content: true
             ),
             'project' => new SendProjectSummaryObject($send->getProject()),
         ]);
+    }
+
+    #[Route('/sends/uuid/{uuid}/content', requirements: ['uuid' => Requirement::UUID], methods: 'GET')]
+    public function getContentByUuid(string $uuid): JsonResponse
+    {
+        $send = $this->sendService->getSendByUuid($uuid);
+
+        if ($send === null) {
+            throw new NotFoundHttpException("Send with UUID $uuid not found");
+        }
+
+        try {
+            $content = $this->sendContentStorage->get($uuid);
+        } catch (SendContentStorageException) {
+            throw new ServiceUnavailableHttpException(
+                message: "Failed to retrieve email content. Please try again later."
+            );
+        }
+
+        if ($content === null) {
+            throw new NotFoundHttpException("Content for send with UUID $uuid not found");
+        }
+
+        return $this->json(new SendContentObject($content));
     }
 }

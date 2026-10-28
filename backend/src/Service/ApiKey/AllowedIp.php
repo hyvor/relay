@@ -6,9 +6,6 @@ use Symfony\Component\HttpFoundation\IpUtils;
 
 class AllowedIp
 {
-    public const int IPV4_MIN_PREFIX = 24;
-    public const int IPV6_MIN_PREFIX = 48;
-
     /**
      * Validates a single allow-list entry. Returns null on success, an error
      * message describing the failure otherwise.
@@ -41,13 +38,13 @@ class AllowedIp
 
         if ($isV4) {
             $effectivePrefix = $prefix ?? 32;
-            if ($effectivePrefix < self::IPV4_MIN_PREFIX || $effectivePrefix > 32) {
-                return "IPv4 CIDR prefix must be between /" . self::IPV4_MIN_PREFIX . " and /32 (got '$entry').";
+            if ($effectivePrefix > 32) {
+                return "IPv4 CIDR prefix must be between /0 and /32 (got '$entry').";
             }
         } else {
             $effectivePrefix = $prefix ?? 128;
-            if ($effectivePrefix < self::IPV6_MIN_PREFIX || $effectivePrefix > 128) {
-                return "IPv6 CIDR prefix must be between /" . self::IPV6_MIN_PREFIX . " and /128 (got '$entry').";
+            if ($effectivePrefix > 128) {
+                return "IPv6 CIDR prefix must be between /0 and /128 (got '$entry').";
             }
         }
 

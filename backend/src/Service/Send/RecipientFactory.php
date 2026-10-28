@@ -39,7 +39,6 @@ class RecipientFactory
                 $suppression = $suppressions[$address->getAddress()] ?? null;
 
                 $sendRecipient = new SendRecipient();
-                $sendRecipient->setSend($send);
                 $sendRecipient->setStatus(
                     $suppression
                         ? SendRecipientStatus::SUPPRESSED

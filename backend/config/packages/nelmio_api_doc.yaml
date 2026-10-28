@@ -1,0 +1,10 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: Hyvor Relay
+            description: Open-source email delivery platform
+            version: 1.0.0
+    areas: # to filter documented areas
+        path_patterns:
+            - ^/api/console
+        disable_default_routes: true

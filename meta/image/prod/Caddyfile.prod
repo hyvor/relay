@@ -1,7 +1,5 @@
 {
-	frankenphp {
-        worker "/app/backend/public/index.php" {$WORKERS:0}
-    }
+	frankenphp
 }
 
 localhost:80, {$WEB_URL:http://} {
@@ -12,8 +10,11 @@ localhost:80, {$WEB_URL:http://} {
 	handle @backend {
 		root * /app/backend/public
 		php_server {
-		   file_server off
-           try_files index.php
+		   	file_server off
+			worker {
+				file /app/backend/public/index.php
+				num {$WORKERS:0}
+			}
         }
     }
 

@@ -1,0 +1,39 @@
+when@prod: &prod
+  monolog:
+    channels: ["streamer"]
+    handlers:
+      app:
+        type: buffer
+        handler: final
+        level: "%env(LOG_LEVEL)%"
+        bubble: false
+        channels: ["app"]
+
+      non_app:
+        type: buffer
+        handler: final
+        level: error
+        bubble: false
+        channels: ["!app"]
+
+      final:
+        type: stream
+        path: "php://stderr"
+        formatter: monolog.formatter.json
+
+      # Separate handler for streamer logs (to avoid buffering delays in long-running commands)
+      streamer:
+        type: stream
+        path: "php://stderr"
+        level: "%env(LOG_LEVEL)%"
+        formatter: monolog.formatter.line
+        channels: ["streamer"]
+
+when@dev: *prod
+
+when@test:
+  monolog:
+    handlers:
+      test:
+        type: test
+        level: debug

@@ -12,22 +12,52 @@
 	import { onMount, type Snippet } from 'svelte';
 	import Overview from './Overview.svelte';
 	import Preview from './Preview.svelte';
-	import type { RetrySendFn, Send } from '../../routes/console/types';
+	import type { RetrySendFn, Send, SendContent } from '../../routes/console/types';
 
 	interface Props {
 		fetchSend: () => Promise<Send>;
+		fetchContent: () => Promise<SendContent>;
 		backHref: string;
 		onRetry?: RetrySendFn;
 		headerExtra?: Snippet<[Send]>;
 		rightActions?: Snippet<[Send]>;
 	}
 
-	let { fetchSend, backHref, onRetry, headerExtra, rightActions }: Props = $props();
+	let { fetchSend, fetchContent, backHref, onRetry, headerExtra, rightActions }: Props = $props();
 
 	let send: Send | null = $state(null);
 	let loading = $state(true);
 	let error: string | null = $state(null);
 	let activeTab: 'overview' | 'preview' | 'raw' = $state('overview');
+
+	let content: SendContent | null = $state(null);
+	let contentLoading = $state(false);
+	let contentError: string | null = $state(null);
+
+	function loadContent() {
+		if (content !== null || contentLoading) return;
+
+		contentLoading = true;
+		contentError = null;
+
+		fetchContent()
+			.then((result) => {
+				content = result;
+			})
+			.catch((err: any) => {
+				contentError = err.message || 'Failed to load email content';
+			})
+			.finally(() => {
+				contentLoading = false;
+			});
+	}
+
+	function selectTab(tab: 'overview' | 'preview' | 'raw') {
+		activeTab = tab;
+		if (tab === 'preview' || tab === 'raw') {
+			loadContent();
+		}
+	}
 
 	onMount(() => {
 		fetchSend()
@@ -75,21 +105,21 @@
 					<TabNavItem
 						name="overview"
 						active={activeTab === 'overview'}
-						onclick={() => (activeTab = 'overview')}
+						onclick={() => selectTab('overview')}
 					>
 						Overview
 					</TabNavItem>
 					<TabNavItem
 						name="preview"
 						active={activeTab === 'preview'}
-						onclick={() => (activeTab = 'preview')}
+						onclick={() => selectTab('preview')}
 					>
 						Preview
 					</TabNavItem>
 					<TabNavItem
 						name="raw"
 						active={activeTab === 'raw'}
-						onclick={() => (activeTab = 'raw')}
+						onclick={() => selectTab('raw')}
 					>
 						Raw
 					</TabNavItem>
@@ -101,16 +131,28 @@
 			{/if}
 
 			{#if activeTab === 'preview'}
-				<Preview {send} />
+				{#if contentLoading}
+					<Loader full />
+				{:else if contentError}
+					<IconMessage error message={contentError} />
+				{:else if content}
+					<Preview {content} />
+				{/if}
 			{/if}
 
 			{#if activeTab === 'raw'}
-				<div class="raw-content">
-					<div class="raw-content-note">
-						This is the raw email content, including headers and body.
+				{#if contentLoading}
+					<Loader full />
+				{:else if contentError}
+					<IconMessage error message={contentError} />
+				{:else if content}
+					<div class="raw-content">
+						<div class="raw-content-note">
+							This is the raw email content, including headers and body.
+						</div>
+						<CodeBlock code={content.raw} language={null} />
 					</div>
-					<CodeBlock code={send.raw} language={null} />
-				</div>
+				{/if}
 			{/if}
 		</div>
 	</div>

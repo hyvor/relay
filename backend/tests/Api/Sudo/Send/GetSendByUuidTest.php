@@ -76,10 +76,6 @@ class GetSendByUuidTest extends WebTestCase
         $this->assertSame($sendEntity->getId(), $jsonSend['id']);
         $this->assertSame($sendEntity->getUuid(), $jsonSend['uuid']);
 
-        $this->assertArrayHasKey('body_html', $jsonSend);
-        $this->assertArrayHasKey('body_text', $jsonSend);
-        $this->assertArrayHasKey('raw', $jsonSend);
-        $this->assertArrayHasKey('headers', $jsonSend);
         $this->assertArrayHasKey('size_bytes', $jsonSend);
         $this->assertArrayHasKey('send_after', $jsonSend);
 
@@ -152,5 +148,31 @@ class GetSendByUuidTest extends WebTestCase
             createSudoUser: false
         );
         $this->assertResponseStatusCodeSame(403);
+    }
+
+    public function test_get_send_content(): void
+    {
+        $storage = $this->container->get(\App\Service\Send\SendContentStorage::class);
+        $this->assertInstanceOf(\App\Service\Send\SendContentStorage::class, $storage);
+        $project = ProjectFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project]);
+
+        $raw = implode("\r\n", [
+            'From: sender@example.com',
+            'To: recipient@example.com',
+            'Subject: Test Email',
+            'X-Custom: value',
+            'Content-Type: text/html; charset=utf-8',
+            '',
+            '<p>Hello</p>',
+        ]);
+        $storage->store($send->getUuid(), $raw);
+
+        $response = $this->sudoApi('GET', '/sends/uuid/' . $send->getUuid() . '/content');
+        $this->assertSame(200, $response->getStatusCode());
+
+        /** @var array<string, mixed> $json */
+        $json = $this->getJson();
+        $this->assertSame('<p>Hello</p>', $json['body_html']);
     }
 }

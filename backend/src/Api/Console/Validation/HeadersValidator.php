@@ -37,7 +37,7 @@ class HeadersValidator extends ConstraintValidator
         'authentication-results',
     ];
 
-    public function validate(mixed $value, Constraint $constraint)
+    public function validate(mixed $value, Constraint $constraint): void
     {
         if (!$constraint instanceof Headers) {
             throw new UnexpectedTypeException($constraint, Headers::class);

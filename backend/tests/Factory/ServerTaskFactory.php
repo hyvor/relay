@@ -4,12 +4,12 @@ namespace App\Tests\Factory;
 
 use App\Entity\ServerTask;
 use App\Entity\Type\ServerTaskType;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<ServerTask>
+ * @extends PersistentObjectFactory<ServerTask>
  */
-final class ServerTaskFactory extends PersistentProxyObjectFactory
+final class ServerTaskFactory extends PersistentObjectFactory
 {
     public function __construct()
     {

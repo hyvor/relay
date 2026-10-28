@@ -4,12 +4,12 @@ namespace App\Tests\Factory;
 
 use App\Entity\IpAddress;
 use App\Entity\Server;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<IpAddress>
+ * @extends PersistentObjectFactory<IpAddress>
  */
-final class IpAddressFactory extends PersistentProxyObjectFactory
+final class IpAddressFactory extends PersistentObjectFactory
 {
 
     public function __construct()

@@ -31,12 +31,12 @@ export function validateAllowedIpEntry(entry: string): string | null {
 	try {
 		const [ip, prefix] = ipaddr.parseCIDR(trimmed);
 		if (ip.kind() === 'ipv4') {
-			if (prefix < IPV4_MIN_PREFIX || prefix > 32) {
-				return `IPv4 CIDR prefix must be between /${IPV4_MIN_PREFIX} and /32 (got /${prefix}).`;
+			if (prefix > 32) {
+				return `IPv4 CIDR prefix must be between /0 and /32 (got /${prefix}).`;
 			}
 		} else {
-			if (prefix < IPV6_MIN_PREFIX || prefix > 128) {
-				return `IPv6 CIDR prefix must be between /${IPV6_MIN_PREFIX} and /128 (got /${prefix}).`;
+			if (prefix > 128) {
+				return `IPv6 CIDR prefix must be between /0 and /128 (got /${prefix}).`;
 			}
 		}
 	} catch {
@@ -44,4 +44,27 @@ export function validateAllowedIpEntry(entry: string): string | null {
 	}
 
 	return null;
+}
+
+export function isBroadAllowedIpEntry(entry: string): boolean {
+	if (!entry.includes('/')) return false;
+
+	try {
+		const [ip, prefix] = ipaddr.parseCIDR(entry.trim());
+		return ip.kind() === 'ipv4' ? prefix < IPV4_MIN_PREFIX : prefix < IPV6_MIN_PREFIX;
+	} catch {
+		return false;
+	}
+}
+
+export function broadAllowedIpEntryWarning(entry: string): string | null {
+	if (!isBroadAllowedIpEntry(entry)) return null;
+
+	try {
+		const [, prefix] = ipaddr.parseCIDR(entry.trim());
+		const count = cidrAddressCount(entry);
+		return `/${prefix} prefix allows ${count.toLocaleString()} IP address${count === 1 ? '' : 'es'}`;
+	} catch {
+		return null;
+	}
 }

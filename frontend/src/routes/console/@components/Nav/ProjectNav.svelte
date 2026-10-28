@@ -123,7 +123,7 @@
 	</NavLinkGroup>
 </div>
 
-<style lang="scss">
+<style>
 	.wrap {
 		padding-bottom: 15px;
 		padding-top: 5px;
@@ -137,15 +137,15 @@
 		padding: 10px 20px;
 		border-radius: var(--box-radius);
 		cursor: pointer;
-		.left {
-			flex: 1;
-		}
-		.name {
-			font-weight: 600;
-		}
-		&:hover {
-			background-color: var(--hover);
-		}
+	}
+	.current .left {
+		flex: 1;
+	}
+	.current .name {
+		font-weight: 600;
+	}
+	.current:hover {
+		background-color: var(--hover);
 	}
 
 	.name {
@@ -161,9 +161,9 @@
 		display: inline-block;
 		margin-left: 5px;
 		background-color: var(--blue-light);
-		&.distributional {
-			background-color: var(--orange-light);
-		}
+	}
+	.dot.distributional {
+		background-color: var(--orange-light);
 	}
 
 	.system-notice {
@@ -186,25 +186,24 @@
 			display: flex;
 			border-top: 1px solid var(--border);
 			overflow-x: auto;
-
-			:global(a .middle) {
-				display: none;
-			}
-			:global(a .start) {
-				margin-right: 0 !important;
-			}
-			:global(a) {
-				border-left: none !important;
-				border-top: 3px solid transparent;
-				flex: 1;
-				justify-content: center;
-			}
-			:global(a.active) {
-				border-top-color: var(--accent);
-			}
-			:global(.line) {
-				display: none !important;
-			}
+		}
+		.nav-links :global(a .middle) {
+			display: none;
+		}
+		.nav-links :global(a .start) {
+			margin-right: 0 !important;
+		}
+		.nav-links :global(a) {
+			border-left: none !important;
+			border-top: 3px solid transparent;
+			flex: 1;
+			justify-content: center;
+		}
+		.nav-links :global(a.active) {
+			border-top-color: var(--accent);
+		}
+		.nav-links :global(.line) {
+			display: none !important;
 		}
 		.current {
 			margin: 0px auto;

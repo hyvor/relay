@@ -106,7 +106,7 @@ class ReverifyDomainsMessageHandlerTest extends KernelTestCase
 
     public function test_when_errors_exceed_maximum(): void
     {
-        $dkimVerificationService = $this->createMock(DkimVerificationService::class);
+        $dkimVerificationService = $this->createStub(DkimVerificationService::class);
         $dkimVerificationService
             ->method('verify')
             ->willThrowException(new DkimVerificationFailedException('Cloudflare missing'));

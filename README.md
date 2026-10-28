@@ -78,6 +78,8 @@ Directory structure:
 - `/frontend`: SvelteKit frontend
 - `/worker`: Go services (single binary)
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+
 <!-- ## Performance TODO -->
 
 ## License

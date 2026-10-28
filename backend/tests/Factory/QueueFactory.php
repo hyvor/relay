@@ -5,12 +5,12 @@ namespace App\Tests\Factory;
 use App\Entity\Queue;
 use App\Entity\Type\QueueType;
 use App\Service\Queue\QueueService;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
+use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<Queue>
+ * @extends PersistentObjectFactory<Queue>
  */
-final class QueueFactory extends PersistentProxyObjectFactory
+final class QueueFactory extends PersistentObjectFactory
 {
 
     public function __construct()

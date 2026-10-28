@@ -1,18 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Loader, toast } from '@hyvor/design/components';
-	import { getIpAddresses, getQueues } from '../sudoActions';
-	import { ipAddressesStore, queuesStore } from '../sudoStore';
+	import { getQueues } from '../sudoActions';
+	import { queuesStore } from '../sudoStore';
 	import QueueRow from './QueueRow.svelte';
 	import SingleBox from '../SingleBox.svelte';
 
 	let loading = $state(true);
 
-	onMount(async () => {
-		Promise.all([await getQueues(), await getIpAddresses()])
-			.then(([queuesResponse, ipsResponse]) => {
+	onMount(() => {
+		getQueues()
+			.then((queuesResponse) => {
 				queuesStore.set(queuesResponse);
-				ipAddressesStore.set(ipsResponse);
 			})
 			.catch((err) => {
 				toast.error('Failed to load data: ' + err.message);
@@ -29,9 +28,10 @@
 	{:else}
 		<div class="header">
 			<div class="tip">
-				Each email is sent to a queue. A server with an IP address asssigned to that queue will
-				process the email. By default, emails are sent to transactional or distributional queues
-				based on the project type. For users with dedicated IPs, a dedicated queue is used.
+				Each email is sent to a queue. A server with an IP address asssigned to that queue
+				will process the email. By default, emails are sent to transactional or
+				distributional queues based on the project type. For users with dedicated IPs, a
+				dedicated queue is used.
 			</div>
 		</div>
 
