@@ -1,7 +1,7 @@
 ###################################################
 FROM node:24.9.0 AS node
 FROM composer:2.8.8 AS composer
-FROM dunglas/frankenphp:1.10.0-php8.4.15 AS frankenphp
+FROM dunglas/frankenphp:1.13.1-php8.4 AS frankenphp
 FROM golang:1.25.4 AS golang
 
 ###################################################
