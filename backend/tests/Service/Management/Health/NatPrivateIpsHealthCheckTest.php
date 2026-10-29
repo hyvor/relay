@@ -2,169 +2,135 @@
 
 namespace App\Tests\Service\Management\Health;
 
-use App\Service\Ip\ServerIpResolver\PublicIpResolver;
 use App\Service\Management\Health\NatPrivateIpsHealthCheck;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\IpAddressFactory;
+use App\Tests\Factory\ServerFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\MockObject\MockObject;
+use Symfony\Component\Clock\Clock;
+use Symfony\Component\Clock\MockClock;
 
 #[CoversClass(NatPrivateIpsHealthCheck::class)]
 class NatPrivateIpsHealthCheckTest extends KernelTestCase
 {
 
-    private PublicIpResolver&MockObject $publicIpResolver;
     private NatPrivateIpsHealthCheck $healthCheck;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->publicIpResolver = $this->createMock(PublicIpResolver::class);
-        $this->healthCheck = new NatPrivateIpsHealthCheck(
-            $this->em,
-            $this->publicIpResolver,
-        );
+        Clock::set(new MockClock('2026-10-29 10:00:00'));
+        $this->healthCheck = new NatPrivateIpsHealthCheck($this->em);
     }
 
     public function test_returns_true_when_no_ips_have_a_private_ip(): void
     {
+        $server = ServerFactory::createOne();
         IpAddressFactory::createOne([
+            'server' => $server,
             'ip_address' => '8.8.8.8',
         ]);
 
-        $this->publicIpResolver->expects($this->never())->method('resolve');
-
-        $result = $this->healthCheck->check();
-
-        $this->assertTrue($result);
+        $this->assertTrue($this->healthCheck->check());
         $this->assertEmpty($this->healthCheck->getData());
     }
 
-    public function test_returns_true_when_all_private_ips_resolve_correctly(): void
+    public function test_returns_true_when_all_servers_have_fresh_valid_results(): void
     {
-        IpAddressFactory::createOne([
-            'ip_address' => '8.8.8.8',
-            'private_ip_address' => '10.0.1.5',
+        $server1 = ServerFactory::createOne([
+            'nat_check' => ['checked_at' => '2026-10-29T09:45:00+00:00', 'invalid_nats' => []],
+        ]);
+        $server2 = ServerFactory::createOne([
+            'nat_check' => ['checked_at' => '2026-10-29T09:01:00+00:00', 'invalid_nats' => []],
         ]);
 
-        $this->publicIpResolver->expects($this->once())
-            ->method('resolve')
-            ->with('10.0.1.5')
-            ->willReturn('8.8.8.8');
-
-        $result = $this->healthCheck->check();
-
-        $this->assertTrue($result);
-        $this->assertEmpty($this->healthCheck->getData());
-    }
-
-    public function test_returns_false_when_resolved_public_ip_does_not_match(): void
-    {
         IpAddressFactory::createOne([
-            'ip_address' => '8.8.8.8',
-            'private_ip_address' => '10.0.1.5',
-        ]);
-
-        $this->publicIpResolver->expects($this->once())
-            ->method('resolve')
-            ->with('10.0.1.5')
-            ->willReturn('9.9.9.9');
-
-        $result = $this->healthCheck->check();
-
-        $this->assertFalse($result);
-        $data = $this->healthCheck->getData();
-        $this->assertArrayHasKey('invalid_nats', $data);
-        $this->assertSame([
-            [
-                'private_ip' => '10.0.1.5',
-                'expected_public_ip' => '8.8.8.8',
-                'resolved_public_ip' => '9.9.9.9',
-                'error' => null,
-            ],
-        ], $data['invalid_nats']);
-    }
-
-    public function test_returns_false_when_resolver_throws(): void
-    {
-        IpAddressFactory::createOne([
-            'ip_address' => '8.8.8.8',
-            'private_ip_address' => '10.0.1.5',
-        ]);
-
-        $this->publicIpResolver->expects($this->once())
-            ->method('resolve')
-            ->with('10.0.1.5')
-            ->willThrowException(new \RuntimeException('Failed to resolve public IP from all external services'));
-
-        $result = $this->healthCheck->check();
-
-        $this->assertFalse($result);
-        $invalidNats = $this->getInvalidNats($this->healthCheck->getData());
-        $this->assertSame('10.0.1.5', $invalidNats[0]['private_ip']);
-        $this->assertSame('8.8.8.8', $invalidNats[0]['expected_public_ip']);
-        $this->assertNull($invalidNats[0]['resolved_public_ip']);
-        $this->assertSame(
-            'Failed to resolve public IP from all external services',
-            $invalidNats[0]['error'],
-        );
-    }
-
-    public function test_only_reports_the_ip_that_fails_when_mixed(): void
-    {
-        IpAddressFactory::createOne([
+            'server' => $server1,
             'ip_address' => '8.8.8.8',
             'private_ip_address' => '10.0.1.5',
         ]);
         IpAddressFactory::createOne([
+            'server' => $server2,
             'ip_address' => '9.9.9.9',
-            'private_ip_address' => '10.0.1.6',
-        ]);
-        // no private IP, should be skipped entirely
-        IpAddressFactory::createOne([
-            'ip_address' => '1.1.1.1',
+            'private_ip_address' => '10.0.1.5',
         ]);
 
-        $this->publicIpResolver->expects($this->exactly(2))
-            ->method('resolve')
-            ->willReturnMap([
-                ['10.0.1.5', '8.8.8.8'],
-                ['10.0.1.6', 'wrong-ip'],
-            ]);
-
-        $result = $this->healthCheck->check();
-
-        $this->assertFalse($result);
-        $invalidNats = $this->getInvalidNats($this->healthCheck->getData());
-        $this->assertCount(1, $invalidNats);
-        $this->assertSame('10.0.1.6', $invalidNats[0]['private_ip']);
-        $this->assertSame('9.9.9.9', $invalidNats[0]['expected_public_ip']);
-        $this->assertSame('wrong-ip', $invalidNats[0]['resolved_public_ip']);
+        $this->assertTrue($this->healthCheck->check());
+        $this->assertEmpty($this->healthCheck->getData());
     }
 
-    /**
-     * @param array<mixed> $data
-     * @return array<int, array{
-     *     private_ip: string,
-     *     expected_public_ip: string,
-     *     resolved_public_ip: ?string,
-     *     error: ?string
-     * }>
-     */
-    private function getInvalidNats(array $data): array
+    public function test_reports_invalid_nats_with_server_when_two_servers_use_same_private_ip(): void
     {
-        $this->assertArrayHasKey('invalid_nats', $data);
-        /**
-         * @var array<int, array{
-         *     private_ip: string,
-         *     expected_public_ip: string,
-         *     resolved_public_ip: ?string,
-         *     error: ?string
-         * }> $invalidNats
-         */
-        $invalidNats = $data['invalid_nats'];
-        return $invalidNats;
+        $server1 = ServerFactory::createOne([
+            'hostname' => 'server-1',
+            'nat_check' => ['checked_at' => '2026-10-29T09:45:00+00:00', 'invalid_nats' => []],
+        ]);
+        $server2 = ServerFactory::createOne([
+            'hostname' => 'server-2',
+            'nat_check' => [
+                'checked_at' => '2026-10-29T09:45:00+00:00',
+                'invalid_nats' => [
+                    [
+                        'private_ip' => '10.0.1.5',
+                        'expected_public_ip' => '9.9.9.9',
+                        'resolved_public_ip' => '6.6.6.6',
+                        'error' => null,
+                    ],
+                ],
+            ],
+        ]);
+
+        IpAddressFactory::createOne([
+            'server' => $server1,
+            'ip_address' => '8.8.8.8',
+            'private_ip_address' => '10.0.1.5',
+        ]);
+        IpAddressFactory::createOne([
+            'server' => $server2,
+            'ip_address' => '9.9.9.9',
+            'private_ip_address' => '10.0.1.5',
+        ]);
+
+        $this->assertFalse($this->healthCheck->check());
+        $this->assertSame([
+            'invalid_nats' => [
+                [
+                    'server_hostname' => 'server-2',
+                    'private_ip' => '10.0.1.5',
+                    'expected_public_ip' => '9.9.9.9',
+                    'resolved_public_ip' => '6.6.6.6',
+                    'error' => null,
+                ],
+            ],
+            'stale_servers' => [],
+        ], $this->healthCheck->getData());
+    }
+
+    public function test_reports_missing_and_stale_results(): void
+    {
+        $stale = ServerFactory::createOne([
+            'hostname' => 'stale',
+            'nat_check' => ['checked_at' => '2026-10-29T08:59:00+00:00', 'invalid_nats' => []],
+        ]);
+        $missing = ServerFactory::createOne(['hostname' => 'missing']);
+
+        IpAddressFactory::createOne([
+            'server' => $stale,
+            'ip_address' => '8.8.8.8',
+            'private_ip_address' => '10.0.1.5',
+        ]);
+        IpAddressFactory::createOne([
+            'server' => $missing,
+            'ip_address' => '9.9.9.9',
+            'private_ip_address' => '10.0.1.5',
+        ]);
+
+        $this->assertFalse($this->healthCheck->check());
+        $this->assertSame([
+            'invalid_nats' => [],
+            'stale_servers' => ['stale', 'missing'],
+        ], $this->healthCheck->getData());
     }
 
 }
