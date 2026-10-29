@@ -124,7 +124,7 @@ func TestSendEmailToHost_DaneHandshakeProceedsToMail(t *testing.T) {
 		}}}, nil
 	}
 	createSmtpClientContext = func(context.Context, string, string) (*smtp.Client, error) {
-		return smtp.NewClient(clientConn, "mx.example.com")
+		return smtp.NewClient(clientConn, "mx.example.com", smtp.DefaultTimeouts)
 	}
 	t.Cleanup(func() {
 		lookupTLSAFunc = originalTLSA

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log/slog"
 	"net"
 	"os"
@@ -109,6 +108,9 @@ type SmtpConversation struct {
 	// nil if the message was sent successfully (regardless of SMTP status)
 	NetworkError error `json:"network_error"`
 
+	// set when NetworkError is a phase timeout
+	TimeoutPhase smtp.TimeoutPhase `json:"timeout_phase,omitempty"`
+
 	// results for each recipient, indexed by recipient ID
 	RcptResults []*RcptResult `json:"-"`
 
@@ -140,6 +142,15 @@ func NewSmtpConversation() *SmtpConversation {
 		NetworkError: nil,
 		Steps:        make([]*SmtpStep, 0),
 		RcptResults:  make([]*RcptResult, 0),
+	}
+}
+
+func (c *SmtpConversation) SetNetworkError(err error) {
+	c.NetworkError = err
+	c.Duration = time.Since(c.StartTime)
+	var timeoutErr *smtp.TimeoutError
+	if errors.As(err, &timeoutErr) {
+		c.TimeoutPhase = timeoutErr.Phase
 	}
 }
 
@@ -339,7 +350,7 @@ func sendEmailHandlerContext(
 		var conversation *SmtpConversation
 		if policyResult.Enforce && !policyResult.AllowsMX(host) {
 			conversation = NewSmtpConversation()
-			conversation.NetworkError = fmt.Errorf("MTA-STS policy does not allow MX host %s", host)
+			conversation.SetNetworkError(fmt.Errorf("MTA-STS policy does not allow MX host %s", host))
 		} else {
 			conversation = sendEmailToHostContext(ctx, cache, send, recipients, host, instanceDomain, ip, ptr, mxValue.Secure, policyResult.Enforce, true, rcptDomain)
 		}
@@ -402,29 +413,6 @@ func getOutgoingPort() string {
 
 const smtpClientConnectionTimeout = 8 * time.Second
 const smtpClientKeepAlive = 8 * time.Second
-const smtpOperationTimeout = 30 * time.Second
-const smtpDataResponseTimeout = 10 * time.Minute
-const smtpDataChunkTimeout = 3 * time.Minute
-const smtpDataChunkSize = 64 * 1024
-
-func setSmtpDeadline(c *smtp.Client, timeout time.Duration) error {
-	return c.SetDeadline(time.Now().Add(timeout))
-}
-
-// deadline is reset for each chunk so a message only times out if it stops making progress.
-func writeSmtpData(c *smtp.Client, w io.Writer, data string) error {
-	for len(data) > 0 {
-		size := min(len(data), smtpDataChunkSize)
-		if err := setSmtpDeadline(c, smtpDataChunkTimeout); err != nil {
-			return err
-		}
-		if _, err := io.WriteString(w, data[:size]); err != nil {
-			return err
-		}
-		data = data[size:]
-	}
-	return nil
-}
 
 var createSmtpClientContext = createSmtpClientContextHandler
 
@@ -458,16 +446,11 @@ func createSmtpClientContextHandler(ctx context.Context, host string, localIp st
 		return nil, fmt.Errorf("failed to connect to SMTP server %s: %w", host, err)
 	}
 
-	if err := conn.SetDeadline(time.Now().Add(smtpOperationTimeout)); err != nil {
-		_ = conn.Close()
-		return nil, fmt.Errorf("failed to set SMTP deadline for %s: %w", host, err)
-	}
-	client, err := smtp.NewClient(conn, host)
+	client, err := smtp.NewClient(conn, host, smtp.DefaultTimeouts)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create SMTP client for %s: %w", host, err)
 	}
-	_ = client.SetDeadline(time.Time{})
 
 	return client, nil
 }
@@ -496,7 +479,7 @@ func sendEmailToHostHandlerContextAttempt(
 		var err error
 		tlsaResult, err = lookupTLSAFunc(ctx, cache, host)
 		if err != nil {
-			conversation.NetworkError = err
+			conversation.SetNetworkError(err)
 			return conversation
 		}
 	}
@@ -507,7 +490,7 @@ func sendEmailToHostHandlerContextAttempt(
 	// ==============================
 	c, err := createSmtpClientContext(ctx, host, ip)
 	if err != nil {
-		conversation.NetworkError = err
+		conversation.SetNetworkError(err)
 		return conversation
 	}
 	defer c.Close()
@@ -516,14 +499,10 @@ func sendEmailToHostHandlerContextAttempt(
 
 	// STEP 1: EHLO/HELO
 	// =================
-	if err := setSmtpDeadline(c, smtpOperationTimeout); err != nil {
-		conversation.NetworkError = err
-		return conversation
-	}
 	helloResult := c.Hello(ptr)
 
 	if helloResult.Err != nil {
-		conversation.NetworkError = helloResult.Err
+		conversation.SetNetworkError(helloResult.Err)
 		return conversation
 	}
 	conversation.AddStepFromResult(SmtpStepHello, &helloResult)
@@ -537,10 +516,6 @@ func sendEmailToHostHandlerContextAttempt(
 	tlsStarted := false
 	if tryStartTLS {
 		if ok, _ := c.Extension("STARTTLS"); ok {
-			if err := setSmtpDeadline(c, smtpOperationTimeout); err != nil {
-				conversation.NetworkError = err
-				return conversation
-			}
 
 			config := &tls.Config{ServerName: host}
 			if !mtaSTSRequireTLS || daneRequired {
@@ -566,7 +541,7 @@ func sendEmailToHostHandlerContextAttempt(
 					retry.Steps = append(conversation.Steps, retry.Steps...)
 					return retry
 				}
-				conversation.NetworkError = tlsErr
+				conversation.SetNetworkError(tlsErr)
 				return conversation
 			}
 
@@ -574,7 +549,7 @@ func sendEmailToHostHandlerContextAttempt(
 
 			if !startTlsResult.CodeValid(220) {
 				if tlsRequired {
-					conversation.NetworkError = fmt.Errorf("%w: STARTTLS rejected by %s", tlsRequiredError(daneRequired), host)
+					conversation.SetNetworkError(fmt.Errorf("%w: STARTTLS rejected by %s", tlsRequiredError(daneRequired), host))
 					return conversation
 				}
 				// STARTTLS was rejected, so continue with plaintext when policy is
@@ -583,7 +558,7 @@ func sendEmailToHostHandlerContextAttempt(
 				conversation.AddStepFromResult(SmtpStepHello, &ehloResult)
 				if !ehloResult.CodeValid(250) {
 					if tlsRequired {
-						conversation.NetworkError = fmt.Errorf("%w: post-STARTTLS EHLO failed for %s", tlsRequiredError(daneRequired), host)
+						conversation.SetNetworkError(fmt.Errorf("%w: post-STARTTLS EHLO failed for %s", tlsRequiredError(daneRequired), host))
 						return conversation
 					}
 					conversation.SetRcptResults(recipients, &ehloResult)
@@ -595,19 +570,15 @@ func sendEmailToHostHandlerContextAttempt(
 		}
 	}
 	if tlsRequired && !tlsStarted {
-		conversation.NetworkError = fmt.Errorf("%w: SMTP server does not advertise STARTTLS", tlsRequiredError(daneRequired))
+		conversation.SetNetworkError(fmt.Errorf("%w: SMTP server does not advertise STARTTLS", tlsRequiredError(daneRequired)))
 		return conversation
 	}
 
 	// STEP 3: MAIL FROM
 	// ================
-	if err := setSmtpDeadline(c, smtpOperationTimeout); err != nil {
-		conversation.NetworkError = err
-		return conversation
-	}
 	mailResult := c.Mail(getReturnPath(send, instanceDomain))
 	if mailResult.Err != nil {
-		conversation.NetworkError = mailResult.Err
+		conversation.SetNetworkError(mailResult.Err)
 		return conversation
 	}
 	conversation.AddStepFromResult(SmtpStepMail, &mailResult)
@@ -625,14 +596,10 @@ func sendEmailToHostHandlerContextAttempt(
 	acceptedRecipients := make([]*RecipientRow, 0, len(recipients))
 
 	for _, rcpt := range recipients {
-		if err := setSmtpDeadline(c, smtpOperationTimeout); err != nil {
-			conversation.NetworkError = err
-			return conversation
-		}
 		rcptResult := c.Rcpt(rcpt.Address)
 
 		if rcptResult.Err != nil {
-			conversation.NetworkError = rcptResult.Err
+			conversation.SetNetworkError(rcptResult.Err)
 			return conversation
 		}
 
@@ -651,13 +618,9 @@ func sendEmailToHostHandlerContextAttempt(
 
 	// STEP 5: DATA
 	// ============
-	if err := setSmtpDeadline(c, smtpDataResponseTimeout); err != nil {
-		conversation.NetworkError = err
-		return conversation
-	}
 	w, dataResult := c.Data()
 	if dataResult.Err != nil {
-		conversation.NetworkError = dataResult.Err
+		conversation.SetNetworkError(dataResult.Err)
 		return conversation
 	}
 	conversation.AddStepFromResult(SmtpStepData, &dataResult)
@@ -665,20 +628,16 @@ func sendEmailToHostHandlerContextAttempt(
 		conversation.SetRcptResults(acceptedRecipients, &dataResult)
 		return conversation
 	}
-	if err := writeSmtpData(c, w, send.RawEmail); err != nil {
-		conversation.NetworkError = err
+	if _, err := w.Write([]byte(send.RawEmail)); err != nil {
+		conversation.SetNetworkError(err)
 		return conversation
 	}
 
 	// STEP 5.1: Close DATA
 	// ============
-	if err := setSmtpDeadline(c, smtpDataResponseTimeout); err != nil {
-		conversation.NetworkError = err
-		return conversation
-	}
 	closeResult := w.Close()
 	if closeResult.Err != nil {
-		conversation.NetworkError = closeResult.Err
+		conversation.SetNetworkError(closeResult.Err)
 		return conversation
 	}
 	conversation.AddStepFromResult(SmtpStepDataClose, &closeResult)
@@ -689,11 +648,9 @@ func sendEmailToHostHandlerContextAttempt(
 
 	// STEP 6: QUIT
 	// ============
-	if err := setSmtpDeadline(c, smtpOperationTimeout); err == nil {
-		quitResult := c.Quit() // QUIT error won't be considered a failure
-		if quitResult.Err == nil {
-			conversation.AddStepFromResult(SmtpStepQuit, &quitResult)
-		}
+	quitResult := c.Quit() // QUIT error won't be considered a failure
+	if quitResult.Err == nil {
+		conversation.AddStepFromResult(SmtpStepQuit, &quitResult)
 	}
 
 	return conversation
