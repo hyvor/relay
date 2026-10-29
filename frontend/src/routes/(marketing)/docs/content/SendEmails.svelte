@@ -12,6 +12,7 @@
 		'Subject',
 		'Content-Type',
 		'MIME-Version',
+		'Feedback-ID',
 		'DKIM-Signature',
 		'Return-Path',
 		'X-Mailer',

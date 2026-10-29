@@ -5,6 +5,7 @@ namespace App\Tests\Schedule;
 use App\Entity\Type\DomainStatus;
 use App\Schedule\DefaultSchedule;
 use App\Service\Domain\Message\ReverifyDomainsMessage;
+use App\Service\ProviderMetric\Message\FetchGooglePostmasterMetricsMessage;
 use App\Service\Stats\Message\UpdateStatsMessage;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -26,7 +27,7 @@ class GlobalScheduleTest extends TestCase
         );
         $s = $schedule->getSchedule();
         $messages = $s->getRecurringMessages();
-        $this->assertCount(11, $messages);
+        $this->assertCount(12, $messages);
 
         $verifyDomainMessages = $this->getMessagesOfType($schedule, ReverifyDomainsMessage::class);
         $this->assertCount(2, $verifyDomainMessages);
@@ -34,6 +35,7 @@ class GlobalScheduleTest extends TestCase
         $this->assertSame([DomainStatus::PENDING], $verifyDomainMessages[1]->getStatuses());
 
         $this->assertCount(1, $this->getMessagesOfType($schedule, UpdateStatsMessage::class));
+        $this->assertCount(1, $this->getMessagesOfType($schedule, FetchGooglePostmasterMetricsMessage::class));
     }
 
 

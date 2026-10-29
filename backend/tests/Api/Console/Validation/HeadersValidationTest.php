@@ -111,6 +111,7 @@ class HeadersValidationTest extends ConstraintValidatorTestCase
     #[TestWith(['bcc'])]
     #[TestWith(['sender'])]
     #[TestWith(['dkim-signature'])]
+    #[TestWith(['feedback-id'])]
     public function testValidateWithUnallowedHeader(string $header): void
     {
         $constraint = new Headers();
