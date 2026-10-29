@@ -10,6 +10,7 @@ use App\Service\ProviderMetric\MessageHandler\FetchGooglePostmasterMetricsMessag
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProviderMetricFactory;
+use Monolog\LogRecord;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\Clock\Clock;
 use Symfony\Component\Clock\MockClock;
@@ -319,11 +320,11 @@ class FetchGooglePostmasterMetricsMessageHandlerTest extends KernelTestCase
         $this->runHandler();
 
         $this->assertCount(0, $this->em->getRepository(ProviderMetric::class)->findAll());
-        $this->assertTrue($this->getTestLogger()->hasErrorThatPasses(function (array $record) {
-            /** @var array{message: string, context: array{error: string}} $record */
-            return $record['message'] === 'Failed to fetch Google Postmaster metrics'
-                && str_contains($record['context']['error'], '{"error": "internal"}');
-        }));
+        $this->assertTrue($this->getTestLogger()->hasErrorThatPasses(
+            fn(LogRecord $record) => $record->message === 'Failed to fetch Google Postmaster metrics'
+                && is_string($record->context['error'])
+                && str_contains($record->context['error'], '{"error": "internal"}')
+        ));
     }
 
     public function test_does_nothing_when_not_configured(): void
