@@ -496,7 +496,6 @@ class StatsService
             FROM delivered d
             FULL JOIN google g
                 ON g.project_id = d.project_id
-                AND g.ip_address_id = d.ip_address_id
                 AND g.recipient_domain = d.recipient_domain
         SQL, ['date' => $date, 'nextDate' => $nextDate, 'googleRecipientDomain' => self::GOOGLE_RECIPIENT_DOMAIN]);
     }

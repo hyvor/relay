@@ -3,6 +3,8 @@
 namespace App\Service\ProviderMetric;
 
 use App\Service\App\Config;
+use App\Service\ProviderMetric\Exception\GooglePostmasterException;
+use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -38,6 +40,7 @@ class GooglePostmasterClient
 
     /**
      * @return array<string, float> spam rate by Y-m-d
+     * @throws GooglePostmasterException
      */
     public function getSpamRates(string $domain, \DateTimeImmutable $from, \DateTimeImmutable $to): array
     {
@@ -65,6 +68,7 @@ class GooglePostmasterClient
 
     /**
      * @return list<array{date: string, id: string, rate: float}>
+     * @throws GooglePostmasterException
      */
     public function getFeedbackLoopSpamRates(string $domain, \DateTimeImmutable $from, \DateTimeImmutable $to): array
     {
@@ -124,6 +128,7 @@ class GooglePostmasterClient
     /**
      * @param list<array<string, mixed>> $metricDefinitions
      * @return list<DomainStat>
+     * @throws GooglePostmasterException
      */
     private function query(
         string $accessToken,
@@ -155,14 +160,13 @@ class GooglePostmasterClient
             }
 
             /** @var array{domainStats?: list<DomainStat>, nextPageToken?: string} $data */
-            $data = $this->httpClient->request(
-                'POST',
+            $data = $this->request(
                 self::API_URL . '/domains/' . rawurlencode($domain) . '/domainStats:query',
                 [
                     'auth_bearer' => $accessToken,
                     'json' => $body,
                 ]
-            )->toArray();
+            );
 
             array_push($stats, ...($data['domainStats'] ?? []));
 
@@ -172,19 +176,53 @@ class GooglePostmasterClient
         return $stats;
     }
 
+    /**
+     * @throws GooglePostmasterException
+     */
     private function getAccessToken(): string
     {
         /** @var array{access_token: string} $data */
-        $data = $this->httpClient->request('POST', self::TOKEN_URL, [
+        $data = $this->request(self::TOKEN_URL, [
             'body' => [
                 'client_id' => $this->config->getGooglePostmasterClientId(),
                 'client_secret' => $this->config->getGooglePostmasterClientSecret(),
                 'refresh_token' => $this->config->getGooglePostmasterRefreshToken(),
                 'grant_type' => 'refresh_token',
             ],
-        ])->toArray();
+        ]);
 
         return $data['access_token'];
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     * @return array<mixed>
+     * @throws GooglePostmasterException
+     */
+    private function request(string $url, array $options): array
+    {
+        try {
+            $response = $this->httpClient->request('POST', $url, $options);
+            return $response->toArray();
+        } catch (ExceptionInterface $e) {
+            $responseBody = '';
+            if (isset($response)) {
+                try {
+                    $responseBody = $response->getContent(false);
+                } catch (ExceptionInterface) {
+                }
+            }
+
+            throw new GooglePostmasterException(
+                sprintf(
+                    'Google Postmaster API call to %s failed: %s %s',
+                    $url,
+                    $e->getMessage(),
+                    $responseBody !== '' ? 'Response: ' . $responseBody : ''
+                ),
+                previous: $e
+            );
+        }
     }
 
     /**
