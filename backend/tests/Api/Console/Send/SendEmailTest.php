@@ -501,6 +501,8 @@ class SendEmailTest extends WebTestCase
         $this->assertStringContainsString("X-Custom-Header: Custom Value\r\n", $rawHeaders);
         // X-Mailer header
         $this->assertStringContainsString("X-Mailer: Hyvor Relay v0.0.0\r\n", $rawHeaders);
+        // Gmail feedback loop
+        $this->assertStringContainsString("Feedback-ID: {$project->getId()}:hyvorrelay\r\n", $rawHeaders);
 
         $this->assertStringContainsString("\r\nContent-Transfer-Encoding: quoted-printable\r\n", $rawBody);
         $this->assertStringContainsString("This is a test email.", $rawBody);
@@ -511,7 +513,7 @@ class SendEmailTest extends WebTestCase
         $first = $matches[0][0];
         $first = str_replace("\r\n", "", $first);
         $this->assertStringContainsString(
-            "h=From: To: Subject: X-Custom-Header: Reply-To: Message-ID: X-Mailer: MIME-Version: Date;",
+            "h=From: To: Subject: X-Custom-Header: Reply-To: Message-ID: X-Mailer: Feedback-ID: MIME-Version: Date;",
             $first
         );
         $this->assertStringContainsString("i=@hyvor.com", $first);
@@ -520,7 +522,7 @@ class SendEmailTest extends WebTestCase
         $second = $matches[0][1];
         $second = str_replace("\r\n", "", $second);
         $this->assertStringContainsString(
-            "h=From: To: Subject: X-Custom-Header: Reply-To: Message-ID: X-Mailer: MIME-Version: Date;",
+            "h=From: To: Subject: X-Custom-Header: Reply-To: Message-ID: X-Mailer: Feedback-ID: MIME-Version: Date;",
             $second
         );
         $this->assertStringContainsString("i=@mail.hyvor-relay.com", $second);

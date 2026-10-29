@@ -31,6 +31,8 @@ final class SendFeedbackFactory extends PersistentObjectFactory
             'created_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'updated_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'type' => SendFeedbackType::BOUNCE,
+            'project' => ProjectFactory::new(),
+            'send' => SendFactory::new(),
             'sendRecipient' => SendRecipientFactory::new(),
             'debugIncomingEmail' => DebugIncomingEmailFactory::new(),
         ];
