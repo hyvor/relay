@@ -400,13 +400,16 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $date = $this->now()->modify('-3 days');
         $project = ProjectFactory::createOne();
         $ipAddress = IpAddressFactory::createOne();
+        $otherIpAddress = IpAddressFactory::createOne();
         $send = SendFactory::createOne(['project' => $project, 'created_at' => $date]);
         $gmailComplained = SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::COMPLAINED]);
         $gmailAccepted = SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::ACCEPTED]);
+        $gmailOtherIp = SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::ACCEPTED]);
         $other = SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::COMPLAINED]);
 
         $this->attempt($send, $gmailComplained, $ipAddress, 'gmail.com', $date, SendRecipientStatus::ACCEPTED);
         $this->attempt($send, $gmailAccepted, $ipAddress, 'gmail.com', $date, SendRecipientStatus::ACCEPTED);
+        $this->attempt($send, $gmailOtherIp, $otherIpAddress, 'gmail.com', $date, SendRecipientStatus::ACCEPTED);
         $this->attempt($send, $other, $ipAddress, 'example.com', $date, SendRecipientStatus::ACCEPTED);
 
         foreach ([$gmailComplained, $other] as $recipient) {
@@ -433,7 +436,6 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         foreach (['0.002', '0.003'] as $value) {
             ProviderMetricFactory::createOne([
                 'project' => $project,
-                'ip_address' => $ipAddress,
                 'metric_date' => $date,
                 'value' => $value,
             ]);
@@ -441,7 +443,6 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
 
         ProviderMetricFactory::createOne([
             'project' => null,
-            'ip_address' => $ipAddress,
             'metric_date' => $date,
             'value' => '0.004',
         ]);
@@ -453,14 +454,34 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $this->assertSame(1, $gmailRow['complained']);
         $this->assertSame('0.003000', $gmailRow['complained_rate']);
 
+        $gmailOtherIpRow = $this->row('stats_delivery_domain', [
+            ...$where,
+            'ip_address_id' => $otherIpAddress->getId(),
+            'recipient_domain' => 'gmail.com',
+        ]);
+        $this->assertIsArray($gmailOtherIpRow);
+        $this->assertSame(1, $gmailOtherIpRow['sent']);
+        $this->assertSame('0.003000', $gmailOtherIpRow['complained_rate']);
+
         $otherRow = $this->row('stats_delivery_domain', [...$where, 'recipient_domain' => 'example.com']);
         $this->assertIsArray($otherRow);
         $this->assertSame('1.000000', $otherRow['complained_rate']);
 
-        $ipOnlyRow = $this->row('stats_delivery_domain', [...$where, 'project_id' => null, 'recipient_domain' => 'gmail.com']);
-        $this->assertIsArray($ipOnlyRow);
-        $this->assertSame(0, $ipOnlyRow['sent']);
-        $this->assertSame('0.004000', $ipOnlyRow['complained_rate']);
+        $instanceRow = $this->row('stats_delivery_domain', [
+            ...$where,
+            'project_id' => null,
+            'ip_address_id' => null,
+            'recipient_domain' => 'gmail.com',
+        ]);
+        $this->assertIsArray($instanceRow);
+        $this->assertSame(0, $instanceRow['sent']);
+        $this->assertSame('0.004000', $instanceRow['complained_rate']);
+
+        $rowCount = $this->em->getConnection()->fetchOne(
+            'SELECT COUNT(*) FROM stats_delivery_domain WHERE stat_date = :date',
+            ['date' => $date->format('Y-m-d')]
+        );
+        $this->assertSame(4, $rowCount);
 
         $processed = $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM provider_metrics WHERE processed_at IS NOT NULL');
         $this->assertSame(3, $processed);

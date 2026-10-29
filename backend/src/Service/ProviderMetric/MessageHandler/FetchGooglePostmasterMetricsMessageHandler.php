@@ -6,9 +6,12 @@ use App\Entity\Project;
 use App\Entity\ProviderMetric;
 use App\Entity\Type\ProviderMetricSource;
 use App\Service\App\Config;
+use App\Service\ProviderMetric\Exception\GooglePostmasterException;
 use App\Service\ProviderMetric\GooglePostmasterClient;
 use App\Service\ProviderMetric\Message\FetchGooglePostmasterMetricsMessage;
 use Doctrine\ORM\EntityManagerInterface;
+use Hyvor\Internal\Bundle\Log\ContextualLogger;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -19,11 +22,15 @@ class FetchGooglePostmasterMetricsMessageHandler
 
     private const int LOOKBACK_DAYS = 7;
 
+    private LoggerInterface $logger;
+
     public function __construct(
         private GooglePostmasterClient $client,
         private Config $config,
         private EntityManagerInterface $em,
+        LoggerInterface $logger,
     ) {
+        $this->logger = ContextualLogger::forMessageHandler($logger, self::class);
     }
 
     public function __invoke(FetchGooglePostmasterMetricsMessage $message): void
@@ -36,23 +43,32 @@ class FetchGooglePostmasterMetricsMessageHandler
         $today = $this->now()->setTime(0, 0);
         $from = $today->modify('-' . self::LOOKBACK_DAYS . ' days');
 
-        foreach ($this->client->getSpamRates($domain, $from, $today) as $date => $spamRate) {
-            $this->storeIfChanged(new \DateTimeImmutable($date), null, $spamRate);
+        try {
+            $spamRates = $this->client->getSpamRates($domain, $from, $today);
+            $feedbackLoopSpamRates = $this->client->getFeedbackLoopSpamRates($domain, $from, $today);
+        } catch (GooglePostmasterException $e) {
+            $this->logger->error('Failed to fetch Google Postmaster metrics', [
+                'domain' => $domain,
+                'error' => $e->getMessage(),
+            ]);
+            return;
         }
 
-        $this->em->flush();
-
-        foreach ($this->client->getFeedbackLoopSpamRates($domain, $from, $today) as $row) {
-            $project = ctype_digit($row['id']) ? $this->em->find(Project::class, (int) $row['id']) : null;
-
-            if ($project === null) {
-                continue;
+        $this->em->wrapInTransaction(function () use ($spamRates, $feedbackLoopSpamRates) {
+            foreach ($spamRates as $date => $spamRate) {
+                $this->storeIfChanged(new \DateTimeImmutable($date), null, $spamRate);
             }
 
-            $this->storeIfChanged(new \DateTimeImmutable($row['date']), $project, $row['rate']);
-        }
+            foreach ($feedbackLoopSpamRates as $row) {
+                $project = ctype_digit($row['id']) ? $this->em->find(Project::class, (int) $row['id']) : null;
 
-        $this->em->flush();
+                if ($project === null) {
+                    continue;
+                }
+
+                $this->storeIfChanged(new \DateTimeImmutable($row['date']), $project, $row['rate']);
+            }
+        });
     }
 
     private function storeIfChanged(\DateTimeImmutable $metricDate, ?Project $project, float $spamRate): void

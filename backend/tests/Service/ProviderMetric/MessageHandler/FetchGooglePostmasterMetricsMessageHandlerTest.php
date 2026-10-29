@@ -309,6 +309,23 @@ class FetchGooglePostmasterMetricsMessageHandlerTest extends KernelTestCase
         $this->assertSame('2026-06-13', $metrics[2]->getMetricDate()->format('Y-m-d'));
     }
 
+    public function test_stores_nothing_and_logs_when_api_call_fails(): void
+    {
+        $this->mockHttp([
+            new JsonMockResponse($this->statsResponse(['2026-06-12' => 0.0012])),
+            new MockResponse('{"error": "internal"}', ['http_code' => 500]),
+        ]);
+
+        $this->runHandler();
+
+        $this->assertCount(0, $this->em->getRepository(ProviderMetric::class)->findAll());
+        $this->assertTrue($this->getTestLogger()->hasErrorThatPasses(function (array $record) {
+            /** @var array{message: string, context: array{error: string}} $record */
+            return $record['message'] === 'Failed to fetch Google Postmaster metrics'
+                && str_contains($record['context']['error'], '{"error": "internal"}');
+        }));
+    }
+
     public function test_does_nothing_when_not_configured(): void
     {
         $this->setConfig('googlePostmasterRefreshToken', null);
