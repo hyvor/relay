@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
+	"net/textproto"
 	"strings"
 	"testing"
 	"time"
@@ -428,7 +430,7 @@ func TestSendEmailToHost_OneRecipientFails(t *testing.T) {
 
 	var createSmtpClientBackup = createSmtpClient
 	createSmtpClient = func(host string, _ string) (*smtp.Client, error) {
-		return smtp.NewClient(fake, host)
+		return smtp.NewClient(fake, host, smtp.DefaultTimeouts)
 	}
 
 	defer func() {
@@ -503,7 +505,7 @@ func TestSendEmailToHost_DataCloseFails_ReplacesRcptResult(t *testing.T) {
 
 	var createSmtpClientBackup = createSmtpClient
 	createSmtpClient = func(host string, _ string) (*smtp.Client, error) {
-		return smtp.NewClient(fake, host)
+		return smtp.NewClient(fake, host, smtp.DefaultTimeouts)
 	}
 	defer func() { createSmtpClient = createSmtpClientBackup }()
 
@@ -568,7 +570,7 @@ func TestSendEmailToHost_DataCloseFails_PreservesRcptRejection(t *testing.T) {
 
 	var createSmtpClientBackup = createSmtpClient
 	createSmtpClient = func(host string, _ string) (*smtp.Client, error) {
-		return smtp.NewClient(fake, host)
+		return smtp.NewClient(fake, host, smtp.DefaultTimeouts)
 	}
 	defer func() { createSmtpClient = createSmtpClientBackup }()
 
@@ -699,4 +701,103 @@ func TestSendAfterInterval(t *testing.T) {
 
 	assert.Equal(t, "1 day", getSendAfterInterval(10))
 
+}
+
+// A phase timeout on one MX host is a network error: the next MX host is tried.
+func TestSendEmail_RcptTimeout_TriesNextMxHost(t *testing.T) {
+
+	mxCache.data["timeout.test"] = mxCacheEntry{
+		Hosts:  []string{"mx1.timeout.test", "mx2.timeout.test"},
+		Expiry: time.Now().Add(1 * time.Hour),
+	}
+
+	var createSmtpClientBackup = createSmtpClient
+	createSmtpClient = func(host string, _ string) (*smtp.Client, error) {
+
+		if host == "mx1.timeout.test" {
+			// replies until RCPT, then never replies
+			clientConn, serverConn := net.Pipe()
+			t.Cleanup(func() {
+				clientConn.Close()
+				serverConn.Close()
+			})
+			go func() {
+				srv := textproto.NewConn(serverConn)
+				srv.PrintfLine("220 mx1")
+				srv.ReadLine() // EHLO
+				srv.PrintfLine("250 mx1")
+				srv.ReadLine() // MAIL
+				srv.PrintfLine("250 ok")
+				io.Copy(io.Discard, srv.R)
+			}()
+			timeouts := smtp.DefaultTimeouts
+			timeouts.Command = 50 * time.Millisecond
+			return smtp.NewClient(clientConn, host, timeouts)
+		}
+
+		server := `220 mx2
+250 mx2
+250 Sender OK
+250 Recipient OK
+354 Body
+250 Queued
+221 Bye
+`
+		var fake fakeConn
+		fake.ReadWriter = struct {
+			io.Reader
+			io.Writer
+		}{
+			strings.NewReader(server),
+			&bytes.Buffer{},
+		}
+		return smtp.NewClient(fake, host, smtp.DefaultTimeouts)
+	}
+
+	defer func() {
+		createSmtpClient = createSmtpClientBackup
+		delete(mxCache.data, "timeout.test")
+	}()
+
+	result := sendEmailHandler(
+		&SendRow{Uuid: "test-uuid", RawEmail: "Subject: Test Email"},
+		[]*RecipientRow{
+			{Id: 1, Address: "a@timeout.test", TryCount: 0},
+		},
+		"timeout.test",
+		"relay.com",
+		1,
+		"1.1.1.1",
+		"smtp.relay.com",
+	)
+
+	convo1 := result.SmtpConversations["mx1.timeout.test"]
+	assert.Error(t, convo1.NetworkError)
+	assert.Equal(t, smtp.TimeoutPhaseCommand, convo1.TimeoutPhase)
+	assert.Contains(t, convo1.NetworkError.Error(), "command timeout")
+	assert.GreaterOrEqual(t, convo1.Duration, 50*time.Millisecond)
+
+	convo2 := result.SmtpConversations["mx2.timeout.test"]
+	assert.NoError(t, convo2.NetworkError)
+	assert.Equal(t, smtp.TimeoutPhase(""), convo2.TimeoutPhase)
+
+	assert.Equal(t, "mx2.timeout.test", result.RespondedMxHost)
+	assert.Equal(t, 250, result.RcptResults[0].Code)
+}
+
+func TestSmtpConversation_SetNetworkError(t *testing.T) {
+	convo := NewSmtpConversation()
+	convo.SetNetworkError(errors.New("connection refused"))
+	assert.Equal(t, smtp.TimeoutPhase(""), convo.TimeoutPhase)
+
+	convo = NewSmtpConversation()
+	convo.SetNetworkError(fmt.Errorf("failed to create SMTP client: %w", &smtp.TimeoutError{
+		Phase: smtp.TimeoutPhaseGreeting,
+		Err:   errors.New("i/o timeout"),
+	}))
+	assert.Equal(t, smtp.TimeoutPhaseGreeting, convo.TimeoutPhase)
+
+	data, err := convo.MarshalJSON()
+	assert.NoError(t, err)
+	assert.Contains(t, string(data), `"timeout_phase":"greeting"`)
 }

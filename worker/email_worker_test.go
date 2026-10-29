@@ -11,7 +11,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
+
+	smtp "github.com/hyvor/relay/worker/smtp"
 )
 
 func TestNewEmailWorkersPool(t *testing.T) {
@@ -541,4 +544,44 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 	assert.Equal(t, "accepted", updatedRecipient.Status)
 	assert.Equal(t, 1, updatedRecipient.TryCount)
 
+}
+
+func TestUpdateEmailMetricsFromSendResult_SmtpConversations(t *testing.T) {
+	metrics := newMetrics()
+
+	result := &SendResult{
+		QueueName:  "transactional",
+		SentFromIp: "1.1.1.1",
+		SmtpConversations: map[string]*SmtpConversation{
+			"mx1.example.com": {Duration: 2 * time.Second, TimeoutPhase: smtp.TimeoutPhaseDataTerm},
+			"mx2.example.com": {Duration: 1 * time.Second},
+		},
+	}
+
+	updateEmailMetricsFromSendResult(metrics, result)
+
+	registry := prometheus.NewRegistry()
+	registry.MustRegister(metrics.smtpClientTimeoutsTotal, metrics.smtpConversationDuration)
+	families, err := registry.Gather()
+	assert.NoError(t, err)
+
+	found := 0
+	for _, family := range families {
+		switch family.GetName() {
+		case "smtp_client_timeouts_total":
+			found++
+			assert.Len(t, family.GetMetric(), 1)
+			m := family.GetMetric()[0]
+			assert.Equal(t, "phase", m.GetLabel()[0].GetName())
+			assert.Equal(t, "data_term", m.GetLabel()[0].GetValue())
+			assert.Equal(t, 1.0, m.GetCounter().GetValue())
+		case "smtp_conversation_duration_seconds":
+			found++
+			assert.Len(t, family.GetMetric(), 1)
+			h := family.GetMetric()[0].GetHistogram()
+			assert.Equal(t, uint64(2), h.GetSampleCount())
+			assert.Equal(t, 3.0, h.GetSampleSum())
+		}
+	}
+	assert.Equal(t, 2, found)
 }

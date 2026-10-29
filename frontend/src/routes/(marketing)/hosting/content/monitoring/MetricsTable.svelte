@@ -97,6 +97,18 @@
 			global: false
 		},
 		{
+			name: 'smtp_client_timeouts_total',
+			labels: ['phase'],
+			description: 'Total number of outgoing SMTP conversations that hit a phase timeout',
+			global: false
+		},
+		{
+			name: 'smtp_conversation_duration_seconds',
+			labels: ['queue_name', 'ip'],
+			description: 'Duration of outgoing SMTP conversations (per MX host attempt) in seconds',
+			global: false
+		},
+		{
 			name: 'http_requests_total',
 			labels: ['method', 'endpoint', 'status'],
 			description: 'Total number of HTTP requests handled'

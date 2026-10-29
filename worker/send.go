@@ -97,6 +97,9 @@ type SmtpConversation struct {
 	// nil if the message was sent successfully (regardless of SMTP status)
 	NetworkError error `json:"network_error"`
 
+	// set when NetworkError is a phase timeout
+	TimeoutPhase smtp.TimeoutPhase `json:"timeout_phase,omitempty"`
+
 	// results for each recipient, indexed by recipient ID
 	RcptResults []*RcptResult `json:"-"`
 
@@ -128,6 +131,15 @@ func NewSmtpConversation() *SmtpConversation {
 		NetworkError: nil,
 		Steps:        make([]*SmtpStep, 0),
 		RcptResults:  make([]*RcptResult, 0),
+	}
+}
+
+func (c *SmtpConversation) SetNetworkError(err error) {
+	c.NetworkError = err
+	c.Duration = time.Since(c.StartTime)
+	var timeoutErr *smtp.TimeoutError
+	if errors.As(err, &timeoutErr) {
+		c.TimeoutPhase = timeoutErr.Phase
 	}
 }
 
@@ -394,7 +406,7 @@ var createSmtpClient = func(host string, localIp string) (*smtp.Client, error) {
 		return nil, fmt.Errorf("failed to connect to SMTP server %s: %w", host, err)
 	}
 
-	client, err := smtp.NewClient(conn, host)
+	client, err := smtp.NewClient(conn, host, smtp.DefaultTimeouts)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create SMTP client for %s: %w", host, err)
@@ -420,7 +432,7 @@ func sendEmailToHostHandler(
 	// ==============================
 	c, err := createSmtpClient(host, ip)
 	if err != nil {
-		conversation.NetworkError = err
+		conversation.SetNetworkError(err)
 		return conversation
 	}
 	defer c.Close()
@@ -431,7 +443,7 @@ func sendEmailToHostHandler(
 	helloResult := c.Hello(ptr)
 
 	if helloResult.Err != nil {
-		conversation.NetworkError = helloResult.Err
+		conversation.SetNetworkError(helloResult.Err)
 		return conversation
 	}
 	conversation.AddStepFromResult(SmtpStepHello, &helloResult)
@@ -447,12 +459,12 @@ func sendEmailToHostHandler(
 		startTlsResult, ehloResult := c.StartTLS(&tls.Config{ServerName: host})
 
 		if startTlsResult.Err != nil {
-			conversation.NetworkError = startTlsResult.Err
+			conversation.SetNetworkError(startTlsResult.Err)
 			return conversation
 		}
 
 		if ehloResult.Err != nil {
-			conversation.NetworkError = ehloResult.Err
+			conversation.SetNetworkError(ehloResult.Err)
 			return conversation
 		}
 
@@ -475,7 +487,7 @@ func sendEmailToHostHandler(
 	// ================
 	mailResult := c.Mail(getReturnPath(send, instanceDomain))
 	if mailResult.Err != nil {
-		conversation.NetworkError = mailResult.Err
+		conversation.SetNetworkError(mailResult.Err)
 		return conversation
 	}
 	conversation.AddStepFromResult(SmtpStepMail, &mailResult)
@@ -496,7 +508,7 @@ func sendEmailToHostHandler(
 		rcptResult := c.Rcpt(rcpt.Address)
 
 		if rcptResult.Err != nil {
-			conversation.NetworkError = rcptResult.Err
+			conversation.SetNetworkError(rcptResult.Err)
 			return conversation
 		}
 
@@ -517,7 +529,7 @@ func sendEmailToHostHandler(
 	// ============
 	w, dataResult := c.Data()
 	if dataResult.Err != nil {
-		conversation.NetworkError = dataResult.Err
+		conversation.SetNetworkError(dataResult.Err)
 		return conversation
 	}
 	conversation.AddStepFromResult(SmtpStepData, &dataResult)
@@ -527,7 +539,7 @@ func sendEmailToHostHandler(
 	}
 	_, err = w.Write([]byte(send.RawEmail))
 	if err != nil {
-		conversation.NetworkError = err
+		conversation.SetNetworkError(err)
 		return conversation
 	}
 
@@ -535,7 +547,7 @@ func sendEmailToHostHandler(
 	// ============
 	closeResult := w.Close()
 	if closeResult.Err != nil {
-		conversation.NetworkError = closeResult.Err
+		conversation.SetNetworkError(closeResult.Err)
 		return conversation
 	}
 	conversation.AddStepFromResult(SmtpStepDataClose, &closeResult)

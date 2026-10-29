@@ -421,4 +421,15 @@ func updateEmailMetricsFromSendResult(
 		sendResult.SentFromIp,
 	).Observe(sendResult.Duration.Seconds())
 
+	for _, conversation := range sendResult.SmtpConversations {
+		metrics.smtpConversationDuration.WithLabelValues(
+			sendResult.QueueName,
+			sendResult.SentFromIp,
+		).Observe(conversation.Duration.Seconds())
+
+		if conversation.TimeoutPhase != "" {
+			metrics.smtpClientTimeoutsTotal.WithLabelValues(string(conversation.TimeoutPhase)).Inc()
+		}
+	}
+
 }

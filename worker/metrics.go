@@ -43,6 +43,8 @@ type Metrics struct {
 	webhookDeliveriesTotal       *prometheus.CounterVec
 	incomingEmailsTotal          *prometheus.CounterVec
 	dnsQueriesTotal              *prometheus.CounterVec
+	smtpClientTimeoutsTotal      *prometheus.CounterVec
+	smtpConversationDuration     *prometheus.HistogramVec
 }
 
 type SymfonyMetricsResponse struct {
@@ -170,6 +172,23 @@ func newMetrics() *Metrics {
 			// status = "found", "not_found"
 			[]string{"type", "status"},
 		),
+		smtpClientTimeoutsTotal: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "smtp_client_timeouts_total",
+				Help: "Total number of outgoing SMTP conversations that hit a phase timeout",
+			},
+			// phase = "greeting", "command", "data_init", "data_block", "data_term"
+			[]string{"phase"},
+		),
+		smtpConversationDuration: prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name: "smtp_conversation_duration_seconds",
+				Help: "Duration of outgoing SMTP conversations (per MX host attempt) in seconds",
+				// up to 20 minutes
+				Buckets: []float64{0.1, 0.5, 1, 2, 5, 10, 30, 60, 120, 300, 600, 1200},
+			},
+			[]string{"queue_name", "ip"},
+		),
 	}
 }
 
@@ -195,6 +214,8 @@ func (server *MetricsServer) Set(goState GoState) {
 	server.registry.Unregister(server.metrics.webhookDeliveriesTotal)
 	server.registry.Unregister(server.metrics.incomingEmailsTotal)
 	server.registry.Unregister(server.metrics.dnsQueriesTotal)
+	server.registry.Unregister(server.metrics.smtpClientTimeoutsTotal)
+	server.registry.Unregister(server.metrics.smtpConversationDuration)
 
 	// register global metrics if the current server is the leader
 	if server.isLeader {
@@ -217,6 +238,8 @@ func (server *MetricsServer) Set(goState GoState) {
 	server.registry.MustRegister(server.metrics.webhookDeliveriesTotal)
 	server.registry.MustRegister(server.metrics.incomingEmailsTotal)
 	server.registry.MustRegister(server.metrics.dnsQueriesTotal)
+	server.registry.MustRegister(server.metrics.smtpClientTimeoutsTotal)
+	server.registry.MustRegister(server.metrics.smtpConversationDuration)
 
 	// Set static values
 	server.metrics.relayInfo.WithLabelValues(

@@ -18,12 +18,18 @@ import (
 
 type faker struct {
 	io.ReadWriter
+	deadline *time.Time
 }
 
-func (f faker) Close() error                     { return nil }
-func (f faker) LocalAddr() net.Addr              { return nil }
-func (f faker) RemoteAddr() net.Addr             { return nil }
-func (f faker) SetDeadline(time.Time) error      { return nil }
+func (f faker) Close() error         { return nil }
+func (f faker) LocalAddr() net.Addr  { return nil }
+func (f faker) RemoteAddr() net.Addr { return nil }
+func (f faker) SetDeadline(t time.Time) error {
+	if f.deadline != nil {
+		*f.deadline = t
+	}
+	return nil
+}
 func (f faker) SetReadDeadline(time.Time) error  { return nil }
 func (f faker) SetWriteDeadline(time.Time) error { return nil }
 
@@ -35,7 +41,7 @@ func TestBasic(t *testing.T) {
 	bcmdbuf := bufio.NewWriter(&cmdbuf)
 	var fake faker
 	fake.ReadWriter = bufio.NewReadWriter(bufio.NewReader(strings.NewReader(server)), bcmdbuf)
-	c := &Client{Text: textproto.NewConn(fake), localName: "localhost"}
+	c := &Client{Text: textproto.NewConn(fake), conn: fake, localName: "localhost", timeouts: DefaultTimeouts}
 
 	if helloResult := c.helo(); helloResult.Err != nil {
 		t.Fatalf("HELO failed: %s", helloResult.Err)
@@ -152,7 +158,7 @@ QUIT
 	bcmdbuf := bufio.NewWriter(&cmdbuf)
 	var fake faker
 	fake.ReadWriter = bufio.NewReadWriter(bufio.NewReader(strings.NewReader(server)), bcmdbuf)
-	c := &Client{Text: textproto.NewConn(fake), localName: "localhost"}
+	c := &Client{Text: textproto.NewConn(fake), conn: fake, localName: "localhost", timeouts: DefaultTimeouts}
 
 	if helloResult := c.Hello("localhost"); helloResult.CodeValid(250) {
 		t.Fatal("expected EHLO to fail")
@@ -175,7 +181,7 @@ func TestExtensions(t *testing.T) {
 		bcmdbuf = bufio.NewWriter(cmdbuf)
 		var fake faker
 		fake.ReadWriter = bufio.NewReadWriter(bufio.NewReader(strings.NewReader(server)), bcmdbuf)
-		c = &Client{Text: textproto.NewConn(fake), localName: "localhost"}
+		c = &Client{Text: textproto.NewConn(fake), conn: fake, localName: "localhost", timeouts: DefaultTimeouts}
 
 		return c, bcmdbuf, cmdbuf
 	}
@@ -392,7 +398,7 @@ func TestNewClient(t *testing.T) {
 	}
 	var fake faker
 	fake.ReadWriter = bufio.NewReadWriter(bufio.NewReader(strings.NewReader(server)), bcmdbuf)
-	c, err := NewClient(fake, "fake.host")
+	c, err := NewClient(fake, "fake.host", DefaultTimeouts)
 	if err != nil {
 		t.Fatalf("NewClient: %v\n(after %v)", err, out())
 	}
@@ -434,7 +440,7 @@ func TestNewClient2(t *testing.T) {
 	bcmdbuf := bufio.NewWriter(&cmdbuf)
 	var fake faker
 	fake.ReadWriter = bufio.NewReadWriter(bufio.NewReader(strings.NewReader(server)), bcmdbuf)
-	c, err := NewClient(fake, "fake.host")
+	c, err := NewClient(fake, "fake.host", DefaultTimeouts)
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
 	}
@@ -506,7 +512,7 @@ func TestNewClientWithTLS(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client, err := NewClient(conn, ln.Addr().String())
+	client, err := NewClient(conn, ln.Addr().String(), DefaultTimeouts)
 	if err != nil {
 		t.Fatalf("smtp: newclient: %v", err)
 	}
@@ -528,7 +534,7 @@ func TestHello(t *testing.T) {
 		bcmdbuf := bufio.NewWriter(&cmdbuf)
 		var fake faker
 		fake.ReadWriter = bufio.NewReadWriter(bufio.NewReader(strings.NewReader(server)), bcmdbuf)
-		c, err := NewClient(fake, "fake.host")
+		c, err := NewClient(fake, "fake.host", DefaultTimeouts)
 		if err != nil {
 			t.Fatalf("NewClient: %v", err)
 		}

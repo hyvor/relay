@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/textproto"
 	"strings"
+	"time"
 )
 
 // A Client represents a client connection to an SMTP server.
@@ -30,6 +31,7 @@ type Client struct {
 	localName   string        // the name to use in HELO/EHLO
 	helloResult CommandResult // result of the last hello command
 	didHello    bool          // whether we've said HELO/EHLO
+	timeouts    Timeouts      // per-phase deadlines (RFC 5321)
 }
 
 // Dial returns a new [Client] connected to an SMTP server at addr.
@@ -40,21 +42,30 @@ func Dial(addr string) (*Client, error) {
 		return nil, err
 	}
 	host, _, _ := net.SplitHostPort(addr)
-	return NewClient(conn, host)
+	return NewClient(conn, host, DefaultTimeouts)
 }
 
 // NewClient returns a new [Client] using an existing connection and host as a
 // server name to be used when authenticating.
-func NewClient(conn net.Conn, host string) (*Client, error) {
+// The timeouts are applied per phase of the conversation.
+func NewClient(conn net.Conn, host string, timeouts Timeouts) (*Client, error) {
 	text := textproto.NewConn(conn)
-	_, _, err := text.ReadResponse(220)
-	if err != nil {
+	c := &Client{Text: text, conn: conn, serverName: host, localName: "localhost", timeouts: timeouts}
+	if err := c.setDeadline(timeouts.Greeting); err != nil {
 		text.Close()
 		return nil, err
 	}
-	c := &Client{Text: text, conn: conn, serverName: host, localName: "localhost"}
+	_, _, err := text.ReadResponse(220)
+	if err != nil {
+		text.Close()
+		return nil, wrapTimeout(TimeoutPhaseGreeting, err)
+	}
 	_, c.tls = conn.(*tls.Conn)
 	return c, nil
+}
+
+func (c *Client) setDeadline(d time.Duration) error {
+	return c.conn.SetDeadline(time.Now().Add(d))
 }
 
 // Close closes the connection.
@@ -68,7 +79,10 @@ func (c *Client) hello() CommandResult {
 		c.didHello = true
 
 		c.helloResult = c.ehlo()
-		if c.helloResult.Err != nil || !c.helloResult.CodeValid(250) {
+		// fall back to HELO only if the server replied to EHLO with an error.
+		// On a network error (e.g. a timeout), the connection is unusable,
+		// and retrying with HELO would just wait for another full timeout.
+		if c.helloResult.Err == nil && !c.helloResult.CodeValid(250) {
 			c.helloResult = c.helo()
 		}
 	}
@@ -93,14 +107,19 @@ func (c *Client) Hello(localName string) CommandResult {
 }
 
 // cmd is a convenience function that sends a command and returns the response
-func (c *Client) cmd(format string, args ...any) CommandResult {
+func (c *Client) cmd(timeout time.Duration, phase TimeoutPhase, format string, args ...any) CommandResult {
 	commandResult := CommandResult{
 		Command: fmt.Sprintf(format, args...),
 	}
 
+	if err := c.setDeadline(timeout); err != nil {
+		commandResult.Err = err
+		return commandResult
+	}
+
 	id, err := c.Text.Cmd(format, args...)
 	if err != nil {
-		commandResult.Err = err
+		commandResult.Err = wrapTimeout(phase, err)
 		return commandResult
 	}
 	c.Text.StartResponse(id)
@@ -108,7 +127,7 @@ func (c *Client) cmd(format string, args ...any) CommandResult {
 	code, msg, err := c.Text.ReadResponse(0) // 0 to disable code check
 
 	if err != nil {
-		commandResult.Err = err
+		commandResult.Err = wrapTimeout(phase, err)
 		return commandResult
 	}
 
@@ -121,13 +140,13 @@ func (c *Client) cmd(format string, args ...any) CommandResult {
 // server does not support ehlo.
 func (c *Client) helo() CommandResult {
 	c.ext = nil
-	return c.cmd("HELO %s", c.localName)
+	return c.cmd(c.timeouts.Command, TimeoutPhaseCommand, "HELO %s", c.localName)
 }
 
 // ehlo sends the EHLO (extended hello) greeting to the server. It
 // should be the preferred greeting for servers that support it.
 func (c *Client) ehlo() CommandResult {
-	commandResult := c.cmd("EHLO %s", c.localName)
+	commandResult := c.cmd(c.timeouts.Command, TimeoutPhaseCommand, "EHLO %s", c.localName)
 
 	if commandResult.Err != nil {
 		return commandResult
@@ -155,7 +174,7 @@ func (c *Client) ehlo() CommandResult {
 // returns STARTTLS command result and the result of the EHLO command after
 // Verify with: 220 and 250
 func (c *Client) StartTLS(config *tls.Config) (CommandResult, CommandResult) {
-	tlsResult := c.cmd("STARTTLS")
+	tlsResult := c.cmd(c.timeouts.Command, TimeoutPhaseCommand, "STARTTLS")
 
 	if tlsResult.Err != nil {
 		return tlsResult, CommandResult{}
@@ -187,7 +206,7 @@ func (c *Client) Mail(from string) CommandResult {
 			cmdStr += " SMTPUTF8"
 		}
 	}
-	return c.cmd(cmdStr, from)
+	return c.cmd(c.timeouts.Command, TimeoutPhaseCommand, cmdStr, from)
 }
 
 // Rcpt issues a RCPT command to the server using the provided email address.
@@ -198,23 +217,54 @@ func (c *Client) Rcpt(to string) CommandResult {
 	if err := validateLine(to); err != nil {
 		return NewErrorCommandResult(err)
 	}
-	return c.cmd("RCPT TO:<%s>", to)
+	return c.cmd(c.timeouts.Command, TimeoutPhaseCommand, "RCPT TO:<%s>", to)
 }
+
+// dataBlockSize is the size of each body block written with a fresh DataBlock deadline.
+// A slow but progressing server is not cut off just because the message is big.
+const dataBlockSize = 64 * 1024
 
 type dataCloser struct {
 	c *Client
 	io.WriteCloser
 }
 
+func (d *dataCloser) Write(p []byte) (int, error) {
+	written := 0
+	for written < len(p) {
+		end := min(written+dataBlockSize, len(p))
+
+		if err := d.c.setDeadline(d.c.timeouts.DataBlock); err != nil {
+			return written, err
+		}
+
+		n, err := d.WriteCloser.Write(p[written:end])
+		written += n
+		if err != nil {
+			return written, wrapTimeout(TimeoutPhaseDataBlock, err)
+		}
+	}
+	return written, nil
+}
+
 // Verify with: 250
 func (d *dataCloser) Close() CommandResult {
 	commandResult := CommandResult{}
 
-	d.WriteCloser.Close()
+	if err := d.c.setDeadline(d.c.timeouts.DataTerm); err != nil {
+		commandResult.Err = err
+		return commandResult
+	}
+
+	if err := d.WriteCloser.Close(); err != nil {
+		commandResult.Err = wrapTimeout(TimeoutPhaseDataTerm, err)
+		return commandResult
+	}
+
 	code, msg, err := d.c.Text.ReadResponse(0)
 
 	if err != nil {
-		commandResult.Err = err
+		commandResult.Err = wrapTimeout(TimeoutPhaseDataTerm, err)
 		return commandResult
 	}
 
@@ -229,7 +279,7 @@ func (d *dataCloser) Close() CommandResult {
 // Data must be preceded by one or more calls to [Client.Rcpt].
 // Verify with: 354
 func (c *Client) Data() (*dataCloser, CommandResult) {
-	dataResult := c.cmd("DATA")
+	dataResult := c.cmd(c.timeouts.DataInit, TimeoutPhaseDataInit, "DATA")
 
 	if dataResult.Err != nil {
 		return nil, dataResult
@@ -255,20 +305,20 @@ func (c *Client) Extension(ext string) (bool, string) {
 // transaction.
 // Verify with: 250
 func (c *Client) Reset() CommandResult {
-	return c.cmd("RSET")
+	return c.cmd(c.timeouts.Command, TimeoutPhaseCommand, "RSET")
 }
 
 // Noop sends the NOOP command to the server. It does nothing but check
 // that the connection to the server is okay.
 // Verify with: 250
 func (c *Client) Noop() CommandResult {
-	return c.cmd("NOOP")
+	return c.cmd(c.timeouts.Command, TimeoutPhaseCommand, "NOOP")
 }
 
 // Quit sends the QUIT command and closes the connection to the server.
 // Verify with: 221
 func (c *Client) Quit() CommandResult {
-	quitResult := c.cmd("QUIT")
+	quitResult := c.cmd(c.timeouts.Quit, TimeoutPhaseQuit, "QUIT")
 	if quitResult.Err != nil {
 		return quitResult
 	}
