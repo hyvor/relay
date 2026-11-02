@@ -79,9 +79,7 @@ func (c *Client) hello() CommandResult {
 		c.didHello = true
 
 		c.helloResult = c.ehlo()
-		// fall back to HELO only if the server replied to EHLO with an error.
-		// On a network error (e.g. a timeout), the connection is unusable,
-		// and retrying with HELO would just wait for another full timeout.
+		// fallback to HELO on non-250
 		if c.helloResult.Err == nil && !c.helloResult.CodeValid(250) {
 			c.helloResult = c.helo()
 		}
