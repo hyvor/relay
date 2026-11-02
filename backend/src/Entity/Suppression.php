@@ -31,7 +31,7 @@ class Suppression
     #[ORM\Column(enumType: SuppressionReason::class)]
     private SuppressionReason $reason;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(type: "text", nullable: true)]
     private ?string $description = null;
 
     public function getId(): int

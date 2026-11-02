@@ -146,7 +146,7 @@ export type DnsRecordType = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT';
 export interface DebugIncomingEmail {
 	id: number;
 	created_at: number;
-	type: 'bounce' | 'fbl';
+	type: 'bounce' | 'complaint';
 	status: 'success' | 'failed';
 	raw_email: string;
 	mail_from: string;
@@ -240,4 +240,11 @@ export interface WarmupSchedule {
 	created_at: number;
 	updated_at: number;
 	ip_address_id: number;
+}
+
+export interface SudoStats {
+	project_count: number;
+	sends: number;
+	bounce_rate: number;
+	complaint_rate: number;
 }

@@ -131,11 +131,23 @@
 			const recipient = send.recipients.find((r) => r.id === feedback.recipient_id);
 			const recipientEmail = recipient ? recipient.address : 'unknown recipient';
 
-			if (feedback.type === 'bounce') {
+			if (feedback.type === 'bounce' && feedback.bounce_reason === 'recipient') {
 				return {
 					message: `Bounced: <strong>${recipientEmail}</strong>`,
 					description:
 						'Received a bounce notification from the recipient mail server. (Added to suppression list and future sends will be ignored)',
+					color: 'var(--red)'
+				};
+			} else if (feedback.type === 'bounce') {
+				return {
+					message: `Bounced: <strong>${recipientEmail}</strong>`,
+					description: 'Received a bounce notification from the recipient mail server.',
+					color: 'var(--red)'
+				};
+			} else if (feedback.recipient_id === null) {
+				return {
+					message: 'Marked as spam',
+					description: 'The recipient was redacted by the mail provider.',
 					color: 'var(--red)'
 				};
 			} else {

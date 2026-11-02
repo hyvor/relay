@@ -26,6 +26,7 @@ func addCustomHeaders(apiReq *ApiRequest, header mail.Header) {
 		"content-transfer-encoding",
 		"content-disposition",
 		"message-id",
+		"feedback-id",
 
 		// security
 		"dkim-signature",

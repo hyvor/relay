@@ -44,6 +44,9 @@ class Instance
     #[ORM\Column(type: "boolean")]
     private bool $sudo_initialized = false;
 
+    #[ORM\Column(type: "datetime_immutable", nullable: true)]
+    private ?\DateTimeImmutable $stats_rebuilt_at = null;
+
     #[ORM\Column()]
     private ?int $mail_tls_certificate_id = null;
 
@@ -137,6 +140,17 @@ class Instance
     public function setLastHealthCheckAt(?\DateTimeImmutable $lastHealthCheckAt): static
     {
         $this->last_health_check_at = $lastHealthCheckAt;
+        return $this;
+    }
+
+    public function getStatsRebuiltAt(): ?\DateTimeImmutable
+    {
+        return $this->stats_rebuilt_at;
+    }
+
+    public function setStatsRebuiltAt(?\DateTimeImmutable $statsRebuiltAt): static
+    {
+        $this->stats_rebuilt_at = $statsRebuiltAt;
         return $this;
     }
 

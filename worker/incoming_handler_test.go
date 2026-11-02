@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/hyvor/relay/worker/bounceparse"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -115,6 +116,12 @@ This is a test email message.
 	assert.Equal(t, "bounce+uuid@relay.com", bodyMap["rcpt_to"])
 	assert.Equal(t, string(m.Data), bodyMap["raw_email"])
 
+	dsnMap, ok := bodyMap["dsn"].(*bounceparse.Dsn)
+	assert.True(t, ok)
+	bounceDsns := dsnMap.Recipients
+	assert.Equal(t, 1, len(bounceDsns))
+	assert.Equal(t, "recipient", bounceDsns[0].BounceReason)
+
 }
 
 func TestIncomingMail_HandleFbl(t *testing.T) {
@@ -179,7 +186,7 @@ Return-Path: <return@hyvor.com>
 	bodyMap, ok := calledBody.(map[string]interface{})
 	assert.True(t, ok)
 
-	assert.Equal(t, IncomingMailTypeFbl, bodyMap["type"])
+	assert.Equal(t, IncomingMailTypeComplaint, bodyMap["type"])
 	assert.Contains(t, bodyMap, "arf")
 	assert.Equal(t, "sender@example.org", bodyMap["mail_from"])
 	assert.Equal(t, "fbl@relay.com", bodyMap["rcpt_to"])

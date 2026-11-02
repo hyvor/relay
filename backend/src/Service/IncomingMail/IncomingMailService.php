@@ -5,6 +5,7 @@ namespace App\Service\IncomingMail;
 use App\Api\Local\Input\ArfInput;
 use App\Api\Local\Input\DsnInput;
 use App\Entity\DebugIncomingEmail;
+use App\Entity\Type\BounceReason;
 use App\Entity\Type\SendFeedbackType;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SuppressionReason;
@@ -14,9 +15,9 @@ use App\Service\IncomingMail\Event\IncomingBounceEvent;
 use App\Service\IncomingMail\Event\IncomingComplaintEvent;
 use App\Service\InfrastructureBounce\InfrastructureBounceService;
 use App\Service\Send\SendService;
+use App\Service\SendAttempt\SendAttemptService;
 use App\Service\SendFeedback\SendFeedbackService;
 use App\Service\SendRecipient\SendRecipientService;
-use App\Service\Smtp\SmtpResponseParser;
 use App\Service\Suppression\SuppressionService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -27,10 +28,11 @@ class IncomingMailService
         private SendService $sendService,
         private SuppressionService $suppressionService,
         private SendRecipientService $sendRecipientService,
+        private SendAttemptService $sendAttemptService,
         private SendFeedbackService $sendFeedbackService,
         private InfrastructureBounceService $infrastructureBounceService,
         private LoggerInterface $logger,
-        private EventDispatcherInterface $ed
+        private EventDispatcherInterface $ed,
     ) {
     }
 
@@ -60,14 +62,22 @@ class IncomingMailService
                 return;
             }
 
-            $smtpResponseParser = new SmtpResponseParser(null, $recipient->Status, $dsnInput->ReadableText);
-            if (!$smtpResponseParser->isRecipientBounce() && !$smtpResponseParser->isInfrastructureError()) {
-                $this->logger->info('Received bounce that is not a recipient bounce or infrastructure error', [
+            $bounceReason = $recipient->BounceReason;
+            if ($bounceReason === null) {
+                $this->logger->info('Received failed DSN that is not a bounce', [
                     'uuid' => $bounceUuid,
                     'recipient' => $recipient->EmailAddress,
                     'status' => $recipient->Status,
                 ]);
                 return;
+            }
+
+            if ($bounceReason === BounceReason::UNKNOWN) {
+                $this->logger->info('Received bounce that is not a recipient bounce or infrastructure error', [
+                    'uuid' => $bounceUuid,
+                    'recipient' => $recipient->EmailAddress,
+                    'status' => $recipient->Status,
+                ]);
             }
 
             $send = $this->sendService->getSendByUuid($bounceUuid);
@@ -89,9 +99,18 @@ class IncomingMailService
                 return;
             }
 
-            if ($smtpResponseParser->isRecipientBounce()) {
-                $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::BOUNCED);
+            $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::BOUNCED);
 
+            $this->sendFeedbackService->createSendFeedback(
+                SendFeedbackType::BOUNCE,
+                $send,
+                $sendRecipient,
+                $debugIncomingEmail,
+                $this->sendAttemptService->getAcceptedSendAttemptOfRecipient($sendRecipient)?->getIpAddress(),
+                $bounceReason->value,
+            );
+
+            if ($bounceReason === BounceReason::RECIPIENT) {
                 $this->suppressionService->createSuppression(
                     $send->getProject(),
                     $recipient->EmailAddress,
@@ -99,16 +118,10 @@ class IncomingMailService
                     $dsnInput->ReadableText
                 );
 
-                $this->sendFeedbackService->createSendFeedback(
-                    SendFeedbackType::BOUNCE,
-                    $sendRecipient,
-                    $debugIncomingEmail
-                );
-
                 $bounceObject = new BounceDto($dsnInput->ReadableText, $recipient->Status);
                 $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient, $bounceObject));
-            } elseif ($smtpResponseParser->isInfrastructureError()) {
-                $this->logger->info('Received infrastructure error with unknown send UUID', [
+            } elseif ($bounceReason === BounceReason::INFRASTRUCTURE) {
+                $this->logger->info('Received infrastructure error', [
                     'uuid' => $bounceUuid,
                     'recipient' => $recipient->EmailAddress,
                 ]);
@@ -146,15 +159,45 @@ class IncomingMailService
             return;
         }
 
-        $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $arfInput->OriginalRcptTo);
-        if ($sendRecipient === null) {
-            // @codeCoverageIgnoreStart
-            $this->logger->error('Failed to get send recipient by email', [
+        // Redacted reports do not identify the recipient, so every redacted complaint
+        // on a send is treated as a duplicate of the first one
+        $sendRecipient = null;
+        if ($arfInput->OriginalRcptTo !== '') {
+            $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $arfInput->OriginalRcptTo);
+            if ($sendRecipient === null) {
+                // @codeCoverageIgnoreStart
+                $this->logger->error('Failed to get send recipient by email', [
+                    'uuid' => $uuid,
+                    'recipient' => $arfInput->OriginalRcptTo,
+                ]);
+                return;
+                // @codeCoverageIgnoreEnd
+            }
+        }
+
+        if ($this->sendFeedbackService->hasComplaint($send, $sendRecipient)) {
+            $this->logger->info('Received duplicate complaint', [
                 'uuid' => $uuid,
                 'recipient' => $arfInput->OriginalRcptTo,
             ]);
             return;
-            // @codeCoverageIgnoreEnd
+        }
+
+        $ipAddress = $sendRecipient === null
+            ? $send->getIpAddress()
+            : $this->sendAttemptService->getAcceptedSendAttemptOfRecipient($sendRecipient)?->getIpAddress();
+
+        $this->sendFeedbackService->createSendFeedback(
+            SendFeedbackType::COMPLAINT,
+            $send,
+            $sendRecipient,
+            $debugIncomingEmail,
+            $ipAddress,
+            $arfInput->FeedbackType
+        );
+
+        if ($sendRecipient === null) {
+            return;
         }
 
         $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::COMPLAINED);
@@ -164,12 +207,6 @@ class IncomingMailService
             $arfInput->OriginalRcptTo,
             SuppressionReason::COMPLAINT,
             $arfInput->ReadableText
-        );
-
-        $this->sendFeedbackService->createSendFeedback(
-            SendFeedbackType::COMPLAINT,
-            $sendRecipient,
-            $debugIncomingEmail
         );
 
         $complaintObject = new ComplaintDto($arfInput->ReadableText, $arfInput->FeedbackType);

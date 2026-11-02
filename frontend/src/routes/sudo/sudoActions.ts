@@ -19,7 +19,8 @@ import type {
 	SudoSendsResponse,
 	SudoSendResponse,
 	WarmupSchedule,
-	WarmupStatus
+	WarmupStatus,
+	SudoStats
 } from './sudoTypes';
 
 export function initSudo() {
@@ -282,5 +283,12 @@ export function updateWarmupSchedule(
 export function deleteWarmupSchedule(scheduleId: number) {
 	return sudoApi.delete({
 		endpoint: `/warmup-schedules/${scheduleId}`
+	});
+}
+
+export function getSudoStats(period: '30d' | '7d' | '24h' = '24h') {
+	return sudoApi.get<SudoStats>({
+		endpoint: '/stats',
+		data: { period }
 	});
 }
