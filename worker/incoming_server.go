@@ -209,9 +209,6 @@ func (server *IncomingMailServer) Shutdown() {
 var smtpServerPort1 = ":25"
 var smtpServerPort2 = ":587"
 
-var smtpServerReadTimeout = 5 * time.Minute
-var smtpServerWriteTimeout = 5 * time.Minute
-
 func (server *IncomingMailServer) StartChannelAndSmtpServers(instanceDomain string, numWorkers int, mailTls GoStateMailTls) {
 
 	// channel
@@ -256,8 +253,8 @@ func (server *IncomingMailServer) StartSmtpServer(
 
 	smtpServer.Addr = "0.0.0.0" + port
 	smtpServer.Domain = instanceDomain
-	smtpServer.WriteTimeout = smtpServerWriteTimeout
-	smtpServer.ReadTimeout = smtpServerReadTimeout
+	smtpServer.WriteTimeout = 60 * time.Second
+	smtpServer.ReadTimeout = 60 * time.Second
 	smtpServer.MaxMessageBytes = 1024 * 1024
 	smtpServer.MaxRecipients = 10
 	smtpServer.AllowInsecureAuth = true
