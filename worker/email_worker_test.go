@@ -509,10 +509,10 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 			recipients []*RecipientRow,
 			rcptDomain, instanceDomain string,
 			ipId int,
-			ip, ptr string,
+			ip, privateIp, ptr string,
 		) *SendResult {
 			assert.Equal(t, workerContext, ctx)
-			return sendEmail(send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr)
+			return sendEmail(send, recipients, rcptDomain, instanceDomain, ipId, ip, privateIp, ptr)
 		},
 	}
 
@@ -523,6 +523,7 @@ func TestEmailWorker_AttemptSendToDomain(t *testing.T) {
 		instanceDomain string,
 		ipId int,
 		ip string,
+		privateIp string,
 		ptr string,
 	) *SendResult {
 		return &SendResult{

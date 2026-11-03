@@ -19,8 +19,8 @@ var testCache = NewSharedCache(nil)
 
 var sendEmail = sendEmailHandler
 
-func sendEmailHandler(send *SendRow, recipients []*RecipientRow, rcptDomain, instanceDomain string, ipId int, ip, ptr string) *SendResult {
-	return sendEmailHandlerContext(context.Background(), testCache, send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr)
+func sendEmailHandler(send *SendRow, recipients []*RecipientRow, rcptDomain, instanceDomain string, ipId int, ip, privateIp, ptr string) *SendResult {
+	return sendEmailHandlerContext(context.Background(), testCache, send, recipients, rcptDomain, instanceDomain, ipId, ip, privateIp, ptr)
 }
 
 func sendEmailToHostHandler(send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, secureMx bool) *SmtpConversation {
@@ -73,6 +73,7 @@ func TestSendEmail_Accepted(t *testing.T) {
 		"relay.com",
 		1,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -83,6 +84,97 @@ func TestSendEmail_Accepted(t *testing.T) {
 	assert.Equal(t, "OK", rcptResult.Message)
 
 	assert.Equal(t, "mx.hyvor.com", result.RespondedMxHost)
+
+}
+
+func TestSendEmail_UsesPrivateIpForBindWhenSet(t *testing.T) {
+
+	var boundIp string
+
+	originalSendEmailToHost := sendEmailToHostContext
+	sendEmailToHostContext = func(_ context.Context, _ *SharedCache, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
+		boundIp = ip
+		return &SmtpConversation{
+			NetworkError: nil,
+			RcptResults: []*RcptResult{
+				{
+					RecipientId:  1,
+					Code:         250,
+					EnhancedCode: [3]int{0, 0, 0},
+					Message:      "OK",
+				},
+			},
+			Steps: []*SmtpStep{},
+		}
+	}
+
+	seedTestMxCache(t)
+
+	defer func() {
+		sendEmailToHostContext = originalSendEmailToHost
+	}()
+
+	result := sendEmailHandler(
+		&SendRow{},
+		[]*RecipientRow{
+			{Id: 1},
+		},
+		"hyvor.com",
+		"relay.com",
+		1,
+		"1.1.1.1",
+		"10.0.1.5",
+		"smtp.relay.com",
+	)
+
+	assert.Equal(t, "10.0.1.5", boundIp)
+	// the reported "sent from" IP is always the public IP, regardless of the bind IP used
+	assert.Equal(t, "1.1.1.1", result.SentFromIp)
+
+}
+
+func TestSendEmail_UsesPublicIpForBindWhenPrivateIpNotSet(t *testing.T) {
+
+	var boundIp string
+
+	originalSendEmailToHost := sendEmailToHostContext
+	sendEmailToHostContext = func(_ context.Context, _ *SharedCache, send *SendRow, recipients []*RecipientRow, host, instanceDomain, ip, ptr string, _ bool, _ bool, _ bool, _ ...string) *SmtpConversation {
+		boundIp = ip
+		return &SmtpConversation{
+			NetworkError: nil,
+			RcptResults: []*RcptResult{
+				{
+					RecipientId:  1,
+					Code:         250,
+					EnhancedCode: [3]int{0, 0, 0},
+					Message:      "OK",
+				},
+			},
+			Steps: []*SmtpStep{},
+		}
+	}
+
+	seedTestMxCache(t)
+
+	defer func() {
+		sendEmailToHostContext = originalSendEmailToHost
+	}()
+
+	result := sendEmailHandler(
+		&SendRow{},
+		[]*RecipientRow{
+			{Id: 1},
+		},
+		"hyvor.com",
+		"relay.com",
+		1,
+		"1.1.1.1",
+		"",
+		"smtp.relay.com",
+	)
+
+	assert.Equal(t, "1.1.1.1", boundIp)
+	assert.Equal(t, "1.1.1.1", result.SentFromIp)
 
 }
 
@@ -119,6 +211,7 @@ func TestSendEmail_500SmtpError(t *testing.T) {
 		"relay.com",
 		1,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -165,6 +258,7 @@ func TestSendEmail_4xxSmtpError(t *testing.T) {
 		"relay.com",
 		1,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -210,6 +304,7 @@ func TestSendEmail_4xxSmtpError_MaxRetries(t *testing.T) {
 		"relay.com",
 		5,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -248,6 +343,7 @@ func TestSendEmail_ConnectionError_FirstAttempt(t *testing.T) {
 		"relay.com",
 		0,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -286,6 +382,7 @@ func TestSendEmail_ConnectionError_AfterFirstAttempt(t *testing.T) {
 		"relay.com",
 		0,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
@@ -324,6 +421,7 @@ func TestSendEmail_MxFailed(t *testing.T) {
 		"relay.com",
 		0,
 		"1.1.1.1",
+		"",
 		"smtp.relay.com",
 	)
 
