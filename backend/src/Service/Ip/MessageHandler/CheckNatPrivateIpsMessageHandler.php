@@ -34,7 +34,7 @@ class CheckNatPrivateIpsMessageHandler
         $server = $this->serverService->getServerByCurrentHostname();
 
         if ($server === null) {
-            $this->logger->warning(
+            $this->logger->error(
                 'NAT check received, but no server found for the current hostname.'
             );
             return;
