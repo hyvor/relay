@@ -3,64 +3,71 @@
 namespace App\Service\Management\Health;
 
 use App\Entity\IpAddress;
-use App\Service\Ip\ServerIpResolver\PublicIpResolver;
+use App\Entity\Server;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Clock\ClockAwareTrait;
 
 /**
  * Verifies that each private IP address resolves to the expected public IP address via NAT.
+ * Reads the results saved by each server's CheckNatPrivateIpsMessage.
  * This check only runs (and can fail) when IP addresses with private IPs are configured.
  */
 class NatPrivateIpsHealthCheck extends HealthCheckAbstract
 {
 
+    use ClockAwareTrait;
+
     public function __construct(
         private EntityManagerInterface $em,
-        private PublicIpResolver $publicIpResolver,
     ) {}
 
     public function check(): bool
     {
-        /** @var IpAddress[] $allIps */
-        $allIps = $this->em->getRepository(IpAddress::class)->findAll();
+        /** @var IpAddress[] $privateIps */
+        $privateIps = $this->em->createQueryBuilder()
+            ->select('ip')
+            ->from(IpAddress::class, 'ip')
+            ->where('ip.private_ip_address IS NOT NULL')
+            ->orderBy('ip.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        /** @var array<int, Server> $servers */
+        $servers = [];
+        foreach ($privateIps as $ip) {
+            $servers[$ip->getServer()->getId()] = $ip->getServer();
+        }
+
+        // 2x the check interval in ServerSchedule
+        $staleBefore = $this->now()->modify('-1 hour');
 
         $invalidNats = [];
-        $privateIpsExist = false;
+        $staleServers = [];
 
-        foreach ($allIps as $ip) {
-            if ($ip->getPrivateIpAddress() === null) {
+        foreach ($servers as $server) {
+            $natCheck = $server->getNatCheck();
+
+            if ($natCheck === null || new \DateTimeImmutable($natCheck['checked_at']) < $staleBefore) {
+                $staleServers[] = $server->getHostname();
                 continue;
             }
 
-            $privateIpsExist = true;
-            $privateIp = $ip->getPrivateIpAddress();
-
-            try {
-                $resolvedPublicIp = $this->publicIpResolver->resolve($privateIp);
-
-                if ($resolvedPublicIp !== $ip->getIpAddress()) {
-                    $invalidNats[] = [
-                        'private_ip' => $privateIp,
-                        'expected_public_ip' => $ip->getIpAddress(),
-                        'resolved_public_ip' => $resolvedPublicIp,
-                        'error' => null,
-                    ];
-                }
-            } catch (\Throwable $e) {
+            foreach ($natCheck['invalid_nats'] as $invalidNat) {
                 $invalidNats[] = [
-                    'private_ip' => $privateIp,
-                    'expected_public_ip' => $ip->getIpAddress(),
-                    'resolved_public_ip' => null,
-                    'error' => $e->getMessage(),
+                    'server_hostname' => $server->getHostname(),
+                    'private_ip' => $invalidNat['private_ip'],
+                    'expected_public_ip' => $invalidNat['expected_public_ip'],
+                    'resolved_public_ip' => $invalidNat['resolved_public_ip'],
+                    'error' => $invalidNat['error'],
                 ];
             }
         }
 
-        if (!$privateIpsExist) {
-            return true;
-        }
-
-        if (count($invalidNats) > 0) {
-            $this->setData(['invalid_nats' => $invalidNats]);
+        if (count($invalidNats) > 0 || count($staleServers) > 0) {
+            $this->setData([
+                'invalid_nats' => $invalidNats,
+                'stale_servers' => $staleServers,
+            ]);
             return false;
         }
 

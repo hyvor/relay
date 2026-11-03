@@ -104,11 +104,13 @@ export interface HealthCheckData {
 	};
 	nat_private_ips: {
 		invalid_nats: Array<{
+			server_hostname: string;
 			private_ip: string;
 			expected_public_ip: string;
 			resolved_public_ip: string | null;
 			error: string | null;
 		}>;
+		stale_servers: string[];
 	};
 }
 
