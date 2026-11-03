@@ -18,7 +18,8 @@ final class Version20260521000000 extends AbstractMigration
     {
         $this->addSql('ALTER TABLE ip_addresses ADD COLUMN private_ip_address INET DEFAULT NULL');
         $this->addSql(
-            'CREATE UNIQUE INDEX idx_ip_addresses_server_id_private_ip_address ON ip_addresses (server_id, private_ip_address)',
+            'ALTER TABLE ip_addresses ADD CONSTRAINT uniq_ip_addresses_server_id_private_ip_address ' .
+            'UNIQUE (server_id, private_ip_address) DEFERRABLE INITIALLY DEFERRED',
         );
     }
 

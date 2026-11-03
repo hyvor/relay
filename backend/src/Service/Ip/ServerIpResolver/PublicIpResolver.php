@@ -50,7 +50,7 @@ class PublicIpResolver
             try {
                 $options = ['timeout' => 10];
                 if ($localIp !== null) {
-                    $options['bindto'] = $localIp . ':0';
+                    $options['bindto'] = $localIp;
                 }
 
                 $this->logger->debug('Resolving public IP from external service', [

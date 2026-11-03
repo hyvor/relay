@@ -3,6 +3,7 @@
 namespace App\Service\Ip;
 
 use App\Entity\IpAddress;
+use App\Entity\Queue;
 use App\Entity\Server;
 use App\Service\Ip\Dto\PtrValidationDto;
 use App\Service\Ip\Dto\UpdateIpAddressDto;
@@ -68,78 +69,97 @@ class IpAddressService
      */
     public function updateIpAddressesOfServer(Server $server): void
     {
-        $serverIpData = $this->serverIpResolver->resolveIps();
+        $resolvedIpsToCreate = [];
+        foreach ($this->serverIpResolver->resolveIps() as $resolvedIp) {
+            $resolvedIpsToCreate[$resolvedIp->publicIp] = $resolvedIp;
+        }
 
-        $this->em->wrapInTransaction(function () use ($server, $serverIpData) {
-            $currentEntitiesInDb = $this->getIpAddressesOfServer($server);
+        $events = [];
+        $deletedIpAddressIds = [];
 
-            /** @var array<string, IpAddress> $entitiesByPublicIp */
-            $entitiesByPublicIp = [];
-            foreach ($currentEntitiesInDb as $entity) {
-                $entitiesByPublicIp[$entity->getIpAddress()] = $entity;
+        foreach ($this->getIpAddressesOfServer($server) as $entity) {
+            $resolvedIp = $resolvedIpsToCreate[$entity->getIpAddress()] ?? null;
+
+            if ($resolvedIp === null) {
+                $deletedIpAddressIds[] = $entity->getId();
+                $this->deleteIpAddress($entity, flush: false, events: $events);
+                continue;
             }
 
-            $serverPublicIps = array_map(fn(ResolvedIp $r) => $r->publicIp, $serverIpData);
+            unset($resolvedIpsToCreate[$entity->getIpAddress()]);
 
-            foreach ($currentEntitiesInDb as $entity) {
-                if (!in_array($entity->getIpAddress(), $serverPublicIps)) {
-                    $this->deleteIpAddress($entity);
-                }
-            }
-
-            /** @var ResolvedIp[] $changedIps */
-            $changedIps = [];
-            foreach ($serverIpData as $result) {
-                $entity = $entitiesByPublicIp[$result->publicIp] ?? null;
-                if ($entity !== null && $entity->getPrivateIpAddress() !== $result->privateIp) {
-                    $changedIps[] = $result;
-                }
-            }
-
-            foreach ($changedIps as $result) {
-                $entitiesByPublicIp[$result->publicIp]->setPrivateIpAddress(null);
-            }
-            $this->em->flush();
-
-            foreach ($changedIps as $result) {
-                $entity = $entitiesByPublicIp[$result->publicIp];
-                $entity->setPrivateIpAddress($result->privateIp);
+            if ($entity->getPrivateIpAddress() !== $resolvedIp->privateIp) {
+                $entity->setPrivateIpAddress($resolvedIp->privateIp);
                 $entity->setUpdatedAt($this->now());
             }
-            $this->em->flush();
+        }
 
-            foreach ($serverIpData as $result) {
-                if (!isset($entitiesByPublicIp[$result->publicIp])) {
-                    $this->createIpAddress($server, $result->publicIp, $result->privateIp);
-                }
-            }
-        });
+        $freeQueues = $this->queueService->getQueuesThatHaveNoIpAddresses($deletedIpAddressIds);
+
+        foreach ($resolvedIpsToCreate as $resolvedIp) {
+            $this->createIpAddress(
+                $server,
+                $resolvedIp->publicIp,
+                $resolvedIp->privateIp,
+                array_shift($freeQueues),
+                flush: false,
+                events: $events,
+            );
+        }
+
+        $this->em->flush();
+
+        foreach ($events as $event) {
+            $this->ed->dispatch($event);
+        }
     }
 
-    public function createIpAddress(Server $server, string $ipAddress, ?string $privateIpAddress = null): IpAddress
-    {
+    /**
+     * @param object[] $events
+     */
+    public function createIpAddress(
+        Server $server,
+        string $ipAddress,
+        ?string $privateIpAddress = null,
+        ?Queue $queue = null,
+        bool $flush = true,
+        array &$events = [],
+    ): IpAddress {
         $ipAddressEntity = new IpAddress();
         $ipAddressEntity->setServer($server);
         $ipAddressEntity->setIpAddress($ipAddress);
         $ipAddressEntity->setPrivateIpAddress($privateIpAddress);
         $ipAddressEntity->setCreatedAt($this->now());
         $ipAddressEntity->setUpdatedAt($this->now());
-        $ipAddressEntity->setQueue($this->queueService->getAQueueThatHasNoIpAddresses());
+        $ipAddressEntity->setQueue($queue);
 
         $this->em->persist($ipAddressEntity);
-        $this->em->flush();
+        $event = new IpAddressCreatedEvent($ipAddressEntity);
 
-        $this->ed->dispatch(new IpAddressCreatedEvent($ipAddressEntity));
+        if ($flush) {
+            $this->em->flush();
+            $this->ed->dispatch($event);
+        } else {
+            $events[] = $event;
+        }
 
         return $ipAddressEntity;
     }
 
-    public function deleteIpAddress(IpAddress $ipAddress): void
+    /**
+     * @param object[] $events
+     */
+    public function deleteIpAddress(IpAddress $ipAddress, bool $flush = true, array &$events = []): void
     {
         $this->em->remove($ipAddress);
-        $this->em->flush();
+        $event = new IpAddressRemovedEvent($ipAddress);
 
-        $this->ed->dispatch(new IpAddressRemovedEvent($ipAddress));
+        if ($flush) {
+            $this->em->flush();
+            $this->ed->dispatch($event);
+        } else {
+            $events[] = $event;
+        }
     }
 
     public function updateIpAddress(

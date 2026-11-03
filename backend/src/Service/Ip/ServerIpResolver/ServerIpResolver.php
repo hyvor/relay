@@ -84,6 +84,7 @@ class ServerIpResolver
                 'NAT mode is enabled but no matching private IPv4 addresses were found on this server.',
                 ['nat_network' => $natNetwork, 'available_ips' => $allIps],
             );
+            return [];
         }
 
         $this->logger->info('Selected private IPs for NAT mapping', ['private_ips' => $privateIps]);
