@@ -8,16 +8,19 @@ use App\Api\Local\Input\IncomingType;
 use App\Api\Local\Input\SendAttemptDoneInput;
 use App\Entity\Type\DebugIncomingEmailStatus;
 use App\Entity\Type\DebugIncomingEmailType;
+use App\Service\App\Config;
 use App\Service\DebugIncomingEmail\DebugIncomingEmailService;
 use App\Service\IncomingMail\IncomingMailService;
 use App\Service\Management\GoState\GoStateFactory;
 use App\Service\Management\GoState\ServerNotFoundException;
 use App\Service\SendAttempt\SendAttemptService;
 use App\Service\Send\SendContentStorage;
+use App\Tests\Factory\KycFactory;
 use Prometheus\RenderTextFormat;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -36,6 +39,8 @@ class LocalController extends AbstractController
         private DebugIncomingEmailService $debugIncomingEmailService,
         private MetricsListener $metricsListener,
         private SendContentStorage $sendContentStorage,
+        private \Twig\Environment $twig,
+        private Config $config,
     ) {
     }
 
@@ -144,4 +149,85 @@ class LocalController extends AbstractController
             ]
         );
     }
+
+    /**
+     * I am keeping this in case the you need to render the KYC email template
+     * when reviewing the PR. Make sure to remove this before merging.
+     */
+    #[Route('/render-template', methods: 'GET')]
+    public function renderTemplate(): Response
+    {
+        $kyc = KycFactory::createOne();
+        $kyc->setRejectReason('Incomplete documentation');
+
+        // Rejection
+        // $subject = 'Your KYC submission was rejected';
+        // $bodyMain = "We're sorry to inform you that your KYC submission for Hyvor Relay has 
+        //     been rejected.";
+        // $bodySecondary = "Please review and update your details, then resubmit your KYC for 
+        //     another review.";
+
+        // $html = $this->twig->render('mail/kyc_submitted.twig', [
+        //     'strings' => [
+        //         'subject' => $subject,
+        //         'name' => $kyc->getName(),
+        //         'body_main' => $bodyMain,
+        //         'body_secondary' => $bodySecondary,
+        //     ],
+        //     'component' => \Hyvor\Internal\Component\Component::RELAY->value,
+        //     'reject_reason' => $kyc->getRejectReason(),
+        // ]);
+
+        // Approval
+        // $hasLicense = false;
+        // $subscriptionFailed = true;
+
+        // if ($hasLicense) {
+        //     $bodySecondary = "You're all set and you can start sending emails right away.";
+        // } elseif ($subscriptionFailed) {
+        //     $bodySecondary = "We couldn't automatically start a subscription for your organization.
+        //         Please visit the Billing section and start a subscription before you can send emails.";
+        // } else {
+        //     $bodySecondary = "We've created a subscription to the Starter plan for your organization,
+        //     so you can start sending emails right away.";
+        // }
+
+        // $subject = 'Your KYC has been approved';
+        // $bodyMain = "Good news! Your KYC verification for Hyvor Relay has been approved.";
+
+        // $html = $this->twig->render('mail/kyc_submitted.twig', [
+        //     'strings' => [
+        //         'subject' => $subject,
+        //         'name' => $kyc->getName(),
+        //         'body_main' => $bodyMain,
+        //         'body_secondary' => $bodySecondary,
+        //     ],
+        //     'component' => \Hyvor\Internal\Component\Component::RELAY->value,
+        //     ...($subscriptionFailed ? ['billing_url' => $this->config->getWebUrl() . '/console/billing'] : []),
+        // ]);
+
+
+        // Submission
+        $isResubmission = true;
+
+        $subject = $isResubmission ? 'Your KYC submission has been updated' : 'Your KYC submission has been received';
+        $bodyMain = $isResubmission 
+            ? "We've received your updated KYC submission for Hyvor Relay. Our team will review
+                your details and get back. This process may take upto 24 business hours." 
+            : "We've received your KYC submission for Hyvor Relay. Our team will review
+                your details and get back. This process may take upto 24 business hours.";
+
+        $html = $this->twig->render('mail/kyc_submitted.twig', [
+            'strings' => [
+                'subject' => $subject,
+                'name' => $kyc->getName(),
+                'body_main' => $bodyMain,
+            ],
+            'component' => \Hyvor\Internal\Component\Component::RELAY->value,
+            'is_resubmission' => $isResubmission,
+        ]);
+
+        return new Response($html);
+    }
+
 }

@@ -226,6 +226,38 @@ export interface SudoProjectResponse {
 	org: Organization | null;
 }
 
+// KYC
+
+export type KycStatus = 'pending' | 'approved' | 'rejected' | 'stale';
+export type KycAccountType = 'individual' | 'business';
+export type KycContentOwnership = 'self' | 'third_party';
+export type KycSortBy = 'status' | 'created_at';
+
+export interface SudoKyc {
+	id: number;
+	organization_id: number;
+	created_at: number;
+	updated_at: number;
+	account_type: KycAccountType;
+	name: string;
+	country: string;
+	address: string;
+	website: string;
+	email: string;
+	content_ownership: KycContentOwnership[];
+	sending_transactional: boolean;
+	sending_distributional: boolean;
+	use_case: string;
+	status: KycStatus;
+	note: string | null;
+	reject_reason: string | null;
+}
+
+export interface SudoKycsResponse {
+	kycs: SudoKyc[];
+	orgs: Organization[];
+}
+
 export type WarmupStatus = 'warming' | 'warmed' | 'cancelled';
 
 export interface WarmupSchedule {
