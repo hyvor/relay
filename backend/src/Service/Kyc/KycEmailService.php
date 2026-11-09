@@ -29,24 +29,14 @@ class KycEmailService
     public function sendSubmitted(Kyc $kyc, bool $isResubmission = false): void
     {
         $subject = $isResubmission ? 'Your KYC submission has been updated' : 'Your KYC submission has been received';
-        
-        $bodyMain = $isResubmission 
+
+        $bodyMain = $isResubmission
             ? "We've received your updated KYC submission for Hyvor Relay. Our team will review
-                your details and get back. This process may take upto 24 business hours." 
+                your details and get back. This process may take upto 24 business hours."
             : "We've received your KYC submission for Hyvor Relay. Our team will review
                 your details and get back. This process may take upto 24 business hours.";
 
-        $this->send(
-            $kyc,
-            $subject,
-            [
-                'strings' => [
-                    'subject' => $subject,
-                    'body_main' => $bodyMain,
-                ],
-                'is_resubmission' => $isResubmission,
-            ],
-        );
+        $this->send($kyc, $subject, $bodyMain);
     }
 
     public function sendApproved(
@@ -56,8 +46,6 @@ class KycEmailService
     ): void
     {
         assert(!$hasLicense || !$subscriptionFailed, 'Both hasLicense and subscriptionFailed cannot be true at the same time.');
-
-        $subject = 'Your KYC has been approved';
 
         if ($hasLicense) {
             $bodySecondary = "You're all set and you can start sending emails right away.";
@@ -71,18 +59,10 @@ class KycEmailService
 
         $this->send(
             $kyc,
-            $subject,
-            [
-                'strings' => [
-                    'subject' => $subject,
-                    'body_main' => 'Good news! Your KYC verification for Hyvor Relay has been approved.',
-                    'body_secondary' => $bodySecondary,
-
-                ],
-                'has_license' => $hasLicense,
-                'subscription_failed' => $subscriptionFailed,
-                ...($subscriptionFailed ? ['billing_url' => $this->config->getWebUrl() . '/console/billing'] : []),
-            ],
+            'Your KYC has been approved',
+            'Good news! Your KYC verification for Hyvor Relay has been approved.',
+            bodySecondary: $bodySecondary,
+            billingUrl: $subscriptionFailed ? $this->config->getWebUrl() . '/console/billing' : null,
         );
     }
 
@@ -91,23 +71,22 @@ class KycEmailService
         $this->send(
             $kyc,
             'Your KYC submission was rejected',
-            [
-                'strings' => [
-                    'subject' => 'Your KYC submission was rejected',
-                    'body_main' => "We're sorry to inform you that your KYC submission for Hyvor Relay has
-                        been rejected.",
-                    'body_secondary' => "Please review and update your details, then resubmit your KYC for
-                        another review.",
-                ],
-                'reject_reason' => $kyc->getRejectReason(),
-            ],
+            "We're sorry to inform you that your KYC submission for Hyvor Relay has
+                been rejected.",
+            bodySecondary: "Please review and update your details, then resubmit your KYC for
+                another review.",
+            rejectReason: $kyc->getRejectReason(),
         );
     }
 
-    /**
-     * @param array<string, mixed> $context
-     */
-    private function send(Kyc $kyc, string $subject, array $context): void
+    private function send(
+        Kyc $kyc,
+        string $subject,
+        string $bodyMain,
+        ?string $bodySecondary = null,
+        ?string $rejectReason = null,
+        ?string $billingUrl = null,
+    ): void
     {
         $instance = $this->instanceService->tryGetInstance();
 
@@ -137,16 +116,17 @@ class KycEmailService
             return;
         }
 
-
         try {
-            $strings = $context['strings'];
-            assert(is_array($strings));
-            $strings['name'] = $kyc->getName();
-            $context['strings'] = $strings;
-
             $html = $this->twig->render('mail/kyc.twig', [
-                ...$context,
                 'component' => Component::RELAY->value,
+                'strings' => [
+                    'subject' => $subject,
+                    'name' => $kyc->getName(),
+                    'body_main' => $bodyMain,
+                    'body_secondary' => $bodySecondary,
+                ],
+                'reject_reason' => $rejectReason,
+                'billing_url' => $billingUrl,
             ]);
 
             $this->sendService->createSend(

@@ -224,7 +224,6 @@
 	}
 
 	function handleCardAdded() {
-		cardAdded = true;
 		toast.success('Card added successfully.');
 	}
 

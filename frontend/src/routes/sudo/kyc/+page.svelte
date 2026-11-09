@@ -19,7 +19,7 @@
 
 	const PER_PAGE = 30;
 
-	const statusOptions = [
+	const statusOptions: { value: KycStatus | ''; label: string }[] = [
 		{ value: '', label: 'All' },
 		{ value: 'pending', label: 'Pending' },
 		{ value: 'approved', label: 'Approved' },
@@ -34,7 +34,7 @@
 
 	let orgIdInput = $state('');
 	let orgIdSearch = $state<number | null>(null);
-	let statusFilter = $state('');
+	let statusFilter = $state<KycStatus | ''>('');
 	let sortBy = $state<KycSortBy>('created_at');
 	let sortDirection = $state<'asc' | 'desc'>('desc');
 
@@ -48,7 +48,7 @@
 		sortByOptions.find((option) => option.value === sortBy)?.label ?? ''
 	);
 
-	function selectStatus(value: string) {
+	function selectStatus(value: KycStatus | '') {
 		statusFilter = value;
 		showStatusDropdown = false;
 	}
@@ -86,7 +86,7 @@
 		const offset = more ? kycs.length : 0;
 
 		getKycs({
-			status: (statusFilter || null) as KycStatus | null,
+			status: statusFilter || null,
 			organization_id: orgIdSearch,
 			sort_by: sortBy,
 			sort: sortDirection,
