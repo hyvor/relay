@@ -27,10 +27,10 @@ class GetSudoStatsTest extends WebTestCase
             <<<SQL
             INSERT INTO stats_project (
                 project_id, stat_date,
-                send_recipients, accepted, bounced_recipient, bounced_infrastructure, complained
+                send_recipients, attempted, accepted, bounced_recipient, bounced_infrastructure, complained
             ) VALUES (
                 :projectId, :statDate,
-                :sendRecipients, :accepted, :bouncedRecipient, :bouncedInfrastructure, :complained
+                :sendRecipients, :sendRecipients, :accepted, :bouncedRecipient, :bouncedInfrastructure, :complained
             )
             SQL,
             [
@@ -45,7 +45,7 @@ class GetSudoStatsTest extends WebTestCase
         );
     }
 
-    public function test_gets_default_24h(): void
+    public function test_gets_default_today(): void
     {
         ProjectFactory::createOne();
 
@@ -94,13 +94,13 @@ class GetSudoStatsTest extends WebTestCase
         $this->assertResponseStatusCodeSame(422);
     }
 
-    public function test_24h_only_includes_today(): void
+    public function test_today_only_includes_today(): void
     {
         $project = ProjectFactory::createOne();
         $this->insertProjectStats($project, 0, 10, 10, 0, 0, 0);
         $this->insertProjectStats($project, 1, 20, 20, 0, 0, 0);
 
-        $this->sudoApi('GET', '/stats?period=24h');
+        $this->sudoApi('GET', '/stats?period=today');
         $this->assertResponseStatusCodeSame(200);
 
         $json = $this->getJson();

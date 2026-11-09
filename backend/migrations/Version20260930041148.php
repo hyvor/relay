@@ -66,7 +66,7 @@ final class Version20260930041148 extends AbstractMigration
         $this->addSql(
             '
             CREATE TABLE provider_metrics (
-                id SERIAL PRIMARY KEY,
+                id BIGSERIAL PRIMARY KEY,
                 created_at TIMESTAMPTZ NOT NULL,
                 source provider_metric_source NOT NULL,
                 project_id BIGINT DEFAULT NULL REFERENCES projects(id) ON DELETE CASCADE,

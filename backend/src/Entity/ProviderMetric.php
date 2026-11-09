@@ -11,7 +11,7 @@ class ProviderMetric
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: 'bigint')]
     private int $id;
 
     #[ORM\Column(type: 'datetime_immutable')]

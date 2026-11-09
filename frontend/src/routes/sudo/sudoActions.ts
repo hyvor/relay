@@ -286,7 +286,7 @@ export function deleteWarmupSchedule(scheduleId: number) {
 	});
 }
 
-export function getSudoStats(period: '30d' | '7d' | '24h' = '24h') {
+export function getSudoStats(period: '30d' | '7d' | 'today' = 'today') {
 	return sudoApi.get<SudoStats>({
 		endpoint: '/stats',
 		data: { period }

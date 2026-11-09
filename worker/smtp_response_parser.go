@@ -102,16 +102,16 @@ func (p *SmtpResponseParser) enhancedCodeString() string {
 }
 
 func (p *SmtpResponseParser) BounceReason() BounceReason {
-	if !p.IsBounce() {
-		return ""
-	}
 	if p.IsRecipientBounce() {
 		return BounceReasonRecipient
 	}
 	if p.IsInfrastructureError() {
 		return BounceReasonInfrastructure
 	}
-	return BounceReasonUnknown
+	if p.IsBounce() {
+		return BounceReasonUnknown
+	}
+	return ""
 }
 
 type BounceReason string

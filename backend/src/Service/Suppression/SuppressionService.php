@@ -104,7 +104,7 @@ class SuppressionService
         $suppression->setProject($project);
         $suppression->setEmail($email);
         $suppression->setReason($reason);
-        $suppression->setDescription($description);
+        $suppression->setDescription(mb_substr($description, 0, 255));
 
         $this->em->persist($suppression);
         $this->em->flush();

@@ -16,7 +16,7 @@ class SudoAnalyticsService
     /**
      * @return array<string, int|float>
      */
-    public function getStats(string $period = '24h'): array
+    public function getStats(string $period = 'today'): array
     {
         $dateModifier = $this->getPeriodDateModifier($period);
         $startDate = $this->now()->modify($dateModifier);
@@ -26,6 +26,7 @@ class SudoAnalyticsService
             SELECT
                 COUNT(DISTINCT project_id) AS project_count,
                 COALESCE(SUM(send_recipients), 0) AS total_send_recipients,
+                COALESCE(SUM(attempted), 0) AS total_attempted,
                 COALESCE(SUM(accepted), 0) AS total_accepted,
                 COALESCE(SUM(bounced_recipient + bounced_infrastructure + bounced_unknown), 0) AS total_bounced,
                 COALESCE(SUM(complained), 0) AS total_complained
@@ -39,6 +40,7 @@ class SudoAnalyticsService
         $globalStats = $result->fetchAssociative();
 
         $totalRecipients = (int) $globalStats['total_send_recipients'];
+        $totalAttempted = (int) $globalStats['total_attempted'];
         $totalAccepted = (int) $globalStats['total_accepted'];
         $totalBounced = (int) $globalStats['total_bounced'];
         $totalComplained = (int) $globalStats['total_complained'];
@@ -46,8 +48,8 @@ class SudoAnalyticsService
         return [
             'project_count' => (int) $globalStats['project_count'],
             'sends' => $totalRecipients,
-            'bounce_rate' => $totalRecipients > 0 ? round($totalBounced / $totalRecipients, 4) : 0.0,
-            'complaint_rate' => $totalAccepted > 0 ? round($totalComplained / $totalAccepted, 4) : 0.0,
+            'bounce_rate' => $totalAttempted > 0 ? round($totalBounced / $totalAttempted, 4) : 0.0,
+            'complaint_rate' => $totalAccepted > 0 ? round($totalComplained / $totalAccepted, 6) : 0.0,
         ];
     }
 

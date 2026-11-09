@@ -23,6 +23,7 @@ final class Version20260610074736 extends AbstractMigration
                 sends INT DEFAULT 0,
                 send_recipients INT DEFAULT 0,
                 send_attempts INT DEFAULT 0,
+                attempted INT DEFAULT 0,
                 accepted INT DEFAULT 0,
                 deferred INT DEFAULT 0,
                 bounced_recipient INT DEFAULT 0,

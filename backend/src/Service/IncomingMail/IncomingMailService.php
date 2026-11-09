@@ -117,9 +117,6 @@ class IncomingMailService
                     SuppressionReason::BOUNCE,
                     $dsnInput->ReadableText
                 );
-
-                $bounceObject = new BounceDto($dsnInput->ReadableText, $recipient->Status);
-                $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient, $bounceObject));
             } elseif ($bounceReason === BounceReason::INFRASTRUCTURE) {
                 $this->logger->info('Received infrastructure error', [
                     'uuid' => $bounceUuid,
@@ -133,6 +130,9 @@ class IncomingMailService
                     $dsnInput->ReadableText
                 );
             }
+
+            $bounceObject = new BounceDto($dsnInput->ReadableText, $recipient->Status);
+            $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient, $bounceObject));
         }
     }
 

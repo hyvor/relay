@@ -158,7 +158,7 @@ class StatsService
             INSERT INTO stats_attempted
             WITH
             day_attempts AS (
-                SELECT
+                SELECT DISTINCT ON (sar.send_recipient_id)
                     s.project_id,
                     sa.ip_address_id,
                     sa.domain,
@@ -169,6 +169,7 @@ class StatsService
                 JOIN send_attempts sa ON sa.id = sar.send_attempt_id
                 JOIN sends s ON s.id = sa.send_id
                 WHERE sa.created_at >= :date AND sa.created_at < :nextDate
+                ORDER BY sar.send_recipient_id, sa.id DESC
             ),
             feedback AS (
                 SELECT
@@ -272,14 +273,14 @@ class StatsService
             )
             INSERT INTO stats_project (
                 project_id, stat_date,
-                sends, send_recipients, send_attempts,
+                sends, send_recipients, send_attempts, attempted,
                 accepted, deferred, bounced_recipient, bounced_infrastructure, bounced_unknown, complained, suppressed, failed,
                 accepted_rate, deferred_rate, bounced_recipient_rate, bounced_infrastructure_rate, bounced_unknown_rate,
                 complained_rate, suppressed_rate, failed_rate
             )
             SELECT
                 project_id, :date,
-                sends, send_recipients, send_attempts,
+                sends, send_recipients, send_attempts, attempted,
                 accepted, deferred, bounced_recipient, bounced_infrastructure, bounced_unknown, complained, suppressed, failed,
                 ROUND(accepted::NUMERIC / NULLIF(attempted, 0), 4),
                 ROUND(deferred::NUMERIC / NULLIF(attempted, 0), 4),
