@@ -35,6 +35,7 @@ func TestSmtpResponseParser_IsInfrastructureError(t *testing.T) {
 func TestSmtpResponseParser_BounceReason(t *testing.T) {
 	assert.Equal(t, BounceReasonRecipient, NewSmtpResponseParser(550, [3]int{5, 1, 1}, "User unknown").BounceReason())
 	assert.Equal(t, BounceReasonInfrastructure, NewSmtpResponseParser(550, [3]int{5, 7, 1}, "Spam").BounceReason())
+	assert.Equal(t, BounceReasonInfrastructure, NewSmtpResponseParser(450, [3]int{4, 7, 1}, "Rate limit").BounceReason())
 	assert.Equal(t, BounceReason(""), NewSmtpResponseParser(250, [3]int{2, 0, 0}, "OK").BounceReason())
 	assert.Equal(t, BounceReason(""), NewSmtpResponseParser(450, [3]int{4, 2, 1}, "Try later").BounceReason())
 	// bounce, but the reason cannot be classified as recipient or infrastructure

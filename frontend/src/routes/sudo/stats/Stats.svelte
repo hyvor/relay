@@ -8,7 +8,7 @@
 	let stats: SudoStats = $state({} as SudoStats);
 	let statsLoading = $state(true);
 	let statsError = $state('');
-	let selectedPeriod: '24h' | '7d' | '30d' = $state('24h');
+	let selectedPeriod: 'today' | '7d' | '30d' = $state('today');
 
 	onMount(() => {
 		loadStats();
@@ -30,7 +30,7 @@
 			});
 	}
 
-	function setPeriod(period: '24h' | '7d' | '30d') {
+	function setPeriod(period: 'today' | '7d' | '30d') {
 		selectedPeriod = period;
 		loadStats();
 	}
@@ -43,7 +43,7 @@
 		const labels = {
 			'30d': 'Last 30 days',
 			'7d': 'Last 7 days',
-			'24h': 'Today'
+			today: 'Today'
 		};
 		return labels[period as keyof typeof labels] || 'Today';
 	}
@@ -63,8 +63,8 @@
 	<div class="period-buttons">
 		<Button
 			size="x-small"
-			variant={selectedPeriod === '24h' ? 'fill' : 'outline'}
-			onclick={() => setPeriod('24h')}
+			variant={selectedPeriod === 'today' ? 'fill' : 'outline'}
+			onclick={() => setPeriod('today')}
 		>
 			Today
 		</Button>
