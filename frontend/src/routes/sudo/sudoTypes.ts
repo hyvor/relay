@@ -1,4 +1,4 @@
-import type { Send } from '../console/types';
+import type { Kyc, Send } from '../console/types';
 
 export interface SudoInitResponse {
 	config: SudoConfig;
@@ -224,6 +224,21 @@ export interface SudoProjectsResponse {
 export interface SudoProjectResponse {
 	project: SudoProject;
 	org: Organization | null;
+}
+
+// KYC
+
+export type { KycStatus, KycAccountType, KycContentOwnership } from '../console/types';
+export type KycSortBy = 'status' | 'created_at';
+
+export interface SudoKyc extends Kyc {
+	organization_id: number;
+	note: string | null;
+}
+
+export interface SudoKycsResponse {
+	kycs: SudoKyc[];
+	orgs: Organization[];
 }
 
 export type WarmupStatus = 'warming' | 'warmed' | 'cancelled';
