@@ -2,10 +2,10 @@
 
 namespace App\Service\Queue;
 
+use App\Entity\IpAddress;
 use App\Entity\Queue;
 use App\Entity\Type\QueueType;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Query\ResultSetMapping;
 
 class QueueService
 {
@@ -84,30 +84,27 @@ class QueueService
         );
     }
 
-    public function getAQueueThatHasNoIpAddresses(): ?Queue
+    /**
+     * @param int[] $ignoredIpAddressIds
+     * @return Queue[]
+     */
+    public function getQueuesThatHaveNoIpAddresses(array $ignoredIpAddressIds = []): array
     {
-        $rsm = new ResultSetMapping();
-        $rsm->addScalarResult('id', 'id', 'integer');
+        $qb = $this->em->createQueryBuilder()
+            ->select('q')
+            ->from(Queue::class, 'q')
+            ->orderBy('q.id', 'ASC');
 
-        /** @var array<array{id: int}> $result */
-        $result = $this->em->createNativeQuery(
-            <<<SQL
-            SELECT q.id
-            FROM queues q
-            WHERE (SELECT COUNT(i.id) FROM ip_addresses i WHERE i.queue_id = q.id) = 0
-            LIMIT 1
-            SQL,
-            $rsm
-        )
-            ->getResult();
-
-        if (count($result) === 0) {
-            return null;
+        $subQuery = 'SELECT i.id FROM ' . IpAddress::class . ' i WHERE i.queue = q';
+        if (count($ignoredIpAddressIds) > 0) {
+            $subQuery .= ' AND i.id NOT IN (:ignoredIpAddressIds)';
+            $qb->setParameter('ignoredIpAddressIds', $ignoredIpAddressIds);
         }
 
-        $queueId = $result[0]['id'];
+        /** @var Queue[] $queues */
+        $queues = $qb->where("NOT EXISTS ($subQuery)")->getQuery()->getResult();
 
-        return $this->getQueueById((int)$queueId);
+        return $queues;
     }
 
     public function getQueuesCount(): int

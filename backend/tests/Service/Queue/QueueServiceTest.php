@@ -12,18 +12,19 @@ use PHPUnit\Framework\Attributes\CoversClass;
 class QueueServiceTest extends KernelTestCase
 {
 
-    public function test_get_a_queue_that_has_no_ip_address(): void
+    public function test_get_queues_that_have_no_ip_addresses(): void
     {
         /** @var QueueService $queueService */
         $queueService = $this->container->get(QueueService::class);
 
         $queue1 = QueueFactory::createOne();
-        $this->assertSame($queue1->getId(), $queueService->getAQueueThatHasNoIpAddresses()?->getId());
+        $this->assertSame([$queue1], $queueService->getQueuesThatHaveNoIpAddresses());
 
-        IpAddressFactory::createOne([
+        $ip = IpAddressFactory::createOne([
             'queue' => $queue1
         ]);
-        $this->assertNull($queueService->getAQueueThatHasNoIpAddresses());
+        $this->assertSame([], $queueService->getQueuesThatHaveNoIpAddresses());
+        $this->assertSame([$queue1], $queueService->getQueuesThatHaveNoIpAddresses([$ip->getId()]));
     }
 
 }

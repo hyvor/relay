@@ -100,13 +100,15 @@ class DevSeedCommand extends Command
 
             $ipData = [
                 'server' => $server,
-                'queue' => $transactionalQueue,
+                'queue' => null,
                 'is_ptr_forward_valid' => true,
                 'is_ptr_reverse_valid' => true,
             ];
 
             if ($serverHostname === 'orion') {
                 $ipData['ip_address'] = '0.0.0.0';
+                $ipData['private_ip_address'] = '10.10.0.86'; // local compose worker IP in docker
+                $ipData['queue'] = $transactionalQueue;
             }
 
             IpAddressFactory::createOne($ipData);
@@ -132,7 +134,7 @@ class DevSeedCommand extends Command
         ApiKeyFactory::createOne([
             'project' => $project,
             'name' => 'Test API Key',
-            'key_hashed' => hash('sha256', 'test-api-key'),
+            'key_hashed' => hash('sha256', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
         ]);
 
         DomainFactory::createOne(['project' => $project, 'domain' => 'hyvor.com']);

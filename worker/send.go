@@ -276,11 +276,17 @@ func sendEmailHandlerContext(
 	instanceDomain string,
 	ipId int,
 	ip string,
+	privateIp string,
 	ptr string,
 ) *SendResult {
 
 	startTime := time.Now()
 	tryCount := recipients[0].TryCount // all recipients of this domain should have the same try count
+
+	bindIp := ip
+	if privateIp != "" {
+		bindIp = privateIp
+	}
 
 	result := &SendResult{
 		SentFromIpId: ipId,
@@ -341,7 +347,7 @@ func sendEmailHandlerContext(
 			conversation = NewSmtpConversation()
 			conversation.NetworkError = fmt.Errorf("MTA-STS policy does not allow MX host %s", host)
 		} else {
-			conversation = sendEmailToHostContext(ctx, cache, send, recipients, host, instanceDomain, ip, ptr, mxValue.Secure, policyResult.Enforce, true, rcptDomain)
+			conversation = sendEmailToHostContext(ctx, cache, send, recipients, host, instanceDomain, bindIp, ptr, mxValue.Secure, policyResult.Enforce, true, rcptDomain)
 		}
 
 		result.SmtpConversations[host] = conversation
