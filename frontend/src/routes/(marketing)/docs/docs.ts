@@ -5,6 +5,7 @@ import Webhooks from './content/Webhooks.svelte';
 import ConsoleApi from './content/ConsoleApi.svelte';
 import Domains from './content/Domains.svelte';
 import SendEmailsSmtp from './content/SendEmailsSmtp.svelte';
+import Simulator from './content/Simulator.svelte';
 
 export const SECTIONS: NavSectionConfig[] = [
 	{
@@ -33,6 +34,12 @@ export const SECTIONS: NavSectionConfig[] = [
 				slug: 'send-emails-smtp',
 				name: 'Send Emails via SMTP',
 				content: SendEmailsSmtp
+			},
+			{
+				type: 'page',
+				slug: 'simulator',
+				name: 'Testing with the Simulator',
+				content: Simulator
 			}
 		]
 	},
