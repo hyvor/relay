@@ -60,6 +60,13 @@ export async function getSections(lang: string): Promise<NavSectionConfig[]> {
           description: s.descriptions.sendEmailsSmtp,
           content: await getComponent("SendEmailsSmtp"),
         },
+        {
+          type: "page",
+          slug: "simulator",
+          name: s.pages.simulator,
+          description: s.descriptions.simulator,
+          content: await getComponent("Simulator"),
+        },
       ],
     },
     {
