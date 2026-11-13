@@ -155,7 +155,7 @@ func TestMTASTSEnforceRequiresStartTLS(t *testing.T) {
 		io.Writer
 	}{strings.NewReader("220 mx.example.com ready\r\n250 mx.example.com\r\n"), &bytes.Buffer{}}
 	createSmtpClientContext = func(context.Context, string, string) (*smtp.Client, error) {
-		return smtp.NewClient(fake, "mx.example.com")
+		return smtp.NewClient(fake, "mx.example.com", smtp.DefaultTimeouts)
 	}
 	t.Cleanup(func() { createSmtpClientContext = originalCreateClient })
 

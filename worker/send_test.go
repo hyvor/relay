@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
+	"net/textproto"
 	"strings"
 	"testing"
 	"time"
@@ -462,7 +464,7 @@ func TestSendEmailToHost_DaneRequiresStartTLS(t *testing.T) {
 		io.Writer
 	}{strings.NewReader(server), &bytes.Buffer{}}
 	createSmtpClientContext = func(_ context.Context, host string, _ string) (*smtp.Client, error) {
-		return smtp.NewClient(fake, host)
+		return smtp.NewClient(fake, host, smtp.DefaultTimeouts)
 	}
 	t.Cleanup(func() {
 		lookupTLSAFunc = originalTLSA
@@ -551,16 +553,6 @@ func newFakeConn(server string) fakeConn {
 	}{strings.NewReader(strings.ReplaceAll(server, "\n", "\r\n")), &bytes.Buffer{}}}
 }
 
-type deadlineCountingConn struct {
-	fakeConn
-	deadlines *int
-}
-
-func (c deadlineCountingConn) SetDeadline(time.Time) error {
-	*c.deadlines++
-	return nil
-}
-
 func stepNames(conversation *SmtpConversation) []SmtpStepName {
 	names := make([]SmtpStepName, 0, len(conversation.Steps))
 	for _, step := range conversation.Steps {
@@ -592,7 +584,7 @@ func TestSendEmailToHost_OneRecipientFails(t *testing.T) {
 
 	createSmtpClientBackup := createSmtpClientContext
 	createSmtpClientContext = func(_ context.Context, host string, _ string) (*smtp.Client, error) {
-		return smtp.NewClient(fake, host)
+		return smtp.NewClient(fake, host, smtp.DefaultTimeouts)
 	}
 
 	defer func() {
@@ -668,7 +660,7 @@ func TestSendEmailToHost_DataCloseFails_ReplacesRcptResult(t *testing.T) {
 
 	createSmtpClientBackup := createSmtpClientContext
 	createSmtpClientContext = func(_ context.Context, host string, _ string) (*smtp.Client, error) {
-		return smtp.NewClient(fake, host)
+		return smtp.NewClient(fake, host, smtp.DefaultTimeouts)
 	}
 	defer func() { createSmtpClientContext = createSmtpClientBackup }()
 
@@ -734,7 +726,7 @@ func TestSendEmailToHost_DataCloseFails_PreservesRcptRejection(t *testing.T) {
 
 	createSmtpClientBackup := createSmtpClientContext
 	createSmtpClientContext = func(_ context.Context, host string, _ string) (*smtp.Client, error) {
-		return smtp.NewClient(fake, host)
+		return smtp.NewClient(fake, host, smtp.DefaultTimeouts)
 	}
 	defer func() { createSmtpClientContext = createSmtpClientBackup }()
 
@@ -879,7 +871,7 @@ func TestSendEmailToHost_TLSFailureKeepsStepsOnRetry(t *testing.T) {
 	createSmtpClientContext = func(_ context.Context, host string, _ string) (*smtp.Client, error) {
 		conn := conns[dials]
 		dials++
-		return smtp.NewClient(conn, host)
+		return smtp.NewClient(conn, host, smtp.DefaultTimeouts)
 	}
 	defer func() {
 		createSmtpClientContext = createSmtpClientBackup
@@ -908,7 +900,7 @@ func TestSendEmailToHost_TLSFailureKeepsStepsOnRetry(t *testing.T) {
 func TestSendEmailToHost_RejectedStartTLSHasNoEhloStep(t *testing.T) {
 	createSmtpClientBackup := createSmtpClientContext
 	createSmtpClientContext = func(_ context.Context, host string, _ string) (*smtp.Client, error) {
-		return smtp.NewClient(newFakeConn("220 mx ready\n250-mx\n250 STARTTLS\n454 TLS not available\n250 Sender OK\n250 Recipient OK\n354 Body\n250 Queued\n221 Bye\n"), host)
+		return smtp.NewClient(newFakeConn("220 mx ready\n250-mx\n250 STARTTLS\n454 TLS not available\n250 Sender OK\n250 Recipient OK\n354 Body\n250 Queued\n221 Bye\n"), host, smtp.DefaultTimeouts)
 	}
 	defer func() {
 		createSmtpClientContext = createSmtpClientBackup
@@ -931,16 +923,102 @@ func TestSendEmailToHost_RejectedStartTLSHasNoEhloStep(t *testing.T) {
 	}, stepNames(convo))
 }
 
-func TestWriteSmtpDataResetsDeadlinePerChunk(t *testing.T) {
-	deadlines := 0
-	conn := deadlineCountingConn{fakeConn: newFakeConn("220 mx ready\n"), deadlines: &deadlines}
-	c, err := smtp.NewClient(conn, "mx.example.com")
+// A phase timeout on one MX host is a network error: the next MX host is tried.
+func TestSendEmail_RcptTimeout_TriesNextMxHost(t *testing.T) {
+
+	if err := testCache.Set(context.Background(), dnsCacheKey("mx", "timeout.test"), MxCacheValue{
+		Records: []MxRecord{{Host: "mx1.timeout.test", Priority: 10}, {Host: "mx2.timeout.test", Priority: 20}},
+	}, time.Hour); err != nil {
+		t.Fatal(err)
+	}
+
+	createSmtpClientBackup := createSmtpClientContext
+	createSmtpClientContext = func(_ context.Context, host string, _ string) (*smtp.Client, error) {
+
+		if host == "mx1.timeout.test" {
+			// replies until RCPT, then never replies
+			clientConn, serverConn := net.Pipe()
+			t.Cleanup(func() {
+				clientConn.Close()
+				serverConn.Close()
+			})
+			go func() {
+				srv := textproto.NewConn(serverConn)
+				srv.PrintfLine("220 mx1")
+				srv.ReadLine() // EHLO
+				srv.PrintfLine("250 mx1")
+				srv.ReadLine() // MAIL
+				srv.PrintfLine("250 ok")
+				io.Copy(io.Discard, srv.R)
+			}()
+			timeouts := smtp.DefaultTimeouts
+			timeouts.Command = 50 * time.Millisecond
+			return smtp.NewClient(clientConn, host, timeouts)
+		}
+
+		server := `220 mx2
+250 mx2
+250 Sender OK
+250 Recipient OK
+354 Body
+250 Queued
+221 Bye
+`
+		var fake fakeConn
+		fake.ReadWriter = struct {
+			io.Reader
+			io.Writer
+		}{
+			strings.NewReader(server),
+			&bytes.Buffer{},
+		}
+		return smtp.NewClient(fake, host, smtp.DefaultTimeouts)
+	}
+
+	defer func() {
+		createSmtpClientContext = createSmtpClientBackup
+		_ = testCache.Delete(context.Background(), dnsCacheKey("mx", "timeout.test"))
+	}()
+
+	result := sendEmailHandler(
+		&SendRow{Uuid: "test-uuid", RawEmail: "Subject: Test Email"},
+		[]*RecipientRow{
+			{Id: 1, Address: "a@timeout.test", TryCount: 0},
+		},
+		"timeout.test",
+		"relay.com",
+		1,
+		"1.1.1.1",
+		"smtp.relay.com",
+	)
+
+	convo1 := result.SmtpConversations["mx1.timeout.test"]
+	assert.Error(t, convo1.NetworkError)
+	assert.Equal(t, smtp.TimeoutPhaseCommand, convo1.TimeoutPhase)
+	assert.Contains(t, convo1.NetworkError.Error(), "command timeout")
+	assert.GreaterOrEqual(t, convo1.Duration, 50*time.Millisecond)
+
+	convo2 := result.SmtpConversations["mx2.timeout.test"]
+	assert.NoError(t, convo2.NetworkError)
+	assert.Equal(t, smtp.TimeoutPhase(""), convo2.TimeoutPhase)
+
+	assert.Equal(t, "mx2.timeout.test", result.RespondedMxHost)
+	assert.Equal(t, 250, result.RcptResults[0].Code)
+}
+
+func TestSmtpConversation_SetNetworkError(t *testing.T) {
+	convo := NewSmtpConversation()
+	convo.SetNetworkError(errors.New("connection refused"))
+	assert.Equal(t, smtp.TimeoutPhase(""), convo.TimeoutPhase)
+
+	convo = NewSmtpConversation()
+	convo.SetNetworkError(fmt.Errorf("failed to create SMTP client: %w", &smtp.TimeoutError{
+		Phase: smtp.TimeoutPhaseGreeting,
+		Err:   errors.New("i/o timeout"),
+	}))
+	assert.Equal(t, smtp.TimeoutPhaseGreeting, convo.TimeoutPhase)
+
+	data, err := convo.MarshalJSON()
 	assert.NoError(t, err)
-
-	data := strings.Repeat("a", 3*smtpDataChunkSize+1)
-	var written bytes.Buffer
-	assert.NoError(t, writeSmtpData(c, &written, data))
-
-	assert.Equal(t, 4, deadlines)
-	assert.Equal(t, data, written.String())
+	assert.Contains(t, string(data), `"timeout_phase":"greeting"`)
 }
