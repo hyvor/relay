@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Type\BounceReason;
 use App\Entity\Type\SendRecipientStatus;
 use App\Repository\SendAttemptRecipientRepository;
 use Doctrine\ORM\Mapping as ORM;
@@ -42,6 +43,9 @@ class SendAttemptRecipient
 
     #[ORM\Column()]
     private bool $is_suppressed;
+
+    #[ORM\Column(type: "string", enumType: BounceReason::class, nullable: true, name: "bounce_reason")]
+    private ?BounceReason $bounced_reason = null;
 
     public function __construct()
     {
@@ -156,6 +160,17 @@ class SendAttemptRecipient
     public function setIsSuppressed(bool $is_suppressed): static
     {
         $this->is_suppressed = $is_suppressed;
+        return $this;
+    }
+
+    public function getBouncedReason(): ?BounceReason
+    {
+        return $this->bounced_reason;
+    }
+
+    public function setBouncedReason(?BounceReason $bounced_reason): static
+    {
+        $this->bounced_reason = $bounced_reason;
         return $this;
     }
 

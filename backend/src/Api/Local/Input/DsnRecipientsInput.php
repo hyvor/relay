@@ -2,6 +2,7 @@
 
 namespace App\Api\Local\Input;
 
+use App\Entity\Type\BounceReason;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class DsnRecipientsInput
@@ -14,4 +15,6 @@ class DsnRecipientsInput
 
     #[Assert\NotBlank]
     public string $Action;
+
+    public ?BounceReason $BounceReason = null;
 }
