@@ -8,16 +8,20 @@ use App\Api\Local\Input\IncomingType;
 use App\Api\Local\Input\SendAttemptDoneInput;
 use App\Entity\Type\DebugIncomingEmailStatus;
 use App\Entity\Type\DebugIncomingEmailType;
+use App\Service\App\Config;
 use App\Service\DebugIncomingEmail\DebugIncomingEmailService;
 use App\Service\IncomingMail\IncomingMailService;
 use App\Service\Management\GoState\GoStateFactory;
 use App\Service\Management\GoState\ServerNotFoundException;
 use App\Service\SendAttempt\SendAttemptService;
 use App\Service\Send\SendContentStorage;
+use App\Tests\Factory\KycFactory;
 use Prometheus\RenderTextFormat;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockAwareTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -36,6 +40,8 @@ class LocalController extends AbstractController
         private DebugIncomingEmailService $debugIncomingEmailService,
         private MetricsListener $metricsListener,
         private SendContentStorage $sendContentStorage,
+        private \Twig\Environment $twig,
+        private Config $config,
     ) {
     }
 
@@ -144,4 +150,50 @@ class LocalController extends AbstractController
             ]
         );
     }
+
+    /**
+     * I am keeping this in case the you need to render the KYC email template
+     * when reviewing the PR. Make sure to remove this before merging.
+     */
+    #[Route('/render-template', methods: 'GET')]
+    public function renderTemplate(Request $request): Response
+    {
+        $kyc = KycFactory::createOne();
+        $kyc->setRejectReason('Incomplete documentation');
+
+        $strings = [
+            'name' => $kyc->getName(),
+            'body_secondary' => null,
+        ];
+        $rejectReason = null;
+        $billingUrl = null;
+
+        switch ($request->query->getString('type', 'submitted')) {
+            case 'rejected':
+                $strings['subject'] = 'Your KYC submission was rejected';
+                $strings['body_main'] = "We're sorry to inform you that your KYC submission for Hyvor Relay has been rejected.";
+                $strings['body_secondary'] = 'Please review and update your details, then resubmit your KYC for another review.';
+                $rejectReason = $kyc->getRejectReason();
+                break;
+            case 'approved':
+                $strings['subject'] = 'Your KYC has been approved';
+                $strings['body_main'] = 'Good news! Your KYC verification for Hyvor Relay has been approved.';
+                $strings['body_secondary'] = "We couldn't automatically start a subscription for your organization. Please start a subscription before you can send emails.";
+                $billingUrl = $this->config->getWebUrl() . '/console/billing';
+                break;
+            default:
+                $strings['subject'] = 'Your KYC submission has been received';
+                $strings['body_main'] = "We've received your KYC submission for Hyvor Relay. Our team will review your details and get back. This process may take upto 24 business hours.";
+        }
+
+        $html = $this->twig->render('mail/kyc.twig', [
+            'component' => \Hyvor\Internal\Component\Component::RELAY->value,
+            'strings' => $strings,
+            'reject_reason' => $rejectReason,
+            'billing_url' => $billingUrl,
+        ]);
+
+        return new Response($html);
+    }
+
 }

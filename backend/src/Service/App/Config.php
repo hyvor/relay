@@ -22,6 +22,11 @@ class Config
         #[Autowire('%env(string:INSTANCE_DOMAIN)%')]
         private string $instanceDomain,
 
+        #[Autowire('%env(string:NAT_NETWORK)%')]
+        private string $natNetwork = '',
+        #[Autowire('%env(string:NAT_MAP)%')]
+        private string $natMap = '',
+
         // usually only needed in DEV where Go is not running on localhost
         #[Autowire('%env(GO_HOST)%')]
         private ?string $goHost = null,
@@ -64,6 +69,16 @@ class Config
     public function getInstanceDomain(): string
     {
         return $this->instanceDomain;
+    }
+
+    public function getNatNetwork(): string
+    {
+        return $this->natNetwork;
+    }
+
+    public function getNatMap(): string
+    {
+        return $this->natMap;
     }
 
     public function getGoHost(): ?string

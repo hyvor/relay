@@ -133,7 +133,7 @@ type EmailWorker struct {
 		recipients []*RecipientRow,
 		sendTx *SendTransaction,
 	)
-	SendEmailContextFunc func(context.Context, *SendRow, []*RecipientRow, string, string, int, string, string) *SendResult
+	SendEmailContextFunc func(context.Context, *SendRow, []*RecipientRow, string, string, int, string, string, string) *SendResult
 }
 
 var NewEmailWorker = newEmailWorker
@@ -179,9 +179,9 @@ func newEmailWorker(
 		recipients []*RecipientRow,
 		rcptDomain, instanceDomain string,
 		ipId int,
-		ip, ptr string,
+		ip, privateIp, ptr string,
 	) *SendResult {
-		return sendEmailHandlerContext(ctx, worker.cache, send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr)
+		return sendEmailHandlerContext(ctx, worker.cache, send, recipients, rcptDomain, instanceDomain, ipId, ip, privateIp, ptr)
 	}
 
 	return worker
@@ -390,7 +390,7 @@ func (worker *EmailWorker) attemptSendToDomain(
 		"recipients", len(recipients),
 	)
 
-	result := worker.SendEmailContextFunc(worker.ctx, send, recipients, domain, worker.instanceDomain, worker.ip.Id, worker.ip.Ip, worker.ip.Ptr)
+	result := worker.SendEmailContextFunc(worker.ctx, send, recipients, domain, worker.instanceDomain, worker.ip.Id, worker.ip.Ip, worker.ip.PrivateIp, worker.ip.Ptr)
 
 	// get the lock before calling the DB
 	domainQueryMutex.Lock()

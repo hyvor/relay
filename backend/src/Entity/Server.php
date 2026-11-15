@@ -7,6 +7,15 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
+/**
+ * @phpstan-type InvalidNat array{
+ *     private_ip: string,
+ *     expected_public_ip: string,
+ *     resolved_public_ip: ?string,
+ *     error: ?string
+ * }
+ * @phpstan-type NatCheck array{checked_at: string, invalid_nats: list<InvalidNat>}
+ */
 #[ORM\Entity(repositoryClass: ServerRepository::class)]
 #[ORM\Table(name: "servers")]
 #[ORM\HasLifecycleCallbacks]
@@ -41,6 +50,12 @@ class Server
 
     #[ORM\Column(type: "integer")]
     private int $incoming_workers = 0;
+
+    /**
+     * @var NatCheck|null
+     */
+    #[ORM\Column(type: "json", nullable: true)]
+    private ?array $nat_check = null;
 
     /**
      * @var Collection<int, IpAddress>
@@ -157,6 +172,23 @@ class Server
     public function setIncomingWorkers(int $incomingWorkers): static
     {
         $this->incoming_workers = $incomingWorkers;
+        return $this;
+    }
+
+    /**
+     * @return NatCheck|null
+     */
+    public function getNatCheck(): ?array
+    {
+        return $this->nat_check;
+    }
+
+    /**
+     * @param NatCheck|null $natCheck
+     */
+    public function setNatCheck(?array $natCheck): static
+    {
+        $this->nat_check = $natCheck;
         return $this;
     }
 }

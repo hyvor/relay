@@ -1,4 +1,4 @@
-import type { Send } from '../console/types';
+import type { Kyc, Send } from '../console/types';
 
 export interface SudoInitResponse {
 	config: SudoConfig;
@@ -44,6 +44,7 @@ export interface IpAddress {
 	created_at: number;
 	server_id: number;
 	ip_address: string;
+	private_ip_address: string | null;
 	ptr: string;
 	queue: Queue | null;
 	is_ptr_forward_valid: boolean;
@@ -100,6 +101,16 @@ export interface HealthCheckData {
 	};
 	dns_server_pointed: {
 		error: string;
+	};
+	nat_private_ips: {
+		invalid_nats: Array<{
+			server_hostname: string;
+			private_ip: string;
+			expected_public_ip: string;
+			resolved_public_ip: string | null;
+			error: string | null;
+		}>;
+		stale_servers: string[];
 	};
 }
 
@@ -224,6 +235,21 @@ export interface SudoProjectsResponse {
 export interface SudoProjectResponse {
 	project: SudoProject;
 	org: Organization | null;
+}
+
+// KYC
+
+export type { KycStatus, KycAccountType, KycContentOwnership } from '../console/types';
+export type KycSortBy = 'status' | 'created_at';
+
+export interface SudoKyc extends Kyc {
+	organization_id: number;
+	note: string | null;
+}
+
+export interface SudoKycsResponse {
+	kycs: SudoKyc[];
+	orgs: Organization[];
 }
 
 export type WarmupStatus = 'warming' | 'warmed' | 'cancelled';

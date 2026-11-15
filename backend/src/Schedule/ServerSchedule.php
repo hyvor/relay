@@ -2,6 +2,7 @@
 
 namespace App\Schedule;
 
+use App\Service\Ip\Message\CheckNatPrivateIpsMessage;
 use App\Service\Management\Message\PingMessage;
 use App\Service\Management\Message\ServerTaskMessage;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
@@ -27,6 +28,9 @@ class ServerSchedule implements ScheduleProviderInterface
             )
             ->add(
                 RecurringMessage::every('1 minute', new ServerTaskMessage())
+            )
+            ->add(
+                RecurringMessage::every('30 minutes', new CheckNatPrivateIpsMessage())
             )
         ;
     }

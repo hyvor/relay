@@ -12,7 +12,8 @@ use App\Entity\Type\ProjectSendType;
 use App\Service\Domain\DomainService;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
-use App\Service\Ip\ServerIp;
+use App\Service\Ip\ServerIpResolver\ServerIpResolver;
+use App\Service\Ip\ServerIpResolver\ResolvedIp;
 use App\Service\Management\ManagementService;
 use App\Service\Queue\QueueService;
 use App\Service\Server\ServerService;
@@ -34,12 +35,12 @@ class ManagementInitCommandTest extends KernelTestCase
 
     public function test_creates_instance_server_and_adds_ips(): void
     {
-        $serverIpMock = $this->createStub(ServerIp::class);
-        $serverIpMock->method('getPublicV4IpAddresses')->willReturn([
-            '8.8.8.8',
-            '9.9.9.9',
+        $serverIpMock = $this->createStub(ServerIpResolver::class);
+        $serverIpMock->method('resolveIps')->willReturn([
+            new ResolvedIp('8.8.8.8'),
+            new ResolvedIp('9.9.9.9'),
         ]);
-        $this->container->set(ServerIp::class, $serverIpMock);
+        $this->container->set(ServerIpResolver::class, $serverIpMock);
 
         $command = $this->commandTester('management:init');
         $command->execute([]);
@@ -118,12 +119,12 @@ class ManagementInitCommandTest extends KernelTestCase
         ]);
         $ip3Id = $ip3->getId();
 
-        $serverIpMock = $this->createStub(ServerIp::class);
-        $serverIpMock->method('getPublicV4IpAddresses')->willReturn([
-            '8.8.8.8',
-            '9.9.9.9',
+        $serverIpMock = $this->createStub(ServerIpResolver::class);
+        $serverIpMock->method('resolveIps')->willReturn([
+            new ResolvedIp('8.8.8.8'),
+            new ResolvedIp('9.9.9.9'),
         ]);
-        $this->container->set(ServerIp::class, $serverIpMock);
+        $this->container->set(ServerIpResolver::class, $serverIpMock);
 
         $command = $this->commandTester('management:init');
         $command->execute([]);
@@ -139,6 +140,116 @@ class ManagementInitCommandTest extends KernelTestCase
 
         $updatedIp3 = $this->em->getRepository(IpAddress::class)->find($ip3Id);
         $this->assertNull($updatedIp3);
+    }
+
+    public function test_updates_private_ip_address_when_changed(): void
+    {
+        $server = ServerFactory::createOne([
+            'hostname' => 'hyvor-relay',
+        ]);
+
+        $ip = IpAddressFactory::createOne([
+            'server' => $server,
+            'ip_address' => '8.8.8.8',
+            'private_ip_address' => '10.0.1.1',
+        ]);
+        $ipId = $ip->getId();
+        $originalUpdatedAt = $ip->getUpdatedAt();
+
+        $serverIpMock = $this->createStub(ServerIpResolver::class);
+        $serverIpMock->method('resolveIps')->willReturn([
+            new ResolvedIp('8.8.8.8', '10.0.1.99'),
+        ]);
+        $this->container->set(ServerIpResolver::class, $serverIpMock);
+
+        $command = $this->commandTester('management:init');
+        $command->execute([]);
+        $command->assertCommandIsSuccessful();
+
+        $ips = $this->em->getRepository(IpAddress::class)->findBy(['server' => $server]);
+        $this->assertCount(1, $ips);
+
+        $updatedIp = $this->em->getRepository(IpAddress::class)->find($ipId);
+        $this->assertNotNull($updatedIp);
+        $this->assertSame('8.8.8.8', $updatedIp->getIpAddress());
+        $this->assertSame('10.0.1.99', $updatedIp->getPrivateIpAddress());
+        $this->assertNotEquals($originalUpdatedAt, $updatedIp->getUpdatedAt());
+    }
+
+    public function test_replaces_ip_address_when_public_ip_changes_with_same_private_ip(): void
+    {
+        $server = ServerFactory::createOne([
+            'hostname' => 'hyvor-relay',
+        ]);
+
+        $oldIp = IpAddressFactory::createOne([
+            'server' => $server,
+            'ip_address' => '8.8.8.8',
+            'private_ip_address' => '10.0.1.1',
+        ]);
+        $oldIpId = $oldIp->getId();
+
+        $serverIpMock = $this->createStub(ServerIpResolver::class);
+        $serverIpMock->method('resolveIps')->willReturn([
+            new ResolvedIp('9.9.9.9', '10.0.1.1'),
+        ]);
+        $this->container->set(ServerIpResolver::class, $serverIpMock);
+
+        $command = $this->commandTester('management:init');
+        $command->execute([]);
+        $command->assertCommandIsSuccessful();
+
+        $this->assertNull($this->em->getRepository(IpAddress::class)->find($oldIpId));
+
+        $ips = $this->em->getRepository(IpAddress::class)->findBy(['server' => $server]);
+        $this->assertCount(1, $ips);
+        $this->assertSame('9.9.9.9', $ips[0]->getIpAddress());
+        $this->assertSame('10.0.1.1', $ips[0]->getPrivateIpAddress());
+    }
+
+    public function test_swaps_private_ip_addresses_between_existing_ips(): void
+    {
+        $server = ServerFactory::createOne([
+            'hostname' => 'hyvor-relay',
+        ]);
+
+        $ip1 = IpAddressFactory::createOne([
+            'server' => $server,
+            'ip_address' => '8.8.8.8',
+            'private_ip_address' => '10.0.1.1',
+        ]);
+        $ip1Id = $ip1->getId();
+
+        $ip2 = IpAddressFactory::createOne([
+            'server' => $server,
+            'ip_address' => '9.9.9.9',
+            'private_ip_address' => '10.0.1.2',
+        ]);
+        $ip2Id = $ip2->getId();
+
+        $serverIpMock = $this->createStub(ServerIpResolver::class);
+        $serverIpMock->method('resolveIps')->willReturn([
+            new ResolvedIp('8.8.8.8', '10.0.1.2'),
+            new ResolvedIp('9.9.9.9', '10.0.1.1'),
+        ]);
+        $this->container->set(ServerIpResolver::class, $serverIpMock);
+
+        $command = $this->commandTester('management:init');
+        $command->execute([]);
+        $command->assertCommandIsSuccessful();
+
+        $ips = $this->em->getRepository(IpAddress::class)->findBy(['server' => $server]);
+        $this->assertCount(2, $ips);
+
+        $updatedIp1 = $this->em->getRepository(IpAddress::class)->find($ip1Id);
+        $this->assertNotNull($updatedIp1);
+        $this->assertSame('8.8.8.8', $updatedIp1->getIpAddress());
+        $this->assertSame('10.0.1.2', $updatedIp1->getPrivateIpAddress());
+
+        $updatedIp2 = $this->em->getRepository(IpAddress::class)->find($ip2Id);
+        $this->assertNotNull($updatedIp2);
+        $this->assertSame('9.9.9.9', $updatedIp2->getIpAddress());
+        $this->assertSame('10.0.1.1', $updatedIp2->getPrivateIpAddress());
     }
 
     public function test_adds_default_queues(): void

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/smtp"
+	"net/textproto"
 	"strings"
 	"testing"
 	"time"
@@ -204,4 +205,55 @@ func TestIncomingServer_CapturesClientIp(t *testing.T) {
 	// loopback connection: client IP should be 127.0.0.1 or ::1
 	assert.True(t, capturedClientIp == "127.0.0.1" || capturedClientIp == "::1",
 		"expected loopback IP, got %q", capturedClientIp)
+}
+
+// RFC 5321 §4.5.3.2.7: the server should wait at least 5 minutes for the next command
+func TestIncomingServer_TimeoutsAreRfcCompliant(t *testing.T) {
+	assert.GreaterOrEqual(t, smtpServerReadTimeout, 5*time.Minute)
+	assert.GreaterOrEqual(t, smtpServerWriteTimeout, 5*time.Minute)
+}
+
+func TestIncomingServer_IdleClientTimesOut(t *testing.T) {
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	server := &IncomingMailServer{
+		ctx:     ctx,
+		logger:  slogDiscard(),
+		metrics: newMetrics(),
+	}
+
+	originalSmtpServerPort1 := smtpServerPort1
+	originalSmtpServerPort2 := smtpServerPort2
+	originalReadTimeout := smtpServerReadTimeout
+
+	smtpServerPort1 = ":25451"
+	smtpServerPort2 = ":25452"
+	smtpServerReadTimeout = 100 * time.Millisecond
+	defer func() {
+		smtpServerPort1 = originalSmtpServerPort1
+		smtpServerPort2 = originalSmtpServerPort2
+		smtpServerReadTimeout = originalReadTimeout
+	}()
+
+	go server.Set("example.com", 1, GoStateMailTls{Enabled: false})
+
+	time.Sleep(100 * time.Millisecond)
+
+	conn, err := net.Dial("tcp", "localhost:25451")
+	assert.NoError(t, err)
+	defer conn.Close()
+
+	conn.SetDeadline(time.Now().Add(5 * time.Second))
+	text := textproto.NewConn(conn)
+
+	_, _, err = text.ReadResponse(220)
+	assert.NoError(t, err)
+
+	// send nothing; the server closes the connection with 421 4.4.2
+	code, msg, err := text.ReadResponse(421)
+	assert.NoError(t, err)
+	assert.Equal(t, 421, code)
+	assert.Contains(t, msg, "4.4.2")
 }

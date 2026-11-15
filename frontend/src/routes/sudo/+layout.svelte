@@ -23,8 +23,9 @@
 	import IconBug from '@hyvor/icons/IconBug';
 	import IconHouse from '@hyvor/icons/IconHouse';
 	import IconArrowRightShort from '@hyvor/icons/IconArrowRightShort';
-import IconCardList from '@hyvor/icons/IconCardList';
 	import IconGraphUp from '@hyvor/icons/IconGraphUp';
+	import IconCardList from '@hyvor/icons/IconCardList';
+	import IconPersonBadge from '@hyvor/icons/IconPersonBadge';
 
 	dayjs.extend(relativeTime);
 
@@ -164,6 +165,18 @@ import IconCardList from '@hyvor/icons/IconCardList';
 										{/snippet}
 										Sends
 									</NavLink>
+
+									{#if $sudoConfigStore.deployment === 'cloud'}
+										<NavLink
+											href="/sudo/kyc"
+											active={page.url.pathname.startsWith('/sudo/kyc')}
+										>
+											{#snippet start()}
+												<IconPersonBadge />
+											{/snippet}
+											KYC
+										</NavLink>
+									{/if}
 
 									<div class="section-div"></div>
 
