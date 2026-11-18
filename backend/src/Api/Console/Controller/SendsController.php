@@ -12,13 +12,12 @@ use App\Api\Console\Object\SendContentObject;
 use App\Api\Console\Object\SendObject;
 use App\Entity\Project;
 use App\Entity\Send;
-use App\Entity\Type\KycStatus;
 use App\Entity\Type\ProjectSendType;
 use App\Entity\Type\SendRecipientStatus;
 use App\Service\Domain\DomainService;
-use App\Service\Kyc\KycService;
 use App\Service\Queue\QueueService;
 use App\Service\Send\EmailAddressFormat;
+use App\Service\Send\Event\SendValidatingEvent;
 use App\Service\Send\Exception\EmailTooLargeException;
 use App\Service\Send\Exception\SendContentStorageException;
 use App\Service\Send\SendContentStorage;
@@ -26,9 +25,6 @@ use App\Service\Send\SendLimits;
 use App\Service\Send\SendService;
 use App\Service\SendAttempt\SendAttemptService;
 use App\Service\SendFeedback\SendFeedbackService;
-use Hyvor\Internal\Billing\BillingInterface;
-use Hyvor\Internal\Billing\License\Resolved\ResolvedLicenseType;
-use Hyvor\Internal\InternalConfig;
 use Nelmio\ApiDocBundle\Attribute\Model;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -40,15 +36,13 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
-use Symfony\Component\Mime\Address;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class SendsController extends AbstractController
 {
     use ClockAwareTrait;
-
-    private const string SIMULATOR_DOMAIN = 'simulator.relay.hyvor.com';
 
     public function __construct(
         private SendService $sendService,
@@ -57,9 +51,7 @@ class SendsController extends AbstractController
         private SendFeedbackService $sendFeedbackService,
         private DomainService $domainService,
         private QueueService $queueService,
-        private KycService $kycService,
-        private BillingInterface $billing,
-        private InternalConfig $internalConfig,
+        private EventDispatcherInterface $ed,
     ) {}
 
     #[Route("/sends", methods: "POST")]
@@ -115,14 +107,11 @@ class SendsController extends AbstractController
             );
         }
 
-        if (
-            $this->internalConfig->getDeployment()->isCloud() &&
-            !$this->isSimulatorOnly([...$to, ...$cc, ...$bcc]) &&
-            !$this->canSendToAnyone($project)
-        ) {
-            throw new BadRequestException(
-                "Emails can only be sent to @" . self::SIMULATOR_DOMAIN . " until your KYC is approved and your subscription is active"
-            );
+        $validatingEvent = new SendValidatingEvent($project, [...$to, ...$cc, ...$bcc]);
+        $this->ed->dispatch($validatingEvent);
+
+        if ($validatingEvent->error !== null) {
+            throw new BadRequestException($validatingEvent->error);
         }
 
         $queue = $project->getSendType() === ProjectSendType::TRANSACTIONAL ?
@@ -408,35 +397,5 @@ class SendsController extends AbstractController
         }
 
         return $this->json(new SendContentObject($content));
-    }
-
-    /**
-     * @param Address[] $recipients
-     */
-    private function isSimulatorOnly(array $recipients): bool
-    {
-        foreach ($recipients as $recipient) {
-            $domain = EmailAddressFormat::getDomainFromEmail($recipient->getAddress());
-            if ($domain !== self::SIMULATOR_DOMAIN) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private function canSendToAnyone(Project $project): bool
-    {
-        $organizationId = $project->getOrganizationId();
-        assert($organizationId !== null);
-
-        $kyc = $this->kycService->getActiveByOrganizationId($organizationId);
-        if ($kyc?->getStatus() !== KycStatus::APPROVED) {
-            return false;
-        }
-
-        $licenseType = $this->billing->license($organizationId)->type;
-        return $licenseType === ResolvedLicenseType::SUBSCRIPTION ||
-            $licenseType === ResolvedLicenseType::ENTERPRISE_CONTRACT;
     }
 }
