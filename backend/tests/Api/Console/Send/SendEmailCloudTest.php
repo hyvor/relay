@@ -6,26 +6,36 @@ use App\Api\Console\Controller\SendsController;
 use App\Entity\Project;
 use App\Entity\Type\DomainStatus;
 use App\Entity\Type\KycStatus;
+use App\Service\Cloud\Billing\LicenseService;
+use App\Service\Cloud\OrganizationMemberService;
+use App\Service\Cloud\SendValidatingListener;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\InstanceFactory;
 use App\Tests\Factory\KycFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
+use Hyvor\Internal\Auth\AuthFake;
 use Hyvor\Internal\Billing\BillingFake;
 use Hyvor\Internal\Billing\License\RelayLicense;
 use Hyvor\Internal\Billing\License\Resolved\ResolvedLicense;
 use Hyvor\Internal\Billing\License\Resolved\ResolvedLicenseType;
+use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\VerifyMember;
+use Hyvor\Internal\Bundle\Comms\Event\ToCore\Organization\VerifyMemberResponse;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 
 #[CoversClass(SendsController::class)]
+#[CoversClass(SendValidatingListener::class)]
+#[CoversClass(OrganizationMemberService::class)]
+#[CoversClass(LicenseService::class)]
 class SendEmailCloudTest extends WebTestCase
 {
     protected function setUp(): void
     {
         parent::setUp();
         $_ENV['DEPLOYMENT'] = 'cloud';
+        AuthFake::databaseSet();
     }
 
     private function createProject(): Project
@@ -45,10 +55,9 @@ class SendEmailCloudTest extends WebTestCase
 
     private function fakeLicense(ResolvedLicenseType $type): void
     {
-        BillingFake::enableForSymfony(
-            $this->container,
-            [1 => new ResolvedLicense($type, RelayLicense::trial())]
-        );
+        $this->getService(BillingFake::class)->setLicenses([
+            1 => new ResolvedLicense($type, RelayLicense::trial()),
+        ]);
     }
 
     public function test_allows_sending_to_simulator_without_kyc(): void
@@ -78,9 +87,25 @@ class SendEmailCloudTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(400);
         $this->assertSame(
-            'Emails can only be sent to @simulator.relay.hyvor.com until your KYC is approved and your subscription is active',
+            'Emails can only be sent to @simulator.relay.hyvor.com or members of your organization until your KYC is approved and your subscription is active',
             $this->getJson()['message']
         );
+    }
+
+    public function test_allows_sending_to_organization_members_without_kyc(): void
+    {
+        $project = $this->createProject();
+        AuthFake::databaseAdd(['id' => 2, 'email' => 'member@example.com']);
+        $this->getComms()->addResponse(VerifyMember::class, new VerifyMemberResponse(true, 'member'));
+
+        $this->consoleApi($project, "POST", "/sends", data: [
+            'from' => 'test@hyvor.com',
+            'to' => 'member@example.com',
+            'cc' => 'accept@simulator.relay.hyvor.com',
+            'body_text' => 'Test email',
+        ]);
+
+        $this->assertResponseStatusCodeSame(200);
     }
 
     public function test_does_not_allow_sending_with_rejected_kyc(): void
