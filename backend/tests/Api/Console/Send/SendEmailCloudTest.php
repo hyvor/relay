@@ -8,6 +8,7 @@ use App\Entity\Type\DomainStatus;
 use App\Entity\Type\KycStatus;
 use App\Service\Cloud\Billing\LicenseService;
 use App\Service\Cloud\OrganizationMemberService;
+use App\Service\Cloud\SendRestrictionService;
 use App\Service\Cloud\SendValidatingListener;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
@@ -29,6 +30,7 @@ use PHPUnit\Framework\Attributes\TestWith;
 #[CoversClass(SendValidatingListener::class)]
 #[CoversClass(OrganizationMemberService::class)]
 #[CoversClass(LicenseService::class)]
+#[CoversClass(SendRestrictionService::class)]
 class SendEmailCloudTest extends WebTestCase
 {
     protected function setUp(): void

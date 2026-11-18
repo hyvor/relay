@@ -2,12 +2,8 @@
 
 namespace App\Service\Cloud;
 
-use App\Entity\Type\KycStatus;
-use App\Service\Cloud\Billing\LicenseService;
-use App\Service\Kyc\KycService;
 use App\Service\Send\EmailAddressFormat;
 use App\Service\Send\Event\SendValidatingEvent;
-use Hyvor\Internal\Billing\License\Resolved\ResolvedLicenseType;
 use Hyvor\Internal\InternalConfig;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\Mime\Address;
@@ -19,8 +15,7 @@ class SendValidatingListener
 
     public function __construct(
         private InternalConfig $internalConfig,
-        private KycService $kycService,
-        private LicenseService $licenseService,
+        private SendRestrictionService $sendRestrictionService,
         private OrganizationMemberService $organizationMemberService,
     ) {}
 
@@ -38,7 +33,7 @@ class SendValidatingListener
             fn(Address $recipient) => EmailAddressFormat::getDomainFromEmail($recipient->getAddress()) !== self::SIMULATOR_DOMAIN
         );
 
-        if (count($recipients) === 0 || $this->canSendToAnyone($organizationId)) {
+        if (count($recipients) === 0 || !$this->sendRestrictionService->isRestricted($organizationId)) {
             return;
         }
 
@@ -48,17 +43,5 @@ class SendValidatingListener
                 return;
             }
         }
-    }
-
-    private function canSendToAnyone(int $organizationId): bool
-    {
-        $kyc = $this->kycService->getActiveByOrganizationId($organizationId);
-        if ($kyc?->getStatus() !== KycStatus::APPROVED) {
-            return false;
-        }
-
-        $licenseType = $this->licenseService->getCachedLicense($organizationId)->type;
-        return $licenseType === ResolvedLicenseType::SUBSCRIPTION ||
-            $licenseType === ResolvedLicenseType::ENTERPRISE_CONTRACT;
     }
 }

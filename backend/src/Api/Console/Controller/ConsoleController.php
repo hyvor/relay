@@ -8,6 +8,7 @@ use App\Api\Console\Object\ProjectUserObject;
 use App\Entity\Project;
 use App\Entity\Type\WebhooksEventEnum;
 use App\Service\App\Config;
+use App\Service\Cloud\SendRestrictionService;
 use App\Service\Instance\InstanceService;
 use App\Service\ProjectUser\ProjectUserService;
 use App\Service\Send\Compliance;
@@ -31,6 +32,7 @@ class ConsoleController extends AbstractController
         private InstanceService $instanceService,
         private SudoUserService $sudoUserService,
         private AuthInterface $auth,
+        private SendRestrictionService $sendRestrictionService,
     ) {}
 
     #[Route('/init', methods: 'GET')]
@@ -92,6 +94,9 @@ class ConsoleController extends AbstractController
                     'api_keys' => [
                         'scopes' => array_map(fn($scope) => $scope->value, RelayScope::cases()),
                     ],
+                    'send_restricted' => $org !== null &&
+                        $this->internalConfig->getDeployment()->isCloud() &&
+                        $this->sendRestrictionService->isRestricted($org->id),
                     'compliance' => [
                         'rates' => Compliance::getRates(),
                     ],
