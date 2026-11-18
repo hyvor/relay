@@ -20,6 +20,9 @@ class ConfigTest extends KernelTestCase
         $this->assertSame(null, $config->getGoHost());
         $this->assertSame("https://relay.hyvor.com", $config->getWebUrl());
         $this->assertSame("mail.hyvor-relay.com", $config->getInstanceDomain());
+        $this->assertNull($config->getGooglePostmasterClientId());
+        $this->assertNull($config->getGooglePostmasterClientSecret());
+        $this->assertNull($config->getGooglePostmasterRefreshToken());
     }
 
     public function test_get_hostname(): void
