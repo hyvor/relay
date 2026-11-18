@@ -75,9 +75,4 @@ NAT_NETWORK=
 # Format: private_ip=public_ip (comma-separated for multiple)
 # Example: NAT_MAP=10.0.1.5=203.0.113.10,10.0.1.6=203.0.113.11
 NAT_MAP=
-
-# When set, Gmail spam rates are fetched periodically.
-GOOGLE_POSTMASTER_CLIENT_ID=
-GOOGLE_POSTMASTER_CLIENT_SECRET=
-GOOGLE_POSTMASTER_REFRESH_TOKEN=
 ```

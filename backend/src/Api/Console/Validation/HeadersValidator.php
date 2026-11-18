@@ -28,7 +28,6 @@ class HeadersValidator extends ConstraintValidator
         'content-transfer-encoding',
         'content-disposition',
         'message-id',
-        'feedback-id',
 
         // security
         'dkim-signature',
