@@ -268,9 +268,73 @@ export interface WarmupSchedule {
 	ip_address_id: number;
 }
 
+export interface SudoStatsRates {
+	accepted: number;
+	deferred: number;
+	bounce: number;
+	bounce_recipient: number;
+	bounce_infrastructure: number;
+	bounce_unknown: number;
+	complaint: number;
+	suppressed: number;
+	failed: number;
+}
+
+export interface SudoStatsCounts {
+	sends: number;
+	send_recipients: number;
+	send_attempts: number;
+	attempted: number;
+	accepted: number;
+	deferred: number;
+	bounced: number;
+	bounced_recipient: number;
+	bounced_infrastructure: number;
+	bounced_unknown: number;
+	complained: number;
+	suppressed: number;
+	failed: number;
+	rates: SudoStatsRates;
+}
+
+export interface SudoStatsTotals extends SudoStatsCounts {
+	projects: number;
+}
+
+export interface SudoStatsDaily extends SudoStatsCounts {
+	date: string;
+}
+
+export interface SudoStatsIp extends SudoStatsCounts {
+	id: number;
+	ip: string;
+	server: string;
+	ptr_valid: boolean;
+}
+
+export interface SudoStatsProject extends SudoStatsCounts {
+	id: number;
+	name: string;
+}
+
+export interface SudoStatsDomain extends SudoStatsCounts {
+	domain: string;
+}
+
 export interface SudoStats {
+	// legacy
 	project_count: number;
 	sends: number;
 	bounce_rate: number;
 	complaint_rate: number;
+
+	period: 'today' | '7d' | '30d';
+	start_date: string;
+	end_date: string;
+	totals: SudoStatsTotals;
+	previous_totals: SudoStatsTotals;
+	daily: SudoStatsDaily[];
+	ips: SudoStatsIp[];
+	projects: SudoStatsProject[];
+	domains: SudoStatsDomain[];
 }
