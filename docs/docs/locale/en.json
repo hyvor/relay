@@ -1,0 +1,21 @@
+{
+  "sections": {
+    "api": "API"
+  },
+  "pages": {
+    "introduction": "Getting Started",
+    "domains": "Domains",
+    "sendEmails": "Send Emails via API",
+    "sendEmailsSmtp": "Send Emails via SMTP",
+    "consoleApi": "Console API",
+    "webhooks": "Webhooks"
+  },
+  "descriptions": {
+    "introduction": "Get started with Hyvor Relay, an open-source email API for developers. Create a project, add a sending domain, and send your first email.",
+    "domains": "Add and verify sending domains in Hyvor Relay with a single DKIM TXT record. Learn about domain statuses and automating domains with the API.",
+    "sendEmails": "Send emails with the Hyvor Relay API. Request format, retries and idempotency, response status codes, rate limits, and email size limits.",
+    "sendEmailsSmtp": "Send emails through Hyvor Relay over SMTP. Compare SMTP with the API, set up SMTP credentials, and see how MIME messages map to API fields.",
+    "consoleApi": "Hyvor Relay Console API reference: authentication, scopes, rate limits, errors, and endpoints for sends, domains, webhooks, API keys, and more.",
+    "webhooks": "Receive Hyvor Relay webhooks when emails are accepted, deferred, bounced, or complained about, and when domains or suppressions change."
+  }
+}
