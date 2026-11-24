@@ -3,7 +3,7 @@
 	import { getSudoStats } from '../sudoActions';
 	import type { SudoStats } from '../sudoTypes';
 	import { IconMessage, Loader, Button } from '@hyvor/design/components';
-	import Stat from '../../console/[id]/overview/Stat.svelte';
+	import Stat from '../../console/(nav)/[id]/overview/Stat.svelte';
 
 	let stats: SudoStats = $state({} as SudoStats);
 	let statsLoading = $state(true);
