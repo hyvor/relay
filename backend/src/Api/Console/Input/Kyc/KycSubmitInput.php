@@ -5,6 +5,7 @@ namespace App\Api\Console\Input\Kyc;
 use App\Entity\Type\KycAccountType;
 use App\Entity\Type\KycContentOwnership;
 use App\Service\Kyc\Countries;
+use App\Service\Kyc\KycService;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[Assert\Expression(
@@ -55,4 +56,7 @@ class KycSubmitInput
     #[Assert\NotBlank]
     #[Assert\Length(max: 5000)]
     public string $use_case;
+
+    #[Assert\Choice(callback: [KycService::class, 'plans'], message: 'Please select a valid plan.')]
+    public string $plan = KycService::MINIMUM_PLAN;
 }

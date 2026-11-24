@@ -1,4 +1,4 @@
-import type { Kyc, KycAccountType, KycContentOwnership } from '../../types';
+import type { Kyc, KycAccountType, KycContentOwnership, KycPlan } from '../../types';
 import consoleApi from '../consoleApi.svelte';
 
 export interface KycSubmitData {
@@ -12,6 +12,7 @@ export interface KycSubmitData {
 	sending_transactional: boolean;
 	sending_distributional: boolean;
 	use_case: string;
+	plan: KycPlan;
 }
 
 export function getKyc() {

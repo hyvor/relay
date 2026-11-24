@@ -25,6 +25,7 @@ class KycObject
     public bool $sending_transactional;
     public bool $sending_distributional;
     public string $use_case;
+    public string $plan;
     public KycStatus $status;
     public ?string $note;
     public ?string $reject_reason;
@@ -45,6 +46,7 @@ class KycObject
         $this->sending_transactional = $kyc->isSendingTransactional();
         $this->sending_distributional = $kyc->isSendingDistributional();
         $this->use_case = $kyc->getUseCase();
+        $this->plan = $kyc->getPlan();
         $this->status = $kyc->getStatus();
         $this->note = $kyc->getNote();
         $this->reject_reason = $kyc->getRejectReason();

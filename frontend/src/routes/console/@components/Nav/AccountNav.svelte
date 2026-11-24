@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { NavLink } from '@hyvor/design/components';
+	import { NavLink, NavLinkGroup } from '@hyvor/design/components';
 	import IconShieldLock from '@hyvor/icons/IconShieldLock';
 	import IconPersonBadge from '@hyvor/icons/IconPersonBadge';
 	import IconArrowRightShort from '@hyvor/icons/IconArrowRightShort';
 	import { getAppConfig } from '../../lib/stores/consoleStore';
+	import { page } from '$app/state';
 </script>
 
 <!-- 
@@ -27,12 +28,14 @@
 {#if getAppConfig().deployment === 'cloud'}
 	<div class="wrap hds-box">
 		<div class="nav-links">
-			<NavLink href="/console/kyc">
+			<NavLinkGroup activeBackground="var(--accent-light)">
+			<NavLink href="/console/kyc" active={page.url.pathname.startsWith('/console/kyc')}>
 				{#snippet start()}
 					<IconPersonBadge />
 				{/snippet}
 				KYC
 			</NavLink>
+			</NavLinkGroup>
 		</div>
 	</div>
 {/if}

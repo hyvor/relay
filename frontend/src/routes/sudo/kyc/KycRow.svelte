@@ -100,6 +100,10 @@
 				<span class="label">Email</span>
 				<span>{kyc.email}</span>
 			</div>
+			<div class="detail">
+				<span class="label">Plan</span>
+				<span>{kyc.plan}</span>
+			</div>
 			<div class="detail full">
 				<span class="label">Use case</span>
 				<span>{kyc.use_case}</span>

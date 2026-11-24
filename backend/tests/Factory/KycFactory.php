@@ -41,6 +41,7 @@ final class KycFactory extends PersistentObjectFactory
             'sending_transactional' => true,
             'sending_distributional' => false,
             'use_case' => self::faker()->sentence(),
+            'plan' => 'starter',
             'status' => KycStatus::PENDING,
         ];
     }

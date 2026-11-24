@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { goto, beforeNavigate } from '$app/navigation';
 	import {
 		TextInput,
 		Textarea,
@@ -22,18 +22,47 @@
 	import CardCollector from './CardCollector.svelte';
 	import { getAppConfig } from '../../lib/stores/consoleStore';
 	import { getKyc, getKycCountries, submitKyc } from '../../lib/actions/kycActions';
-	import type { Kyc, KycAccountType, KycContentOwnership } from '../../types';
+	import type { Kyc, KycAccountType, KycContentOwnership, KycPlan } from '../../types';
 
 	let loading = $state(true);
 	let saving = $state(false);
 	let existingKyc = $state<Kyc | null>(null);
 
-	let currentStep = $state<1 | 2>(1);
+	let currentStep = $state<1 | 2 | 3>(1);
+
+	const plans: { id: KycPlan; name: string; price: number; features: string[] }[] = [
+		{
+			id: 'starter',
+			name: 'Starter',
+			price: 30,
+			features: [
+				'150,000 emails / month',
+				'3 projects',
+				'10 domains',
+				// 'Shared IPs',
+				'Additional emails: €2 per 10,000'
+			]
+		},
+		{
+			id: 'pro',
+			name: 'Pro',
+			price: 90,
+			features: [
+				'900,000 emails / month',
+				'5 projects',
+				'100 domains',
+				// 'Dedicated IPs',
+				'Additional emails: €1 per 10,000'
+			]
+		}
+	];
+	let plan = $state<KycPlan>('starter');
+	const selectedPlanName = $derived(plans.find((p) => p.id === plan)?.name ?? 'Starter');
 
 	let detailsConfirmed = $state(false);
 	let cardAdded = $state(false);
 
-	let accountType = $state<KycAccountType>('individual');
+	let accountType = $state<KycAccountType>('business');
 	let name = $state('');
 	let country = $state('');
 	let address = $state('');
@@ -67,7 +96,24 @@
 			contentOwnership.every((type) => kyc.content_ownership.includes(type)) &&
 			useCase.trim() === kyc.use_case &&
 			sendingTransactional === kyc.sending_transactional &&
-			sendingDistributional === kyc.sending_distributional
+			sendingDistributional === kyc.sending_distributional &&
+			plan === kyc.plan
+		);
+	});
+
+	// true while the user has entered anything that has not been submitted yet
+	const isDirty = $derived.by(() => {
+		if (existingKyc) return !formUnchanged;
+		return (
+			name.trim() !== '' ||
+			country !== '' ||
+			address.trim() !== '' ||
+			website.trim() !== '' ||
+			email.trim() !== '' ||
+			contentOwnership.length > 0 ||
+			sendingTransactional ||
+			sendingDistributional ||
+			useCase.trim() !== ''
 		);
 	});
 
@@ -90,6 +136,7 @@
 		sendingTransactional = kyc.sending_transactional;
 		sendingDistributional = kyc.sending_distributional;
 		useCase = kyc.use_case;
+		plan = kyc.plan;
 	}
 
 	function toggleContentOwnership(type: KycContentOwnership) {
@@ -100,12 +147,25 @@
 		}
 	}
 
-	function goToStep(step: 1 | 2) {
-		if (step === 2 && !existingKyc && !detailsConfirmed) {
+	function goToStep(step: 1 | 2 | 3) {
+		if (step > 1 && !existingKyc && !detailsConfirmed) {
 			return;
 		}
 		currentStep = step;
 	}
+
+	beforeNavigate(({ cancel, willUnload, to }) => {
+		if (!isDirty) return;
+		if (willUnload) {
+			// triggers the browser's native "leave site?" prompt
+			cancel();
+			return;
+		}
+		if (to?.url.pathname.startsWith('/console/kyc')) return;
+		if (!confirm('You have unsaved KYC details. Are you sure you want to leave this page?')) {
+			cancel();
+		}
+	});
 
 	onMount(() => {
 		if (getAppConfig().deployment !== 'cloud') {
@@ -192,6 +252,10 @@
 		currentStep = 2;
 	}
 
+	function handlePlanNext() {
+		currentStep = 3;
+	}
+
 	function handleSubmit() {
 		if (saving || !cardAdded || formUnchanged) {
 			return;
@@ -209,7 +273,8 @@
 			content_ownership: contentOwnership,
 			sending_transactional: sendingTransactional,
 			sending_distributional: sendingDistributional,
-			use_case: useCase
+			use_case: useCase,
+			plan
 		})
 			.then((res) => {
 				existingKyc = res;
@@ -266,9 +331,20 @@
 					disabled={!existingKyc && !detailsConfirmed}
 					onclick={() => goToStep(2)}
 				>
-					<span class="step-num">2</span>
-					<span class="step-label">Payment details</span>
-				</button>
+											<span class="step-num">2</span>
+						<span class="step-label">Choose plan</span>
+					</button>
+					<div class="step-connector"></div>
+					<button
+						type="button"
+						class="step"
+						class:active={currentStep === 3}
+						disabled={!existingKyc && !detailsConfirmed}
+						onclick={() => goToStep(3)}
+					>
+						<span class="step-num">3</span>
+						<span class="step-label">Payment details</span>
+					</button>
 			</div>
 
 			{#if currentStep === 1}
@@ -300,7 +376,7 @@
 
 				<div class="form">
 					<SplitControl
-						label="Account type"
+						label="Account type *"
 						caption="Are you sending emails as an individual or a business?"
 					>
 						<InputGroup>
@@ -320,7 +396,7 @@
 					</SplitControl>
 
 					<SplitControl 
-						label={accountType === 'individual' ? 'Full name' : 'Business name'} 
+						label={(accountType === 'individual' ? 'Full name' : 'Business name') + ' *'} 
 						caption={accountType === 'individual' ? 'Your full legal name' : 'Your company or organization\'s legal name'}
 					>
 						<FormControl>
@@ -335,7 +411,7 @@
 						</FormControl>
 					</SplitControl>
 
-					<SplitControl label="Country" caption={'Country of ' + (accountType === 'individual' ? 'residence' : 'incorporation')}>
+					<SplitControl label="Country *" caption={'Country of ' + (accountType === 'individual' ? 'residence' : 'incorporation')}>
 						<FormControl>
 							<Select
 								bind:value={country}
@@ -350,7 +426,7 @@
 						</FormControl>
 					</SplitControl>
 
-					<SplitControl label="Address" caption={'Your ' + (accountType === 'individual' ? 'residential' : 'business') + ' address'}>
+					<SplitControl label="Address *" caption={'Your ' + (accountType === 'individual' ? 'residential' : 'business') + ' address'}>
 						<FormControl>
 							<Textarea
 								bind:value={address}
@@ -364,7 +440,7 @@
 						</FormControl>
 					</SplitControl>
 
-					<SplitControl label="Website" caption={'Your ' + (accountType === 'individual' ? 'personal' : 'business') + ' website'}>
+					<SplitControl label="Website *" caption={'Your ' + (accountType === 'individual' ? 'personal' : 'business') + ' website'}>
 						<FormControl>
 							<TextInput
 								bind:value={website}
@@ -377,7 +453,7 @@
 						</FormControl>
 					</SplitControl>
 
-					<SplitControl label="Contact email" caption="Who should we contact if there's an issue with your approval or we need more information?">
+					<SplitControl label="Contact email *" caption="Who should we contact if there's an issue with your approval or we need more information?">
 						<FormControl>
 							<TextInput
 								bind:value={email}
@@ -392,20 +468,26 @@
 					</SplitControl>
 
 					<SplitControl
-						label="Content Ownership"
-						caption="Who writes the content you send? You or anyone from your organization or a third party who uses your platform."
+						label="Content Ownership *"
+						caption="Who creates and owns the content you send?"
 					>
 						<FormControl>
-							<span class="radio-wrap">
-								<Checkbox
-									checked={contentOwnership.includes('self')}
-									on:change={() => toggleContentOwnership('self')}
-								>Our-self</Checkbox>
-								<Checkbox
-									checked={contentOwnership.includes('third_party')}
-									on:change={() => toggleContentOwnership('third_party')}
-								>Third Party</Checkbox>
-							</span>
+							<div class="option-list">
+									<div class="option">
+										<Checkbox
+											checked={contentOwnership.includes('self')}
+											on:change={() => toggleContentOwnership('self')}
+										>Our team</Checkbox>
+										<p class="option-desc">Our team or trusted partners create and own the email content that we send. E.g., welcome emails, newsletters.</p>
+									</div>
+									<div class="option">
+										<Checkbox
+											checked={contentOwnership.includes('third_party')}
+											on:change={() => toggleContentOwnership('third_party')}
+										>Our clients</Checkbox>
+										<p class="option-desc">Our clients provide the email content. E.g., you work as a newsletter service for your clients.</p>
+									</div>
+								</div>
 							{#if errors.contentOwnership}
 								<Validation state="error">{errors.contentOwnership}</Validation>
 							{/if}
@@ -414,32 +496,38 @@
 						{#if contentOwnership.includes('third_party')}
 							<div class="callout-wrap-top">
 								<Callout type="danger">
-									Hyvor Relay cloud version is currently not intended for use by third parties outside you or your organization's
-									employees. For other use cases, please consider self-hosting Hyvor Relay instead.
+									We are currently not accepting use by third parties outside you or your organization's employees.
+									Please check back later or consider self-hosting Hyvor Relay for other use cases.
 								</Callout>
 							</div>
 						{/if}
 					</SplitControl>
 
-					<SplitControl label="Sending Type" caption="Type of emails you plan to send.">
+					<SplitControl label="Sending Type *" caption="Type of emails you plan to send.">
 						<FormControl>
-							<span class="radio-wrap">
-								<Checkbox
-									checked={sendingTransactional}
-									on:change={() => (sendingTransactional = !sendingTransactional)}
-								>Transactional</Checkbox>
-								<Checkbox
-									checked={sendingDistributional}
-									on:change={() => (sendingDistributional = !sendingDistributional)}
-								>Distributional</Checkbox>
-							</span>
+							<div class="option-list">
+									<div class="option">
+										<Checkbox
+											checked={sendingTransactional}
+											on:change={() => (sendingTransactional = !sendingTransactional)}
+										>Transactional</Checkbox>
+										<p class="option-desc">Emails are sent as part of a transaction or triggered by user actions. E.g., order confirmations, password resets.</p>
+									</div>
+									<div class="option">
+										<Checkbox
+											checked={sendingDistributional}
+											on:change={() => (sendingDistributional = !sendingDistributional)}
+										>Distributional</Checkbox>
+										<p class="option-desc">Emails are sent to a distribution list or multiple recipients for informational purposes. E.g., newsletters, announcements.</p>
+									</div>
+								</div>
 							{#if errors.sendingType}
 								<Validation state="error">{errors.sendingType}</Validation>
 							{/if}
 						</FormControl>
 					</SplitControl>
 
-					<SplitControl label="Use case" caption="Describe your use case for Hyvor Relay">
+					<SplitControl label="Use case *" caption="Describe your use case for Hyvor Relay">
 
 						{#if sendingDistributional}
 							<div class="callout-wrap-bottom">
@@ -464,13 +552,31 @@
 
 				</div>
 
-				<div class="actions">
-					<Button
-						color="accent"
-						variant="fill"
-						on:click={handleNext}
-						disabled={contentOwnership.includes('third_party')}
-					>Next</Button>
+
+			{:else if currentStep === 2}
+				<div class="plans-wrap">
+					<p class="plans-intro">
+						Choose the plan to start with. It will be activated once your KYC is approved
+						and your card will be charged then. You can change your plan later.
+					</p>
+					<div class="plans">
+						{#each plans as p (p.id)}
+							<button
+								type="button"
+								class="plan"
+								class:selected={plan === p.id}
+								onclick={() => (plan = p.id)}
+							>
+								<div class="plan-name">{p.name}</div>
+								<div class="plan-price">€{p.price}<span> / month</span></div>
+								<ul>
+									{#each p.features as feature}
+										<li>{feature}</li>
+									{/each}
+								</ul>
+							</button>
+						{/each}
+					</div>
 				</div>
 			{:else}
 				<div class="kyc-card-wrap">
@@ -481,15 +587,15 @@
 								{#if existingKyc.reject_reason}
 									Reason: {existingKyc.reject_reason}
 								{/if}
-								Go back to Step 1 to update your details, then submit again below.
+								Go back to update your details, then submit again below.
 							</Callout>
 						</div>
 					{:else if existingKyc?.status === 'approved' && formUnchanged}
 						<div class="callout-wrap">
 							<Callout type="success">
 								Your KYC has been approved. Your card will be charged automatically
-								for a Starter plan subscription. You may upgrade your plan at <a href="/billing">
-								Billing</a> later. You can still update your details and resubmit if
+								for the {selectedPlanName} plan subscription. You may change your plan at <a href="/console/billing">
+									Billing</a> later. You can still update your details and resubmit if
 								anything has changed.
 							</Callout>
 						</div>
@@ -504,9 +610,8 @@
 						<div class="callout-wrap">
 							<Callout type="info">
 								Add your payment details below, then submit to complete your KYC
-								verification. Your card will be charged automatically for the Starter 
-								plan once it's approved. If your organization already has a payment method
-								added, you can continue with the existing payment method.
+								verification. Your card will be charged automatically for the {selectedPlanName} 
+									plan once it's approved.
 							</Callout>
 						</div>
 					{/if}
@@ -516,29 +621,40 @@
 					</div>
 				</div>
 
-				<div class="actions space-between">
-					<Button variant="outline" color="gray" on:click={() => goToStep(1)}>Back</Button
-					>
-					<div class="submit-wrap">
-						<Tooltip text={submitDisabledReason ?? ''} disabled={submitDisabledReason === null}>
-							<Button
-								color="accent"
-								variant="fill"
-								disabled={saving || !cardAdded || formUnchanged}
-								on:click={handleSubmit}
-							>
-								{saving
-									? 'Submitting...'
-									: existingKyc
-										? 'Resubmit KYC'
-										: 'Submit KYC'}
-							</Button>
-						</Tooltip>
-					</div>
-				</div>
 			{/if}
 		{/if}
 	</div>
+
+	{#if !loading}
+		<div class="footer">
+			{#if currentStep === 1}
+				<span></span>
+				<Button
+					color="accent"
+					variant="fill"
+					on:click={handleNext}
+					disabled={contentOwnership.includes('third_party')}
+				>Next</Button>
+			{:else if currentStep === 2}
+				<Button variant="outline" color="gray" on:click={() => goToStep(1)}>Back</Button>
+				<Button color="accent" variant="fill" on:click={handlePlanNext}>Next</Button>
+			{:else}
+				<Button variant="outline" color="gray" on:click={() => goToStep(2)}>Back</Button>
+				<div class="submit-wrap">
+					<Tooltip text={submitDisabledReason ?? ''} disabled={submitDisabledReason === null}>
+						<Button
+							color="accent"
+							variant="fill"
+							disabled={saving || !cardAdded || formUnchanged}
+							on:click={handleSubmit}
+						>
+							{saving ? 'Submitting...' : existingKyc ? 'Resubmit KYC' : 'Submit KYC'}
+						</Button>
+					</Tooltip>
+				</div>
+			{/if}
+		</div>
+	{/if}
 </SingleBox>
 
 <style>
@@ -646,14 +762,90 @@
 		overflow: hidden;
 	}
 
-	.actions {
+	.footer {
 		display: flex;
-		justify-content: flex-end;
-		margin-top: 20px;
+		justify-content: space-between;
+		align-items: center;
+		padding: 15px 30px;
+		border-top: 1px solid var(--border);
+		flex-shrink: 0;
 	}
 
-	.actions.space-between {
-		justify-content: space-between;
+	.option-list {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+	}
+
+	.option-desc {
+		margin: 4px 0 0 26px;
+		font-size: 13px;
+		color: var(--text-light);
+	}
+
+	.plans-wrap {
+		max-width: 700px;
+		margin: 0 auto;
+	}
+
+	.plans-intro {
+		margin: 0 0 20px;
+		font-size: 13px;
+		color: var(--text-light);
+	}
+
+	.plans {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 20px;
+	}
+
+	.plan {
+		text-align: left;
+		font: inherit;
+		color: inherit;
+		background: none;
+		padding: 20px;
+		border: 2px solid var(--border);
+		border-radius: 12px;
+		cursor: pointer;
+	}
+
+	.plan.selected {
+		border-color: var(--accent);
+		background: var(--accent-lightest);
+	}
+
+	.plan-name {
+		font-weight: 600;
+		font-size: 16px;
+	}
+
+	.plan-price {
+		font-size: 24px;
+		font-weight: 600;
+		margin: 6px 0 14px;
+	}
+
+	.plan-price span {
+		font-size: 13px;
+		font-weight: 400;
+		color: var(--text-light);
+	}
+
+	.plan ul {
+		margin: 0;
+		padding-left: 18px;
+		font-size: 13px;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	@media (max-width: 600px) {
+		.plans {
+			grid-template-columns: 1fr;
+		}
 	}
 
 	.submit-wrap {

@@ -236,6 +236,8 @@ export type KycAccountType = 'individual' | 'business';
 
 export type KycContentOwnership = 'self' | 'third_party';
 
+export type KycPlan = 'starter' | 'pro';
+
 export type KycStatus = 'pending' | 'approved' | 'rejected' | 'stale';
 
 export interface Kyc {
@@ -252,6 +254,7 @@ export interface Kyc {
 	use_case: string;
 	website: string;
 	email: string;
+	plan: KycPlan;
 	status: KycStatus;
 	reject_reason: string | null;
 }
