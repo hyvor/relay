@@ -28,7 +28,9 @@
 	];
 
 	const filteredQueues = $derived(
-		$queuesStore.filter((queue) => queue.name.toLowerCase().includes(searchQuery.toLowerCase()))
+		$queuesStore
+			.filter((queue) => queue.name.toLowerCase().includes(searchQuery.toLowerCase()))
+			.sort((a, b) => a.id - b.id)
 	);
 
 	function handleClose() {
