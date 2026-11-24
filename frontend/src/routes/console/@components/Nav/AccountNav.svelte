@@ -6,7 +6,6 @@
 	import { getAppConfig, kycStatusStore } from '../../lib/stores/consoleStore';
 	import IconCreditCard from '@hyvor/icons/IconCreditCard';
 	import { page } from '$app/state';
-	import { page } from '$app/state';
 </script>
 
 <!-- 
