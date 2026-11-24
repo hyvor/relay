@@ -18,15 +18,24 @@ class SudoAnalyticsService
     /**
      * @return array<string, mixed>
      */
-    public function getStats(string $period = 'today'): array
+    public function getStats(string $period = 'today', ?string $from = null, ?string $to = null): array
     {
-        $days = $this->getPeriodDays($period);
         $today = $this->now()->setTime(0, 0);
-        $start = $today->modify('-' . ($days - 1) . ' days');
+
+        if ($period === 'custom' && $from !== null && $to !== null) {
+            $start = new \DateTimeImmutable($from);
+            $end = new \DateTimeImmutable($to);
+            $days = (int) $start->diff($end)->days + 1;
+        } else {
+            $days = $this->getPeriodDays($period);
+            $end = $today;
+            $start = $today->modify('-' . ($days - 1) . ' days');
+        }
+
         $previousStart = $start->modify("-$days days");
         $previousEnd = $start->modify('-1 day');
 
-        $totals = $this->getTotals($start->format('Y-m-d'), $today->format('Y-m-d'));
+        $totals = $this->getTotals($start->format('Y-m-d'), $end->format('Y-m-d'));
         $previous = $this->getTotals($previousStart->format('Y-m-d'), $previousEnd->format('Y-m-d'));
 
         return [
@@ -38,13 +47,13 @@ class SudoAnalyticsService
 
             'period' => $period,
             'start_date' => $start->format('Y-m-d'),
-            'end_date' => $today->format('Y-m-d'),
+            'end_date' => $end->format('Y-m-d'),
             'totals' => $totals,
             'previous_totals' => $previous,
-            'daily' => $this->getDaily($today->modify('-' . (max($days, 7) - 1) . ' days'), $today),
-            'ips' => $this->getIps($start->format('Y-m-d'), $today->format('Y-m-d')),
-            'projects' => $this->getProjects($start->format('Y-m-d'), $today->format('Y-m-d')),
-            'domains' => $this->getDomains($start->format('Y-m-d'), $today->format('Y-m-d')),
+            'daily' => $this->getDaily($days < 7 ? $end->modify('-6 days') : $start, $end),
+            'ips' => $this->getIps($start->format('Y-m-d'), $end->format('Y-m-d')),
+            'projects' => $this->getProjects($start->format('Y-m-d'), $end->format('Y-m-d')),
+            'domains' => $this->getDomains($start->format('Y-m-d'), $end->format('Y-m-d')),
         ];
     }
 
@@ -308,6 +317,7 @@ class SudoAnalyticsService
         return match ($period) {
             '7d' => 7,
             '30d' => 30,
+            '1y' => 365,
             default => 1,
         };
     }

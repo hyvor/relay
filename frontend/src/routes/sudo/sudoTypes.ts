@@ -328,7 +328,7 @@ export interface SudoStats {
 	bounce_rate: number;
 	complaint_rate: number;
 
-	period: 'today' | '7d' | '30d';
+	period: 'today' | '7d' | '30d' | '1y' | 'custom';
 	start_date: string;
 	end_date: string;
 	totals: SudoStatsTotals;
