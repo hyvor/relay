@@ -72,6 +72,17 @@ class ProjectService
     /**
      * @return Project[]
      */
+    public function getProjectsByOrganizationId(int $organizationId): array
+    {
+        return $this->em->getRepository(Project::class)->findBy(
+            ['organization_id' => $organizationId],
+            ['id' => 'ASC'],
+        );
+    }
+
+    /**
+     * @return Project[]
+     */
     public function getProjects(
         int $limit,
         ?int $beforeId = null,

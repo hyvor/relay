@@ -9,6 +9,7 @@ use App\Service\Ip\IpAddressService;
 use App\Service\Queue\QueueService;
 use App\Service\Server\ServerService;
 use Doctrine\ORM\EntityManagerInterface;
+use Hyvor\Internal\InternalConfig;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Lock\LockFactory;
@@ -25,6 +26,7 @@ class ManagementService
         private QueueService $queueService,
         private EntityManagerInterface $entityManager,
         private LockFactory $lockFactory,
+        private InternalConfig $internalConfig,
     ) {
         $this->output = new NullOutput();
     }
@@ -98,6 +100,11 @@ class ManagementService
             $this->output->writeln('<info>Default queues created successfully.</info>');
         }
 
+        if ($this->internalConfig->getDeployment()->isCloud() && $this->queueService->hasTrialQueues() === false) {
+            $this->output->writeln('<info>Creating trial queues...</info>');
+            $this->queueService->createTrialQueues();
+            $this->output->writeln('<info>Trial queues created successfully.</info>');
+        }
 
         $lock->release();
     }

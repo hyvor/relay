@@ -7,6 +7,7 @@ use App\Entity\Type\KycAccountType;
 use App\Entity\Type\KycStatus;
 use App\Service\Kyc\Exception\KycNotPendingException;
 use App\Service\Kyc\Exception\PaymentMethodRequiredException;
+use App\Service\Queue\ProjectQueueResolver;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Hyvor\Internal\Billing\BillingInterface;
@@ -36,6 +37,7 @@ class KycService
         private LoggerInterface $logger,
         private BillingInterface $billing,
         private KycEmailService $kycEmailService,
+        private ProjectQueueResolver $projectQueueResolver,
     ) {
     }
 
@@ -239,12 +241,20 @@ class KycService
             return $lockedKyc;
         });
 
+        $this->chargeAndNotifyApproved($kyc);
+        $this->reassignQueues($kyc->getOrganizationId());
+
+        return $kyc;
+    }
+
+    private function chargeAndNotifyApproved(Kyc $kyc): void
+    {
         $resolvedLicense = $this->billing->license($kyc->getOrganizationId());
         $license = $resolvedLicense->license;
 
         if ($resolvedLicense->type !== ResolvedLicenseType::TRIAL && $license instanceof RelayLicense) {
             $this->kycEmailService->sendApproved($kyc, hasLicense: true);
-            return $kyc;
+            return;
         }
 
         try {
@@ -262,8 +272,6 @@ class KycService
             );
             $this->kycEmailService->sendApproved($kyc, subscriptionFailed: true);
         }
-
-        return $kyc;
     }
 
     /**
@@ -294,8 +302,21 @@ class KycService
         });
 
         $this->kycEmailService->sendRejected($kyc);
+        $this->reassignQueues($kyc->getOrganizationId());
 
         return $kyc;
+    }
+
+    private function reassignQueues(int $organizationId): void
+    {
+        try {
+            $this->projectQueueResolver->reassignOrganization($organizationId);
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to reassign queues after a KYC status change', [
+                'organizationId' => $organizationId,
+                'exception' => $e,
+            ]);
+        }
     }
 
     private function staleActiveRecord(int $organizationId): void

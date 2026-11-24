@@ -5,8 +5,16 @@ namespace App\Entity\Type;
 enum QueueType: string
 {
 
-    case DEFAULT = 'default';
-    case DEDICATED = 'dedicated';
-    case CUSTOM = 'custom'; // NOT YET IMPLEMENTED, but will allow custom queues
+    case TRANSACTIONAL = 'transactional';
+    case DISTRIBUTIONAL = 'distributional';
+    case DEDICATED = 'dedicated'; // NOT YET IMPLEMENTED (#83)
+
+    public static function fromProjectSendType(ProjectSendType $sendType): self
+    {
+        return match ($sendType) {
+            ProjectSendType::TRANSACTIONAL => self::TRANSACTIONAL,
+            ProjectSendType::DISTRIBUTIONAL => self::DISTRIBUTIONAL,
+        };
+    }
 
 }

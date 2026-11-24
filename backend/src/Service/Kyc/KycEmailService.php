@@ -6,6 +6,7 @@ use App\Entity\Kyc;
 use App\Service\App\Config;
 use App\Service\Domain\DomainService;
 use App\Service\Instance\InstanceService;
+use App\Entity\Type\QueueType;
 use App\Service\Queue\QueueService;
 use App\Service\Send\SendService;
 use Hyvor\Internal\Component\Component;
@@ -107,7 +108,7 @@ class KycEmailService
             return;
         }
 
-        $queue = $this->queueService->getTransactionalQueue();
+        $queue = $this->queueService->getDefaultQueue(QueueType::TRANSACTIONAL);
 
         if ($queue === null) {
             $this->logger->error('Transactional queue not found; could not send KYC email.', [

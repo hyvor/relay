@@ -4,6 +4,7 @@ import type { Send, SendContent, SendRecipientStatus } from '../console/types';
 import type {
 	IpAddress,
 	Queue,
+	QueueType,
 	Server,
 	SudoInitResponse,
 	HealthCheckResults,
@@ -61,6 +62,19 @@ export function getIpAddresses() {
 export function getQueues() {
 	return sudoApi.get<Queue[]>({
 		endpoint: '/queues'
+	});
+}
+
+export function createQueue(data: { type: QueueType; name: string }) {
+	return sudoApi.post<Queue>({
+		endpoint: '/queues',
+		data
+	});
+}
+
+export function deleteQueue(queueId: number) {
+	return sudoApi.delete({
+		endpoint: `/queues/${queueId}`
 	});
 }
 

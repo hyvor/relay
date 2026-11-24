@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Tooltip } from '@hyvor/design/components';
+	import { Button, Tag, Tooltip } from '@hyvor/design/components';
 	import type { IpAddress } from '../sudoTypes';
 	import IconExclamationCircle from '@hyvor/icons/IconExclamationCircle';
 	import QueueSelectModal from '../queues/QueueSelectModal.svelte';
@@ -49,7 +49,7 @@
 	</td>
 	<td class="queue-name">
 		{#if ip.queue}
-			{ip.queue.name}
+			<Tag size="small">{ip.queue.full_name}</Tag>
 		{:else}
 			<Tooltip
 				text="This IP address will not be used for email delivery until you assign a queue to it."

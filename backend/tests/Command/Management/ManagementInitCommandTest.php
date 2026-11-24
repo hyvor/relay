@@ -78,8 +78,8 @@ class ManagementInitCommandTest extends KernelTestCase
         // QUEUES
         $queues = $this->em->getRepository(Queue::class)->findAll();
         $this->assertCount(2, $queues);
-        $this->assertSame('transactional', $queues[0]->getName());
-        $this->assertSame('distributional', $queues[1]->getName());
+        $this->assertSame('transactional:default', $queues[0]->getFullName());
+        $this->assertSame('distributional:default', $queues[1]->getFullName());
 
         // SERVERS
         $servers = $this->em->getRepository(Server::class)->findAll();
@@ -91,9 +91,9 @@ class ManagementInitCommandTest extends KernelTestCase
         $this->assertCount(2, $ips);
 
         $this->assertSame('8.8.8.8', $ips[0]->getIpAddress());
-        $this->assertSame('transactional', $ips[0]->getQueue()?->getName());
+        $this->assertSame('transactional:default', $ips[0]->getQueue()?->getFullName());
         $this->assertSame('9.9.9.9', $ips[1]->getIpAddress());
-        $this->assertSame('distributional', $ips[1]->getQueue()?->getName());
+        $this->assertSame('distributional:default', $ips[1]->getQueue()?->getFullName());
     }
 
     public function test_deletes_ip_addresses(): void
@@ -260,6 +260,36 @@ class ManagementInitCommandTest extends KernelTestCase
 
         $queues = $this->em->getRepository(Queue::class)->findAll();
         $this->assertCount(2, $queues);
+
+        // second run does not create new queues
+        $command->execute([]);
+        $command->assertCommandIsSuccessful();
+        $this->assertCount(2, $this->em->getRepository(Queue::class)->findAll());
+    }
+
+    public function test_adds_trial_queues_on_cloud(): void
+    {
+        $_ENV['DEPLOYMENT'] = 'cloud';
+
+        $command = $this->commandTester('management:init');
+        $command->execute([]);
+        $command->assertCommandIsSuccessful();
+
+        $queues = $this->em->getRepository(Queue::class)->findBy([], ['id' => 'ASC']);
+        $this->assertSame(
+            [
+                'transactional:default',
+                'distributional:default',
+                'transactional:trial',
+                'distributional:trial',
+            ],
+            array_map(fn(Queue $queue) => $queue->getFullName(), $queues)
+        );
+
+        // second run does not create new queues
+        $command->execute([]);
+        $command->assertCommandIsSuccessful();
+        $this->assertCount(4, $this->em->getRepository(Queue::class)->findAll());
     }
 
 }

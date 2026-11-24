@@ -52,10 +52,18 @@ export interface IpAddress {
 	current_warmup_schedule: WarmupSchedule | null;
 }
 
+export type QueueType = 'transactional' | 'distributional' | 'dedicated';
+
 export interface Queue {
 	id: number;
 	created_at: number;
+	updated_at: number;
+	type: QueueType;
 	name: string;
+	full_name: string; // type:name
+	dedicated_organization_id: number | null;
+	is_reserved: boolean;
+	projects_count: number | null;
 }
 
 export interface Blacklist {
@@ -216,6 +224,7 @@ export interface SudoProject {
 	updated_at: number;
 	organization_id: number | null;
 	send_type: 'transactional' | 'distributional';
+	queue: Queue | null;
 }
 
 export interface Organization {

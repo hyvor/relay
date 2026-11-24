@@ -12,10 +12,9 @@ use App\Api\Console\Object\SendContentObject;
 use App\Api\Console\Object\SendObject;
 use App\Entity\Project;
 use App\Entity\Send;
-use App\Entity\Type\ProjectSendType;
 use App\Entity\Type\SendRecipientStatus;
 use App\Service\Domain\DomainService;
-use App\Service\Queue\QueueService;
+use App\Service\Queue\ProjectQueueResolver;
 use App\Service\Send\EmailAddressFormat;
 use App\Service\Send\Exception\EmailTooLargeException;
 use App\Service\Send\Exception\SendContentStorageException;
@@ -48,7 +47,7 @@ class SendsController extends AbstractController
         private SendAttemptService $sendAttemptService,
         private SendFeedbackService $sendFeedbackService,
         private DomainService $domainService,
-        private QueueService $queueService,
+        private ProjectQueueResolver $projectQueueResolver,
     ) {}
 
     #[Route("/sends", methods: "POST")]
@@ -104,10 +103,7 @@ class SendsController extends AbstractController
             );
         }
 
-        $queue = $project->getSendType() === ProjectSendType::TRANSACTIONAL ?
-            $this->queueService->getTransactionalQueue() :
-            $this->queueService->getDistributionalQueue();
-        assert($queue !== null, 'Transactional or Distributional should be set');
+        $queue = $this->projectQueueResolver->resolve($project);
 
         try {
             $attachments = $sendEmailInput->getAttachments();

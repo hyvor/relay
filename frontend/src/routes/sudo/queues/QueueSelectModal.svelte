@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { Modal, TextInput, Button } from '@hyvor/design/components';
+	import { Modal, TextInput, Button, Tag } from '@hyvor/design/components';
 	import { queuesStore } from '../sudoStore';
 	import { getQueues, updateIpAddress } from '../sudoActions';
-	import type { Queue, IpAddress } from '../sudoTypes';
+	import type { Queue, IpAddress, QueueType } from '../sudoTypes';
 	import { toast } from '@hyvor/design/components';
 	import QueueRow from './QueueRow.svelte';
 	import { onMount } from 'svelte';
@@ -20,6 +20,12 @@
 
 	let loading = $state(true);
 	let updating = $state(false);
+
+	const groups: { type: QueueType; label: string }[] = [
+		{ type: 'transactional', label: 'Transactional' },
+		{ type: 'distributional', label: 'Distributional' },
+		{ type: 'dedicated', label: 'Dedicated' }
+	];
 
 	const filteredQueues = $derived(
 		$queuesStore.filter((queue) => queue.name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -55,7 +61,7 @@
 	async function handleQueueSelect(queue: Queue) {
 		await updateQueue(
 			queue.id,
-			`IP ${ip?.ip_address} assigned to the queue "${queue.name}"`,
+			`IP ${ip?.ip_address} assigned to the queue "${queue.full_name}"`,
 			'Failed to assign queue: '
 		);
 	}
@@ -100,7 +106,7 @@
 			<div class="current-queue">
 				<div class="current-queue-name">
 					<span class="queue-tag">Current Queue:</span>
-					{ip.queue.name}
+					<Tag size="small">{ip.queue.full_name}</Tag>
 				</div>
 				<Button
 					size="small"
@@ -130,14 +136,22 @@
 				</div>
 			{:else}
 				<div class="queue-list">
-					{#each filteredQueues as queue}
-						<button
-							class="queue-item"
-							class:disabled={updating || ip?.queue?.id === queue.id}
-							onclick={() => handleQueueSelect(queue)}
-						>
-							<QueueRow {queue} />
-						</button>
+					{#each groups as group}
+						{@const queues = filteredQueues.filter((q) => q.type === group.type)}
+						{#if queues.length > 0}
+							<div class="group">
+								<div class="group-title">{group.label}</div>
+								{#each queues as queue (queue.id)}
+									<button
+										class="queue-item"
+										class:disabled={updating || ip?.queue?.id === queue.id}
+										onclick={() => handleQueueSelect(queue)}
+									>
+										<QueueRow {queue} />
+									</button>
+								{/each}
+							</div>
+						{/if}
 					{/each}
 				</div>
 			{/if}
@@ -191,6 +205,17 @@
 	.queue-list {
 		max-height: 300px;
 		overflow-y: auto;
+	}
+
+	.group + .group {
+		margin-top: 15px;
+	}
+
+	.group-title {
+		font-weight: 600;
+		font-size: 14px;
+		color: var(--text-light);
+		padding: 0 0 5px;
 	}
 
 	.no-results {

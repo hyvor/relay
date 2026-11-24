@@ -105,6 +105,16 @@
 					<div class="value"><Tag size="small">{project.send_type}</Tag></div>
 				</div>
 				<div class="field">
+					<div class="label">Queue</div>
+					<div class="value">
+						{#if project.queue}
+							<Tag size="small">{project.queue.full_name}</Tag>
+						{:else}
+							<span class="muted">Not assigned yet</span>
+						{/if}
+					</div>
+				</div>
+				<div class="field">
 					<div class="label">Created At</div>
 					<div class="value">{formatDate(project.created_at)}</div>
 				</div>

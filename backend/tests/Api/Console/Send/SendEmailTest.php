@@ -13,6 +13,8 @@ use App\Entity\Type\DomainStatus;
 use App\Entity\Type\ProjectSendType;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
+use App\Entity\Type\QueueType;
+use App\Service\Queue\ProjectQueueResolver;
 use App\Service\Queue\QueueService;
 use App\Service\Send\EmailBuilder;
 use App\Service\Send\Event\SendRecipientSuppressedEvent;
@@ -37,6 +39,7 @@ use PHPUnit\Framework\Attributes\TestWith;
 #[CoversClass(SuppressionService::class)]
 #[CoversClass(UnableToDecodeAttachmentBase64Exception::class)]
 #[CoversClass(QueueService::class)]
+#[CoversClass(ProjectQueueResolver::class)]
 #[CoversClass(RecipientFactory::class)]
 #[CoversClass(SendRecipientSuppressedEvent::class)]
 #[CoversClass(SendContentStorage::class)]
@@ -879,7 +882,65 @@ class SendEmailTest extends WebTestCase
         $send = $this->em->getRepository(Send::class)->findBy(['project' => $project->getId()]);
         $this->assertCount(1, $send);
         $send = $send[0];
-        $this->assertSame('distributional', $send->getQueue()->getName());
+        $this->assertSame('distributional:default', $send->getQueue()->getFullName());
+        $this->assertSame('distributional:default', $send->getQueueName());
+
+        $this->assertSame($send->getQueue()->getId(), $project->getQueue()?->getId());
     }
 
+    public function test_uses_the_cached_queue_of_the_project(): void
+    {
+        QueueFactory::createTransactional();
+        $cached = QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => 'cached']);
+
+        $project = ProjectFactory::createOne(['queue' => $cached]);
+
+        DomainFactory::createOne([
+            "project" => $project,
+            "domain" => "hyvor.com",
+            'status' => DomainStatus::ACTIVE,
+        ]);
+
+        $this->consoleApi($project, "POST", "/sends", data: [
+            'from' => 'test@hyvor.com',
+            'to' => 'test@example.com',
+            'body_text' => 'Test email',
+        ]);
+
+        $this->assertResponseStatusCodeSame(200);
+
+        $send = $this->em->getRepository(Send::class)->findOneBy(['project' => $project->getId()]);
+        $this->assertNotNull($send);
+        $this->assertSame('transactional:cached', $send->getQueueName());
+    }
+
+    public function test_queues_on_the_trial_queue_on_cloud(): void
+    {
+        $_ENV['DEPLOYMENT'] = 'cloud';
+
+        QueueFactory::createTransactional();
+        $trial = QueueFactory::createTrial(QueueType::TRANSACTIONAL);
+        $ip = IpAddressFactory::createOne(['queue' => $trial]);
+
+        $project = ProjectFactory::createOne();
+
+        DomainFactory::createOne([
+            "project" => $project,
+            "domain" => "hyvor.com",
+            'status' => DomainStatus::ACTIVE,
+        ]);
+
+        $this->consoleApi($project, "POST", "/sends", data: [
+            'from' => 'test@hyvor.com',
+            'to' => 'test@example.com',
+            'body_text' => 'Test email',
+        ]);
+
+        $this->assertResponseStatusCodeSame(200);
+
+        $send = $this->em->getRepository(Send::class)->findOneBy(['project' => $project->getId()]);
+        $this->assertNotNull($send);
+        $this->assertSame('transactional:trial', $send->getQueueName());
+        $this->assertSame($ip->getId(), $send->getIpAddress()?->getId());
+    }
 }
