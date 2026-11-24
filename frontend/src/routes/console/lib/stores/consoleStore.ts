@@ -2,6 +2,9 @@ import { writable } from "svelte/store";
 import type { AppConfig } from "../../types";
 import type { CloudContextOrganization } from '@hyvor/design/cloud';
 
+import type { KycStatus } from '../../types';
+
+export const kycStatusStore = writable<KycStatus | null>(null);
 export const selectingProject = writable(false);
 export const authOrganizationStore = writable<CloudContextOrganization>();
 

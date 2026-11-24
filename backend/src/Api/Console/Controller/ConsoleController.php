@@ -9,6 +9,8 @@ use App\Entity\Project;
 use App\Entity\Type\WebhooksEventEnum;
 use App\Service\App\Config;
 use App\Service\Instance\InstanceService;
+use App\Entity\Type\KycStatus;
+use App\Service\Kyc\KycService;
 use App\Service\ProjectUser\ProjectUserService;
 use App\Service\Send\Compliance;
 use Hyvor\Internal\Auth\AuthInterface;
@@ -31,6 +33,7 @@ class ConsoleController extends AbstractController
         private InstanceService $instanceService,
         private SudoUserService $sudoUserService,
         private AuthInterface $auth,
+        private KycService $kycService,
     ) {}
 
     #[Route('/init', methods: 'GET')]
@@ -61,6 +64,14 @@ class ConsoleController extends AbstractController
                 fn($project) => new ProjectUserObject($project, $user),
                 $projectUsers
             );
+        }
+
+        $kycStatus = null;
+        if ($org && $this->internalConfig->getDeployment()->isCloud()) {
+            $active = $this->kycService->getActiveByOrganizationId($org->id);
+            $kycStatus = $active?->getStatus() === KycStatus::APPROVED
+                ? KycStatus::APPROVED->value
+                : $this->kycService->getCurrentByOrganizationId($org->id)?->getStatus()->value;
         }
 
         $this->logger->info('Console initialized', [
@@ -97,7 +108,8 @@ class ConsoleController extends AbstractController
                     ],
                 ],
             ],
-            'organization' => $org
+            'organization' => $org,
+            'kyc_status' => $kycStatus,
         ]);
     }
 

@@ -20,9 +20,12 @@
 	} from '@hyvor/design/components';
 	import SingleBox from '../../@components/content/SingleBox.svelte';
 	import CardCollector from './CardCollector.svelte';
-	import { getAppConfig } from '../../lib/stores/consoleStore';
+	import { getAppConfig, kycStatusStore } from '../../lib/stores/consoleStore';
 	import { getKyc, getKycCountries, submitKyc } from '../../lib/actions/kycActions';
 	import type { Kyc, KycAccountType, KycContentOwnership, KycPlan } from '../../types';
+
+	// approved organizations can only update their details (no plan / payment steps)
+	const isApproved = $derived($kycStatusStore === 'approved');
 
 	let loading = $state(true);
 	let saving = $state(false);
@@ -118,7 +121,11 @@
 	});
 
 	const submitDisabledReason = $derived(
-		!cardAdded
+		isApproved
+			? formUnchanged
+				? 'Update your details before resubmitting'
+				: null
+			: !cardAdded
 			? 'Save your card to proceed'
 			: formUnchanged
 				? 'Update your details before resubmitting'
@@ -256,8 +263,16 @@
 		currentStep = 3;
 	}
 
+	function handleDetailsSubmit() {
+		if (!validate()) {
+			return;
+		}
+		// approved organizations already have a payment method on file
+		handleSubmit();
+	}
+
 	function handleSubmit() {
-		if (saving || !cardAdded || formUnchanged) {
+		if (saving || (!isApproved && !cardAdded) || formUnchanged) {
 			return;
 		}
 
@@ -313,6 +328,7 @@
 				<Loader size="large" />
 			</div>
 		{:else}
+			{#if !isApproved}
 			<div class="steps">
 				<button
 					type="button"
@@ -346,8 +362,9 @@
 						<span class="step-label">Payment details</span>
 					</button>
 			</div>
+			{/if}
 
-			{#if currentStep === 1}
+			{#if currentStep === 1 || isApproved}
 				{#if existingKyc?.status === 'pending'}
 					<div class="callout-wrap">
 						<Callout type="info">
@@ -358,8 +375,8 @@
 				{:else if existingKyc?.status === 'approved'}
 					<div class="callout-wrap">
 						<Callout type="success">
-							Your KYC has been approved. You can still update the details below
-							and resubmit if anything has changed.
+							Your KYC has been approved. If any of your details have changed, please update them
+							below and resubmit for review. Thank you for keeping your information up to date.
 						</Callout>
 					</div>
 				{:else if existingKyc?.status === 'rejected'}
@@ -627,7 +644,17 @@
 
 	{#if !loading}
 		<div class="footer">
-			{#if currentStep === 1}
+			{#if isApproved}
+				<span></span>
+				<Tooltip text={submitDisabledReason ?? ''} disabled={submitDisabledReason === null}>
+					<Button
+						color="accent"
+						variant="fill"
+						disabled={saving || formUnchanged || contentOwnership.includes('third_party')}
+						on:click={handleDetailsSubmit}
+					>{saving ? 'Submitting...' : 'Resubmit KYC'}</Button>
+				</Tooltip>
+			{:else if currentStep === 1}
 				<span></span>
 				<Button
 					color="accent"
