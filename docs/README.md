@@ -5,7 +5,7 @@ Source of truth for the Hyvor Relay documentation:
 - `docs/` - [hyvor.com/relay/docs](https://hyvor.com/relay/docs)
 - `hosting/` - [hyvor.com/relay/hosting](https://hyvor.com/relay/hosting)
 
-These directories are synced to [hyvor/core](https://github.com/hyvor/core), which renders them (see `meta/docs/sync` in core). The sync is triggered by `.github/workflows/sync-docs-to-core.yaml` when `docs/**` changes on `main`.
+These directories are synced to [hyvor/marketing](https://github.com/hyvor/marketing), which renders them (see "Product docs" in its README). The sync is triggered by `.github/workflows/sync-docs-to-marketing.yaml` when `docs/**` changes on `main`.
 
 For local testing, `frontend` renders the same files at `/docs` and `/hosting` (via the `$docs` alias).
 

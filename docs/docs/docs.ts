@@ -1,7 +1,7 @@
 /**
  * Navigation of the Hyvor Relay docs (hyvor.com/relay/docs).
  *
- * This directory is synced to hyvor/core, which renders the docs.
+ * This directory is synced to hyvor/marketing, which renders the docs.
  * Keep it self-contained: only import from within this directory,
  * `svelte`, `@hyvor/design`, and `@hyvor/icons`.
  */
