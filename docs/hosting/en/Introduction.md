@@ -6,7 +6,7 @@
 
 # Hosting
 
-<a href="/">Hyvor Relay</a> is a self-hosted, open-source email API for developers. Think of it as
+[Hyvor Relay](/) is a self-hosted, open-source email API for developers. Think of it as
 an alternative to AWS SES, Mailgun, or SendGrid, but you host it on your own infrastructure.
 
 <h2 id="architecture">Architecture</h2>
@@ -122,22 +122,21 @@ volumes and high availability).
 
 <h2 id="license">License</h2>
 
-Hyvor Relay is licensed under the <strong>AGPL-3.0 License</strong>. We also offer
-<a href="https://hyvor.com/enterprise" target="_blank">enterprise licenses</a>
+Hyvor Relay is licensed under the **AGPL-3.0 License**. We also
+offer <a href="https://hyvor.com/enterprise" target="_blank">enterprise licenses</a>
 for organizations that require a commercial license or do not wish to comply with the AGPLv3 terms.
 Both licenses include the same features.
-See HYVOR's
-<a href="https://hyvor.com/docs/hosting-license" target="_blank">Self-Hosting License FAQ</a> for
+See HYVOR's <a href="https://hyvor.com/docs/hosting-license" target="_blank">Self-Hosting License FAQ</a> for
 more information.
 
 <h2 id="security">Security</h2>
 
 <h3>DDoS</h3>
 
-<strong> Layer 7 </strong>: Hyvor Relay has built-in rate limiting to mitigate DDoS attacks at
+**Layer 7**: Hyvor Relay has built-in rate limiting to mitigate DDoS attacks at
 the application layer for the HTTP server.
 
-<strong>Layer 3/4</strong>: You need to ensure that your server is protected against DDoS
+**Layer 3/4**: You need to ensure that your server is protected against DDoS
 attacks at the network layer. This is usually managed by your cloud provider. Since Hyvor Relay
 also exposes SMTP and DNS servers, it is highly recommended to use a cloud provider that offers
 strong DDoS protection.

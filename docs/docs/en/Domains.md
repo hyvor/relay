@@ -41,7 +41,7 @@ Then, you will see the instructions to add a TXT record to your domain's DNS set
 <DocsImage src={imgDomainsDns} alt="Add Domain in Hyvor Relay" />
 
 Once you add the TXT record, click the <strong>Verify</strong> button. It might
-<a href="#how-long-to-verify">take a few minutes</a> for the verification to complete. Once verified,
+[take a few minutes](#how-long-to-verify) for the verification to complete. Once verified,
 you can start sending emails from this domain.
 
 Make sure to keep the TXT record in your domain's DNS settings.
@@ -77,24 +77,23 @@ the issue. If not resolved within 14 days, the domain will be automatically remo
 <h2 id="domains-in-api">Automating Domains using the API</h2>
 
 Manually configuring domains might not be feasible if you have a large number of domains or if
-you allow your users to send emails using their own domains. In such cases, use the <a
-href="/docs/api-console">Console API</a>
+you allow your users to send emails using their own domains. In such cases, use the [Console API](/docs/api-console)
 to automate domain configuration. See
-<a href="/docs/api-console#domains">Domains in Console API</a> to get started.
+[Domains in Console API](/docs/api-console#domains) to get started.
 
-Note that the verification process is asynchronous. You need to poll the <code>GET /domains/:id</code>
+Note that the verification process is asynchronous. You need to poll the `GET /domains/:id`
 or
-<code>GET /domains/:domain</code> endpoint periodically to check the status of the domain
-verification. Or, you can use the <code>domain.verified</code>
-<a href="/docs/webhooks">webhook</a>
+`GET /domains/:domain` endpoint periodically to check the status of the domain
+verification. Or, you can use the `domain.verified`
+[webhook](/docs/webhooks)
 to get notified when the domain is verified.
 
 <h2 id="faqs">FAQs</h2>
 
-<strong>What DNS records should I add?</strong> <br />
+**What DNS records should I add?** <br />
 Only one: a DKIM TXT record. The exact value of the TXT record is provided in the Hyvor Relay Console
 when you add a domain. The hostname is unique for the project and is in the format
-<code>rly20250709021031291c6964._domainkey.example.com</code>
+`rly20250709021031291c6964._domainkey.example.com`
 
 <p id="how-long-to-verify">
 <strong> How long does it take to verify a domain?</strong> <br />
@@ -104,15 +103,15 @@ of the domain in the Hyvor Relay Console or using the Console API. We run a veri
 5 minutes. You will also receive an email notification when the domain is verified.
 </p>
 
-<strong>Can I use the same domain in multiple projects?</strong> <br />
+**Can I use the same domain in multiple projects?** <br />
 Yes, however, you need to add a separate TXT record for each project since the DKIM selector is unique
 for each project.
 
-<strong>What happens if I delete a domain?</strong> <br />
+**What happens if I delete a domain?** <br />
 Deleting a domain will stop all sending activity from that domain and remove all associated credentials,
 DNS verification status, and sending logs. This action is irreversible.
 
-<strong>Can I use emails of a subdomain of the configured domain?</strong> <br />
+**Can I use emails of a subdomain of the configured domain?** <br />
 No, currently you cannot use emails of a subdomain (info@subdomain.example.com) of the configured
 domain (example.com). You need to configure each subdomain separately.
 

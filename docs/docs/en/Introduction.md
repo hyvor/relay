@@ -14,19 +14,19 @@ email.
 
 <h2 id="cloud-vs-self-hosted">Cloud vs Self-hosted</h2>
 
-When we say "<strong>Cloud</strong>", we mean the single official instance run by HYVOR at
-<a href="https://relay.hyvor.com">relay.hyvor.com</a>. You need a HYVOR account to log in to
+When we say "<strong>Cloud</strong>", we mean the single official instance run by HYVOR
+at <a href="https://relay.hyvor.com">relay.hyvor.com</a>. You need a HYVOR account to log in to
 this instance. At this moment, the cloud instance is not open for public signups.
 
 When we say "<strong>Self-hosted</strong>", we mean any other instance that you or your
 organization has set up. You need the URL and OIDC credentials to log in to a self-hosted
 instance.
 
-This documentation (<a href="/docs">/docs</a>) is intended for developers working with
-<strong>any Hyvor Relay instance</strong>. Whenever relevant, we will note any differences
+This documentation ([/docs](/docs)) is intended for developers working with
+**any Hyvor Relay instance**. Whenever relevant, we will note any differences
 between the Cloud and self-hosted deployments. If you are a system administrator who wants to
 spin up an instance, visit
-<a href="/hosting">/hosting</a>.
+[/hosting](/hosting).
 
 <h2 id="console">Console</h2>
 

@@ -5,7 +5,7 @@
 
 # Deliverability
 
-<strong>Deliverability</strong> refers to the ability of an email to successfully reach the recipient's
+**Deliverability** refers to the ability of an email to successfully reach the recipient's
 inbox without being blocked or marked as spam.
 
 Early email systems had minimal filtering. Starting from the <a
@@ -167,6 +167,7 @@ email is spam. They are primarily based on the <strong>sending IP address</stron
 based on the sending domain. Getting one of your IPs blacklisted can significantly affect all of
 your users' deliverability.
 
+<p>
 Most blacklists are public. <a
 href="https://www.spamhaus.org/"
 target="_blank"
@@ -174,6 +175,7 @@ rel="nofollow noopener">Spamhaus</a>,
 <a href="https://www.barracudacentral.org/" target="_blank" rel="nofollow noopener">Barracuda</a>, and <a href="https://www.spamcop.net/" target="_blank" rel="nofollow noopener">SpamCop</a>
 are some of the popular blacklists. They are usually
 <a href="https://en.wikipedia.org/wiki/Domain_Name_System_blocklist" target="_blank">DNS Blacklists (DNSBLs)</a> and can be queried via DNS.
+</p>
 
 Some providers, such as Google, Yahoo, and Microsoft, maintain their own internal blacklists.
 They cannot be queried via DNS. The <a href="/hosting/providers">Email Providers</a> page has more

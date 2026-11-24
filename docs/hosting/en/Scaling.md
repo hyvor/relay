@@ -44,10 +44,10 @@ of connections created by all workers:
 <h3 id="increase-max-connections">Increasing Max Connections</h3>
 
 The default max connection limit is
-<strong>100</strong>. As a first step, you can increase it based on available RAM on your
+**100**. As a first step, you can increase it based on available RAM on your
 Postgres server. A common recommendation is to allocate
-<strong>1 connection per 10MB of RAM</strong>. For example, if your Postgres server has
-<strong>32GB RAM</strong>, you can set max connections to <strong>320</strong>. Note that this
+**1 connection per 10MB of RAM**. For example, if your Postgres server has
+**32GB RAM**, you can set max connections to **320**. Note that this
 is a general recommendation, and you might also need to consider other system resources.
 
 <h2 id="scaling-examples">Scaling Examples</h2>

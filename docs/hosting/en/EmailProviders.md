@@ -62,9 +62,9 @@ popular email providers and how Hyvor Relay handles them.
 
 When a recipient marks an email as spam, the email provider may send a complaint to the sender
 via a feedback loop (FBL). When hosting Hyvor Relay, you may sign up for these FBLs to monitor
-spam complaints and route FBL reports <code>abuse@</code>
-and <code>fbl@</code> emails of your
-<a href="/hosting/setup#instance-domain">instance domain</a>. Hyvor Relay's incoming SMTP server
+spam complaints and route FBL reports `abuse@`
+and `fbl@` emails of your
+[instance domain](/hosting/setup#instance-domain). Hyvor Relay's incoming SMTP server
 will process these reports and automatically add the recipients to the suppression list.
 
 <h3 id="yahoo-fbl">Yahoo FBL</h3>
@@ -77,15 +77,15 @@ will process these reports and automatically add the recipients to the suppressi
 
 Below we have listed some of the enhanced SMTP codes used by popular email providers.
 
-<strong>Recipient error codes</strong>
+**Recipient error codes**
 indicate issues with the recipient's email address. If Hyvor Relay encounters these codes, it will
 add the recipient to the suppression list.
 
-<strong>Infrastructure error codes</strong>
+**Infrastructure error codes**
 indicate issues with Hyvor Relay's sending infrastructure (e.g., an IP address being blocked). Those
 codes are serious and may impact email deliverability for multiple recipients. A remedy must be applied
 by the administrator of the Hyvor Relay instance. Responses are logged and can be viewed in the
-<strong>Sudo &rarr; Debug &rarr; Infrastructure Bounces</strong>
+**Sudo &rarr; Debug &rarr; Infrastructure Bounces**
 section. There is also a sudo health check to alert if infrastructure bounces are detected.
 
 <Table columns="1fr 1fr 1fr 1fr">

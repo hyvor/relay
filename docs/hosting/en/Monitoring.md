@@ -30,11 +30,10 @@ metrics. It also comes with a pre-configured Grafana dashboard for visualizing t
 
 <h2 id="prometheus">Prometheus</h2>
 
-Hyvor Relay exposes metrics in the Prometheus format on port <code>9667</code> on each server.
-It only serves metrics to connections from
-<a href="https://en.wikipedia.org/wiki/Private_network#Private_IPv4_addresses" target="_blank">private</a>
-and
-<a
+Hyvor Relay exposes metrics in the Prometheus format on port `9667` on each server.
+It only serves metrics to connections
+from <a href="https://en.wikipedia.org/wiki/Private_network#Private_IPv4_addresses" target="_blank">private</a>
+and <a
 href="https://en.wikipedia.org/wiki/Private_network#Dedicated_space_for_carrier-grade_NAT_deployment"
 target="_blank">CGNAT</a> IP addresses, assuming your monitoring system is on a private network.
 
@@ -70,8 +69,7 @@ You can set up <a
 href="https://prometheus.io/docs/alerting/latest/alertmanager/"
 target="_blank">Alertmanager</a>
 to receive alerts when certain conditions are met in your Relay instance. As a starting point, you
-can use our default
-<a
+can use our default <a
 href="https://github.com/hyvor/relay/blob/main/meta/monitoring/alertmanager.yaml"
 target="_blank">alertmanager.yaml</a> file. You can customize it to suit your needs.
 

@@ -73,26 +73,25 @@ does not have any IPs, emails sent via that queue will not be delivered.
 
 This check ensures that the DKIM record for the instance domain is correctly set up. DKIM
 records are also managed on your DNS Server. You can view your Instance DKIM settings at
-<strong>Sudo &rarr; Settings &rarr; Instance &rarr; Instance DKIM</strong>.
+**Sudo &rarr; Settings &rarr; Instance &rarr; Instance DKIM**.
 
 <h3 id="instance-domain-pointed-dns">5. Instance domain pointed to DNS server</h3>
 
-This check ensures that the <a href="/hosting/setup#instance-domain">instance domain</a> is
+This check ensures that the [instance domain](/hosting/setup#instance-domain) is
 correctly pointed to the Hyvor Relay DNS server. This is verified using a unique TXT record at
-the
-<code>_hash</code> subdomain.
+the `_hash` subdomain.
 
 <h3 id="no-unread-infra-bounces">6. No unread infrastructure bounces</h3>
 
 When emails are sent, sometimes they bounce back due to various reasons (invalid email address,
 full inbox, etc.). Hyvor Relay automatically processes these bounces and categorizes them into
-<strong> infrastructure bounces </strong> and <strong>recipient bounces</strong> based on the enhanced
+**infrastructure bounces** and **recipient bounces** based on the enhanced
 SMTP status codes.
 
-<strong>Infrastructure bounces are nasty!</strong> They indicate issues with the sending
+**Infrastructure bounces are nasty!** They indicate issues with the sending
 infrastructure, such as IP blacklisting, DNS misconfigurations, etc. Hyvor Relay saves all those
 bounce emails for 30 days, which you can view at
-<strong>Sudo &rarr; Debug &rarr; Infrastructure Bounces</strong>.
+**Sudo &rarr; Debug &rarr; Infrastructure Bounces**.
 
 This check ensures that there are no unread infrastructure bounces. If there are any, it is
 strongly recommended to review them and take necessary actions to resolve the issues. Once you

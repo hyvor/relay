@@ -104,9 +104,9 @@ const tabCode1 = `
 # Send Emails via API
 
 This page explains how to send emails using the <strong>Console API</strong>. Before getting
-started, make sure to <a href="/docs">set up a project</a>
+started, make sure to [set up a project](/docs)
 and familiarize yourself with the
-<a href="/docs/api-console">Console API</a>.
+[Console API](/docs/api-console).
 
 <ul>
 <li>
@@ -125,21 +125,19 @@ and familiarize yourself with the
 
 <h2 id="sending">Sending Emails</h2>
 
-<strong>Endpoint:</strong><br />
-<code>POST /api/console/sends</code>
+**Endpoint:**<br />
+`POST /api/console/sends`
 
-<strong>Authorization:</strong><br />
+**Authorization:**
 
 ```
 Authorization: Bearer <your-api-key>
 ```
 
-<div>
-Create an API key at <strong><a href="/console">Console</a> &rarr; API</strong> with the
-<strong>sends.send</strong> scope enabled.
-</div>
+Create an API key at **[Console](/console) &rarr; API** with the
+**sends.send** scope enabled.
 
-<strong>Request:</strong>
+**Request:**
 
 ```ts
     type Request = SendRequest;
@@ -198,7 +196,7 @@ before the 24-hour period ends, the API will return the same response as the fir
 without actually processing it. If the idempotency key is not found, the API will process the
 request as usual and return a new response.
 
-<code>X-Idempotency-Short-Circuit</code> header is set to <code>true</code> if the response was created
+`X-Idempotency-Short-Circuit` header is set to `true` if the response was created
 using a previously processed request with the same idempotency key.
 
 <h3 id="response-status-codes">Response Status Codes</h3>
@@ -273,7 +271,7 @@ on each status.
 <h2 id="rate-limit">Rate Limiting</h2>
 
 The rate limit for the <code>POST /api/console/sends</code> endpoint is
-<strong>10 requests per second</strong>
+**10 requests per second**
 (per project).
 
 Learn more about <a href="/docs/api-console#rate-limit">Console API Rate Limiting</a>.

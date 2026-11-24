@@ -31,9 +31,9 @@ Hyvor Relay and ensure optimal email deliverability.
 <h2 id="web-domain">(1) Web Domain</h2>
 
 Web domain is where you access the Hyvor Relay Console, Sudo, and API. This is the domain name
-of the environment variable <code>WEB_URL</code>
+of the environment variable `WEB_URL`
 you set during installation. Point the web domain to one of your server's IP addresses using an
-<code>A</code> record.
+`A` record.
 
 <Table columns="1fr 3fr 3fr">
 <TableRow head>
@@ -52,8 +52,8 @@ If you used <strong>https</strong> in the <code>WEB_URL</code>, Caddy will autom
 and configure a TLS certificate for your web domain using Let's Encrypt. This might take a few
 minutes to complete. Make sure to monitor logs.
 
-Once the DNS changes have propagated, you should see the Hyvor Relay homepage at
-<strong>https://relay.yourdomain.com</strong>.
+Once the DNS changes have propagated, you should see the Hyvor Relay homepage
+at <strong>https://relay.yourdomain.com</strong>.
 
 <Callout type="info">
 {#snippet icon()}
@@ -80,7 +80,7 @@ public IP addresses.
 <h2 id="instance-domain">(3) Instance Domain</h2>
 
 You configured the instance domain during the installation using the environment variable
-<code>INSTANCE_DOMAIN</code>. Example: <strong>mail.relay.yourdomain.com</strong>.
+`INSTANCE_DOMAIN`. Example: **mail.relay.yourdomain.com**.
 
 The instance domain and its subdomains are used for many things:
 
@@ -99,7 +99,7 @@ The instance domain is critical for email deliverability. Hyvor Relay is designe
 DNS records of the instance domain and its subdomains, making management easier.
 
 To delegate DNS management of the instance domain to Hyvor Relay, set up a
-<code>NS</code> record pointing to Hyvor Relay's DNS server.
+`NS` record pointing to Hyvor Relay's DNS server.
 
 <Table columns="1fr 3fr 3fr">
 <TableRow head>
@@ -151,9 +151,9 @@ On Hyvor Relay Cloud, the instance domain is <strong>mail.hyvor-relay.com</stron
 
 PTR, also known as reverse DNS, is a DNS record that maps an IP address to a domain name. SMTP
 messages contain a
-<code>EHLO {'<domain>'}</code> command, which identifies the sending server (or IP address). In
+`EHLO <domain>` command, which identifies the sending server (or IP address). In
 Hyvor Relay, each sending IP address uses a unique subdomain of the
-<a href="#instance-domain">instance domain</a> as the domain name.
+[instance domain](#instance-domain) as the domain name.
 
 You can find the domain name of each IP address in Sudo &rarr; Servers section.
 
@@ -228,10 +228,10 @@ NAT_NETWORK=10.0.0.0/8,172.16.0.0/12
 ```
 
 By default, Hyvor Relay auto-detects your server's public IP address by calling
-<code>icanhazip.com</code>, <code>checkip.amazonaws.com</code>, or <code>ifconfig.me</code>
+`icanhazip.com`, `checkip.amazonaws.com`, or `ifconfig.me`
 (with each as a fallback). If you prefer
 to map IP addresses manually (e.g., in air-gapped environments or to avoid outbound HTTP calls
-at startup), use the <code>NAT_MAP</code> environment variable:
+at startup), use the `NAT_MAP` environment variable:
 
 ```yaml
 # Format: private_ip=public_ip (comma-separated for multiple)
@@ -239,5 +239,5 @@ NAT_MAP=10.0.1.5=203.0.113.10,10.0.1.6=203.0.113.11
 ```
 
 Once configured, the private IP address is shown next to the public IP in
-<strong>Sudo &rarr; Servers</strong>, and there is a health check to verify that each private IP
+**Sudo &rarr; Servers**, and there is a health check to verify that each private IP
 routes through the correct public IP.

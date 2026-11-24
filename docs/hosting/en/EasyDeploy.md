@@ -9,8 +9,8 @@ easiest way to deploy Hyvor Relay, and it is suitable for <strong>most use cases
 need a reliable transactional email service.
 
 In general, on a server with 4GB RAM and 2 vCPUs, you should be able to easily send more than
-<a href="/hosting/scaling#onemil-per-day"> 1,000,000 emails per day</a>. However, if you need
-high availability and scalability, see the <a href="/hosting/deploy">Prod Deploy</a> page, which
+[1,000,000 emails per day](/hosting/scaling#onemil-per-day). However, if you need
+high availability and scalability, see the [Prod Deploy](/hosting/deploy) page, which
 uses multiple servers with Docker Swarm.
 
 <ul>
@@ -25,19 +25,19 @@ uses multiple servers with Docker Swarm.
 
 <h2 id="prerequisites">Prerequisites</h2>
 
-<strong>Server</strong>: A server with at least 1GB RAM and 1 vCPU. 2GB RAM and 2 vCPU are
+**Server**: A server with at least 1GB RAM and 1 vCPU. 2GB RAM and 2 vCPU are
 recommended for production use.
 
-<strong>IP Addresses</strong>: You need at least one static IPv4 address for the server. Add
+**IP Addresses**: You need at least one static IPv4 address for the server. Add
 more IP addresses for more queues.
 
-<strong>OS</strong>: A Linux-based operating system. Hyvor Relay is tested on Ubuntu 24.04 LTS
+**OS**: A Linux-based operating system. Hyvor Relay is tested on Ubuntu 24.04 LTS
 in production.
 
-<strong>Docker</strong>: Install the latest version, following the
-<a href="https://docs.docker.com/engine/install/" target="_blank">official guide</a>.
+**Docker**: Install the latest version, following
+the <a href="https://docs.docker.com/engine/install/" target="_blank">official guide</a>.
 
-<strong> OpenID Connect (OIDC) Provider </strong>: Hyvor Relay relies on OIDC for
+**OpenID Connect (OIDC) Provider**: Hyvor Relay relies on OIDC for
 authentication. Create an application in your OIDC provider and obtain the issuer URL, client
 ID, and client secret. Then, allow the following URLs:
 
@@ -50,7 +50,7 @@ ID, and client secret. Then, allow the following URLs:
 </li>
 </ul>
 
-<strong>Firewall</strong>: the following ports should be open on your server:
+**Firewall**: the following ports should be open on your server:
 
 <ul>
 <li>
@@ -81,7 +81,7 @@ tar -xzf deploy.tar.gz
 cd deploy/easy
 ```
 
-<code>deploy/easy</code> directory contains the following files:
+`deploy/easy` directory contains the following files:
 
 ```
 .env 			 	# Environment variables
@@ -96,6 +96,7 @@ Edit the <code>.env</code> file to set the following variables:
 <li>
 <code>APP_SECRET</code>: A strong random string. You can generate one using the following
 command:
+
 ```
 openssl rand -base64 32
 ```
@@ -104,6 +105,7 @@ openssl rand -base64 32
 <li>
 <code>POSTGRES_PASSWORD</code>: Use a strong, URL-safe password for the Postgres database.
 You can generate one using the following command:
+
 ```
 openssl rand -base64 32 | tr '+/' '-_' | tr -d '='
 ```
@@ -172,8 +174,8 @@ Next, head to the <a href="/hosting/setup">Setup</a> page to continue the setup 
 
 The <code>APP_SECRET</code> variable is a 32-bytes key used to encrypt sensitive data (e.g., API
 keys, tokens) in the application. You should not change this value after the initial setup, as
-it will invalidate existing encrypted data. Key rotation is not supported yet, but
-<a href="https://github.com/hyvor/internal/issues/55" target="_blank">planned</a>.
+it will invalidate existing encrypted data. Key rotation is not supported yet,
+but <a href="https://github.com/hyvor/internal/issues/55" target="_blank">planned</a>.
 
 <h3 id="host-network">Host Network</h3>
 
@@ -185,5 +187,5 @@ used for sending emails. Other network modes (e.g., bridge, overlay) are not sup
 <h3 id="external-postgres">External Postgres</h3>
 
 If you want to use an external Postgres database (for example, a managed database service), you
-can do so by updating the <code>DATABASE_URL</code> environment variable in the
-<code>.env</code> file.
+can do so by updating the `DATABASE_URL` environment variable in the
+`.env` file.

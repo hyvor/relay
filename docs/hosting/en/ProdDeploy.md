@@ -9,7 +9,7 @@
 This page covers a <strong>production-ready deployment</strong> that requires multiple servers.
 If you want to deploy Hyvor Relay for hobby or small to medium-sized projects (less than
 1,000,000 emails/day without high availability), refer to the
-<a href="/hosting/deploy-easy">Easy Deploy</a> page.
+[Easy Deploy](/hosting/deploy-easy) page.
 
 <h2 id="overview">Overview</h2>
 
@@ -48,6 +48,7 @@ not go into details here. Whichever option you choose, make sure that:
 <ul>
 <li>
 A dedicated database is created for Hyvor Relay. Recommended name: <code>hyvor_relay</code>.
+
 ```
 CREATE DATABASE hyvor_relay;
 ```
@@ -56,6 +57,7 @@ CREATE DATABASE hyvor_relay;
 <li>
 A dedicated user is created with all privileges on the Hyvor Relay database and a strong
 password.
+
 ```
 CREATE USER relay_servers WITH ENCRYPTED PASSWORD 'strong_password';
 GRANT ALL PRIVILEGES ON DATABASE hyvor_relay TO relay_servers;
@@ -64,6 +66,7 @@ GRANT ALL PRIVILEGES ON DATABASE hyvor_relay TO relay_servers;
 </li>
 <li>
 Configured to allow connections from the app servers (ideally via a private network).
+
 ```
 # In pg_hba.conf
 host    hyvor_relay    relay_servers xx.xx.xx.xx/yy    scram-sha-256
@@ -152,8 +155,8 @@ and connect to the PostgreSQL server securely.
 
 <h4>1. Install Docker</h4>
 
-Follow the official Docker installation guide for your Linux distribution:
-<a target="_blank" href="https://docs.docker.com/engine/install/">https://docs.docker.com/engine/install/</a>
+Follow the official Docker installation guide for your Linux
+distribution: <a target="_blank" href="https://docs.docker.com/engine/install/">https://docs.docker.com/engine/install/</a>
 
 <h4>2. Create a Docker Swarm</h4>
 
@@ -185,7 +188,7 @@ tar -xzf deploy.tar.gz
 cd deploy/prod
 ```
 
-<code>deploy/prod</code> directory contains two files:
+`deploy/prod` directory contains two files:
 
 ```
 .env 			 	# Environment variables
@@ -198,6 +201,7 @@ Edit the <code>.env</code> file to set the following variables:
 <li>
 <code>APP_SECRET</code>: A strong random string. You can generate one using the following
 command:
+
 ```
 openssl rand -base64 32
 ```

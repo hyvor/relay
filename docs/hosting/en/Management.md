@@ -38,11 +38,11 @@ This section covers ongoing management tasks for your Hyvor Relay instance.
 
 <h2 id="system-project">System Project</h2>
 
-When Hyvor Relay is initialized, a special read-only <strong>System Project</strong> is
-automatically created using the <a href="/hosting/setup#instance-domain">instance domain</a>. It is used for
+When Hyvor Relay is initialized, a special read-only **System Project** is
+automatically created using the [instance domain](/hosting/setup#instance-domain). It is used for
 sending system emails (e.g. notifications). All sudo users are automatically granted read-only
-access (<code>project.read</code>, <code>sends.read</code>, <code>domains.read</code>,
-<code>analytics.read</code>) and this is kept in sync as sudo users are added or removed.
+access (`project.read`, `sends.read`, `domains.read`,
+`analytics.read`) and this is kept in sync as sudo users are added or removed.
 
 <h2 id="sudo-users">Sudo Users</h2>
 

@@ -52,9 +52,9 @@ The JSON body of the request has the following structure:
 
 <h2 id="events">Events & Payloads</h2>
 
-Each event below shows the shape of the <code>payload</code> field of the
-<a href="#request-format">request body</a>. The <code>event</code> field is set to the event name
-(e.g. <code>send.recipient.accepted</code>).
+Each event below shows the shape of the `payload` field of the
+[request body](#request-format). The `event` field is set to the event name
+(e.g. `send.recipient.accepted`).
 
 <ul>
 <li>
@@ -93,11 +93,11 @@ Each event below shows the shape of the <code>payload</code> field of the
 
 <h3 id="send-recipient-accepted">send.recipient.accepted</h3>
 
-<code>send.recipient.accepted</code> is triggered when an email is accepted by the recipient
+`send.recipient.accepted` is triggered when an email is accepted by the recipient
 SMTP server. This can be triggered once for a recipient of a send. It indicates that the email
 has been successfully delivered to the recipient's server, but it does not guarantee that the
-email has been delivered to the recipient's inbox. <code>send.recipient.bounced</code> or
-<code>send.recipient.complained</code> can be triggered later if the email is not delivered to the
+email has been delivered to the recipient's inbox. `send.recipient.bounced` or
+`send.recipient.complained` can be triggered later if the email is not delivered to the
 recipient's inbox (ex: when the mailbox is full, or if the email provider's spam detector detects
 the mail as spam) or if the recipient marks it as spam.
 
@@ -109,19 +109,19 @@ the mail as spam) or if the recipient marks it as spam.
 }
 ```
 
-Objects: <a href="/docs/api-console#send-object">Send</a>,
-<a href="/docs/api-console#send-recipient-object">SendRecipient</a>,
-<a href="/docs/api-console#send-attempt-object">SendAttempt</a>
+Objects: [Send](/docs/api-console#send-object),
+[SendRecipient](/docs/api-console#send-recipient-object),
+[SendAttempt](/docs/api-console#send-attempt-object)
 
 <h3 id="send-recipient-deferred">send.recipient.deferred</h3>
 
-<code>send.recipient.deferred</code> is triggered when an email is temporarily deferred by the
+`send.recipient.deferred` is triggered when an email is temporarily deferred by the
 recipient SMTP server. This can happen for various reasons, such as the recipient's server being
 busy or because of <a href="https://en.wikipedia.org/wiki/Greylisting_(email)">greylisting</a>.
 Hyvor Relay will retry sending the email a few more times before giving up. You can expect a
-<code>send.recipient.accepted</code>
+`send.recipient.accepted`
 or
-<code>send.recipient.bounced</code> event later.
+`send.recipient.bounced` event later.
 
 ```ts
 {
@@ -131,13 +131,13 @@ or
 }
 ```
 
-Objects: <a href="/docs/api-console#send-object">Send</a>,
-<a href="/docs/api-console#send-recipient-object">SendRecipient</a>,
-<a href="/docs/api-console#send-attempt-object">SendAttempt</a>
+Objects: [Send](/docs/api-console#send-object),
+[SendRecipient](/docs/api-console#send-recipient-object),
+[SendAttempt](/docs/api-console#send-attempt-object)
 
 <h3 id="send-recipient-bounced">send.recipient.bounced</h3>
 
-<code>send.recipient.bounced</code> is triggered when an email is permanently rejected by the recipient
+`send.recipient.bounced` is triggered when an email is permanently rejected by the recipient
 SMTP server. This can happen for various reasons, such as the recipient's email address not existing
 or the recipient's server rejecting the email due to spam filters.
 
@@ -170,16 +170,16 @@ sending emails to invalid email addresses, which can harm your sender reputation
 }
 ```
 
-Objects: <a href="/docs/api-console#send-object">Send</a>,
-<a href="/docs/api-console#send-recipient-object">SendRecipient</a>,
-<a href="/docs/api-console#send-attempt-object">SendAttempt</a>
-<a href="/docs/api-console#bounce-object">Bounce</a>
+Objects: [Send](/docs/api-console#send-object),
+[SendRecipient](/docs/api-console#send-recipient-object),
+[SendAttempt](/docs/api-console#send-attempt-object),
+[Bounce](/docs/api-console#bounce-object)
 
 <h3 id="send-recipient-complained">send.recipient.complained</h3>
 
 When a recipient marks an email as spam, the email provider sends a complaint, called a Feedback
 Loop (FBL), to Hyvor Relay. Hyvor Relay is configured to receive FBLs from major email
-providers.bind: We process these complaints and trigger the <code>send.recipient.complained</code> event. This event indicates that the recipient has marked the email as spam or junk. When this
+providers. We process these complaints and trigger the <code>send.recipient.complained</code> event. This event indicates that the recipient has marked the email as spam or junk. When this
 event is triggered, the email address is automatically added to your project's suppression list,
 similar to when a hard bounce occurs.
 
@@ -191,9 +191,9 @@ similar to when a hard bounce occurs.
 }
 ```
 
-Objects: <a href="/docs/api-console#send-object">Send</a>,
-<a href="/docs/api-console#send-recipient-object">SendRecipient</a>,
-<a href="/docs/api-console#complaint-object">Complaint</a>
+Objects: [Send](/docs/api-console#send-object),
+[SendRecipient](/docs/api-console#send-recipient-object),
+[Complaint](/docs/api-console#complaint-object)
 
 <h3 id="send-recipient-suppressed">send.recipient.suppressed</h3>
 
@@ -209,9 +209,9 @@ suppressed without trying to send it. No further events will be triggered for th
 }
 ```
 
-Objects: <a href="/docs/api-console#send-object">Send</a>,
-<a href="/docs/api-console#send-recipient-object">SendRecipient</a>,
-<a href="/docs/api-console#suppression-object">Suppression</a>
+Objects: [Send](/docs/api-console#send-object),
+[SendRecipient](/docs/api-console#send-recipient-object),
+[Suppression](/docs/api-console#suppression-object)
 
 <h3 id="send-recipient-failed">send.recipient.failed</h3>
 
@@ -230,9 +230,9 @@ Failed emails are not added to the suppression list automatically.
 }
 ```
 
-Objects: <a href="/docs/api-console#send-object">Send</a>,
-<a href="/docs/api-console#send-recipient-object">SendRecipient</a>
-<a href="/docs/api-console#send-attempt-object">SendAttempt</a>
+Objects: [Send](/docs/api-console#send-object),
+[SendRecipient](/docs/api-console#send-recipient-object),
+[SendAttempt](/docs/api-console#send-attempt-object)
 
 <h3 id="domain-created">domain.created</h3>
 
@@ -244,7 +244,7 @@ This event is triggered when a new domain is created in your Hyvor Relay project
 }
 ```
 
-Objects: <a href="/docs/api-console#domain-object">Domain</a>
+Objects: [Domain](/docs/api-console#domain-object)
 
 <h3 id="domain-status-changed">domain.status.changed</h3>
 
@@ -263,7 +263,7 @@ This event is triggered when the <a href="/docs/domains#status">status of a doma
 }
 ```
 
-Objects: <a href="/docs/api-console#domain-object">Domain</a>
+Objects: [Domain](/docs/api-console#domain-object)
 
 <h3 id="domain-deleted">domain.deleted</h3>
 
@@ -275,7 +275,7 @@ This event is triggered when a domain is deleted from your Hyvor Relay project.
 }
 ```
 
-Objects: <a href="/docs/api-console#domain-object">Domain</a>
+Objects: [Domain](/docs/api-console#domain-object)
 
 <h3 id="suppression-created">suppression.created</h3>
 
@@ -288,7 +288,7 @@ be due to a <code>hard-bounce</code> or a <code>complaint</code>.
 }
 ```
 
-Objects: <a href="/docs/api-console#suppression-object">Suppression</a>
+Objects: [Suppression](/docs/api-console#suppression-object)
 
 <h3 id="suppression-deleted">suppression.deleted</h3>
 
@@ -300,7 +300,7 @@ This event is triggered when a suppression is deleted from your Hyvor Relay proj
 }
 ```
 
-Objects: <a href="/docs/api-console#suppression-object">Suppression</a>
+Objects: [Suppression](/docs/api-console#suppression-object)
 
 <!--<h3 id="domain-verified">domain.verified</h3>-->
 

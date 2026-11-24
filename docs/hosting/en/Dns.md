@@ -52,7 +52,7 @@ DKIM (TXT) record for the instance domain <br />
 <h2 id="custom-records">Custom Records</h2>
 
 In addition to the default records, you can add custom DNS records in
-<strong>Sudo &rarr; Settings &rarr; DNS &rarr; Custom DNS Records</strong>. You can add A, AAAA,
+**Sudo &rarr; Settings &rarr; DNS &rarr; Custom DNS Records**. You can add A, AAAA,
 CNAME, MX, and TXT records for the instance domain and its subdomains here.
 
 <DocsImage src={imgDnsCustom} alt="Custom DNS Records" />

@@ -13,7 +13,7 @@ sending emails using the <strong>SMTP protocol</strong>.
 
 <h2 id="smtp-vs-api">SMTP vs API</h2>
 
-<strong> Pros of using SMTP: </strong>
+**Pros of using SMTP:**
 
 <ul>
 <li>Easier integration with existing systems.</li>
@@ -21,7 +21,7 @@ sending emails using the <strong>SMTP protocol</strong>.
 <li>Easier to switch email service providers in the future.</li>
 </ul>
 
-<strong> Cons of using SMTP: </strong>
+**Cons of using SMTP:**
 
 <ul>
 <li>Potentially slower performance.</li>
@@ -79,7 +79,7 @@ indirectly.
 <h2 id="mime-to-api-mapping">MIME to API Mapping</h2>
 
 The SMTP server parses the incoming MIME email and maps its components to the corresponding
-<a href="/docs/send-emails#sending">API request fields</a> as follows:
+[API request fields](/docs/send-emails#sending) as follows:
 
 <Table columns="1fr 1fr">
 <TableRow head>

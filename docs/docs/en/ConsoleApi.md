@@ -90,7 +90,7 @@ second (per project)
 </ul>
 
 If you exceed these limits, you will receive a
-<code>429 Too Many Requests</code> response. The following standard headers are included in all API
+`429 Too Many Requests` response. The following standard headers are included in all API
 responses to indicate the current rate limit status:
 
 <ul>
@@ -189,7 +189,7 @@ Endpoints:
 
 <h4 id="create-project">Create Project</h4>
 
-<code>POST /projects</code> (scope: <strong>org.projects.create</strong>) <Scope>Organization Endpoint</Scope>
+`POST /projects` (scope: **org.projects.create**) <Scope>Organization Endpoint</Scope>
 
 ```ts
 type Request = {
@@ -235,7 +235,7 @@ Objects:
 
 <h4 id="send-email">Send Email</h4>
 
-<code>POST /sends</code> (scope: <strong>sends.send</strong>)
+`POST /sends` (scope: **sends.send**)
 
 Visit the <a href="/docs/send-emails">Send Emails</a> page for a detailed guide on how to send emails
 using this endpoint.
@@ -265,7 +265,7 @@ type Response = {
 
 <h4 id="get-sends">Get Sends</h4>
 
-<code>GET /sends</code> (scope: <strong>sends.read</strong>)
+`GET /sends` (scope: **sends.read**)
 
 ```ts
     type Request = {
@@ -280,7 +280,7 @@ type Response = {
 
 <h4 id="get-send">Get Send by ID</h4>
 
-<code>GET /sends/:id</code> (scope: <strong>sends.read</strong>)
+`GET /sends/:id` (scope: **sends.read**)
 
 ```ts
 	type Request = {}
@@ -289,7 +289,7 @@ type Response = {
 
 <h4 id="get-send-uuid">Get Send by UUID</h4>
 
-<code>GET /sends/uuid/:uuid</code> (scope: <strong>sends.read</strong>)
+`GET /sends/uuid/:uuid` (scope: **sends.read**)
 
 ```ts
     type Request = {}
@@ -298,7 +298,7 @@ type Response = {
 
 <h4 id="retry-send">Retry Send</h4>
 
-<code>POST /sends/:id/retry</code> (scope: <strong>sends.send</strong>)
+`POST /sends/:id/retry` (scope: **sends.send**)
 
 Re-queues failed recipients of a send for retry. The send must not already be queued. Only
 recipients with a <code>failed</code> status will be retried.
@@ -344,7 +344,7 @@ Objects:
 
 <h4 id="get-domains">Get Domains</h4>
 
-<code>GET /domains</code> (scope: <strong>domains.read</strong>)
+`GET /domains` (scope: **domains.read**)
 
 ```ts
     type Request = {
@@ -357,7 +357,7 @@ Objects:
 
 <h4 id="create-domain">Create Domain</h4>
 
-<code>POST /domains</code> (scope: <strong>domains.write</strong>)
+`POST /domains` (scope: **domains.write**)
 
 ```ts
 type Request = {
@@ -385,7 +385,7 @@ timestamp to minimize the risk of conflicts.
 
 <h4 id="verify-domain">Verify Domain</h4>
 
-<code>POST /domains/verify</code> (scope: <strong>domains.write</strong>)
+`POST /domains/verify` (scope: **domains.write**)
 
 ```ts
 type Request = {
@@ -398,7 +398,7 @@ type Response = Domain
 
 <h4 id="get-domain">Get Domain</h4>
 
-<code>GET /domains/by</code> (scope: <strong>domains.read</strong>)
+`GET /domains/by` (scope: **domains.read**)
 
 ```ts
 type Request = {
@@ -416,7 +416,7 @@ type Response = Domain
 
 <h4 id="delete-domain">Delete Domain</h4>
 
-<code>DELETE /domains</code> (scope: <strong>domains.write</strong>)
+`DELETE /domains` (scope: **domains.write**)
 
 ```ts
     type Request = {
@@ -462,7 +462,7 @@ Objects:
 
 <h4 id="get-webhooks">Get Webhooks</h4>
 
-<code>GET /webhooks</code>
+`GET /webhooks`
 
 ```ts
     type Request = {}
@@ -471,7 +471,7 @@ Objects:
 
 <h4 id="create-webhook">Create Webhook</h4>
 
-<code>POST /webhooks</code>
+`POST /webhooks`
 
 See <a href="/docs/webhooks#events">Webhooks</a> page for available events.
 
@@ -486,7 +486,7 @@ See <a href="/docs/webhooks#events">Webhooks</a> page for available events.
 
 <h4 id="update-webhook">Update Webhook</h4>
 
-<code>PATCH /webhooks/:id</code>
+`PATCH /webhooks/:id`
 
 ```ts
     type Request = {
@@ -499,7 +499,7 @@ See <a href="/docs/webhooks#events">Webhooks</a> page for available events.
 
 <h4 id="delete-webhook">Delete Webhook</h4>
 
-<code>DELETE /webhooks/:id</code>
+`DELETE /webhooks/:id`
 
 ```ts
     type Request = {}
@@ -508,7 +508,7 @@ See <a href="/docs/webhooks#events">Webhooks</a> page for available events.
 
 <h4 id="get-webhook-deliveries">Get Webhook Deliveries</h4>
 
-<code>GET /webhooks/deliveries</code>
+`GET /webhooks/deliveries`
 
 ```ts
     type Request = {
@@ -546,7 +546,7 @@ Objects:
 
 <h4 id="get-api-keys">Get API Keys</h4>
 
-<code>GET /api-keys</code> (scope: <strong>api_keys.read</strong>)
+`GET /api-keys` (scope: **api_keys.read**)
 
 ```ts
     type Request = {}
@@ -555,7 +555,7 @@ Objects:
 
 <h4 id="create-api-key">Create API Key</h4>
 
-<code>POST /api-keys</code> (scope: <strong>api_keys.write</strong>)
+`POST /api-keys` (scope: **api_keys.write**)
 
 Note: Maximum of 10 API keys are allowed per project.
 
@@ -569,7 +569,7 @@ Note: Maximum of 10 API keys are allowed per project.
 
 <h4 id="update-api-key">Update API Key</h4>
 
-<code>PATCH /api-keys/:id</code> (scope: <strong>api_keys.write</strong>)
+`PATCH /api-keys/:id` (scope: **api_keys.write**)
 
 ```ts
     type Request = {
@@ -582,7 +582,7 @@ Note: Maximum of 10 API keys are allowed per project.
 
 <h4 id="delete-api-key">Delete API Key</h4>
 
-<code>DELETE /api-keys/:id</code> (scope: <strong>api_keys.write</strong>)
+`DELETE /api-keys/:id` (scope: **api_keys.write**)
 
 ```ts
     type Request = {}
@@ -612,7 +612,7 @@ Objects:
 
 <h4 id="get-suppressions">Get Suppressions</h4>
 
-<code>GET /suppressions</code> (scope: <strong>suppressions.read</strong>)
+`GET /suppressions` (scope: **suppressions.read**)
 
 ```ts
     type Request = {
@@ -624,7 +624,7 @@ Objects:
 
 <h4 id="delete-suppression">Delete Suppression</h4>
 
-<code>DELETE /suppressions/:id</code> (scope: <strong>suppressions.write</strong>)
+`DELETE /suppressions/:id` (scope: **suppressions.write**)
 
 ```ts
     type Request = {}
@@ -646,7 +646,7 @@ Endpoints:
 
 <h4 id="get-analytics-stats">Get Analytics Statistics</h4>
 
-<code>GET /analytics/stats</code> (scope: <strong>analytics.read</strong>)
+`GET /analytics/stats` (scope: **analytics.read**)
 
 ```ts
     type Request = {
@@ -661,7 +661,7 @@ Endpoints:
 
 <h4 id="get-analytics-chart">Get Analytics Chart Data</h4>
 
-<code>GET /analytics/sends/chart</code> (scope: <strong>analytics.read</strong>)
+`GET /analytics/sends/chart` (scope: **analytics.read**)
 
 ```ts
     type Request = {}
