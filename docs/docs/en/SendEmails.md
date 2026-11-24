@@ -134,7 +134,7 @@ and familiarize yourself with the
 Authorization: Bearer <your-api-key>
 ```
 
-Create an API key at **[Console](/console) &rarr; API** with the
+Create an API key at **<a href="https://relay.hyvor.com/console">Console</a> &rarr; API** with the
 **sends.send** scope enabled.
 
 **Request:**

@@ -18,5 +18,20 @@
     "deliverability": "Deliverability",
     "providers": "Email Providers",
     "env": "Environment Variables"
+  },
+  "descriptions": {
+    "introduction": "Self-host Hyvor Relay, an open-source alternative to AWS SES, Mailgun, and SendGrid. Learn about its architecture, licensing, and security.",
+    "deployEasy": "Deploy Hyvor Relay on a single server with Docker Compose. Prerequisites, installation, and configuration for small to medium sending volumes.",
+    "deploy": "Deploy Hyvor Relay for production on multiple servers with Docker Swarm, for high availability and large sending volumes.",
+    "setup": "Set up a self-hosted Hyvor Relay instance: web domain, Sudo access, instance domain, PTR records, health checks, and NAT configuration.",
+    "management": "Manage a self-hosted Hyvor Relay instance: the system project, sudo users, and IP warmup.",
+    "monitoring": "Monitor Hyvor Relay with Prometheus metrics, a pre-configured Grafana dashboard, Alertmanager alerts, logs, and uptime checks.",
+    "scaling": "Scale a self-hosted Hyvor Relay instance for higher sending volumes, from Postgres max connections to example server setups.",
+    "upgrade010": "Upgrade a self-hosted Hyvor Relay instance to 0.1.0, which stores email contents in a Docker volume or an S3-compatible bucket.",
+    "healthChecks": "Hyvor Relay runs built-in health checks every hour. See what each check verifies and how to fix issues on your self-hosted instance.",
+    "dns": "Hyvor Relay's built-in DNS server for the instance domain: the default records it serves and how to add custom DNS records.",
+    "deliverability": "Improve email deliverability on a self-hosted Hyvor Relay instance: content, technical configuration, IP reputation, blacklists, and tools.",
+    "providers": "Sending to major email providers from Hyvor Relay: feedback loops (FBLs) and the enhanced SMTP response codes providers use.",
+    "env": "All environment variables for configuring a self-hosted Hyvor Relay instance, with defaults and examples."
   }
 }

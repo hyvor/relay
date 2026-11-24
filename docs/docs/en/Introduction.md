@@ -30,8 +30,9 @@ spin up an instance, visit
 
 <h2 id="console">Console</h2>
 
-Console (<a href="/console">/console</a>) is where you can manage your projects. Upon first
-login, you'll be prompted to create a project to begin.
+Console (<a href="https://relay.hyvor.com/console">relay.hyvor.com/console</a>, or `/console` on a
+self-hosted instance) is where you can manage your projects. Upon first login, you'll be
+prompted to create a project to begin.
 
 <h2 id="project">Project</h2>
 

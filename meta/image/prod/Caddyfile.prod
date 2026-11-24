@@ -2,7 +2,36 @@
 	frankenphp
 }
 
+(marketing_redirects) {
+	# ?query of the request, to be appended to the redirect URL
+	@has_query expression {query} != ""
+	vars @has_query query_suffix ?{query}
+
+	import docs_redirects
+	import marketing_redirects_{$DEPLOYMENT:on-prem}
+}
+
+# docs are served at hyvor.com/relay/docs and hyvor.com/relay/hosting (in all deployments)
+# they are only rendered in this app in dev
+(docs_redirects) {
+	# /hosting/setup -> https://hyvor.com/relay/hosting/setup
+	@docs path_regexp docs ^/(docs|hosting)((?:/[^/]+)*)/?$
+	redir @docs https://hyvor.com/relay/{re.docs.1}{re.docs.2}{vars.query_suffix} 301
+}
+
+# the homepage moved to hyvor.com/relay
+(marketing_redirects_cloud) {
+	redir / https://hyvor.com/relay{vars.query_suffix} 301
+}
+
+(marketing_redirects_on-prem) {
+	# self-hosted instances only serve the console
+	redir / /console{vars.query_suffix} 302
+}
+
 localhost:80, {$WEB_URL:http://} {
+	import marketing_redirects
+
 	# backend
 	@backend {
 		path /api/*

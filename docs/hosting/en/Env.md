@@ -20,13 +20,13 @@ DATABASE_URL=
 # Example: https://relay.yourdomain.com
 # If https is used, Caddy will automatically provision SSL certificates.
 # If behind a reverse proxy that handles SSL, use http:// URL.
-# See https://relay.hyvor.com/hosting/setup#web-domain
+# See https://hyvor.com/relay/hosting/setup#web-domain
 WEB_URL=
 
 # Instance domain.
 # The domain name used for the incoming mail server, EHLO identification, and PTR records.
 # Example: mail.relay.yourdomain.com
-# See https://relay.hyvor.com/hosting/setup#instance-domain
+# See https://hyvor.com/relay/hosting/setup#instance-domain
 INSTANCE_DOMAIN=
 
 # OpenID Connect (OIDC) configuration
@@ -61,7 +61,7 @@ S3_BUCKET=
 DNS_OVER_HTTPS_URL=https://cloudflare-dns.com/dns-query
 
 # NAT (1:1) Configuration
-# See: https://relay.hyvor.com/hosting/setup#nat
+# See: https://hyvor.com/relay/hosting/setup#nat
 
 # NAT network CIDR range(s). Sending IP addresses are selected from the given range(s).
 # Use this when the server is behind 1:1 NAT

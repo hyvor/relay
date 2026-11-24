@@ -18,7 +18,7 @@ const config = {
 			fallback: 'fallback.html'
 		}),
 		alias: {
-			// docs are kept in the repo root, and synced to hyvor/core
+			// docs are kept in the repo root, and synced to hyvor/marketing
 			$docs: '../docs'
 		},
 		typescript: {
