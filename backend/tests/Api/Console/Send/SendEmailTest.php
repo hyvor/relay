@@ -24,6 +24,7 @@ use App\Service\Send\SendService;
 use App\Service\Suppression\SuppressionService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
+use App\Tests\Factory\InstanceFactory;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
@@ -917,6 +918,8 @@ class SendEmailTest extends WebTestCase
     public function test_queues_on_the_trial_queue_on_cloud(): void
     {
         $_ENV['DEPLOYMENT'] = 'cloud';
+
+        InstanceFactory::new()->withDefaultDkim()->create();
 
         QueueFactory::createTransactional();
         $trial = QueueFactory::createTrial(QueueType::TRANSACTIONAL);

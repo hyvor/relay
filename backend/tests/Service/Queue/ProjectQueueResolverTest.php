@@ -49,7 +49,7 @@ class ProjectQueueResolverTest extends KernelTestCase
 
         $project2 = ProjectFactory::createOne(['send_type' => ProjectSendType::DISTRIBUTIONAL]);
         $this->assertSame($distributional, $this->resolver->resolve($project2));
-        $this->getEd()->assertDispatched(ProjectQueueSelectingEvent::class);
+        $this->getEd()->assertDispatchedCount(ProjectQueueSelectingEvent::class, 2);
 
         $this->em->clear();
         $saved = $this->em->getRepository(Project::class)->find($project->getId());

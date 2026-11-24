@@ -77,9 +77,9 @@ class QueueService
         $queues = $this->em->getRepository(Queue::class)
             ->createQueryBuilder('q')
             ->where('q.type = :type')
-            ->andWhere('q.name != :default')
+            ->andWhere('q.name != :trial')
             ->setParameter('type', $type)
-            ->setParameter('default', self::DEFAULT_QUEUE_NAME)
+            ->setParameter('trial', self::TRIAL_QUEUE_NAME)
             ->orderBy('q.id', 'ASC')
             ->getQuery()
             ->getResult();
@@ -204,6 +204,7 @@ class QueueService
             ->select('IDENTITY(p.queue) AS queue_id, COUNT(p.id) AS count')
             ->where('p.queue IS NOT NULL')
             ->groupBy('p.queue')
+            ->orderBy('queue_id', 'ASC')
             ->getQuery()
             ->getScalarResult();
 

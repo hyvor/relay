@@ -13,6 +13,7 @@ use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\SendFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\TestWith;
 
 #[CoversClass(QueueController::class)]
 #[CoversClass(QueueService::class)]
@@ -43,16 +44,16 @@ class DeleteQueueTest extends WebTestCase
         $this->assertResponseStatusCodeSame(404);
     }
 
-    public function test_cannot_delete_reserved_queues(): void
+    #[TestWith([QueueType::TRANSACTIONAL, QueueService::DEFAULT_QUEUE_NAME])]
+    #[TestWith([QueueType::DISTRIBUTIONAL, QueueService::TRIAL_QUEUE_NAME])]
+    public function test_cannot_delete_reserved_queues(QueueType $type, string $name): void
     {
-        $default = QueueFactory::createDefault(QueueType::TRANSACTIONAL);
-        $trial = QueueFactory::createTrial(QueueType::DISTRIBUTIONAL);
+        $queue = QueueFactory::createOne(['type' => $type, 'name' => $name]);
 
-        foreach ([$default, $trial] as $queue) {
-            $this->sudoApi('DELETE', '/queues/' . $queue->getId());
-            $this->assertResponseStatusCodeSame(400);
-            $this->assertSame('Reserved queues cannot be deleted.', $this->getJson()['message']);
-        }
+        $this->sudoApi('DELETE', '/queues/' . $queue->getId());
+
+        $this->assertResponseStatusCodeSame(400);
+        $this->assertSame('Reserved queues cannot be deleted.', $this->getJson()['message']);
     }
 
     public function test_cannot_delete_queue_with_ip_addresses(): void

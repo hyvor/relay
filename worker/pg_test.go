@@ -150,8 +150,8 @@ func (f *TestFactory) Queue() (int, error) {
 
 	var queueId int
 	err := f.conn.QueryRow(`
-		INSERT INTO queues (created_at, updated_at, name)
-		VALUES ($1, $2, $3)
+		INSERT INTO queues (created_at, updated_at, type, name)
+		VALUES ($1, $2, 'transactional', $3)
 		RETURNING id
 	`, now, now, name).Scan(&queueId)
 
