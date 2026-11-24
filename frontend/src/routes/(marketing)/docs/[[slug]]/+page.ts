@@ -1,10 +1,11 @@
 import { loadDocsPage } from '@hyvor/design/marketing';
-import { SECTIONS } from '../docs';
+import { getSections } from '$docs/docs/docs';
 
 export async function load({ params }: { params: { slug?: string } }) {
 	return loadDocsPage({
 		basepath: '/docs',
-		sections: SECTIONS,
+		rootName: 'Docs',
+		sections: await getSections('en'),
 		slug: params.slug ?? ''
 	});
 }

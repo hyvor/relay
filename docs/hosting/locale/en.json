@@ -1,0 +1,22 @@
+{
+  "sections": {
+    "upgradeGuides": "Upgrade Guides",
+    "features": "Features",
+    "misc": "Misc"
+  },
+  "pages": {
+    "introduction": "Introduction",
+    "deployEasy": "Easy Deploy",
+    "deploy": "Prod Deploy",
+    "setup": "Setup",
+    "management": "Management",
+    "monitoring": "Monitoring",
+    "scaling": "Scaling",
+    "upgrade010": "0.1.0",
+    "healthChecks": "Health Checks",
+    "dns": "DNS Server",
+    "deliverability": "Deliverability",
+    "providers": "Email Providers",
+    "env": "Environment Variables"
+  }
+}

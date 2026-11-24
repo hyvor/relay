@@ -1,0 +1,13 @@
+{
+  "sections": {
+    "api": "API"
+  },
+  "pages": {
+    "introduction": "Getting Started",
+    "domains": "Domains",
+    "sendEmails": "Send Emails via API",
+    "sendEmailsSmtp": "Send Emails via SMTP",
+    "consoleApi": "Console API",
+    "webhooks": "Webhooks"
+  }
+}

@@ -16,7 +16,20 @@ const config = {
 		// See https://svelte.dev/docs/kit/adapters for more information about adapters.
 		adapter: adapter({
 			fallback: 'fallback.html'
-		})
+		}),
+		alias: {
+			// docs are kept in the repo root, and synced to hyvor/core
+			$docs: '../docs'
+		},
+		typescript: {
+			config(config) {
+				// ../docs has no node_modules, resolve its types from here
+				config.compilerOptions.paths['@hyvor/design/marketing'] = [
+					'../node_modules/@hyvor/design/dist/marketing/index.d.ts'
+				];
+				config.include.push('../../docs/**/*.ts');
+			}
+		}
 	},
 
 	compilerOptions: {

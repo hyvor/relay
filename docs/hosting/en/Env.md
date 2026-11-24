@@ -1,13 +1,8 @@
-<script>
-    import {CodeBlock} from '@hyvor/design/components';
-</script>
+# Environment Variables
 
-<h1>Environment Variables</h1>
+These are the environment variables that you can set for Hyvor Relay.
 
-<p>These are the environment variables that you can set for Hyvor Relay.</p>
-
-<CodeBlock
-    code={`
+```yaml
 # Environment: prod, dev, or test
 # you probably want to use prod for a deployment
 APP_ENV=prod
@@ -80,6 +75,4 @@ NAT_NETWORK=
 # Format: private_ip=public_ip (comma-separated for multiple)
 # Example: NAT_MAP=10.0.1.5=203.0.113.10,10.0.1.6=203.0.113.11
 NAT_MAP=
-`}
-    language="yaml"
-/>
+```
