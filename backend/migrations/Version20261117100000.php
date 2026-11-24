@@ -16,10 +16,11 @@ final class Version20261117100000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        // drop queue_type
+        // drop types and constraints
         $this->addSql("ALTER TABLE queues ALTER COLUMN type DROP DEFAULT");
         $this->addSql("ALTER TABLE queues ALTER COLUMN type TYPE VARCHAR(32) USING type::text");
         $this->addSql("DROP TYPE queue_type");
+        $this->addSql("ALTER TABLE queues DROP CONSTRAINT queues_name_key");
 
         // swap type and name
         $this->addSql("UPDATE queues SET type = name, name = 'default'");
@@ -29,7 +30,6 @@ final class Version20261117100000 extends AbstractMigration
         $this->addSql("ALTER TABLE queues ALTER COLUMN type TYPE queue_type USING type::queue_type");
 
         // constraints and indexes
-        $this->addSql("ALTER TABLE queues DROP CONSTRAINT queues_name_key");
         $this->addSql("ALTER TABLE queues ADD COLUMN dedicated_organization_id BIGINT DEFAULT NULL");
         $this->addSql(
             <<<SQL
