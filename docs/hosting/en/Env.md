@@ -1,0 +1,78 @@
+# Environment Variables
+
+These are the environment variables that you can set for Hyvor Relay.
+
+```yaml
+# Environment: prod, dev, or test
+# you probably want to use prod for a deployment
+APP_ENV=prod
+
+# The secret key (32 bytes) used to encrypt sensitive data.
+# Generate one using: "openssl rand -base64 32"
+APP_SECRET=
+
+# The PostgreSQL database URL.
+# Use the format: "postgresql://user:pass@host:5432/database_name?serverVersion=16&charset=utf8"
+DATABASE_URL=
+
+# Web URL.
+# The public URL where Hyvor Relay and its API will be accessible.
+# Example: https://relay.yourdomain.com
+# If https is used, Caddy will automatically provision SSL certificates.
+# If behind a reverse proxy that handles SSL, use http:// URL.
+# See https://hyvor.com/relay/hosting/setup#web-domain
+WEB_URL=
+
+# Instance domain.
+# The domain name used for the incoming mail server, EHLO identification, and PTR records.
+# Example: mail.relay.yourdomain.com
+# See https://hyvor.com/relay/hosting/setup#instance-domain
+INSTANCE_DOMAIN=
+
+# OpenID Connect (OIDC) configuration
+OIDC_ISSUER_URL=
+OIDC_CLIENT_ID=
+OIDC_CLIENT_SECRET=
+
+# Trusted proxy IP addresses or CIDR ranges.
+# This is used to determine the real client IP address and HTTPS status.
+# By default, all private IP ranges are trusted.
+TRUSTED_PROXIES=
+
+# Logging level
+# One of: debug, info, notice, warning, error, critical, alert, emergency
+# Default: info
+LOG_LEVEL=info
+
+# Storage backend for email contents (raw .eml).
+# One of: file, s3
+# Default: file
+FILESYSTEM=file
+
+# S3-compatible object storage.
+# Only required when FILESYSTEM=s3.
+S3_ENDPOINT=
+S3_REGION=
+S3_KEY=
+S3_SECRET=
+S3_BUCKET=
+
+# DNS over HTTPS resolver endpoint.
+DNS_OVER_HTTPS_URL=https://cloudflare-dns.com/dns-query
+
+# NAT (1:1) Configuration
+# See: https://hyvor.com/relay/hosting/setup#nat
+
+# NAT network CIDR range(s). Sending IP addresses are selected from the given range(s).
+# Use this when the server is behind 1:1 NAT
+# Example (single range): NAT_NETWORK=10.0.0.0/8
+# Example (multiple, comma-separated): NAT_NETWORK=10.0.0.0/8,172.16.0.0/12
+NAT_NETWORK=
+
+# Manual mapping of private IP to public IP for NAT.
+# If not set, the public IP is resolved automatically by binding to each private IP
+# and calling  icanhazip.com / checkip.amazonaws.com / ifconfig.me.
+# Format: private_ip=public_ip (comma-separated for multiple)
+# Example: NAT_MAP=10.0.1.5=203.0.113.10,10.0.1.6=203.0.113.11
+NAT_MAP=
+```

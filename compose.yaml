@@ -12,6 +12,7 @@ services:
       - ./frontend/package-lock.json:/app/frontend/package-lock.json
       - ./frontend/tsconfig.json:/app/frontend/tsconfig.json
       - ./frontend/svelte.config.js:/app/frontend/svelte.config.js
+      - ./docs:/app/docs
     labels:
       traefik.enable: true
       traefik.http.routers.hyvor-relay-frontend.rule: Host(`relay.hyvor.localhost`)
