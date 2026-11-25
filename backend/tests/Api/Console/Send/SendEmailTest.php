@@ -937,7 +937,7 @@ class SendEmailTest extends WebTestCase
 
         $this->consoleApi($project, "POST", "/sends", data: [
             'from' => 'test@hyvor.com',
-            'to' => 'test@example.com',
+            'to' => 'accept@simulator.relay.hyvor.com',
             'body_text' => 'Test email',
         ]);
 
