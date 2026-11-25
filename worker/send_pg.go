@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+
+	"github.com/hyvor/relay/worker/bounceparse"
 )
 
 type SendRow struct {
@@ -222,7 +224,7 @@ func (b *SendTransaction) RecordAttempt(
 			}
 		}
 
-		bounceReason := BounceReasonUnknown
+		bounceReason := bounceparse.BounceReasonUnknown
 		if reason := rcptResult.GetBounceReason(); reason != "" {
 			bounceReason = reason
 		}

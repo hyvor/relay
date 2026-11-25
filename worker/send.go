@@ -12,6 +12,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/hyvor/relay/worker/bounceparse"
 	smtp "github.com/hyvor/relay/worker/smtp"
 )
 
@@ -63,8 +64,8 @@ type RcptResult struct {
 }
 
 // calculates the bounce reason from the SMTP response when needed
-func (r RcptResult) GetBounceReason() BounceReason {
-	return NewSmtpResponseParser(r.Code, r.EnhancedCode, r.Message).BounceReason()
+func (r RcptResult) GetBounceReason() bounceparse.BounceReason {
+	return bounceparse.NewSmtpResponseParser(r.Code, r.EnhancedCode, r.Message).BounceReason()
 }
 
 func (r RcptResult) MarshalJSON() ([]byte, error) {

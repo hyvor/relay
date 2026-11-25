@@ -6,7 +6,7 @@ namespace App\Entity\Type;
  * Why a delivery attempt to a recipient was classified as it was.
  *
  * Classification is done in the Go worker, from the SMTP response
- * (worker/smtp_response_parser.go: SmtpResponseParser::BounceReason()) for direct
+ * (worker/bounceparse/smtp_response_parser.go: SmtpResponseParser::BounceReason()) for direct
  * send attempts, and from the DSN status (worker/bounceparse/dsn.go) for
  * incoming async bounces.
  */

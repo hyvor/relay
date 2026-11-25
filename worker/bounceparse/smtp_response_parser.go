@@ -1,4 +1,4 @@
-package main
+package bounceparse
 
 import (
 	"fmt"

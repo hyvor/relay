@@ -98,6 +98,9 @@ func ParseDsn(input []byte) (*Dsn, error) {
 		dsnRecipient.EmailAddress = getDsnRecipientEmailAddress(headers.Get("Final-Recipient"))
 		dsnRecipient.Status = parseDsnStatus(headers.Get("Status"))
 		dsnRecipient.Action = headers.Get("Action")
+		dsnRecipient.BounceReason = string(
+			NewSmtpResponseParser(0, [3]int(dsnRecipient.Status), "").BounceReason(),
+		)
 
 		dsn.Recipients = append(dsn.Recipients, dsnRecipient)
 
