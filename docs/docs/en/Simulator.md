@@ -4,15 +4,16 @@
 
 # Testing with the Simulator
 
-HYVOR runs a public SMTP simulator at <code>simulator.relay.hyvor.com</code>. Emails sent to
+HYVOR runs a private SMTP simulator at <code>simulator.relay.hyvor.com</code>. Emails sent to
 this domain are not delivered to any mailbox. Instead, the simulator responds with a pre-defined
 result based on the recipient address, such as a successful delivery, a bounce, or a complaint.
 You can use it to test how your application handles each case (for example, your
 <a href="/docs/webhooks">webhook</a> handlers) without sending emails to real people or harming your
 sender reputation.
 
-The simulator works with both the Cloud and self-hosted instances. If you prefer, you can also
-run your own copy using <a href="https://github.com/hyvor/smtp-simulator" target="_blank">hyvor/smtp-simulator</a>.
+This simulator is only available on Hyvor Relay Cloud. If you are self-hosting, you can run your
+own copy using <a href="https://github.com/hyvor/smtp-simulator" target="_blank">hyvor/smtp-simulator</a>
+and use its domain instead of <code>simulator.relay.hyvor.com</code> in the examples below.
 
 <h2 id="usage">Usage</h2>
 
