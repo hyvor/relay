@@ -100,7 +100,7 @@ class IncomingMailService
             }
 
             $this->sendAttemptService->updateLastAttemptStatus($sendRecipient, SendRecipientStatus::BOUNCED, $bounceReason);
-            $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::BOUNCED);
+            $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::BOUNCED, $bounceReason);
 
             $this->sendFeedbackService->createSendFeedback(
                 SendFeedbackType::BOUNCE,

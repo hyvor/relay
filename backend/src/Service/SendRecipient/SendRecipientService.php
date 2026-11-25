@@ -6,6 +6,7 @@ use App\Entity\Send;
 use App\Entity\SendAttempt;
 use App\Entity\SendAttemptRecipient;
 use App\Entity\SendRecipient;
+use App\Entity\Type\BounceReason;
 use App\Entity\Type\SendRecipientStatus;
 use App\Service\Stats\StatsService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -50,9 +51,12 @@ class SendRecipientService
 
     public function updateSendRecipientStatus(
         SendRecipient $sendRecipient,
-        SendRecipientStatus $status
+        SendRecipientStatus $status,
+        ?BounceReason $bounceReason = null,
     ): void {
         $sendRecipient->setStatus($status);
+        // the bounce reason is only kept while the recipient is bounced
+        $sendRecipient->setBounceReason($status === SendRecipientStatus::BOUNCED ? $bounceReason : null);
         $this->em->persist($sendRecipient);
         $this->em->flush();
 

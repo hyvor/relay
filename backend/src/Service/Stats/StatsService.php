@@ -25,9 +25,7 @@ class StatsService
 {
     use ClockAwareTrait;
 
-    public function __construct(private EntityManagerInterface $em)
-    {
-    }
+    public function __construct(private EntityManagerInterface $em) {}
 
     /**
      * Flags the stats of the given day as outdated, so the next stats update re-counts that day.
@@ -90,9 +88,10 @@ class StatsService
     /**
      * stats_project: send_recipients by status. The day is the day the recipient was added.
      *
-     * - accepted includes complained recipients (the server accepted them before the complaint)
-     * - bounces are split by the bounce reason of the last attempt
-     * - rates are based on send_recipients (complained_rate is based on accepted)
+     * - each recipient is counted in exactly one status (accepted does not include complained)
+     * - bounces are split by send_recipients.bounce_reason
+     * - rates are based on send_recipients (complained_rate is based on accepted + complained,
+     *   as the server accepted a complained recipient before the complaint)
      */
     private function rebuildProjectStats(Connection $connection, string $date, string $nextDate): void
     {
@@ -106,23 +105,16 @@ class StatsService
                     COUNT(DISTINCT s.id) AS sends,
                     COUNT(sr.id) AS send_recipients,
                     COUNT(sr.id) FILTER (WHERE sr.status = 'queued') AS queued,
-                    COUNT(sr.id) FILTER (WHERE sr.status IN ('accepted', 'complained')) AS accepted,
+                    COUNT(sr.id) FILTER (WHERE sr.status = 'accepted') AS accepted,
                     COUNT(sr.id) FILTER (WHERE sr.status = 'deferred') AS deferred,
-                    COUNT(sr.id) FILTER (WHERE sr.status = 'bounced' AND la.bounce_reason = 'recipient') AS bounced_recipient,
-                    COUNT(sr.id) FILTER (WHERE sr.status = 'bounced' AND la.bounce_reason = 'infrastructure') AS bounced_infrastructure,
-                    COUNT(sr.id) FILTER (WHERE sr.status = 'bounced' AND la.bounce_reason IS DISTINCT FROM 'recipient' AND la.bounce_reason IS DISTINCT FROM 'infrastructure') AS bounced_unknown,
+                    COUNT(sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'recipient') AS bounced_recipient,
+                    COUNT(sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'infrastructure') AS bounced_infrastructure,
+                    COUNT(sr.id) FILTER (WHERE sr.status = 'bounced' AND sr.bounce_reason = 'unknown') AS bounced_unknown,
                     COUNT(sr.id) FILTER (WHERE sr.status = 'complained') AS complained,
                     COUNT(sr.id) FILTER (WHERE sr.status = 'suppressed') AS suppressed,
                     COUNT(sr.id) FILTER (WHERE sr.status = 'failed') AS failed
                 FROM sends s
                 JOIN send_recipients sr ON sr.send_id = s.id
-                LEFT JOIN LATERAL (
-                    SELECT sar.bounce_reason::TEXT AS bounce_reason
-                    FROM send_attempt_recipients sar
-                    WHERE sr.status = 'bounced' AND sar.send_recipient_id = sr.id
-                    ORDER BY sar.id DESC
-                    LIMIT 1
-                ) la ON TRUE
                 WHERE s.created_at >= :date AND s.created_at < :nextDate
                 GROUP BY s.project_id
             )
@@ -142,7 +134,7 @@ class StatsService
                 ROUND(bounced_recipient::NUMERIC / NULLIF(send_recipients, 0), 4),
                 ROUND(bounced_infrastructure::NUMERIC / NULLIF(send_recipients, 0), 4),
                 ROUND(bounced_unknown::NUMERIC / NULLIF(send_recipients, 0), 4),
-                ROUND(complained::NUMERIC / NULLIF(accepted, 0), 6),
+                ROUND(complained::NUMERIC / NULLIF(accepted + complained, 0), 6),
                 ROUND(suppressed::NUMERIC / NULLIF(send_recipients, 0), 4),
                 ROUND(failed::NUMERIC / NULLIF(send_recipients, 0), 4)
             FROM recipients
@@ -150,8 +142,13 @@ class StatsService
     }
 
     /**
-     * One row per attempt (send_attempt_recipients) of the day. A recipient attempted multiple
-     * times has multiple rows. The bounce reason is only set for bounced attempts.
+     * Attempts (send_attempt_recipients) of the day, pre-aggregated to the finest grain every attempt
+     * stat needs: (project, ip, domain, recipient status, bounce reason), with the number of attempts
+     * in `cnt`. A recipient attempted multiple times is counted once per attempt. The bounce reason
+     * is only set for bounced attempts.
+     *
+     * This keeps the table small (it does not grow with the email volume), so the stats below
+     * SUM(cnt) over thousands of rows instead of re-scanning millions.
      */
     private function createAttemptsTable(Connection $connection, string $date, string $nextDate): void
     {
@@ -162,7 +159,8 @@ class StatsService
                 ip_address_id BIGINT NOT NULL,
                 domain TEXT NOT NULL,
                 recipient_status TEXT NOT NULL,
-                bounce_reason TEXT
+                bounce_reason TEXT,
+                cnt BIGINT NOT NULL
             ) ON COMMIT DROP
         SQL);
 
@@ -173,11 +171,13 @@ class StatsService
                 sa.ip_address_id,
                 sa.domain,
                 sar.recipient_status::TEXT,
-                CASE WHEN sar.recipient_status = 'bounced' THEN sar.bounce_reason::TEXT END
+                CASE WHEN sar.recipient_status = 'bounced' THEN sar.bounce_reason::TEXT END,
+                COUNT(*)
             FROM send_attempt_recipients sar
             JOIN send_attempts sa ON sa.id = sar.send_attempt_id
             JOIN sends s ON s.id = sa.send_id
             WHERE sa.created_at >= :date AND sa.created_at < :nextDate
+            GROUP BY 1, 2, 3, 4, 5
         SQL, ['date' => $date, 'nextDate' => $nextDate]);
     }
 
@@ -210,14 +210,14 @@ class StatsService
             delivered AS (
                 SELECT
                     ip_address_id,
-                    COUNT(*) AS attempted,
-                    COUNT(*) FILTER (WHERE recipient_status IN ('accepted', 'complained')) AS accepted,
-                    COUNT(*) FILTER (WHERE recipient_status = 'deferred') AS deferred,
-                    COUNT(*) FILTER (WHERE bounce_reason = 'recipient') AS bounced_recipient,
-                    COUNT(*) FILTER (WHERE bounce_reason = 'infrastructure') AS bounced_infrastructure,
-                    COUNT(*) FILTER (WHERE bounce_reason = 'unknown') AS bounced_unknown,
-                    COUNT(*) FILTER (WHERE recipient_status = 'failed') AS failed,
-                    COUNT(*) FILTER (WHERE recipient_status = 'complained') AS complained
+                    SUM(cnt) AS attempted,
+                    COALESCE(SUM(cnt) FILTER (WHERE recipient_status IN ('accepted', 'complained')), 0) AS accepted,
+                    COALESCE(SUM(cnt) FILTER (WHERE recipient_status = 'deferred'), 0) AS deferred,
+                    COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'recipient'), 0) AS bounced_recipient,
+                    COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'infrastructure'), 0) AS bounced_infrastructure,
+                    COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'unknown'), 0) AS bounced_unknown,
+                    COALESCE(SUM(cnt) FILTER (WHERE recipient_status = 'failed'), 0) AS failed,
+                    COALESCE(SUM(cnt) FILTER (WHERE recipient_status = 'complained'), 0) AS complained
                 FROM stats_attempts
                 GROUP BY ip_address_id
             ),
@@ -276,12 +276,12 @@ class StatsService
                 SELECT
                     ip_address_id,
                     project_id,
-                    COUNT(*) AS sent,
-                    COUNT(*) FILTER (WHERE recipient_status IN ('accepted', 'complained')) AS accepted,
-                    COUNT(*) FILTER (WHERE bounce_reason = 'recipient') AS bounced_recipient,
-                    COUNT(*) FILTER (WHERE bounce_reason = 'infrastructure') AS bounced_infrastructure,
-                    COUNT(*) FILTER (WHERE bounce_reason = 'unknown') AS bounced_unknown,
-                    COUNT(*) FILTER (WHERE recipient_status = 'complained') AS complained
+                    SUM(cnt) AS sent,
+                    COALESCE(SUM(cnt) FILTER (WHERE recipient_status IN ('accepted', 'complained')), 0) AS accepted,
+                    COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'recipient'), 0) AS bounced_recipient,
+                    COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'infrastructure'), 0) AS bounced_infrastructure,
+                    COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'unknown'), 0) AS bounced_unknown,
+                    COALESCE(SUM(cnt) FILTER (WHERE recipient_status = 'complained'), 0) AS complained
                 FROM stats_attempts
                 GROUP BY ip_address_id, project_id
             )
@@ -311,12 +311,12 @@ class StatsService
                     project_id,
                     ip_address_id,
                     domain AS recipient_domain,
-                    COUNT(*) AS sent,
-                    COUNT(*) FILTER (WHERE recipient_status IN ('accepted', 'complained')) AS accepted,
-                    COUNT(*) FILTER (WHERE bounce_reason = 'recipient') AS bounced_recipient,
-                    COUNT(*) FILTER (WHERE bounce_reason = 'infrastructure') AS bounced_infrastructure,
-                    COUNT(*) FILTER (WHERE bounce_reason = 'unknown') AS bounced_unknown,
-                    COUNT(*) FILTER (WHERE recipient_status = 'complained') AS complained
+                    SUM(cnt) AS sent,
+                    COALESCE(SUM(cnt) FILTER (WHERE recipient_status IN ('accepted', 'complained')), 0) AS accepted,
+                    COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'recipient'), 0) AS bounced_recipient,
+                    COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'infrastructure'), 0) AS bounced_infrastructure,
+                    COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'unknown'), 0) AS bounced_unknown,
+                    COALESCE(SUM(cnt) FILTER (WHERE recipient_status = 'complained'), 0) AS complained
                 FROM stats_attempts
                 GROUP BY project_id, ip_address_id, domain
             )

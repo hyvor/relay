@@ -115,7 +115,11 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $this->attempt($send, $complained, $ipAddress, 'example.com', $date, SendRecipientStatus::COMPLAINED);
 
         foreach ([BounceReason::RECIPIENT, BounceReason::INFRASTRUCTURE, BounceReason::UNKNOWN] as $reason) {
-            $bounced = SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::BOUNCED]);
+            $bounced = SendRecipientFactory::createOne([
+                'send' => $send,
+                'status' => SendRecipientStatus::BOUNCED,
+                'bounce_reason' => $reason,
+            ]);
             $this->attempt($send, $bounced, $ipAddress, 'example.com', $date, SendRecipientStatus::BOUNCED, $reason);
         }
 
@@ -135,7 +139,7 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $this->assertSame(1, $row['sends']);
         $this->assertSame(9, $row['send_recipients']);
         $this->assertSame(1, $row['queued']);
-        $this->assertSame(2, $row['accepted']); // includes the complained one
+        $this->assertSame(1, $row['accepted']); // does not include the complained one
         $this->assertSame(1, $row['deferred']);
         $this->assertSame(1, $row['bounced_recipient']);
         $this->assertSame(1, $row['bounced_infrastructure']);
@@ -143,7 +147,7 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $this->assertSame(1, $row['complained']);
         $this->assertSame(1, $row['suppressed']);
         $this->assertSame(1, $row['failed']);
-        $this->assertSame('0.2222', $row['accepted_rate']);
+        $this->assertSame('0.1111', $row['accepted_rate']);
         $this->assertSame('0.500000', $row['complained_rate']);
         $this->assertArrayNotHasKey('attempted', $row);
         $this->assertArrayNotHasKey('send_attempts', $row);
@@ -289,8 +293,9 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         /** @var SendAttemptService $service */
         $service = $this->container->get(SendAttemptService::class);
         $service->updateLastAttemptStatus($recipient, SendRecipientStatus::BOUNCED, BounceReason::RECIPIENT);
-        $recipient->setStatus(SendRecipientStatus::BOUNCED);
-        $this->em->flush();
+        /** @var SendRecipientService $recipientService */
+        $recipientService = $this->container->get(SendRecipientService::class);
+        $recipientService->updateSendRecipientStatus($recipient, SendRecipientStatus::BOUNCED, BounceReason::RECIPIENT);
         $this->assertTrue($this->isOutdated($date));
 
         $this->runHandler();

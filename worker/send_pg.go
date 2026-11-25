@@ -260,13 +260,19 @@ func (b *SendTransaction) RecordAttempt(
 		}
 
 		// update send_recipients to the latest state
+		// the bounce reason is only kept while the recipient is bounced
+		var recipientBounceReason sql.NullString
+		if rcptResult.ToRecipientStatus().ToString() == "bounced" {
+			recipientBounceReason = sql.NullString{String: string(bounceReason), Valid: true}
+		}
 		_, err = b.tx.ExecContext(b.ctx, `
 			UPDATE send_recipients
 			SET 
 				status = $1,
-				try_count = $2
+				try_count = $2,
+				bounce_reason = $4
 			WHERE id = $3
-		`, rcptResult.ToRecipientStatus().ToString(), sendResult.NewTryCount, rcptResult.RecipientId)
+		`, rcptResult.ToRecipientStatus().ToString(), sendResult.NewTryCount, rcptResult.RecipientId, recipientBounceReason)
 
 		if err != nil {
 			return 0, fmt.Errorf("failed to update recipient ID %d status: %w", rcptResult.RecipientId, err)
