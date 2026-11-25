@@ -55,21 +55,17 @@ class UpdateStatsMessageHandler
             $instance->getStatsRebuiltAt()?->format("Y-m-d") ??
             $now->modify("-1 day")->format("Y-m-d");
 
-        $feedbackIds = $this->statsService->getUnprocessedFeedbackIds();
-
         $dates = [
             ...$this->dateRange(max($from, $minDate), $today),
-            ...$this->statsService->assignFeedbackStatDates($feedbackIds),
+            ...$this->statsService->getOutdatedDates($minDate),
         ];
 
-        $dates = array_filter(array_unique($dates), fn(string $date) => $date >= $minDate);
+        $dates = array_unique($dates);
         sort($dates);
 
         foreach ($dates as $date) {
             $this->statsService->rebuildDate($date);
         }
-
-        $this->statsService->markFeedbackProcessed($feedbackIds);
 
         $instance->setStatsRebuiltAt($now);
         $this->em->flush();

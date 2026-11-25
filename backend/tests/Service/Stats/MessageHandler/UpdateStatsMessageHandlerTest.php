@@ -80,6 +80,13 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         );
     }
 
+    private function markOutdated(SendRecipient $recipient): void
+    {
+        /** @var StatsService $statsService */
+        $statsService = $this->container->get(StatsService::class);
+        $statsService->markOutdated($recipient);
+    }
+
     private function getInstance(): Instance
     {
         /** @var InstanceService $instanceService */
@@ -114,25 +121,26 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $complained->setStatus(SendRecipientStatus::COMPLAINED);
         $this->em->flush();
 
-        $feedback = SendFeedbackFactory::createOne([
+        SendFeedbackFactory::createOne([
             'type' => SendFeedbackType::COMPLAINT,
-            'project' => $project,
-            'send' => $send,
             'sendRecipient' => $complained,
         ]);
+        $this->markOutdated($complained);
+
+        $row = $this->row('stats_project', $where);
+        $this->assertIsArray($row);
+        $this->assertTrue($row['is_outdated']);
 
         $this->runHandler();
 
         $row = $this->row('stats_project', $where);
         $this->assertIsArray($row);
+        $this->assertFalse($row['is_outdated']);
         $this->assertSame(1, $row['sends']);
         $this->assertSame(2, $row['send_recipients']);
         $this->assertSame(2, $row['accepted']);
         $this->assertSame(1, $row['complained']);
         $this->assertSame('0.500000', $row['complained_rate']);
-
-        $this->em->refresh($feedback);
-        $this->assertNotNull($feedback->getProcessedAt());
     }
 
     public function test_multi_domain_send_does_not_leak_across_domains(): void
@@ -177,15 +185,25 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
 
         $this->attempt($send, $recipient, $ipAddress, 'example.com', $date, SendRecipientStatus::ACCEPTED);
 
+        $this->em->getConnection()->insert('stats_project', [
+            'project_id' => $project->getId(),
+            'stat_date' => $date->format('Y-m-d'),
+            'accepted' => 1,
+        ]);
+
         SendFeedbackFactory::createOne([
             'type' => SendFeedbackType::BOUNCE,
-            'project' => $project,
-            'send' => $send,
             'sendRecipient' => $recipient,
             'detail' => BounceReason::UNKNOWN->value,
         ]);
+        $this->markOutdated($recipient);
 
         $this->runHandler();
+
+        $projectRow = $this->row('stats_project', ['project_id' => $project->getId(), 'stat_date' => $date->format('Y-m-d')]);
+        $this->assertIsArray($projectRow);
+        $this->assertFalse($projectRow['is_outdated']);
+        $this->assertSame(1, $projectRow['bounced_unknown']);
 
         $row = $this->row('stats_ip_project', [
             'ip_address_id' => $ipAddress->getId(),
@@ -197,57 +215,33 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $this->assertSame(1, $row['bounced_unknown']);
     }
 
-    public function test_redacted_complaint_counts_for_project_and_ip_only(): void
+    public function test_only_flags_stats_of_the_accepted_day(): void
     {
-        $date = $this->now();
+        $day1 = $this->now()->modify('-3 days');
+        $day2 = $this->now()->modify('-2 days');
         $project = ProjectFactory::createOne();
         $ipAddress = IpAddressFactory::createOne();
-        $send = SendFactory::createOne(['project' => $project, 'created_at' => $date, 'ip_address' => $ipAddress]);
-        $first = SendRecipientFactory::createOne(['send' => $send]);
-        $second = SendRecipientFactory::createOne(['send' => $send]);
+        $send = SendFactory::createOne(['project' => $project, 'created_at' => $day1]);
+        $recipient = SendRecipientFactory::createOne(['send' => $send]);
 
-        $this->attempt($send, $first, $ipAddress, 'example.com', $date, SendRecipientStatus::ACCEPTED);
-        $this->attempt($send, $second, $ipAddress, 'example.com', $date, SendRecipientStatus::ACCEPTED);
+        $this->attempt($send, $recipient, $ipAddress, 'example.com', $day1, SendRecipientStatus::DEFERRED);
+        $this->attempt($send, $recipient, $ipAddress, 'example.com', $day2, SendRecipientStatus::ACCEPTED);
 
-        $feedback = SendFeedbackFactory::createOne([
-            'type' => SendFeedbackType::COMPLAINT,
-            'project' => $project,
-            'send' => $send,
-            'sendRecipient' => null,
-            'ip_address' => $ipAddress,
-        ]);
+        foreach ([$day1, $day2] as $day) {
+            $this->em->getConnection()->insert('stats_project', [
+                'project_id' => $project->getId(),
+                'stat_date' => $day->format('Y-m-d'),
+            ]);
+        }
 
-        $this->runHandler();
+        $this->markOutdated($recipient);
 
-        $statDate = $date->format('Y-m-d');
-
-        $this->em->refresh($feedback);
-        $this->assertSame($statDate, $feedback->getStatDate()?->format('Y-m-d'));
-
-        $projectRow = $this->row('stats_project', ['project_id' => $project->getId(), 'stat_date' => $statDate]);
-        $this->assertIsArray($projectRow);
-        $this->assertSame(1, $projectRow['complained']);
-
-        $ipRow = $this->row('stats_ip', ['ip_address_id' => $ipAddress->getId(), 'stat_date' => $statDate]);
-        $this->assertIsArray($ipRow);
-        $this->assertSame(1, $ipRow['complained']);
-
-        $ipProjectRow = $this->row('stats_ip_project', [
-            'ip_address_id' => $ipAddress->getId(),
-            'project_id' => $project->getId(),
-            'stat_date' => $statDate,
-        ]);
-        $this->assertIsArray($ipProjectRow);
-        $this->assertSame(1, $ipProjectRow['complained']);
-
-        $domainRow = $this->row('stats_delivery_domain', [
-            'project_id' => $project->getId(),
-            'ip_address_id' => $ipAddress->getId(),
-            'recipient_domain' => 'example.com',
-            'stat_date' => $statDate,
-        ]);
-        $this->assertIsArray($domainRow);
-        $this->assertSame(0, $domainRow['complained']);
+        $row1 = $this->row('stats_project', ['project_id' => $project->getId(), 'stat_date' => $day1->format('Y-m-d')]);
+        $row2 = $this->row('stats_project', ['project_id' => $project->getId(), 'stat_date' => $day2->format('Y-m-d')]);
+        $this->assertIsArray($row1);
+        $this->assertIsArray($row2);
+        $this->assertFalse($row1['is_outdated']);
+        $this->assertTrue($row2['is_outdated']);
     }
 
     public function test_skips_when_another_run_holds_the_lock(): void
@@ -295,12 +289,11 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
             'accepted' => 10,
         ]);
 
-        $feedback = SendFeedbackFactory::createOne([
+        SendFeedbackFactory::createOne([
             'type' => SendFeedbackType::COMPLAINT,
-            'project' => $project,
-            'send' => $send,
             'sendRecipient' => $recipient,
         ]);
+        $this->markOutdated($recipient);
 
         $this->runHandler();
 
@@ -308,9 +301,7 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $this->assertIsArray($row);
         $this->assertSame(10, $row['accepted']);
         $this->assertSame(0, $row['complained']);
-
-        $this->em->refresh($feedback);
-        $this->assertNotNull($feedback->getProcessedAt());
+        $this->assertTrue($row['is_outdated']);
     }
 
     public function test_catches_up_on_dates_missed_while_scheduler_was_down(): void

@@ -2,7 +2,7 @@
 
 namespace App\Service\Stats;
 
-use Doctrine\DBAL\ArrayParameterType;
+use App\Entity\SendRecipient;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -11,76 +11,54 @@ class StatsService
 {
     use ClockAwareTrait;
 
-    private const string REDACTED_CTE = <<<SQL
-        redacted AS (
-            SELECT project_id, ip_address_id
-            FROM send_feedback
-            WHERE type = 'complaint'
-            AND send_recipient_id IS NULL
-            AND stat_date = :date
-        )
-    SQL;
-
     public function __construct(private EntityManagerInterface $em)
     {
     }
 
     /**
-     * @return int[]
+     * Flags the stats of the day the recipient was accepted on as outdated,
+     * so the next stats update rebuilds that day
      */
-    public function getUnprocessedFeedbackIds(): array
+    public function markOutdated(SendRecipient $recipient): void
     {
-        /** @var int[] $ids */
-        $ids = $this->em->getConnection()->fetchFirstColumn(
-            'SELECT id FROM send_feedback WHERE processed_at IS NULL'
+        $this->em->getConnection()->executeStatement(
+            <<<SQL
+            UPDATE stats_project
+            SET is_outdated = TRUE
+            WHERE project_id = :projectId
+            AND stat_date = (
+                SELECT MIN(sa.created_at)::DATE
+                FROM send_attempts sa
+                JOIN send_attempt_recipients sar ON sar.send_attempt_id = sa.id
+                WHERE sar.send_recipient_id = :recipientId
+                AND sar.recipient_status = 'accepted'
+            )
+            SQL,
+            [
+                'projectId' => $recipient->getSend()->getProject()->getId(),
+                'recipientId' => $recipient->getId(),
+            ]
         );
-
-        return $ids;
     }
 
     /**
-     * @param int[] $feedbackIds
-     * @return string[]
+     * @return string[] Y-m-d dates having outdated stats, not older than $minDate
      */
-    public function assignFeedbackStatDates(array $feedbackIds): array
+    public function getOutdatedDates(string $minDate): array
     {
         /** @var string[] $dates */
         $dates = $this->em->getConnection()->fetchFirstColumn(
-            <<<SQL
-            WITH updated AS (
-                UPDATE send_feedback sf
-                SET stat_date = (
-                    SELECT MIN(sa.created_at)::DATE
-                    FROM send_attempts sa
-                    JOIN send_attempt_recipients sar ON sar.send_attempt_id = sa.id
-                    WHERE sa.send_id = sf.send_id
-                    AND sar.recipient_status = 'accepted'
-                    AND (sf.send_recipient_id IS NULL OR sar.send_recipient_id = sf.send_recipient_id)
-                )
-                WHERE sf.id IN (:ids)
-                RETURNING sf.stat_date
-            )
-            SELECT DISTINCT stat_date FROM updated WHERE stat_date IS NOT NULL
-            SQL,
-            ['ids' => $feedbackIds],
-            ['ids' => ArrayParameterType::INTEGER]
+            'SELECT DISTINCT stat_date FROM stats_project WHERE is_outdated AND stat_date >= :minDate',
+            ['minDate' => $minDate]
         );
 
         return $dates;
     }
 
     /**
-     * @param int[] $feedbackIds
+     * Recalculates all stats of the given day. Rows of the day are deleted and re-inserted,
+     * which also resets stats_project.is_outdated (defaults to false) once the transaction commits.
      */
-    public function markFeedbackProcessed(array $feedbackIds): void
-    {
-        $this->em->getConnection()->executeStatement(
-            'UPDATE send_feedback SET processed_at = :now WHERE id IN (:ids)',
-            ['now' => $this->now()->format('Y-m-d H:i:sP'), 'ids' => $feedbackIds],
-            ['ids' => ArrayParameterType::INTEGER]
-        );
-    }
-
     public function rebuildDate(string $date): void
     {
         $nextDate = new \DateTimeImmutable($date)->modify('+1 day')->format('Y-m-d');
@@ -159,11 +137,8 @@ class StatsService
     {
         $connection->executeStatement('DELETE FROM stats_project WHERE stat_date = :date', ['date' => $date]);
 
-        $redacted = self::REDACTED_CTE;
-
         $connection->executeStatement(<<<SQL
             WITH
-            $redacted,
             submitted AS (
                 SELECT
                     s.project_id,
@@ -196,16 +171,10 @@ class StatsService
                 FROM stats_attempted
                 GROUP BY project_id
             ),
-            redacted_complaints AS (
-                SELECT project_id, COUNT(*) AS complained
-                FROM redacted
-                GROUP BY project_id
-            ),
             projects AS (
                 SELECT project_id FROM submitted
                 UNION SELECT project_id FROM attempts
                 UNION SELECT project_id FROM delivered
-                UNION SELECT project_id FROM redacted_complaints
             ),
             counts AS (
                 SELECT
@@ -221,12 +190,11 @@ class StatsService
                     COALESCE(d.bounced_infrastructure, 0) AS bounced_infrastructure,
                     COALESCE(d.bounced_unknown, 0) AS bounced_unknown,
                     COALESCE(d.failed, 0) AS failed,
-                    COALESCE(d.complained, 0) + COALESCE(rc.complained, 0) AS complained
+                    COALESCE(d.complained, 0) AS complained
                 FROM projects p
                 LEFT JOIN submitted sub ON sub.project_id = p.project_id
                 LEFT JOIN attempts a ON a.project_id = p.project_id
                 LEFT JOIN delivered d ON d.project_id = p.project_id
-                LEFT JOIN redacted_complaints rc ON rc.project_id = p.project_id
             )
             INSERT INTO stats_project (
                 project_id, stat_date,
@@ -255,11 +223,8 @@ class StatsService
     {
         $connection->executeStatement('DELETE FROM stats_ip WHERE stat_date = :date', ['date' => $date]);
 
-        $redacted = self::REDACTED_CTE;
-
         $connection->executeStatement(<<<SQL
             WITH
-            $redacted,
             submitted AS (
                 SELECT
                     s.ip_address_id,
@@ -291,17 +256,10 @@ class StatsService
                 FROM stats_attempted
                 GROUP BY ip_address_id
             ),
-            redacted_complaints AS (
-                SELECT ip_address_id, COUNT(*) AS complained
-                FROM redacted
-                WHERE ip_address_id IS NOT NULL
-                GROUP BY ip_address_id
-            ),
             ips AS (
                 SELECT ip_address_id FROM submitted
                 UNION SELECT ip_address_id FROM attempts
                 UNION SELECT ip_address_id FROM delivered
-                UNION SELECT ip_address_id FROM redacted_complaints
             ),
             counts AS (
                 SELECT
@@ -317,12 +275,11 @@ class StatsService
                     COALESCE(d.bounced_infrastructure, 0) AS bounced_infrastructure,
                     COALESCE(d.bounced_unknown, 0) AS bounced_unknown,
                     COALESCE(d.failed, 0) AS failed,
-                    COALESCE(d.complained, 0) + COALESCE(rc.complained, 0) AS complained
+                    COALESCE(d.complained, 0) AS complained
                 FROM ips i
                 LEFT JOIN submitted sub ON sub.ip_address_id = i.ip_address_id
                 LEFT JOIN attempts a ON a.ip_address_id = i.ip_address_id
                 LEFT JOIN delivered d ON d.ip_address_id = i.ip_address_id
-                LEFT JOIN redacted_complaints rc ON rc.ip_address_id = i.ip_address_id
             )
             INSERT INTO stats_ip (
                 ip_address_id, stat_date,
@@ -351,11 +308,8 @@ class StatsService
     {
         $connection->executeStatement('DELETE FROM stats_ip_project WHERE stat_date = :date', ['date' => $date]);
 
-        $redacted = self::REDACTED_CTE;
-
         $connection->executeStatement(<<<SQL
             WITH
-            $redacted,
             delivered AS (
                 SELECT
                     ip_address_id,
@@ -368,26 +322,6 @@ class StatsService
                     COUNT(DISTINCT send_recipient_id) FILTER (WHERE complained) AS complained
                 FROM stats_attempted
                 GROUP BY ip_address_id, project_id
-            ),
-            redacted_complaints AS (
-                SELECT ip_address_id, project_id, COUNT(*) AS complained
-                FROM redacted
-                WHERE ip_address_id IS NOT NULL
-                GROUP BY ip_address_id, project_id
-            ),
-            counts AS (
-                SELECT
-                    COALESCE(d.ip_address_id, rc.ip_address_id) AS ip_address_id,
-                    COALESCE(d.project_id, rc.project_id) AS project_id,
-                    COALESCE(d.sent, 0) AS sent,
-                    COALESCE(d.accepted, 0) AS accepted,
-                    COALESCE(d.bounced_recipient, 0) AS bounced_recipient,
-                    COALESCE(d.bounced_infrastructure, 0) AS bounced_infrastructure,
-                    COALESCE(d.bounced_unknown, 0) AS bounced_unknown,
-                    COALESCE(d.complained, 0) + COALESCE(rc.complained, 0) AS complained
-                FROM delivered d
-                FULL JOIN redacted_complaints rc
-                    ON rc.ip_address_id = d.ip_address_id AND rc.project_id = d.project_id
             )
             INSERT INTO stats_ip_project (
                 ip_address_id, project_id, stat_date,
@@ -401,7 +335,7 @@ class StatsService
                 ROUND(bounced_infrastructure::NUMERIC / NULLIF(sent, 0), 4),
                 ROUND(bounced_unknown::NUMERIC / NULLIF(sent, 0), 4),
                 ROUND(complained::NUMERIC / NULLIF(accepted, 0), 6)
-            FROM counts
+            FROM delivered
         SQL, ['date' => $date, 'nextDate' => $nextDate]);
     }
 

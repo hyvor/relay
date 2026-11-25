@@ -40,6 +40,7 @@ final class Version20260610074736 extends AbstractMigration
                 complained_rate NUMERIC(7,6),
                 suppressed_rate NUMERIC(6,4),
                 failed_rate NUMERIC(6,4),
+                is_outdated BOOLEAN NOT NULL DEFAULT FALSE,
                 PRIMARY KEY (project_id, stat_date)
             )
         ");

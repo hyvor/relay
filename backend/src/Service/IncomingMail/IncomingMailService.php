@@ -15,7 +15,6 @@ use App\Service\IncomingMail\Event\IncomingBounceEvent;
 use App\Service\IncomingMail\Event\IncomingComplaintEvent;
 use App\Service\InfrastructureBounce\InfrastructureBounceService;
 use App\Service\Send\SendService;
-use App\Service\SendAttempt\SendAttemptService;
 use App\Service\SendFeedback\SendFeedbackService;
 use App\Service\SendRecipient\SendRecipientService;
 use App\Service\Suppression\SuppressionService;
@@ -28,7 +27,6 @@ class IncomingMailService
         private SendService $sendService,
         private SuppressionService $suppressionService,
         private SendRecipientService $sendRecipientService,
-        private SendAttemptService $sendAttemptService,
         private SendFeedbackService $sendFeedbackService,
         private InfrastructureBounceService $infrastructureBounceService,
         private LoggerInterface $logger,
@@ -103,10 +101,8 @@ class IncomingMailService
 
             $this->sendFeedbackService->createSendFeedback(
                 SendFeedbackType::BOUNCE,
-                $send,
                 $sendRecipient,
                 $debugIncomingEmail,
-                $this->sendAttemptService->getAcceptedSendAttemptOfRecipient($sendRecipient)?->getIpAddress(),
                 $bounceReason->value,
             );
 
@@ -159,23 +155,27 @@ class IncomingMailService
             return;
         }
 
-        // Redacted reports do not identify the recipient, so every redacted complaint
-        // on a send is treated as a duplicate of the first one
-        $sendRecipient = null;
-        if ($arfInput->OriginalRcptTo !== '') {
-            $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $arfInput->OriginalRcptTo);
-            if ($sendRecipient === null) {
-                // @codeCoverageIgnoreStart
-                $this->logger->error('Failed to get send recipient by email', [
-                    'uuid' => $uuid,
-                    'recipient' => $arfInput->OriginalRcptTo,
-                ]);
-                return;
-                // @codeCoverageIgnoreEnd
-            }
+        // Reports that do not identify the recipient are ignored for now
+        // see https://github.com/hyvor/relay/issues/536
+        if ($arfInput->OriginalRcptTo === '') {
+            $this->logger->info('Received complaint without a recipient', [
+                'uuid' => $uuid,
+            ]);
+            return;
         }
 
-        if ($this->sendFeedbackService->hasComplaint($send, $sendRecipient)) {
+        $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $arfInput->OriginalRcptTo);
+        if ($sendRecipient === null) {
+            // @codeCoverageIgnoreStart
+            $this->logger->error('Failed to get send recipient by email', [
+                'uuid' => $uuid,
+                'recipient' => $arfInput->OriginalRcptTo,
+            ]);
+            return;
+            // @codeCoverageIgnoreEnd
+        }
+
+        if ($this->sendFeedbackService->hasComplaint($sendRecipient)) {
             $this->logger->info('Received duplicate complaint', [
                 'uuid' => $uuid,
                 'recipient' => $arfInput->OriginalRcptTo,
@@ -183,22 +183,12 @@ class IncomingMailService
             return;
         }
 
-        $ipAddress = $sendRecipient === null
-            ? $send->getIpAddress()
-            : $this->sendAttemptService->getAcceptedSendAttemptOfRecipient($sendRecipient)?->getIpAddress();
-
         $this->sendFeedbackService->createSendFeedback(
             SendFeedbackType::COMPLAINT,
-            $send,
             $sendRecipient,
             $debugIncomingEmail,
-            $ipAddress,
             $arfInput->FeedbackType
         );
-
-        if ($sendRecipient === null) {
-            return;
-        }
 
         $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::COMPLAINED);
 

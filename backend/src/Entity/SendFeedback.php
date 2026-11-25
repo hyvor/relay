@@ -24,21 +24,9 @@ class SendFeedback
     #[ORM\Column(type: "string", enumType: SendFeedbackType::class)]
     private SendFeedbackType $type;
 
-    #[ORM\ManyToOne(targetEntity: Project::class)]
-    #[ORM\JoinColumn(nullable: true)]
-    private ?Project $project = null;
-
-    #[ORM\ManyToOne(targetEntity: Send::class)]
-    #[ORM\JoinColumn(nullable: true)]
-    private ?Send $send = null;
-
     #[ORM\ManyToOne(targetEntity: SendRecipient::class)]
-    #[ORM\JoinColumn(nullable: true)]
-    private ?SendRecipient $send_recipient = null;
-
-    #[ORM\ManyToOne(targetEntity: IpAddress::class)]
-    #[ORM\JoinColumn(nullable: true, onDelete: "CASCADE")]
-    private ?IpAddress $ip_address = null;
+    #[ORM\JoinColumn]
+    private SendRecipient $send_recipient;
 
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $detail = null;
@@ -46,12 +34,6 @@ class SendFeedback
     #[ORM\OneToOne(targetEntity: DebugIncomingEmail::class)]
     #[ORM\JoinColumn]
     private DebugIncomingEmail $debugIncomingEmail;
-
-    #[ORM\Column(type: "datetime_immutable", nullable: true)]
-    private ?\DateTimeImmutable $processed_at = null;
-
-    #[ORM\Column(type: "date_immutable", nullable: true)]
-    private ?\DateTimeImmutable $stat_date = null;
 
     public function getId(): int
     {
@@ -97,47 +79,14 @@ class SendFeedback
         return $this;
     }
 
-    public function getProject(): ?Project
-    {
-        return $this->project;
-    }
-
-    public function setProject(?Project $project): static
-    {
-        $this->project = $project;
-        return $this;
-    }
-
-    public function getSend(): ?Send
-    {
-        return $this->send;
-    }
-
-    public function setSend(?Send $send): static
-    {
-        $this->send = $send;
-        return $this;
-    }
-
-    public function getSendRecipient(): ?SendRecipient
+    public function getSendRecipient(): SendRecipient
     {
         return $this->send_recipient;
     }
 
-    public function setSendRecipient(?SendRecipient $send_recipient): static
+    public function setSendRecipient(SendRecipient $send_recipient): static
     {
         $this->send_recipient = $send_recipient;
-        return $this;
-    }
-
-    public function getIpAddress(): ?IpAddress
-    {
-        return $this->ip_address;
-    }
-
-    public function setIpAddress(?IpAddress $ipAddress): static
-    {
-        $this->ip_address = $ipAddress;
         return $this;
     }
 
@@ -162,27 +111,4 @@ class SendFeedback
         $this->debugIncomingEmail = $debugIncomingEmail;
         return $this;
     }
-
-    public function getProcessedAt(): ?\DateTimeImmutable
-    {
-        return $this->processed_at;
-    }
-
-    public function setProcessedAt(?\DateTimeImmutable $processedAt): static
-    {
-        $this->processed_at = $processedAt;
-        return $this;
-    }
-
-    public function getStatDate(): ?\DateTimeImmutable
-    {
-        return $this->stat_date;
-    }
-
-    public function setStatDate(?\DateTimeImmutable $statDate): static
-    {
-        $this->stat_date = $statDate;
-        return $this;
-    }
 }
-

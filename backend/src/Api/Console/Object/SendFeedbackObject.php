@@ -12,7 +12,7 @@ class SendFeedbackObject
     public int $id;
     public int $created_at;
     public SendFeedbackType $type;
-    public ?int $recipient_id;
+    public int $recipient_id;
     public int $debug_incoming_email_id;
     public ?BounceReason $bounce_reason;
 
@@ -21,7 +21,7 @@ class SendFeedbackObject
         $this->id = $sendFeedback->getId();
         $this->created_at = $sendFeedback->getCreatedAt()->getTimestamp();
         $this->type = $sendFeedback->getType();
-        $this->recipient_id = $sendFeedback->getSendRecipient()?->getId();
+        $this->recipient_id = $sendFeedback->getSendRecipient()->getId();
         $this->debug_incoming_email_id = $sendFeedback->getDebugIncomingEmail()->getId();
         $this->bounce_reason = $sendFeedback->getType() === SendFeedbackType::BOUNCE
             ? BounceReason::tryFrom((string) $sendFeedback->getDetail())

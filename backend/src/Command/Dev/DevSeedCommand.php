@@ -185,8 +185,6 @@ class DevSeedCommand extends Command
                 $allRecipients[] = $recipient[0];
 
                 SendFeedbackFactory::createOne([
-                    'project' => $project,
-                    'send' => $send,
                     'sendRecipient' => $recipient[0],
                     'type' => SendFeedbackType::cases()[array_rand(SendFeedbackType::cases())],
                 ]);

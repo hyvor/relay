@@ -61,7 +61,6 @@ class GetSendByUuidTest extends WebTestCase
         ]);
 
         SendFeedbackFactory::createOne([
-            'send' => $sendEntity,
             'sendRecipient' => $recipient,
             'detail' => BounceReason::INFRASTRUCTURE->value,
         ]);
