@@ -3,7 +3,6 @@
 namespace App\Service\Stats\MessageHandler;
 
 use App\Service\Instance\InstanceService;
-use App\Service\Send\MessageHandler\ClearExpiredSendsMessageHandler;
 use App\Service\Stats\Message\UpdateStatsMessage;
 use App\Service\Stats\StatsService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -17,7 +16,7 @@ class UpdateStatsMessageHandler
     use ClockAwareTrait;
 
     public const string LOCK_NAME = "stats_update";
-    public const int MAX_REBUILD_AGE_DAYS = ClearExpiredSendsMessageHandler::RETENTION_DAYS - 2;
+    public const int MAX_REBUILD_AGE_DAYS = 30 - 2; // sends are retained for 30 days (ClearExpiredSendsMessageHandler)
 
     public function __construct(
         private StatsService $statsService,
