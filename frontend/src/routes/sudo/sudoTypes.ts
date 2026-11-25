@@ -283,8 +283,6 @@ export interface SudoStatsRates {
 export interface SudoStatsCounts {
 	sends: number;
 	send_recipients: number;
-	send_attempts: number;
-	attempted: number;
 	accepted: number;
 	deferred: number;
 	bounced: number;
@@ -306,6 +304,8 @@ export interface SudoStatsDaily extends SudoStatsCounts {
 }
 
 export interface SudoStatsIp extends SudoStatsCounts {
+	send_attempts: number;
+	attempted: number;
 	id: number;
 	ip: string;
 	server: string;
@@ -318,6 +318,7 @@ export interface SudoStatsProject extends SudoStatsCounts {
 }
 
 export interface SudoStatsDomain extends SudoStatsCounts {
+	attempted: number;
 	domain: string;
 }
 

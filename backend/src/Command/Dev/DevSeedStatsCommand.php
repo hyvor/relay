@@ -213,7 +213,8 @@ class DevSeedStatsCommand extends Command
                             }
                         }
 
-                        foreach (['attempted', 'accepted', 'deferred', 'bounced_recipient', 'bounced_infrastructure', 'bounced_unknown', 'failed', 'complained'] as $f) {
+                        // project stats count recipients by status: accepted is calculated below
+                        foreach (['deferred', 'bounced_recipient', 'bounced_infrastructure', 'bounced_unknown', 'failed', 'complained'] as $f) {
                             $project[$f] += $ipc[$f];
                         }
 
@@ -221,6 +222,14 @@ class DevSeedStatsCommand extends Command
                             $ipTotals[$ipId][$f] = ($ipTotals[$ipId][$f] ?? 0) + $v;
                         }
                     }
+
+                    // every recipient is in exactly one status (accepted does not include complained)
+                    $project['accepted'] = max(
+                        0,
+                        $recipients - $project['suppressed'] - $project['deferred'] - $project['bounced_recipient']
+                            - $project['bounced_infrastructure'] - $project['bounced_unknown']
+                            - $project['failed'] - $project['complained']
+                    );
 
                     $this->insertProject($projectId, $dateStr, $project);
                     $rows++;
@@ -278,6 +287,7 @@ class DevSeedStatsCommand extends Command
             'send_recipients' => 0,
             'send_attempts' => 0,
             'attempted' => 0,
+            'queued' => 0,
             'sent' => 0,
             'accepted' => 0,
             'deferred' => 0,
@@ -292,18 +302,21 @@ class DevSeedStatsCommand extends Command
 
     /**
      * @param array<string, int> $c
+     * @param bool $byRecipients stats_project: rates are based on send_recipients, and complained_rate on
+     *                           accepted + complained. Otherwise rates are based on attempts.
      * @return array<string, float|null>
      */
-    private function rates(array $c, bool $full): array
+    private function rates(array $c, bool $full, bool $byRecipients = false): array
     {
-        $att = $c['attempted'] ?: ($c['sent'] ?? 0);
+        $att = $byRecipients ? $c['send_recipients'] : ($c['attempted'] ?: ($c['sent'] ?? 0));
+        $complaintBase = $byRecipients ? $c['accepted'] + $c['complained'] : $c['accepted'];
         $r = fn(int $n, int $d, int $p) => $d > 0 ? round($n / $d, $p) : null;
 
         $rates = [
             'bounced_recipient_rate' => $r($c['bounced_recipient'], $att, 4),
             'bounced_infrastructure_rate' => $r($c['bounced_infrastructure'], $att, 4),
             'bounced_unknown_rate' => $r($c['bounced_unknown'], $att, 4),
-            'complained_rate' => $r($c['complained'], $c['accepted'], 6),
+            'complained_rate' => $r($c['complained'], $complaintBase, 6),
         ];
 
         if ($full) {
@@ -323,13 +336,13 @@ class DevSeedStatsCommand extends Command
      * @param array<string, int|float|string|null> $keys
      * @param string[] $countFields
      */
-    private function insert(string $table, array $keys, array $c, array $countFields, bool $fullRates, bool $bounceRates = true): void
+    private function insert(string $table, array $keys, array $c, array $countFields, bool $fullRates, bool $bounceRates = true, bool $byRecipients = false): void
     {
         $data = $keys;
         foreach ($countFields as $f) {
             $data[$f] = $c[$f];
         }
-        $rates = $this->rates($c, $fullRates);
+        $rates = $this->rates($c, $fullRates, $byRecipients);
         if (!$bounceRates) {
             $rates = ['complained_rate' => $rates['complained_rate']];
         }
@@ -348,8 +361,7 @@ class DevSeedStatsCommand extends Command
             [
                 'sends',
                 'send_recipients',
-                'send_attempts',
-                'attempted',
+                'queued',
                 'accepted',
                 'deferred',
                 'bounced_recipient',
@@ -359,6 +371,8 @@ class DevSeedStatsCommand extends Command
                 'suppressed',
                 'failed'
             ],
+            true,
+            true,
             true,
         );
     }
@@ -374,6 +388,7 @@ class DevSeedStatsCommand extends Command
                 'sends',
                 'send_recipients',
                 'send_attempts',
+                'attempted',
                 'accepted',
                 'deferred',
                 'bounced_recipient',

@@ -127,7 +127,7 @@
 			}
 		}
 		for (const p of stats.projects) {
-			if (p.attempted < 100) continue;
+			if (p.send_recipients < 100) continue;
 			if (complaintLevel(p.rates.complaint) === 'bad') {
 				out.push({
 					level: 'bad',
@@ -162,10 +162,10 @@
 		return [
 			{ label: 'Submitted', value: t.send_recipients, cls: 'f-grey' },
 			{ label: 'Suppressed', value: t.suppressed, cls: 'f-orange' },
-			{ label: 'Attempted', value: t.attempted, cls: 'f-blue' },
 			{ label: 'Accepted', value: t.accepted, cls: 'f-green' },
 			{ label: 'Deferred', value: t.deferred, cls: 'f-grey' },
 			{ label: 'Bounced', value: t.bounced, cls: 'f-red' },
+			{ label: 'Complained', value: t.complained, cls: 'f-blue' },
 			{ label: 'Failed', value: t.failed, cls: 'f-purple' }
 		].map((f) => ({ ...f, width: Math.max(1, (f.value / base) * 100) }));
 	}
@@ -275,7 +275,7 @@
 					<div class="kpis">
 						{@render kpi('Emails submitted', compactNum(t.send_recipients), 'ok', delta(t.send_recipients, pt.send_recipients, false), 'Recipients accepted into the queue (including suppressed ones)')}
 						{@render kpi('Active projects', num(t.projects), 'ok', delta(t.projects, pt.projects, false), 'Projects that submitted at least one email')}
-						{@render kpi('Delivered', pct(t.rates.accepted, 1), 'ok', delta(t.rates.accepted, pt.rates.accepted, false), 'Accepted by the receiving server ÷ attempted')}
+						{@render kpi('Delivered', pct(t.rates.accepted, 1), 'ok', delta(t.rates.accepted, pt.rates.accepted, false), 'Accepted by the receiving server ÷ submitted')}
 						{@render kpi('Suppressed', pct(t.rates.suppressed, 1), 'ok', delta(t.rates.suppressed, pt.rates.suppressed), 'Recipients skipped because they are on a suppression list')}
 					</div>
 				</section>
@@ -283,8 +283,8 @@
 				<section class="section s-health">
 					<div class="section-title">Reputation</div>
 					<div class="kpis">
-						{@render kpi('Bounce rate', pct(t.rates.bounce), bounceLevel(t.rates.bounce), delta(t.rates.bounce, pt.rates.bounce), 'All bounces ÷ attempted. < 2% great, ≥ 5% warning, ≥ 10% critical')}
-						{@render kpi('Complaint rate', pct(t.rates.complaint), complaintLevel(t.rates.complaint), delta(t.rates.complaint, pt.rates.complaint), 'Spam complaints ÷ accepted. Keep < 0.10%; Gmail/Yahoo enforce 0.30%')}
+						{@render kpi('Bounce rate', pct(t.rates.bounce), bounceLevel(t.rates.bounce), delta(t.rates.bounce, pt.rates.bounce), 'All bounces ÷ submitted. < 2% great, ≥ 5% warning, ≥ 10% critical')}
+						{@render kpi('Complaint rate', pct(t.rates.complaint), complaintLevel(t.rates.complaint), delta(t.rates.complaint, pt.rates.complaint), 'Spam complaints ÷ (accepted + complained). Keep < 0.10%; Gmail/Yahoo enforce 0.30%')}
 						{@render kpi('Infra bounces', pct(t.rates.bounce_infrastructure), infraLevel(t.rates.bounce_infrastructure), delta(t.rates.bounce_infrastructure, pt.rates.bounce_infrastructure), 'Bounces caused by our infrastructure (blocklists, PTR, throttling). Should be ~0%')}
 						{@render kpi('Deferred', pct(t.rates.deferred, 1), deferLevel(t.rates.deferred), delta(t.rates.deferred, pt.rates.deferred), 'Recipients still being retried (receivers throttling us)')}
 					</div>
