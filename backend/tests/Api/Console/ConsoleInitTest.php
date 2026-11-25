@@ -134,9 +134,6 @@ class ConsoleInitTest extends WebTestCase
         AuthFake::enableForSymfony($this->container, ['id' => 1]);
 
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
-        // Pre-create an Instance so getInstance() in init doesn't lazily create one
-        // (which would dispatch ProjectCreatingEvent and trip the cloud non-sudo guard).
-        InstanceFactory::createOne();
 
         $this->client->request(
             "GET",
