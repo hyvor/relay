@@ -37,7 +37,7 @@ final class SendAttemptRecipientFactory extends PersistentObjectFactory
             'smtp_message' => self::faker()->sentence(),
             'recipient_status' => SendRecipientStatus::ACCEPTED,
             'is_suppressed' => false,
-            'bounced_reason' => null,
+            'bounced_reason' => BounceReason::UNKNOWN,
         ];
     }
 }

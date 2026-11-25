@@ -222,13 +222,9 @@ func (b *SendTransaction) RecordAttempt(
 			}
 		}
 
-		var bounceReason sql.NullString
-
+		bounceReason := BounceReasonUnknown
 		if reason := rcptResult.GetBounceReason(); reason != "" {
-			bounceReason = sql.NullString{
-				String: string(reason),
-				Valid:  true,
-			}
+			bounceReason = reason
 		}
 
 		// record current results in send_attempt_recipients

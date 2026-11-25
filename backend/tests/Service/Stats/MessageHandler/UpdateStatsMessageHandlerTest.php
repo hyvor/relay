@@ -61,7 +61,7 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
             ]),
             'send_recipient_id' => $recipient->getId(),
             'recipient_status' => $status,
-            'bounced_reason' => $bounceReason,
+            'bounced_reason' => $bounceReason ?? BounceReason::UNKNOWN,
             'created_at' => $date,
         ]);
     }

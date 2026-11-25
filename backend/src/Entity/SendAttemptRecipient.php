@@ -44,8 +44,8 @@ class SendAttemptRecipient
     #[ORM\Column()]
     private bool $is_suppressed;
 
-    #[ORM\Column(type: "string", enumType: BounceReason::class, nullable: true, name: "bounce_reason")]
-    private ?BounceReason $bounced_reason = null;
+    #[ORM\Column(type: "string", enumType: BounceReason::class, name: "bounce_reason")]
+    private BounceReason $bounced_reason = BounceReason::UNKNOWN;
 
     public function __construct()
     {
@@ -163,15 +163,14 @@ class SendAttemptRecipient
         return $this;
     }
 
-    public function getBouncedReason(): ?BounceReason
+    public function getBouncedReason(): BounceReason
     {
         return $this->bounced_reason;
     }
 
-    public function setBouncedReason(?BounceReason $bounced_reason): static
+    public function setBouncedReason(BounceReason $bounced_reason): static
     {
         $this->bounced_reason = $bounced_reason;
         return $this;
     }
-
 }

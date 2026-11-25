@@ -22,8 +22,7 @@ class ClearExpiredSendsMessageHandler
         private EntityManagerInterface $em,
         private SendContentStorage $sendContentStorage,
         private LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function __invoke(ClearExpiredSendsMessage $message): void
     {
@@ -74,5 +73,4 @@ class ClearExpiredSendsMessageHandler
             }
         } while (count($sends) === self::BATCH_SIZE);
     }
-
 }
