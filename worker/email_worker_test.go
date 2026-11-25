@@ -648,9 +648,9 @@ func TestEmailWorker_AttemptSendToDomain_BounceReason(t *testing.T) {
 			recipients []*RecipientRow,
 			rcptDomain, instanceDomain string,
 			ipId int,
-			ip, ptr string,
+			ip, privateIp, ptr string,
 		) *SendResult {
-			return sendEmail(send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr)
+			return sendEmail(send, recipients, rcptDomain, instanceDomain, ipId, ip, privateIp, ptr)
 		},
 	}
 
@@ -662,6 +662,7 @@ func TestEmailWorker_AttemptSendToDomain_BounceReason(t *testing.T) {
 		instanceDomain string,
 		ipId int,
 		ip string,
+		privateIp string,
 		ptr string,
 	) *SendResult {
 		return &SendResult{
@@ -759,9 +760,9 @@ func TestEmailWorker_AttemptSendToDomain_BounceReason(t *testing.T) {
 			recipients []*RecipientRow,
 			rcptDomain, instanceDomain string,
 			ipId int,
-			ip, ptr string,
+			ip, privateIp, ptr string,
 		) *SendResult {
-			return sendEmail(send, recipients, rcptDomain, instanceDomain, ipId, ip, ptr)
+			return sendEmail(send, recipients, rcptDomain, instanceDomain, ipId, ip, privateIp, ptr)
 		},
 	}
 
@@ -772,6 +773,7 @@ func TestEmailWorker_AttemptSendToDomain_BounceReason(t *testing.T) {
 		instanceDomain string,
 		ipId int,
 		ip string,
+		privateIp string,
 		ptr string,
 	) *SendResult {
 		return &SendResult{
