@@ -27,10 +27,10 @@ class GetSudoStatsTest extends WebTestCase
             <<<SQL
             INSERT INTO stats_project (
                 project_id, stat_date,
-                send_recipients, attempted, accepted, bounced_recipient, bounced_infrastructure, complained
+                send_recipients, accepted, bounced_recipient, bounced_infrastructure, complained
             ) VALUES (
                 :projectId, :statDate,
-                :sendRecipients, :sendRecipients, :accepted, :bouncedRecipient, :bouncedInfrastructure, :complained
+                :sendRecipients, :accepted, :bouncedRecipient, :bouncedInfrastructure, :complained
             )
             SQL,
             [

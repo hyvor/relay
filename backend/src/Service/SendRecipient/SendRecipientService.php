@@ -7,12 +7,14 @@ use App\Entity\SendAttempt;
 use App\Entity\SendAttemptRecipient;
 use App\Entity\SendRecipient;
 use App\Entity\Type\SendRecipientStatus;
+use App\Service\Stats\StatsService;
 use Doctrine\ORM\EntityManagerInterface;
 
 class SendRecipientService
 {
     public function __construct(
         private EntityManagerInterface $em,
+        private StatsService $statsService,
     ) {
     }
 
@@ -53,6 +55,9 @@ class SendRecipientService
         $sendRecipient->setStatus($status);
         $this->em->persist($sendRecipient);
         $this->em->flush();
+
+        // stats_project counts recipients by the day they were added
+        $this->statsService->markDateOutdated($sendRecipient->getSend()->getCreatedAt());
     }
 
 }

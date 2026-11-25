@@ -16,14 +16,15 @@ final class Version20260610074736 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
+
+        // project stats are aggregated by send_recipient status
         $this->addSql("
             CREATE TABLE stats_project (
                 project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
                 stat_date DATE NOT NULL,
                 sends INT DEFAULT 0,
                 send_recipients INT DEFAULT 0,
-                send_attempts INT DEFAULT 0,
-                attempted INT DEFAULT 0,
+                queued INT DEFAULT 0,
                 accepted INT DEFAULT 0,
                 deferred INT DEFAULT 0,
                 bounced_recipient INT DEFAULT 0,
@@ -40,10 +41,11 @@ final class Version20260610074736 extends AbstractMigration
                 complained_rate NUMERIC(7,6),
                 suppressed_rate NUMERIC(6,4),
                 failed_rate NUMERIC(6,4),
-                is_outdated BOOLEAN NOT NULL DEFAULT FALSE,
                 PRIMARY KEY (project_id, stat_date)
             )
         ");
+
+        // the rest of the stats tables are aggregated by send_attempt_recipient
 
         $this->addSql("
             CREATE TABLE stats_ip (
@@ -52,13 +54,13 @@ final class Version20260610074736 extends AbstractMigration
                 sends INT DEFAULT 0,
                 send_recipients INT DEFAULT 0,
                 send_attempts INT DEFAULT 0,
+                attempted INT DEFAULT 0,
                 accepted INT DEFAULT 0,
                 deferred INT DEFAULT 0,
                 bounced_recipient INT DEFAULT 0,
                 bounced_infrastructure INT DEFAULT 0,
                 bounced_unknown INT DEFAULT 0,
                 complained INT DEFAULT 0,
-                suppressed INT DEFAULT 0,
                 failed INT DEFAULT 0,
                 accepted_rate NUMERIC(6,4),
                 deferred_rate NUMERIC(6,4),
@@ -66,7 +68,6 @@ final class Version20260610074736 extends AbstractMigration
                 bounced_infrastructure_rate NUMERIC(6,4),
                 bounced_unknown_rate NUMERIC(6,4),
                 complained_rate NUMERIC(7,6),
-                suppressed_rate NUMERIC(6,4),
                 failed_rate NUMERIC(6,4),
                 PRIMARY KEY (ip_address_id, stat_date)
             )
@@ -112,13 +113,18 @@ final class Version20260610074736 extends AbstractMigration
             ON stats_delivery_domain (project_id, ip_address_id, recipient_domain, stat_date)
             NULLS NOT DISTINCT
         ");
+
+
+        // dates (of stats) that need to be re-counted by the next stats update
+        $this->addSql("
+            CREATE TABLE stats_outdated_dates (
+                stat_date DATE NOT NULL PRIMARY KEY
+            )
+        ");
+
+        // finding the last attempt of a recipient (async bounces, complaints, stats)
+        $this->addSql('CREATE INDEX idx_send_attempt_recipients_send_recipient_id ON send_attempt_recipients (send_recipient_id)');
     }
 
-    public function down(Schema $schema): void
-    {
-        $this->addSql('DROP TABLE stats_delivery_domain');
-        $this->addSql('DROP TABLE stats_ip_project');
-        $this->addSql('DROP TABLE stats_ip');
-        $this->addSql('DROP TABLE stats_project');
-    }
+    public function down(Schema $schema): void {}
 }

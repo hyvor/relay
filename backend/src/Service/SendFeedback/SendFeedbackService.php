@@ -7,7 +7,6 @@ use App\Entity\Send;
 use App\Entity\SendFeedback;
 use App\Entity\SendRecipient;
 use App\Entity\Type\SendFeedbackType;
-use App\Service\Stats\StatsService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 
@@ -17,7 +16,6 @@ class SendFeedbackService
 
     public function __construct(
         private EntityManagerInterface $em,
-        private StatsService $statsService,
     ) {
     }
 
@@ -65,9 +63,6 @@ class SendFeedbackService
 
         $this->em->persist($sendFeedback);
         $this->em->flush();
-
-        // new feedback changes the outcome of the send, so the stats of that day are stale
-        $this->statsService->markOutdated($recipient);
 
         return $sendFeedback;
     }

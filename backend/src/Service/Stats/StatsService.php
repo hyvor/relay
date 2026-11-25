@@ -2,11 +2,25 @@
 
 namespace App\Service\Stats;
 
-use App\Entity\SendRecipient;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
 
+/**
+ * Stats serve two different purposes, and count two different things:
+ *
+ * 1. stats_project: what users see. Counts send recipients by their current status.
+ *    A day is the day the recipient was added (the project called the API to queue the email).
+ *    Attempts are not considered. One recipient is counted exactly once, in one status.
+ *
+ * 2. stats_ip, stats_ip_project, stats_delivery_domain: internal monitoring and alerting.
+ *    Counts attempts (send_attempt_recipients). A day is the day of the attempt.
+ *    One recipient may have multiple attempts, and each attempt is counted.
+ *
+ * Both are re-counted from scratch for a day by rebuildDate(). The stats update job re-counts today
+ * (and any day since the last run) plus the days flagged by markDateOutdated(), as the numbers of a
+ * past day change when late events (async bounces, complaints, retries) arrive.
+ */
 class StatsService
 {
     use ClockAwareTrait;
@@ -16,39 +30,31 @@ class StatsService
     }
 
     /**
-     * Flags the stats of the day the recipient was accepted on as outdated,
-     * so the next stats update rebuilds that day
+     * Flags the stats of the given day as outdated, so the next stats update re-counts that day.
+     * Today is skipped, since it is always re-counted.
      */
-    public function markOutdated(SendRecipient $recipient): void
+    public function markDateOutdated(\DateTimeInterface $date): void
     {
+        $statDate = $date->format('Y-m-d');
+
+        if ($statDate >= $this->now()->format('Y-m-d')) {
+            return;
+        }
+
         $this->em->getConnection()->executeStatement(
-            <<<SQL
-            UPDATE stats_project
-            SET is_outdated = TRUE
-            WHERE project_id = :projectId
-            AND stat_date = (
-                SELECT MIN(sa.created_at)::DATE
-                FROM send_attempts sa
-                JOIN send_attempt_recipients sar ON sar.send_attempt_id = sa.id
-                WHERE sar.send_recipient_id = :recipientId
-                AND sar.recipient_status = 'accepted'
-            )
-            SQL,
-            [
-                'projectId' => $recipient->getSend()->getProject()->getId(),
-                'recipientId' => $recipient->getId(),
-            ]
+            'INSERT INTO stats_outdated_dates (stat_date) VALUES (:statDate) ON CONFLICT DO NOTHING',
+            ['statDate' => $statDate]
         );
     }
 
     /**
-     * @return string[] Y-m-d dates having outdated stats, not older than $minDate
+     * @return string[] Y-m-d dates flagged as outdated, not older than $minDate
      */
     public function getOutdatedDates(string $minDate): array
     {
         /** @var string[] $dates */
         $dates = $this->em->getConnection()->fetchFirstColumn(
-            'SELECT DISTINCT stat_date FROM stats_project WHERE is_outdated AND stat_date >= :minDate',
+            'SELECT stat_date FROM stats_outdated_dates WHERE stat_date >= :minDate',
             ['minDate' => $minDate]
         );
 
@@ -56,169 +62,129 @@ class StatsService
     }
 
     /**
-     * Recalculates all stats of the given day. Rows of the day are deleted and re-inserted,
-     * which also resets stats_project.is_outdated (defaults to false) once the transaction commits.
+     * Re-counts all stats of the given day. Rows of the day are deleted and re-inserted.
      */
     public function rebuildDate(string $date): void
     {
         $nextDate = new \DateTimeImmutable($date)->modify('+1 day')->format('Y-m-d');
 
         $this->em->getConnection()->transactional(function (Connection $connection) use ($date, $nextDate) {
-            $this->createAttemptedTable($connection, $date, $nextDate);
+            // The flag is cleared first. If a late event flags the day again while this runs,
+            // the flag stays, and the day is re-counted once more by the next run.
+            $connection->executeStatement(
+                'DELETE FROM stats_outdated_dates WHERE stat_date = :date',
+                ['date' => $date]
+            );
+
             $this->rebuildProjectStats($connection, $date, $nextDate);
+
+            $this->createAttemptsTable($connection, $date, $nextDate);
             $this->rebuildIpStats($connection, $date, $nextDate);
             $this->rebuildIpProjectStats($connection, $date, $nextDate);
             $this->rebuildDeliveryDomainStats($connection, $date, $nextDate);
 
-            $connection->executeStatement('DROP TABLE stats_attempted');
+            $connection->executeStatement('DROP TABLE stats_attempts');
         });
     }
 
-    private function createAttemptedTable(Connection $connection, string $date, string $nextDate): void
-    {
-        $connection->executeStatement('DROP TABLE IF EXISTS stats_attempted');
-        $connection->executeStatement(<<<SQL
-            CREATE TEMP TABLE stats_attempted (
-                project_id BIGINT NOT NULL,
-                ip_address_id BIGINT NOT NULL,
-                domain TEXT NOT NULL,
-                send_recipient_id BIGINT NOT NULL,
-                recipient_status TEXT NOT NULL,
-                bounce_reason TEXT,
-                complained BOOLEAN NOT NULL
-            ) ON COMMIT DROP
-        SQL);
-
-        $connection->executeStatement(<<<SQL
-            INSERT INTO stats_attempted
-            WITH
-            day_attempts AS (
-                SELECT DISTINCT ON (sar.send_recipient_id)
-                    s.project_id,
-                    sa.ip_address_id,
-                    sa.domain,
-                    sar.send_recipient_id,
-                    sar.recipient_status::TEXT AS recipient_status,
-                    sar.bounce_reason::TEXT AS bounce_reason
-                FROM send_attempt_recipients sar
-                JOIN send_attempts sa ON sa.id = sar.send_attempt_id
-                JOIN sends s ON s.id = sa.send_id
-                WHERE sa.created_at >= :date AND sa.created_at < :nextDate
-                ORDER BY sar.send_recipient_id, sa.id DESC
-            ),
-            feedback AS (
-                SELECT
-                    sf.send_recipient_id,
-                    (ARRAY_AGG(sf.detail ORDER BY sf.id DESC) FILTER (WHERE sf.type = 'bounce'))[1] AS bounce_detail,
-                    BOOL_OR(sf.type = 'complaint') AS complained
-                FROM send_feedback sf
-                WHERE sf.send_recipient_id IN (
-                    SELECT send_recipient_id FROM day_attempts WHERE recipient_status = 'accepted'
-                )
-                GROUP BY sf.send_recipient_id
-            )
-            SELECT
-                d.project_id,
-                d.ip_address_id,
-                d.domain,
-                d.send_recipient_id,
-                d.recipient_status,
-                CASE
-                    WHEN d.recipient_status = 'bounced' THEN d.bounce_reason
-                    WHEN d.recipient_status = 'accepted' THEN f.bounce_detail
-                END,
-                d.recipient_status = 'accepted' AND COALESCE(f.complained, FALSE)
-            FROM day_attempts d
-            LEFT JOIN feedback f ON f.send_recipient_id = d.send_recipient_id
-        SQL, ['date' => $date, 'nextDate' => $nextDate]);
-    }
-
+    /**
+     * stats_project: send_recipients by status. The day is the day the recipient was added.
+     *
+     * - accepted includes complained recipients (the server accepted them before the complaint)
+     * - bounces are split by the bounce reason of the last attempt
+     * - rates are based on send_recipients (complained_rate is based on accepted)
+     */
     private function rebuildProjectStats(Connection $connection, string $date, string $nextDate): void
     {
         $connection->executeStatement('DELETE FROM stats_project WHERE stat_date = :date', ['date' => $date]);
 
         $connection->executeStatement(<<<SQL
             WITH
-            submitted AS (
+            recipients AS (
                 SELECT
                     s.project_id,
                     COUNT(DISTINCT s.id) AS sends,
                     COUNT(sr.id) AS send_recipients,
-                    COUNT(sr.id) FILTER (WHERE sr.status = 'suppressed') AS suppressed
+                    COUNT(sr.id) FILTER (WHERE sr.status = 'queued') AS queued,
+                    COUNT(sr.id) FILTER (WHERE sr.status IN ('accepted', 'complained')) AS accepted,
+                    COUNT(sr.id) FILTER (WHERE sr.status = 'deferred') AS deferred,
+                    COUNT(sr.id) FILTER (WHERE sr.status = 'bounced' AND la.bounce_reason = 'recipient') AS bounced_recipient,
+                    COUNT(sr.id) FILTER (WHERE sr.status = 'bounced' AND la.bounce_reason = 'infrastructure') AS bounced_infrastructure,
+                    COUNT(sr.id) FILTER (WHERE sr.status = 'bounced' AND la.bounce_reason IS DISTINCT FROM 'recipient' AND la.bounce_reason IS DISTINCT FROM 'infrastructure') AS bounced_unknown,
+                    COUNT(sr.id) FILTER (WHERE sr.status = 'complained') AS complained,
+                    COUNT(sr.id) FILTER (WHERE sr.status = 'suppressed') AS suppressed,
+                    COUNT(sr.id) FILTER (WHERE sr.status = 'failed') AS failed
                 FROM sends s
                 JOIN send_recipients sr ON sr.send_id = s.id
+                LEFT JOIN LATERAL (
+                    SELECT sar.bounce_reason::TEXT AS bounce_reason
+                    FROM send_attempt_recipients sar
+                    WHERE sr.status = 'bounced' AND sar.send_recipient_id = sr.id
+                    ORDER BY sar.id DESC
+                    LIMIT 1
+                ) la ON TRUE
                 WHERE s.created_at >= :date AND s.created_at < :nextDate
                 GROUP BY s.project_id
-            ),
-            attempts AS (
-                SELECT s.project_id, COUNT(sa.id) AS send_attempts
-                FROM send_attempts sa
-                JOIN sends s ON s.id = sa.send_id
-                WHERE sa.created_at >= :date AND sa.created_at < :nextDate
-                GROUP BY s.project_id
-            ),
-            delivered AS (
-                SELECT
-                    project_id,
-                    COUNT(DISTINCT send_recipient_id) AS attempted,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE recipient_status = 'accepted') AS accepted,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE recipient_status = 'deferred') AS deferred,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE bounce_reason = 'recipient') AS bounced_recipient,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE bounce_reason = 'infrastructure') AS bounced_infrastructure,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE bounce_reason = 'unknown') AS bounced_unknown,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE recipient_status = 'failed') AS failed,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE complained) AS complained
-                FROM stats_attempted
-                GROUP BY project_id
-            ),
-            projects AS (
-                SELECT project_id FROM submitted
-                UNION SELECT project_id FROM attempts
-                UNION SELECT project_id FROM delivered
-            ),
-            counts AS (
-                SELECT
-                    p.project_id,
-                    COALESCE(sub.sends, 0) AS sends,
-                    COALESCE(sub.send_recipients, 0) AS send_recipients,
-                    COALESCE(sub.suppressed, 0) AS suppressed,
-                    COALESCE(a.send_attempts, 0) AS send_attempts,
-                    COALESCE(d.attempted, 0) AS attempted,
-                    COALESCE(d.accepted, 0) AS accepted,
-                    COALESCE(d.deferred, 0) AS deferred,
-                    COALESCE(d.bounced_recipient, 0) AS bounced_recipient,
-                    COALESCE(d.bounced_infrastructure, 0) AS bounced_infrastructure,
-                    COALESCE(d.bounced_unknown, 0) AS bounced_unknown,
-                    COALESCE(d.failed, 0) AS failed,
-                    COALESCE(d.complained, 0) AS complained
-                FROM projects p
-                LEFT JOIN submitted sub ON sub.project_id = p.project_id
-                LEFT JOIN attempts a ON a.project_id = p.project_id
-                LEFT JOIN delivered d ON d.project_id = p.project_id
             )
             INSERT INTO stats_project (
                 project_id, stat_date,
-                sends, send_recipients, send_attempts, attempted,
+                sends, send_recipients, queued,
                 accepted, deferred, bounced_recipient, bounced_infrastructure, bounced_unknown, complained, suppressed, failed,
                 accepted_rate, deferred_rate, bounced_recipient_rate, bounced_infrastructure_rate, bounced_unknown_rate,
                 complained_rate, suppressed_rate, failed_rate
             )
             SELECT
                 project_id, :date,
-                sends, send_recipients, send_attempts, attempted,
+                sends, send_recipients, queued,
                 accepted, deferred, bounced_recipient, bounced_infrastructure, bounced_unknown, complained, suppressed, failed,
-                ROUND(accepted::NUMERIC / NULLIF(attempted, 0), 4),
-                ROUND(deferred::NUMERIC / NULLIF(attempted, 0), 4),
-                ROUND(bounced_recipient::NUMERIC / NULLIF(attempted, 0), 4),
-                ROUND(bounced_infrastructure::NUMERIC / NULLIF(attempted, 0), 4),
-                ROUND(bounced_unknown::NUMERIC / NULLIF(attempted, 0), 4),
+                ROUND(accepted::NUMERIC / NULLIF(send_recipients, 0), 4),
+                ROUND(deferred::NUMERIC / NULLIF(send_recipients, 0), 4),
+                ROUND(bounced_recipient::NUMERIC / NULLIF(send_recipients, 0), 4),
+                ROUND(bounced_infrastructure::NUMERIC / NULLIF(send_recipients, 0), 4),
+                ROUND(bounced_unknown::NUMERIC / NULLIF(send_recipients, 0), 4),
                 ROUND(complained::NUMERIC / NULLIF(accepted, 0), 6),
                 ROUND(suppressed::NUMERIC / NULLIF(send_recipients, 0), 4),
-                ROUND(failed::NUMERIC / NULLIF(attempted, 0), 4)
-            FROM counts
+                ROUND(failed::NUMERIC / NULLIF(send_recipients, 0), 4)
+            FROM recipients
         SQL, ['date' => $date, 'nextDate' => $nextDate]);
     }
 
+    /**
+     * One row per attempt (send_attempt_recipients) of the day. A recipient attempted multiple
+     * times has multiple rows. The bounce reason is only set for bounced attempts.
+     */
+    private function createAttemptsTable(Connection $connection, string $date, string $nextDate): void
+    {
+        $connection->executeStatement('DROP TABLE IF EXISTS stats_attempts');
+        $connection->executeStatement(<<<SQL
+            CREATE TEMP TABLE stats_attempts (
+                project_id BIGINT NOT NULL,
+                ip_address_id BIGINT NOT NULL,
+                domain TEXT NOT NULL,
+                recipient_status TEXT NOT NULL,
+                bounce_reason TEXT
+            ) ON COMMIT DROP
+        SQL);
+
+        $connection->executeStatement(<<<SQL
+            INSERT INTO stats_attempts
+            SELECT
+                s.project_id,
+                sa.ip_address_id,
+                sa.domain,
+                sar.recipient_status::TEXT,
+                CASE WHEN sar.recipient_status = 'bounced' THEN sar.bounce_reason::TEXT END
+            FROM send_attempt_recipients sar
+            JOIN send_attempts sa ON sa.id = sar.send_attempt_id
+            JOIN sends s ON s.id = sa.send_id
+            WHERE sa.created_at >= :date AND sa.created_at < :nextDate
+        SQL, ['date' => $date, 'nextDate' => $nextDate]);
+    }
+
+    /**
+     * stats_ip: attempts by status. The day is the day of the attempt.
+     * Sends and send_recipients are informational (by the day of the send).
+     */
     private function rebuildIpStats(Connection $connection, string $date, string $nextDate): void
     {
         $connection->executeStatement('DELETE FROM stats_ip WHERE stat_date = :date', ['date' => $date]);
@@ -229,8 +195,7 @@ class StatsService
                 SELECT
                     s.ip_address_id,
                     COUNT(DISTINCT s.id) AS sends,
-                    COUNT(sr.id) AS send_recipients,
-                    COUNT(sr.id) FILTER (WHERE sr.status = 'suppressed') AS suppressed
+                    COUNT(sr.id) AS send_recipients
                 FROM sends s
                 JOIN send_recipients sr ON sr.send_id = s.id
                 WHERE s.created_at >= :date AND s.created_at < :nextDate AND s.ip_address_id IS NOT NULL
@@ -245,15 +210,15 @@ class StatsService
             delivered AS (
                 SELECT
                     ip_address_id,
-                    COUNT(DISTINCT send_recipient_id) AS attempted,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE recipient_status = 'accepted') AS accepted,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE recipient_status = 'deferred') AS deferred,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE bounce_reason = 'recipient') AS bounced_recipient,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE bounce_reason = 'infrastructure') AS bounced_infrastructure,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE bounce_reason = 'unknown') AS bounced_unknown,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE recipient_status = 'failed') AS failed,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE complained) AS complained
-                FROM stats_attempted
+                    COUNT(*) AS attempted,
+                    COUNT(*) FILTER (WHERE recipient_status IN ('accepted', 'complained')) AS accepted,
+                    COUNT(*) FILTER (WHERE recipient_status = 'deferred') AS deferred,
+                    COUNT(*) FILTER (WHERE bounce_reason = 'recipient') AS bounced_recipient,
+                    COUNT(*) FILTER (WHERE bounce_reason = 'infrastructure') AS bounced_infrastructure,
+                    COUNT(*) FILTER (WHERE bounce_reason = 'unknown') AS bounced_unknown,
+                    COUNT(*) FILTER (WHERE recipient_status = 'failed') AS failed,
+                    COUNT(*) FILTER (WHERE recipient_status = 'complained') AS complained
+                FROM stats_attempts
                 GROUP BY ip_address_id
             ),
             ips AS (
@@ -266,7 +231,6 @@ class StatsService
                     i.ip_address_id,
                     COALESCE(sub.sends, 0) AS sends,
                     COALESCE(sub.send_recipients, 0) AS send_recipients,
-                    COALESCE(sub.suppressed, 0) AS suppressed,
                     COALESCE(a.send_attempts, 0) AS send_attempts,
                     COALESCE(d.attempted, 0) AS attempted,
                     COALESCE(d.accepted, 0) AS accepted,
@@ -283,22 +247,21 @@ class StatsService
             )
             INSERT INTO stats_ip (
                 ip_address_id, stat_date,
-                sends, send_recipients, send_attempts,
-                accepted, deferred, bounced_recipient, bounced_infrastructure, bounced_unknown, complained, suppressed, failed,
+                sends, send_recipients, send_attempts, attempted,
+                accepted, deferred, bounced_recipient, bounced_infrastructure, bounced_unknown, complained, failed,
                 accepted_rate, deferred_rate, bounced_recipient_rate, bounced_infrastructure_rate, bounced_unknown_rate,
-                complained_rate, suppressed_rate, failed_rate
+                complained_rate, failed_rate
             )
             SELECT
                 ip_address_id, :date,
-                sends, send_recipients, send_attempts,
-                accepted, deferred, bounced_recipient, bounced_infrastructure, bounced_unknown, complained, suppressed, failed,
+                sends, send_recipients, send_attempts, attempted,
+                accepted, deferred, bounced_recipient, bounced_infrastructure, bounced_unknown, complained, failed,
                 ROUND(accepted::NUMERIC / NULLIF(attempted, 0), 4),
                 ROUND(deferred::NUMERIC / NULLIF(attempted, 0), 4),
                 ROUND(bounced_recipient::NUMERIC / NULLIF(attempted, 0), 4),
                 ROUND(bounced_infrastructure::NUMERIC / NULLIF(attempted, 0), 4),
                 ROUND(bounced_unknown::NUMERIC / NULLIF(attempted, 0), 4),
                 ROUND(complained::NUMERIC / NULLIF(accepted, 0), 6),
-                ROUND(suppressed::NUMERIC / NULLIF(send_recipients, 0), 4),
                 ROUND(failed::NUMERIC / NULLIF(attempted, 0), 4)
             FROM counts
         SQL, ['date' => $date, 'nextDate' => $nextDate]);
@@ -309,18 +272,17 @@ class StatsService
         $connection->executeStatement('DELETE FROM stats_ip_project WHERE stat_date = :date', ['date' => $date]);
 
         $connection->executeStatement(<<<SQL
-            WITH
-            delivered AS (
+            WITH delivered AS (
                 SELECT
                     ip_address_id,
                     project_id,
-                    COUNT(DISTINCT send_recipient_id) AS sent,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE recipient_status = 'accepted') AS accepted,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE bounce_reason = 'recipient') AS bounced_recipient,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE bounce_reason = 'infrastructure') AS bounced_infrastructure,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE bounce_reason = 'unknown') AS bounced_unknown,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE complained) AS complained
-                FROM stats_attempted
+                    COUNT(*) AS sent,
+                    COUNT(*) FILTER (WHERE recipient_status IN ('accepted', 'complained')) AS accepted,
+                    COUNT(*) FILTER (WHERE bounce_reason = 'recipient') AS bounced_recipient,
+                    COUNT(*) FILTER (WHERE bounce_reason = 'infrastructure') AS bounced_infrastructure,
+                    COUNT(*) FILTER (WHERE bounce_reason = 'unknown') AS bounced_unknown,
+                    COUNT(*) FILTER (WHERE recipient_status = 'complained') AS complained
+                FROM stats_attempts
                 GROUP BY ip_address_id, project_id
             )
             INSERT INTO stats_ip_project (
@@ -349,13 +311,13 @@ class StatsService
                     project_id,
                     ip_address_id,
                     domain AS recipient_domain,
-                    COUNT(DISTINCT send_recipient_id) AS sent,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE recipient_status = 'accepted') AS accepted,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE bounce_reason = 'recipient') AS bounced_recipient,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE bounce_reason = 'infrastructure') AS bounced_infrastructure,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE bounce_reason = 'unknown') AS bounced_unknown,
-                    COUNT(DISTINCT send_recipient_id) FILTER (WHERE complained) AS complained
-                FROM stats_attempted
+                    COUNT(*) AS sent,
+                    COUNT(*) FILTER (WHERE recipient_status IN ('accepted', 'complained')) AS accepted,
+                    COUNT(*) FILTER (WHERE bounce_reason = 'recipient') AS bounced_recipient,
+                    COUNT(*) FILTER (WHERE bounce_reason = 'infrastructure') AS bounced_infrastructure,
+                    COUNT(*) FILTER (WHERE bounce_reason = 'unknown') AS bounced_unknown,
+                    COUNT(*) FILTER (WHERE recipient_status = 'complained') AS complained
+                FROM stats_attempts
                 GROUP BY project_id, ip_address_id, domain
             )
             INSERT INTO stats_delivery_domain (
