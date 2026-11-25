@@ -17,6 +17,7 @@ use App\Entity\Type\SendRecipientStatus;
 use App\Service\Domain\DomainService;
 use App\Service\Queue\QueueService;
 use App\Service\Send\EmailAddressFormat;
+use App\Service\Send\Event\SendValidatingEvent;
 use App\Service\Send\Exception\EmailTooLargeException;
 use App\Service\Send\Exception\SendContentStorageException;
 use App\Service\Send\SendContentStorage;
@@ -37,6 +38,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class SendsController extends AbstractController
 {
@@ -49,6 +51,7 @@ class SendsController extends AbstractController
         private SendFeedbackService $sendFeedbackService,
         private DomainService $domainService,
         private QueueService $queueService,
+        private EventDispatcherInterface $ed,
     ) {}
 
     #[Route("/sends", methods: "POST")]
@@ -102,6 +105,13 @@ class SendsController extends AbstractController
             throw new BadRequestException(
                 "Total number of recipients (To, Cc, Bcc) exceeds the maximum allowed limit of $maxRecipients."
             );
+        }
+
+        $validatingEvent = new SendValidatingEvent($project, [...$to, ...$cc, ...$bcc]);
+        $this->ed->dispatch($validatingEvent);
+
+        if ($validatingEvent->error !== null) {
+            throw new BadRequestException($validatingEvent->error);
         }
 
         $queue = $project->getSendType() === ProjectSendType::TRANSACTIONAL ?

@@ -13,6 +13,7 @@ use App\Entity\Type\DomainStatus;
 use App\Entity\Type\ProjectSendType;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
+use App\Service\Cloud\SendValidatingListener;
 use App\Service\Queue\QueueService;
 use App\Service\Send\EmailBuilder;
 use App\Service\Send\Event\SendRecipientSuppressedEvent;
@@ -40,6 +41,7 @@ use PHPUnit\Framework\Attributes\TestWith;
 #[CoversClass(RecipientFactory::class)]
 #[CoversClass(SendRecipientSuppressedEvent::class)]
 #[CoversClass(SendContentStorage::class)]
+#[CoversClass(SendValidatingListener::class)]
 class SendEmailTest extends WebTestCase
 {
 
