@@ -12,6 +12,7 @@ use App\Entity\Suppression;
 use App\Entity\Type\DebugIncomingEmailStatus;
 use App\Entity\Type\DebugIncomingEmailType;
 use App\Entity\Type\SendFeedbackType;
+use App\Entity\Type\SendAttemptRecipientStatus;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SuppressionReason;
 use App\Service\IncomingMail\Dto\ComplaintDto;
@@ -51,7 +52,7 @@ class IncomingComplaintTest extends WebTestCase
         SendAttemptRecipientFactory::createOne([
             'send_attempt' => SendAttemptFactory::createOne(['send' => $send, 'ip_address' => $ipAddress]),
             'send_recipient_id' => $recipient->getId(),
-            'recipient_status' => SendRecipientStatus::ACCEPTED,
+            'status' => SendAttemptRecipientStatus::ACCEPTED,
         ]);
 
         $response = $this->localApi(

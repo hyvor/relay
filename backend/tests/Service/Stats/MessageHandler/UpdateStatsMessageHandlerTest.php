@@ -7,11 +7,11 @@ use App\Entity\IpAddress;
 use App\Entity\Send;
 use App\Entity\SendRecipient;
 use App\Entity\Type\BounceReason;
+use App\Entity\Type\SendAttemptRecipientStatus;
 use App\Entity\Type\SendRecipientStatus;
 use App\Service\Instance\InstanceService;
 use App\Service\Stats\Message\UpdateStatsMessage;
 use App\Service\Stats\MessageHandler\UpdateStatsMessageHandler;
-use App\Service\SendAttempt\SendAttemptService;
 use App\Service\SendRecipient\SendRecipientService;
 use App\Service\Stats\StatsService;
 use App\Tests\Case\KernelTestCase;
@@ -49,7 +49,7 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         IpAddress $ipAddress,
         string $domain,
         \DateTimeImmutable $date,
-        SendRecipientStatus $status,
+        SendAttemptRecipientStatus $status,
         ?BounceReason $bounceReason = null,
     ): void {
         SendAttemptRecipientFactory::createOne([
@@ -60,7 +60,7 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
                 'created_at' => $date,
             ]),
             'send_recipient_id' => $recipient->getId(),
-            'recipient_status' => $status,
+            'status' => $status,
             'bounced_reason' => $bounceReason ?? BounceReason::UNKNOWN,
             'created_at' => $date,
         ]);
@@ -108,11 +108,11 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
 
         // deferred first, then accepted on a later day: counted once, as accepted
         $retried = SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::ACCEPTED]);
-        $this->attempt($send, $retried, $ipAddress, 'example.com', $date, SendRecipientStatus::DEFERRED);
-        $this->attempt($send, $retried, $ipAddress, 'example.com', $date->modify('+1 day'), SendRecipientStatus::ACCEPTED);
+        $this->attempt($send, $retried, $ipAddress, 'example.com', $date, SendAttemptRecipientStatus::DEFERRED);
+        $this->attempt($send, $retried, $ipAddress, 'example.com', $date->modify('+1 day'), SendAttemptRecipientStatus::ACCEPTED);
 
         $complained = SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::COMPLAINED]);
-        $this->attempt($send, $complained, $ipAddress, 'example.com', $date, SendRecipientStatus::COMPLAINED);
+        $this->attempt($send, $complained, $ipAddress, 'example.com', $date, SendAttemptRecipientStatus::ACCEPTED);
 
         foreach ([BounceReason::RECIPIENT, BounceReason::INFRASTRUCTURE, BounceReason::UNKNOWN] as $reason) {
             $bounced = SendRecipientFactory::createOne([
@@ -120,7 +120,7 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
                 'status' => SendRecipientStatus::BOUNCED,
                 'bounce_reason' => $reason,
             ]);
-            $this->attempt($send, $bounced, $ipAddress, 'example.com', $date, SendRecipientStatus::BOUNCED, $reason);
+            $this->attempt($send, $bounced, $ipAddress, 'example.com', $date, SendAttemptRecipientStatus::BOUNCED, $reason);
         }
 
         foreach ([
@@ -167,19 +167,22 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $send = SendFactory::createOne(['project' => $project, 'ip_address' => $ipAddress, 'created_at' => $date]);
 
         $retried = SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::ACCEPTED]);
-        $this->attempt($send, $retried, $ipAddress, 'example.com', $date, SendRecipientStatus::DEFERRED);
-        $this->attempt($send, $retried, $ipAddress, 'example.com', $date, SendRecipientStatus::ACCEPTED);
+        $this->attempt($send, $retried, $ipAddress, 'example.com', $date, SendAttemptRecipientStatus::DEFERRED);
+        $this->attempt($send, $retried, $ipAddress, 'example.com', $date, SendAttemptRecipientStatus::ACCEPTED);
+
+        // a complained recipient was accepted by the server (the complaint does not change the attempt)
+        $complained = SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::COMPLAINED]);
+        $this->attempt($send, $complained, $ipAddress, 'example.com', $date, SendAttemptRecipientStatus::ACCEPTED);
 
         $outcomes = [
-            [SendRecipientStatus::BOUNCED, BounceReason::RECIPIENT],
-            [SendRecipientStatus::BOUNCED, BounceReason::INFRASTRUCTURE],
-            [SendRecipientStatus::BOUNCED, BounceReason::UNKNOWN],
-            [SendRecipientStatus::FAILED, null],
-            [SendRecipientStatus::COMPLAINED, null],
+            [SendRecipientStatus::BOUNCED, SendAttemptRecipientStatus::BOUNCED, BounceReason::RECIPIENT],
+            [SendRecipientStatus::BOUNCED, SendAttemptRecipientStatus::BOUNCED, BounceReason::INFRASTRUCTURE],
+            [SendRecipientStatus::BOUNCED, SendAttemptRecipientStatus::BOUNCED, BounceReason::UNKNOWN],
+            [SendRecipientStatus::FAILED, SendAttemptRecipientStatus::FAILED, null],
         ];
-        foreach ($outcomes as [$status, $reason]) {
+        foreach ($outcomes as [$status, $attemptStatus, $reason]) {
             $recipient = SendRecipientFactory::createOne(['send' => $send, 'status' => $status]);
-            $this->attempt($send, $recipient, $ipAddress, 'example.com', $date, $status, $reason);
+            $this->attempt($send, $recipient, $ipAddress, 'example.com', $date, $attemptStatus, $reason);
         }
 
         SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::SUPPRESSED]);
@@ -192,16 +195,16 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $this->assertSame(7, $row['send_recipients']);
         $this->assertSame(7, $row['send_attempts']);
         $this->assertSame(7, $row['attempted']);
-        $this->assertSame(2, $row['accepted']); // accepted + complained
+        $this->assertSame(2, $row['accepted']); // accepted + the one that complained later
         $this->assertSame(1, $row['deferred']);
         $this->assertSame(1, $row['bounced_recipient']);
         $this->assertSame(1, $row['bounced_infrastructure']);
         $this->assertSame(1, $row['bounced_unknown']);
         $this->assertSame(1, $row['failed']);
-        $this->assertSame(1, $row['complained']);
+        $this->assertArrayNotHasKey('complained', $row);
+        $this->assertArrayNotHasKey('complained_rate', $row);
         $this->assertSame('0.2857', $row['accepted_rate']);
         $this->assertSame('0.1429', $row['deferred_rate']);
-        $this->assertSame('0.500000', $row['complained_rate']);
         $this->assertArrayNotHasKey('suppressed', $row);
         $this->assertArrayNotHasKey('suppressed_rate', $row);
     }
@@ -215,8 +218,8 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $send = SendFactory::createOne(['project' => $project, 'ip_address' => $ipAddress, 'created_at' => $day1]);
         $recipient = SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::ACCEPTED]);
 
-        $this->attempt($send, $recipient, $ipAddress, 'example.com', $day1, SendRecipientStatus::DEFERRED);
-        $this->attempt($send, $recipient, $ipAddress, 'example.com', $day2, SendRecipientStatus::ACCEPTED);
+        $this->attempt($send, $recipient, $ipAddress, 'example.com', $day1, SendAttemptRecipientStatus::DEFERRED);
+        $this->attempt($send, $recipient, $ipAddress, 'example.com', $day2, SendAttemptRecipientStatus::ACCEPTED);
 
         $this->markOutdated($day1);
         $this->markOutdated($day2);
@@ -247,8 +250,8 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $gmail = SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::ACCEPTED]);
         $yahoo = SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::BOUNCED]);
 
-        $this->attempt($send, $gmail, $ipAddress, 'gmail.com', $date, SendRecipientStatus::ACCEPTED);
-        $this->attempt($send, $yahoo, $ipAddress, 'yahoo.com', $date, SendRecipientStatus::BOUNCED, BounceReason::RECIPIENT);
+        $this->attempt($send, $gmail, $ipAddress, 'gmail.com', $date, SendAttemptRecipientStatus::ACCEPTED);
+        $this->attempt($send, $yahoo, $ipAddress, 'yahoo.com', $date, SendAttemptRecipientStatus::BOUNCED, BounceReason::RECIPIENT);
 
         $this->runHandler();
 
@@ -271,7 +274,7 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $this->assertSame(2, $ipProject['sent']);
     }
 
-    public function test_async_bounce_updates_the_last_attempt_only(): void
+    public function test_async_bounce_does_not_change_attempt_stats(): void
     {
         $date = $this->now()->modify('-5 days');
         $project = ProjectFactory::createOne();
@@ -279,8 +282,8 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $send = SendFactory::createOne(['project' => $project, 'ip_address' => $ipAddress, 'created_at' => $date]);
         $recipient = SendRecipientFactory::createOne(['send' => $send, 'status' => SendRecipientStatus::ACCEPTED]);
 
-        $this->attempt($send, $recipient, $ipAddress, 'example.com', $date, SendRecipientStatus::DEFERRED);
-        $this->attempt($send, $recipient, $ipAddress, 'example.com', $date->modify('+1 hour'), SendRecipientStatus::ACCEPTED);
+        $this->attempt($send, $recipient, $ipAddress, 'example.com', $date, SendAttemptRecipientStatus::DEFERRED);
+        $this->attempt($send, $recipient, $ipAddress, 'example.com', $date->modify('+1 hour'), SendAttemptRecipientStatus::ACCEPTED);
 
         $this->markOutdated($date);
         $this->runHandler();
@@ -290,9 +293,6 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $this->assertSame(1, $this->row('stats_ip', $ipWhere)['accepted'] ?? null);
         $this->assertFalse($this->isOutdated($date));
 
-        /** @var SendAttemptService $service */
-        $service = $this->container->get(SendAttemptService::class);
-        $service->updateLastAttemptStatus($recipient, SendRecipientStatus::BOUNCED, BounceReason::RECIPIENT);
         /** @var SendRecipientService $recipientService */
         $recipientService = $this->container->get(SendRecipientService::class);
         $recipientService->updateSendRecipientStatus($recipient, SendRecipientStatus::BOUNCED, BounceReason::RECIPIENT);
@@ -303,10 +303,11 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $this->assertFalse($this->isOutdated($date));
         $ip = $this->row('stats_ip', $ipWhere);
         $this->assertIsArray($ip);
+        // the attempts keep what the SMTP server returned at that moment
         $this->assertSame(2, $ip['attempted']);
         $this->assertSame(1, $ip['deferred']);
-        $this->assertSame(0, $ip['accepted']);
-        $this->assertSame(1, $ip['bounced_recipient']);
+        $this->assertSame(1, $ip['accepted']);
+        $this->assertSame(0, $ip['bounced_recipient']);
 
         $project = $this->row('stats_project', $projectWhere);
         $this->assertIsArray($project);
@@ -342,7 +343,7 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
         $ipAddress = IpAddressFactory::createOne();
         $send = SendFactory::createOne(['project' => $project, 'created_at' => $date]);
         $recipient = SendRecipientFactory::createOne(['send' => $send]);
-        $this->attempt($send, $recipient, $ipAddress, 'example.com', $date, SendRecipientStatus::ACCEPTED);
+        $this->attempt($send, $recipient, $ipAddress, 'example.com', $date, SendAttemptRecipientStatus::ACCEPTED);
 
         /** @var LockFactory $lockFactory */
         $lockFactory = $this->container->get(LockFactory::class);
@@ -402,7 +403,7 @@ class UpdateStatsMessageHandlerTest extends KernelTestCase
             $date = new \DateTimeImmutable($time);
             $send = SendFactory::createOne(['project' => $project, 'created_at' => $date]);
             $recipient = SendRecipientFactory::createOne(['send' => $send]);
-            $this->attempt($send, $recipient, $ipAddress, 'example.com', $date, SendRecipientStatus::ACCEPTED);
+            $this->attempt($send, $recipient, $ipAddress, 'example.com', $date, SendAttemptRecipientStatus::ACCEPTED);
         }
 
         Clock::set(new MockClock('2026-06-15 12:00:00'));

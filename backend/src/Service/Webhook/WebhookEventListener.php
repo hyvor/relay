@@ -8,7 +8,7 @@ use App\Api\Console\Object\SendObject;
 use App\Api\Console\Object\SendRecipientObject;
 use App\Api\Console\Object\SuppressionObject;
 use App\Entity\Project;
-use App\Entity\Type\SendRecipientStatus;
+use App\Entity\Type\SendAttemptRecipientStatus;
 use App\Entity\Type\WebhooksEventEnum;
 use App\Service\Domain\Event\DomainCreatedEvent;
 use App\Service\Domain\Event\DomainDeletedEvent;
@@ -65,18 +65,12 @@ class WebhookEventListener
         $project = $send->getProject();
 
         foreach ($attempt->getRecipients() as $attemptRecipient) {
-            $event = match ($attemptRecipient->getRecipientStatus()) {
-                SendRecipientStatus::ACCEPTED => WebhooksEventEnum::SEND_RECIPIENT_ACCEPTED,
-                SendRecipientStatus::DEFERRED => WebhooksEventEnum::SEND_RECIPIENT_DEFERRED,
-                SendRecipientStatus::BOUNCED => WebhooksEventEnum::SEND_RECIPIENT_BOUNCED,
-                SendRecipientStatus::FAILED => WebhooksEventEnum::SEND_RECIPIENT_FAILED,
-                // at this point, only the above statuses should be possible
-                default => null // @codeCoverageIgnore
+            $event = match ($attemptRecipient->getStatus()) {
+                SendAttemptRecipientStatus::ACCEPTED => WebhooksEventEnum::SEND_RECIPIENT_ACCEPTED,
+                SendAttemptRecipientStatus::DEFERRED => WebhooksEventEnum::SEND_RECIPIENT_DEFERRED,
+                SendAttemptRecipientStatus::BOUNCED => WebhooksEventEnum::SEND_RECIPIENT_BOUNCED,
+                SendAttemptRecipientStatus::FAILED => WebhooksEventEnum::SEND_RECIPIENT_FAILED,
             };
-
-            if ($event === null) {
-                continue; // @codeCoverageIgnore
-            }
 
             $sendRecipient = $this->sendRecipientService->getRecipientFromSendAndAttemptRecipient(
                 $send,

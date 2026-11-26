@@ -238,7 +238,7 @@ func (b *SendTransaction) RecordAttempt(
 				updated_at,
 				send_attempt_id,
 				send_recipient_id,
-				recipient_status,
+				status,
 				smtp_code,
 				smtp_enhanced_code,
 				smtp_message,

@@ -158,7 +158,7 @@ class StatsService
                 project_id BIGINT NOT NULL,
                 ip_address_id BIGINT NOT NULL,
                 domain TEXT NOT NULL,
-                recipient_status TEXT NOT NULL,
+                status TEXT NOT NULL,
                 bounce_reason TEXT,
                 cnt BIGINT NOT NULL
             ) ON COMMIT DROP
@@ -170,8 +170,8 @@ class StatsService
                 s.project_id,
                 sa.ip_address_id,
                 sa.domain,
-                sar.recipient_status::TEXT,
-                CASE WHEN sar.recipient_status = 'bounced' THEN sar.bounce_reason::TEXT END,
+                sar.status::TEXT,
+                CASE WHEN sar.status = 'bounced' THEN sar.bounce_reason::TEXT END,
                 COUNT(*)
             FROM send_attempt_recipients sar
             JOIN send_attempts sa ON sa.id = sar.send_attempt_id
@@ -211,13 +211,12 @@ class StatsService
                 SELECT
                     ip_address_id,
                     SUM(cnt) AS attempted,
-                    COALESCE(SUM(cnt) FILTER (WHERE recipient_status = 'accepted'), 0) AS accepted,
-                    COALESCE(SUM(cnt) FILTER (WHERE recipient_status = 'deferred'), 0) AS deferred,
+                    COALESCE(SUM(cnt) FILTER (WHERE status = 'accepted'), 0) AS accepted,
+                    COALESCE(SUM(cnt) FILTER (WHERE status = 'deferred'), 0) AS deferred,
                     COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'recipient'), 0) AS bounced_recipient,
                     COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'infrastructure'), 0) AS bounced_infrastructure,
                     COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'unknown'), 0) AS bounced_unknown,
-                    COALESCE(SUM(cnt) FILTER (WHERE recipient_status = 'failed'), 0) AS failed,
-                    COALESCE(SUM(cnt) FILTER (WHERE recipient_status = 'complained'), 0) AS complained
+                    COALESCE(SUM(cnt) FILTER (WHERE status = 'failed'), 0) AS failed
                 FROM stats_attempts
                 GROUP BY ip_address_id
             ),
@@ -238,8 +237,7 @@ class StatsService
                     COALESCE(d.bounced_recipient, 0) AS bounced_recipient,
                     COALESCE(d.bounced_infrastructure, 0) AS bounced_infrastructure,
                     COALESCE(d.bounced_unknown, 0) AS bounced_unknown,
-                    COALESCE(d.failed, 0) AS failed,
-                    COALESCE(d.complained, 0) AS complained
+                    COALESCE(d.failed, 0) AS failed
                 FROM ips i
                 LEFT JOIN submitted sub ON sub.ip_address_id = i.ip_address_id
                 LEFT JOIN attempts a ON a.ip_address_id = i.ip_address_id
@@ -248,20 +246,19 @@ class StatsService
             INSERT INTO stats_ip (
                 ip_address_id, stat_date,
                 sends, send_recipients, send_attempts, attempted,
-                accepted, deferred, bounced_recipient, bounced_infrastructure, bounced_unknown, complained, failed,
+                accepted, deferred, bounced_recipient, bounced_infrastructure, bounced_unknown, failed,
                 accepted_rate, deferred_rate, bounced_recipient_rate, bounced_infrastructure_rate, bounced_unknown_rate,
-                complained_rate, failed_rate
+                failed_rate
             )
             SELECT
                 ip_address_id, :date,
                 sends, send_recipients, send_attempts, attempted,
-                accepted, deferred, bounced_recipient, bounced_infrastructure, bounced_unknown, complained, failed,
+                accepted, deferred, bounced_recipient, bounced_infrastructure, bounced_unknown, failed,
                 ROUND(accepted::NUMERIC / NULLIF(attempted, 0), 4),
                 ROUND(deferred::NUMERIC / NULLIF(attempted, 0), 4),
                 ROUND(bounced_recipient::NUMERIC / NULLIF(attempted, 0), 4),
                 ROUND(bounced_infrastructure::NUMERIC / NULLIF(attempted, 0), 4),
                 ROUND(bounced_unknown::NUMERIC / NULLIF(attempted, 0), 4),
-                ROUND(complained::NUMERIC / NULLIF(accepted, 0), 6),
                 ROUND(failed::NUMERIC / NULLIF(attempted, 0), 4)
             FROM counts
         SQL, ['date' => $date, 'nextDate' => $nextDate]);
@@ -277,26 +274,24 @@ class StatsService
                     ip_address_id,
                     project_id,
                     SUM(cnt) AS sent,
-                    COALESCE(SUM(cnt) FILTER (WHERE recipient_status = 'accepted'), 0) AS accepted,
+                    COALESCE(SUM(cnt) FILTER (WHERE status = 'accepted'), 0) AS accepted,
                     COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'recipient'), 0) AS bounced_recipient,
                     COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'infrastructure'), 0) AS bounced_infrastructure,
-                    COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'unknown'), 0) AS bounced_unknown,
-                    COALESCE(SUM(cnt) FILTER (WHERE recipient_status = 'complained'), 0) AS complained
+                    COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'unknown'), 0) AS bounced_unknown
                 FROM stats_attempts
                 GROUP BY ip_address_id, project_id
             )
             INSERT INTO stats_ip_project (
                 ip_address_id, project_id, stat_date,
-                sent, accepted, bounced_recipient, bounced_infrastructure, bounced_unknown, complained,
-                bounced_recipient_rate, bounced_infrastructure_rate, bounced_unknown_rate, complained_rate
+                sent, accepted, bounced_recipient, bounced_infrastructure, bounced_unknown,
+                bounced_recipient_rate, bounced_infrastructure_rate, bounced_unknown_rate
             )
             SELECT
                 ip_address_id, project_id, :date,
-                sent, accepted, bounced_recipient, bounced_infrastructure, bounced_unknown, complained,
+                sent, accepted, bounced_recipient, bounced_infrastructure, bounced_unknown,
                 ROUND(bounced_recipient::NUMERIC / NULLIF(sent, 0), 4),
                 ROUND(bounced_infrastructure::NUMERIC / NULLIF(sent, 0), 4),
-                ROUND(bounced_unknown::NUMERIC / NULLIF(sent, 0), 4),
-                ROUND(complained::NUMERIC / NULLIF(accepted, 0), 6)
+                ROUND(bounced_unknown::NUMERIC / NULLIF(sent, 0), 4)
             FROM delivered
         SQL, ['date' => $date, 'nextDate' => $nextDate]);
     }
@@ -312,23 +307,20 @@ class StatsService
                     ip_address_id,
                     domain AS recipient_domain,
                     SUM(cnt) AS sent,
-                    COALESCE(SUM(cnt) FILTER (WHERE recipient_status = 'accepted'), 0) AS accepted,
+                    COALESCE(SUM(cnt) FILTER (WHERE status = 'accepted'), 0) AS accepted,
                     COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'recipient'), 0) AS bounced_recipient,
                     COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'infrastructure'), 0) AS bounced_infrastructure,
-                    COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'unknown'), 0) AS bounced_unknown,
-                    COALESCE(SUM(cnt) FILTER (WHERE recipient_status = 'complained'), 0) AS complained
+                    COALESCE(SUM(cnt) FILTER (WHERE bounce_reason = 'unknown'), 0) AS bounced_unknown
                 FROM stats_attempts
                 GROUP BY project_id, ip_address_id, domain
             )
             INSERT INTO stats_delivery_domain (
                 project_id, ip_address_id, recipient_domain, stat_date,
-                sent, accepted, bounced_recipient, bounced_infrastructure, bounced_unknown, complained,
-                complained_rate
+                sent, accepted, bounced_recipient, bounced_infrastructure, bounced_unknown
             )
             SELECT
                 project_id, ip_address_id, recipient_domain, :date,
-                sent, accepted, bounced_recipient, bounced_infrastructure, bounced_unknown, complained,
-                ROUND(complained::NUMERIC / NULLIF(accepted, 0), 6)
+                sent, accepted, bounced_recipient, bounced_infrastructure, bounced_unknown
             FROM delivered
         SQL, ['date' => $date, 'nextDate' => $nextDate]);
     }

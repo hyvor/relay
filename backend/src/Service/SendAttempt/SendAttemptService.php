@@ -4,10 +4,7 @@ namespace App\Service\SendAttempt;
 
 use App\Entity\Send;
 use App\Entity\SendAttempt;
-use App\Entity\SendRecipient;
 use App\Entity\Type\BounceReason;
-use App\Entity\Type\SendAttemptStatus;
-use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SuppressionReason;
 use App\Service\InfrastructureBounce\InfrastructureBounceService;
 use App\Service\SendRecipient\SendRecipientService;
@@ -26,8 +23,7 @@ class SendAttemptService
         private SendRecipientService $sendRecipientService,
         private InfrastructureBounceService $infrastructureBounceService,
         private StatsService $statsService,
-    ) {
-    }
+    ) {}
 
     /**
      * @return SendAttempt[]
@@ -72,6 +68,7 @@ class SendAttemptService
                 $this->em->persist($attemptRecipient);
                 $this->em->flush();
             }
+
             if ($attemptRecipient->getBouncedReason() === BounceReason::INFRASTRUCTURE) {
                 $this->infrastructureBounceService->createInfrastructureBounce(
                     $attemptRecipient->getSendRecipientId(),
@@ -82,47 +79,9 @@ class SendAttemptService
             }
         }
 
-        // the outcome of the recipients (stats_project counts them by the day they were added) may have changed
         $this->statsService->markDateOutdated($sendAttempt->getSend()->getCreatedAt());
 
         $event = new Event\SendAttemptCreatedEvent($sendAttempt);
         $this->ed->dispatch($event);
-    }
-
-    /**
-     * Async bounces and complaints are not linked to a specific attempt (see
-     * https://github.com/hyvor/relay/issues/536). Until then, they update the last attempt of the recipient,
-     * so that attempt-based stats (stats_ip, etc.) reflect them.
-     */
-    public function updateLastAttemptStatus(
-        SendRecipient $sendRecipient,
-        SendRecipientStatus $status,
-        ?BounceReason $bounceReason = null,
-    ): void {
-        /** @var string|false $attemptDate */
-        $attemptDate = $this->em->getConnection()->fetchOne(
-            <<<SQL
-            UPDATE send_attempt_recipients
-            SET recipient_status = :status,
-                bounce_reason = COALESCE(:bounceReason, bounce_reason)::bounce_reason,
-                updated_at = NOW()
-            WHERE id = (
-                SELECT id FROM send_attempt_recipients
-                WHERE send_recipient_id = :recipientId
-                ORDER BY id DESC
-                LIMIT 1
-            )
-            RETURNING (SELECT created_at FROM send_attempts WHERE id = send_attempt_id)
-            SQL,
-            [
-                'status' => $status->value,
-                'bounceReason' => $bounceReason?->value,
-                'recipientId' => $sendRecipient->getId(),
-            ]
-        );
-
-        if ($attemptDate !== false) {
-            $this->statsService->markDateOutdated(new \DateTimeImmutable($attemptDate));
-        }
     }
 }

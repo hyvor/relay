@@ -44,19 +44,19 @@
 		function getAttemptMessage(attempt: SendAttempt, attemptRecipient: SendAttemptRecipient) {
 			const recipient = send.recipients.find((r) => r.id === attemptRecipient.recipient_id)!;
 
-			if (attemptRecipient.recipient_status === 'accepted') {
+			if (attemptRecipient.status === 'accepted') {
 				return {
 					message: `Accepted: <strong>${recipient.address}</strong>`,
 					description: 'Successfully delivered to the recipient mail server.',
 					color: 'var(--green)'
 				};
-			} else if (attemptRecipient.recipient_status === 'deferred') {
+			} else if (attemptRecipient.status === 'deferred') {
 				return {
 					message: `Deferred, retrying later: <strong>${recipient.address}</strong>`,
 					description: getAttemptDescription(),
 					color: 'var(--orange)'
 				};
-			} else if (attemptRecipient.recipient_status === 'bounced') {
+			} else if (attemptRecipient.status === 'bounced') {
 				const suppressedMessage = attemptRecipient.is_suppressed
 					? ' (Added to suppression list and future sends will be ignored)'
 					: '';

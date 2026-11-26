@@ -3,7 +3,7 @@
 namespace App\Entity;
 
 use App\Entity\Type\BounceReason;
-use App\Entity\Type\SendRecipientStatus;
+use App\Entity\Type\SendAttemptRecipientStatus;
 use App\Repository\SendAttemptRecipientRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -38,8 +38,8 @@ class SendAttemptRecipient
     #[ORM\Column(type: "text")]
     private string $smtp_message;
 
-    #[ORM\Column(type: "string", enumType: SendRecipientStatus::class)]
-    private SendRecipientStatus $recipient_status;
+    #[ORM\Column(type: "string", enumType: SendAttemptRecipientStatus::class)]
+    private SendAttemptRecipientStatus $status;
 
     #[ORM\Column()]
     private bool $is_suppressed;
@@ -141,14 +141,14 @@ class SendAttemptRecipient
         return $this;
     }
 
-    public function getRecipientStatus(): SendRecipientStatus
+    public function getStatus(): SendAttemptRecipientStatus
     {
-        return $this->recipient_status;
+        return $this->status;
     }
 
-    public function setRecipientStatus(SendRecipientStatus $recipient_status): static
+    public function setStatus(SendAttemptRecipientStatus $status): static
     {
-        $this->recipient_status = $recipient_status;
+        $this->status = $status;
         return $this;
     }
 

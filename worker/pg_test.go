@@ -321,7 +321,7 @@ func (f *TestFactory) GetSendAttemptById(id int) (*FactorySendAttempt, error) {
 	var recipientResults []*FactorySendAttemptRecipientResult
 	rows, err := f.conn.Query(`
 		SELECT 
-			id, send_recipient_id, recipient_status, smtp_code, smtp_enhanced_code, smtp_message, bounce_reason
+			id, send_recipient_id, status, smtp_code, smtp_enhanced_code, smtp_message, bounce_reason
 		FROM send_attempt_recipients WHERE send_attempt_id = $1
 	`, id)
 

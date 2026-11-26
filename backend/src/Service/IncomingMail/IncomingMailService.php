@@ -17,7 +17,6 @@ use App\Service\IncomingMail\Event\IncomingBounceEvent;
 use App\Service\IncomingMail\Event\IncomingComplaintEvent;
 use App\Service\InfrastructureBounce\InfrastructureBounceService;
 use App\Service\Send\SendService;
-use App\Service\SendAttempt\SendAttemptService;
 use App\Service\SendFeedback\SendFeedbackService;
 use App\Service\SendRecipient\SendRecipientService;
 use App\Service\Suppression\SuppressionService;
@@ -30,7 +29,6 @@ class IncomingMailService
         private SendService $sendService,
         private SuppressionService $suppressionService,
         private SendRecipientService $sendRecipientService,
-        private SendAttemptService $sendAttemptService,
         private SendFeedbackService $sendFeedbackService,
         private InfrastructureBounceService $infrastructureBounceService,
         private LoggerInterface $logger,
@@ -100,7 +98,6 @@ class IncomingMailService
             return;
         }
 
-        $this->sendAttemptService->updateLastAttemptStatus($sendRecipient, SendRecipientStatus::BOUNCED, $bounceReason);
         $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::BOUNCED, $bounceReason);
 
         $this->sendFeedbackService->createSendFeedback(
@@ -192,7 +189,6 @@ class IncomingMailService
             $arfInput->FeedbackType
         );
 
-        $this->sendAttemptService->updateLastAttemptStatus($sendRecipient, SendRecipientStatus::COMPLAINED);
         $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::COMPLAINED);
 
         $this->suppressionService->createSuppression(
