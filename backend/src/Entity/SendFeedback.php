@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Type\BounceReason;
 use App\Entity\Type\SendFeedbackType;
 use App\Repository\SendFeedbackRepository;
 use Doctrine\ORM\Mapping as ORM;
@@ -28,6 +29,15 @@ class SendFeedback
     #[ORM\JoinColumn]
     private SendRecipient $send_recipient;
 
+    /**
+     * Only set for bounces
+     */
+    #[ORM\Column(type: "string", enumType: BounceReason::class, name: "bounce_reason", nullable: true)]
+    private ?BounceReason $bounce_reason = null;
+
+    /**
+     * Free-form description, e.g. the feedback type of a complaint (abuse, fraud, ...)
+     */
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $detail = null;
 
@@ -87,6 +97,17 @@ class SendFeedback
     public function setSendRecipient(SendRecipient $send_recipient): static
     {
         $this->send_recipient = $send_recipient;
+        return $this;
+    }
+
+    public function getBounceReason(): ?BounceReason
+    {
+        return $this->bounce_reason;
+    }
+
+    public function setBounceReason(?BounceReason $bounce_reason): static
+    {
+        $this->bounce_reason = $bounce_reason;
         return $this;
     }
 

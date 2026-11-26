@@ -6,6 +6,7 @@ use App\Entity\DebugIncomingEmail;
 use App\Entity\Send;
 use App\Entity\SendFeedback;
 use App\Entity\SendRecipient;
+use App\Entity\Type\BounceReason;
 use App\Entity\Type\SendFeedbackType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -52,6 +53,7 @@ class SendFeedbackService
         SendRecipient $recipient,
         DebugIncomingEmail $debugIncomingEmail,
         ?string $detail = null,
+        ?BounceReason $bounceReason = null,
     ): SendFeedback {
         $sendFeedback = new SendFeedback();
         $sendFeedback->setCreatedAt($this->now());
@@ -59,6 +61,7 @@ class SendFeedbackService
         $sendFeedback->setType($type);
         $sendFeedback->setSendRecipient($recipient);
         $sendFeedback->setDetail($detail);
+        $sendFeedback->setBounceReason($bounceReason);
         $sendFeedback->setDebugIncomingEmail($debugIncomingEmail);
 
         $this->em->persist($sendFeedback);

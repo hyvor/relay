@@ -106,7 +106,7 @@ class IncomingMailService
                 SendFeedbackType::BOUNCE,
                 $sendRecipient,
                 $debugIncomingEmail,
-                $bounceReason->value,
+                bounceReason: $bounceReason,
             );
 
             if ($bounceReason === BounceReason::RECIPIENT) {

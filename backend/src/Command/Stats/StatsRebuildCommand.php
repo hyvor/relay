@@ -59,8 +59,10 @@ class StatsRebuildCommand extends Command
 
         try {
             for ($date = $fromDate; $date <= $toDate; $date = $date->modify('+1 day')) {
-                $output->writeln('Re-counting ' . $date->format('Y-m-d'));
+                $output->write('Re-counting ' . $date->format('Y-m-d') . ' ... ');
+                $startedAt = hrtime(true);
                 $this->statsService->rebuildDate($date->format('Y-m-d'));
+                $output->writeln(sprintf('done in %.2fs', (hrtime(true) - $startedAt) / 1e9));
             }
         } finally {
             $lock->release();

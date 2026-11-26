@@ -11,17 +11,34 @@ final class Version20260610074733 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'Add bounce_reason to send_attempt_recipients';
+        return 'Add bounce_reason, stats rebuild checkpoint and stats indexes';
     }
 
     public function up(Schema $schema): void
     {
         $this->addSql("CREATE TYPE bounce_reason AS ENUM ('recipient', 'infrastructure', 'unknown')");
+        // per attempt (always set; only meaningful for bounced attempts)
         $this->addSql("ALTER TABLE send_attempt_recipients ADD COLUMN bounce_reason bounce_reason NOT NULL DEFAULT 'unknown'");
+
+        // only set when bounced
+        $this->addSql('ALTER TABLE send_recipients ADD COLUMN bounce_reason bounce_reason DEFAULT NULL');
+        $this->addSql('ALTER TABLE send_feedback ADD COLUMN bounce_reason bounce_reason DEFAULT NULL');
+        $this->addSql('ALTER TABLE send_feedback ADD COLUMN detail TEXT DEFAULT NULL');
+
+        $this->addSql('ALTER TABLE instances ADD COLUMN stats_rebuilt_at TIMESTAMPTZ DEFAULT NULL');
+
+        $this->addSql('CREATE INDEX idx_send_attempts_created_at ON send_attempts (created_at)');
+        $this->addSql('CREATE INDEX idx_send_attempt_recipients_send_attempt_id ON send_attempt_recipients (send_attempt_id)');
     }
 
     public function down(Schema $schema): void
     {
+        $this->addSql('DROP INDEX idx_send_attempt_recipients_send_attempt_id');
+        $this->addSql('DROP INDEX idx_send_attempts_created_at');
+        $this->addSql('ALTER TABLE instances DROP COLUMN stats_rebuilt_at');
+        $this->addSql('ALTER TABLE send_feedback DROP COLUMN detail');
+        $this->addSql('ALTER TABLE send_feedback DROP COLUMN bounce_reason');
+        $this->addSql('ALTER TABLE send_recipients DROP COLUMN bounce_reason');
         $this->addSql("ALTER TABLE send_attempt_recipients DROP COLUMN bounce_reason");
         $this->addSql("DROP TYPE bounce_reason");
     }
