@@ -114,6 +114,50 @@ class SubmitKycTest extends WebTestCase
         $this->assertSame('Sri Lanka', $kyc->getCountry());
     }
 
+    public function test_submits_with_selected_plan(): void
+    {
+        $this->fakeOrganizationHasPaymentMethod(true);
+
+        $response = $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            [...$this->validPayload(), 'plan' => 'pro'],
+            useSession: true
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('pro', $this->getJson()['plan']);
+
+        $kyc = $this->em->getRepository(Kyc::class)->findOneBy(['organization_id' => 1]);
+        $this->assertNotNull($kyc);
+        $this->assertSame('pro', $kyc->getPlan());
+    }
+
+    public function test_defaults_to_starter_plan(): void
+    {
+        $this->fakeOrganizationHasPaymentMethod(true);
+
+        $this->consoleApi(null, 'POST', '/kyc', $this->validPayload(), useSession: true);
+
+        $this->assertSame('starter', $this->getJson()['plan']);
+    }
+
+    public function test_fails_validation_when_plan_is_invalid(): void
+    {
+        $this->fakeOrganizationHasPaymentMethod(true);
+
+        $response = $this->consoleApi(
+            null,
+            'POST',
+            '/kyc',
+            [...$this->validPayload(), 'plan' => 'enterprise'],
+            useSession: true
+        );
+
+        $this->assertSame(422, $response->getStatusCode());
+    }
+
     public function test_submits_as_individual(): void
     {
         $payload = $this->validPayload();

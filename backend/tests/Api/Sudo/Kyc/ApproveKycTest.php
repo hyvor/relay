@@ -51,6 +51,27 @@ class ApproveKycTest extends WebTestCase
         QueueFactory::createTransactional();
     }
 
+    public function test_approves_and_subscribes_to_the_selected_plan(): void
+    {
+        $kyc = KycFactory::createOne(['status' => KycStatus::PENDING, 'plan' => 'pro']);
+
+        $this->getComms()->addResponse(
+            CreateSubscription::class,
+            fn() => new CreateSubscriptionResponse(999)
+        );
+
+        $response = $this->sudoApi('POST', '/kyc/' . $kyc->getId() . '/approve');
+        $this->assertSame(200, $response->getStatusCode());
+
+        $this->getComms()->assertSent(
+            CreateSubscription::class,
+            Component::CORE,
+            eventValidator: function (CreateSubscription $event) {
+                $this->assertSame('pro', $event->getPlan());
+            }
+        );
+    }
+
     public function test_approves_and_charges_the_minimum_plan(): void
     {
         $kyc = KycFactory::createOne(['status' => KycStatus::PENDING]);

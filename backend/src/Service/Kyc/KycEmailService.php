@@ -43,6 +43,7 @@ class KycEmailService
         Kyc $kyc,
         bool $hasLicense = false,
         bool $subscriptionFailed = false,
+        string $plan = 'starter',
     ): void
     {
         assert(!$hasLicense || !$subscriptionFailed, 'Both hasLicense and subscriptionFailed cannot be true at the same time.');
@@ -53,7 +54,7 @@ class KycEmailService
             $bodySecondary = "We couldn't automatically start a subscription for your organization.
                 Please start a subscription before you can send emails.";
         } else {
-            $bodySecondary = "We've created a subscription to the Starter plan for your organization,
+            $bodySecondary = "We've created a subscription to the " . ucfirst($plan) . " plan for your organization,
             so you can start sending emails right away.";
         }
 

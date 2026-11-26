@@ -74,6 +74,7 @@ class KycController extends AbstractController
                 $input->sending_transactional,
                 $input->sending_distributional,
                 $input->use_case,
+                $input->plan,
             );
         } catch (PaymentMethodRequiredException $e) {
             throw new BadRequestHttpException($e->getMessage(), previous: $e);
