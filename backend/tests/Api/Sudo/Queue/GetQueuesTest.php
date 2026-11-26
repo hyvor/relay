@@ -43,10 +43,9 @@ class GetQueuesTest extends WebTestCase
         $this->assertSame('transactional', $transactional['type']);
         $this->assertSame('default', $transactional['name']);
         $this->assertNull($transactional['dedicated_organization_id']);
-        $this->assertTrue($transactional['is_reserved']);
+        $this->assertArrayNotHasKey('is_reserved', $transactional);
         $this->assertSame(2, $transactional['projects_count']);
 
-        $this->assertFalse($json[1]['is_reserved']);
         $this->assertSame(0, $json[1]['projects_count']);
     }
 }

@@ -19,6 +19,7 @@ use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
 use App\Entity\Type\QueueType;
+use App\Service\Cloud\CloudProjectQueueListener;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\SendAttemptFactory;
 use App\Tests\Factory\SendFeedbackFactory;
@@ -83,8 +84,8 @@ class DevSeedCommand extends Command
 
         $transactionalQueue = QueueFactory::createTransactional();
         $distributionalQueue = QueueFactory::createDistributional();
-        $transactionalTrialQueue = QueueFactory::createTrial(QueueType::TRANSACTIONAL);
-        QueueFactory::createTrial(QueueType::DISTRIBUTIONAL);
+        $transactionalTrialQueue = QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => CloudProjectQueueListener::TRIAL_QUEUE_NAME]);
+        QueueFactory::createOne(['type' => QueueType::DISTRIBUTIONAL, 'name' => CloudProjectQueueListener::TRIAL_QUEUE_NAME]);
         QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => 'secondary']);
 
         DnsRecordFactory::new()->a()->create();

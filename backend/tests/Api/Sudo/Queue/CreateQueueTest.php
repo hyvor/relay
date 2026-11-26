@@ -33,7 +33,6 @@ class CreateQueueTest extends WebTestCase
         $this->assertSame('transactional', $json['type']);
         $this->assertSame('eu-1', $json['name']);
         $this->assertSame('transactional:eu-1', $json['full_name']);
-        $this->assertFalse($json['is_reserved']);
         $this->assertSame(0, $json['projects_count']);
 
         $queue = $this->em->getRepository(Queue::class)->find($json['id']);

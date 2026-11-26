@@ -14,7 +14,6 @@ class QueueObject
     public string $name;
     public string $full_name;
     public ?int $dedicated_organization_id;
-    public bool $is_reserved;
     public ?int $projects_count;
 
     public function __construct(Queue $queue, ?int $projectsCount = null)
@@ -26,7 +25,6 @@ class QueueObject
         $this->name = $queue->getName();
         $this->full_name = $queue->getFullName();
         $this->dedicated_organization_id = $queue->getDedicatedOrganizationId();
-        $this->is_reserved = $queue->isReserved();
         $this->projects_count = $projectsCount;
     }
 

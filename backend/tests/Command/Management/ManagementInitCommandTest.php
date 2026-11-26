@@ -9,6 +9,7 @@ use App\Entity\IpAddress;
 use App\Entity\Queue;
 use App\Entity\Server;
 use App\Entity\Type\ProjectSendType;
+use App\Entity\Type\QueueType;
 use App\Service\Domain\DomainService;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
@@ -19,6 +20,7 @@ use App\Service\Queue\QueueService;
 use App\Service\Server\ServerService;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\IpAddressFactory;
+use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\ServerFactory;
 use Hyvor\Internal\Util\Crypt\Encryption;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -267,29 +269,16 @@ class ManagementInitCommandTest extends KernelTestCase
         $this->assertCount(2, $this->em->getRepository(Queue::class)->findAll());
     }
 
-    public function test_adds_trial_queues_on_cloud(): void
+    public function test_does_not_add_default_queues_when_any_queue_exists(): void
     {
-        $_ENV['DEPLOYMENT'] = 'cloud';
+        $queue = QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => 'eu']);
 
         $command = $this->commandTester('management:init');
         $command->execute([]);
         $command->assertCommandIsSuccessful();
 
-        $queues = $this->em->getRepository(Queue::class)->findBy([], ['id' => 'ASC']);
-        $this->assertSame(
-            [
-                'transactional:default',
-                'distributional:default',
-                'transactional:trial',
-                'distributional:trial',
-            ],
-            array_map(fn(Queue $queue) => $queue->getFullName(), $queues)
-        );
-
-        // second run does not create new queues
-        $command->execute([]);
-        $command->assertCommandIsSuccessful();
-        $this->assertCount(4, $this->em->getRepository(Queue::class)->findAll());
+        $queues = $this->em->getRepository(Queue::class)->findAll();
+        $this->assertCount(1, $queues);
+        $this->assertSame($queue->getId(), $queues[0]->getId());
     }
-
 }

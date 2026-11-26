@@ -4,26 +4,18 @@ namespace App\Tests\Api\Sudo\Kyc;
 
 use App\Api\Sudo\Controller\KycController;
 use App\Entity\Kyc;
-use App\Entity\Project;
 use App\Entity\Send;
 use App\Entity\Type\DomainStatus;
 use App\Entity\Type\KycStatus;
-use App\Entity\Type\QueueType;
 use App\Service\App\Config;
 use App\Service\Instance\InstanceService;
 use App\Service\Kyc\KycEmailService;
 use App\Service\Kyc\KycService;
-use App\Service\Queue\ProjectQueueResolver;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
 use App\Tests\Factory\InstanceFactory;
 use App\Tests\Factory\KycFactory;
-use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
-use Hyvor\Internal\Billing\BillingFake;
-use Hyvor\Internal\Billing\License\RelayLicense;
-use Hyvor\Internal\Billing\License\Resolved\ResolvedLicense;
-use Hyvor\Internal\Billing\License\Resolved\ResolvedLicenseType;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\Billing\CreateSubscription;
 use Hyvor\Internal\Bundle\Comms\Event\ToCore\Billing\CreateSubscriptionResponse;
 use Hyvor\Internal\Bundle\Comms\Exception\CommsApiFailedException;
@@ -33,7 +25,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(KycController::class)]
 #[CoversClass(KycService::class)]
 #[CoversClass(KycEmailService::class)]
-#[CoversClass(ProjectQueueResolver::class)]
 class ApproveKycTest extends WebTestCase
 {
     protected function setUp(): void
@@ -304,31 +295,5 @@ class ApproveKycTest extends WebTestCase
         $kyc = KycFactory::createOne(['status' => KycStatus::PENDING]);
         $response = $this->sudoApi('POST', '/kyc/' . $kyc->getId() . '/approve', createSudoUser: false);
         $this->assertSame(403, $response->getStatusCode());
-    }
-
-    public function test_moves_projects_to_production_queues(): void
-    {
-        $this->seedSystemProjectInfra();
-        $trial = QueueFactory::createTrial(QueueType::TRANSACTIONAL);
-
-        $kyc = KycFactory::createOne(['status' => KycStatus::PENDING]);
-        $project = ProjectFactory::createOne([
-            'organization_id' => $kyc->getOrganizationId(),
-            'queue' => $trial,
-        ]);
-
-        /** @var BillingFake $billing */
-        $billing = $this->container->get(BillingFake::class);
-        $billing->setLicenses([
-            $kyc->getOrganizationId() => new ResolvedLicense(ResolvedLicenseType::SUBSCRIPTION, RelayLicense::trial()),
-        ]);
-
-        $response = $this->sudoApi('POST', '/kyc/' . $kyc->getId() . '/approve');
-        $this->assertSame(200, $response->getStatusCode());
-
-        $this->em->clear();
-        $project = $this->em->getRepository(Project::class)->find($project->getId());
-        $this->assertNotNull($project);
-        $this->assertSame('transactional:default', $project->getQueue()?->getFullName());
     }
 }

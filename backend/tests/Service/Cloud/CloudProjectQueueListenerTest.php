@@ -36,9 +36,9 @@ class CloudProjectQueueListenerTest extends KernelTestCase
         $_ENV['DEPLOYMENT'] = 'cloud';
 
         $this->transactionalDefault = QueueFactory::createDefault(QueueType::TRANSACTIONAL);
-        $this->transactionalTrial = QueueFactory::createTrial(QueueType::TRANSACTIONAL);
+        $this->transactionalTrial = QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => CloudProjectQueueListener::TRIAL_QUEUE_NAME]);
         QueueFactory::createDefault(QueueType::DISTRIBUTIONAL);
-        $this->distributionalTrial = QueueFactory::createTrial(QueueType::DISTRIBUTIONAL);
+        $this->distributionalTrial = QueueFactory::createOne(['type' => QueueType::DISTRIBUTIONAL, 'name' => CloudProjectQueueListener::TRIAL_QUEUE_NAME]);
     }
 
     private function setLicense(ResolvedLicenseType $type): void
@@ -98,22 +98,35 @@ class CloudProjectQueueListenerTest extends KernelTestCase
         $this->assertSame($this->distributionalTrial, $this->resolve(ProjectSendType::DISTRIBUTIONAL));
     }
 
-    public function test_uses_license_from_event(): void
+    public function test_distributes_production_queues_excluding_trial(): void
     {
-        // billing fake would return a trial license
-        $this->setLicense(ResolvedLicenseType::TRIAL);
+        $this->setLicense(ResolvedLicenseType::SUBSCRIPTION);
         KycFactory::createOne(['organization_id' => self::ORG_ID, 'status' => KycStatus::APPROVED]);
-
-        $project = ProjectFactory::createOne(['organization_id' => self::ORG_ID]);
+        $secondary = QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => 'secondary']);
 
         /** @var ProjectQueueResolver $resolver */
         $resolver = $this->container->get(ProjectQueueResolver::class);
-        $queue = $resolver->assign(
-            $project,
-            new ResolvedLicense(ResolvedLicenseType::SUBSCRIPTION, RelayLicense::trial())
-        );
 
-        $this->assertSame($this->transactionalDefault, $queue);
+        $selected = [];
+        foreach (ProjectFactory::createMany(4, ['organization_id' => self::ORG_ID]) as $project) {
+            $queue = $resolver->resolve($project);
+            $expected = $project->getId() % 2 === 0 ? $this->transactionalDefault : $secondary;
+            $this->assertSame($expected, $queue);
+            $selected[$queue->getId()] = true;
+        }
+
+        $this->assertArrayNotHasKey($this->transactionalTrial->getId(), $selected);
+    }
+
+    public function test_throws_when_no_production_queues(): void
+    {
+        $this->setLicense(ResolvedLicenseType::SUBSCRIPTION);
+        KycFactory::createOne(['organization_id' => self::ORG_ID, 'status' => KycStatus::APPROVED]);
+        $this->em->remove($this->transactionalDefault);
+        $this->em->flush();
+
+        $this->expectException(\LogicException::class);
+        $this->resolve();
     }
 
     public function test_trial_queue_and_not_cached_when_license_fetch_fails(): void
@@ -134,7 +147,7 @@ class CloudProjectQueueListenerTest extends KernelTestCase
         $this->assertTrue($this->getTestLogger()->hasErrorThatContains('Failed to fetch the license'));
     }
 
-    public function test_system_project_uses_default_selection(): void
+    public function test_system_project_uses_production_queue(): void
     {
         $this->setLicense(ResolvedLicenseType::TRIAL);
         $this->assertSame($this->transactionalDefault, $this->resolve(orgId: 0));
@@ -156,5 +169,4 @@ class CloudProjectQueueListenerTest extends KernelTestCase
         $this->expectException(\LogicException::class);
         $this->resolve();
     }
-
 }

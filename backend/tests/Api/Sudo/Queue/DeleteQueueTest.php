@@ -13,7 +13,6 @@ use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\SendFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\TestWith;
 
 #[CoversClass(QueueController::class)]
 #[CoversClass(QueueService::class)]
@@ -44,18 +43,6 @@ class DeleteQueueTest extends WebTestCase
         $this->assertResponseStatusCodeSame(404);
     }
 
-    #[TestWith([QueueType::TRANSACTIONAL, QueueService::DEFAULT_QUEUE_NAME])]
-    #[TestWith([QueueType::DISTRIBUTIONAL, QueueService::TRIAL_QUEUE_NAME])]
-    public function test_cannot_delete_reserved_queues(QueueType $type, string $name): void
-    {
-        $queue = QueueFactory::createOne(['type' => $type, 'name' => $name]);
-
-        $this->sudoApi('DELETE', '/queues/' . $queue->getId());
-
-        $this->assertResponseStatusCodeSame(400);
-        $this->assertSame('Reserved queues cannot be deleted.', $this->getJson()['message']);
-    }
-
     public function test_cannot_delete_queue_with_ip_addresses(): void
     {
         $queue = QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => 'eu']);
@@ -79,9 +66,20 @@ class DeleteQueueTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(400);
         $this->assertSame(
-            'Queues that have been used for sending cannot be deleted.',
+            'Unassign all IPs and wait until all sends are cleared up after the retention period before deleting.',
             $this->getJson()['message']
         );
     }
 
+    public function test_can_delete_default_queue(): void
+    {
+        $queue = QueueFactory::createDefault(QueueType::TRANSACTIONAL);
+        $queueId = $queue->getId();
+
+        $this->sudoApi('DELETE', '/queues/' . $queueId);
+
+        $this->assertResponseStatusCodeSame(200);
+        $this->em->clear();
+        $this->assertNull($this->em->getRepository(Queue::class)->find($queueId));
+    }
 }

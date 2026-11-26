@@ -15,23 +15,9 @@ class QueueService
 
     use ClockAwareTrait;
 
-    // created on all deployments
-    public const string DEFAULT_QUEUE_NAME = 'default';
-
-    // created on cloud only
-    // projects of organizations that are in trial are routed here
-    public const string TRIAL_QUEUE_NAME = 'trial';
-
-    // Types that have a default and trial queue
-    public const array SHARED_TYPES = [
-        QueueType::TRANSACTIONAL,
-        QueueType::DISTRIBUTIONAL,
-    ];
-
     public function __construct(
         private EntityManagerInterface $em,
-    ) {
-    }
+    ) {}
 
     /**
      * @return Queue[]
@@ -56,43 +42,31 @@ class QueueService
         ]);
     }
 
-    public function getDefaultQueue(QueueType $type): ?Queue
+    /**
+     * @return Queue[] ordered by id
+     */
+    public function getQueuesByType(QueueType $type): array
     {
-        return $this->getQueue($type, self::DEFAULT_QUEUE_NAME);
+        return $this->em->getRepository(Queue::class)->findBy(['type' => $type], ['id' => 'ASC']);
     }
 
-    public function getTrialQueue(QueueType $type): ?Queue
+    public function selectQueue(QueueType $type, int $projectId): Queue
     {
-        return $this->getQueue($type, self::TRIAL_QUEUE_NAME);
+        assert($type !== QueueType::DEDICATED, 'Dedicated queues cannot be selected by type');
+
+        return $this->pickQueue($this->getQueuesByType($type), $projectId)
+            ?? throw new \LogicException("No queues found for type {$type->value}");
     }
 
     /**
-     * @return Queue[]
+     * @param Queue[] $queues
      */
-    public function getDefaultQueues(QueueType $type): array
+    public function pickQueue(array $queues, int $projectId): ?Queue
     {
-        assert($type !== QueueType::DEDICATED, 'Dedicated queues are not production queues');
-
-        /** @var Queue[] $queues */
-        $queues = $this->em->getRepository(Queue::class)
-            ->createQueryBuilder('q')
-            ->where('q.type = :type')
-            ->andWhere('q.name != :trial')
-            ->setParameter('type', $type)
-            ->setParameter('trial', self::TRIAL_QUEUE_NAME)
-            ->orderBy('q.id', 'ASC')
-            ->getQuery()
-            ->getResult();
-
-        return $queues;
-    }
-
-    public function selectDefaultQueue(QueueType $type, int $projectId): Queue
-    {
-        $queues = $this->getDefaultQueues($type);
+        $queues = array_values($queues);
 
         if (count($queues) === 0) {
-            throw new \LogicException("No production queues found for type {$type->value}");
+            return null;
         }
 
         return $queues[$projectId % count($queues)];
@@ -128,49 +102,6 @@ class QueueService
     public function deleteQueue(Queue $queue): void
     {
         $this->em->remove($queue);
-        $this->em->flush();
-    }
-
-    public function hasDefaultQueues(): bool
-    {
-        foreach (self::SHARED_TYPES as $type) {
-            if ($this->getDefaultQueue($type) === null) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public function createDefaultQueues(): void
-    {
-        $this->createMissingQueues(self::DEFAULT_QUEUE_NAME);
-    }
-
-    public function hasTrialQueues(): bool
-    {
-        foreach (self::SHARED_TYPES as $type) {
-            if ($this->getTrialQueue($type) === null) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public function createTrialQueues(): void
-    {
-        $this->createMissingQueues(self::TRIAL_QUEUE_NAME);
-    }
-
-    private function createMissingQueues(string $name): void
-    {
-        foreach (self::SHARED_TYPES as $type) {
-            if ($this->getQueue($type, $name) === null) {
-                $this->createQueue($type, $name, flush: false);
-            }
-        }
-
         $this->em->flush();
     }
 

@@ -4,7 +4,6 @@ namespace App\Entity;
 
 use App\Entity\Type\QueueType;
 use App\Repository\QueueRepository;
-use App\Service\Queue\QueueService;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: QueueRepository::class)]
@@ -110,24 +109,11 @@ class Queue
         return $this;
     }
 
-    
     /**
      * ex: transactional:default
      */
     public function getFullName(): string
     {
         return $this->type->value . ':' . $this->name;
-    }
-
-    /**
-     * Reserved queues are created by the system and cannot be deleted
-     */
-    public function isReserved(): bool
-    {
-        return $this->type !== QueueType::DEDICATED && in_array(
-            $this->name,
-            [QueueService::DEFAULT_QUEUE_NAME, QueueService::TRIAL_QUEUE_NAME],
-            true
-        );
     }
 }

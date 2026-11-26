@@ -16,7 +16,7 @@
 	let { queue, actions = false }: Props = $props();
 
 	const ipCount = $derived($ipAddressesStore.filter((ip) => ip.queue?.id === queue.id).length);
-	const canDelete = $derived(!queue.is_reserved && ipCount === 0);
+	const canDelete = $derived(ipCount === 0);
 
 	async function handleDelete() {
 		const confirmed = await confirm({
@@ -53,9 +53,6 @@
 	</div>
 	<div class="name">
 		{queue.name}
-		{#if queue.is_reserved}
-			<Tag size="x-small">Reserved</Tag>
-		{/if}
 	</div>
 	{#if actions && queue.projects_count !== null}
 		<div class="projects-count">

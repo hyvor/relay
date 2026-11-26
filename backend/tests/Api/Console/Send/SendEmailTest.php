@@ -25,7 +25,6 @@ use App\Service\Send\SendService;
 use App\Service\Suppression\SuppressionService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\DomainFactory;
-use App\Tests\Factory\InstanceFactory;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
@@ -915,37 +914,5 @@ class SendEmailTest extends WebTestCase
         $send = $this->em->getRepository(Send::class)->findOneBy(['project' => $project->getId()]);
         $this->assertNotNull($send);
         $this->assertSame('transactional:cached', $send->getQueueName());
-    }
-
-    public function test_queues_on_the_trial_queue_on_cloud(): void
-    {
-        $_ENV['DEPLOYMENT'] = 'cloud';
-
-        InstanceFactory::new()->withDefaultDkim()->create();
-
-        QueueFactory::createTransactional();
-        $trial = QueueFactory::createTrial(QueueType::TRANSACTIONAL);
-        $ip = IpAddressFactory::createOne(['queue' => $trial]);
-
-        $project = ProjectFactory::createOne();
-
-        DomainFactory::createOne([
-            "project" => $project,
-            "domain" => "hyvor.com",
-            'status' => DomainStatus::ACTIVE,
-        ]);
-
-        $this->consoleApi($project, "POST", "/sends", data: [
-            'from' => 'test@hyvor.com',
-            'to' => 'accept@simulator.relay.hyvor.com',
-            'body_text' => 'Test email',
-        ]);
-
-        $this->assertResponseStatusCodeSame(200);
-
-        $send = $this->em->getRepository(Send::class)->findOneBy(['project' => $project->getId()]);
-        $this->assertNotNull($send);
-        $this->assertSame('transactional:trial', $send->getQueueName());
-        $this->assertSame($ip->getId(), $send->getIpAddress()?->getId());
     }
 }

@@ -100,10 +100,10 @@ class ProjectQueueResolverTest extends KernelTestCase
             'dedicated_organization_id' => 1,
         ]);
 
-        $trial = QueueFactory::createTrial(QueueType::TRANSACTIONAL);
+        $selected = QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => 'selected']);
         $this->getEd()->addListener(
             ProjectQueueSelectingEvent::class,
-            fn(ProjectQueueSelectingEvent $event) => $event->setQueue($trial)
+            fn(ProjectQueueSelectingEvent $event) => $event->setQueue($selected)
         );
 
         $project1 = ProjectFactory::createOne(['organization_id' => 1, 'queue' => $old]);
@@ -113,8 +113,8 @@ class ProjectQueueResolverTest extends KernelTestCase
 
         $this->resolver->reassignOrganization(1);
 
-        $this->assertSame($trial->getId(), $project1->getQueue()?->getId());
-        $this->assertSame($trial->getId(), $project2->getQueue()?->getId());
+        $this->assertSame($selected->getId(), $project1->getQueue()?->getId());
+        $this->assertSame($selected->getId(), $project2->getQueue()?->getId());
         $this->assertSame($dedicated->getId(), $projectDedicated->getQueue()?->getId());
         $this->assertSame($default->getId(), $otherOrgProject->getQueue()?->getId());
     }

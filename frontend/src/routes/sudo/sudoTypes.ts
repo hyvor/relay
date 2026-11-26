@@ -62,7 +62,6 @@ export interface Queue {
 	name: string;
 	full_name: string; // type:name
 	dedicated_organization_id: number | null;
-	is_reserved: boolean;
 	projects_count: number | null;
 }
 

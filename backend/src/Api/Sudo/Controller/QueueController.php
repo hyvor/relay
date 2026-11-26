@@ -65,16 +65,12 @@ class QueueController extends AbstractController
             throw new NotFoundHttpException('Queue not found.');
         }
 
-        if ($queue->isReserved()) {
-            throw new BadRequestHttpException('Reserved queues cannot be deleted.');
-        }
-
         if ($this->queueService->hasIpAddresses($queue)) {
             throw new BadRequestHttpException('Unassign all IP addresses from the queue before deleting it.');
         }
 
         if ($this->queueService->hasSends($queue)) {
-            throw new BadRequestHttpException('Queues that have been used for sending cannot be deleted.');
+            throw new BadRequestHttpException('Unassign all IPs and wait until all sends are cleared up after the retention period before deleting.');
         }
 
         $this->queueService->deleteQueue($queue);

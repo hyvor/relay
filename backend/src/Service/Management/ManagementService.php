@@ -4,18 +4,20 @@ namespace App\Service\Management;
 
 use App\Entity\Instance;
 use App\Entity\Server;
+use App\Entity\Type\QueueType;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
 use App\Service\Queue\QueueService;
 use App\Service\Server\ServerService;
 use Doctrine\ORM\EntityManagerInterface;
-use Hyvor\Internal\InternalConfig;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Lock\LockFactory;
 
 class ManagementService
 {
+
+    private const string DEFAULT_QUEUE_NAME = 'default';
 
     private OutputInterface $output;
 
@@ -26,7 +28,6 @@ class ManagementService
         private QueueService $queueService,
         private EntityManagerInterface $entityManager,
         private LockFactory $lockFactory,
-        private InternalConfig $internalConfig,
     ) {
         $this->output = new NullOutput();
     }
@@ -93,20 +94,14 @@ class ManagementService
         $lock = $this->lockFactory->createLock('management_init_default_queues');
         $lock->acquire(true);
 
-        $hasDefaultQueues = $this->queueService->hasDefaultQueues();
-        if ($hasDefaultQueues === false) {
+        if ($this->queueService->getQueuesCount() === 0) {
             $this->output->writeln('<info>Creating default queues...</info>');
-            $this->queueService->createDefaultQueues();
+            $this->queueService->createQueue(QueueType::TRANSACTIONAL, self::DEFAULT_QUEUE_NAME, flush: false);
+            $this->queueService->createQueue(QueueType::DISTRIBUTIONAL, self::DEFAULT_QUEUE_NAME, flush: false);
+            $this->entityManager->flush();
             $this->output->writeln('<info>Default queues created successfully.</info>');
-        }
-
-        if ($this->internalConfig->getDeployment()->isCloud() && $this->queueService->hasTrialQueues() === false) {
-            $this->output->writeln('<info>Creating trial queues...</info>');
-            $this->queueService->createTrialQueues();
-            $this->output->writeln('<info>Trial queues created successfully.</info>');
         }
 
         $lock->release();
     }
-
 }

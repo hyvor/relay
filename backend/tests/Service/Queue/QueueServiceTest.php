@@ -42,77 +42,53 @@ class QueueServiceTest extends KernelTestCase
     {
         $transactional = QueueFactory::createDefault(QueueType::TRANSACTIONAL);
         $distributional = QueueFactory::createDefault(QueueType::DISTRIBUTIONAL);
-        $trial = QueueFactory::createTrial(QueueType::TRANSACTIONAL);
+        $eu = QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => 'eu']);
 
-        $this->assertSame($transactional, $this->queueService->getDefaultQueue(QueueType::TRANSACTIONAL));
-        $this->assertSame($distributional, $this->queueService->getDefaultQueue(QueueType::DISTRIBUTIONAL));
-        $this->assertSame($trial, $this->queueService->getTrialQueue(QueueType::TRANSACTIONAL));
-        $this->assertNull($this->queueService->getTrialQueue(QueueType::DISTRIBUTIONAL));
+        $this->assertSame($transactional, $this->queueService->getQueue(QueueType::TRANSACTIONAL, 'default'));
+        $this->assertSame($distributional, $this->queueService->getQueue(QueueType::DISTRIBUTIONAL, 'default'));
         $this->assertNull($this->queueService->getQueue(QueueType::TRANSACTIONAL, 'unknown'));
+
+        $this->assertSame([$transactional, $eu], $this->queueService->getQueuesByType(QueueType::TRANSACTIONAL));
     }
 
-    public function test_select_default_queue_with_one_queue(): void
+    public function test_select_queue_with_one_queue(): void
     {
-        $queue = QueueFactory::createDefault(QueueType::TRANSACTIONAL);
-        QueueFactory::createTrial(QueueType::TRANSACTIONAL);
+        $queue = QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => 'eu']);
         QueueFactory::createDefault(QueueType::DISTRIBUTIONAL);
 
         foreach ([1, 2, 3, 100] as $projectId) {
-            $this->assertSame($queue, $this->queueService->selectDefaultQueue(QueueType::TRANSACTIONAL, $projectId));
+            $this->assertSame($queue, $this->queueService->selectQueue(QueueType::TRANSACTIONAL, $projectId));
         }
     }
 
-    public function test_select_default_queue_by_project_id(): void
+    public function test_select_queue_by_project_id(): void
     {
         $queue0 = QueueFactory::createDefault(QueueType::TRANSACTIONAL);
-        QueueFactory::createTrial(QueueType::TRANSACTIONAL); // never selected
         $queue1 = QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => 'one']);
         $queue2 = QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => 'two']);
         QueueFactory::createOne(['type' => QueueType::DISTRIBUTIONAL, 'name' => 'other']);
 
-        $this->assertSame($queue0, $this->queueService->selectDefaultQueue(QueueType::TRANSACTIONAL, 3));
-        $this->assertSame($queue1, $this->queueService->selectDefaultQueue(QueueType::TRANSACTIONAL, 4));
-        $this->assertSame($queue2, $this->queueService->selectDefaultQueue(QueueType::TRANSACTIONAL, 5));
-        $this->assertSame($queue0, $this->queueService->selectDefaultQueue(QueueType::TRANSACTIONAL, 6));
+        $this->assertSame($queue0, $this->queueService->selectQueue(QueueType::TRANSACTIONAL, 3));
+        $this->assertSame($queue1, $this->queueService->selectQueue(QueueType::TRANSACTIONAL, 4));
+        $this->assertSame($queue2, $this->queueService->selectQueue(QueueType::TRANSACTIONAL, 5));
+        $this->assertSame($queue0, $this->queueService->selectQueue(QueueType::TRANSACTIONAL, 6));
     }
 
-    public function test_select_default_queue_throws_when_no_queues(): void
+    public function test_select_queue_throws_when_no_queues(): void
     {
-        QueueFactory::createTrial(QueueType::TRANSACTIONAL);
+        QueueFactory::createDefault(QueueType::DISTRIBUTIONAL);
 
         $this->expectException(\LogicException::class);
-        $this->queueService->selectDefaultQueue(QueueType::TRANSACTIONAL, 1);
+        $this->queueService->selectQueue(QueueType::TRANSACTIONAL, 1);
     }
 
-    public function test_create_default_and_trial_queues_only_creates_missing(): void
-    {
-        QueueFactory::createDefault(QueueType::TRANSACTIONAL);
-
-        $this->assertFalse($this->queueService->hasDefaultQueues());
-        $this->queueService->createDefaultQueues();
-        $this->assertTrue($this->queueService->hasDefaultQueues());
-
-        $this->assertFalse($this->queueService->hasTrialQueues());
-        $this->queueService->createTrialQueues();
-        $this->queueService->createTrialQueues();
-        $this->assertTrue($this->queueService->hasTrialQueues());
-
-        $this->assertSame(4, $this->queueService->getQueuesCount());
-    }
-
-    public function test_queue_full_name_and_reserved(): void
+    public function test_queue_full_name(): void
     {
         $default = QueueFactory::createDefault(QueueType::DISTRIBUTIONAL);
-        $trial = QueueFactory::createTrial(QueueType::TRANSACTIONAL);
         $custom = QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => 'eu']);
 
         $this->assertSame('distributional:default', $default->getFullName());
-        $this->assertSame('transactional:trial', $trial->getFullName());
         $this->assertSame('transactional:eu', $custom->getFullName());
-
-        $this->assertTrue($default->isReserved());
-        $this->assertTrue($trial->isReserved());
-        $this->assertFalse($custom->isReserved());
     }
 
     public function test_has_sends_ip_addresses_and_project_counts(): void

@@ -8,7 +8,6 @@ use App\Entity\Type\QueueType;
 use App\Service\Project\ProjectService;
 use App\Service\Queue\Event\ProjectQueueSelectingEvent;
 use Doctrine\ORM\EntityManagerInterface;
-use Hyvor\Internal\Billing\License\Resolved\ResolvedLicense;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ProjectQueueResolver
@@ -19,20 +18,19 @@ class ProjectQueueResolver
         private EventDispatcherInterface $ed,
         private QueueService $queueService,
         private ProjectService $projectService,
-    ) {
-    }
+    ) {}
 
     public function resolve(Project $project): Queue
     {
         return $project->getQueue() ?? $this->assign($project);
     }
 
-    public function assign(Project $project, ?ResolvedLicense $license = null, bool $flush = true): Queue
+    public function assign(Project $project, bool $flush = true): Queue
     {
-        $event = new ProjectQueueSelectingEvent($project, $license);
+        $event = new ProjectQueueSelectingEvent($project);
         $this->ed->dispatch($event);
 
-        $queue = $event->getQueue() ?? $this->queueService->selectDefaultQueue(
+        $queue = $event->getQueue() ?? $this->queueService->selectQueue(
             QueueType::fromProjectSendType($project->getSendType()),
             $project->getId(),
         );
@@ -48,7 +46,7 @@ class ProjectQueueResolver
         return $queue;
     }
 
-    public function reassignOrganization(int $organizationId, ?ResolvedLicense $license = null): void
+    public function reassignOrganization(int $organizationId): void
     {
         $projects = $this->projectService->getProjectsByOrganizationId($organizationId);
 
@@ -57,10 +55,9 @@ class ProjectQueueResolver
                 continue;
             }
 
-            $this->assign($project, $license, flush: false);
+            $this->assign($project, flush: false);
         }
 
         $this->em->flush();
     }
-
 }

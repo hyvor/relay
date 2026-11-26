@@ -7,6 +7,7 @@ use App\Entity\Type\KycAccountType;
 use App\Entity\Type\KycStatus;
 use App\Service\Kyc\Exception\KycNotPendingException;
 use App\Service\Kyc\Exception\PaymentMethodRequiredException;
+use App\Service\Cloud\Billing\LicenseService;
 use App\Service\Queue\ProjectQueueResolver;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
@@ -38,6 +39,7 @@ class KycService
         private BillingInterface $billing,
         private KycEmailService $kycEmailService,
         private ProjectQueueResolver $projectQueueResolver,
+        private LicenseService $licenseService,
     ) {
     }
 
@@ -310,6 +312,8 @@ class KycService
     private function reassignQueues(int $organizationId): void
     {
         try {
+            // approval may have just started a subscription
+            $this->licenseService->clearLicenseCache($organizationId);
             $this->projectQueueResolver->reassignOrganization($organizationId);
         } catch (\Throwable $e) {
             $this->logger->error('Failed to reassign queues after a KYC status change', [

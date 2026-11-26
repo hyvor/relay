@@ -91,6 +91,8 @@ class ProjectService
     ): array {
         $qb = $this->em
             ->getRepository(Project::class)->createQueryBuilder('p')
+            ->leftJoin('p.queue', 'q')
+            ->addSelect('q')
             ->orderBy('p.id', 'DESC')
             ->setMaxResults($limit);
 
