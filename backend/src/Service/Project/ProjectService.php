@@ -72,6 +72,17 @@ class ProjectService
     /**
      * @return Project[]
      */
+    public function getProjectsByOrganizationId(int $organizationId): array
+    {
+        return $this->em->getRepository(Project::class)->findBy(
+            ['organization_id' => $organizationId],
+            ['id' => 'ASC'],
+        );
+    }
+
+    /**
+     * @return Project[]
+     */
     public function getProjects(
         int $limit,
         ?int $beforeId = null,
@@ -80,6 +91,8 @@ class ProjectService
     ): array {
         $qb = $this->em
             ->getRepository(Project::class)->createQueryBuilder('p')
+            ->leftJoin('p.queue', 'q')
+            ->addSelect('q')
             ->orderBy('p.id', 'DESC')
             ->setMaxResults($limit);
 

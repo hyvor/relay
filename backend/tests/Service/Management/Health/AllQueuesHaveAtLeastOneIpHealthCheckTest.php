@@ -73,8 +73,8 @@ class AllQueuesHaveAtLeastOneIpHealthCheckTest extends KernelTestCase
         $this->assertFalse($result);
         $data = $this->healthCheck->getData();
         $this->assertIsArray($data["queues_without_ip"]);
-        $this->assertContains("queue_without_ip", $data["queues_without_ip"]);
-        $this->assertNotContains("queue_with_ip", $data["queues_without_ip"]);
+        $this->assertContains("transactional:queue_without_ip", $data["queues_without_ip"]);
+        $this->assertNotContains("transactional:queue_with_ip", $data["queues_without_ip"]);
     }
 
     public function testCheckReturnsCorrectDataForMultipleQueuesWithoutIps(): void
@@ -106,9 +106,9 @@ class AllQueuesHaveAtLeastOneIpHealthCheckTest extends KernelTestCase
         $data = $this->healthCheck->getData();
         $this->assertIsArray($data["queues_without_ip"]);
         $this->assertCount(2, $data["queues_without_ip"]);
-        $this->assertContains("queue_without_ip_1", $data["queues_without_ip"]);
-        $this->assertContains("queue_without_ip_2", $data["queues_without_ip"]);
-        $this->assertNotContains("queue_with_ip", $data["queues_without_ip"]);
+        $this->assertContains("transactional:queue_without_ip_1", $data["queues_without_ip"]);
+        $this->assertContains("transactional:queue_without_ip_2", $data["queues_without_ip"]);
+        $this->assertNotContains("transactional:queue_with_ip", $data["queues_without_ip"]);
     }
 
     public function testCheckHandlesIpAddressWithNullQueue(): void
@@ -132,6 +132,6 @@ class AllQueuesHaveAtLeastOneIpHealthCheckTest extends KernelTestCase
         $this->assertFalse($result);
         $data = $this->healthCheck->getData();
         $this->assertIsArray($data["queues_without_ip"]);
-        $this->assertContains("queue_with_null_ip", $data["queues_without_ip"]);
+        $this->assertContains("transactional:queue_with_null_ip", $data["queues_without_ip"]);
     }
 }

@@ -33,6 +33,10 @@ class Project
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $created_by_source = null;
 
+    #[ORM\ManyToOne(targetEntity: Queue::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Queue $queue = null;
+
     public function __construct() {}
 
     public function getId(): int
@@ -109,6 +113,17 @@ class Project
     public function setCreatedBySource(?string $created_by_source): static
     {
         $this->created_by_source = $created_by_source;
+        return $this;
+    }
+
+    public function getQueue(): ?Queue
+    {
+        return $this->queue;
+    }
+
+    public function setQueue(?Queue $queue): static
+    {
+        $this->queue = $queue;
         return $this;
     }
 }

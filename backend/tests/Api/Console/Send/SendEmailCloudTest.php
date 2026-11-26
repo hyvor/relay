@@ -6,7 +6,9 @@ use App\Api\Console\Controller\SendsController;
 use App\Entity\Project;
 use App\Entity\Type\DomainStatus;
 use App\Entity\Type\KycStatus;
+use App\Entity\Type\QueueType;
 use App\Service\Cloud\Billing\LicenseService;
+use App\Service\Cloud\CloudProjectQueueListener;
 use App\Service\Cloud\OrganizationMemberService;
 use App\Service\Cloud\SendRestrictionService;
 use App\Service\Cloud\SendValidatingListener;
@@ -44,6 +46,7 @@ class SendEmailCloudTest extends WebTestCase
     {
         InstanceFactory::new()->withDefaultDkim()->create();
         QueueFactory::createTransactional();
+        QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => CloudProjectQueueListener::TRIAL_QUEUE_NAME]);
         $project = ProjectFactory::createOne();
 
         DomainFactory::createOne([

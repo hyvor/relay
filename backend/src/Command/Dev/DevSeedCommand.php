@@ -18,6 +18,8 @@ use App\Tests\Factory\InfrastructureBounceFactory;
 use App\Tests\Factory\IpAddressFactory;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\ProjectUserFactory;
+use App\Entity\Type\QueueType;
+use App\Service\Cloud\CloudProjectQueueListener;
 use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\SendAttemptFactory;
 use App\Tests\Factory\SendFeedbackFactory;
@@ -82,6 +84,9 @@ class DevSeedCommand extends Command
 
         $transactionalQueue = QueueFactory::createTransactional();
         $distributionalQueue = QueueFactory::createDistributional();
+        $transactionalTrialQueue = QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => CloudProjectQueueListener::TRIAL_QUEUE_NAME]);
+        QueueFactory::createOne(['type' => QueueType::DISTRIBUTIONAL, 'name' => CloudProjectQueueListener::TRIAL_QUEUE_NAME]);
+        QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => 'secondary']);
 
         DnsRecordFactory::new()->a()->create();
         DnsRecordFactory::new()->mx()->create();
@@ -109,6 +114,8 @@ class DevSeedCommand extends Command
                 $ipData['ip_address'] = '0.0.0.0';
                 $ipData['private_ip_address'] = '10.10.0.86'; // local compose worker IP in docker
                 $ipData['queue'] = $transactionalQueue;
+            } else {
+                $ipData['queue'] = $transactionalTrialQueue;
             }
 
             IpAddressFactory::createOne($ipData);

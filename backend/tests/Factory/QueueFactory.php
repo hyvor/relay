@@ -4,7 +4,6 @@ namespace App\Tests\Factory;
 
 use App\Entity\Queue;
 use App\Entity\Type\QueueType;
-use App\Service\Queue\QueueService;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
@@ -32,18 +31,22 @@ final class QueueFactory extends PersistentObjectFactory
             'name' => self::faker()->unique()->word() . '_queue',
             'created_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'updated_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
-            'type' => QueueType::DEFAULT
+            'type' => QueueType::TRANSACTIONAL,
         ];
+    }
+
+    public static function createDefault(QueueType $type): Queue
+    {
+        return self::createOne(['type' => $type, 'name' => 'default']);
     }
 
     public static function createTransactional(): Queue
     {
-        return self::createOne(['name' => QueueService::TRANSACTIONAL_QUEUE_NAME]);
+        return self::createDefault(QueueType::TRANSACTIONAL);
     }
 
     public static function createDistributional(): Queue
     {
-        return self::createOne(['name' => QueueService::DISTRIBUTIONAL_QUEUE_NAME]);
+        return self::createDefault(QueueType::DISTRIBUTIONAL);
     }
-
 }

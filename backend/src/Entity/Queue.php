@@ -22,11 +22,14 @@ class Queue
     #[ORM\Column]
     private \DateTimeImmutable $updated_at;
 
-    #[ORM\Column(type: "string", length: 255, unique: true)]
+    #[ORM\Column(type: "string", length: 255)]
     private string $name;
 
     #[ORM\Column(enumType: QueueType::class)]
     private QueueType $type;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $dedicated_organization_id = null;
 
     public function __construct()
     {
@@ -93,5 +96,24 @@ class Queue
     {
         $this->type = $type;
         return $this;
+    }
+
+    public function getDedicatedOrganizationId(): ?int
+    {
+        return $this->dedicated_organization_id;
+    }
+
+    public function setDedicatedOrganizationId(?int $dedicated_organization_id): static
+    {
+        $this->dedicated_organization_id = $dedicated_organization_id;
+        return $this;
+    }
+
+    /**
+     * ex: transactional:default
+     */
+    public function getFullName(): string
+    {
+        return $this->type->value . ':' . $this->name;
     }
 }

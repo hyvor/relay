@@ -22,7 +22,7 @@ class AllQueuesHaveAtLeastOneIpHealthCheck extends HealthCheckAbstract
         /** @var array<array{name: string}> $queuesWithoutIp */
         $queuesWithoutIp = $this->em->createNativeQuery(
             <<<SQL
-        SELECT queues.name FROM queues
+        SELECT queues.type || ':' || queues.name AS name FROM queues
         WHERE (
             SELECT COUNT(ip_addresses.id) 
             FROM ip_addresses

@@ -12,6 +12,7 @@ class ProjectObject
     public int $updated_at;
     public ?int $organization_id;
     public string $send_type;
+    public ?QueueObject $queue;
 
     public function __construct(Project $project)
     {
@@ -21,5 +22,8 @@ class ProjectObject
         $this->updated_at = $project->getUpdatedAt()->getTimestamp();
         $this->organization_id = $project->getOrganizationId();
         $this->send_type = $project->getSendType()->value;
+
+        $queue = $project->getQueue();
+        $this->queue = $queue !== null ? new QueueObject($queue) : null;
     }
 }

@@ -50,7 +50,7 @@ class GoStateFactory
                 privateIp: $ip->getPrivateIpAddress(),
                 ptr: Ptr::getPtrDomain($ip, $this->config->getInstanceDomain()),
                 queueId: $queue->getId(),
-                queueName: $queue->getName(),
+                queueName: $queue->getFullName(),
             );
         }
 

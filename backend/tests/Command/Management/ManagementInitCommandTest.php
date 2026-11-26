@@ -9,6 +9,7 @@ use App\Entity\IpAddress;
 use App\Entity\Queue;
 use App\Entity\Server;
 use App\Entity\Type\ProjectSendType;
+use App\Entity\Type\QueueType;
 use App\Service\Domain\DomainService;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
@@ -19,6 +20,7 @@ use App\Service\Queue\QueueService;
 use App\Service\Server\ServerService;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\IpAddressFactory;
+use App\Tests\Factory\QueueFactory;
 use App\Tests\Factory\ServerFactory;
 use Hyvor\Internal\Util\Crypt\Encryption;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -78,8 +80,8 @@ class ManagementInitCommandTest extends KernelTestCase
         // QUEUES
         $queues = $this->em->getRepository(Queue::class)->findAll();
         $this->assertCount(2, $queues);
-        $this->assertSame('transactional', $queues[0]->getName());
-        $this->assertSame('distributional', $queues[1]->getName());
+        $this->assertSame('transactional:default', $queues[0]->getFullName());
+        $this->assertSame('distributional:default', $queues[1]->getFullName());
 
         // SERVERS
         $servers = $this->em->getRepository(Server::class)->findAll();
@@ -91,9 +93,9 @@ class ManagementInitCommandTest extends KernelTestCase
         $this->assertCount(2, $ips);
 
         $this->assertSame('8.8.8.8', $ips[0]->getIpAddress());
-        $this->assertSame('transactional', $ips[0]->getQueue()?->getName());
+        $this->assertSame('transactional:default', $ips[0]->getQueue()?->getFullName());
         $this->assertSame('9.9.9.9', $ips[1]->getIpAddress());
-        $this->assertSame('distributional', $ips[1]->getQueue()?->getName());
+        $this->assertSame('distributional:default', $ips[1]->getQueue()?->getFullName());
     }
 
     public function test_deletes_ip_addresses(): void
@@ -260,6 +262,23 @@ class ManagementInitCommandTest extends KernelTestCase
 
         $queues = $this->em->getRepository(Queue::class)->findAll();
         $this->assertCount(2, $queues);
+
+        // second run does not create new queues
+        $command->execute([]);
+        $command->assertCommandIsSuccessful();
+        $this->assertCount(2, $this->em->getRepository(Queue::class)->findAll());
     }
 
+    public function test_does_not_add_default_queues_when_any_queue_exists(): void
+    {
+        $queue = QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => 'eu']);
+
+        $command = $this->commandTester('management:init');
+        $command->execute([]);
+        $command->assertCommandIsSuccessful();
+
+        $queues = $this->em->getRepository(Queue::class)->findAll();
+        $this->assertCount(1, $queues);
+        $this->assertSame($queue->getId(), $queues[0]->getId());
+    }
 }

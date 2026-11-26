@@ -6,7 +6,7 @@ use App\Entity\Kyc;
 use App\Service\App\Config;
 use App\Service\Domain\DomainService;
 use App\Service\Instance\InstanceService;
-use App\Service\Queue\QueueService;
+use App\Service\Queue\ProjectQueueResolver;
 use App\Service\Send\SendService;
 use Hyvor\Internal\Component\Component;
 use Psr\Log\LoggerInterface;
@@ -18,13 +18,12 @@ class KycEmailService
     public function __construct(
         private InstanceService $instanceService,
         private DomainService $domainService,
-        private QueueService $queueService,
+        private ProjectQueueResolver $projectQueueResolver,
         private SendService $sendService,
         private Environment $twig,
         private Config $config,
         private LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function sendSubmitted(Kyc $kyc, bool $isResubmission = false): void
     {
@@ -87,8 +86,7 @@ class KycEmailService
         ?string $bodySecondary = null,
         ?string $rejectReason = null,
         ?string $billingUrl = null,
-    ): void
-    {
+    ): void {
         $instance = $this->instanceService->tryGetInstance();
 
         if ($instance === null) {
@@ -108,16 +106,9 @@ class KycEmailService
             return;
         }
 
-        $queue = $this->queueService->getTransactionalQueue();
-
-        if ($queue === null) {
-            $this->logger->error('Transactional queue not found; could not send KYC email.', [
-                'kycId' => $kyc->getId(),
-            ]);
-            return;
-        }
-
         try {
+            $queue = $this->projectQueueResolver->resolve($project);
+
             $html = $this->twig->render('mail/kyc.twig', [
                 'component' => Component::RELAY->value,
                 'strings' => [

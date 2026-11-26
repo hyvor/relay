@@ -4,8 +4,10 @@ namespace App\Tests\Api\Sudo\Queue;
 
 use App\Api\Sudo\Controller\QueueController;
 use App\Api\Sudo\Object\QueueObject;
+use App\Entity\Type\QueueType;
 use App\Service\Queue\QueueService;
 use App\Tests\Case\WebTestCase;
+use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\QueueFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 
@@ -18,14 +20,32 @@ class GetQueuesTest extends WebTestCase
     public function test_get_queues(): void
     {
         $queue1 = QueueFactory::createTransactional();
-        $queue2 = QueueFactory::createDistributional();
+        QueueFactory::createDistributional();
+        QueueFactory::createOne(['type' => QueueType::TRANSACTIONAL, 'name' => 'eu']);
 
-        $response = $this->sudoApi("GET", "/queues");
+        ProjectFactory::createMany(2, ['queue' => $queue1]);
+
+        $this->sudoApi("GET", "/queues");
 
         $this->assertResponseStatusCodeSame(200);
 
+        /** @var array<array<string, mixed>> $json */
         $json = $this->getJson();
-        $this->assertCount(2, $json);
-    }
+        $this->assertCount(3, $json);
 
+        $this->assertSame(
+            ['transactional:default', 'transactional:eu', 'distributional:default'],
+            array_column($json, 'full_name')
+        );
+
+        $transactional = $json[0];
+        $this->assertSame($queue1->getId(), $transactional['id']);
+        $this->assertSame('transactional', $transactional['type']);
+        $this->assertSame('default', $transactional['name']);
+        $this->assertNull($transactional['dedicated_organization_id']);
+        $this->assertArrayNotHasKey('is_reserved', $transactional);
+        $this->assertSame(2, $transactional['projects_count']);
+
+        $this->assertSame(0, $json[1]['projects_count']);
+    }
 }

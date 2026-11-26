@@ -161,7 +161,7 @@ class SendService
         $send->setProject($project);
         $send->setDomain($domain);
         $send->setQueue($queue);
-        $send->setQueueName($queue->getName());
+        $send->setQueueName($queue->getFullName());
         $send->setFromAddress($from->getAddress());
         $send->setFromName($from->getName());
         $send->setSubject($subject);

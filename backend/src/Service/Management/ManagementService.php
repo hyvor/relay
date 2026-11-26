@@ -4,6 +4,7 @@ namespace App\Service\Management;
 
 use App\Entity\Instance;
 use App\Entity\Server;
+use App\Entity\Type\QueueType;
 use App\Service\Instance\InstanceService;
 use App\Service\Ip\IpAddressService;
 use App\Service\Queue\QueueService;
@@ -15,6 +16,8 @@ use Symfony\Component\Lock\LockFactory;
 
 class ManagementService
 {
+
+    private const string DEFAULT_QUEUE_NAME = 'default';
 
     private OutputInterface $output;
 
@@ -91,15 +94,14 @@ class ManagementService
         $lock = $this->lockFactory->createLock('management_init_default_queues');
         $lock->acquire(true);
 
-        $hasDefaultQueues = $this->queueService->hasDefaultQueues();
-        if ($hasDefaultQueues === false) {
+        if ($this->queueService->getQueuesCount() === 0) {
             $this->output->writeln('<info>Creating default queues...</info>');
-            $this->queueService->createDefaultQueues();
+            $this->queueService->createQueue(QueueType::TRANSACTIONAL, self::DEFAULT_QUEUE_NAME, flush: false);
+            $this->queueService->createQueue(QueueType::DISTRIBUTIONAL, self::DEFAULT_QUEUE_NAME, flush: false);
+            $this->entityManager->flush();
             $this->output->writeln('<info>Default queues created successfully.</info>');
         }
 
-
         $lock->release();
     }
-
 }
