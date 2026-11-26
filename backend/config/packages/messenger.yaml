@@ -4,12 +4,24 @@ framework:
       async: 'doctrine://default?auto_setup=1'
       sync: 'sync://'
 
+      # cloud-only
+      cloud:
+        dsn: 'doctrine://default?auto_setup=1&queue_name=cloud'
+        failure_transport: cloud_failed
+        retry_strategy:
+          max_retries: 6
+          delay: 60000 # 1 minute
+          multiplier: 4 # ~1m, 4m, 16m, 1h, 4h, 17h
+      cloud_failed: 'doctrine://default?auto_setup=1&queue_name=cloud_failed'
+
 when@test:
   framework:
     messenger:
       transports:
         async: 'test://'
         sync: 'test://'
+        cloud: 'test://'
+        cloud_failed: 'test://'
         scheduler_default: 'test://'
         scheduler_server: 'test://'
-
+        scheduler_cloud: 'test://'

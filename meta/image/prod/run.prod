@@ -6,5 +6,12 @@ bin/console doctrine:migrations:migrate --no-interaction
 # Initiate the state of the current server
 bin/console management:init
 
+# To start cloud-only workers
+if [ "$DEPLOYMENT" = "cloud" ]; then
+    export CLOUD_WORKERS=true
+else
+    export CLOUD_WORKERS=false
+fi
+
 # Run supervisor
 /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
