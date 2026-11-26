@@ -3,7 +3,8 @@
 	import IconShieldLock from '@hyvor/icons/IconShieldLock';
 	import IconPersonBadge from '@hyvor/icons/IconPersonBadge';
 	import IconArrowRightShort from '@hyvor/icons/IconArrowRightShort';
-	import { getAppConfig } from '../../lib/stores/consoleStore';
+	import { getAppConfig, kycStatusStore } from '../../lib/stores/consoleStore';
+	import IconCreditCard from '@hyvor/icons/IconCreditCard';
 	import { page } from '$app/state';
 </script>
 
@@ -35,6 +36,14 @@
 				{/snippet}
 				KYC
 			</NavLink>
+			{#if $kycStatusStore === 'approved'}
+				<NavLink href="/console/billing" active={page.url.pathname.startsWith('/console/billing')}>
+					{#snippet start()}
+						<IconCreditCard />
+					{/snippet}
+					Billing
+				</NavLink>
+			{/if}
 			</NavLinkGroup>
 		</div>
 	</div>
