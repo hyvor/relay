@@ -17,8 +17,7 @@ class SendFeedbackService
 
     public function __construct(
         private EntityManagerInterface $em,
-    ) {
-    }
+    ) {}
 
     /**
      * @return SendFeedback[]
@@ -38,7 +37,7 @@ class SendFeedbackService
         return $result;
     }
 
-    public function hasComplaint(SendRecipient $recipient): bool
+    public function hasComplaintForRecipient(SendRecipient $recipient): bool
     {
         $feedback = $this->em->getRepository(SendFeedback::class)->findOneBy([
             'type' => SendFeedbackType::COMPLAINT,

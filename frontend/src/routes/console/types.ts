@@ -139,7 +139,7 @@ export interface SendFeedback {
 	id: number;
 	created_at: number;
 	type: 'bounce' | 'complaint';
-	recipient_id: number | null;
+	recipient_id: number;
 	debug_incoming_email_id: number;
 	bounce_reason: 'recipient' | 'infrastructure' | 'unknown' | null;
 }
