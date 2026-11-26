@@ -261,8 +261,6 @@ func (b *SendTransaction) RecordAttempt(
 			return 0, fmt.Errorf("failed to insert send attempt recipient for recipient ID %d: %w", rcptResult.RecipientId, err)
 		}
 
-		// update send_recipients to the latest state
-		// the bounce reason is only kept while the recipient is bounced
 		var recipientBounceReason sql.NullString
 		if rcptResult.ToRecipientStatus().ToString() == "bounced" {
 			recipientBounceReason = sql.NullString{String: string(bounceReason), Valid: true}

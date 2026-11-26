@@ -29,15 +29,9 @@ class SendFeedback
     #[ORM\JoinColumn]
     private SendRecipient $send_recipient;
 
-    /**
-     * Only set for bounces
-     */
     #[ORM\Column(type: "string", enumType: BounceReason::class, name: "bounce_reason", nullable: true)]
     private ?BounceReason $bounce_reason = null;
 
-    /**
-     * Free-form description, e.g. the feedback type of a complaint (abuse, fraud, ...)
-     */
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $detail = null;
 

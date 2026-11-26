@@ -177,7 +177,7 @@ class IncomingMailService
             // @codeCoverageIgnoreEnd
         }
 
-        if ($this->sendFeedbackService->hasComplaint($sendRecipient)) {
+        if ($this->sendFeedbackService->hasComplaintForRecipient($sendRecipient)) {
             $this->logger->info('Received duplicate complaint', [
                 'uuid' => $uuid,
                 'recipient' => $sendRecipient->getAddress(),

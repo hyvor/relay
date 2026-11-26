@@ -124,6 +124,12 @@ final class Version20260610074736 extends AbstractMigration
 
         // finding the last attempt of a recipient (async bounces, complaints, stats)
         $this->addSql('CREATE INDEX idx_send_attempt_recipients_send_recipient_id ON send_attempt_recipients (send_recipient_id)');
+
+        // for DELETE of stats for rebuilding
+        $this->addSql("CREATE INDEX idx_stats_delivery_domain_stat_date ON stats_delivery_domain (stat_date)");
+        $this->addSql("CREATE INDEX idx_stats_project_stat_date ON stats_project (stat_date)");
+        $this->addSql("CREATE INDEX idx_stats_ip_stat_date ON stats_ip (stat_date)");
+        $this->addSql("CREATE INDEX idx_stats_ip_project_stat_date ON stats_ip_project (stat_date)");
     }
 
     public function down(Schema $schema): void {}

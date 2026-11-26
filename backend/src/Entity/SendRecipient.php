@@ -40,9 +40,6 @@ class SendRecipient
     #[ORM\Column(type: "integer")]
     private int $try_count = 0;
 
-    /**
-     * Only set when the status is bounced
-     */
     #[ORM\Column(type: "string", enumType: BounceReason::class, name: "bounce_reason", nullable: true)]
     private ?BounceReason $bounce_reason = null;
 

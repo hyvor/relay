@@ -17,12 +17,6 @@ class UpdateStatsMessageHandler
 
     public const string LOCK_NAME = "stats_update";
 
-    /**
-     * Sends are deleted after 30 days (ClearExpiredSendsMessageHandler). A day can only be re-counted
-     * while all of its sends still exist. The cleanup deletes sends created at or before "now - 30 days",
-     * so the oldest day may already be partially deleted, and a 2-day margin keeps a day that is being
-     * re-counted from losing rows half-way (the cleanup runs on a schedule, not at midnight).
-     */
     public const int MAX_REBUILD_AGE_DAYS = 30 - 2;
 
     public function __construct(

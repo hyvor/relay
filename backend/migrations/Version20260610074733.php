@@ -16,17 +16,21 @@ final class Version20260610074733 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
+        // saving bounce reason along with recipients, attempt recipients, and feedback for stats
         $this->addSql("CREATE TYPE bounce_reason AS ENUM ('recipient', 'infrastructure', 'unknown')");
-        // per attempt (always set; only meaningful for bounced attempts)
         $this->addSql("ALTER TABLE send_attempt_recipients ADD COLUMN bounce_reason bounce_reason NOT NULL DEFAULT 'unknown'");
-
-        // only set when bounced
         $this->addSql('ALTER TABLE send_recipients ADD COLUMN bounce_reason bounce_reason DEFAULT NULL');
         $this->addSql('ALTER TABLE send_feedback ADD COLUMN bounce_reason bounce_reason DEFAULT NULL');
+
         $this->addSql('ALTER TABLE send_feedback ADD COLUMN detail TEXT DEFAULT NULL');
 
         $this->addSql('ALTER TABLE instances ADD COLUMN stats_rebuilt_at TIMESTAMPTZ DEFAULT NULL');
 
+        // uuid sent as the X-Relay-Recipient header
+        $this->addSql('ALTER TABLE send_recipients ADD COLUMN uuid UUID NOT NULL DEFAULT gen_random_uuid()');
+        $this->addSql('CREATE UNIQUE INDEX send_recipients_uuid_unique ON send_recipients (uuid)');
+
+        // indices for stats
         $this->addSql('CREATE INDEX idx_send_attempts_created_at ON send_attempts (created_at)');
         $this->addSql('CREATE INDEX idx_send_attempt_recipients_send_attempt_id ON send_attempt_recipients (send_attempt_id)');
     }
