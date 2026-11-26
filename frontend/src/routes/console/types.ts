@@ -15,6 +15,7 @@ export interface AppConfig {
 
 	app: {
 		system_project_id: number;
+		send_restricted: boolean;
 		webhook: {
 			events: string[];
 		};

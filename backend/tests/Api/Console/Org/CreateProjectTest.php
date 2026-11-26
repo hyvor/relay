@@ -11,7 +11,6 @@ use App\Service\Project\ProjectService;
 use App\Tests\Case\WebTestCase;
 use Hyvor\Internal\Auth\AuthFake;
 use Hyvor\Internal\Auth\AuthUserOrganization;
-use Hyvor\Internal\Sudo\SudoUserFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\BrowserKit\Cookie;
 
@@ -37,8 +36,6 @@ class CreateProjectTest extends WebTestCase
                 role: 'member',
             ),
         );
-
-        SudoUserFactory::createOne(['user_id' => 1]);
 
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
 
@@ -79,41 +76,5 @@ class CreateProjectTest extends WebTestCase
         $this->assertSame('Valid Project Name', $projectDb->getName());
         $this->assertSame(ProjectSendType::TRANSACTIONAL, $projectDb->getSendType());
         $this->assertSame('session:', $projectDb->getCreatedBySource());
-    }
-
-    public function test_disallow_project_creation_for_non_sudo_users(): void
-    {
-        // The non-sudo restriction only applies on cloud deployments.
-        $_ENV['DEPLOYMENT'] = 'cloud';
-
-        AuthFake::enableForSymfony(
-            $this->container,
-            ['id' => 99],
-            new AuthUserOrganization(
-                id: 1,
-                name: 'Fake Organization',
-                role: 'member',
-            ),
-        );
-
-        $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
-
-        $this->client->request(
-            "POST",
-            "/api/console/projects",
-            [
-                'name' => 'Valid Project Name',
-                'send_type' => 'transactional',
-            ],
-            server: [
-                'HTTP_X_ORGANIZATION_ID' => '1',
-            ],
-        );
-
-        $this->assertResponseStatusCodeSame(400);
-
-        $json = $this->getJson();
-        $this->assertArrayHasKey('message', $json);
-        $this->assertSame('Currently not available for public usage.', $json['message']);
     }
 }

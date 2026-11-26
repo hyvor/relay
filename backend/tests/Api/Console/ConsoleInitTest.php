@@ -80,6 +80,29 @@ class ConsoleInitTest extends WebTestCase
         $this->assertIsArray($json['config']);
         $this->assertIsArray($json['config']['user']);
         $this->assertTrue($json['config']['user']['is_sudo']);
+        $this->assertIsArray($json['config']['app']);
+        $this->assertFalse($json['config']['app']['send_restricted']);
+    }
+
+    public function test_init_console_send_restricted_in_cloud(): void
+    {
+        $_ENV['DEPLOYMENT'] = 'cloud';
+        AuthFake::enableForSymfony(
+            $this->container,
+            ['id' => 1],
+            new AuthUserOrganization(id: 1, name: 'Fake Organization', role: 'admin')
+        );
+        $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
+        InstanceFactory::createOne();
+
+        $this->client->request("GET", "/api/console/init");
+
+        $this->assertResponseStatusCodeSame(200);
+
+        $json = $this->getJson();
+        $this->assertIsArray($json['config']);
+        $this->assertIsArray($json['config']['app']);
+        $this->assertTrue($json['config']['app']['send_restricted']);
     }
 
     public function test_init_console_without_org(): void
@@ -111,9 +134,6 @@ class ConsoleInitTest extends WebTestCase
         AuthFake::enableForSymfony($this->container, ['id' => 1]);
 
         $this->client->getCookieJar()->set(new Cookie('authsess', 'validSession'));
-        // Pre-create an Instance so getInstance() in init doesn't lazily create one
-        // (which would dispatch ProjectCreatingEvent and trip the cloud non-sudo guard).
-        InstanceFactory::createOne();
 
         $this->client->request(
             "GET",

@@ -23,13 +23,15 @@ COPY frontend/package.json frontend/package-lock.json \
     frontend/tsconfig.json /app/frontend/
 COPY frontend/src /app/frontend/src
 COPY frontend/static /app/frontend/static
+COPY docs /app/docs
 CMD ["npm", "run", "dev"]
 
 ###################################################
 FROM frontend-base AS frontend-prod
 COPY frontend/src /app/frontend/src
 COPY frontend/static /app/frontend/static
-RUN npm run build \
+RUN rm -rf "src/routes/(docs)" \
+    && npm run build \
     && find . -maxdepth 1 -not -name build -not -name . -exec rm -rf {} \;
 
 ###################################################
