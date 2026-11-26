@@ -58,6 +58,7 @@ services:
     environment:
       GO_SYMFONY_URL: http://hyvor-relay-backend
       # OUTGOING_SMTP_PORT: ":587"
+      DEV_DNS_OVERRIDES: simulator.net=10.10.0.87
     ports:
       - "11025:25"
       - "11587:587"
@@ -76,7 +77,8 @@ services:
     environment:
       - DOMAIN=simulator.net
     networks:
-      - hyvor-network
+      hyvor-network:
+        ipv4_address: 10.10.0.87
 
 networks:
   hyvor-network:
