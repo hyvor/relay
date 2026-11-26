@@ -28,6 +28,7 @@ final class SendRecipientFactory extends PersistentObjectFactory
     protected function defaults(): array
     {
         return [
+            'uuid' => self::faker()->uuid(),
             'send' => SendFactory::new(),
             'type' => SendRecipientType::TO,
             'address' => self::faker()->email(),

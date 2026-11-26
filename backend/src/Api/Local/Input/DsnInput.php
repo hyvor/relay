@@ -13,4 +13,5 @@ class DsnInput
     #[Assert\NotBlank]
     public array $Recipients;
 
+    public string $RecipientUuid = '';
 }

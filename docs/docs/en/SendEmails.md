@@ -16,6 +16,7 @@
 		'Return-Path',
 		'X-Mailer',
 		'X-Originating-IP',
+		'X-Relay-Recipient',
 		'Authentication-Results'
 	];
 
@@ -275,6 +276,21 @@ The rate limit for the <code>POST /api/console/sends</code> endpoint is
 (per project).
 
 Learn more about <a href="/docs/api-console#rate-limit">Console API Rate Limiting</a>.
+
+<h2 id="recipient-identification">Recipient Identification</h2>
+
+<p>
+Relay delivers a separate copy of the email to each recipient (TO, CC, and BCC), using one SMTP
+transaction per recipient. Each copy has the same <code>Message-ID</code> but includes a unique
+<code>X-Relay-Recipient</code> header, which is the UUID of the recipient in Relay.
+</p>
+
+<p>
+Some mailbox providers, such as Microsoft and Yahoo, redact the recipient's email address in
+bounces and spam complaints. Relay uses this header (returned in the original message of the
+report) to identify the recipient when the address is not available. This header is added after
+DKIM signing and is not included in the signed headers. It cannot be set as a custom header.
+</p>
 
 <h2 id="limits">General Limits</h2>
 

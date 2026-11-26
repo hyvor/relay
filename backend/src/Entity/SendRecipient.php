@@ -18,6 +18,9 @@ class SendRecipient
     #[ORM\Column(type: "integer")]
     private int $id;
 
+    #[ORM\Column(type: "string", unique: true)]
+    private string $uuid;
+
     #[ORM\ManyToOne(targetEntity: Send::class)]
     #[ORM\JoinColumn]
     private Send $send;
@@ -51,6 +54,17 @@ class SendRecipient
     public function setId(int $id): static
     {
         $this->id = $id;
+        return $this;
+    }
+
+    public function getUuid(): string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(string $uuid): static
+    {
+        $this->uuid = $uuid;
         return $this;
     }
 
@@ -130,5 +144,4 @@ class SendRecipient
         $this->bounce_reason = $bounce_reason;
         return $this;
     }
-
 }

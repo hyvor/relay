@@ -10,6 +10,7 @@ use App\Service\Send\Event\SendRecipientSuppressedEvent;
 use App\Service\Suppression\SuppressionService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Mime\Address;
+use Symfony\Component\Uid\Uuid;
 
 class RecipientFactory
 {
@@ -39,6 +40,7 @@ class RecipientFactory
                 $suppression = $suppressions[$address->getAddress()] ?? null;
 
                 $sendRecipient = new SendRecipient();
+                $sendRecipient->setUuid((string) Uuid::v4());
                 $sendRecipient->setStatus(
                     $suppression
                         ? SendRecipientStatus::SUPPRESSED

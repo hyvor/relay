@@ -17,4 +17,5 @@ class ArfInput
     public string $OriginalRcptTo = '';
     #[Assert\NotBlank]
     public string $MessageId;
+    public string $RecipientUuid = '';
 }

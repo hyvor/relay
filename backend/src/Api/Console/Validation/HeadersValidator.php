@@ -34,6 +34,7 @@ class HeadersValidator extends ConstraintValidator
         'return-path',
         'x-mailer',
         'x-originating-ip',
+        'x-relay-recipient',
         'authentication-results',
     ];
 
