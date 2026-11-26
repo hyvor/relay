@@ -45,6 +45,7 @@ final class Version20260911100000 extends AbstractMigration
                 sending_transactional BOOLEAN NOT NULL DEFAULT FALSE,
                 sending_distributional BOOLEAN NOT NULL DEFAULT FALSE,
                 use_case TEXT NOT NULL,
+                plan TEXT NOT NULL DEFAULT 'starter',
                 status kyc_status_enum NOT NULL DEFAULT 'pending',
                 note TEXT DEFAULT NULL,
                 reject_reason TEXT DEFAULT NULL

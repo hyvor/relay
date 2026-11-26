@@ -29,6 +29,8 @@ class KycService
     // the plan a KYC-approved organization is automatically subscribed to
     public const string MINIMUM_PLAN = 'starter';
 
+    public const array PLANS = ['starter', 'pro'];
+
     public const array SORTABLE_COLUMNS = ['status', 'created_at'];
     public const array SORT_DIRECTIONS = ['asc', 'desc'];
 
@@ -41,6 +43,14 @@ class KycService
         private ProjectQueueResolver $projectQueueResolver,
         private LicenseService $licenseService,
     ) {
+    }
+
+    /**
+     * @return string[]
+     */
+    public static function plans(): array
+    {
+        return self::PLANS;
     }
 
     public function getCurrentByOrganizationId(int $organizationId): ?Kyc
@@ -142,6 +152,7 @@ class KycService
         bool $sendingTransactional,
         bool $sendingDistributional,
         string $useCase,
+        string $plan = self::MINIMUM_PLAN,
     ): Kyc {
         $this->assertHasPaymentMethod($organizationId);
 
@@ -157,6 +168,7 @@ class KycService
             $sendingTransactional,
             $sendingDistributional,
             $useCase,
+            $plan,
         ) {
             $pending = $this->getPendingByOrganizationId($organizationId, lock: true);
 
@@ -179,6 +191,7 @@ class KycService
             $kyc->setSendingTransactional($sendingTransactional);
             $kyc->setSendingDistributional($sendingDistributional);
             $kyc->setUseCase($useCase);
+            $kyc->setPlan($plan);
 
             $this->em->persist($kyc);
             $this->em->flush();
@@ -215,7 +228,7 @@ class KycService
 
     /**
      * Approves the KYC and charges the organization's payment method for the
-     * minimum (starter) subscription. The approval itself always goes through
+     * plan selected in the KYC submission. The approval itself always goes through
      * even if the charge fails.
      *
      * @throws KycNotPendingException
@@ -261,9 +274,9 @@ class KycService
 
         try {
             $this->comms->send(
-                new CreateSubscription($kyc->getOrganizationId(), Component::RELAY, self::MINIMUM_PLAN),
+                new CreateSubscription($kyc->getOrganizationId(), Component::RELAY, $kyc->getPlan()),
             );
-            $this->kycEmailService->sendApproved($kyc);
+            $this->kycEmailService->sendApproved($kyc, plan: $kyc->getPlan());
         } catch (CommsApiFailedException $e) {
             $this->logger->error(
                 'Failed to create subscription for organization ' . $kyc->getOrganizationId(),

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { ConsoleLoader, toast } from '@hyvor/design/components';
 	import { onMount } from 'svelte';
-	import type { AppConfig, ProjectUser } from './types';
+	import type { AppConfig, KycStatus, ProjectUser } from './types';
 	import consoleApi from './lib/consoleApi.svelte';
-	import { authOrganizationStore, getAppConfig, setAppConfig } from './lib/stores/consoleStore';
+	import { authOrganizationStore, getAppConfig, kycStatusStore, setAppConfig } from './lib/stores/consoleStore';
 	import { setCurrentProjectUser, setProjectUsers } from './lib/stores/projectStore.svelte';
 	import { page } from '$app/state';
 	import {
@@ -25,6 +25,7 @@
 		config: AppConfig;
 		project_users: ProjectUser[];
 		organization: CloudContextOrganization;
+		kyc_status: KycStatus | null;
 	}
 
 	let isLoading = $state(true);
@@ -41,6 +42,7 @@
 				setAppConfig(res.config);
 				setProjectUsers(res.project_users);
 				authOrganizationStore.set(res.organization);
+				kycStatusStore.set(res.kyc_status ?? null);
 
 				function getProjectId(): number | undefined {
 					const projectId = page.params.id;

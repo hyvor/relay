@@ -58,6 +58,9 @@ class Kyc
     #[ORM\Column(type: 'text')]
     private string $use_case;
 
+    #[ORM\Column(length: 50)]
+    private string $plan = 'starter';
+
     #[ORM\Column(enumType: KycStatus::class)]
     private KycStatus $status;
 
@@ -237,6 +240,18 @@ class Kyc
     public function setUseCase(string $use_case): static
     {
         $this->use_case = $use_case;
+
+        return $this;
+    }
+
+    public function getPlan(): string
+    {
+        return $this->plan;
+    }
+
+    public function setPlan(string $plan): static
+    {
+        $this->plan = $plan;
 
         return $this;
     }
