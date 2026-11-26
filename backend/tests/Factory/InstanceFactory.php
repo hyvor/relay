@@ -32,7 +32,7 @@ final class InstanceFactory extends PersistentObjectFactory
             'updated_at' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'dkim_public_key' => '',
             'dkim_private_key_encrypted' => '',
-            'system_project' => ProjectFactory::new(),
+            'system_project' => ProjectFactory::new(['organization_id' => 0, 'name' => 'System']),
             'sudo_initialized' => false,
         ];
     }

@@ -7,6 +7,7 @@ use App\Entity\Type\KycStatus;
 use App\Entity\Type\ProjectSendType;
 use App\Entity\Type\QueueType;
 use App\Service\Cloud\CloudProjectQueueListener;
+use App\Service\Queue\Event\ProjectQueueSelectingEvent;
 use App\Service\Queue\ProjectQueueResolver;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\KycFactory;
@@ -157,7 +158,12 @@ class CloudProjectQueueListenerTest extends KernelTestCase
     {
         $_ENV['DEPLOYMENT'] = 'on-prem';
         $this->setLicense(ResolvedLicenseType::TRIAL);
-        $this->assertSame($this->transactionalDefault, $this->resolve());
+
+        $event = new ProjectQueueSelectingEvent(ProjectFactory::createOne(['organization_id' => self::ORG_ID]));
+        $this->getEd()->dispatch($event);
+
+        $this->assertNull($event->getQueue());
+        $this->assertTrue($event->isCacheable());
     }
 
     public function test_throws_when_trial_queue_is_missing(): void
