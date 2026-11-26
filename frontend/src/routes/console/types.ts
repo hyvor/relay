@@ -151,7 +151,7 @@ export interface SmtpConversation {
 }
 
 export interface SmtpStep {
-	name: 'dial' | 'helo' | 'mail' | 'rcpt' | 'data' | 'data_close' | 'quit';
+	name: 'dial' | 'helo' | 'mail' | 'rcpt' | 'data' | 'data_close' | 'reset' | 'quit';
 	duration: string;
 	command: string;
 	reply_code: number;

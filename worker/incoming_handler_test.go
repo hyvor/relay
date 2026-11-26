@@ -118,9 +118,7 @@ This is a test email message.
 
 	dsnMap, ok := bodyMap["dsn"].(*bounceparse.Dsn)
 	assert.True(t, ok)
-	bounceDsns := dsnMap.Recipients
-	assert.Equal(t, 1, len(bounceDsns))
-	assert.Equal(t, "recipient", bounceDsns[0].BounceReason)
+	assert.Equal(t, "recipient", dsnMap.BounceReason)
 
 }
 

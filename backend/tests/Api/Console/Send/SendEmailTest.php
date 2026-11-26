@@ -881,5 +881,4 @@ class SendEmailTest extends WebTestCase
         $send = $send[0];
         $this->assertSame('distributional', $send->getQueue()->getName());
     }
-
 }

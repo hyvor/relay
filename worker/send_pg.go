@@ -19,6 +19,7 @@ type SendRow struct {
 
 type RecipientRow struct {
 	Id       int
+	Uuid     string
 	Type     string // "to", "cc", "bcc"
 	Address  string
 	TryCount int
@@ -75,7 +76,7 @@ func (b *SendTransaction) FetchSend(ipId int) (*SendRow, []*RecipientRow, error)
 
 	// Fetch recipients for the send
 	rows, err := b.tx.QueryContext(b.ctx, `
-		SELECT id, type, address, status, try_count
+		SELECT id, uuid, type, address, status, try_count
 		FROM send_recipients
 		WHERE send_id = $1
 	`, send.Id)
@@ -93,6 +94,7 @@ func (b *SendTransaction) FetchSend(ipId int) (*SendRow, []*RecipientRow, error)
 
 		if err := rows.Scan(
 			&recipient.Id,
+			&recipient.Uuid,
 			&recipient.Type,
 			&recipient.Address,
 			&status,
@@ -128,7 +130,7 @@ func sendResultToAttemptStatus(result *SendResult) string {
 			hasOtherType = code
 		}
 	}
-	
+
 	if hasAccepted {
 		if hasOther {
 			return "partial"

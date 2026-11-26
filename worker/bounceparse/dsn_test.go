@@ -30,16 +30,13 @@ func TestDsnSimple(t *testing.T) {
 
 	assert.Contains(t, dsn.ReadableText, "The following addresses had delivery problems")
 
-	assert.Equal(t, 1, len(dsn.Recipients))
-
-	firstRecipient := dsn.Recipients[0]
-	assert.Equal(t, "louisl@larry.slip.umd.edu", firstRecipient.EmailAddress)
-	assert.Equal(t, DsnStatus([3]int{4, 0, 0}), firstRecipient.Status)
-	assert.Equal(t, "failed", firstRecipient.Action)
+	assert.Equal(t, "louisl@larry.slip.umd.edu", dsn.EmailAddress)
+	assert.Equal(t, DsnStatus([3]int{4, 0, 0}), dsn.Status)
+	assert.Equal(t, "failed", dsn.Action)
 
 }
 
-func TestDsnMultiRecipients(t *testing.T) {
+func TestDsnMultiRecipientsParsesFirst(t *testing.T) {
 
 	content, err := os.ReadFile("./testdata/dsn_multi_recipient.txt")
 	assert.Nil(t, err)
@@ -51,23 +48,9 @@ func TestDsnMultiRecipients(t *testing.T) {
 	}
 
 	assert.Contains(t, dsn.ReadableText, "The following addresses had delivery problems")
-
-	assert.Equal(t, 3, len(dsn.Recipients))
-
-	firstRecipient := dsn.Recipients[0]
-	assert.Equal(t, "arathib@vnet.ibm.com", firstRecipient.EmailAddress)
-	assert.Equal(t, DsnStatus([3]int{5, 0, 0}), firstRecipient.Status)
-	assert.Equal(t, "failed", firstRecipient.Action)
-
-	secondRecipient := dsn.Recipients[1]
-	assert.Equal(t, "johnh@hpnjld.njd.hp.com", secondRecipient.EmailAddress)
-	assert.Equal(t, DsnStatus([3]int{4, 0, 0}), secondRecipient.Status)
-	assert.Equal(t, "delayed", secondRecipient.Action)
-
-	thirdRecipient := dsn.Recipients[2]
-	assert.Equal(t, "wsnell@sdcc13.ucsd.edu", thirdRecipient.EmailAddress)
-	assert.Equal(t, DsnStatus([3]int{5, 1, 1}), thirdRecipient.Status)
-	assert.Equal(t, "failed", thirdRecipient.Action)
+	assert.Equal(t, "arathib@vnet.ibm.com", dsn.EmailAddress)
+	assert.Equal(t, DsnStatus([3]int{5, 0, 0}), dsn.Status)
+	assert.Equal(t, "failed", dsn.Action)
 
 }
 
@@ -98,4 +81,31 @@ func TestGetRecipientEmailAd(t *testing.T) {
 	email2 := getDsnRecipientEmailAddress(" supun@hyvor.com ")
 	assert.Equal(t, "supun@hyvor.com", email2)
 
+}
+
+func TestDsnRecipientHeader(t *testing.T) {
+	content, err := os.ReadFile("./testdata/dsn_with_original.txt")
+	assert.Nil(t, err)
+
+	dsn, err := ParseDsn(content)
+	assert.Nil(t, err)
+	assert.Equal(t, "5f0c8a0e-1b7e-4d37-9d52-6f3c2a1b9e10", dsn.RecipientUuid)
+	assert.Equal(t, "louisl@larry.slip.umd.edu", dsn.EmailAddress)
+}
+
+func TestDsnWithoutRecipientHeader(t *testing.T) {
+	content, err := os.ReadFile("./testdata/dsn_simple.txt")
+	assert.Nil(t, err)
+
+	dsn, err := ParseDsn(content)
+	assert.Nil(t, err)
+	assert.Equal(t, "", dsn.RecipientUuid)
+}
+
+func TestDsnErrOnNoRecipient(t *testing.T) {
+	content := []byte("Content-Type: multipart/report; report-type=delivery-status; boundary=\"b\"\r\n\r\n" +
+		"--b\r\n\r\nreadable\r\n--b\r\nContent-Type: message/delivery-status\r\n\r\nReporting-MTA: dns; x\r\n\r\n--b--\r\n")
+
+	_, err := ParseDsn(content)
+	assert.Equal(t, ErrNoDsnRecipient, err)
 }

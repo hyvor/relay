@@ -575,9 +575,10 @@ func TestSendEmailToHost_OneRecipientFails(t *testing.T) {
 250 Go ahead
 250 Sender OK
 250 Recipient OK
-550 5.1.1 No such user here
 354 Body
 250 Bye
+250 Sender OK
+550 5.1.1 No such user here
 221 Closing connection
 `
 	var wrote bytes.Buffer
@@ -651,6 +652,9 @@ func TestSendEmailToHost_DataCloseFails_ReplacesRcptResult(t *testing.T) {
 250 Go ahead
 250 Sender OK
 250 Recipient OK
+354 Body
+550 5.0.0 Message rejected
+250 Sender OK
 250 Recipient OK
 354 Body
 550 5.0.0 Message rejected
@@ -717,9 +721,10 @@ func TestSendEmailToHost_DataCloseFails_PreservesRcptRejection(t *testing.T) {
 250 Go ahead
 250 Sender OK
 250 Recipient OK
-550 5.1.1 No such user here
 354 Body
 550 5.0.0 Message rejected
+250 Sender OK
+550 5.1.1 No such user here
 221 Closing connection
 `
 	var wrote bytes.Buffer
@@ -776,6 +781,118 @@ func TestSendEmailToHost_DataCloseFails_PreservesRcptRejection(t *testing.T) {
 	assert.Equal(t, [3]int{5, 1, 1}, r2.EnhancedCode)
 	assert.Equal(t, "No such user here", r2.Message)
 	assert.Equal(t, RecipientStatusBounced, r2.ToRecipientStatus())
+}
+
+// Each recipient gets its own MAIL/RCPT/DATA transaction with its own X-Relay-Recipient header
+func TestSendEmailToHost_OneTransactionPerRecipient(t *testing.T) {
+
+	server := `220 somedomain.com at your service
+250 Go ahead
+250 Sender OK
+250 Recipient OK
+354 Body
+250 Queued
+250 Sender OK
+250 Recipient OK
+354 Body
+250 Queued
+221 Closing connection
+`
+	var wrote bytes.Buffer
+	var fake fakeConn
+	fake.ReadWriter = struct {
+		io.Reader
+		io.Writer
+	}{
+		strings.NewReader(server),
+		&wrote,
+	}
+
+	createSmtpClientBackup := createSmtpClientContext
+	createSmtpClientContext = func(_ context.Context, host string, _ string) (*smtp.Client, error) {
+		return smtp.NewClient(fake, host)
+	}
+	defer func() { createSmtpClientContext = createSmtpClientBackup }()
+
+	send := &SendRow{
+		Id:        1,
+		Uuid:      "test-uuid",
+		From:      "test@hyvor.com",
+		RawEmail:  "From: a@b.com\r\nX-Mailer: Hyvor Relay\r\nSubject: Test\r\n\r\nbody",
+		QueueName: "default",
+	}
+
+	recipient1 := &RecipientRow{Id: 11, Uuid: "uuid-11", Type: "to", Address: "a@somedomain.com"}
+	recipient2 := &RecipientRow{Id: 12, Uuid: "uuid-12", Type: "cc", Address: "b@somedomain.com"}
+
+	convo := sendEmailToHostHandler(
+		send,
+		[]*RecipientRow{recipient1, recipient2},
+		"localhost",
+		"relay.com",
+		"127.0.0.1",
+		"smtp.relay.com",
+		false,
+	)
+
+	assert.NoError(t, convo.NetworkError)
+	assert.Equal(t, 2, len(convo.RcptResults))
+	assert.Equal(t, 250, convo.RcptResults[0].Code)
+	assert.Equal(t, 250, convo.RcptResults[1].Code)
+
+	out := wrote.String()
+	assert.Equal(t, 2, strings.Count(out, "MAIL FROM"))
+	assert.Equal(t, 2, strings.Count(out, "DATA\r\n"))
+	assert.Contains(t, out, "Subject: Test\r\nX-Relay-Recipient: uuid-11\r\n\r\nbody")
+	assert.Contains(t, out, "Subject: Test\r\nX-Relay-Recipient: uuid-12\r\n\r\nbody")
+}
+
+// If the connection drops after some recipients were already sent, the rest are deferred
+// (not retried on another MX host, which would duplicate the delivered ones)
+func TestSendEmailToHost_ConnectionLostAfterFirstRecipient(t *testing.T) {
+
+	server := `220 somedomain.com at your service
+250 Go ahead
+250 Sender OK
+250 Recipient OK
+354 Body
+250 Queued
+`
+	var wrote bytes.Buffer
+	var fake fakeConn
+	fake.ReadWriter = struct {
+		io.Reader
+		io.Writer
+	}{
+		strings.NewReader(server),
+		&wrote,
+	}
+
+	createSmtpClientBackup := createSmtpClientContext
+	createSmtpClientContext = func(_ context.Context, host string, _ string) (*smtp.Client, error) {
+		return smtp.NewClient(fake, host)
+	}
+	defer func() { createSmtpClientContext = createSmtpClientBackup }()
+
+	send := &SendRow{Id: 1, Uuid: "test-uuid", From: "test@hyvor.com", RawEmail: "Subject: Test", QueueName: "default"}
+
+	recipient1 := &RecipientRow{Id: 1, Type: "to", Address: "a@somedomain.com"}
+	recipient2 := &RecipientRow{Id: 2, Type: "to", Address: "b@somedomain.com"}
+
+	convo := sendEmailToHostHandler(
+		send,
+		[]*RecipientRow{recipient1, recipient2},
+		"localhost",
+		"relay.com",
+		"127.0.0.1",
+		"smtp.relay.com",
+		false,
+	)
+
+	assert.NoError(t, convo.NetworkError)
+	assert.Equal(t, 2, len(convo.RcptResults))
+	assert.Equal(t, RecipientStatusAccepted, convo.RcptResults[0].ToRecipientStatus())
+	assert.Equal(t, RecipientStatusDeferred, convo.RcptResults[1].ToRecipientStatus())
 }
 
 func TestSendEmailFailedSmtpStatus(t *testing.T) {

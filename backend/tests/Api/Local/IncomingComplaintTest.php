@@ -123,7 +123,6 @@ class IncomingComplaintTest extends WebTestCase
             'rcpt_to' => 'to@example.com'
         ];
     }
-
     public function test_duplicate_complaint_is_ignored(): void
     {
         $project = ProjectFactory::createOne();
@@ -172,6 +171,91 @@ class IncomingComplaintTest extends WebTestCase
             'project' => $project,
             'reason' => SuppressionReason::COMPLAINT
         ]));
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    private function withRecipientUuid(array $payload, string $uuid): array
+    {
+        assert(is_array($payload['arf']));
+        $payload['arf']['RecipientUuid'] = $uuid;
+        return $payload;
+    }
+
+
+    public function test_complaint_with_redacted_recipient_is_matched_by_uuid(): void
+    {
+        $project = ProjectFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project]);
+        $recipient = SendRecipientFactory::createOne([
+            'send' => $send,
+            'address' => 'spammer@example.net',
+            'status' => SendRecipientStatus::ACCEPTED,
+        ]);
+        SendRecipientFactory::createOne([
+            'send' => $send,
+            'address' => 'other@example.net',
+            'status' => SendRecipientStatus::ACCEPTED,
+        ]);
+
+        $payload = $this->complaintPayload($send, '');
+        $payload = $this->withRecipientUuid($payload, $recipient->getUuid());
+
+        $response = $this->localApi('POST', '/incoming', $payload);
+        $this->assertResponseStatusCodeSame(200, $response);
+
+        $this->assertSame(SendRecipientStatus::COMPLAINED, $recipient->getStatus());
+        $this->assertNotNull($this->em->getRepository(SendFeedback::class)->findOneBy(['send_recipient' => $recipient]));
+
+        // the suppression uses the stored address, not the (redacted) one in the report
+        $suppression = $this->em->getRepository(Suppression::class)->findOneBy([
+            'project' => $project,
+            'reason' => SuppressionReason::COMPLAINT
+        ]);
+        $this->assertNotNull($suppression);
+        $this->assertSame('spammer@example.net', $suppression->getEmail());
+    }
+
+    public function test_complaint_uuid_of_another_send_is_not_used(): void
+    {
+        $project = ProjectFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project]);
+        $otherSend = SendFactory::createOne(['project' => $project]);
+        $otherRecipient = SendRecipientFactory::createOne([
+            'send' => $otherSend,
+            'address' => 'spammer@example.net',
+            'status' => SendRecipientStatus::ACCEPTED,
+        ]);
+
+        $payload = $this->complaintPayload($send, '');
+        $payload = $this->withRecipientUuid($payload, $otherRecipient->getUuid());
+
+        $response = $this->localApi('POST', '/incoming', $payload);
+        $this->assertResponseStatusCodeSame(200, $response);
+
+        $this->assertSame(SendRecipientStatus::ACCEPTED, $otherRecipient->getStatus());
+        $this->assertCount(0, $this->em->getRepository(SendFeedback::class)->findAll());
+    }
+
+    public function test_complaint_with_invalid_recipient_uuid_falls_back_to_email(): void
+    {
+        $project = ProjectFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project]);
+        $recipient = SendRecipientFactory::createOne([
+            'send' => $send,
+            'address' => 'spammer@example.net',
+            'status' => SendRecipientStatus::ACCEPTED,
+        ]);
+
+        $payload = $this->complaintPayload($send, 'spammer@example.net');
+        $payload = $this->withRecipientUuid($payload, 'not-a-uuid');
+
+        $response = $this->localApi('POST', '/incoming', $payload);
+        $this->assertResponseStatusCodeSame(200, $response);
+
+        $this->assertSame(SendRecipientStatus::COMPLAINED, $recipient->getStatus());
     }
 
     public function test_incoming_complaint_arf_missing_error_provided(): void

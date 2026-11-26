@@ -20,7 +20,10 @@ type Arf struct {
 	OriginalMailFrom string // The original MAIL FROM (Return-Path) address, this can be empty since the RFC does not require it
 	OriginalRcptTo   string // The original RCPT TO address, this can also be empty
 	MessageId        string // The Message-ID of the original message
+	RecipientUuid    string // The X-Relay-Recipient header of the original message, can be empty
 }
+
+const RecipientHeader = "X-Relay-Recipient"
 
 var ErrNotArfReport = errors.New("not an ARF report")
 var ErrInvalidMimeType = errors.New("invalid ARF MIME type")
@@ -75,11 +78,12 @@ func ParseArf(input []byte) (*Arf, error) {
 	arf.MessageId = part2.Header.Get("Message-ID")
 
 	// Part3 is the original message (message/rfc822 or message/rfc822-headers)
-	part3, err := readNextPartBodyAsMessage(reader, []string{"message/rfc822", "message/rfc822-headers"})
+	part3, err := readNextPartBodyAsMessage(reader, []string{"message/rfc822", "message/rfc822-headers", "text/rfc822-headers"})
 	if err != nil {
 		return nil, err
 	}
 	arf.MessageId = strings.Trim(part3.Header.Get("Message-ID"), "<> ")
+	arf.RecipientUuid = strings.TrimSpace(part3.Header.Get(RecipientHeader))
 
 	return arf, nil
 }
