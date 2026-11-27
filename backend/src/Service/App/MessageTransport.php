@@ -8,5 +8,6 @@ class MessageTransport
 
     public const ASYNC = 'async';
     public const SYNC = 'sync';
+    public const CLOUD = 'cloud';
 
 }

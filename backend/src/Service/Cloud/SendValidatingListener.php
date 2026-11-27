@@ -11,7 +11,7 @@ use Symfony\Component\Mime\Address;
 #[AsEventListener]
 class SendValidatingListener
 {
-    private const string SIMULATOR_DOMAIN = 'simulator.relay.hyvor.com';
+    public const string SIMULATOR_DOMAIN = 'simulator.relay.hyvor.com';
 
     public function __construct(
         private InternalConfig $internalConfig,
