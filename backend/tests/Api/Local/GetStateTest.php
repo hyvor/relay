@@ -51,6 +51,7 @@ class GetStateTest extends WebTestCase
         $ipEntity = IpAddressFactory::createOne([
             'server' => $server,
             'queue' => QueueFactory::new(),
+            'ip_address' => '1.1.1.1',
         ]);
 
         // no queue
@@ -72,6 +73,7 @@ class GetStateTest extends WebTestCase
         $this->assertSame('mail.hyvor-relay.com', $json['instanceDomain']);
         $this->assertSame('hyvor-relay', $json['hostname']);
         $this->assertSame('test', $json['env']);
+        $this->assertSame('1.1.1.1', $json['dnsIp']);
 
         $ips = $json['ips'];
         $this->assertIsArray($ips);
@@ -81,6 +83,21 @@ class GetStateTest extends WebTestCase
         $this->assertIsArray($ip);
         $this->assertSame($ipEntity->getId(), $ip['id']);
         $this->assertSame('smtp' . $ipEntity->getId() . '.mail.hyvor-relay.com', $ip['ptr']);
+    }
+
+    public function test_dns_ip_with_nat(): void
+    {
+        $server = ServerFactory::createOne(['hostname' => 'hyvor-relay']);
+        IpAddressFactory::createOne([
+            'server' => $server,
+            'queue' => QueueFactory::new(),
+            'ip_address' => '1.1.1.1',
+            'private_ip_address' => '10.0.0.5',
+        ]);
+
+        $this->localApi('GET', '/state');
+        $this->assertResponseIsSuccessful();
+        $this->assertSame('10.0.0.5', $this->getJson()['dnsIp']);
     }
 
     public function test_fails_when_server_not_initialized(): void
@@ -96,5 +113,4 @@ class GetStateTest extends WebTestCase
             $this->getJson()["message"]
         );
     }
-
 }
