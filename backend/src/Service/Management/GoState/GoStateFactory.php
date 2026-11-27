@@ -54,7 +54,9 @@ class GoStateFactory
             );
         }
 
-        $dnsIp = count($ips) > 0 ? $ips[0]->ip : "";
+        $dnsIp = count($ips) > 0 ?
+            ($ips[0]->privateIp ?: $ips[0]->ip) :
+            "";
 
         return new GoState(
             instanceDomain: $this->config->getInstanceDomain(),
