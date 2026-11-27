@@ -64,7 +64,6 @@ class ReportMeteredUsageMessageHandler
             $count = $this->meteredUsageService->reportDailyUsage($day);
 
             // move the cursor only after the day's events are queued
-            // if this fails midway, the day is re-reported (safe: idempotency key)
             $cursor->set($day->format('Y-m-d'));
             $this->cache->save($cursor);
 

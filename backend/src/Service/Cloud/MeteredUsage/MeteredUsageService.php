@@ -2,19 +2,16 @@
 
 namespace App\Service\Cloud\MeteredUsage;
 
-use App\Service\Cloud\SendValidatingListener;
-use Doctrine\ORM\EntityManagerInterface;
-use Hyvor\Internal\Bundle\Comms\CommsInterface;
-use Hyvor\Internal\Bundle\Comms\Event\ToCore\Billing\RecordMeteredUsage;
-use Hyvor\Internal\Component\Component;
 use App\Service\App\MessageTransport;
+use Doctrine\ORM\EntityManagerInterface;
+use Hyvor\Internal\Billing\BillingInterface;
 
 class MeteredUsageService
 {
 
     public function __construct(
         private EntityManagerInterface $em,
-        private CommsInterface $comms,
+        private BillingInterface $billing,
     ) {
     }
 
@@ -36,14 +33,12 @@ class MeteredUsageService
             WHERE s.created_at >= :start
                 AND s.created_at < :end
                 AND p.organization_id IS NOT NULL
-                AND LOWER(sr.address) NOT LIKE :simulator
             GROUP BY p.organization_id
             ORDER BY p.organization_id
             SQL,
             [
                 'start' => $start->format('Y-m-d H:i:s'),
-                'end' => $end->format('Y-m-d H:i:s'),
-                'simulator' => '%@' . SendValidatingListener::SIMULATOR_DOMAIN,
+                'end' => $end->format('Y-m-d H:i:s')
             ]
         );
 
@@ -58,29 +53,22 @@ class MeteredUsageService
     /**
      * @return int number of organizations reported
      */
-    public function reportDailyUsage(\DateTimeImmutable $day): int
+    public function reportDailyUsage(\DateTimeImmutable $day, bool $force = false): int
     {
         $usage = $this->getDailyUsageByOrganization($day);
 
         foreach ($usage as $organizationId => $amount) {
-            $this->comms->sendAsync(
-                new RecordMeteredUsage(
-                    Component::RELAY,
-                    $organizationId,
-                    $amount,
-                    self::idempotencyKey($organizationId, $day),
-                    $day,
-                ),
+            $this->billing->recordMeteredUsage(
+                $organizationId,
+                $amount,
+                $day,
+                force: $force,
+                async: true,
                 transport: MessageTransport::CLOUD,
             );
         }
 
         return count($usage);
-    }
-
-    public static function idempotencyKey(int $organizationId, \DateTimeImmutable $day): string
-    {
-        return 'relay:' . $organizationId . ':' . $day->format('Y-m-d');
     }
 
 }

@@ -11,9 +11,9 @@ use App\Service\Cloud\MeteredUsage\MeteredUsageService;
 use App\Tests\Case\KernelTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\SendFactory;
+use App\Service\App\MessageTransport;
 use App\Tests\Factory\SendRecipientFactory;
-use Hyvor\Internal\Bundle\Comms\Event\ToCore\Billing\RecordMeteredUsage;
-use Hyvor\Internal\Component\Component;
+use Hyvor\Internal\Billing\BillingFake;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
@@ -59,7 +59,7 @@ class ReportMeteredUsageTest extends KernelTestCase
         $org2Project = ProjectFactory::createOne(['organization_id' => 2]);
         $org3Project = ProjectFactory::createOne(['organization_id' => 3]);
 
-        // org 1: 2 + 1 + 1 = 4 (across two projects, simulator excluded)
+        // org 1: 2 + 2 + 1 = 5 (across two projects, simulator included)
         $this->createSend($org1ProjectA, '2026-11-25 00:00:00', ['a@example.com', 'b@example.com']);
         $this->createSend($org1ProjectB, '2026-11-25 12:00:00', ['c@example.com', 'x@simulator.relay.hyvor.com']);
         $this->createSend($org1ProjectB, '2026-11-25 23:59:59', ['d@example.com']);
@@ -67,7 +67,7 @@ class ReportMeteredUsageTest extends KernelTestCase
         // org 2: 1
         $this->createSend($org2Project, '2026-11-25 08:00:00', ['e@example.com']);
 
-        // org 3: only simulator recipients -> not reported
+        // org 3: only simulator recipients
         $this->createSend($org3Project, '2026-11-25 08:00:00', ['y@SIMULATOR.relay.hyvor.com']);
 
         // other days -> not counted
@@ -82,25 +82,22 @@ class ReportMeteredUsageTest extends KernelTestCase
         $service = $this->getService(MeteredUsageService::class);
         $usage = $service->getDailyUsageByOrganization(new \DateTimeImmutable('2026-11-25'));
 
-        $this->assertSame([1 => 4, 2 => 1], $usage);
+        $this->assertSame([1 => 5, 2 => 1, 3 => 1], $usage);
     }
 
     /**
-     * @return array<string, array<int, RecordMeteredUsage>> date => organization_id => event
+     * @return array<string, array<int, array{organizationId: int, amount: int, usageDate: \DateTimeImmutable, force: bool, async: bool, transport: string}>> date => organization_id => recorded usage
      */
-    private function sentEvents(): array
+    private function recordedUsage(): array
     {
-        $events = [];
-        foreach ($this->getComms()->getSentsByEventClass(RecordMeteredUsage::class) as $sent) {
-            $this->assertTrue($sent['async']);
-            $this->assertSame(Component::CORE, $sent['to']);
-
-            $event = $sent['event'];
-            $this->assertInstanceOf(RecordMeteredUsage::class, $event);
-            $events[$event->getUsageDate()->format('Y-m-d')][$event->getOrganizationId()] = $event;
+        $recorded = [];
+        foreach ($this->getService(BillingFake::class)->recordedUsage as $usage) {
+            $this->assertTrue($usage['async']);
+            $this->assertSame(MessageTransport::CLOUD, $usage['transport']);
+            $recorded[$usage['usageDate']->format('Y-m-d')][$usage['organizationId']] = $usage;
         }
-        ksort($events);
-        return $events;
+        ksort($recorded);
+        return $recorded;
     }
 
     private function runHandler(): void
@@ -132,17 +129,15 @@ class ReportMeteredUsageTest extends KernelTestCase
 
         $this->runHandler();
 
-        $events = $this->sentEvents();
-        $this->assertSame(['2026-11-25'], array_keys($events));
+        $recorded = $this->recordedUsage();
+        $this->assertSame(['2026-11-25'], array_keys($recorded));
+        $this->assertSame([1, 2, 3], array_keys($recorded['2026-11-25']));
 
-        $org1 = $events['2026-11-25'][1];
-        $this->assertSame(4, $org1->getAmount());
-        $this->assertSame('relay:1:2026-11-25', $org1->getIdempotencyKey());
-        $this->assertSame(Component::RELAY, $org1->getComponent());
+        $org1 = $recorded['2026-11-25'][1];
+        $this->assertSame(5, $org1['amount']);
+        $this->assertFalse($org1['force']);
 
-        $org2 = $events['2026-11-25'][2];
-        $this->assertSame(1, $org2->getAmount());
-        $this->assertSame('relay:2:2026-11-25', $org2->getIdempotencyKey());
+        $this->assertSame(1, $recorded['2026-11-25'][2]['amount']);
 
         $this->assertSame('2026-11-25', $this->getLastReportedDay());
     }
@@ -156,12 +151,12 @@ class ReportMeteredUsageTest extends KernelTestCase
 
         $this->runHandler();
 
-        $events = $this->sentEvents();
+        $recorded = $this->recordedUsage();
         // 23rd has no usage; 24th, 25th have usage
-        $this->assertSame(['2026-11-24', '2026-11-25'], array_keys($events));
-        $this->assertSame([1], array_keys($events['2026-11-24']));
-        $this->assertSame(1, $events['2026-11-24'][1]->getAmount());
-        $this->assertSame([1, 2], array_keys($events['2026-11-25']));
+        $this->assertSame(['2026-11-24', '2026-11-25'], array_keys($recorded));
+        $this->assertSame([1], array_keys($recorded['2026-11-24']));
+        $this->assertSame(1, $recorded['2026-11-24'][1]['amount']);
+        $this->assertSame([1, 2, 3], array_keys($recorded['2026-11-25']));
 
         $this->assertSame('2026-11-25', $this->getLastReportedDay());
     }
@@ -174,7 +169,7 @@ class ReportMeteredUsageTest extends KernelTestCase
 
         $this->runHandler();
 
-        $this->assertSame([], $this->sentEvents());
+        $this->assertSame([], $this->recordedUsage());
         $this->assertSame('2026-11-25', $this->getLastReportedDay());
     }
 
@@ -207,7 +202,7 @@ class ReportMeteredUsageTest extends KernelTestCase
 
         $this->runHandler();
 
-        $this->getComms()->assertNotSent(RecordMeteredUsage::class, Component::CORE);
+        $this->assertSame([], $this->recordedUsage());
         $this->assertNull($this->getLastReportedDay());
     }
 
@@ -219,7 +214,26 @@ class ReportMeteredUsageTest extends KernelTestCase
         $exitCode = $command->execute(['--date' => '2026-11-25']);
 
         $this->assertSame(0, $exitCode);
-        $this->assertCount(2, $this->getComms()->getSentsByEventClass(RecordMeteredUsage::class));
+
+        $recorded = $this->recordedUsage();
+        $this->assertSame([1, 2, 3], array_keys($recorded['2026-11-25']));
+        $this->assertFalse($recorded['2026-11-25'][1]['force']);
+    }
+
+    public function test_command_reports_given_date_with_force(): void
+    {
+        $this->seed();
+
+        $command = $this->commandTester('cloud:report-metered-usage');
+        $exitCode = $command->execute(['--date' => '2026-11-25', '--force' => true]);
+
+        $this->assertSame(0, $exitCode);
+        $this->assertStringContainsString('(forced)', $command->getDisplay());
+
+        $recorded = $this->recordedUsage();
+        $this->assertSame([1, 2, 3], array_keys($recorded['2026-11-25']));
+        $this->assertTrue($recorded['2026-11-25'][1]['force']);
+        $this->assertSame(5, $recorded['2026-11-25'][1]['amount']);
     }
 
     public function test_command_requires_valid_date(): void

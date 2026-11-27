@@ -21,6 +21,12 @@ class ReportMeteredUsageCommand extends Command
     protected function configure(): void
     {
         $this->addOption('date', null, InputOption::VALUE_REQUIRED, 'Day to report (Y-m-d)');
+        $this->addOption(
+            'force',
+            null,
+            InputOption::VALUE_NONE,
+            'Replace the usage already recorded in core for the day (no effect if already invoiced)'
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -39,9 +45,13 @@ class ReportMeteredUsageCommand extends Command
             return Command::INVALID;
         }
 
-        $count = $this->meteredUsageService->reportDailyUsage($date);
+        $force = (bool) $input->getOption('force');
+        $count = $this->meteredUsageService->reportDailyUsage($date, $force);
 
-        $output->writeln("Metered usage for {$date->format('Y-m-d')} queued for reporting ({$count} organizations)");
+        $output->writeln(
+            "Metered usage for {$date->format('Y-m-d')} queued for reporting ({$count} organizations)" .
+            ($force ? ' (forced)' : '')
+        );
 
         return Command::SUCCESS;
     }

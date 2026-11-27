@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "49e368d6defb5734bc3cdf2f897ba7f0",
+    "content-hash": "a84c8e18bd83cda0db5aba8632afad47",
     "packages": [
         {
             "name": "async-aws/core",
@@ -1604,16 +1604,16 @@
         },
         {
             "name": "hyvor/internal",
-            "version": "4.1.15",
+            "version": "4.1.16",
             "source": {
                 "type": "git",
                 "url": "https://github.com/hyvor/internal.git",
-                "reference": "489d510192f4ac75aff5fd7e7d380f01941bf3dd"
+                "reference": "1fae2fe27ab37803688fcb681592c0756722998d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/hyvor/internal/zipball/489d510192f4ac75aff5fd7e7d380f01941bf3dd",
-                "reference": "489d510192f4ac75aff5fd7e7d380f01941bf3dd",
+                "url": "https://api.github.com/repos/hyvor/internal/zipball/1fae2fe27ab37803688fcb681592c0756722998d",
+                "reference": "1fae2fe27ab37803688fcb681592c0756722998d",
                 "shasum": ""
             },
             "require": {
@@ -1677,9 +1677,9 @@
             "description": "Internal Package for HYVOR Applications",
             "support": {
                 "issues": "https://github.com/hyvor/internal/issues",
-                "source": "https://github.com/hyvor/internal/tree/4.1.15"
+                "source": "https://github.com/hyvor/internal/tree/4.1.16"
             },
-            "time": "2026-11-24T05:34:59+00:00"
+            "time": "2026-11-27T12:07:44+00:00"
         },
         {
             "name": "illuminate/collections",
