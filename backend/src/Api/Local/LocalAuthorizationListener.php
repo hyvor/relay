@@ -22,7 +22,7 @@ class LocalAuthorizationListener
     public function __invoke(ControllerEvent $event): void
     {
         // only local API requests
-        if (!str_starts_with($event->getRequest()->getPathInfo(), '/api/local')) return;
+        if (!str_starts_with(rawurldecode($event->getRequest()->getPathInfo()), '/api/local')) return;
         if ($this->env === 'dev') return;
 
         $ip = $event->getRequest()->getClientIp();
