@@ -17,7 +17,7 @@
         "doctrine/orm": "^3.6.8",
         "dragonmantank/cron-expression": "^3.6",
         "egulias/email-validator": "^4.0.4",
-        "hyvor/internal": "^4.1.10",
+        "hyvor/internal": "^4.1.17",
         "league/flysystem": "^3.35.2",
         "league/flysystem-async-aws-s3": "^3.31",
         "league/flysystem-memory": "^3.31",
