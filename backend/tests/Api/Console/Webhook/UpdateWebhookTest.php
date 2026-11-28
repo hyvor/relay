@@ -11,6 +11,7 @@ use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use App\Tests\Factory\WebhookFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 #[CoversClass(WebhooksController::class)]
 #[CoversClass(WebhookService::class)]
@@ -58,5 +59,31 @@ class UpdateWebhookTest extends WebTestCase
         $this->assertSame('New description', $webhookDb->getDescription());
         $this->assertContains('send.recipient.complained', $webhookDb->getEvents());
         $this->assertContains('suppression.created', $webhookDb->getEvents());
+    }
+
+    #[DataProvider('disallowedSchemeUrls')]
+    public function test_update_webhook_rejects_non_http_schemes(string $url): void
+    {
+        $project = ProjectFactory::createOne();
+        $webhook = WebhookFactory::createOne(['project' => $project, 'url' => 'https://example.com/old']);
+
+        $response = $this->consoleApi(
+            $project,
+            'PATCH',
+            '/webhooks/' . $webhook->getId(),
+            ['url' => $url]
+        );
+
+        $this->assertSame(422, $response->getStatusCode());
+        $this->assertHasViolation('url', 'This value is not a valid URL');
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function disallowedSchemeUrls(): iterable
+    {
+        yield 'file' => ['file:///etc/passwd'];
+        yield 'ftp' => ['ftp://example.com/webhook'];
     }
 }

@@ -9,7 +9,7 @@ class CreateWebhookInput
 {
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
-    #[Assert\Url(requireTld: false)]
+    #[Assert\Url(protocols: ['http', 'https'], requireTld: false)]
     public string $url;
 
     public string $description;

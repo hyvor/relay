@@ -9,6 +9,7 @@ use App\Service\Webhook\WebhookService;
 use App\Tests\Case\WebTestCase;
 use App\Tests\Factory\ProjectFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 #[CoversClass(WebhooksController::class)]
 #[CoversClass(WebhookService::class)]
@@ -63,5 +64,35 @@ class CreateWebhookTest extends WebTestCase
 
         $this->assertSame(422, $response->getStatusCode());
         $this->assertHasViolation('url', 'This value is not a valid URL');
+    }
+
+    #[DataProvider('disallowedSchemeUrls')]
+    public function test_create_webhook_rejects_non_http_schemes(string $url): void
+    {
+        $project = ProjectFactory::createOne();
+
+        $response = $this->consoleApi(
+            $project,
+            'POST',
+            '/webhooks',
+            [
+                'url' => $url,
+                'description' => 'Test',
+                'events' => ['send.recipient.accepted'],
+            ]
+        );
+
+        $this->assertSame(422, $response->getStatusCode());
+        $this->assertHasViolation('url', 'This value is not a valid URL');
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function disallowedSchemeUrls(): iterable
+    {
+        yield 'file' => ['file:///etc/passwd'];
+        yield 'ftp' => ['ftp://example.com/webhook'];
+        yield 'gopher' => ['gopher://example.com/'];
     }
 }

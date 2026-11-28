@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -89,6 +90,15 @@ func TestWebhookWorkersPoolStopWorkers(t *testing.T) {
 
 type WebhookWorkerTestSuite struct {
 	suite.Suite
+}
+
+func (suite *WebhookWorkerTestSuite) SetupSuite() {
+	// tests use local httptest servers
+	blockInternalWebhookIPs = false
+}
+
+func (suite *WebhookWorkerTestSuite) TearDownSuite() {
+	blockInternalWebhookIPs = true
 }
 
 func (suite *WebhookWorkerTestSuite) SetupTest() {
@@ -292,4 +302,54 @@ func (suite *WebhookWorkerTestSuite) TestWebhookDeliveryWithSignatureHeader() {
 	suite.Equal(200, int(delivery.ResponseCode.Int64))
 	suite.Equal(1, delivery.TryCount)
 	suite.Equal(testSignature, delivery.Signature.String)
+}
+
+func TestIsInternalIP(t *testing.T) {
+	blocked := []string{
+		"127.0.0.1", "::1", "0.0.0.0", "10.1.2.3", "172.16.0.1", "192.168.1.1",
+		"169.254.169.254", "100.64.0.1", "fe80::1", "fd00::1", "::ffff:127.0.0.1",
+		"224.0.0.1", "198.18.0.1", "240.0.0.1",
+	}
+	for _, ip := range blocked {
+		assert.True(t, isInternalIP(net.ParseIP(ip)), ip)
+	}
+	for _, ip := range []string{"8.8.8.8", "1.1.1.1", "2606:4700:4700::1111"} {
+		assert.False(t, isInternalIP(net.ParseIP(ip)), ip)
+	}
+}
+
+func TestSendWebhookBlocksInternalDestination(t *testing.T) {
+	blockInternalWebhookIPs = true
+	called := false
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		called = true
+	}))
+	defer server.Close()
+
+	result := sendWebhook(&WebhookDelivery{Url: server.URL + "/webhook", RequestBody: "{}"})
+
+	assert.False(t, result.Success)
+	assert.Contains(t, result.ResponseBody, "is not allowed")
+	assert.False(t, called)
+}
+
+func TestSendWebhookDoesNotFollowRedirects(t *testing.T) {
+	blockInternalWebhookIPs = false
+	defer func() { blockInternalWebhookIPs = true }()
+
+	targetCalled := false
+	target := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		targetCalled = true
+	}))
+	defer target.Close()
+	redirector := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		http.Redirect(rw, req, target.URL, http.StatusFound)
+	}))
+	defer redirector.Close()
+
+	result := sendWebhook(&WebhookDelivery{Url: redirector.URL, RequestBody: "{}"})
+
+	assert.False(t, result.Success)
+	assert.Equal(t, http.StatusFound, result.ResponseStatusCode)
+	assert.False(t, targetCalled)
 }
