@@ -57,6 +57,7 @@ services:
       - relay_media:/app/media
     environment:
       GO_SYMFONY_URL: http://hyvor-relay-backend
+      LOCAL_HTTP_ADDR: ":8085"
       # OUTGOING_SMTP_PORT: ":587"
     ports:
       - "11025:25"

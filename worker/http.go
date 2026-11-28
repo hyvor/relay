@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-var localHttpPort = ":8085"
+var localHttpAddr = "127.0.0.1:8085"
 
 func StartHttpServer(
 	ctx context.Context,
@@ -20,7 +21,11 @@ func StartHttpServer(
 ) {
 
 	httpServerLogger := serviceState.Logger.With("component", "http_local_server")
-	httpServerLogger.Info("Starting local HTTP server at localhost:8085")
+	if addr := os.Getenv("LOCAL_HTTP_ADDR"); addr != "" {
+		localHttpAddr = addr
+	}
+
+	httpServerLogger.Info("Starting local HTTP server at " + localHttpAddr)
 
 	mux := http.NewServeMux()
 
@@ -33,7 +38,7 @@ func StartHttpServer(
 	var handler http.Handler = mux
 
 	server := &http.Server{
-		Addr:    localHttpPort,
+		Addr:    localHttpAddr,
 		Handler: handler,
 	}
 
