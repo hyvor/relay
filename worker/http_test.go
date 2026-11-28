@@ -27,7 +27,7 @@ func withOutboundDNSResolver(t *testing.T, resolver *DoHResolver) {
 
 func TestPingAndReady(t *testing.T) {
 
-	localHttpPort = ":43000"
+	localHttpAddr = ":43000"
 
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -38,14 +38,14 @@ func TestPingAndReady(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	resp, err := http.Get("http://localhost" + localHttpPort + "/ping")
+	resp, err := http.Get("http://localhost" + localHttpAddr + "/ping")
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	body, _ := io.ReadAll(resp.Body)
 	assert.Equal(t, "ok", string(body))
 
-	resp, err = http.Get("http://localhost" + localHttpPort + "/ready")
+	resp, err = http.Get("http://localhost" + localHttpAddr + "/ready")
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 	assert.Equal(t, 503, resp.StatusCode)
@@ -53,7 +53,7 @@ func TestPingAndReady(t *testing.T) {
 	assert.Equal(t, "not ready", string(body))
 
 	serviceState.IsSet = true
-	resp, err = http.Get("http://localhost" + localHttpPort + "/ready")
+	resp, err = http.Get("http://localhost" + localHttpAddr + "/ready")
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -66,7 +66,7 @@ func TestPingAndReady(t *testing.T) {
 
 func TestSetState(t *testing.T) {
 
-	localHttpPort = ":43005"
+	localHttpAddr = ":43005"
 
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -94,7 +94,7 @@ func TestSetState(t *testing.T) {
 
 func TestDebugParseBounce(t *testing.T) {
 
-	localHttpPort = ":43001"
+	localHttpAddr = ":43001"
 
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -132,7 +132,7 @@ Content-Type: message/rfc822
 	rawBase64 := base64.StdEncoding.EncodeToString(raw)
 	jsonData := `{"raw": "` + rawBase64 + `","type": "bounce"}`
 
-	resp, err := http.Post("http://localhost"+localHttpPort+"/debug/parse-bounce-fbl", "application/json", strings.NewReader(jsonData))
+	resp, err := http.Post("http://localhost"+localHttpAddr+"/debug/parse-bounce-fbl", "application/json", strings.NewReader(jsonData))
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -145,7 +145,7 @@ Content-Type: message/rfc822
 
 func TestDebugParseFbl(t *testing.T) {
 
-	localHttpPort = ":43002"
+	localHttpAddr = ":43002"
 
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -161,7 +161,7 @@ func TestDebugParseFbl(t *testing.T) {
 	rawBase64 := base64.StdEncoding.EncodeToString(content)
 	jsonData := `{"raw": "` + rawBase64 + `","type": "complaint"}`
 
-	resp, err := http.Post("http://localhost"+localHttpPort+"/debug/parse-bounce-fbl", "application/json", strings.NewReader(jsonData))
+	resp, err := http.Post("http://localhost"+localHttpAddr+"/debug/parse-bounce-fbl", "application/json", strings.NewReader(jsonData))
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -183,7 +183,7 @@ func TestDebugParseFbl(t *testing.T) {
 
 func TestDnsResolveARecord(t *testing.T) {
 
-	localHttpPort = ":43006"
+	localHttpAddr = ":43006"
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -209,7 +209,7 @@ func TestDnsResolveARecord(t *testing.T) {
 	withOutboundDNSResolver(t, &DoHResolver{URL: server.URL, Client: server.Client()})
 
 	resp, err := http.Post(
-		"http://localhost"+localHttpPort+"/dns/resolve",
+		"http://localhost"+localHttpAddr+"/dns/resolve",
 		"application/json",
 		strings.NewReader(`{"name": "example.com", "type": "A"}`),
 	)
@@ -229,7 +229,7 @@ func TestDnsResolveARecord(t *testing.T) {
 
 func TestDnsResolveTxtRecord(t *testing.T) {
 
-	localHttpPort = ":43007"
+	localHttpAddr = ":43007"
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -254,7 +254,7 @@ func TestDnsResolveTxtRecord(t *testing.T) {
 	withOutboundDNSResolver(t, &DoHResolver{URL: server.URL, Client: server.Client()})
 
 	resp, err := http.Post(
-		"http://localhost"+localHttpPort+"/dns/resolve",
+		"http://localhost"+localHttpAddr+"/dns/resolve",
 		"application/json",
 		strings.NewReader(`{"name": "example.com", "type": "TXT"}`),
 	)
@@ -270,7 +270,7 @@ func TestDnsResolveTxtRecord(t *testing.T) {
 
 func TestDnsResolveNxdomain(t *testing.T) {
 
-	localHttpPort = ":43008"
+	localHttpAddr = ":43008"
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -294,7 +294,7 @@ func TestDnsResolveNxdomain(t *testing.T) {
 	withOutboundDNSResolver(t, &DoHResolver{URL: server.URL, Client: server.Client()})
 
 	resp, err := http.Post(
-		"http://localhost"+localHttpPort+"/dns/resolve",
+		"http://localhost"+localHttpAddr+"/dns/resolve",
 		"application/json",
 		strings.NewReader(`{"name": "nonexistent.example", "type": "A"}`),
 	)
@@ -311,7 +311,7 @@ func TestDnsResolveNxdomain(t *testing.T) {
 
 func TestDnsResolveUnsupportedType(t *testing.T) {
 
-	localHttpPort = ":43009"
+	localHttpAddr = ":43009"
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -323,7 +323,7 @@ func TestDnsResolveUnsupportedType(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	resp, err := http.Post(
-		"http://localhost"+localHttpPort+"/dns/resolve",
+		"http://localhost"+localHttpAddr+"/dns/resolve",
 		"application/json",
 		strings.NewReader(`{"name": "example.com", "type": "BOGUS"}`),
 	)
@@ -335,7 +335,7 @@ func TestDnsResolveUnsupportedType(t *testing.T) {
 
 func TestDnsResolveLookupFailure(t *testing.T) {
 
-	localHttpPort = ":43010"
+	localHttpAddr = ":43010"
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -350,7 +350,7 @@ func TestDnsResolveLookupFailure(t *testing.T) {
 	withOutboundDNSResolver(t, &DoHResolver{URL: "http://example.com", Client: http.DefaultClient})
 
 	resp, err := http.Post(
-		"http://localhost"+localHttpPort+"/dns/resolve",
+		"http://localhost"+localHttpAddr+"/dns/resolve",
 		"application/json",
 		strings.NewReader(`{"name": "example.com", "type": "A"}`),
 	)
@@ -362,7 +362,7 @@ func TestDnsResolveLookupFailure(t *testing.T) {
 
 func TestDnsResolveInvalidBody(t *testing.T) {
 
-	localHttpPort = ":43011"
+	localHttpAddr = ":43011"
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -374,7 +374,7 @@ func TestDnsResolveInvalidBody(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	resp, err := http.Post(
-		"http://localhost"+localHttpPort+"/dns/resolve",
+		"http://localhost"+localHttpAddr+"/dns/resolve",
 		"application/json",
 		strings.NewReader(`{"name": ""}`),
 	)
