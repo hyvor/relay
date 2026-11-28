@@ -73,6 +73,10 @@ class AuthorizationListener extends ConsoleApiAuthorizationListenerAbstract
             return null;
         }
 
+        if (!$apiKeyModel->getIsEnabled()) {
+            return null;
+        }
+
         $allowedIps = $apiKeyModel->getAllowedIps();
         /**
          * note: here we do not check if allowed IPs are set if sends.send is set
@@ -142,5 +146,4 @@ class AuthorizationListener extends ConsoleApiAuthorizationListenerAbstract
         $apiKeyUpdates->lastAccessedAt = $this->now();
         $this->apiKeyService->updateApiKey($apiKeyModel, $apiKeyUpdates);
     }
-
 }
