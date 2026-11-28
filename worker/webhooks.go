@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -228,7 +231,76 @@ func (wr WebhookResult) MetricStatus() string {
 	return "deferred"
 }
 
-var httpClient = &http.Client{}
+// for testing
+var blockInternalWebhookIPs = true
+
+// these ranges are not covered by the standard net.IP helpers
+var extraBlockedCidrs = mustParseCidrs(
+	"0.0.0.0/8",     // "this" network
+	"100.64.0.0/10", // CGNAT
+	"192.0.0.0/24",  // IETF protocol assignments
+	"198.18.0.0/15", // benchmarking
+	"240.0.0.0/4",   // reserved
+	"64:ff9b::/96",  // NAT64
+)
+
+func mustParseCidrs(cidrs ...string) []*net.IPNet {
+	nets := make([]*net.IPNet, 0, len(cidrs))
+	for _, c := range cidrs {
+		_, n, err := net.ParseCIDR(c)
+		if err != nil {
+			panic(err)
+		}
+		nets = append(nets, n)
+	}
+	return nets
+}
+
+func isInternalIP(ip net.IP) bool {
+	if v4 := ip.To4(); v4 != nil {
+		ip = v4
+	}
+	if ip.IsUnspecified() || ip.IsLoopback() || ip.IsPrivate() ||
+		ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() ||
+		ip.IsInterfaceLocalMulticast() || ip.IsMulticast() {
+		return true
+	}
+	for _, n := range extraBlockedCidrs {
+		if n.Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
+
+func webhookDialControl(network, address string, _ syscall.RawConn) error {
+	if !blockInternalWebhookIPs {
+		return nil
+	}
+	host, _, err := net.SplitHostPort(address)
+	if err != nil {
+		return err
+	}
+	ip := net.ParseIP(host)
+	if ip == nil || isInternalIP(ip) {
+		return fmt.Errorf("destination %s is not allowed", host)
+	}
+	return nil
+}
+
+var httpClient = &http.Client{
+	Timeout: 30 * time.Second,
+	Transport: &http.Transport{
+		Proxy: nil, // a proxy would bypass the dial check
+		DialContext: (&net.Dialer{
+			Timeout: 10 * time.Second,
+			Control: webhookDialControl,
+		}).DialContext,
+	},
+	CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	},
+}
 
 func sendWebhook(delivery *WebhookDelivery) *WebhookResult {
 
