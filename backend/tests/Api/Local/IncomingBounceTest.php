@@ -4,11 +4,12 @@ namespace App\Tests\Api\Local;
 
 use App\Api\Local\Controller\LocalController;
 use App\Api\Local\Input\DsnInput;
-use App\Api\Local\Input\DsnRecipientsInput;
 use App\Api\Local\Input\IncomingInput;
 use App\Entity\DebugIncomingEmail;
 use App\Entity\InfrastructureBounce;
+use App\Entity\SendFeedback;
 use App\Entity\Suppression;
+use App\Entity\Type\BounceReason;
 use App\Entity\Type\DebugIncomingEmailStatus;
 use App\Entity\Type\DebugIncomingEmailType;
 use App\Entity\Type\SendRecipientStatus;
@@ -29,7 +30,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(IncomingMailService::class)]
 #[CoversClass(IncomingInput::class)]
 #[CoversClass(DsnInput::class)]
-#[CoversClass(DsnRecipientsInput::class)]
 #[CoversClass(DebugIncomingEmailService::class)]
 #[CoversClass(BounceDto::class)]
 #[CoversClass(IncomingBounceEvent::class)]
@@ -44,7 +44,6 @@ class IncomingBounceTest extends WebTestCase
             'project' => $project
         ]);
         $recipient1 = SendRecipientFactory::createOne(['send' => $send, 'address' => 'nadil@hyvor.com']);
-        $recipient2 = SendRecipientFactory::createOne(['send' => $send, 'address' => 'supun@hyvor.com']);
 
         $response = $this->localApi(
             'POST',
@@ -53,18 +52,10 @@ class IncomingBounceTest extends WebTestCase
                 'type' => 'bounce',
                 'dsn' => [
                     'ReadableText' => 'This is a test DSN',
-                    'Recipients' => [
-                        [
-                            'EmailAddress' => 'nadil@hyvor.com',
-                            'Status' => '5.1.1',
-                            'Action' => 'failed',
-                        ],
-                        [
-                            'EmailAddress' => 'supun@hyvor.com',
-                            'Status' => '5.1.1',
-                            'Action' => 'failed',
-                        ],
-                    ]
+                    'EmailAddress' => 'nadil@hyvor.com',
+                    'Status' => '5.1.1',
+                    'Action' => 'failed',
+                    'BounceReason' => 'recipient',
                 ],
                 'bounce_uuid' => $send->getUuid(),
                 'raw_email' => 'This is a raw email content',
@@ -80,13 +71,10 @@ class IncomingBounceTest extends WebTestCase
             'reason' => SuppressionReason::BOUNCE
         ]);
 
-        $this->assertSame(2, count($suppressions));
+        $this->assertSame(1, count($suppressions));
         $this->assertSame('nadil@hyvor.com', $suppressions[0]->getEmail());
         $this->assertSame(SuppressionReason::BOUNCE, $suppressions[0]->getReason());
         $this->assertSame('This is a test DSN', $suppressions[0]->getDescription());
-        $this->assertSame('supun@hyvor.com', $suppressions[1]->getEmail());
-        $this->assertSame(SuppressionReason::BOUNCE, $suppressions[1]->getReason());
-        $this->assertSame('This is a test DSN', $suppressions[1]->getDescription());
 
         $debugIncomingEmail = $this->em->getRepository(DebugIncomingEmail::class)->findOneBy([
             'type' => DebugIncomingEmailType::BOUNCE,
@@ -99,7 +87,46 @@ class IncomingBounceTest extends WebTestCase
         $this->assertNull($debugIncomingEmail->getErrorMessage());
 
         $this->assertSame(SendRecipientStatus::BOUNCED, $recipient1->getStatus());
-        $this->assertSame(SendRecipientStatus::BOUNCED, $recipient2->getStatus());
+        $feedback = $this->em->getRepository(SendFeedback::class)->findOneBy(['send_recipient' => $recipient1]);
+        $this->assertSame(BounceReason::RECIPIENT, $feedback?->getBounceReason());
+    }
+
+    public function test_incoming_bounce_with_redacted_recipient_is_matched_by_uuid(): void
+    {
+        $project = ProjectFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project]);
+        $recipient = SendRecipientFactory::createOne(['send' => $send, 'address' => 'nadil@hyvor.com']);
+        SendRecipientFactory::createOne(['send' => $send, 'address' => 'supun@hyvor.com']);
+
+        $response = $this->localApi(
+            'POST',
+            '/incoming',
+            [
+                'type' => 'bounce',
+                'dsn' => [
+                    'ReadableText' => 'This is a test DSN',
+                    'RecipientUuid' => $recipient->getUuid(),
+                    'EmailAddress' => 'redacted@example.com',
+                    'Status' => '5.1.1',
+                    'Action' => 'failed',
+                    'BounceReason' => 'recipient',
+                ],
+                'bounce_uuid' => $send->getUuid(),
+                'raw_email' => 'raw',
+                'mail_from' => 'mail.from@example.com',
+                'rcpt_to' => 'rcpt.to@example.com'
+            ]
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(SendRecipientStatus::BOUNCED, $recipient->getStatus());
+
+        $suppressions = $this->em->getRepository(Suppression::class)->findBy([
+            'project' => $project,
+            'reason' => SuppressionReason::BOUNCE
+        ]);
+        $this->assertCount(1, $suppressions);
+        $this->assertSame('nadil@hyvor.com', $suppressions[0]->getEmail());
     }
 
     public function test_incoming_bounce_dsn_missing(): void
@@ -136,7 +163,7 @@ class IncomingBounceTest extends WebTestCase
         $this->assertCount(0, $suppressions);
     }
 
-    public function test_incoming_bounce_no_recipients(): void
+    public function test_incoming_bounce_without_recipient(): void
     {
         $project = ProjectFactory::createOne();
         $send = SendFactory::createOne(['project' => $project]);
@@ -146,8 +173,10 @@ class IncomingBounceTest extends WebTestCase
             [
                 'type' => 'bounce',
                 'dsn' => [
-                    'ReadableText' => 'No recipients',
-                    'Recipients' => []
+                    'ReadableText' => 'No recipient',
+                    'Status' => '5.1.1',
+                    'Action' => 'failed',
+                    'BounceReason' => 'recipient',
                 ],
                 'bounce_uuid' => $send->getUuid(),
                 'raw_email' => 'raw',
@@ -168,6 +197,8 @@ class IncomingBounceTest extends WebTestCase
             'rcpt_to' => 'to@example.com',
         ]);
         $this->assertNotNull($debugIncomingEmail);
+
+        $this->assertTrue($this->getTestLogger()->hasInfoThatContains('Received bounce without a recipient'));
     }
 
     public function test_incoming_bounce_non_failed_action(): void
@@ -181,13 +212,9 @@ class IncomingBounceTest extends WebTestCase
                 'type' => 'bounce',
                 'dsn' => [
                     'ReadableText' => 'Non failed',
-                    'Recipients' => [
-                        [
-                            'EmailAddress' => 'nadil@hyvor.com',
-                            'Status' => '5.1.1',
-                            'Action' => 'delayed',
-                        ]
-                    ]
+                    'EmailAddress' => 'nadil@hyvor.com',
+                    'Status' => '5.1.1',
+                    'Action' => 'delayed',
                 ],
                 'bounce_uuid' => $send->getUuid(),
                 'raw_email' => 'raw',
@@ -221,13 +248,9 @@ class IncomingBounceTest extends WebTestCase
                 'type' => 'bounce',
                 'dsn' => [
                     'ReadableText' => 'Non permanent',
-                    'Recipients' => [
-                        [
-                            'EmailAddress' => 'nadil@hyvor.com',
-                            'Status' => '4.1.1',
-                            'Action' => 'failed',
-                        ]
-                    ]
+                    'EmailAddress' => 'nadil@hyvor.com',
+                    'Status' => '4.1.1',
+                    'Action' => 'failed',
                 ],
                 'bounce_uuid' => $send->getUuid(),
                 'raw_email' => 'raw',
@@ -251,6 +274,53 @@ class IncomingBounceTest extends WebTestCase
 
         $logger = $this->getTestLogger();
         $this->assertTrue(
+            $logger->hasInfoThatContains('Received failed DSN that is not a bounce')
+        );
+    }
+
+    public function test_unknown_bounce_recorded_without_suppression(): void
+    {
+        $project = ProjectFactory::createOne();
+        $send = SendFactory::createOne(['project' => $project]);
+        $sendRecipient = SendRecipientFactory::createOne(['send' => $send, 'address' => 'nadil@hyvor.com']);
+
+        $response = $this->localApi(
+            'POST',
+            '/incoming',
+            [
+                'type' => 'bounce',
+                'dsn' => [
+                    'ReadableText' => 'Unclassified',
+                    'EmailAddress' => 'nadil@hyvor.com',
+                    'Status' => '5.3.0',
+                    'Action' => 'failed',
+                    'BounceReason' => 'unknown',
+                ],
+                'bounce_uuid' => $send->getUuid(),
+                'raw_email' => 'raw',
+                'mail_from' => 'from@example.com',
+                'rcpt_to' => 'to@example.com'
+            ]
+        );
+        $this->assertSame(200, $response->getStatusCode());
+
+        $suppressions = $this->em->getRepository(Suppression::class)->findBy([
+            'project' => $project,
+            'reason' => SuppressionReason::BOUNCE
+        ]);
+        $this->assertCount(0, $suppressions);
+
+        $infrastructureBounces = $this->em->getRepository(InfrastructureBounce::class)->findBy([
+            'send_recipient_id' => $sendRecipient->getId()
+        ]);
+        $this->assertCount(0, $infrastructureBounces);
+
+        $this->assertSame(SendRecipientStatus::BOUNCED, $sendRecipient->getStatus());
+        $feedback = $this->em->getRepository(SendFeedback::class)->findOneBy(['send_recipient' => $sendRecipient]);
+        $this->assertSame(BounceReason::UNKNOWN, $feedback?->getBounceReason());
+
+        $logger = $this->getTestLogger();
+        $this->assertTrue(
             $logger->hasInfoThatContains('Received bounce that is not a recipient bounce or infrastructure error')
         );
     }
@@ -265,13 +335,10 @@ class IncomingBounceTest extends WebTestCase
                 'type' => 'bounce',
                 'dsn' => [
                     'ReadableText' => 'Send not found',
-                    'Recipients' => [
-                        [
-                            'EmailAddress' => 'nadil@hyvor.com',
-                            'Status' => '5.1.1',
-                            'Action' => 'failed',
-                        ]
-                    ]
+                    'EmailAddress' => 'nadil@hyvor.com',
+                    'Status' => '5.1.1',
+                    'Action' => 'failed',
+                    'BounceReason' => 'recipient',
                 ],
                 'bounce_uuid' => '123e4567-e89b-12d3-a456-426614174000',
                 'raw_email' => 'raw',
@@ -305,13 +372,10 @@ class IncomingBounceTest extends WebTestCase
                 'type' => 'bounce',
                 'dsn' => [
                     'ReadableText' => 'Recipient not found',
-                    'Recipients' => [
-                        [
-                            'EmailAddress' => 'supun@hyvor.com',
-                            'Status' => '5.1.1',
-                            'Action' => 'failed',
-                        ]
-                    ]
+                    'EmailAddress' => 'supun@hyvor.com',
+                    'Status' => '5.1.1',
+                    'Action' => 'failed',
+                    'BounceReason' => 'recipient',
                 ],
                 'bounce_uuid' => $send->getUuid(),
                 'raw_email' => 'raw',
@@ -351,13 +415,10 @@ class IncomingBounceTest extends WebTestCase
                 'type' => 'bounce',
                 'dsn' => [
                     'ReadableText' => 'Message rejected due to security policy',
-                    'Recipients' => [
-                        [
-                            'EmailAddress' => 'test@example.com',
-                            'Status' => '5.7.1',
-                            'Action' => 'failed',
-                        ]
-                    ]
+                    'EmailAddress' => 'test@example.com',
+                    'Status' => '5.7.1',
+                    'Action' => 'failed',
+                    'BounceReason' => 'infrastructure',
                 ],
                 'bounce_uuid' => $send->getUuid(),
                 'raw_email' => 'raw',
@@ -379,6 +440,10 @@ class IncomingBounceTest extends WebTestCase
         $this->assertSame('5.7.1', $infrastructureBounce->getSmtpEnhancedCode());
         $this->assertSame('Message rejected due to security policy', $infrastructureBounce->getSmtpMessage());
         $this->assertFalse($infrastructureBounce->isRead());
+
+        $this->assertSame(SendRecipientStatus::BOUNCED, $sendRecipient->getStatus());
+        $feedback = $this->em->getRepository(SendFeedback::class)->findOneBy(['send_recipient' => $sendRecipient]);
+        $this->assertSame(BounceReason::INFRASTRUCTURE, $feedback?->getBounceReason());
 
         $debugIncomingEmail = $this->em->getRepository(DebugIncomingEmail::class)->findOneBy([
             'type' => DebugIncomingEmailType::BOUNCE,

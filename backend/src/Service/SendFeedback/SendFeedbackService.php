@@ -6,6 +6,7 @@ use App\Entity\DebugIncomingEmail;
 use App\Entity\Send;
 use App\Entity\SendFeedback;
 use App\Entity\SendRecipient;
+use App\Entity\Type\BounceReason;
 use App\Entity\Type\SendFeedbackType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockAwareTrait;
@@ -16,8 +17,7 @@ class SendFeedbackService
 
     public function __construct(
         private EntityManagerInterface $em,
-    ) {
-    }
+    ) {}
 
     /**
      * @return SendFeedback[]
@@ -37,16 +37,30 @@ class SendFeedbackService
         return $result;
     }
 
+    public function hasComplaintForRecipient(SendRecipient $recipient): bool
+    {
+        $feedback = $this->em->getRepository(SendFeedback::class)->findOneBy([
+            'type' => SendFeedbackType::COMPLAINT,
+            'send_recipient' => $recipient,
+        ]);
+
+        return $feedback !== null;
+    }
+
     public function createSendFeedback(
         SendFeedbackType $type,
         SendRecipient $recipient,
-        DebugIncomingEmail $debugIncomingEmail
+        DebugIncomingEmail $debugIncomingEmail,
+        ?string $detail = null,
+        ?BounceReason $bounceReason = null,
     ): SendFeedback {
         $sendFeedback = new SendFeedback();
-        $sendFeedback->setCreatedAt(new \DateTimeImmutable());
-        $sendFeedback->setUpdatedAt(new \DateTimeImmutable());
+        $sendFeedback->setCreatedAt($this->now());
+        $sendFeedback->setUpdatedAt($this->now());
         $sendFeedback->setType($type);
         $sendFeedback->setSendRecipient($recipient);
+        $sendFeedback->setDetail($detail);
+        $sendFeedback->setBounceReason($bounceReason);
         $sendFeedback->setDebugIncomingEmail($debugIncomingEmail);
 
         $this->em->persist($sendFeedback);

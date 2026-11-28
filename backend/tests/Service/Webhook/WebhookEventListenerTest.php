@@ -4,6 +4,7 @@ namespace App\Tests\Service\Webhook;
 
 use App\Entity\Project;
 use App\Entity\Type\DomainStatus;
+use App\Entity\Type\SendAttemptRecipientStatus;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\WebhooksEventEnum;
 use App\Entity\Webhook;
@@ -163,7 +164,7 @@ class WebhookEventListenerTest extends KernelTestCase
 
         SendAttemptRecipientFactory::createOne([
             'send_attempt' => $attempt,
-            'recipient_status' => $sendRecipientStatus,
+            'status' => SendAttemptRecipientStatus::from($sendRecipientStatus->value),
             'send_recipient_id' => $recipient->getId(),
         ]);
 

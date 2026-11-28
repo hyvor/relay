@@ -29,6 +29,9 @@ var ErrSmtpMxLookupFailed = errors.New("MX lookup failed")
 var ErrSmtpMxPermanent = errors.New("permanent MX failure")
 
 var lookupDNSFunc = func(ctx context.Context, name string, recordType uint16) (DNSLookupResult, error) {
+	if result, ok := devDNSOverride(devDNSOverrides, name, recordType); ok {
+		return result, nil
+	}
 	return outboundDNSResolver.Lookup(ctx, name, recordType)
 }
 

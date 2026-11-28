@@ -55,3 +55,24 @@ func TestReturnsErrOnPart3InvalidMimeType(t *testing.T) {
 	_, err = ParseArf(content)
 	assert.Equal(t, ErrInvalidMimeType, err)
 }
+
+func TestParseArfRecipientHeader(t *testing.T) {
+	content, err := os.ReadFile("./testdata/arf_recipient_header.txt")
+	assert.Nil(t, err)
+
+	arf, err := ParseArf(content)
+	assert.Nil(t, err)
+
+	// the recipient is redacted, but the header is available
+	assert.Equal(t, "", arf.OriginalRcptTo)
+	assert.Equal(t, "5f0c8a0e-1b7e-4d37-9d52-6f3c2a1b9e10", arf.RecipientUuid)
+}
+
+func TestParseArfWithoutRecipientHeader(t *testing.T) {
+	content, err := os.ReadFile("./testdata/arf1.txt")
+	assert.Nil(t, err)
+
+	arf, err := ParseArf(content)
+	assert.Nil(t, err)
+	assert.Equal(t, "", arf.RecipientUuid)
+}

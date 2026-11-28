@@ -3,6 +3,7 @@
 namespace App\Api\Console\Object;
 
 use App\Entity\SendFeedback;
+use App\Entity\Type\BounceReason;
 use App\Entity\Type\SendFeedbackType;
 
 class SendFeedbackObject
@@ -13,6 +14,7 @@ class SendFeedbackObject
     public SendFeedbackType $type;
     public int $recipient_id;
     public int $debug_incoming_email_id;
+    public ?BounceReason $bounce_reason;
 
     public function __construct(SendFeedback $sendFeedback)
     {
@@ -21,6 +23,7 @@ class SendFeedbackObject
         $this->type = $sendFeedback->getType();
         $this->recipient_id = $sendFeedback->getSendRecipient()->getId();
         $this->debug_incoming_email_id = $sendFeedback->getDebugIncomingEmail()->getId();
+        $this->bounce_reason = $sendFeedback->getBounceReason();
     }
 
 }

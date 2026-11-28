@@ -12,6 +12,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/hyvor/relay/worker/bounceparse"
 	smtp "github.com/hyvor/relay/worker/smtp"
 )
 
@@ -38,6 +39,7 @@ const (
 	SmtpStepRcpt      SmtpStepName = "rcpt"
 	SmtpStepData      SmtpStepName = "data"
 	SmtpStepDataClose SmtpStepName = "data_close"
+	SmtpStepReset     SmtpStepName = "reset"
 	SmtpStepQuit      SmtpStepName = "quit"
 )
 
@@ -62,6 +64,11 @@ type RcptResult struct {
 	Message      string
 }
 
+// calculates the bounce reason from the SMTP response when needed
+func (r RcptResult) GetBounceReason() bounceparse.BounceReason {
+	return bounceparse.NewSmtpResponseParser(r.Code, r.EnhancedCode, r.Message).BounceReason()
+}
+
 func (r RcptResult) MarshalJSON() ([]byte, error) {
 
 	type RcptResultJson struct {
@@ -70,6 +77,7 @@ func (r RcptResult) MarshalJSON() ([]byte, error) {
 		EnhancedCode string `json:"enhanced_code"`
 		Message      string `json:"message"`
 		Status       string `json:"status"`
+		BounceReason string `json:"bounce_reason"`
 	}
 
 	var jsonObj = RcptResultJson{
@@ -78,6 +86,7 @@ func (r RcptResult) MarshalJSON() ([]byte, error) {
 		EnhancedCode: fmt.Sprintf("%d.%d.%d", r.EnhancedCode[0], r.EnhancedCode[1], r.EnhancedCode[2]),
 		Message:      r.Message,
 		Status:       r.ToRecipientStatus().ToString(),
+		BounceReason: string(r.GetBounceReason()),
 	}
 
 	return json.Marshal(jsonObj)
@@ -175,16 +184,27 @@ func (c *SmtpConversation) SetRcptResults(recipients []*RecipientRow, result *sm
 	}
 }
 
-// for each RCPT TO command — replaces an existing entry for the same recipient instead of appending.
+func (c *SmtpConversation) SetRcptResultDeferred(rcptId int, message string) {
+	c.setRcptResult(&RcptResult{
+		RecipientId:  rcptId,
+		Code:         400,
+		EnhancedCode: [3]int{4, 4, 2},
+		Message:      message,
+	})
+}
+
 func (c *SmtpConversation) SetRcptResult(rcptId int, result *smtp.CommandResult) {
-	newResult := &RcptResult{
+	c.setRcptResult(&RcptResult{
 		RecipientId:  rcptId,
 		Code:         result.Reply.Code,
 		EnhancedCode: result.Reply.EnhancedCode(),
 		Message:      result.Reply.Message(),
-	}
+	})
+}
+
+func (c *SmtpConversation) setRcptResult(newResult *RcptResult) {
 	for i, existing := range c.RcptResults {
-		if existing.RecipientId == rcptId {
+		if existing.RecipientId == newResult.RecipientId {
 			c.RcptResults[i] = newResult
 			return
 		}
@@ -605,92 +625,104 @@ func sendEmailToHostHandlerContextAttempt(
 		return conversation
 	}
 
-	// STEP 3: MAIL FROM
-	// ================
-	if err := setSmtpDeadline(c, smtpOperationTimeout); err != nil {
-		conversation.NetworkError = err
-		return conversation
-	}
-	mailResult := c.Mail(getReturnPath(send, instanceDomain))
-	if mailResult.Err != nil {
-		conversation.NetworkError = mailResult.Err
-		return conversation
-	}
-	conversation.AddStepFromResult(SmtpStepMail, &mailResult)
-	if !mailResult.CodeValid(250) {
-		conversation.SetRcptResults(recipients, &mailResult)
-		return conversation
-	}
+	// STEPS 3-5 run once per recipient on the same connection:
+	// MAIL FROM -> RCPT TO -> DATA.
+	// Each recipient gets a unique copy with X-Relay-Recipient header.
+	// ============
+	dataStarted := false // true once any recipient reached the DATA stage
 
-	// STEP 4: RCPT TO
-	// We continue to the next step if at least one recipient is accepted
-	// ===============
-	// recipients accepted at RCPT TO; only these get their result overridden by a
-	// later DATA/DATACLOSE failure. Recipients rejected at RCPT TO keep their
-	// (more specific) original rejection result.
-	acceptedRecipients := make([]*RecipientRow, 0, len(recipients))
-
-	for _, rcpt := range recipients {
-		if err := setSmtpDeadline(c, smtpOperationTimeout); err != nil {
+	// handles a connection-level error that happened while processing recipients[i].
+	// The caller must return the conversation right after.
+	handleNetworkError := func(i int, err error) {
+		// no recipient received the message. Let the next MX host handle it
+		if !dataStarted {
 			conversation.NetworkError = err
+			return
+		}
+		// some may have received the message already
+		// so defer the rest to be retried later (otherwise there could be duplicates for the previously sent recipients)
+		for _, rcpt := range recipients[i:] {
+			conversation.SetRcptResultDeferred(rcpt.Id, err.Error())
+		}
+	}
+
+	for i, rcpt := range recipients {
+
+		// STEP 3: MAIL FROM
+		if err := setSmtpDeadline(c, smtpOperationTimeout); err != nil {
+			handleNetworkError(i, err)
+			return conversation
+		}
+		mailResult := c.Mail(getReturnPath(send, instanceDomain))
+		if mailResult.Err != nil {
+			handleNetworkError(i, mailResult.Err)
+			return conversation
+		}
+		conversation.AddStepFromResult(SmtpStepMail, &mailResult)
+		if !mailResult.CodeValid(250) {
+			conversation.SetRcptResults(recipients[i:], &mailResult)
+			return conversation
+		}
+
+		// STEP 4: RCPT TO
+		if err := setSmtpDeadline(c, smtpOperationTimeout); err != nil {
+			handleNetworkError(i, err)
 			return conversation
 		}
 		rcptResult := c.Rcpt(rcpt.Address)
-
 		if rcptResult.Err != nil {
-			conversation.NetworkError = rcptResult.Err
+			handleNetworkError(i, rcptResult.Err)
 			return conversation
 		}
-
 		conversation.AddStepFromResult(SmtpStepRcpt, &rcptResult)
 		conversation.SetRcptResult(rcpt.Id, &rcptResult)
 
-		if rcptResult.Reply.Code == 250 {
-			acceptedRecipients = append(acceptedRecipients, rcpt)
+		if rcptResult.Reply.Code != 250 {
+			if !resetSmtpTransaction(c, conversation, i, recipients, handleNetworkError) {
+				return conversation
+			}
+			continue
 		}
-	}
 
-	// if no recipients were accepted, we consider it a failure and stop here
-	if len(acceptedRecipients) == 0 {
-		return conversation
-	}
+		// STEP 5: DATA
+		if err := setSmtpDeadline(c, smtpDataResponseTimeout); err != nil {
+			handleNetworkError(i, err)
+			return conversation
+		}
+		w, dataResult := c.Data()
+		if dataResult.Err != nil {
+			handleNetworkError(i, dataResult.Err)
+			return conversation
+		}
+		conversation.AddStepFromResult(SmtpStepData, &dataResult)
+		if !dataResult.CodeValid(354) {
+			conversation.SetRcptResult(rcpt.Id, &dataResult)
+			if !resetSmtpTransaction(c, conversation, i, recipients, handleNetworkError) {
+				return conversation
+			}
+			continue
+		}
+		dataStarted = true
 
-	// STEP 5: DATA
-	// ============
-	if err := setSmtpDeadline(c, smtpDataResponseTimeout); err != nil {
-		conversation.NetworkError = err
-		return conversation
-	}
-	w, dataResult := c.Data()
-	if dataResult.Err != nil {
-		conversation.NetworkError = dataResult.Err
-		return conversation
-	}
-	conversation.AddStepFromResult(SmtpStepData, &dataResult)
-	if !dataResult.CodeValid(354) {
-		conversation.SetRcptResults(acceptedRecipients, &dataResult)
-		return conversation
-	}
-	if err := writeSmtpData(c, w, send.RawEmail); err != nil {
-		conversation.NetworkError = err
-		return conversation
-	}
+		if err := writeSmtpData(c, w, injectRecipientHeader(send.RawEmail, rcpt.Uuid)); err != nil {
+			handleNetworkError(i, err)
+			return conversation
+		}
 
-	// STEP 5.1: Close DATA
-	// ============
-	if err := setSmtpDeadline(c, smtpDataResponseTimeout); err != nil {
-		conversation.NetworkError = err
-		return conversation
-	}
-	closeResult := w.Close()
-	if closeResult.Err != nil {
-		conversation.NetworkError = closeResult.Err
-		return conversation
-	}
-	conversation.AddStepFromResult(SmtpStepDataClose, &closeResult)
-	if !closeResult.CodeValid(250) {
-		conversation.SetRcptResults(acceptedRecipients, &closeResult)
-		return conversation
+		// STEP 5.1: Close DATA
+		if err := setSmtpDeadline(c, smtpDataResponseTimeout); err != nil {
+			handleNetworkError(i, err)
+			return conversation
+		}
+		closeResult := w.Close()
+		if closeResult.Err != nil {
+			handleNetworkError(i, closeResult.Err)
+			return conversation
+		}
+		conversation.AddStepFromResult(SmtpStepDataClose, &closeResult)
+		if !closeResult.CodeValid(250) {
+			conversation.SetRcptResult(rcpt.Id, &closeResult)
+		}
 	}
 
 	// STEP 6: QUIT
@@ -704,6 +736,32 @@ func sendEmailToHostHandlerContextAttempt(
 
 	return conversation
 
+}
+
+// resets an open SMTP transaction (after a rejected RCPT/DATA) so the next recipient can start with MAIL FROM.
+// Returns false if the conversation must end (connection error).
+func resetSmtpTransaction(
+	c *smtp.Client,
+	conversation *SmtpConversation,
+	i int,
+	recipients []*RecipientRow,
+	handleNetworkError func(int, error),
+) bool {
+	// no more recipients
+	if i == len(recipients)-1 {
+		return true
+	}
+	if err := setSmtpDeadline(c, smtpOperationTimeout); err != nil {
+		handleNetworkError(i+1, err)
+		return false
+	}
+	resetResult := c.Reset()
+	if resetResult.Err != nil {
+		handleNetworkError(i+1, resetResult.Err)
+		return false
+	}
+	conversation.AddStepFromResult(SmtpStepReset, &resetResult)
+	return true
 }
 
 func getReturnPath(

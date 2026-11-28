@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Type\BounceReason;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SendRecipientType;
 use App\Repository\SendRecipientRepository;
@@ -16,6 +17,9 @@ class SendRecipient
     #[ORM\GeneratedValue]
     #[ORM\Column(type: "integer")]
     private int $id;
+
+    #[ORM\Column(type: "string", unique: true)]
+    private string $uuid;
 
     #[ORM\ManyToOne(targetEntity: Send::class)]
     #[ORM\JoinColumn]
@@ -36,6 +40,9 @@ class SendRecipient
     #[ORM\Column(type: "integer")]
     private int $try_count = 0;
 
+    #[ORM\Column(type: "string", enumType: BounceReason::class, name: "bounce_reason", nullable: true)]
+    private ?BounceReason $bounce_reason = null;
+
     public function getId(): int
     {
         return $this->id;
@@ -44,6 +51,17 @@ class SendRecipient
     public function setId(int $id): static
     {
         $this->id = $id;
+        return $this;
+    }
+
+    public function getUuid(): string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(string $uuid): static
+    {
+        $this->uuid = $uuid;
         return $this;
     }
 
@@ -113,4 +131,14 @@ class SendRecipient
         return $this;
     }
 
+    public function getBounceReason(): ?BounceReason
+    {
+        return $this->bounce_reason;
+    }
+
+    public function setBounceReason(?BounceReason $bounce_reason): static
+    {
+        $this->bounce_reason = $bounce_reason;
+        return $this;
+    }
 }

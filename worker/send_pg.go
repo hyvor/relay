@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+
+	"github.com/hyvor/relay/worker/bounceparse"
 )
 
 type SendRow struct {
@@ -17,6 +19,7 @@ type SendRow struct {
 
 type RecipientRow struct {
 	Id       int
+	Uuid     string
 	Type     string // "to", "cc", "bcc"
 	Address  string
 	TryCount int
@@ -73,7 +76,7 @@ func (b *SendTransaction) FetchSend(ipId int) (*SendRow, []*RecipientRow, error)
 
 	// Fetch recipients for the send
 	rows, err := b.tx.QueryContext(b.ctx, `
-		SELECT id, type, address, status, try_count
+		SELECT id, uuid, type, address, status, try_count
 		FROM send_recipients
 		WHERE send_id = $1
 	`, send.Id)
@@ -91,6 +94,7 @@ func (b *SendTransaction) FetchSend(ipId int) (*SendRow, []*RecipientRow, error)
 
 		if err := rows.Scan(
 			&recipient.Id,
+			&recipient.Uuid,
 			&recipient.Type,
 			&recipient.Address,
 			&status,
@@ -126,7 +130,7 @@ func sendResultToAttemptStatus(result *SendResult) string {
 			hasOtherType = code
 		}
 	}
-	
+
 	if hasAccepted {
 		if hasOther {
 			return "partial"
@@ -222,6 +226,11 @@ func (b *SendTransaction) RecordAttempt(
 			}
 		}
 
+		bounceReason := bounceparse.BounceReasonUnknown
+		if reason := rcptResult.GetBounceReason(); reason != "" {
+			bounceReason = reason
+		}
+
 		// record current results in send_attempt_recipients
 		_, err = b.tx.ExecContext(b.ctx, `
 			INSERT INTO send_attempt_recipients (
@@ -229,10 +238,11 @@ func (b *SendTransaction) RecordAttempt(
 				updated_at,
 				send_attempt_id,
 				send_recipient_id,
-				recipient_status,
+				status,
 				smtp_code,
 				smtp_enhanced_code,
-				smtp_message
+				smtp_message,
+				bounce_reason
 			)
 			VALUES (
 				NOW(),
@@ -242,22 +252,27 @@ func (b *SendTransaction) RecordAttempt(
 				$3,
 				$4,
 				$5,
-				$6
+				$6,
+				$7
 			)
-		`, attemptId, rcptResult.RecipientId, rcptResult.ToRecipientStatus().ToString(), rcptResult.Code, enhancedCode, rcptResult.Message)
+		`, attemptId, rcptResult.RecipientId, rcptResult.ToRecipientStatus().ToString(), rcptResult.Code, enhancedCode, rcptResult.Message, bounceReason)
 
 		if err != nil {
 			return 0, fmt.Errorf("failed to insert send attempt recipient for recipient ID %d: %w", rcptResult.RecipientId, err)
 		}
 
-		// update send_recipients to the latest state
+		var recipientBounceReason sql.NullString
+		if rcptResult.ToRecipientStatus().ToString() == "bounced" {
+			recipientBounceReason = sql.NullString{String: string(bounceReason), Valid: true}
+		}
 		_, err = b.tx.ExecContext(b.ctx, `
 			UPDATE send_recipients
 			SET 
 				status = $1,
-				try_count = $2
+				try_count = $2,
+				bounce_reason = $4
 			WHERE id = $3
-		`, rcptResult.ToRecipientStatus().ToString(), sendResult.NewTryCount, rcptResult.RecipientId)
+		`, rcptResult.ToRecipientStatus().ToString(), sendResult.NewTryCount, rcptResult.RecipientId, recipientBounceReason)
 
 		if err != nil {
 			return 0, fmt.Errorf("failed to update recipient ID %d status: %w", rcptResult.RecipientId, err)

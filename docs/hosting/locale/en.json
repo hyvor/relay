@@ -2,6 +2,7 @@
   "sections": {
     "upgradeGuides": "Upgrade Guides",
     "features": "Features",
+    "feedbackLoops": "Feedback Loops",
     "misc": "Misc"
   },
   "pages": {
@@ -17,6 +18,8 @@
     "dns": "DNS Server",
     "deliverability": "Deliverability",
     "providers": "Email Providers",
+    "fblYahoo": "Yahoo",
+    "fblMicrosoft": "Microsoft",
     "env": "Environment Variables"
   },
   "descriptions": {
@@ -32,6 +35,8 @@
     "dns": "Hyvor Relay's built-in DNS server for the instance domain: the default records it serves and how to add custom DNS records.",
     "deliverability": "Improve email deliverability on a self-hosted Hyvor Relay instance: content, technical configuration, IP reputation, blacklists, and tools.",
     "providers": "Sending to major email providers from Hyvor Relay: feedback loops (FBLs) and the enhanced SMTP response codes providers use.",
+    "fblYahoo": "Enroll your Hyvor Relay instance domain in Yahoo's Complaint Feedback Loop to receive spam complaints and suppress recipients automatically.",
+    "fblMicrosoft": "Receive spam complaints from Outlook and Hotmail for your Hyvor Relay instance by joining Microsoft's feedback loop programs.",
     "env": "All environment variables for configuring a self-hosted Hyvor Relay instance, with defaults and examples."
   }
 }

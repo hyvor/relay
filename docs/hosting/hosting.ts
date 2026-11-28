@@ -137,6 +137,30 @@ export async function getSections(lang: string): Promise<NavSectionConfig[]> {
           content: await getComponent("EmailProviders"),
         },
         {
+          type: "sub-section",
+          name: s.sections.feedbackLoops,
+          sections: [
+            {
+              navs: [
+                {
+                  type: "page",
+                  slug: "fbl-yahoo",
+                  name: s.pages.fblYahoo,
+                  description: s.descriptions.fblYahoo,
+                  content: await getComponent("FblYahoo"),
+                },
+                {
+                  type: "page",
+                  slug: "fbl-microsoft",
+                  name: s.pages.fblMicrosoft,
+                  description: s.descriptions.fblMicrosoft,
+                  content: await getComponent("FblMicrosoft"),
+                },
+              ],
+            },
+          ],
+        },
+        {
           type: "page",
           slug: "env",
           name: s.pages.env,

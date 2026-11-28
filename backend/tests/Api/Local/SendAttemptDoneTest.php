@@ -5,7 +5,9 @@ namespace App\Tests\Api\Local;
 use App\Api\Local\Controller\LocalController;
 use App\Entity\InfrastructureBounce;
 use App\Entity\Suppression;
+use App\Entity\Type\BounceReason;
 use App\Entity\Type\SendAttemptStatus;
+use App\Entity\Type\SendAttemptRecipientStatus;
 use App\Entity\Type\SendRecipientStatus;
 use App\Service\Send\SendService;
 use App\Service\SendAttempt\Event\SendAttemptCreatedEvent;
@@ -92,20 +94,22 @@ class SendAttemptDoneTest extends WebTestCase
         $attemptRecipient1 = SendAttemptRecipientFactory::createOne([
             'send_attempt' => $attempt1,
             'send_recipient_id' => $recipient1->getId(),
-            'recipient_status' => SendRecipientStatus::BOUNCED,
+            'status' => SendAttemptRecipientStatus::BOUNCED,
             'smtp_code' => 550,
             'smtp_enhanced_code' => '5.1.1',
             'smtp_message' => 'User unknown',
+            'bounced_reason' => BounceReason::RECIPIENT,
         ]);
 
         // infra bounce
         SendAttemptRecipientFactory::createOne([
             'send_attempt' => $attempt1,
             'send_recipient_id' => $recipient2->getId(),
-            'recipient_status' => SendRecipientStatus::BOUNCED,
+            'status' => SendAttemptRecipientStatus::BOUNCED,
             'smtp_code' => 550,
             'smtp_enhanced_code' => '5.7.1',
             'smtp_message' => 'User unknown',
+            'bounced_reason' => BounceReason::INFRASTRUCTURE,
         ]);
 
         refresh($send);

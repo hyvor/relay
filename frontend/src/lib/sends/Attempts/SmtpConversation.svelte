@@ -24,6 +24,8 @@
 				<div class="client">
 					{#if step.name === 'data_close'}
 						{`<DATACLOSE>`}
+					{:else if step.name === 'reset'}
+						{`<RESET>`}
 					{:else}
 						{step.command}
 					{/if}

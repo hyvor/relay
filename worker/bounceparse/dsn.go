@@ -18,8 +18,12 @@ import (
 // https://datatracker.ietf.org/doc/html/rfc3464
 
 type Dsn struct {
-	ReadableText string         // Readable text representation of the DSN (part1)
-	Recipients   []DsnRecipient // List of recipients with their statuses
+	ReadableText  string    // Readable text representation of the DSN (part1)
+	RecipientUuid string    // The X-Relay-Recipient header of the original message, empty if not available
+	EmailAddress  string    // The email address of the recipient (can be redacted by some providers)
+	Status        DsnStatus // The status code for the recipient, e.g., {5,1,1} for permanent failure
+	Action        string    // Action taken, e.g., "failed", "delayed", "delivered" (https://datatracker.ietf.org/doc/html/rfc3464#section-2.3.3)
+	BounceReason  string    `json:"BounceReason,omitempty"` // computed bounce reason ("recipient"/"infrastructure"/"unknown"), empty if not a bounce
 }
 
 type DsnStatus [3]int
@@ -28,13 +32,8 @@ func (s DsnStatus) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf(`"%d.%d.%d"`, s[0], s[1], s[2])), nil
 }
 
-type DsnRecipient struct {
-	EmailAddress string    // The email address of the recipient
-	Status       DsnStatus // The status code for this recipient, e.g., {5,1,1} for permanent failure
-	Action       string    // Action taken, e.g., "failed", "delayed", "delivered" (https://datatracker.ietf.org/doc/html/rfc3464#section-2.3.3)
-}
-
 var ErrNotDsnReport = errors.New("not a DSN report")
+var ErrNoDsnRecipient = errors.New("DSN has no recipient")
 
 // ParseBounce
 func ParseDsn(input []byte) (*Dsn, error) {
@@ -75,31 +74,31 @@ func ParseDsn(input []byte) (*Dsn, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	recipientsBody, _ := io.ReadAll(part2.Body)
-	recipientsFields := bytes.Split(recipientsBody, []byte("\n\n"))
+	recipientFields := bytes.TrimSpace(bytes.Split(bytes.TrimSpace(recipientsBody), []byte("\n\n"))[0])
 
-	for i, recipientFields := range recipientsFields {
+	if len(recipientFields) == 0 {
+		return nil, ErrNoDsnRecipient
+	}
 
-		dsnRecipient := DsnRecipient{}
+	recipientFields = append(recipientFields, '\n', '\n')
+	tp := textproto.NewReader(bufio.NewReader(bytes.NewReader(recipientFields)))
 
-		recipientFields = append(recipientFields, '\n')
-		recipientFields = append(recipientFields, '\n')
-		reader := bufio.NewReader(bytes.NewReader(recipientFields))
+	headers, err := tp.ReadMIMEHeader()
+	if err != nil {
+		return nil, fmt.Errorf("error reading MIME header: %w", err)
+	}
 
-		tp := textproto.NewReader(reader)
+	dsn.EmailAddress = getDsnRecipientEmailAddress(headers.Get("Final-Recipient"))
+	dsn.Status = parseDsnStatus(headers.Get("Status"))
+	dsn.Action = headers.Get("Action")
+	dsn.BounceReason = string(
+		NewSmtpResponseParser(0, [3]int(dsn.Status), "").BounceReason(),
+	)
 
-		headers, err := tp.ReadMIMEHeader()
-		if err != nil {
-			return nil, fmt.Errorf("[%d] error reading MIME header: %w", i, err)
-		}
-
-		dsnRecipient.EmailAddress = getDsnRecipientEmailAddress(headers.Get("Final-Recipient"))
-		dsnRecipient.Status = parseDsnStatus(headers.Get("Status"))
-		dsnRecipient.Action = headers.Get("Action")
-
-		dsn.Recipients = append(dsn.Recipients, dsnRecipient)
-
+	part3, err := readNextPartBodyAsMessage(multipartReader, []string{"message/rfc822", "message/rfc822-headers", "text/rfc822-headers"})
+	if err == nil {
+		dsn.RecipientUuid = strings.TrimSpace(part3.Header.Get(RecipientHeader))
 	}
 
 	return dsn, nil

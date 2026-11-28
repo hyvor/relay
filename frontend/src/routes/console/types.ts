@@ -98,10 +98,7 @@ export type SendContent = {
 export type SendRecipientStatus =
 	'queued' | 'accepted' | 'deferred' | 'bounced' | 'suppressed' | 'failed' | 'complained';
 
-export type SendRecipientStatusForAttempt = Omit<
-	SendRecipientStatus,
-	'queued' | 'suppressed' | 'complained'
->;
+export type SendAttemptRecipientStatus = 'accepted' | 'deferred' | 'bounced' | 'failed';
 
 export interface SendRecipient {
 	id: number;
@@ -129,7 +126,7 @@ export interface SendAttemptRecipient {
 	id: number;
 	created_at: number;
 	recipient_id: number;
-	recipient_status: SendRecipientStatusForAttempt;
+	status: SendAttemptRecipientStatus;
 	smtp_code: number;
 	smtp_enhanced_code: string;
 	smtp_message: string;
@@ -142,6 +139,7 @@ export interface SendFeedback {
 	type: 'bounce' | 'complaint';
 	recipient_id: number;
 	debug_incoming_email_id: number;
+	bounce_reason: 'recipient' | 'infrastructure' | 'unknown' | null;
 }
 
 export interface SmtpConversation {
@@ -151,7 +149,7 @@ export interface SmtpConversation {
 }
 
 export interface SmtpStep {
-	name: 'dial' | 'helo' | 'mail' | 'rcpt' | 'data' | 'data_close' | 'quit';
+	name: 'dial' | 'helo' | 'mail' | 'rcpt' | 'data' | 'data_close' | 'reset' | 'quit';
 	duration: string;
 	command: string;
 	reply_code: number;

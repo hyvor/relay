@@ -43,8 +43,8 @@ Use [hyvor/smtp-simulator](https://github.com/hyvor/smtp-simulator) for testing 
 docker compose up -d simulator
 
 # 2. send emails to @simulator.net
-# - tempfail@simulator.com
-# - missing@simulator.com
+# - tempfail@simulator.net
+# - missing@simulator.net
 # more: https://github.com/hyvor/smtp-simulator?tab=readme-ov-file#email-addresses
 ```
 

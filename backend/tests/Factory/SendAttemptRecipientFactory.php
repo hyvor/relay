@@ -3,7 +3,8 @@
 namespace App\Tests\Factory;
 
 use App\Entity\SendAttemptRecipient;
-use App\Entity\Type\SendRecipientStatus;
+use App\Entity\Type\BounceReason;
+use App\Entity\Type\SendAttemptRecipientStatus;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
@@ -34,8 +35,9 @@ final class SendAttemptRecipientFactory extends PersistentObjectFactory
             'smtp_code' => self::faker()->numberBetween(200, 500),
             'smtp_enhanced_code' => self::faker()->optional()->regexify('[2-5]\.[0-9]\.[0-9]'),
             'smtp_message' => self::faker()->sentence(),
-            'recipient_status' => SendRecipientStatus::ACCEPTED,
+            'status' => SendAttemptRecipientStatus::ACCEPTED,
             'is_suppressed' => false,
+            'bounced_reason' => BounceReason::UNKNOWN,
         ];
     }
 }

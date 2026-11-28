@@ -49,7 +49,7 @@
 			// > = {};
 
 			// for (const rcptResult of attempt.recipients) {
-			// 	const status = rcptResult.recipient_status;
+			// 	const status = rcptResult.status;
 
 			// 	if (!attemptRecipientsByStatus[status]) {
 			// 		attemptRecipientsByStatus[status] = [];

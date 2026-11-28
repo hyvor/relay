@@ -5,6 +5,9 @@ namespace App\Service\IncomingMail;
 use App\Api\Local\Input\ArfInput;
 use App\Api\Local\Input\DsnInput;
 use App\Entity\DebugIncomingEmail;
+use App\Entity\Send;
+use App\Entity\SendRecipient;
+use App\Entity\Type\BounceReason;
 use App\Entity\Type\SendFeedbackType;
 use App\Entity\Type\SendRecipientStatus;
 use App\Entity\Type\SuppressionReason;
@@ -16,7 +19,6 @@ use App\Service\InfrastructureBounce\InfrastructureBounceService;
 use App\Service\Send\SendService;
 use App\Service\SendFeedback\SendFeedbackService;
 use App\Service\SendRecipient\SendRecipientService;
-use App\Service\Smtp\SmtpResponseParser;
 use App\Service\Suppression\SuppressionService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -30,97 +32,104 @@ class IncomingMailService
         private SendFeedbackService $sendFeedbackService,
         private InfrastructureBounceService $infrastructureBounceService,
         private LoggerInterface $logger,
-        private EventDispatcherInterface $ed
-    ) {
-    }
+        private EventDispatcherInterface $ed,
+    ) {}
 
     public function handleIncomingBounce(
         string $bounceUuid,
         DsnInput $dsnInput,
         DebugIncomingEmail $debugIncomingEmail,
     ): void {
-        $recipients = $dsnInput->Recipients;
-
-        if (count($recipients) === 0) {
-            $this->logger->error('Received bounce with no recipients', [
-                'uuid' => $bounceUuid
+        // we are not interested in delayed or delivered actions
+        // most email clients do not even send delivered reports
+        if ($dsnInput->Action !== 'failed') {
+            $this->logger->info('Received bounce with non-failed action', [
+                'uuid' => $bounceUuid,
+                'recipient' => $dsnInput->EmailAddress,
+                'action' => $dsnInput->Action,
             ]);
             return;
         }
 
-        foreach ($recipients as $recipient) {
-            // we are not interested in delayed or delivered actions
-            // most email clients do not even send delivered reports
-            if ($recipient->Action !== 'failed') {
-                $this->logger->info('Received bounce with non-failed action', [
-                    'uuid' => $bounceUuid,
-                    'recipient' => $recipient->EmailAddress,
-                    'action' => $recipient->Action,
-                ]);
-                return;
-            }
-
-            $smtpResponseParser = new SmtpResponseParser(null, $recipient->Status, $dsnInput->ReadableText);
-            if (!$smtpResponseParser->isRecipientBounce() && !$smtpResponseParser->isInfrastructureError()) {
-                $this->logger->info('Received bounce that is not a recipient bounce or infrastructure error', [
-                    'uuid' => $bounceUuid,
-                    'recipient' => $recipient->EmailAddress,
-                    'status' => $recipient->Status,
-                ]);
-                return;
-            }
-
-            $send = $this->sendService->getSendByUuid($bounceUuid);
-
-            if ($send === null) {
-                $this->logger->info('Received bounce with unknown send UUID', [
-                    'uuid' => $bounceUuid,
-                    'recipient' => $recipient->EmailAddress,
-                ]);
-                return;
-            }
-
-            $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $recipient->EmailAddress);
-            if ($sendRecipient === null) {
-                $this->logger->info('Received bounce with unknown recipient', [
-                    'uuid' => $bounceUuid,
-                    'recipient' => $recipient->EmailAddress,
-                ]);
-                return;
-            }
-
-            if ($smtpResponseParser->isRecipientBounce()) {
-                $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::BOUNCED);
-
-                $this->suppressionService->createSuppression(
-                    $send->getProject(),
-                    $recipient->EmailAddress,
-                    SuppressionReason::BOUNCE,
-                    $dsnInput->ReadableText
-                );
-
-                $this->sendFeedbackService->createSendFeedback(
-                    SendFeedbackType::BOUNCE,
-                    $sendRecipient,
-                    $debugIncomingEmail
-                );
-
-                $bounceObject = new BounceDto($dsnInput->ReadableText, $recipient->Status);
-                $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient, $bounceObject));
-            } elseif ($smtpResponseParser->isInfrastructureError()) {
-                $this->logger->info('Received infrastructure error with unknown send UUID', [
-                    'uuid' => $bounceUuid,
-                    'recipient' => $recipient->EmailAddress,
-                ]);
-
-                $this->infrastructureBounceService->createInfrastructureBounce(
-                    $sendRecipient->getId(),
-                    0, // SMTP code is not available in DSN, using 0 as default
-                    $recipient->Status,
-                    $dsnInput->ReadableText
-                );
-            }
+        $bounceReason = $dsnInput->BounceReason;
+        if ($bounceReason === null) {
+            $this->logger->info('Received failed DSN that is not a bounce', [
+                'uuid' => $bounceUuid,
+                'recipient' => $dsnInput->EmailAddress,
+                'status' => $dsnInput->Status,
+            ]);
+            return;
         }
+
+        if ($bounceReason === BounceReason::UNKNOWN) {
+            $this->logger->info('Received bounce that is not a recipient bounce or infrastructure error', [
+                'uuid' => $bounceUuid,
+                'recipient' => $dsnInput->EmailAddress,
+                'status' => $dsnInput->Status,
+            ]);
+        }
+
+        // Some providers (Microsoft, Yahoo) redact the recipient address.
+        // Then, the X-Relay-Recipient header of the original message identifies the recipient.
+        if ($dsnInput->EmailAddress === '' && $dsnInput->RecipientUuid === '') {
+            $this->logger->info('Received bounce without a recipient', [
+                'uuid' => $bounceUuid,
+            ]);
+            return;
+        }
+
+        $send = $this->sendService->getSendByUuid($bounceUuid);
+
+        if ($send === null) {
+            $this->logger->info('Received bounce with unknown send UUID', [
+                'uuid' => $bounceUuid,
+                'recipient' => $dsnInput->EmailAddress,
+            ]);
+            return;
+        }
+
+        $sendRecipient = $this->resolveSendRecipient($send, $dsnInput->RecipientUuid, $dsnInput->EmailAddress);
+        if ($sendRecipient === null) {
+            $this->logger->info('Received bounce with unknown recipient', [
+                'uuid' => $bounceUuid,
+                'recipient' => $dsnInput->EmailAddress,
+                'recipient_uuid' => $dsnInput->RecipientUuid,
+            ]);
+            return;
+        }
+
+        $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::BOUNCED, $bounceReason);
+
+        $this->sendFeedbackService->createSendFeedback(
+            SendFeedbackType::BOUNCE,
+            $sendRecipient,
+            $debugIncomingEmail,
+            bounceReason: $bounceReason,
+        );
+
+        if ($bounceReason === BounceReason::RECIPIENT) {
+            $this->suppressionService->createSuppression(
+                $send->getProject(),
+                $sendRecipient->getAddress(),
+                SuppressionReason::BOUNCE,
+                $dsnInput->ReadableText
+            );
+        } elseif ($bounceReason === BounceReason::INFRASTRUCTURE) {
+            $this->logger->info('Received infrastructure error', [
+                'uuid' => $bounceUuid,
+                'recipient' => $sendRecipient->getAddress(),
+            ]);
+
+            $this->infrastructureBounceService->createInfrastructureBounce(
+                $sendRecipient->getId(),
+                0, // SMTP code is not available in DSN, using 0 as default
+                $dsnInput->Status,
+                $dsnInput->ReadableText
+            );
+        }
+
+        $bounceObject = new BounceDto($dsnInput->ReadableText, $dsnInput->Status);
+        $this->ed->dispatch(new IncomingBounceEvent($send, $sendRecipient, $bounceObject));
     }
 
     public function handleIncomingComplaint(
@@ -146,33 +155,70 @@ class IncomingMailService
             return;
         }
 
-        $sendRecipient = $this->sendRecipientService->getSendRecipientByEmail($send, $arfInput->OriginalRcptTo);
+        if ($arfInput->OriginalRcptTo === '' && $arfInput->RecipientUuid === '') {
+            $this->logger->info('Received complaint without a recipient', [
+                'uuid' => $uuid,
+            ]);
+            return;
+        }
+
+        $sendRecipient = $this->resolveSendRecipient($send, $arfInput->RecipientUuid, $arfInput->OriginalRcptTo);
         if ($sendRecipient === null) {
             // @codeCoverageIgnoreStart
-            $this->logger->error('Failed to get send recipient by email', [
+            $this->logger->error('Failed to get send recipient', [
                 'uuid' => $uuid,
                 'recipient' => $arfInput->OriginalRcptTo,
+                'recipient_uuid' => $arfInput->RecipientUuid,
             ]);
             return;
             // @codeCoverageIgnoreEnd
         }
 
-        $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::COMPLAINED);
-
-        $this->suppressionService->createSuppression(
-            $send->getProject(),
-            $arfInput->OriginalRcptTo,
-            SuppressionReason::COMPLAINT,
-            $arfInput->ReadableText
-        );
+        if ($this->sendFeedbackService->hasComplaintForRecipient($sendRecipient)) {
+            $this->logger->info('Received duplicate complaint', [
+                'uuid' => $uuid,
+                'recipient' => $sendRecipient->getAddress(),
+            ]);
+            return;
+        }
 
         $this->sendFeedbackService->createSendFeedback(
             SendFeedbackType::COMPLAINT,
             $sendRecipient,
-            $debugIncomingEmail
+            $debugIncomingEmail,
+            $arfInput->FeedbackType
+        );
+
+        $this->sendRecipientService->updateSendRecipientStatus($sendRecipient, SendRecipientStatus::COMPLAINED);
+
+        $this->suppressionService->createSuppression(
+            $send->getProject(),
+            $sendRecipient->getAddress(),
+            SuppressionReason::COMPLAINT,
+            $arfInput->ReadableText
         );
 
         $complaintObject = new ComplaintDto($arfInput->ReadableText, $arfInput->FeedbackType);
         $this->ed->dispatch(new IncomingComplaintEvent($send, $sendRecipient, $complaintObject));
+    }
+
+    /**
+     * try X-Relay-Recipient first then fall back to the email address in the report.
+     */
+    private function resolveSendRecipient(Send $send, string $recipientUuid, string $email): ?SendRecipient
+    {
+        if ($recipientUuid !== '') {
+            $sendRecipient = $this->sendRecipientService->getSendRecipientByUuid($recipientUuid);
+
+            if ($sendRecipient !== null && $sendRecipient->getSend()->getId() === $send->getId()) {
+                return $sendRecipient;
+            }
+        }
+
+        if ($email === '') {
+            return null;
+        }
+
+        return $this->sendRecipientService->getSendRecipientByEmail($send, $email);
     }
 }

@@ -23,7 +23,8 @@ import type {
 	KycStatus,
 	KycSortBy,
 	WarmupSchedule,
-	WarmupStatus
+	WarmupStatus,
+	SudoStats
 } from './sudoTypes';
 
 export function initSudo() {
@@ -316,5 +317,12 @@ export function updateWarmupSchedule(
 export function deleteWarmupSchedule(scheduleId: number) {
 	return sudoApi.delete({
 		endpoint: `/warmup-schedules/${scheduleId}`
+	});
+}
+
+export function getSudoStats(period: '30d' | '7d' | 'today' = 'today') {
+	return sudoApi.get<SudoStats>({
+		endpoint: '/stats',
+		data: { period }
 	});
 }

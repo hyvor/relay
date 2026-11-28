@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Type\BounceReason;
 use App\Entity\Type\SendFeedbackType;
 use App\Repository\SendFeedbackRepository;
 use Doctrine\ORM\Mapping as ORM;
@@ -27,6 +28,12 @@ class SendFeedback
     #[ORM\ManyToOne(targetEntity: SendRecipient::class)]
     #[ORM\JoinColumn]
     private SendRecipient $send_recipient;
+
+    #[ORM\Column(type: "string", enumType: BounceReason::class, name: "bounce_reason", nullable: true)]
+    private ?BounceReason $bounce_reason = null;
+
+    #[ORM\Column(type: "text", nullable: true)]
+    private ?string $detail = null;
 
     #[ORM\OneToOne(targetEntity: DebugIncomingEmail::class)]
     #[ORM\JoinColumn]
@@ -87,6 +94,28 @@ class SendFeedback
         return $this;
     }
 
+    public function getBounceReason(): ?BounceReason
+    {
+        return $this->bounce_reason;
+    }
+
+    public function setBounceReason(?BounceReason $bounce_reason): static
+    {
+        $this->bounce_reason = $bounce_reason;
+        return $this;
+    }
+
+    public function getDetail(): ?string
+    {
+        return $this->detail;
+    }
+
+    public function setDetail(?string $detail): static
+    {
+        $this->detail = $detail;
+        return $this;
+    }
+
     public function getDebugIncomingEmail(): DebugIncomingEmail
     {
         return $this->debugIncomingEmail;
@@ -98,4 +127,3 @@ class SendFeedback
         return $this;
     }
 }
-

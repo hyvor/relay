@@ -44,19 +44,19 @@
 		function getAttemptMessage(attempt: SendAttempt, attemptRecipient: SendAttemptRecipient) {
 			const recipient = send.recipients.find((r) => r.id === attemptRecipient.recipient_id)!;
 
-			if (attemptRecipient.recipient_status === 'accepted') {
+			if (attemptRecipient.status === 'accepted') {
 				return {
 					message: `Accepted: <strong>${recipient.address}</strong>`,
 					description: 'Successfully delivered to the recipient mail server.',
 					color: 'var(--green)'
 				};
-			} else if (attemptRecipient.recipient_status === 'deferred') {
+			} else if (attemptRecipient.status === 'deferred') {
 				return {
 					message: `Deferred, retrying later: <strong>${recipient.address}</strong>`,
 					description: getAttemptDescription(),
 					color: 'var(--orange)'
 				};
-			} else if (attemptRecipient.recipient_status === 'bounced') {
+			} else if (attemptRecipient.status === 'bounced') {
 				const suppressedMessage = attemptRecipient.is_suppressed
 					? ' (Added to suppression list and future sends will be ignored)'
 					: '';
@@ -132,19 +132,24 @@
 			const recipientEmail = recipient ? recipient.address : 'unknown recipient';
 
 			if (feedback.type === 'bounce') {
+				let description = 'Received a bounce notification from the recipient mail server.';
+				if (feedback.bounce_reason === 'recipient') {
+					description += ' (Added to suppression list and future sends will be ignored)';
+				} else if (feedback.bounce_reason === 'infrastructure') {
+					description = 'Infrastructure issue, retry later or contact support';
+				}
 				return {
 					message: `Bounced: <strong>${recipientEmail}</strong>`,
-					description:
-						'Received a bounce notification from the recipient mail server. (Added to suppression list and future sends will be ignored)',
-					color: 'var(--red)'
-				};
-			} else {
-				return {
-					message: `Marked as spam: <strong>${recipientEmail}</strong>`,
-					description: null,
+					description,
 					color: 'var(--red)'
 				};
 			}
+
+			return {
+				message: `Marked as spam: <strong>${recipientEmail}</strong>`,
+				description: null,
+				color: 'var(--red)'
+			};
 		}
 	});
 </script>

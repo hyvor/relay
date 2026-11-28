@@ -3,7 +3,7 @@
 namespace App\Api\Console\Object;
 
 use App\Entity\SendAttemptRecipient;
-use App\Entity\Type\SendRecipientStatus;
+use App\Entity\Type\SendAttemptRecipientStatus;
 
 class SendAttemptRecipientObject
 {
@@ -11,7 +11,7 @@ class SendAttemptRecipientObject
     public int $id;
     public int $created_at;
     public int $recipient_id;
-    public SendRecipientStatus $recipient_status;
+    public SendAttemptRecipientStatus $status;
     public int $smtp_code;
     public ?string $smtp_enhanced_code = null;
     public string $smtp_message;
@@ -22,7 +22,7 @@ class SendAttemptRecipientObject
         $this->id = $recipient->getId();
         $this->created_at = $recipient->getCreatedAt()->getTimestamp();
         $this->recipient_id = $recipient->getSendRecipientId();
-        $this->recipient_status = $recipient->getRecipientStatus();
+        $this->status = $recipient->getStatus();
         $this->smtp_code = $recipient->getSmtpCode();
         $this->smtp_enhanced_code = $recipient->getSmtpEnhancedCode();
         $this->smtp_message = $recipient->getSmtpMessage();
