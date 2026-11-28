@@ -320,9 +320,13 @@ export function deleteWarmupSchedule(scheduleId: number) {
 	});
 }
 
-export function getSudoStats(period: '30d' | '7d' | 'today' = 'today') {
+export function getSudoStats(
+	period: '1y' | '30d' | '7d' | 'today' | 'custom' = 'today',
+	from?: string,
+	to?: string
+) {
 	return sudoApi.get<SudoStats>({
 		endpoint: '/stats',
-		data: { period }
+		data: period === 'custom' ? { period, from, to } : { period }
 	});
 }

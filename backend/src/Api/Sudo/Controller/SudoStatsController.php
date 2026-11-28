@@ -23,7 +23,7 @@ class SudoStatsController extends AbstractController
     public function getStats(
         #[MapQueryString] SudoStatsInput $input
     ): JsonResponse {
-        $stats = $this->sudoAnalyticsService->getStats($input->period);
+        $stats = $this->sudoAnalyticsService->getStats($input->period, $input->from, $input->to);
         return new JsonResponse($stats);
     }
 }
