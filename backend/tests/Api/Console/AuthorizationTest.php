@@ -171,6 +171,25 @@ class AuthorizationTest extends WebTestCase
         $this->assertResponseStatusCodeSame(200);
     }
 
+    public function test_disabled_api_key_does_not_authenticate(): void
+    {
+        $project = ProjectFactory::createOne();
+        $apiKey = bin2hex(random_bytes(ApiKeyService::API_KEY_LENGTH / 2));
+        ApiKeyFactory::createOne([
+            'project' => $project,
+            'key_hashed' => hash('sha256', $apiKey),
+            'scopes' => [RelayScope::SENDS_READ->value],
+            'is_enabled' => false,
+        ]);
+
+        $this->client->request(
+            'GET',
+            '/api/console/sends',
+            server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $apiKey],
+        );
+        $this->assertResponseStatusCodeSame(403);
+    }
+
     public function test_authorizes_via_session(): void
     {
         AuthFake::enableForSymfony(
